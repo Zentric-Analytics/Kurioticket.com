@@ -19,6 +19,16 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!target.partnerRedirectUrl && !target.bookingUrl) {
+    return NextResponse.json(
+      {
+        error:
+          "This offer is currently displayed using provider test mode. Final booking handoff is not enabled yet.",
+      },
+      { status: 409 },
+    );
+  }
+
   const url = new URL(target.partnerRedirectUrl || target.bookingUrl);
   if (!["http:", "https:"].includes(url.protocol)) {
     return NextResponse.json({ error: "Unsafe redirect target." }, { status: 400 });

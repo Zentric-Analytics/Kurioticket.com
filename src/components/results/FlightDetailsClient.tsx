@@ -80,6 +80,15 @@ export function FlightDetailsClient({ id }: { id: string }) {
 
       <div className="page-shell grid gap-6 py-6 lg:grid-cols-[1fr_340px]">
         <section className="space-y-6">
+          {!flight.partnerRedirectUrl && !flight.bookingUrl ? (
+            <Card className="border-amber/30 bg-amber/10 p-5">
+              <h2 className="text-lg font-bold text-navy">Booking Handoff Status</h2>
+              <p className="mt-2 text-sm leading-6 text-amber">
+                This offer is currently displayed using provider test mode. Final booking handoff is not enabled yet.
+              </p>
+            </Card>
+          ) : null}
+
           <Card className="p-5">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
               <div>
@@ -152,7 +161,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
               ))}
             </div>
           </Card>
-          <Button variant="accent" size="lg" className="w-full" onClick={continueToBooking}>
+          <Button variant="accent" size="lg" className="w-full" onClick={continueToBooking} disabled={!flight.partnerRedirectUrl && !flight.bookingUrl}>
             Continue to Booking
           </Button>
         </aside>

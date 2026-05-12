@@ -246,9 +246,7 @@ function buildFlight(input: {
   rawProviderReference?: unknown;
 }): NormalizedFlightResult {
   const scores = scoreFlight(input);
-  const partnerUrl =
-    input.bookingUrl ||
-    `https://www.google.com/travel/flights?q=${encodeURIComponent(`${input.originAirport} to ${input.destinationAirport}`)}`;
+  const partnerUrl = input.bookingUrl || "";
 
   return {
     id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,

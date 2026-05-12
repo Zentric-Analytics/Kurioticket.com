@@ -59,3 +59,42 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
       .filter(Boolean) as NormalizedFlightResult[];
   });
 }
+
+export async function checkDuffelHealth() {
+  const apiKey = process.env.DUFFEL_API_KEY;
+  const checkedAt = new Date().toISOString();
+
+  if (!apiKey) {
+    return {
+      configured: false,
+      connected: false,
+      latencyMs: 0,
+      lastError: "Missing DUFFEL_API_KEY.",
+      checkedAt,
+    };
+  }
+
+  const result = await runProvider("Duffel", async () => {
+    await fetchJson<{ data?: unknown[] }>(
+      "https://api.duffel.com/air/offer_requests?limit=1",
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: "application/json",
+          "Duffel-Version": "v2",
+        },
+      },
+      9000,
+    );
+
+    return [{ ok: true }];
+  });
+
+  return {
+    configured: true,
+    connected: result.status === "success",
+    latencyMs: result.latencyMs,
+    lastError: result.error,
+    checkedAt,
+  };
+}

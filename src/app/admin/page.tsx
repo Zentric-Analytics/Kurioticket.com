@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { Activity, CreditCard, DollarSign, Flag, Gauge, LifeBuoy, Plane, Scale, Users } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { ProviderHealthPanel } from "@/components/admin/ProviderHealthPanel";
 import { Card } from "@/components/ui/Card";
 import { authOptions } from "@/lib/auth";
 
@@ -38,6 +39,9 @@ export default async function AdminPage() {
               Admin access is role-gated through authentication and ADMIN_EMAILS. This page shows the Phase 1 operations modules for setup review.
             </p>
           ) : null}
+        </div>
+        <div className="mt-6">
+          <ProviderHealthPanel enabled={isAdmin} />
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {modules.map((module) => (
