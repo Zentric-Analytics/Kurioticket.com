@@ -92,11 +92,11 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     results: publicResults,
-    providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs, error }) => ({
+    providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs }) => ({
       provider,
       status,
       latencyMs,
-      error,
+      error: status === "success" ? undefined : `${provider} is temporarily unavailable.`,
     })),
     warnings: aggregate.warnings,
     servedFromFallback: aggregate.servedFromFallback,

@@ -86,17 +86,29 @@ function normalizeDuffelFlight(raw: unknown, search: FlightSearchParams): Normal
     id?: string;
     total_amount?: string;
     total_currency?: string;
-    owner?: { name?: string };
+    owner?: { name?: string; iata_code?: string };
+    conditions?: {
+      change_before_departure?: { allowed?: boolean; penalty_amount?: string; penalty_currency?: string };
+      refund_before_departure?: { allowed?: boolean; penalty_amount?: string; penalty_currency?: string };
+    };
+    passengers?: Array<{
+      baggages?: Array<{ type?: string; quantity?: number }>;
+    }>;
     slices?: Array<{
       duration?: string;
       segments?: Array<{
+        id?: string;
         departing_at?: string;
         arriving_at?: string;
-        origin?: { iata_code?: string };
-        destination?: { iata_code?: string };
+        origin?: { iata_code?: string; name?: string };
+        destination?: { iata_code?: string; name?: string };
         operating_carrier?: { name?: string; iata_code?: string };
         marketing_carrier?: { name?: string; iata_code?: string };
         marketing_carrier_flight_number?: string;
+        passengers?: Array<{
+          cabin_class?: string;
+          baggages?: Array<{ type?: string; quantity?: number }>;
+        }>;
       }>;
     }>;
   };
@@ -109,6 +121,11 @@ function normalizeDuffelFlight(raw: unknown, search: FlightSearchParams): Normal
   const carrier = first.marketing_carrier?.iata_code || first.operating_carrier?.iata_code || "";
   const airlineName = first.marketing_carrier?.name || first.operating_carrier?.name || offer.owner?.name || airlineNames[carrier] || "Airline";
   const durationMinutes = parseIsoDuration(offer.slices?.[0]?.duration) || estimateDuration(first.departing_at, last.arriving_at);
+  const cabinClass = formatDuffelCabin(first.passengers?.[0]?.cabin_class) || search.cabinClass;
+  const baggageInfo = buildDuffelBaggageInfo(first.passengers?.[0]?.baggages || offer.passengers?.[0]?.baggages);
+  const refundInfo = buildDuffelRefundInfo(offer.conditions);
+  const price = Number(offer.total_amount);
+  if (!Number.isFinite(price)) return null;
 
   return buildFlight({
     provider: "Duffel",
@@ -122,12 +139,17 @@ function normalizeDuffelFlight(raw: unknown, search: FlightSearchParams): Normal
     durationMinutes,
     stops: Math.max(segments.length - 1, 0),
     layovers: buildDuffelLayovers(segments),
-    cabinClass: search.cabinClass,
-    baggageInfo: "Baggage details are verified on the partner booking step.",
-    refundInfo: "Change and refund rules vary by fare.",
-    price: Number(offer.total_amount),
+    cabinClass,
+    baggageInfo,
+    refundInfo,
+    price,
     currency: offer.total_currency || "USD",
-    rawProviderReference: { provider: "duffel", id: offer.id },
+    rawProviderReference: {
+      provider: "duffel",
+      id: offer.id,
+      liveOffer: true,
+      sliceIds: offer.slices?.flatMap((slice) => slice.segments?.map((segment) => segment.id).filter(Boolean) || []),
+    },
   });
 }
 
@@ -295,6 +317,45 @@ function buildDuffelLayovers(
     });
   }
   return layovers;
+}
+
+function buildDuffelBaggageInfo(baggages?: Array<{ type?: string; quantity?: number }>) {
+  if (!baggages?.length) return "Baggage details are confirmed by Duffel before booking.";
+
+  const checked = baggages.find((bag) => bag.type === "checked");
+  const carryOn = baggages.find((bag) => bag.type === "carry_on");
+  const parts = [];
+  if (carryOn?.quantity) parts.push(`${carryOn.quantity} carry-on included`);
+  if (checked?.quantity) parts.push(`${checked.quantity} checked bag${checked.quantity > 1 ? "s" : ""} included`);
+  return parts.length ? parts.join(", ") : "Baggage details are confirmed by Duffel before booking.";
+}
+
+function buildDuffelRefundInfo(conditions?: {
+  change_before_departure?: { allowed?: boolean; penalty_amount?: string; penalty_currency?: string };
+  refund_before_departure?: { allowed?: boolean; penalty_amount?: string; penalty_currency?: string };
+}) {
+  const refund = conditions?.refund_before_departure;
+  const change = conditions?.change_before_departure;
+  const parts = [];
+
+  if (refund?.allowed === true) {
+    parts.push(refund.penalty_amount ? `Refundable before departure with ${refund.penalty_currency || ""} ${refund.penalty_amount} penalty`.trim() : "Refundable before departure");
+  } else if (refund?.allowed === false) {
+    parts.push("Not refundable before departure");
+  }
+
+  if (change?.allowed === true) {
+    parts.push(change.penalty_amount ? `Changes allowed with ${change.penalty_currency || ""} ${change.penalty_amount} penalty`.trim() : "Changes allowed before departure");
+  } else if (change?.allowed === false) {
+    parts.push("Changes not allowed before departure");
+  }
+
+  return parts.length ? parts.join(". ") : "Change and refund rules vary by fare and are confirmed before booking.";
+}
+
+function formatDuffelCabin(value?: string) {
+  if (!value) return "";
+  return value.replace(/_/g, " ");
 }
 
 function buildKiwiLayovers(route: Array<{ local_arrival?: string; local_departure?: string; flyTo?: string }>) {

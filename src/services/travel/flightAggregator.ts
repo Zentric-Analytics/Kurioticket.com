@@ -9,8 +9,8 @@ import { searchKiwiFlights } from "@/services/travel/providers/kiwiProvider";
 export async function searchFlights(search: FlightSearchParams): Promise<AggregatedResult<NormalizedFlightResult>> {
   const startedAt = Date.now();
   const providers = await Promise.all([
-    searchAmadeusFlights(search),
     searchDuffelFlights(search),
+    searchAmadeusFlights(search),
     searchKiwiFlights(search),
   ]);
 
@@ -18,7 +18,11 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
   const deduped = assignBadges(sortFlights(dedupeFlights(merged), search.sort || "cheapest"));
   const warnings = providers
     .filter((provider) => provider.status !== "success")
-    .map((provider) => `${provider.provider}: ${provider.error || "Unavailable"}`);
+    .map((provider) =>
+      provider.provider === "Duffel"
+        ? "Live Duffel flight offers are temporarily unavailable. We are checking provider connectivity."
+        : `${provider.provider} flight results are temporarily unavailable.`,
+    );
 
   if (deduped.length > 0) {
     rememberFlights(deduped);
@@ -39,7 +43,7 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
       servedFromFallback: false,
       latencyMs: Date.now() - startedAt,
       unavailableMessage:
-        "Live flight search is temporarily unavailable. Our provider connections are being checked, and we are not showing development fallback fares in production.",
+        "Live flight search is temporarily unavailable. Duffel and our backup provider connections are being checked, and we are not showing development fallback fares in production.",
     };
   }
 

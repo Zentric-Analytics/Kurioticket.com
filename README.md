@@ -10,7 +10,7 @@ Curioticket is not an airline and does not issue tickets at launch. Users comple
 - Tailwind CSS
 - PostgreSQL with Prisma
 - NextAuth credentials and Google auth
-- Amadeus, Duffel, Kiwi/Tequila, and hotel provider service architecture
+- Duffel, Amadeus, Kiwi/Tequila, and hotel provider service architecture
 - Stripe Checkout, subscriptions, webhooks, billing portal
 - Resend transactional email
 - OpenAI API for premium travel intelligence
@@ -65,8 +65,8 @@ The schema includes users, auth sessions, subscriptions, saved flights/hotels/se
 
 Provider calls happen only in backend services under `src/services/travel`.
 
-- Amadeus is the primary flight provider.
-- Duffel is the secondary flight provider.
+- Duffel is the primary live flight provider.
+- Amadeus is the secondary flight provider.
 - Kiwi/Tequila is the third flight provider.
 - Hotels use Amadeus Hotels when Amadeus credentials exist, then a hotel partner/Travelpayouts-style fallback if configured.
 

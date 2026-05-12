@@ -11,7 +11,8 @@ const cabinClassMap: Record<FlightSearchParams["cabinClass"], string> = {
 };
 
 export function searchDuffelFlights(search: FlightSearchParams): Promise<ProviderResult<NormalizedFlightResult>> {
-  if (!process.env.DUFFEL_API_KEY) {
+  const apiKey = process.env.DUFFEL_API_KEY;
+  if (!apiKey) {
     return Promise.resolve(skippedProvider("Duffel", "Missing DUFFEL_API_KEY."));
   }
 
@@ -32,13 +33,13 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
       });
     }
 
-    const passengers = Array.from({ length: search.travelers }, () => ({ type: "adult" }));
+    const passengers = Array.from({ length: search.travelers }, () => ({ type: "adult" as const }));
     const data = await fetchJson<{ data?: { offers?: unknown[] } }>(
       "https://api.duffel.com/air/offer_requests?return_offers=true",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${process.env.DUFFEL_API_KEY}`,
+          Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
           "Duffel-Version": "v2",
         },
