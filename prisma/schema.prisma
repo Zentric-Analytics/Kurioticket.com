@@ -1,0 +1,529 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  PREMIUM
+  SUPPORT
+  ADMIN
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
+}
+
+enum BillingInterval {
+  MONTH
+  YEAR
+}
+
+enum SearchType {
+  FLIGHT
+  HOTEL
+}
+
+enum SearchStatus {
+  SUCCESS
+  PARTIAL
+  FAILED
+}
+
+enum PriceAlertStatus {
+  ACTIVE
+  PAUSED
+  TRIGGERED
+  EXPIRED
+  DELETED
+}
+
+enum SupportTicketStatus {
+  OPEN
+  WAITING_ON_USER
+  WAITING_ON_TEAM
+  RESOLVED
+  CLOSED
+}
+
+enum SupportPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum NotificationType {
+  PRICE_ALERT
+  SUPPORT_UPDATE
+  SUBSCRIPTION
+  SYSTEM
+  TRAVEL_INSIGHT
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+}
+
+enum ProviderStatus {
+  SUCCESS
+  DEGRADED
+  FAILED
+  DISABLED
+}
+
+enum RedirectType {
+  FLIGHT
+  HOTEL
+}
+
+enum AnalyticsEventType {
+  SEARCH
+  REDIRECT
+  SAVE
+  ALERT_CREATED
+  SIGNUP
+  PREMIUM_CLICK
+  SUBSCRIPTION_CONVERSION
+  AI_USAGE
+  SUPPORT_TICKET
+  PROVIDER_FAILURE
+}
+
+enum LegalDocumentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum FeatureFlagScope {
+  GLOBAL
+  USER
+  PREMIUM
+  ADMIN
+}
+
+model User {
+  id                      String              @id @default(cuid())
+  name                    String?
+  email                   String?             @unique
+  emailVerified           DateTime?
+  image                   String?
+  passwordHash            String?
+  role                    UserRole            @default(USER)
+  isPremium               Boolean             @default(false)
+  priceAlertLimitOverride Int?
+  onboardedAt             DateTime?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+  accounts                Account[]
+  sessions                Session[]
+  subscriptions           Subscription[]
+  savedFlights            SavedFlight[]
+  savedHotels             SavedHotel[]
+  savedSearches           SavedSearch[]
+  searchHistory           SearchHistory[]
+  priceAlerts             PriceAlert[]
+  supportTickets          SupportTicket[]
+  redirectLogs            RedirectLog[]
+  apiEvents               AnalyticsEvent[]
+  notifications           Notification[]
+  travelPreferences       TravelPreferences?
+  watchlistItems          TravelWatchlist[]
+  savedTrips              SavedTrip[]
+
+  @@index([role])
+  @@index([isPremium])
+  @@index([createdAt])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  status               SubscriptionStatus @default(INCOMPLETE)
+  interval             BillingInterval?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  trialEndsAt          DateTime?
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripeCustomerId])
+}
+
+model SavedFlight {
+  id                 String   @id @default(cuid())
+  userId             String
+  provider           String
+  airlineName        String
+  flightNumber       String?
+  originAirport      String
+  destinationAirport String
+  departureTime      DateTime
+  arrivalTime        DateTime
+  price              Decimal  @db.Decimal(12, 2)
+  currency           String   @default("USD")
+  payload            Json
+  createdAt          DateTime @default(now())
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([originAirport, destinationAirport])
+  @@index([departureTime])
+  @@index([createdAt])
+}
+
+model SavedHotel {
+  id           String   @id @default(cuid())
+  userId       String
+  provider     String
+  hotelName    String
+  destination  String
+  checkIn      DateTime
+  checkOut     DateTime
+  totalPrice   Decimal  @db.Decimal(12, 2)
+  currency     String   @default("USD")
+  payload      Json
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([destination])
+  @@index([checkIn, checkOut])
+  @@index([createdAt])
+}
+
+model SavedSearch {
+  id          String     @id @default(cuid())
+  userId      String
+  type        SearchType
+  label       String?
+  origin      String?
+  destination String?
+  checkIn     DateTime?
+  checkOut    DateTime?
+  query       Json
+  createdAt   DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([origin, destination])
+  @@index([createdAt])
+}
+
+model SearchHistory {
+  id          String       @id @default(cuid())
+  userId      String?
+  type        SearchType
+  origin      String?
+  destination String?
+  checkIn     DateTime?
+  checkOut    DateTime?
+  query       Json
+  resultCount Int          @default(0)
+  latencyMs   Int?
+  status      SearchStatus @default(SUCCESS)
+  createdAt   DateTime     @default(now())
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([origin, destination])
+  @@index([createdAt])
+}
+
+model PriceAlert {
+  id             String           @id @default(cuid())
+  userId         String
+  type           SearchType
+  origin         String?
+  destination    String
+  targetPrice    Decimal?         @db.Decimal(12, 2)
+  currency       String           @default("USD")
+  status         PriceAlertStatus @default(ACTIVE)
+  query          Json
+  lastSeenPrice  Decimal?         @db.Decimal(12, 2)
+  lastCheckedAt  DateTime?
+  nextCheckAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  priceSnapshots PriceSnapshot[]
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([origin, destination])
+  @@index([nextCheckAt])
+}
+
+model PriceSnapshot {
+  id           String     @id @default(cuid())
+  priceAlertId String
+  provider     String
+  price        Decimal    @db.Decimal(12, 2)
+  currency     String     @default("USD")
+  payload       Json?
+  createdAt    DateTime   @default(now())
+  priceAlert   PriceAlert @relation(fields: [priceAlertId], references: [id], onDelete: Cascade)
+
+  @@index([priceAlertId])
+  @@index([createdAt])
+}
+
+model SupportTicket {
+  id            String              @id @default(cuid())
+  userId        String?
+  email         String
+  subject       String
+  category      String
+  status        SupportTicketStatus @default(OPEN)
+  priority      SupportPriority     @default(NORMAL)
+  sourceContext Json?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  user          User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages      SupportMessage[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+}
+
+model SupportMessage {
+  id        String        @id @default(cuid())
+  ticketId  String
+  author    String
+  body      String
+  isAiDraft Boolean       @default(false)
+  createdAt DateTime      @default(now())
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+model RedirectLog {
+  id             String       @id @default(cuid())
+  userId         String?
+  type           RedirectType
+  provider       String
+  route          String?
+  price          Decimal?     @db.Decimal(12, 2)
+  currency       String       @default("USD")
+  destinationUrl String
+  userType       String
+  sourcePage     String
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+  user           User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([provider])
+  @@index([createdAt])
+}
+
+model ApiProviderLog {
+  id           String         @id @default(cuid())
+  provider     String
+  service      String
+  endpoint     String?
+  status       ProviderStatus
+  latencyMs    Int?
+  errorMessage String?
+  requestCost  Decimal?       @db.Decimal(10, 4)
+  metadata     Json?
+  createdAt    DateTime       @default(now())
+
+  @@index([provider])
+  @@index([service])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ProviderHealthLog {
+  id          String         @id @default(cuid())
+  provider    String
+  service     String
+  status      ProviderStatus
+  latencyMs   Int?
+  errorRate   Decimal?       @db.Decimal(5, 2)
+  checkedAt   DateTime       @default(now())
+  metadata    Json?
+
+  @@index([provider])
+  @@index([service])
+  @@index([status])
+  @@index([checkedAt])
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  type      NotificationType
+  channel   NotificationChannel
+  title     String
+  body      String
+  readAt    DateTime?
+  metadata  Json?
+  createdAt DateTime            @default(now())
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([readAt])
+  @@index([createdAt])
+}
+
+model TravelPreferences {
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  homeAirport             String?
+  preferredAirlines       String[] @default([])
+  budgetStyle             String?
+  directVsCheaper         String?
+  travelFrequency         String?
+  comfortVsSavings        String?
+  travelPurpose           String?
+  notificationPreferences Json?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TravelWatchlist {
+  id          String     @id @default(cuid())
+  userId      String
+  type        SearchType
+  label       String
+  origin      String?
+  destination String
+  query       Json
+  createdAt   DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([origin, destination])
+}
+
+model SavedTrip {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  startsAt    DateTime?
+  endsAt      DateTime?
+  destination String?
+  payload     Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([startsAt])
+  @@index([destination])
+}
+
+model LegalDocument {
+  id            String              @id @default(cuid())
+  slug          String              @unique
+  title         String
+  summary       String
+  body          Json
+  status        LegalDocumentStatus @default(PUBLISHED)
+  lastUpdatedAt DateTime
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([status])
+  @@index([lastUpdatedAt])
+}
+
+model FeatureFlag {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  name        String
+  description String?
+  enabled     Boolean          @default(false)
+  scope       FeatureFlagScope @default(GLOBAL)
+  payload     Json?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([enabled])
+  @@index([scope])
+}
+
+model AnalyticsEvent {
+  id        String             @id @default(cuid())
+  userId    String?
+  type      AnalyticsEventType
+  name      String
+  metadata  Json?
+  createdAt DateTime           @default(now())
+  user      User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([name])
+  @@index([createdAt])
+}

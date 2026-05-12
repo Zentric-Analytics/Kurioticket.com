@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7fafc;
+  --foreground: #0b172a;
+  --navy: #071526;
+  --navy-soft: #10233c;
+  --surface: #ffffff;
+  --surface-muted: #eef4f7;
+  --border: #d9e4ea;
+  --muted: #64748b;
+  --teal: #0f9f9a;
+  --teal-dark: #0f766e;
+  --blue: #2563eb;
+  --amber: #b7791f;
+  --danger: #b91c1c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-teal: var(--teal);
+  --color-teal-dark: var(--teal-dark);
+  --color-blue: var(--blue);
+  --color-amber: var(--amber);
+  --color-danger: var(--danger);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+a {
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(15, 159, 154, 0.24);
+}
+
+.page-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+}
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px rgba(15, 159, 154, 0.28);
+}
+
+.legal-paper {
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(180deg, rgba(15, 159, 154, 0.42), rgba(37, 99, 235, 0.18)) border-box;
+}

@@ -1,0 +1,26 @@
+name: Security Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify no committed secrets
+        run: npm run security:secrets
