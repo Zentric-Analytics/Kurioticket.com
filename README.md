@@ -20,8 +20,8 @@ Curioticket is not an airline and does not issue tickets at launch. Users comple
 
 ```bash
 npm install
-cp .env.example .env
-npm run db:generate
+cp .env.example .env.local
+npx prisma generate
 npm run dev
 ```
 
@@ -41,9 +41,11 @@ Copy `.env.example` and fill provider credentials:
 - `OPENAI_API_KEY`, `OPENAI_MODEL`
 - `AMADEUS_CLIENT_ID`, `AMADEUS_CLIENT_SECRET`
 - `DUFFEL_API_KEY`
-- `KIWI_API_KEY`, `TRAVELPAYOUTS_API_KEY`
+- `KIWI_API_KEY`, `TRAVELPAYOUTS_API_KEY`, `TRAVELPAYOUTS_MARKER`
 - `HOTEL_API_KEY`
 - `ADMIN_EMAILS`
+
+Never commit `.env` or `.env.local`. Only `NEXT_PUBLIC_` values may be used in browser code. Travel provider keys, Stripe secret keys, Resend keys, OpenAI keys, database URLs, and auth secrets must remain server-side.
 
 ## Prisma
 
@@ -68,9 +70,22 @@ Provider calls happen only in backend services under `src/services/travel`.
 - Duffel is the primary live flight provider.
 - Amadeus is the secondary flight provider.
 - Kiwi/Tequila is the third flight provider.
+- Travelpayouts is not a replacement for Duffel. It is the affiliate, enrichment, destination discovery, travel trends, SEO, and monetization layer.
 - Hotels use Amadeus Hotels when Amadeus credentials exist, then a hotel partner/Travelpayouts-style fallback if configured.
 
 If provider credentials are missing, unavailable, or rate-limited in local development, the aggregator returns clearly labeled development fallback results. In production, Curioticket does not pretend fallback data is live data; the search API returns a professional live-provider unavailable message instead. Raw provider responses are never returned to users.
+
+### Duffel Setup
+
+Set `DUFFEL_API_KEY` in Render and local `.env.local` when testing live searches. Duffel calls are made only from backend services with `Authorization: Bearer <token>` and the `Duffel-Version` header. Curioticket creates live offer requests and normalizes offers into the internal flight result shape; it does not create Duffel orders or issue tickets at launch.
+
+### Travelpayouts Setup
+
+Set `TRAVELPAYOUTS_API_KEY` and `TRAVELPAYOUTS_MARKER`. The marker is used for affiliate attribution and the API key is used for data/enrichment health checks and future destination discovery surfaces. Travelpayouts enriches deals, SEO pages, redirects, and travel intelligence; Duffel remains the primary live flight provider.
+
+### Provider Health Checks
+
+Admins can review provider status at `/admin`. The admin-only endpoint `/api/admin/provider-health` reports Duffel and Travelpayouts configured/missing state, connection test result, response latency, sanitized last error, and environment readiness. Provider errors are logged internally and sanitized before returning to the browser.
 
 ## Stripe Setup
 
@@ -106,16 +121,17 @@ Set `OPENAI_API_KEY`. Premium AI routes use provider/search data as truth and ar
 
 This repository includes `render.yaml` for a Render Blueprint:
 
-- Node web service
-- Render PostgreSQL database
+- Production Node web service on `main`
+- Staging Node web service on `dev`
+- Separate production and staging Render PostgreSQL databases
 - `/api/health` health check
-- production env var placeholders with secrets marked `sync: false`
+- production and staging env var placeholders with secrets marked `sync: false`
 
-Recommended deployment flow:
+Production deployment flow:
 
 ```bash
 git add .
-git commit -m "Build Curioticket Phase 1 MVP"
+git commit -m "Describe production-ready change"
 git push origin main
 ```
 
@@ -128,6 +144,56 @@ https://dashboard.render.com/blueprint/new
 Select the GitHub repository, fill secret environment variables, apply the Blueprint, and run `npm run db:deploy` after migrations exist.
 
 Production keys must be added in Render environment variables only. Local keys belong in `.env.local`, which is ignored by git.
+
+Production custom domains:
+
+- `curioticket.com`
+- `www.curioticket.com`
+
+Staging may use either the Render staging URL or `staging.curioticket.com`. If using `staging.curioticket.com`, add the domain to the staging Render service and create the DNS record GoDaddy/Render asks for.
+
+Use separate production and staging values for Stripe, Resend, OpenAI, Duffel, Travelpayouts, database, auth, and app URL environment variables. Staging must not share production payment webhooks unless intentionally configured by the infrastructure owner.
+
+## GitHub Branch Workflow
+
+Branches:
+
+- `main`: production branch connected to the public Render production service
+- `dev`: staging/integration branch connected to the Render staging service
+- `frontend/*`: frontend feature branches such as `frontend/homepage-polish`, `frontend/flight-results-page`, `frontend/mobile-refactor`
+- `backend/*`: backend feature branches such as `backend/duffel-provider`, `backend/travelpayouts-provider`, `backend/provider-health`
+
+Required flow:
+
+```text
+feature branch
+-> Pull Request into dev
+-> staging deployment
+-> admin review
+-> merge into dev
+-> final approval
+-> merge dev into main
+-> production deployment
+```
+
+No developer should push directly to `main`. Protect `main` in GitHub with required pull requests, required status checks, and administrator review. Frontend contributors should open PRs into `dev`; the admin/backend lead approves staging and performs the final production merge.
+
+## PR Review Process
+
+Frontend PRs must include desktop screenshots, mobile screenshots, a page summary, testing notes, and confirmation that `npm run lint` and `npm run build` passed. They also need confirmation of no console errors, no broken navigation, and mobile/desktop testing.
+
+Frontend PRs cannot be approved unless the UI is responsive, premium-quality, uncluttered, navigable, and includes loading, error, and empty states.
+
+Backend PRs must protect secrets, document new environment variables, preserve provider abstraction, gracefully handle provider failures, avoid exposing raw provider responses, and update README and `.env.example` when configuration changes.
+
+Backend verification before merge:
+
+```bash
+npm run lint
+npm run build
+npx prisma validate
+npx prisma generate
+```
 
 ## Team Workflow
 
