@@ -5,6 +5,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { getAdminEmails, getAuthSecret } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
+import { signinSchema } from "@/lib/validation";
 
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
@@ -14,16 +15,21 @@ const providers: NextAuthOptions["providers"] = [
       password: { label: "Password", type: "password" },
     },
     async authorize(credentials) {
-      const email = credentials?.email?.toLowerCase().trim();
-      const password = credentials?.password;
+      const parsed = signinSchema.safeParse(credentials);
+      if (!parsed.success) {
+        throw new Error("Enter a valid email address and password.");
+      }
 
-      if (!email || !password) return null;
-
+      const { email, password } = parsed.data;
       const user = await getPrisma().user.findUnique({ where: { email } });
-      if (!user?.passwordHash) return null;
+      if (!user?.passwordHash) {
+        throw new Error("No password account exists for this email.");
+      }
 
       const valid = await bcrypt.compare(password, user.passwordHash);
-      if (!valid) return null;
+      if (!valid) {
+        throw new Error("Incorrect email or password.");
+      }
 
       return {
         id: user.id,
@@ -60,14 +66,15 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user }) {
       const email = user.email?.toLowerCase();
-      if (!email) return true;
+      if (!email) return false;
 
       const adminEmails = getAdminEmails();
       if (adminEmails.includes(email)) {
-        await getPrisma().user.update({
+        await getPrisma().user.updateMany({
           where: { email },
           data: { role: "ADMIN" },
         });
+        user.role = "ADMIN";
       }
 
       return true;
@@ -80,13 +87,19 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (token.email && process.env.DATABASE_URL) {
+        const email = token.email.toLowerCase();
+        const adminEmails = getAdminEmails();
         const dbUser = await getPrisma().user.findUnique({
-          where: { email: token.email },
+          where: { email },
           select: { id: true, role: true, isPremium: true },
         });
         if (dbUser) {
+          const role = adminEmails.includes(email) ? "ADMIN" : dbUser.role;
+          if (role === "ADMIN" && dbUser.role !== "ADMIN") {
+            await getPrisma().user.update({ where: { id: dbUser.id }, data: { role: "ADMIN" } });
+          }
           token.id = dbUser.id;
-          token.role = dbUser.role;
+          token.role = role;
           token.isPremium = dbUser.isPremium;
         }
       }

@@ -3,10 +3,23 @@ import { signupSchema } from "@/lib/validation";
 import { createPasswordUser } from "@/services/authService";
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Submit a valid JSON signup request." }, { status: 400 });
+  }
+
   const parsed = signupSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Please check the signup details.", issues: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      {
+        error: "Please fix the highlighted signup details.",
+        issues: parsed.error.flatten(),
+      },
+      { status: 400 },
+    );
   }
 
   try {

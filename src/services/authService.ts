@@ -4,13 +4,14 @@ import { trackAnalyticsEvent } from "@/services/analyticsService";
 
 export async function createPasswordUser(input: { name: string; email: string; password: string }) {
   const email = input.email.toLowerCase().trim();
+  const name = input.name.trim();
   const existing = await getPrisma().user.findUnique({ where: { email } });
   if (existing) throw new Error("An account with this email already exists.");
 
   const passwordHash = await bcrypt.hash(input.password, 12);
   const user = await getPrisma().user.create({
     data: {
-      name: input.name,
+      name,
       email,
       passwordHash,
     },
