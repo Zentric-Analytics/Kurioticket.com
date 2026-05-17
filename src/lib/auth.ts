@@ -14,23 +14,31 @@ const providers: NextAuthOptions["providers"] = [
       email: { label: "Email", type: "email" },
       password: { label: "Password", type: "password" },
     },
+
     async authorize(credentials) {
       const parsed = signinSchema.safeParse(credentials);
+
       if (!parsed.success) {
-        throw new Error("Enter a valid email address and password.");
+        console.error("[auth:credentials-validation]", parsed.error.flatten().fieldErrors);
+        return null;
       }
 
       const { email, password } = parsed.data;
-      const user = await getPrisma().user.findUnique({ where: { email } });
+
+      const user = await getPrisma().user.findUnique({
+        where: { email },
+      });
 
       if (!user?.passwordHash) {
-        throw new Error("No password account exists for this email.");
+        console.error("[auth:credentials-user-missing]", { email });
+        return null;
       }
 
       const valid = await bcrypt.compare(password, user.passwordHash);
 
       if (!valid) {
-        throw new Error("Incorrect email or password.");
+        console.error("[auth:credentials-invalid-password]", { email });
+        return null;
       }
 
       return {
@@ -55,8 +63,12 @@ if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: isDatabaseConfigured() ? PrismaAdapter(getPrisma() as never) : undefined,
+  adapter: isDatabaseConfigured()
+    ? PrismaAdapter(getPrisma() as never)
+    : undefined,
+
   providers,
+
   secret: getAuthSecret() || undefined,
 
   session: {
@@ -92,7 +104,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role || "USER";
-        token.isPremium = Boolean((user as { isPremium?: boolean }).isPremium);
+        token.isPremium = Boolean(
+          (user as { isPremium?: boolean }).isPremium,
+        );
       }
 
       if (token.email && isDatabaseConfigured()) {

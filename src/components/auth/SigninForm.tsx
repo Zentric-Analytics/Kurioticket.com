@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+import { signinSchema } from "@/lib/validation";
 
 type SigninFormProps = {
   callbackUrl?: string;
@@ -20,14 +21,27 @@ export function SigninForm({ callbackUrl = "/dashboard", googleEnabled = false }
     setLoading(true);
     setError("");
 
-    const result = await signIn("credentials", {
-      redirect: false,
+    const parsed = signinSchema.safeParse({
       email: String(formData.get("email") || ""),
       password: String(formData.get("password") || ""),
+    });
+
+    if (!parsed.success) {
+      setLoading(false);
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      setError(fieldErrors.email?.length ? "Enter a valid email address." : "Password must meet minimum requirements.");
+      return;
+    }
+
+    const result = await signIn("credentials", {
+      redirect: false,
+      email: parsed.data.email,
+      password: parsed.data.password,
       callbackUrl,
     });
 
     setLoading(false);
+
     if (!result?.ok) {
       setError("We could not sign you in. Check your email and password, then try again.");
       return;
@@ -56,7 +70,10 @@ export function SigninForm({ callbackUrl = "/dashboard", googleEnabled = false }
         </Button>
       ) : null}
       <p className="mt-4 text-sm text-muted">
-        New to Curioticket? <Link className="font-semibold text-teal-dark" href="/auth/signup">Create an account</Link>
+        New to Curioticket?{" "}
+        <Link className="font-semibold text-teal-dark" href="/auth/signup">
+          Create an account
+        </Link>
       </p>
     </Card>
   );

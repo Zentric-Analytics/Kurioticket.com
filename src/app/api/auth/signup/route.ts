@@ -10,17 +10,15 @@ export async function POST(request: Request) {
 
   try {
     body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Submit a valid JSON signup request." }, { status: 400 });
+  } catch (error) {
+    console.error("[signup:invalid-json]", error);
+    return NextResponse.json({ error: "Unable to create account right now." }, { status: 400 });
   }
 
   const parsed = signupSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      {
-        error: "Please fix the highlighted signup details.",
-        issues: parsed.error.flatten(),
-      },
+      { error: getPublicSignupValidationError(parsed.error.flatten().fieldErrors) },
       { status: 400 },
     );
   }
@@ -31,23 +29,18 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[signup]", error);
 
-    if (error instanceof DatabaseUnavailableError) {
-      return NextResponse.json(
-        { error: "Database access is not available for this deployment. Check DATABASE_URL in the hosting environment." },
-        { status: 503 },
-      );
+    if (error instanceof DatabaseUnavailableError || isMissingMigrationError(error)) {
+      return NextResponse.json({ error: "Unable to create account right now." }, { status: 503 });
     }
 
-    if (isMissingMigrationError(error)) {
-      return NextResponse.json(
-        { error: "Database tables are not ready yet. Run the Prisma migrations for this deployment, then try again." },
-        { status: 503 },
-      );
-    }
-
-    const message = error instanceof Error ? error.message : "Unable to create account.";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: "Unable to create account right now." }, { status: 400 });
   }
+}
+
+function getPublicSignupValidationError(fieldErrors: Record<string, string[] | undefined>) {
+  if (fieldErrors.email?.length) return "Enter a valid email address.";
+  if (fieldErrors.password?.length) return "Password must meet minimum requirements.";
+  return "Unable to create account right now.";
 }
 
 function isMissingMigrationError(error: unknown) {
