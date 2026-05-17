@@ -41,8 +41,9 @@ export function SigninForm({ callbackUrl = "/dashboard", googleEnabled = false }
     });
 
     setLoading(false);
+
     if (!result?.ok) {
-      setError("Unable to create account right now.");
+      setError("We could not sign you in. Check your email and password, then try again.");
       return;
     }
 
@@ -69,7 +70,10 @@ export function SigninForm({ callbackUrl = "/dashboard", googleEnabled = false }
         </Button>
       ) : null}
       <p className="mt-4 text-sm text-muted">
-        New to Curioticket? <Link className="font-semibold text-teal-dark" href="/auth/signup">Create an account</Link>
+        New to Curioticket?{" "}
+        <Link className="font-semibold text-teal-dark" href="/auth/signup">
+          Create an account
+        </Link>
       </p>
     </Card>
   );

@@ -13,9 +13,7 @@ export const flightSearchSchema = z
     departureDate: futureDate,
     returnDate: z.string().optional(),
     travelers: z.coerce.number().int().min(1).max(9).default(1),
-    cabinClass: z
-      .enum(["economy", "premium-economy", "business", "first"])
-      .default("economy"),
+    cabinClass: z.enum(["economy", "premium-economy", "business", "first"]).default("economy"),
     sort: z.enum(["cheapest", "best", "fastest", "stops"]).optional(),
   })
   .refine((data) => data.tripType !== "round-trip" || Boolean(data.returnDate), {
@@ -39,7 +37,9 @@ export const hotelSearchSchema = z
 
 const emailMessage = "Enter a valid email address.";
 const passwordMessage = "Password must meet minimum requirements.";
-const strictEmailPattern = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+
+const strictEmailPattern =
+  /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
 
 export const emailSchema = z
   .string()
@@ -74,7 +74,7 @@ export const signupSchema = z.object({
 });
 
 export const supportTicketSchema = z.object({
-  email: z.string().trim().email(),
+  email: emailSchema,
   subject: z.string().trim().min(4).max(160),
   category: z.string().trim().min(2).max(80),
   body: z.string().trim().min(20).max(4000),
