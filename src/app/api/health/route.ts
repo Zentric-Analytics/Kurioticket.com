@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import { getOptionalPrisma } from "@/lib/prisma";
+import { getOptionalPrisma, isDatabaseConfigured } from "@/lib/prisma";
+
+export const runtime = "nodejs";
 
 export async function GET() {
   const db = getOptionalPrisma();
   let database: { configured: boolean; connected: boolean; error?: string } = {
-    configured: Boolean(db),
+    configured: isDatabaseConfigured(),
     connected: false,
   };
 
@@ -23,7 +25,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    ok: database.configured ? database.connected : true,
+    ok: database.configured && database.connected,
     service: "curioticket",
     time: new Date().toISOString(),
     database,
