@@ -37,10 +37,22 @@ export const hotelSearchSchema = z
     path: ["checkOut"],
   });
 
+const passwordSchema = z
+  .string()
+  .min(8, "Use at least 8 characters.")
+  .max(100, "Use 100 characters or fewer.")
+  .regex(/[A-Za-z]/, "Include at least one letter.")
+  .regex(/[0-9]/, "Include at least one number.");
+
+export const signinSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Enter a valid email address.").max(255),
+  password: z.string().min(1, "Enter your password.").max(100),
+});
+
 export const signupSchema = z.object({
   name: z.string().trim().min(2, "Enter your full name.").max(120),
-  email: z.string().trim().email("Enter a valid email address.").max(255),
-  password: z.string().min(8, "Use at least 8 characters.").max(100),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address.").max(255),
+  password: passwordSchema,
 });
 
 export const supportTicketSchema = z.object({

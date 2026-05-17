@@ -7,24 +7,33 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
 
-export function SigninForm() {
+type SigninFormProps = {
+  callbackUrl?: string;
+  googleEnabled?: boolean;
+};
+
+export function SigninForm({ callbackUrl = "/dashboard", googleEnabled = false }: SigninFormProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submit(formData: FormData) {
     setLoading(true);
     setError("");
+
     const result = await signIn("credentials", {
       redirect: false,
       email: String(formData.get("email") || ""),
       password: String(formData.get("password") || ""),
+      callbackUrl,
     });
+
     setLoading(false);
-    if (result?.error) {
-      setError("We could not sign you in with those details.");
+    if (!result?.ok) {
+      setError("We could not sign you in. Check your email and password, then try again.");
       return;
     }
-    window.location.href = "/dashboard";
+
+    window.location.href = result.url || callbackUrl;
   }
 
   return (
@@ -41,9 +50,11 @@ export function SigninForm() {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         <Button disabled={loading}>{loading ? "Signing in..." : "Log in"}</Button>
       </form>
-      <Button variant="secondary" className="mt-3 w-full" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
-        Continue with Google
-      </Button>
+      {googleEnabled ? (
+        <Button variant="secondary" className="mt-3 w-full" onClick={() => signIn("google", { callbackUrl })}>
+          Continue with Google
+        </Button>
+      ) : null}
       <p className="mt-4 text-sm text-muted">
         New to Curioticket? <Link className="font-semibold text-teal-dark" href="/auth/signup">Create an account</Link>
       </p>

@@ -1,10 +1,9 @@
-import { getServerSession } from "next-auth";
 import { Activity, CreditCard, DollarSign, Flag, Gauge, LifeBuoy, Plane, Scale, Users } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { ProviderHealthPanel } from "@/components/admin/ProviderHealthPanel";
 import { Card } from "@/components/ui/Card";
-import { authOptions } from "@/lib/auth";
+import { requireAdminSession } from "@/lib/auth-guards";
 
 const modules = [
   { title: "Users", icon: Users, body: "Account status, roles, premium access, and onboarding." },
@@ -24,8 +23,7 @@ export const metadata = {
 };
 
 export default async function AdminPage() {
-  const session = await getServerSession(authOptions);
-  const isAdmin = session?.user?.role === "ADMIN";
+  await requireAdminSession("/admin");
 
   return (
     <>
@@ -34,14 +32,12 @@ export default async function AdminPage() {
         <div>
           <p className="text-sm font-semibold text-teal-dark">Admin foundation</p>
           <h1 className="mt-1 text-3xl font-bold text-navy">Operations Dashboard</h1>
-          {!isAdmin ? (
-            <p className="mt-2 max-w-2xl text-sm text-muted">
-              Admin access is role-gated through authentication and ADMIN_EMAILS. This page shows the Phase 1 operations modules for setup review.
-            </p>
-          ) : null}
+          <p className="mt-2 max-w-2xl text-sm text-muted">
+            Admin access is role-gated through authentication and ADMIN_EMAILS.
+          </p>
         </div>
         <div className="mt-6">
-          <ProviderHealthPanel enabled={isAdmin} />
+          <ProviderHealthPanel enabled />
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {modules.map((module) => (
