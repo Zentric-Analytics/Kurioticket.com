@@ -32,7 +32,7 @@ export async function searchHotels(search: HotelSearchParams): Promise<Aggregate
       servedFromFallback: false,
       latencyMs: Date.now() - startedAt,
       unavailableMessage:
-        "Live hotel search is temporarily unavailable. Our provider connections are being checked, and we are not showing development fallback stays in production.",
+        "Live hotel search is temporarily unavailable. Please try again shortly.",
     };
   }
 
@@ -43,8 +43,8 @@ export async function searchHotels(search: HotelSearchParams): Promise<Aggregate
     results: fallback,
     providerStatuses: providers,
     warnings: warnings.length
-      ? warnings
-      : ["Hotel providers are not configured yet. Showing development fallback results."],
+      ? ["Local development fallback mode is enabled while hotel providers are unavailable."]
+      : ["Local development fallback mode is enabled without hotel provider credentials."],
     servedFromFallback: true,
     latencyMs: Date.now() - startedAt,
   };

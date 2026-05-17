@@ -39,7 +39,7 @@ export function priceAlertEmail(input: { name?: string | null; route: string; pr
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">A meaningful price change was found</h1>
       <p>${input.name ? `Hi ${input.name},` : "Hi,"} Curioticket found an option for ${input.route} at ${input.price}.</p>
-      <p>Review the route before booking. Prices and availability can change on the partner site.</p>
+      <p>Review the route on Curioticket, then confirm current price, availability, and fare rules on the external provider site.</p>
       <p><a href="${input.url}" style="color:#0f766e">View alert</a></p>
     </div>
   `;
@@ -52,7 +52,7 @@ export function supportTicketEmail(input: { ticketId: string; subject: string })
       <p>Your Curioticket support ticket is open.</p>
       <p><strong>Ticket:</strong> ${input.ticketId}</p>
       <p><strong>Subject:</strong> ${input.subject}</p>
-      <p>Our team can help with Curioticket searches, alerts, premium tools, and travel guidance. Airlines and booking partners handle final bookings, check-in, changes, cancellations, and refunds.</p>
+      <p>Our team can help with Curioticket searches, alerts, premium tools, and travel guidance. External providers handle purchases, check-in, changes, cancellations, and refunds.</p>
     </div>
   `;
 }

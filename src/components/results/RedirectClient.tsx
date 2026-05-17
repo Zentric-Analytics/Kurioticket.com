@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 
 export function RedirectClient() {
   const params = useSearchParams();
-  const [message, setMessage] = useState("Preparing secure partner redirect...");
+  const [message, setMessage] = useState("Preparing secure external provider redirect...");
   const id = params.get("id");
   const type = params.get("type") as "flight" | "hotel" | null;
   const missingTarget = !id || !type;
@@ -40,7 +40,7 @@ export function RedirectClient() {
         </div>
         <h1 className="mt-4 text-2xl font-bold text-navy">Secure partner redirect</h1>
         <p className="mt-3 text-muted">
-          You are being redirected securely to complete your booking through the airline or trusted travel partner.
+          You are leaving Curioticket for an external provider where pricing, availability, fare rules, and purchase steps are confirmed.
         </p>
         <p className="mt-4 text-sm font-semibold text-teal-dark">
           {missingTarget ? "Redirect link is missing. Please search again." : message}

@@ -49,8 +49,8 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
     results: fallback,
     providerStatuses: providers,
     warnings: providerWarnings.length
-      ? ["Some live providers are unavailable. Showing local development fallback results."]
-      : ["Travel providers are not configured yet. Showing development fallback results."],
+      ? ["Local development fallback mode is enabled while live providers are unavailable."]
+      : ["Local development fallback mode is enabled without live provider credentials."],
     servedFromFallback: true,
     latencyMs: Date.now() - startedAt,
   };

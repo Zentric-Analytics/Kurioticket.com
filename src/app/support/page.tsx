@@ -18,7 +18,7 @@ export default function SupportPage() {
           <p className="text-sm font-semibold text-teal-dark">Intelligent Travel Assistance</p>
           <h1 className="mt-1 text-3xl font-bold text-navy">Support Center</h1>
           <p className="mt-3 text-muted">
-            Curioticket helps with platform usage, premium tools, price alerts, optimization, and travel guidance. Airlines and partners handle ticket changes, refunds, cancellations, check-in, boarding, and final booking issues.
+            Curioticket helps with platform usage, premium tools, price alerts, optimization, and travel guidance. External providers handle purchases, fare rules, refunds, cancellations, check-in, and boarding.
           </p>
         </div>
         <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_420px]">
@@ -26,7 +26,7 @@ export default function SupportPage() {
             <SupportCard icon={<HelpCircle size={22} />} title="Smart Help Center" body="Search, alerts, partner redirects, account settings, and premium tool guidance." />
             <SupportCard icon={<MessageSquare size={22} />} title="AI Travel Assistance" body="Premium support can draft context-aware travel guidance from verified platform data." />
             <SupportCard icon={<LifeBuoy size={22} />} title="Human + AI Hybrid" body="Tickets keep context so the support team can respond without asking you to repeat everything." />
-            <SupportCard icon={<ShieldAlert size={22} />} title="Clear Boundaries" body="We help with Curioticket. Providers handle final bookings and payment disputes." />
+            <SupportCard icon={<ShieldAlert size={22} />} title="Clear Boundaries" body="We help with Curioticket. External providers handle purchases, payment disputes, and travel document requirements." />
           </section>
           <SupportForm />
         </div>

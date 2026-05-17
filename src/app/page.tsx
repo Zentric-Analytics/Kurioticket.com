@@ -26,7 +26,7 @@ const heroImage =
 
 const assurances = [
   { label: "Best Prices Guaranteed", icon: ShieldCheck },
-  { label: "Easy Booking Experience", icon: TicketCheck },
+  { label: "Easy Provider Comparison", icon: TicketCheck },
   { label: "Secure Payments", icon: CreditCard },
   { label: "24/7 Customer Support", icon: Headphones },
 ];
@@ -35,7 +35,7 @@ const trustItems = [
   { title: "Millions of Choices", body: "Flights and hotels worldwide", icon: Globe2 },
   { title: "Flexible Options", body: "Choose what fits your trip", icon: SlidersHorizontal },
   { title: "Secure Payments", body: "100% safe and secure", icon: CreditCard },
-  { title: "Great Deals", body: "Save more on every booking", icon: BadgeDollarSign },
+  { title: "Great Deals", body: "Compare more before you buy", icon: BadgeDollarSign },
 ];
 
 const destinations = [

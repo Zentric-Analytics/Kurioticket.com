@@ -22,8 +22,7 @@ export async function POST(request: Request) {
   if (!target.partnerRedirectUrl && !target.bookingUrl) {
     return NextResponse.json(
       {
-        error:
-          "This offer is currently displayed using provider test mode. Final booking handoff is not enabled yet.",
+        error: "No external provider link is available for this result right now. Please choose another flight option.",
       },
       { status: 409 },
     );

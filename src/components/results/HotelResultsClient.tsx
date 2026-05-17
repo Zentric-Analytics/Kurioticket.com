@@ -186,7 +186,7 @@ function HotelFilters({
           </label>
           <label className="flex items-center gap-2">
             <input type="checkbox" className="accent-teal" />
-            Flexible booking
+            Flexible cancellation
           </label>
         </div>
       </div>

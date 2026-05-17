@@ -19,7 +19,7 @@ export function isProductionRuntime() {
 }
 
 export function canUseDevelopmentFallbacks() {
-  return !isProductionRuntime();
+  return !isProductionRuntime() && process.env.ENABLE_DEVELOPMENT_FALLBACKS === "true";
 }
 
 export function getAdminEmails() {

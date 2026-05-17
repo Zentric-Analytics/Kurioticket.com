@@ -14,7 +14,7 @@ export const legalDocuments: LegalDocument[] = [
         title: "Overview",
         paragraphs: [
           "Curioticket is an intelligent travel confidence platform that helps users search flights and hotels, compare partner prices, save travel options, create price alerts, and use premium optimization tools.",
-          "Curioticket is not an airline, hotel, travel agency, payment processor for bookings, or ticket issuer at launch. Final booking, payment, ticketing, itinerary changes, cancellations, refunds, boarding, check-in, and travel documents are handled by the airline, hotel, or booking partner.",
+          "Curioticket is not an airline, hotel, online travel agency, travel agency, payment processor for travel purchases, or ticket issuer. Purchases, fare rules, ticketing, itinerary changes, cancellations, refunds, boarding, check-in, and travel documents are handled by the external provider.",
         ],
       },
       {
@@ -37,7 +37,7 @@ export const legalDocuments: LegalDocument[] = [
         id: "partner-services",
         title: "Partner Services",
         paragraphs: [
-          "Travel results may include prices, availability, policies, route data, hotel data, and booking links supplied by APIs, airlines, hotels, or affiliate partners.",
+          "Travel results may include prices, availability, policies, route data, hotel data, and external provider links supplied by APIs, airlines, hotels, or affiliate partners.",
           "Partner terms apply once you leave Curioticket or complete a transaction with a partner. Review all fare, hotel, baggage, change, refund, visa, and traveler requirements before purchase.",
         ],
       },
@@ -102,7 +102,7 @@ export const legalDocuments: LegalDocument[] = [
         title: "Third-Party Technologies",
         paragraphs: [
           "Stripe, authentication providers, analytics tools, and hosting infrastructure may set or read cookies as needed to provide secure services.",
-          "Partner booking sites have their own cookie practices after redirect.",
+          "External provider sites have their own cookie practices after redirect.",
         ],
       },
       {
@@ -139,23 +139,23 @@ export const legalDocuments: LegalDocument[] = [
   },
   {
     slug: "refund-booking-disclaimer",
-    title: "Refund & Booking Disclaimer",
-    summary: "Clarifies that booking, ticketing, refunds, cancellations, and payment for travel inventory happen outside Curioticket at launch.",
+    title: "Refund & External Provider Disclaimer",
+    summary: "Clarifies that purchases, ticketing, refunds, cancellations, and payment for travel inventory happen outside Curioticket.",
     lastUpdated,
     sections: [
       {
         id: "no-ticketing",
         title: "No Direct Ticket Issuing",
         paragraphs: [
-          "Curioticket does not issue airline tickets or hotel reservations at launch. We redirect users to trusted airlines, hotels, or booking partners to complete transactions.",
-          "Your booking contract is with the provider or partner that accepts your payment, not Curioticket.",
+          "Curioticket does not sell airline tickets or hotel reservations. We redirect users to external airlines, hotels, affiliate partners, or travel providers to continue comparison and purchase steps.",
+          "Your purchase contract is with the external provider that accepts your payment, not Curioticket.",
         ],
       },
       {
         id: "refunds",
         title: "Refunds and Changes",
         paragraphs: [
-          "Refunds, credits, schedule changes, cancellations, missed connections, check-in issues, baggage disputes, and final booking problems are handled by the airline, hotel, or booking partner.",
+          "Refunds, credits, schedule changes, cancellations, missed connections, check-in issues, baggage disputes, and purchase problems are handled by the external airline, hotel, or travel provider.",
           "Curioticket support can help you understand platform usage and travel guidance boundaries, but cannot override partner or airline policies.",
         ],
       },
@@ -256,7 +256,7 @@ export const legalDocuments: LegalDocument[] = [
         id: "verify",
         title: "Verify Before Payment",
         paragraphs: [
-          "Always review the final partner checkout page before payment. The partner checkout page is the authoritative source for final price, availability, fare conditions, room conditions, and booking terms.",
+          "Always review the external provider site before purchase. The external provider site is the authoritative source for final price, availability, fare conditions, room conditions, and purchase terms.",
         ],
       },
     ],
@@ -264,14 +264,14 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "partner-redirect-disclaimer",
     title: "Partner Redirect Disclaimer",
-    summary: "What happens when Curioticket redirects users to airlines, hotels, or booking partners.",
+    summary: "What happens when Curioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
     lastUpdated,
     sections: [
       {
         id: "redirect",
         title: "Secure Redirects",
         paragraphs: [
-          "When you continue to booking, Curioticket redirects you to an airline, hotel, or trusted travel partner. We may log redirect metadata such as provider, route, price, timestamp, user type, and source page for analytics, support, abuse prevention, and affiliate tracking.",
+          "When you continue to an external provider, Curioticket redirects you to an airline, hotel, affiliate partner, or travel provider. We may log redirect metadata such as provider, route, price, timestamp, user type, and source page for analytics, support, abuse prevention, and affiliate tracking.",
           "Curioticket does not auto-fill airline websites, scrape airline websites, or complete partner purchases on your behalf.",
         ],
       },
