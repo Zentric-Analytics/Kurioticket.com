@@ -6,25 +6,47 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+import { signinSchema } from "@/lib/validation";
 
-export function SigninForm() {
+type SigninFormProps = {
+  callbackUrl?: string;
+  googleEnabled?: boolean;
+};
+
+export function SigninForm({ callbackUrl = "/dashboard", googleEnabled = false }: SigninFormProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submit(formData: FormData) {
     setLoading(true);
     setError("");
-    const result = await signIn("credentials", {
-      redirect: false,
+
+    const parsed = signinSchema.safeParse({
       email: String(formData.get("email") || ""),
       password: String(formData.get("password") || ""),
     });
-    setLoading(false);
-    if (result?.error) {
-      setError("We could not sign you in with those details.");
+
+    if (!parsed.success) {
+      setLoading(false);
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      setError(fieldErrors.email?.length ? "Enter a valid email address." : "Password must meet minimum requirements.");
       return;
     }
-    window.location.href = "/dashboard";
+
+    const result = await signIn("credentials", {
+      redirect: false,
+      email: parsed.data.email,
+      password: parsed.data.password,
+      callbackUrl,
+    });
+
+    setLoading(false);
+    if (!result?.ok) {
+      setError("Unable to create account right now.");
+      return;
+    }
+
+    window.location.href = result.url || callbackUrl;
   }
 
   return (
@@ -41,9 +63,11 @@ export function SigninForm() {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         <Button disabled={loading}>{loading ? "Signing in..." : "Log in"}</Button>
       </form>
-      <Button variant="secondary" className="mt-3 w-full" onClick={() => signIn("google", { callbackUrl: "/dashboard" })}>
-        Continue with Google
-      </Button>
+      {googleEnabled ? (
+        <Button variant="secondary" className="mt-3 w-full" onClick={() => signIn("google", { callbackUrl })}>
+          Continue with Google
+        </Button>
+      ) : null}
       <p className="mt-4 text-sm text-muted">
         New to Curioticket? <Link className="font-semibold text-teal-dark" href="/auth/signup">Create an account</Link>
       </p>
