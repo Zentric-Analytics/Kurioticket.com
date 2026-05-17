@@ -16,20 +16,16 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
 
   const merged = providers.flatMap((provider) => provider.results);
   const deduped = assignBadges(sortFlights(dedupeFlights(merged), search.sort || "cheapest"));
-  const warnings = providers
-    .filter((provider) => provider.status !== "success")
-    .map((provider) =>
-      provider.provider === "Duffel"
-        ? "Live Duffel flight offers are temporarily unavailable. We are checking provider connectivity."
-        : `${provider.provider} flight results are temporarily unavailable.`,
-    );
+  const providerWarnings = providers
+    .filter((provider) => provider.status === "failed")
+    .map((provider) => `${provider.provider} provider failed internally.`);
 
   if (deduped.length > 0) {
     rememberFlights(deduped);
     return {
       results: deduped,
       providerStatuses: providers,
-      warnings,
+      warnings: [],
       servedFromFallback: false,
       latencyMs: Date.now() - startedAt,
     };
@@ -39,11 +35,10 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
     return {
       results: [],
       providerStatuses: providers,
-      warnings,
+      warnings: providerWarnings,
       servedFromFallback: false,
       latencyMs: Date.now() - startedAt,
-      unavailableMessage:
-        "Live flight search is temporarily unavailable. Duffel and our backup provider connections are being checked, and we are not showing development fallback fares in production.",
+      unavailableMessage: "Live flight results are temporarily unavailable. Please try again shortly.",
     };
   }
 
@@ -53,8 +48,8 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
   return {
     results: fallback,
     providerStatuses: providers,
-    warnings: warnings.length
-      ? warnings
+    warnings: providerWarnings.length
+      ? ["Some live providers are unavailable. Showing local development fallback results."]
       : ["Travel providers are not configured yet. Showing development fallback results."],
     servedFromFallback: true,
     latencyMs: Date.now() - startedAt,

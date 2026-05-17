@@ -13,16 +13,7 @@ export function SearchTabs() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("flights");
   const [tripType, setTripType] = useState("round-trip");
-  const defaults = useMemo(() => {
-    const depart = new Date();
-    depart.setDate(depart.getDate() + 28);
-    const back = new Date(depart);
-    back.setDate(back.getDate() + 6);
-    return {
-      depart: depart.toISOString().slice(0, 10),
-      back: back.toISOString().slice(0, 10),
-    };
-  }, []);
+  const defaults = useMemo(() => ({ guests: "2", rooms: "1" }), []);
 
   function onFlightSubmit(formData: FormData) {
     const params = new URLSearchParams({
@@ -92,15 +83,15 @@ export function SearchTabs() {
             </button>
           </div>
           <div className="grid overflow-hidden rounded-xl border border-slate-200 bg-white md:grid-cols-[1fr_auto_1fr] lg:grid-cols-[1fr_auto_1fr_1fr_1fr_1fr]">
-            <SearchField label="From" name="origin" defaultValue="LOS" helper="Lagos, Nigeria" placeholder="Origin" />
+            <SearchField label="From" name="origin" helper="City or airport" placeholder="From" />
             <div className="hidden items-center justify-center border-slate-200 px-2 md:flex lg:border-r">
               <span className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-100 bg-violet-50 text-[#6d28d9]">
                 <Repeat2 size={18} />
               </span>
             </div>
-            <SearchField label="To" name="destination" defaultValue="DXB" helper="Dubai, UAE" placeholder="Destination" />
-            <SearchField label="Departure" name="departureDate" defaultValue={defaults.depart} helper="Fri" type="date" icon={<CalendarDays size={17} />} />
-            <SearchField label="Return" name="returnDate" defaultValue={defaults.back} helper="Fri" type="date" icon={<CalendarDays size={17} />} disabled={tripType === "one-way"} />
+            <SearchField label="To" name="destination" helper="City or airport" placeholder="To" />
+            <SearchField label="Departure" name="departureDate" helper="Select date" type="date" icon={<CalendarDays size={17} />} />
+            <SearchField label="Return" name="returnDate" helper={tripType === "one-way" ? "Not needed" : "Select date"} type="date" icon={<CalendarDays size={17} />} disabled={tripType === "one-way"} />
             <label className="block border-t border-slate-200 p-4 lg:border-l lg:border-t-0">
               <span className="block text-xs font-bold text-slate-600">Travelers & Class</span>
               <select name="travelers" defaultValue="1" className="mt-2 w-full bg-transparent text-lg font-extrabold text-slate-950 outline-none">
@@ -127,11 +118,11 @@ export function SearchTabs() {
       ) : (
         <form action={onHotelSubmit} className="grid gap-6 p-5 sm:p-7">
           <div className="grid overflow-hidden rounded-xl border border-slate-200 bg-white md:grid-cols-2 lg:grid-cols-5">
-            <SearchField label="Destination" name="destination" defaultValue="Dubai" helper="UAE" placeholder="Destination" />
-            <SearchField label="Check-in" name="checkIn" type="date" defaultValue={defaults.depart} helper="Fri" icon={<CalendarDays size={17} />} />
-            <SearchField label="Check-out" name="checkOut" type="date" defaultValue={defaults.back} helper="Fri" icon={<CalendarDays size={17} />} />
-            <SearchField label="Guests" name="guests" type="number" defaultValue="2" helper="Adults" />
-            <SearchField label="Rooms" name="rooms" type="number" defaultValue="1" helper="Room" />
+            <SearchField label="Destination" name="destination" helper="City or hotel area" placeholder="Destination" />
+            <SearchField label="Check-in" name="checkIn" type="date" helper="Select date" icon={<CalendarDays size={17} />} />
+            <SearchField label="Check-out" name="checkOut" type="date" helper="Select date" icon={<CalendarDays size={17} />} />
+            <SearchField label="Guests" name="guests" type="number" defaultValue={defaults.guests} helper="Adults" />
+            <SearchField label="Rooms" name="rooms" type="number" defaultValue={defaults.rooms} helper="Room" />
           </div>
           <div className="flex justify-center">
             <Button size="lg" variant="primary" className="w-full bg-[#5b21d6] px-12 hover:bg-[#4c1d95] sm:w-auto">
@@ -157,7 +148,7 @@ function SearchField({
 }: {
   label: string;
   name: string;
-  defaultValue: string;
+  defaultValue?: string;
   helper: string;
   placeholder?: string;
   type?: string;

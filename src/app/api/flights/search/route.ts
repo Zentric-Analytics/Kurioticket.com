@@ -39,11 +39,6 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: aggregate.unavailableMessage,
-        providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs }) => ({
-          provider,
-          status,
-          latencyMs,
-        })),
       },
       { status: 503 },
     );
@@ -92,13 +87,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     results: publicResults,
-    providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs }) => ({
-      provider,
-      status,
-      latencyMs,
-      error: status === "success" ? undefined : `${provider} is temporarily unavailable.`,
-    })),
-    warnings: aggregate.warnings,
+    warnings: aggregate.servedFromFallback ? aggregate.warnings : [],
     servedFromFallback: aggregate.servedFromFallback,
     latencyMs: aggregate.latencyMs,
   });
