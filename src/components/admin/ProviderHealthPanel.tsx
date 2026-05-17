@@ -1,26 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Activity, AlertTriangle, CheckCircle2, RefreshCw, ServerCog } from "lucide-react";
+import { useState } from "react";
+import { Activity, AlertTriangle, CheckCircle2, RefreshCcw, ServerCog } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
-
-type ProviderHealthResponse = {
-  environment: {
-    nodeEnv: string;
-    productionRuntime: boolean;
-    appUrlConfigured: boolean;
-    databaseConfigured: boolean;
-  };
-  providers: {
-    duffel: ProviderStatus;
-    travelpayouts: ProviderStatus & {
-      markerConfigured: boolean;
-      marker?: string;
-    };
-  };
-};
 
 type ProviderStatus = {
   configured: boolean;
@@ -30,87 +14,66 @@ type ProviderStatus = {
   checkedAt: string;
 };
 
+type ProviderHealthResponse = {
+  environment: {
+    nodeEnv?: string;
+    appUrlConfigured?: boolean;
+    databaseConfigured?: boolean;
+    databaseConnected?: boolean;
+    duffelConfigured?: boolean;
+  };
+  providers: {
+    duffel: ProviderStatus;
+  };
+  pausedProviders?: Array<{ name: string; status: string; note: string }>;
+};
+
 export function ProviderHealthPanel({ enabled }: { enabled: boolean }) {
+  const [loading, setLoading] = useState(false);
   const [data, setData] = useState<ProviderHealthResponse | null>(null);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  async function loadHealth() {
+  async function runCheck() {
     if (!enabled) return;
     setLoading(true);
     setError("");
-    try {
-      const response = await fetch("/api/admin/provider-health", { cache: "no-store" });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error || "Unable to load provider health.");
-      setData(payload as ProviderHealthResponse);
-    } catch (healthError) {
-      setError(healthError instanceof Error ? healthError.message : "Unable to load provider health.");
-    } finally {
-      setLoading(false);
+    const response = await fetch("/api/admin/provider-health", { cache: "no-store" });
+    const payload = await response.json();
+    setLoading(false);
+    if (!response.ok) {
+      setError(payload.error || "Unable to run provider health check.");
+      return;
     }
+    setData(payload);
   }
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      void loadHealth();
-    }, 0);
-    return () => window.clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled]);
-
   return (
-    <Card className="border-slate-200 p-5 shadow-sm">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <Card className="p-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-bold text-teal-dark">Provider Health</p>
-          <h2 className="mt-1 text-2xl font-bold text-navy">Live API Readiness</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Admin-only health checks for live Duffel flight offers and Travelpayouts affiliate intelligence.
-          </p>
+          <p className="text-sm font-semibold text-teal-dark">Provider health</p>
+          <h2 className="mt-1 text-xl font-bold text-navy">Flight metasearch infrastructure</h2>
+          <p className="mt-1 text-sm text-muted">Duffel is the active flight provider. Paused providers are not treated as failures.</p>
         </div>
-        <Button variant="secondary" onClick={loadHealth} disabled={!enabled || loading}>
-          <RefreshCw size={16} className={cn(loading && "animate-spin")} />
-          Retest Providers
+        <Button onClick={runCheck} disabled={!enabled || loading} variant="secondary">
+          <RefreshCcw size={16} />
+          {loading ? "Checking..." : "Run health check"}
         </Button>
       </div>
-
-      {!enabled ? (
-        <div className="mt-5 rounded-md border border-amber/30 bg-amber/10 p-4 text-sm text-amber">
-          Sign in as an admin listed in ADMIN_EMAILS to run provider health checks.
-        </div>
-      ) : error ? (
-        <div className="mt-5 rounded-md border border-danger/30 bg-red-50 p-4 text-sm text-danger">{error}</div>
-      ) : null}
-
+      {!enabled ? <p className="mt-4 rounded-md bg-amber/10 p-3 text-sm font-semibold text-amber">Sign in as an admin listed in ADMIN_EMAILS to run provider health checks.</p> : null}
+      {error ? <p className="mt-4 rounded-md bg-red-50 p-3 text-sm font-semibold text-danger">{error}</p> : null}
       <div className="mt-5 grid gap-4 lg:grid-cols-3">
-        <ProviderCard title="Duffel" subtitle="Primary live flight provider" status={data?.providers.duffel} />
-        <ProviderCard
-          title="Travelpayouts"
-          subtitle={`Affiliate, discovery, and SEO layer${data?.providers.travelpayouts.marker ? ` (${data.providers.travelpayouts.marker})` : ""}`}
-          status={data?.providers.travelpayouts}
-          markerConfigured={data?.providers.travelpayouts.markerConfigured}
-        />
+        <ProviderCard title="Duffel" subtitle="Active flight metasearch provider" status={data?.providers.duffel} />
+        <PausedProviderCard providers={data?.pausedProviders || []} />
         <EnvironmentCard data={data?.environment} />
       </div>
     </Card>
   );
 }
 
-function ProviderCard({
-  title,
-  subtitle,
-  status,
-  markerConfigured,
-}: {
-  title: string;
-  subtitle: string;
-  status?: ProviderStatus;
-  markerConfigured?: boolean;
-}) {
+function ProviderCard({ title, subtitle, status }: { title: string; subtitle: string; status?: ProviderStatus }) {
   const connected = Boolean(status?.connected);
   const configured = Boolean(status?.configured);
-
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
@@ -121,13 +84,29 @@ function ProviderCard({
         <StatusIcon ok={connected} configured={configured} />
       </div>
       <div className="mt-4 grid gap-2 text-sm">
-        <StatusLine label="Configured" value={configured ? "Yes" : "Missing"} ok={configured} />
-        {markerConfigured !== undefined ? <StatusLine label="Marker" value={markerConfigured ? "Configured" : "Missing"} ok={markerConfigured} /> : null}
-        <StatusLine label="Connected" value={connected ? "Healthy" : configured ? "Failing" : "Not tested"} ok={connected} />
+        <StatusLine label="Configured" value={configured ? "Yes" : "Not configured"} ok={configured} neutral={!status} />
+        <StatusLine label="Connected" value={connected ? "Healthy" : configured ? "Needs attention" : "Paused until configured"} ok={connected} neutral={!status || !configured} />
         <StatusLine label="Latency" value={status ? `${status.latencyMs}ms` : "Waiting"} ok={connected} neutral={!status} />
         <StatusLine label="Last test" value={status ? new Date(status.checkedAt).toLocaleString() : "Not run"} ok={connected} neutral={!status} />
       </div>
-      {status?.lastError ? <p className="mt-4 rounded-md bg-red-50 p-3 text-xs font-semibold text-danger">{status.lastError}</p> : null}
+      {status?.lastError ? <p className="mt-4 rounded-md bg-amber/10 p-3 text-xs font-semibold text-amber">Duffel health check needs attention. Check server logs and credentials.</p> : null}
+    </div>
+  );
+}
+
+function PausedProviderCard({ providers }: { providers: Array<{ name: string; status: string; note: string }> }) {
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <h3 className="font-bold text-navy">Paused / future providers</h3>
+      <p className="mt-1 text-xs font-semibold leading-5 text-muted">These are not active failures.</p>
+      <div className="mt-4 grid gap-2 text-sm">
+        {(providers.length ? providers : [{ name: "Travelpayouts", status: "Paused", note: "Disabled as active provider." }]).map((provider) => (
+          <div key={provider.name} className="flex items-center justify-between gap-3">
+            <span className="text-muted">{provider.name}</span>
+            <span className="font-bold text-muted">{provider.status}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -138,15 +117,15 @@ function EnvironmentCard({ data }: { data?: ProviderHealthResponse["environment"
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="font-bold text-navy">Environment</h3>
-          <p className="mt-1 text-xs font-semibold leading-5 text-muted">Deployment and runtime configuration.</p>
+          <p className="mt-1 text-xs font-semibold leading-5 text-muted">Safe runtime status only.</p>
         </div>
         <ServerCog className="text-teal" size={22} />
       </div>
       <div className="mt-4 grid gap-2 text-sm">
         <StatusLine label="Runtime" value={data?.nodeEnv || "Waiting"} ok={Boolean(data?.nodeEnv)} neutral={!data} />
-        <StatusLine label="Production mode" value={data?.productionRuntime ? "Yes" : "No"} ok={Boolean(data?.productionRuntime)} neutral={!data} />
         <StatusLine label="App URL" value={data?.appUrlConfigured ? "Configured" : "Missing"} ok={Boolean(data?.appUrlConfigured)} neutral={!data} />
-        <StatusLine label="Database" value={data?.databaseConfigured ? "Configured" : "Missing"} ok={Boolean(data?.databaseConfigured)} neutral={!data} />
+        <StatusLine label="Database" value={data?.databaseConnected ? "Connected" : data?.databaseConfigured ? "Configured" : "Missing"} ok={Boolean(data?.databaseConnected)} neutral={!data} />
+        <StatusLine label="Duffel" value={data?.duffelConfigured ? "Configured" : "Not configured"} ok={Boolean(data?.duffelConfigured)} neutral={!data} />
       </div>
     </div>
   );
@@ -156,7 +135,7 @@ function StatusLine({ label, value, ok, neutral = false }: { label: string; valu
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-muted">{label}</span>
-      <span className={cn("font-bold", neutral ? "text-muted" : ok ? "text-teal-dark" : "text-danger")}>{value}</span>
+      <span className={cn("font-bold", neutral ? "text-muted" : ok ? "text-teal-dark" : "text-amber")}>{value}</span>
     </div>
   );
 }
