@@ -22,130 +22,170 @@ import {
 
 import { signinSchema } from "@/lib/validation";
 
-const providers: NextAuthOptions["providers"] = [
-  CredentialsProvider({
-    name: "Email and password",
+import {
+  getEmailVerificationRedirect,
+  sendEmailVerificationCode,
+} from "@/services/emailVerificationService";
 
-    credentials: {
-      email: {
-        label: "Email",
-        type: "email",
+const providers: NextAuthOptions["providers"] =
+  [
+    CredentialsProvider({
+      name: "Email and password",
+
+      credentials: {
+        email: {
+          label: "Email",
+          type: "email",
+        },
+
+        password: {
+          label: "Password",
+          type: "password",
+        },
       },
 
-      password: {
-        label: "Password",
-        type: "password",
+      async authorize(
+        credentials,
+      ) {
+        const parsed =
+          signinSchema.safeParse(
+            credentials,
+          );
+
+        if (!parsed.success) {
+          console.error(
+            "[auth:credentials-validation]",
+            parsed.error.flatten()
+              .fieldErrors,
+          );
+
+          logSafeAuthDiagnostics(
+            "[auth:credentials-validation-diagnostics]",
+          );
+
+          return null;
+        }
+
+        const { email, password } =
+          parsed.data;
+
+        const user =
+          await getPrisma().user.findUnique(
+            {
+              where: {
+                email,
+              },
+            },
+          );
+
+        if (
+          !user?.passwordHash
+        ) {
+          console.error(
+            "[auth:credentials-user-missing]",
+            { email },
+          );
+
+          logSafeAuthDiagnostics(
+            "[auth:credentials-user-missing-diagnostics]",
+            { email },
+          );
+
+          return null;
+        }
+
+        if (
+          user.status !==
+          "ACTIVE"
+        ) {
+          console.error(
+            "[auth:credentials-account-unavailable]",
+            {
+              email,
+              status:
+                user.status,
+            },
+          );
+
+          logSafeAuthDiagnostics(
+            "[auth:credentials-account-unavailable-diagnostics]",
+            {
+              email,
+              role:
+                user.role,
+              status:
+                user.status,
+            },
+          );
+
+          throw new Error(
+            "This account is not available. Please contact support.",
+          );
+        }
+
+        const valid =
+          await bcrypt.compare(
+            password,
+            user.passwordHash,
+          );
+
+        if (!valid) {
+          console.error(
+            "[auth:credentials-invalid-password]",
+            { email },
+          );
+
+          logSafeAuthDiagnostics(
+            "[auth:credentials-invalid-password-diagnostics]",
+            { email },
+          );
+
+          return null;
+        }
+
+        // Preserve codex verification flow
+        if (
+          !user.emailVerified
+        ) {
+          await sendEmailVerificationCode(
+            {
+              email,
+              name: user.name,
+            },
+          );
+
+          throw new Error(
+            "EmailVerificationRequired",
+          );
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          role: user.role,
+          isPremium:
+            user.isPremium,
+          status: user.status,
+          emailVerified:
+            user.emailVerified,
+        };
       },
-    },
-
-    async authorize(credentials) {
-      const parsed =
-        signinSchema.safeParse(
-          credentials,
-        );
-
-      if (!parsed.success) {
-        console.error(
-          "[auth:credentials-validation]",
-          parsed.error.flatten()
-            .fieldErrors,
-        );
-
-        logSafeAuthDiagnostics(
-          "[auth:credentials-validation-diagnostics]",
-        );
-
-        return null;
-      }
-
-      const { email, password } =
-        parsed.data;
-
-      const user =
-        await getPrisma().user.findUnique({
-          where: { email },
-        });
-
-      if (!user?.passwordHash) {
-        console.error(
-          "[auth:credentials-user-missing]",
-          { email },
-        );
-
-        logSafeAuthDiagnostics(
-          "[auth:credentials-user-missing-diagnostics]",
-          { email },
-        );
-
-        return null;
-      }
-
-      if (user.status !== "ACTIVE") {
-        console.error(
-          "[auth:credentials-account-unavailable]",
-          {
-            email,
-            status: user.status,
-          },
-        );
-
-        logSafeAuthDiagnostics(
-          "[auth:credentials-account-unavailable-diagnostics]",
-          {
-            email,
-            role: user.role,
-            status: user.status,
-          },
-        );
-
-        throw new Error(
-          "This account is not available. Please contact support.",
-        );
-      }
-
-      const valid =
-        await bcrypt.compare(
-          password,
-          user.passwordHash,
-        );
-
-      if (!valid) {
-        console.error(
-          "[auth:credentials-invalid-password]",
-          { email },
-        );
-
-        logSafeAuthDiagnostics(
-          "[auth:credentials-invalid-password-diagnostics]",
-          { email },
-        );
-
-        return null;
-      }
-
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        image: user.image,
-        role: user.role,
-        isPremium:
-          user.isPremium,
-        status: user.status,
-      };
-    },
-  }),
-];
+    }),
+  ];
 
 if (isGoogleAuthConfigured()) {
   providers.push(
     GoogleProvider({
       clientId:
-        process.env.AUTH_GOOGLE_ID ||
+        process.env
+          .AUTH_GOOGLE_ID ||
         "",
 
       clientSecret:
-        process.env.AUTH_GOOGLE_SECRET ||
+        process.env
+          .AUTH_GOOGLE_SECRET ||
         "",
     }),
   );
@@ -208,6 +248,9 @@ export const authOptions: NextAuthOptions =
                 id: true,
                 status: true,
                 role: true,
+                emailVerified:
+                  true,
+                name: true,
               },
             },
           );
@@ -238,6 +281,24 @@ export const authOptions: NextAuthOptions =
           );
 
           return "/auth/signin?error=AccountUnavailable";
+        }
+
+        // Preserve codex verification gate
+        if (
+          dbUser &&
+          !dbUser.emailVerified
+        ) {
+          await sendEmailVerificationCode(
+            {
+              email,
+              name:
+                dbUser.name,
+            },
+          );
+
+          return getEmailVerificationRedirect(
+            email,
+          );
         }
 
         const adminEmails =
@@ -300,6 +361,19 @@ export const authOptions: NextAuthOptions =
               }
             ).status ||
             "ACTIVE";
+
+          token.emailVerified =
+            Boolean(
+              (
+                user as {
+                  emailVerified?:
+                    | Date
+                    | string
+                    | null;
+                }
+              )
+                .emailVerified,
+            );
         }
 
         if (
@@ -325,6 +399,8 @@ export const authOptions: NextAuthOptions =
                   isPremium:
                     true,
                   status: true,
+                  emailVerified:
+                    true,
                 },
               },
             );
@@ -335,7 +411,7 @@ export const authOptions: NextAuthOptions =
                 email,
               );
 
-            // security: allowlist overrides DB role
+            // allowlist overrides DB role
             const role =
               isAdminEmail
                 ? "ADMIN"
@@ -374,6 +450,11 @@ export const authOptions: NextAuthOptions =
 
             token.status =
               dbUser.status;
+
+            token.emailVerified =
+              Boolean(
+                dbUser.emailVerified,
+              );
           }
         }
 
@@ -408,6 +489,11 @@ export const authOptions: NextAuthOptions =
             String(
               token.status ||
                 "ACTIVE",
+            );
+
+          session.user.emailVerified =
+            Boolean(
+              token.emailVerified,
             );
         }
 

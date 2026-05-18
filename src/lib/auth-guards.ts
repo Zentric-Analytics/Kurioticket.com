@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
 import { getAdminEmails } from "@/lib/env";
+import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
+import { getEmailVerificationRedirect } from "@/services/emailVerificationService";
 
 export function getLoginRedirect(
   pathname = "/dashboard",
@@ -33,6 +35,41 @@ export async function requireUserSession(
   ) {
     redirect(
       "/auth/signin?error=AccountUnavailable",
+    );
+  }
+
+  // Preserve codex email verification enforcement
+  if (isDatabaseConfigured()) {
+    const user =
+      await getPrisma().user.findUnique(
+        {
+          where: {
+            id: session.user.id,
+          },
+          select: {
+            email: true,
+            emailVerified: true,
+          },
+        },
+      );
+
+    if (
+      user?.email &&
+      !user.emailVerified
+    ) {
+      redirect(
+        getEmailVerificationRedirect(
+          user.email,
+        ),
+      );
+    }
+  } else if (
+    !session.user.emailVerified
+  ) {
+    redirect(
+      getEmailVerificationRedirect(
+        session.user.email || "",
+      ),
     );
   }
 

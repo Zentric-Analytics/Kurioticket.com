@@ -19,6 +19,7 @@ export async function requireAdminApiSession() {
     !session?.user?.id ||
     session.user.role !== "ADMIN" ||
     session.user.status !== "ACTIVE" ||
+    !session.user.emailVerified ||
     !isConfiguredAdminEmail(
       session.user.email,
     )
@@ -67,7 +68,6 @@ export async function countActiveAdminsExcluding(
       id: {
         not: userId,
       },
-
       role: "ADMIN",
       status: "ACTIVE",
     },

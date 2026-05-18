@@ -20,47 +20,42 @@ export function SigninForm({
   googleEnabled = false,
   initialError = "",
 }: SigninFormProps) {
-  const [error, setError] =
-    useState(initialError);
-
-  const [loading, setLoading] =
-    useState(false);
+  const [error, setError] = useState(initialError);
+  const [loading, setLoading] = useState(false);
 
   async function submit(formData: FormData) {
     setLoading(true);
     setError("");
 
-    const parsed =
-      signinSchema.safeParse({
-        email: String(
-          formData.get("email") || "",
-        ),
-        password: String(
-          formData.get("password") || "",
-        ),
-      });
+    const parsed = signinSchema.safeParse({
+      email: String(formData.get("email") || ""),
+      password: String(formData.get("password") || ""),
+    });
 
     if (!parsed.success) {
       setLoading(false);
-
       setError(
         "We could not sign you in. Check your email and password, then try again.",
       );
-
       return;
     }
 
-    const result = await signIn(
-      "credentials",
-      {
-        redirect: false,
-        email: parsed.data.email,
-        password: parsed.data.password,
-        callbackUrl,
-      },
-    );
+    const result = await signIn("credentials", {
+      redirect: false,
+      email: parsed.data.email,
+      password: parsed.data.password,
+      callbackUrl,
+    });
 
     setLoading(false);
+
+    // Preserve backend auth flow from codex branch
+    if (result?.error === "EmailVerificationRequired") {
+      window.location.href = `/auth/verify-email?email=${encodeURIComponent(
+        parsed.data.email,
+      )}`;
+      return;
+    }
 
     if (!result?.ok) {
       setError(
@@ -69,12 +64,10 @@ export function SigninForm({
           ? result.error
           : "We could not sign you in. Check your email and password, then try again.",
       );
-
       return;
     }
 
-    window.location.href =
-      result.url || callbackUrl;
+    window.location.href = result.url || callbackUrl;
   }
 
   return (

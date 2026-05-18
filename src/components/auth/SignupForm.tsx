@@ -16,9 +16,7 @@ type SignupFormProps = {
 export function SignupForm({
   googleEnabled = false,
 }: SignupFormProps) {
-  const [error, setError] =
-    useState("");
-
+  const [error, setError] = useState("");
   const [loading, setLoading] =
     useState(false);
 
@@ -32,11 +30,9 @@ export function SignupForm({
       name: String(
         formData.get("name") || "",
       ),
-
       email: String(
         formData.get("email") || "",
       ),
-
       password: String(
         formData.get("password") || "",
       ),
@@ -65,12 +61,10 @@ export function SignupForm({
       "/api/auth/signup",
       {
         method: "POST",
-
         headers: {
           "Content-Type":
             "application/json",
         },
-
         body: JSON.stringify(
           parsed.data,
         ),
@@ -103,6 +97,17 @@ export function SignupForm({
       });
 
     setLoading(false);
+
+    // Preserve backend verification flow from codex branch
+    if (
+      signInResult?.error ===
+      "EmailVerificationRequired"
+    ) {
+      window.location.href = `/auth/verify-email?email=${encodeURIComponent(
+        email,
+      )}`;
+      return;
+    }
 
     if (!signInResult?.ok) {
       setError(

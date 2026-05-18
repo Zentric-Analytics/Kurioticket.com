@@ -56,3 +56,16 @@ export function supportTicketEmail(input: { ticketId: string; subject: string })
     </div>
   `;
 }
+
+export function verificationCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number; verifyUrl: string }) {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">Verify your Curioticket email</h1>
+      <p>${input.name ? `Hi ${input.name},` : "Hi,"} use this code to verify your email address:</p>
+      <p style="font-size:28px;font-weight:700;letter-spacing:6px;color:#0f766e">${input.code}</p>
+      <p>This code expires in ${input.expiresInMinutes} minutes.</p>
+      <p><a href="${input.verifyUrl}" style="color:#0f766e">Enter verification code</a></p>
+      <p>If you did not try to access Curioticket, you can ignore this email.</p>
+    </div>
+  `;
+}
