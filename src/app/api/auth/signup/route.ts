@@ -17,7 +17,10 @@ export async function POST(request: Request) {
 
   const parsed = signupSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: getPublicSignupValidationError(parsed.error.flatten().fieldErrors) }, { status: 400 });
+    return NextResponse.json(
+      { error: getPublicSignupValidationError(parsed.error.flatten().fieldErrors) },
+      { status: 400 },
+    );
   }
 
   try {

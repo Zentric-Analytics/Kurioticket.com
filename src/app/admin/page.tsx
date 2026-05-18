@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Users, Activity, Plane, Gauge, LifeBuoy, ListChecks, ServerCog, Settings } from "lucide-react";
+import { Activity, Gauge, LifeBuoy, ListChecks, Plane, ServerCog, Settings, Users } from "lucide-react";
 import { AdminPageShell, MetricCard, StatusPill } from "@/components/admin/AdminPageShell";
 import { Card } from "@/components/ui/Card";
+import { requireAdminSession } from "@/lib/auth-guards";
 import { getDuffelAdminHealth, getSafeSystemStatus } from "@/lib/admin-data";
 import { getOptionalPrisma } from "@/lib/prisma";
 
@@ -19,10 +20,19 @@ const adminModules = [
 export const metadata = { title: "Admin" };
 
 export default async function AdminPage() {
-  const [metrics, system, duffel] = await Promise.all([getAdminMetrics(), getSafeSystemStatus(), getDuffelAdminHealth()]);
+  await requireAdminSession("/admin");
+
+  const [metrics, system, duffel] = await Promise.all([
+    getAdminMetrics(),
+    getSafeSystemStatus(),
+    getDuffelAdminHealth(),
+  ]);
 
   return (
-    <AdminPageShell title="Operations Dashboard" description="Manage Curioticket flight metasearch operations, users, provider health, redirects, support, and audit logs.">
+    <AdminPageShell
+      title="Operations Dashboard"
+      description="Manage Curioticket flight metasearch operations, users, provider health, redirects, support, and audit logs."
+    >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Total users" value={metrics.totalUsers} />
         <MetricCard label="Active users" value={metrics.activeUsers} />
@@ -33,6 +43,7 @@ export default async function AdminPage() {
         <MetricCard label="Recent searches" value={metrics.recentSearches} hint="Last 7 days" />
         <MetricCard label="Recent admin actions" value={metrics.recentAdminActions} hint="Last 7 days" />
       </div>
+
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {adminModules.map((module) => (
           <Link key={module.href} href={module.href} className="block rounded-xl focus-ring">
@@ -45,6 +56,7 @@ export default async function AdminPage() {
           </Link>
         ))}
       </div>
+
       <Card className="mt-6 p-4">
         <h2 className="font-bold text-navy">Active vs paused systems</h2>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -63,8 +75,20 @@ export default async function AdminPage() {
 
 async function getAdminMetrics() {
   const db = getOptionalPrisma();
-  if (!db) return { totalUsers: "—", activeUsers: "—", suspendedUsers: "—", adminUsers: "—", recentSearches: "—", recentAdminActions: "—" };
+
+  if (!db) {
+    return {
+      totalUsers: "—",
+      activeUsers: "—",
+      suspendedUsers: "—",
+      adminUsers: "—",
+      recentSearches: "—",
+      recentAdminActions: "—",
+    };
+  }
+
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
   const [totalUsers, activeUsers, suspendedUsers, adminUsers, recentSearches, recentAdminActions] = await Promise.all([
     db.user.count(),
     db.user.count({ where: { status: "ACTIVE" } }),
@@ -73,5 +97,13 @@ async function getAdminMetrics() {
     db.searchHistory.count({ where: { type: "FLIGHT", createdAt: { gte: since } } }),
     db.adminAuditLog.count({ where: { createdAt: { gte: since } } }),
   ]);
-  return { totalUsers, activeUsers, suspendedUsers, adminUsers, recentSearches, recentAdminActions };
+
+  return {
+    totalUsers,
+    activeUsers,
+    suspendedUsers,
+    adminUsers,
+    recentSearches,
+    recentAdminActions,
+  };
 }

@@ -19,11 +19,13 @@ export function SignupForm({ googleEnabled = false }: SignupFormProps) {
   async function submit(formData: FormData) {
     setLoading(true);
     setError("");
+
     const input = {
       name: String(formData.get("name") || ""),
       email: String(formData.get("email") || ""),
       password: String(formData.get("password") || ""),
     };
+
     const parsed = signupSchema.safeParse(input);
 
     if (!parsed.success) {
@@ -33,19 +35,28 @@ export function SignupForm({ googleEnabled = false }: SignupFormProps) {
     }
 
     const { email, password } = parsed.data;
+
     const response = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(parsed.data),
     });
+
     const data = await response.json();
+
     if (!response.ok) {
       setLoading(false);
       setError(String(data.error || "Unable to create account right now."));
       return;
     }
 
-    const signInResult = await signIn("credentials", { redirect: false, email, password, callbackUrl: "/onboarding" });
+    const signInResult = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+      callbackUrl: "/onboarding",
+    });
+
     setLoading(false);
 
     if (!signInResult?.ok) {
@@ -60,29 +71,48 @@ export function SignupForm({ googleEnabled = false }: SignupFormProps) {
     <Card className="mx-auto w-full max-w-md p-5">
       <h1 className="text-2xl font-bold text-navy">Create your account</h1>
       <p className="mt-2 text-sm text-muted">No passport, government ID, phone number, or address needed.</p>
+
       <form action={submit} className="mt-5 grid gap-4">
         <Field label="Full name">
           <Input name="name" autoComplete="name" required />
         </Field>
+
         <Field label="Email">
           <Input name="email" type="email" autoComplete="email" required />
         </Field>
+
         <Field label="Password">
           <Input name="password" type="password" autoComplete="new-password" minLength={8} required />
         </Field>
+
         <p className="text-xs leading-5 text-muted">
-          By creating an account, you agree to the <Link className="font-semibold text-teal-dark" href="/legal/terms-of-service">Terms</Link>, <Link className="font-semibold text-teal-dark" href="/legal/privacy-policy">Privacy Policy</Link>, and partner redirect disclosures.
+          By creating an account, you agree to{" "}
+          <Link className="font-semibold text-teal-dark" href="/legal/terms-of-service">
+            Terms
+          </Link>
+          ,{" "}
+          <Link className="font-semibold text-teal-dark" href="/legal/privacy-policy">
+            Privacy Policy
+          </Link>
+          , and partner redirect disclosures.
         </p>
+
         {error ? <p className="text-sm text-danger">{error}</p> : null}
+
         <Button disabled={loading}>{loading ? "Creating account..." : "Sign Up"}</Button>
       </form>
+
       {googleEnabled ? (
         <Button variant="secondary" className="mt-3 w-full" onClick={() => signIn("google", { callbackUrl: "/onboarding" })}>
           Continue with Google
         </Button>
       ) : null}
+
       <p className="mt-4 text-sm text-muted">
-        Already have an account? <Link className="font-semibold text-teal-dark" href="/auth/signin">Log in</Link>
+        Already have an account?{" "}
+        <Link className="font-semibold text-teal-dark" href="/auth/signin">
+          Log in
+        </Link>
       </p>
     </Card>
   );
