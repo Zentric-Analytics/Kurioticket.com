@@ -12,6 +12,7 @@ export class DuplicateEmailError extends Error {
 
 export async function createPasswordUser(input: { name: string; email: string; password: string }) {
   const parsed = signupSchema.safeParse(input);
+
   if (!parsed.success) {
     console.error("[signup:service-validation]", parsed.error.flatten().fieldErrors);
     throw new Error("Invalid signup input.");
@@ -19,8 +20,14 @@ export async function createPasswordUser(input: { name: string; email: string; p
 
   const { email, password } = parsed.data;
   const name = parsed.data.name.trim();
-  const existing = await getPrisma().user.findUnique({ where: { email } });
-  if (existing) throw new DuplicateEmailError();
+
+  const existing = await getPrisma().user.findUnique({
+    where: { email },
+  });
+
+  if (existing) {
+    throw new DuplicateEmailError();
+  }
 
   const passwordHash = await bcrypt.hash(password, 12);
 
@@ -41,7 +48,10 @@ export async function createPasswordUser(input: { name: string; email: string; p
 
     return user;
   } catch (error) {
-    if (isUniqueEmailError(error)) throw new DuplicateEmailError();
+    if (isUniqueEmailError(error)) {
+      throw new DuplicateEmailError();
+    }
+
     throw error;
   }
 }
