@@ -11,10 +11,15 @@ import { signinSchema } from "@/lib/validation";
 type SigninFormProps = {
   callbackUrl?: string;
   googleEnabled?: boolean;
+  initialError?: string;
 };
 
-export function SigninForm({ callbackUrl = "/dashboard", googleEnabled = false }: SigninFormProps) {
-  const [error, setError] = useState("");
+export function SigninForm({
+  callbackUrl = "/dashboard",
+  googleEnabled = false,
+  initialError = "",
+}: SigninFormProps) {
+  const [error, setError] = useState(initialError);
   const [loading, setLoading] = useState(false);
 
   async function submit(formData: FormData) {
@@ -28,8 +33,7 @@ export function SigninForm({ callbackUrl = "/dashboard", googleEnabled = false }
 
     if (!parsed.success) {
       setLoading(false);
-      const fieldErrors = parsed.error.flatten().fieldErrors;
-      setError(fieldErrors.email?.length ? "Enter a valid email address." : "Password must meet minimum requirements.");
+      setError("We could not sign you in. Check your email and password, then try again.");
       return;
     }
 

@@ -48,6 +48,17 @@ Copy `.env.example` and fill provider credentials:
 
 Never commit `.env` or `.env.local`. Only `NEXT_PUBLIC_` values may be used in browser code. Travel provider keys, Stripe secret keys, Resend keys, OpenAI keys, database URLs, and auth secrets must remain server-side.
 
+### Auth and Google OAuth
+
+Authentication uses NextAuth credentials plus optional Google OAuth. Set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` to show the Google button on sign-in/sign-up. If either variable is missing, the Google button is hidden gracefully.
+
+Allowed Google OAuth callback URLs:
+
+- Staging: `https://staging.curioticket.com/api/auth/callback/google`
+- Production: `https://www.curioticket.com/api/auth/callback/google`
+
+Admin access is controlled only by comma-separated `ADMIN_EMAILS` values. Emails are trimmed and normalized to lowercase, for example `ADMIN_EMAILS=admin@zentricresearch.com`.
+
 ## Prisma
 
 ```bash
