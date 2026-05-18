@@ -6,6 +6,10 @@ import { signOut, useSession } from "next-auth/react";
 import { Bell, ChevronDown, Globe2, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
 import { Button, LinkButton } from "@/components/ui/Button";
 
+type AppHeaderProps = {
+  brandVariant?: "default" | "homepage";
+};
+
 const navItems = [
   { href: "/flights/results", label: "Flights" },
   { href: "/hotels/results", label: "Hotels" },
@@ -15,19 +19,24 @@ const navItems = [
   { href: "/support", label: "Support" },
 ];
 
-export function AppHeader() {
+export function AppHeader({ brandVariant = "default" }: AppHeaderProps) {
   const [open, setOpen] = useState(false);
   const { data: session, status } = useSession();
   const isSignedIn = status === "authenticated" && Boolean(session?.user);
+  const isHomepageBrand = brandVariant === "homepage";
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
       <div className="page-shell flex h-20 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-slate-950">
+        <Link href="/" className={`flex items-center text-slate-950 ${isHomepageBrand ? "shrink-0 gap-3.5" : "gap-3 text-xl font-extrabold tracking-tight"}`}>
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white shadow-[0_10px_24px_rgba(109,40,217,0.22)]">
             <Sparkles size={22} />
           </span>
-          Curioticket
+          {isHomepageBrand ? (
+            <span className="font-sans text-[1.35rem] font-black leading-none tracking-[-0.035em] sm:text-[1.55rem]">Curioticket</span>
+          ) : (
+            "Curioticket"
+          )}
         </Link>
 
         <nav className="hidden items-center gap-2 lg:flex">
