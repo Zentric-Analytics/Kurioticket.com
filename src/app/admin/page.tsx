@@ -76,9 +76,7 @@ const adminModules = [
   },
 ];
 
-export const metadata = {
-  title: "Admin",
-};
+export const metadata = { title: "Admin" };
 
 export default async function AdminPage() {
   await requireAdminSession("/admin");
@@ -96,8 +94,11 @@ export default async function AdminPage() {
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard label="Total users" value={metrics.totalUsers} />
+
         <MetricCard label="Active users" value={metrics.activeUsers} />
+
         <MetricCard label="Suspended users" value={metrics.suspendedUsers} />
+
         <MetricCard label="Admin users" value={metrics.adminUsers} />
 
         <MetricCard

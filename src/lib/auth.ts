@@ -3,12 +3,19 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
+
 import { getAdminEmails, getAuthSecret } from "@/lib/env";
+
 import {
   isGoogleAuthConfigured,
   logSafeAuthDiagnostics,
 } from "@/lib/auth-diagnostics";
-import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
+
+import {
+  getPrisma,
+  isDatabaseConfigured,
+} from "@/lib/prisma";
+
 import { signinSchema } from "@/lib/validation";
 
 const providers: NextAuthOptions["providers"] = [
@@ -16,12 +23,20 @@ const providers: NextAuthOptions["providers"] = [
     name: "Email and password",
 
     credentials: {
-      email: { label: "Email", type: "email" },
-      password: { label: "Password", type: "password" },
+      email: {
+        label: "Email",
+        type: "email",
+      },
+
+      password: {
+        label: "Password",
+        type: "password",
+      },
     },
 
     async authorize(credentials) {
-      const parsed = signinSchema.safeParse(credentials);
+      const parsed =
+        signinSchema.safeParse(credentials);
 
       if (!parsed.success) {
         console.error(
@@ -43,7 +58,10 @@ const providers: NextAuthOptions["providers"] = [
       });
 
       if (!user?.passwordHash) {
-        console.error("[auth:credentials-user-missing]", { email });
+        console.error(
+          "[auth:credentials-user-missing]",
+          { email },
+        );
 
         logSafeAuthDiagnostics(
           "[auth:credentials-user-missing-diagnostics]",
@@ -54,10 +72,13 @@ const providers: NextAuthOptions["providers"] = [
       }
 
       if (user.status !== "ACTIVE") {
-        console.error("[auth:credentials-account-unavailable]", {
-          email,
-          status: user.status,
-        });
+        console.error(
+          "[auth:credentials-account-unavailable]",
+          {
+            email,
+            status: user.status,
+          },
+        );
 
         logSafeAuthDiagnostics(
           "[auth:credentials-account-unavailable-diagnostics]",
@@ -79,9 +100,10 @@ const providers: NextAuthOptions["providers"] = [
       );
 
       if (!valid) {
-        console.error("[auth:credentials-invalid-password]", {
-          email,
-        });
+        console.error(
+          "[auth:credentials-invalid-password]",
+          { email },
+        );
 
         logSafeAuthDiagnostics(
           "[auth:credentials-invalid-password-diagnostics]",
@@ -107,8 +129,11 @@ const providers: NextAuthOptions["providers"] = [
 if (isGoogleAuthConfigured()) {
   providers.push(
     GoogleProvider({
-      clientId: process.env.AUTH_GOOGLE_ID || "",
-      clientSecret: process.env.AUTH_GOOGLE_SECRET || "",
+      clientId:
+        process.env.AUTH_GOOGLE_ID || "",
+
+      clientSecret:
+        process.env.AUTH_GOOGLE_SECRET || "",
     }),
   );
 }
@@ -133,27 +158,39 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async signIn({ user }) {
-      const email = user.email?.toLowerCase().trim();
+      const email =
+        user.email?.toLowerCase().trim();
 
-      if (!email) return false;
+      if (!email) {
+        return false;
+      }
 
-      if (!isDatabaseConfigured()) return true;
+      if (!isDatabaseConfigured()) {
+        return true;
+      }
 
-      const dbUser = await getPrisma().user.findUnique({
-        where: { email },
+      const dbUser =
+        await getPrisma().user.findUnique({
+          where: { email },
 
-        select: {
-          id: true,
-          status: true,
-          role: true,
-        },
-      });
-
-      if (dbUser?.status && dbUser.status !== "ACTIVE") {
-        console.error("[auth:signin-account-unavailable]", {
-          email,
-          status: dbUser.status,
+          select: {
+            id: true,
+            status: true,
+            role: true,
+          },
         });
+
+      if (
+        dbUser?.status &&
+        dbUser.status !== "ACTIVE"
+      ) {
+        console.error(
+          "[auth:signin-account-unavailable]",
+          {
+            email,
+            status: dbUser.status,
+          },
+        );
 
         logSafeAuthDiagnostics(
           "[auth:signin-account-unavailable-diagnostics]",
@@ -186,33 +223,45 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
 
         token.role =
-          (user as { role?: string }).role || "USER";
+          (user as { role?: string }).role ||
+          "USER";
 
         token.isPremium = Boolean(
-          (user as { isPremium?: boolean }).isPremium,
+          (user as {
+            isPremium?: boolean;
+          }).isPremium,
         );
 
         token.status =
-          (user as { status?: string }).status || "ACTIVE";
+          (user as { status?: string }).status ||
+          "ACTIVE";
       }
 
-      if (token.email && isDatabaseConfigured()) {
-        const email = token.email.toLowerCase();
-        const adminEmails = getAdminEmails();
+      if (
+        token.email &&
+        isDatabaseConfigured()
+      ) {
+        const email =
+          token.email.toLowerCase();
 
-        const dbUser = await getPrisma().user.findUnique({
-          where: { email },
+        const adminEmails =
+          getAdminEmails();
 
-          select: {
-            id: true,
-            role: true,
-            isPremium: true,
-            status: true,
-          },
-        });
+        const dbUser =
+          await getPrisma().user.findUnique({
+            where: { email },
+
+            select: {
+              id: true,
+              role: true,
+              isPremium: true,
+              status: true,
+            },
+          });
 
         if (dbUser) {
-          const isAdminEmail = adminEmails.includes(email);
+          const isAdminEmail =
+            adminEmails.includes(email);
 
           const role = isAdminEmail
             ? "ADMIN"
@@ -220,7 +269,10 @@ export const authOptions: NextAuthOptions = {
               ? "USER"
               : dbUser.role;
 
-          if (isAdminEmail && dbUser.role !== "ADMIN") {
+          if (
+            isAdminEmail &&
+            dbUser.role !== "ADMIN"
+          ) {
             await getPrisma().user.update({
               where: { id: dbUser.id },
               data: { role: "ADMIN" },
@@ -229,8 +281,10 @@ export const authOptions: NextAuthOptions = {
 
           token.id = dbUser.id;
           token.role = role;
-          token.isPremium = dbUser.isPremium;
-          token.status = dbUser.status;
+          token.isPremium =
+            dbUser.isPremium;
+          token.status =
+            dbUser.status;
         }
       }
 
@@ -239,9 +293,17 @@ export const authOptions: NextAuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = String(token.id || "");
-        session.user.role = String(token.role || "USER");
-        session.user.isPremium = Boolean(token.isPremium);
+        session.user.id = String(
+          token.id || "",
+        );
+
+        session.user.role = String(
+          token.role || "USER",
+        );
+
+        session.user.isPremium = Boolean(
+          token.isPremium,
+        );
 
         session.user.status = String(
           token.status || "ACTIVE",

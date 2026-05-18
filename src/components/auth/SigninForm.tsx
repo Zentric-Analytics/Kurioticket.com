@@ -52,6 +52,7 @@ export function SigninForm({
           ? result.error
           : "We could not sign you in. Check your email and password, then try again.",
       );
+
       return;
     }
 
@@ -61,31 +62,57 @@ export function SigninForm({
   return (
     <Card className="mx-auto w-full max-w-md p-5">
       <h1 className="text-2xl font-bold text-navy">Log in</h1>
-      <p className="mt-2 text-sm text-muted">Save searches, manage alerts, and access your travel dashboard.</p>
+
+      <p className="mt-2 text-sm text-muted">
+        Save searches, manage alerts, and access your travel dashboard.
+      </p>
 
       <form action={submit} className="mt-5 grid gap-4">
         <Field label="Email">
-          <Input name="email" type="email" autoComplete="email" required />
+          <Input
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+          />
         </Field>
 
         <Field label="Password">
-          <Input name="password" type="password" autoComplete="current-password" required />
+          <Input
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+          />
         </Field>
 
-        {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {error ? (
+          <p className="text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
 
-        <Button disabled={loading}>{loading ? "Signing in..." : "Log in"}</Button>
+        <Button disabled={loading}>
+          {loading ? "Signing in..." : "Log in"}
+        </Button>
       </form>
 
       {googleEnabled ? (
-        <Button variant="secondary" className="mt-3 w-full" onClick={() => signIn("google", { callbackUrl })}>
+        <Button
+          variant="secondary"
+          className="mt-3 w-full"
+          onClick={() => signIn("google", { callbackUrl })}
+        >
           Continue with Google
         </Button>
       ) : null}
 
       <p className="mt-4 text-sm text-muted">
         New to Curioticket?{" "}
-        <Link className="font-semibold text-teal-dark" href="/auth/signup">
+        <Link
+          className="font-semibold text-teal-dark"
+          href="/auth/signup"
+        >
           Create an account
         </Link>
       </p>
