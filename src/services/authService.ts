@@ -1,7 +1,10 @@
 import { promises as dns } from "node:dns";
 import bcrypt from "bcryptjs";
 import { getPrisma } from "@/lib/prisma";
-import { isStrictEmailAddress, signupSchema } from "@/lib/validation";
+import {
+  isStrictEmailAddress,
+  signupSchema,
+} from "@/lib/validation";
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 
 export class DuplicateEmailError extends Error {
@@ -20,25 +23,35 @@ export class InvalidEmailError extends Error {
 
 export async function createPasswordUser(input: { name: string; email: string; password: string }) {
   const parsed = signupSchema.safeParse(input);
+
   if (!parsed.success) {
     console.error("[signup:service-validation]", parsed.error.flatten().fieldErrors);
     throw new Error("Invalid signup input.");
   }
 
   const { email, password } = parsed.data;
+
   if (!isStrictEmailAddress(email)) {
     console.error("[signup:service-email-validation]", { email });
     throw new InvalidEmailError();
   }
 
   if (!(await hasValidEmailHost(email))) {
-    console.error("[signup:service-email-host-validation]", { domain: email.split("@")[1] });
+    console.error("[signup:service-email-host-validation]", {
+      domain: email.split("@")[1],
+    });
     throw new InvalidEmailError();
   }
 
   const name = parsed.data.name.trim();
-  const existing = await getPrisma().user.findUnique({ where: { email } });
-  if (existing) throw new DuplicateEmailError();
+
+  const existing = await getPrisma().user.findUnique({
+    where: { email },
+  });
+
+  if (existing) {
+    throw new DuplicateEmailError();
+  }
 
   const passwordHash = await bcrypt.hash(password, 12);
 
@@ -59,21 +72,32 @@ export async function createPasswordUser(input: { name: string; email: string; p
 
     return user;
   } catch (error) {
-    if (isUniqueEmailError(error)) throw new DuplicateEmailError();
+    if (isUniqueEmailError(error)) {
+      throw new DuplicateEmailError();
+    }
+
     throw error;
   }
 }
 
 function isUniqueEmailError(error: unknown) {
-  return error instanceof Error && /Unique constraint failed|P2002|unique/i.test(error.message) && /email/i.test(error.message);
+  return (
+    error instanceof Error &&
+    /Unique constraint failed|P2002|unique/i.test(error.message) &&
+    /email/i.test(error.message)
+  );
 }
 
 async function hasValidEmailHost(email: string) {
   const domain = email.split("@")[1];
-  if (!domain) return false;
+
+  if (!domain) {
+    return false;
+  }
 
   try {
     const records = await withTimeout(dns.resolveMx(domain), 3000);
+
     return records.some((record) => record.exchange && record.exchange.trim().length > 0);
   } catch {
     return false;
