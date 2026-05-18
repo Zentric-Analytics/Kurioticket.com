@@ -37,10 +37,40 @@ export const hotelSearchSchema = z
     path: ["checkOut"],
   });
 
+const emailMessage = "Enter a valid email address.";
+const passwordMessage = "Password must meet minimum requirements.";
+const strictEmailPattern = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
+
+export const emailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .min(1, emailMessage)
+  .max(254, emailMessage)
+  .refine((email) => /^[\x00-\x7F]+$/.test(email), emailMessage)
+  .refine((email) => !/\s/.test(email), emailMessage)
+  .refine((email) => strictEmailPattern.test(email), emailMessage)
+  .refine((email) => {
+    const [localPart] = email.split("@");
+    return Boolean(localPart) && !localPart.startsWith(".") && !localPart.endsWith(".") && !localPart.includes("..");
+  }, emailMessage);
+
+const passwordSchema = z
+  .string()
+  .min(8, passwordMessage)
+  .max(100, passwordMessage)
+  .regex(/[A-Za-z]/, passwordMessage)
+  .regex(/[0-9]/, passwordMessage);
+
+export const signinSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, passwordMessage).max(100, passwordMessage),
+});
+
 export const signupSchema = z.object({
-  name: z.string().trim().min(2, "Enter your full name.").max(120),
-  email: z.string().trim().email("Enter a valid email address.").max(255),
-  password: z.string().min(8, "Use at least 8 characters.").max(100),
+  name: z.string().trim().min(2, "Unable to create account right now.").max(120, "Unable to create account right now."),
+  email: emailSchema,
+  password: passwordSchema,
 });
 
 export const supportTicketSchema = z.object({
