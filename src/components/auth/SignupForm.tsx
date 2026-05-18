@@ -3,9 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
+
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+
 import { signupSchema } from "@/lib/validation";
 
 type SignupFormProps = {
@@ -16,41 +18,63 @@ export function SignupForm({
   googleEnabled = false,
 }: SignupFormProps) {
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
-  async function submit(formData: FormData) {
+  async function submit(
+    formData: FormData,
+  ) {
     setLoading(true);
     setError("");
 
     const input = {
-      name: String(formData.get("name") || ""),
-      email: String(formData.get("email") || ""),
-      password: String(formData.get("password") || ""),
+      name: String(
+        formData.get("name") || "",
+      ),
+
+      email: String(
+        formData.get("email") || "",
+      ),
+
+      password: String(
+        formData.get("password") || "",
+      ),
     };
 
-    const parsed = signupSchema.safeParse(input);
+    const parsed =
+      signupSchema.safeParse(input);
 
     if (!parsed.success) {
       setLoading(false);
 
       setError(
         getPublicSignupValidationError(
-          parsed.error.flatten().fieldErrors,
+          parsed.error.flatten()
+            .fieldErrors,
         ),
       );
 
       return;
     }
 
-    const { email, password } = parsed.data;
+    const { email, password } =
+      parsed.data;
 
-    const response = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetch(
+      "/api/auth/signup",
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify(
+          parsed.data,
+        ),
       },
-      body: JSON.stringify(parsed.data),
-    });
+    );
 
     const data = await response.json();
 
@@ -67,12 +91,13 @@ export function SignupForm({
       return;
     }
 
-    const signInResult = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-      callbackUrl: "/onboarding",
-    });
+    const signInResult =
+      await signIn("credentials", {
+        redirect: false,
+        email,
+        password,
+        callbackUrl: "/onboarding",
+      });
 
     setLoading(false);
 
@@ -85,7 +110,8 @@ export function SignupForm({
     }
 
     window.location.href =
-      signInResult.url || "/onboarding";
+      signInResult.url ||
+      "/onboarding";
   }
 
   return (
@@ -95,11 +121,15 @@ export function SignupForm({
       </h1>
 
       <p className="mt-2 text-sm text-muted">
-        No passport, government ID, phone number,
-        or address needed.
+        No passport, government ID,
+        phone number, or address
+        needed.
       </p>
 
-      <form action={submit} className="mt-5 grid gap-4">
+      <form
+        action={submit}
+        className="mt-5 grid gap-4"
+      >
         <Field label="Full name">
           <Input
             name="name"
@@ -128,7 +158,8 @@ export function SignupForm({
         </Field>
 
         <p className="text-xs leading-5 text-muted">
-          By creating an account, you agree to{" "}
+          By creating an account,
+          you agree to{" "}
           <Link
             className="font-semibold text-teal-dark"
             href="/legal/terms-of-service"
@@ -142,7 +173,8 @@ export function SignupForm({
           >
             Privacy Policy
           </Link>
-          , and partner redirect disclosures.
+          , and partner redirect
+          disclosures.
         </p>
 
         {error ? (
@@ -164,7 +196,8 @@ export function SignupForm({
           className="mt-3 w-full"
           onClick={() =>
             signIn("google", {
-              callbackUrl: "/onboarding",
+              callbackUrl:
+                "/onboarding",
             })
           }
         >
@@ -186,7 +219,10 @@ export function SignupForm({
 }
 
 function getPublicSignupValidationError(
-  fieldErrors: Record<string, string[] | undefined>,
+  fieldErrors: Record<
+    string,
+    string[] | undefined
+  >,
 ) {
   if (fieldErrors.email?.length) {
     return "Enter a valid email address.";

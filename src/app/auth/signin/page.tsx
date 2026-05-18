@@ -1,6 +1,7 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SigninForm } from "@/components/auth/SigninForm";
+
 import { isGoogleAuthConfigured } from "@/lib/auth-diagnostics";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,8 @@ export default async function SigninPage({
       ? "This account is not available. Please contact support."
       : "";
 
-  const googleEnabled = isGoogleAuthConfigured();
+  const googleEnabled =
+    isGoogleAuthConfigured();
 
   return (
     <>

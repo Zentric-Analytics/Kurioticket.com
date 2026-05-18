@@ -136,6 +136,22 @@ const emailDomainLabelPattern =
 const emailTopLevelDomainPattern =
   /^[A-Za-z]{2,63}$/;
 
+const consumerEmailDomains =
+  new Set([
+    "aol.com",
+    "gmail.com",
+    "googlemail.com",
+    "hotmail.com",
+    "icloud.com",
+    "live.com",
+    "me.com",
+    "msn.com",
+    "outlook.com",
+    "proton.me",
+    "protonmail.com",
+    "yahoo.com",
+  ]);
+
 export function isStrictEmailAddress(
   value: string,
 ) {
@@ -191,6 +207,15 @@ export function isStrictEmailAddress(
     return false;
   }
 
+  if (
+    isSuspiciousConsumerMailbox(
+      localPart,
+      domain,
+    )
+  ) {
+    return false;
+  }
+
   if (domain.length > 253) {
     return false;
   }
@@ -221,6 +246,17 @@ export function isStrictEmailAddress(
 
   return domainLabels.every((label) =>
     emailDomainLabelPattern.test(label),
+  );
+}
+
+function isSuspiciousConsumerMailbox(
+  localPart: string,
+  domain: string,
+) {
+  return (
+    consumerEmailDomains.has(domain) &&
+    localPart.length >= 20 &&
+    /^[a-z]+$/.test(localPart)
   );
 }
 

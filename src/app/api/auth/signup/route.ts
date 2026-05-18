@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { DatabaseUnavailableError } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
-import { DuplicateEmailError, createPasswordUser } from "@/services/authService";
+import {
+  DuplicateEmailError,
+  InvalidEmailError,
+  createPasswordUser,
+} from "@/services/authService";
 
 export const runtime = "nodejs";
 
@@ -52,6 +56,13 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: "An account with this email already exists." },
         { status: 409 },
+      );
+    }
+
+    if (error instanceof InvalidEmailError) {
+      return NextResponse.json(
+        { error: "Enter a valid email address." },
+        { status: 400 },
       );
     }
 

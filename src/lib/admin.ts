@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+
 import { authOptions } from "@/lib/auth";
+
 import { logSafeAuthDiagnostics } from "@/lib/auth-diagnostics";
+
 import { getAdminEmails } from "@/lib/env";
+
 import { getPrisma } from "@/lib/prisma";
 
 type AdminRequest = Request & {
@@ -10,13 +14,17 @@ type AdminRequest = Request & {
 };
 
 export async function requireAdminApiSession() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(
+    authOptions,
+  );
 
   if (
     !session?.user?.id ||
     session.user.role !== "ADMIN" ||
     session.user.status !== "ACTIVE" ||
-    !isConfiguredAdminEmail(session.user.email)
+    !isConfiguredAdminEmail(
+      session.user.email,
+    )
   ) {
     logSafeAuthDiagnostics(
       "[admin:api-access-denied]",
@@ -29,8 +37,13 @@ export async function requireAdminApiSession() {
 
     return {
       response: NextResponse.json(
-        { error: "Admin access required." },
-        { status: 403 },
+        {
+          error:
+            "Admin access required.",
+        },
+        {
+          status: 403,
+        },
       ),
     };
   }
@@ -57,56 +70,75 @@ export async function countActiveAdminsExcluding(
       id: {
         not: userId,
       },
+
       role: "ADMIN",
+
       status: "ACTIVE",
     },
   });
 }
 
-export async function writeAdminAuditLog(input: {
-  adminUserId?: string | null;
-  adminEmail?: string | null;
-  action: string;
-  targetType: string;
-  targetId?: string | null;
-  targetEmail?: string | null;
-  metadata?: Record<string, unknown>;
-  request?: AdminRequest;
-}) {
+export async function writeAdminAuditLog(
+  input: {
+    adminUserId?: string | null;
+    adminEmail?: string | null;
+    action: string;
+    targetType: string;
+    targetId?: string | null;
+    targetEmail?: string | null;
+    metadata?: Record<
+      string,
+      unknown
+    >;
+    request?: AdminRequest;
+  },
+) {
   try {
-    await getPrisma().adminAuditLog.create({
-      data: {
-        adminUserId:
-          input.adminUserId || undefined,
+    await getPrisma().adminAuditLog.create(
+      {
+        data: {
+          adminUserId:
+            input.adminUserId ||
+            undefined,
 
-        adminEmail:
-          input.adminEmail?.toLowerCase() ||
-          "unknown-admin",
+          adminEmail:
+            input.adminEmail?.toLowerCase() ||
+            "unknown-admin",
 
-        action: input.action,
+          action: input.action,
 
-        targetType: input.targetType,
+          targetType:
+            input.targetType,
 
-        targetId:
-          input.targetId || undefined,
+          targetId:
+            input.targetId ||
+            undefined,
 
-        targetEmail:
-          input.targetEmail?.toLowerCase() ||
-          undefined,
+          targetEmail:
+            input.targetEmail?.toLowerCase() ||
+            undefined,
 
-        metadata:
-          (input.metadata || {}) as never,
+          metadata:
+            (input.metadata ||
+              {}) as never,
 
-        ipAddress: getRequestIp(input.request),
+          ipAddress:
+            getRequestIp(
+              input.request,
+            ),
 
-        userAgent:
-          input.request?.headers.get(
-            "user-agent",
-          ) || undefined,
+          userAgent:
+            input.request?.headers.get(
+              "user-agent",
+            ) || undefined,
+        },
       },
-    });
+    );
   } catch (error) {
-    console.error("[admin:audit-log]", error);
+    console.error(
+      "[admin:audit-log]",
+      error,
+    );
   }
 }
 
@@ -118,7 +150,9 @@ export function getRequestIp(
       .get("x-forwarded-for")
       ?.split(",")[0]
       ?.trim() ||
-    request?.headers.get("x-real-ip") ||
+    request?.headers.get(
+      "x-real-ip",
+    ) ||
     undefined
   );
 }
