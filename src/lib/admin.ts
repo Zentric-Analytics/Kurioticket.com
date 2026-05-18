@@ -2,11 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
-
 import { logSafeAuthDiagnostics } from "@/lib/auth-diagnostics";
-
 import { getAdminEmails } from "@/lib/env";
-
 import { getPrisma } from "@/lib/prisma";
 
 type AdminRequest = Request & {
@@ -72,7 +69,6 @@ export async function countActiveAdminsExcluding(
       },
 
       role: "ADMIN",
-
       status: "ACTIVE",
     },
   });

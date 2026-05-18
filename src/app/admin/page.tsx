@@ -1,5 +1,4 @@
 import Link from "next/link";
-
 import {
   Activity,
   Gauge,
@@ -18,14 +17,11 @@ import {
 } from "@/components/admin/AdminPageShell";
 
 import { Card } from "@/components/ui/Card";
-
 import { requireAdminSession } from "@/lib/auth-guards";
-
 import {
   getDuffelAdminHealth,
   getSafeSystemStatus,
 } from "@/lib/admin-data";
-
 import { getOptionalPrisma } from "@/lib/prisma";
 
 const adminModules = [
@@ -35,49 +31,42 @@ const adminModules = [
     icon: Users,
     body: "Search users, review status, suspend/reactivate accounts, and inspect roles.",
   },
-
   {
     href: "/admin/providers",
     title: "Providers",
     icon: Activity,
     body: "Monitor Duffel and track paused/future provider integrations.",
   },
-
   {
     href: "/admin/searches",
     title: "Searches",
     icon: Plane,
     body: "Review recent flight metasearch activity and result counts.",
   },
-
   {
     href: "/admin/redirects",
     title: "Redirects",
     icon: Gauge,
     body: "Inspect future external booking handoff logs.",
   },
-
   {
     href: "/admin/support",
     title: "Support",
     icon: LifeBuoy,
     body: "Review support tickets and operational queues.",
   },
-
   {
     href: "/admin/logs",
     title: "Logs",
     icon: ListChecks,
     body: "Audit sensitive admin actions and account changes.",
   },
-
   {
     href: "/admin/system",
     title: "System",
     icon: ServerCog,
     body: "Check safe environment, auth, database, and runtime status.",
   },
-
   {
     href: "/admin/settings",
     title: "Settings",
@@ -93,12 +82,11 @@ export const metadata = {
 export default async function AdminPage() {
   await requireAdminSession("/admin");
 
-  const [metrics, system, duffel] =
-    await Promise.all([
-      getAdminMetrics(),
-      getSafeSystemStatus(),
-      getDuffelAdminHealth(),
-    ]);
+  const [metrics, system, duffel] = await Promise.all([
+    getAdminMetrics(),
+    getSafeSystemStatus(),
+    getDuffelAdminHealth(),
+  ]);
 
   return (
     <AdminPageShell
@@ -244,7 +232,7 @@ async function getAdminMetrics() {
   }
 
   const since = new Date(
-    Date.now() - 7 * 24 * 60 * 60 * 1000,
+    Date.now() - 7 * 24 * 60 * 60 * 1000
   );
 
   const [

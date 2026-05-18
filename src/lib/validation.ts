@@ -4,122 +4,154 @@ const futureDate = z
   .string()
   .min(1)
   .refine(
-    (value) => !Number.isNaN(Date.parse(value)),
+    (value) =>
+      !Number.isNaN(
+        Date.parse(value),
+      ),
     "Use a valid date.",
   );
 
-export const flightSearchSchema = z
-  .object({
-    tripType: z
-      .enum([
-        "round-trip",
-        "one-way",
-        "multi-city",
-      ])
-      .default("round-trip"),
+export const flightSearchSchema =
+  z
+    .object({
+      tripType: z
+        .enum([
+          "round-trip",
+          "one-way",
+          "multi-city",
+        ])
+        .default(
+          "round-trip",
+        ),
 
-    origin: z
-      .string()
-      .trim()
-      .min(
-        3,
-        "Enter a departure airport or city.",
-      )
-      .max(80),
+      origin: z
+        .string()
+        .trim()
+        .min(
+          3,
+          "Enter a departure airport or city.",
+        )
+        .max(80),
 
-    destination: z
-      .string()
-      .trim()
-      .min(
-        3,
-        "Enter an arrival airport or city.",
-      )
-      .max(80),
+      destination: z
+        .string()
+        .trim()
+        .min(
+          3,
+          "Enter an arrival airport or city.",
+        )
+        .max(80),
 
-    departureDate: futureDate,
+      departureDate:
+        futureDate,
 
-    returnDate: z.string().optional(),
+      returnDate: z
+        .string()
+        .optional(),
 
-    travelers: z.coerce.number()
-      .int()
-      .min(1)
-      .max(9)
-      .default(1),
+      travelers:
+        z.coerce
+          .number()
+          .int()
+          .min(1)
+          .max(9)
+          .default(1),
 
-    cabinClass: z
-      .enum([
-        "economy",
-        "premium-economy",
-        "business",
-        "first",
-      ])
-      .default("economy"),
+      cabinClass: z
+        .enum([
+          "economy",
+          "premium-economy",
+          "business",
+          "first",
+        ])
+        .default(
+          "economy",
+        ),
 
-    sort: z
-      .enum([
-        "cheapest",
-        "best",
-        "fastest",
-        "stops",
-      ])
-      .optional(),
-  })
+      sort: z
+        .enum([
+          "cheapest",
+          "best",
+          "fastest",
+          "stops",
+        ])
+        .optional(),
+    })
+    .refine(
+      (data) =>
+        data.tripType !==
+          "round-trip" ||
+        Boolean(
+          data.returnDate,
+        ),
+      {
+        message:
+          "Choose a return date for round trips.",
+        path: [
+          "returnDate",
+        ],
+      },
+    );
 
-  .refine(
-    (data) =>
-      data.tripType !== "round-trip" ||
-      Boolean(data.returnDate),
-    {
-      message:
-        "Choose a return date for round trips.",
-      path: ["returnDate"],
-    },
-  );
+export const hotelSearchSchema =
+  z
+    .object({
+      destination: z
+        .string()
+        .trim()
+        .min(
+          2,
+          "Enter a destination.",
+        )
+        .max(120),
 
-export const hotelSearchSchema = z
-  .object({
-    destination: z
-      .string()
-      .trim()
-      .min(2, "Enter a destination.")
-      .max(120),
+      checkIn:
+        futureDate,
 
-    checkIn: futureDate,
+      checkOut:
+        futureDate,
 
-    checkOut: futureDate,
+      guests:
+        z.coerce
+          .number()
+          .int()
+          .min(1)
+          .max(12)
+          .default(2),
 
-    guests: z.coerce.number()
-      .int()
-      .min(1)
-      .max(12)
-      .default(2),
+      rooms:
+        z.coerce
+          .number()
+          .int()
+          .min(1)
+          .max(6)
+          .default(1),
 
-    rooms: z.coerce.number()
-      .int()
-      .min(1)
-      .max(6)
-      .default(1),
-
-    sort: z
-      .enum([
-        "cheapest",
-        "best",
-        "rating",
-        "location",
-      ])
-      .optional(),
-  })
-
-  .refine(
-    (data) =>
-      new Date(data.checkOut) >
-      new Date(data.checkIn),
-    {
-      message:
-        "Check-out must be after check-in.",
-      path: ["checkOut"],
-    },
-  );
+      sort: z
+        .enum([
+          "cheapest",
+          "best",
+          "rating",
+          "location",
+        ])
+        .optional(),
+    })
+    .refine(
+      (data) =>
+        new Date(
+          data.checkOut,
+        ) >
+        new Date(
+          data.checkIn,
+        ),
+      {
+        message:
+          "Check-out must be after check-in.",
+        path: [
+          "checkOut",
+        ],
+      },
+    );
 
 const emailMessage =
   "Enter a valid email address.";
@@ -155,7 +187,9 @@ const consumerEmailDomains =
 export function isStrictEmailAddress(
   value: string,
 ) {
-  if (value !== value.trim()) {
+  if (
+    value !== value.trim()
+  ) {
     return false;
   }
 
@@ -166,43 +200,69 @@ export function isStrictEmailAddress(
     return false;
   }
 
-  if (!/^[\x00-\x7F]+$/.test(value)) {
-    return false;
-  }
-
-  if (/\s/.test(value)) {
-    return false;
-  }
-
-  if (value.includes("..")) {
-    return false;
-  }
-
-  const parts = value.split("@");
-
-  if (parts.length !== 2) {
-    return false;
-  }
-
-  const [localPart, domain] = parts;
-
-  if (!localPart || !domain) {
-    return false;
-  }
-
-  if (localPart.length > 64) {
-    return false;
-  }
-
   if (
-    localPart.startsWith(".") ||
-    localPart.endsWith(".")
+    !/^[\x00-\x7F]+$/.test(
+      value,
+    )
   ) {
     return false;
   }
 
   if (
-    !emailLocalPartPattern.test(localPart)
+    /\s/.test(value)
+  ) {
+    return false;
+  }
+
+  if (
+    value.includes("..")
+  ) {
+    return false;
+  }
+
+  const parts =
+    value.split("@");
+
+  if (
+    parts.length !== 2
+  ) {
+    return false;
+  }
+
+  const [
+    localPart,
+    domain,
+  ] = parts;
+
+  if (
+    !localPart ||
+    !domain
+  ) {
+    return false;
+  }
+
+  if (
+    localPart.length >
+    64
+  ) {
+    return false;
+  }
+
+  if (
+    localPart.startsWith(
+      ".",
+    ) ||
+    localPart.endsWith(
+      ".",
+    )
+  ) {
+    return false;
+  }
+
+  if (
+    !emailLocalPartPattern.test(
+      localPart,
+    )
   ) {
     return false;
   }
@@ -216,13 +276,19 @@ export function isStrictEmailAddress(
     return false;
   }
 
-  if (domain.length > 253) {
+  if (
+    domain.length > 253
+  ) {
     return false;
   }
 
   if (
-    domain.startsWith(".") ||
-    domain.endsWith(".")
+    domain.startsWith(
+      ".",
+    ) ||
+    domain.endsWith(
+      ".",
+    )
   ) {
     return false;
   }
@@ -230,22 +296,29 @@ export function isStrictEmailAddress(
   const domainLabels =
     domain.split(".");
 
-  if (domainLabels.length < 2) {
+  if (
+    domainLabels.length <
+    2
+  ) {
     return false;
   }
 
   if (
     !emailTopLevelDomainPattern.test(
       domainLabels[
-        domainLabels.length - 1
+        domainLabels.length -
+          1
       ],
     )
   ) {
     return false;
   }
 
-  return domainLabels.every((label) =>
-    emailDomainLabelPattern.test(label),
+  return domainLabels.every(
+    (label) =>
+      emailDomainLabelPattern.test(
+        label,
+      ),
   );
 }
 
@@ -254,61 +327,99 @@ function isSuspiciousConsumerMailbox(
   domain: string,
 ) {
   return (
-    consumerEmailDomains.has(domain) &&
-    localPart.length >= 20 &&
-    /^[a-z]+$/.test(localPart)
+    consumerEmailDomains.has(
+      domain,
+    ) &&
+    localPart.length >=
+      20 &&
+    /^[a-z]+$/.test(
+      localPart,
+    )
   );
 }
 
-export const emailSchema = z
-  .string()
-  .min(1, emailMessage)
-  .max(254, emailMessage)
-  .refine(
-    isStrictEmailAddress,
-    emailMessage,
-  )
-  .transform((email) =>
-    email.toLowerCase(),
-  );
-
-const passwordSchema = z
-  .string()
-  .min(8, passwordMessage)
-  .max(100, passwordMessage)
-  .regex(/[A-Za-z]/, passwordMessage)
-  .regex(/[0-9]/, passwordMessage);
-
-export const signinSchema = z.object({
-  email: emailSchema,
-
-  password: z
+export const emailSchema =
+  z
     .string()
-    .min(1, passwordMessage)
-    .max(100, passwordMessage),
-});
-
-export const signupSchema = z.object({
-  name: z
-    .string()
-    .trim()
     .min(
-      2,
-      "Unable to create account right now.",
+      1,
+      emailMessage,
     )
     .max(
-      120,
-      "Unable to create account right now.",
-    ),
+      254,
+      emailMessage,
+    )
+    .refine(
+      isStrictEmailAddress,
+      emailMessage,
+    )
+    .transform(
+      (email) =>
+        email.toLowerCase(),
+    );
 
-  email: emailSchema,
+const passwordSchema =
+  z
+    .string()
+    .min(
+      8,
+      passwordMessage,
+    )
+    .max(
+      100,
+      passwordMessage,
+    )
+    .regex(
+      /[A-Za-z]/,
+      passwordMessage,
+    )
+    .regex(
+      /[0-9]/,
+      passwordMessage,
+    );
 
-  password: passwordSchema,
-});
+export const signinSchema =
+  z.object({
+    email:
+      emailSchema,
+
+    password: z
+      .string()
+      .min(
+        1,
+        passwordMessage,
+      )
+      .max(
+        100,
+        passwordMessage,
+      ),
+  });
+
+export const signupSchema =
+  z.object({
+    name: z
+      .string()
+      .trim()
+      .min(
+        2,
+        "Unable to create account right now.",
+      )
+      .max(
+        120,
+        "Unable to create account right now.",
+      ),
+
+    email:
+      emailSchema,
+
+    password:
+      passwordSchema,
+  });
 
 export const supportTicketSchema =
   z.object({
-    email: emailSchema,
+    email:
+      emailSchema,
 
     subject: z
       .string()
@@ -329,7 +440,10 @@ export const supportTicketSchema =
       .max(4000),
 
     sourceContext: z
-      .record(z.string(), z.unknown())
+      .record(
+        z.string(),
+        z.unknown(),
+      )
       .optional(),
   });
 
@@ -352,9 +466,11 @@ export const priceAlertSchema =
       .min(2)
       .max(120),
 
-    targetPrice: z.coerce.number()
-      .positive()
-      .optional(),
+    targetPrice:
+      z.coerce
+        .number()
+        .positive()
+        .optional(),
 
     currency: z
       .string()

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { DatabaseUnavailableError } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
+
 import {
   DuplicateEmailError,
   InvalidEmailError,
