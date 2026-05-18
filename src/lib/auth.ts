@@ -10,6 +10,7 @@ import { signinSchema } from "@/lib/validation";
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
     name: "Email and password",
+
     credentials: {
       email: { label: "Email", type: "email" },
       password: { label: "Password", type: "password" },
@@ -34,6 +35,15 @@ const providers: NextAuthOptions["providers"] = [
         return null;
       }
 
+      if (user.status !== "ACTIVE") {
+        console.error("[auth:credentials-account-unavailable]", {
+          email,
+          status: user.status,
+        });
+
+        throw new Error("This account is not available. Please contact support.");
+      }
+
       const valid = await bcrypt.compare(password, user.passwordHash);
 
       if (!valid) {
@@ -48,6 +58,7 @@ const providers: NextAuthOptions["providers"] = [
         image: user.image,
         role: user.role,
         isPremium: user.isPremium,
+        status: user.status,
       };
     },
   }),
@@ -86,9 +97,29 @@ export const authOptions: NextAuthOptions = {
 
       if (!email) return false;
 
+      if (!isDatabaseConfigured()) return true;
+
+      const dbUser = await getPrisma().user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          status: true,
+          role: true,
+        },
+      });
+
+      if (dbUser?.status && dbUser.status !== "ACTIVE") {
+        console.error("[auth:signin-account-unavailable]", {
+          email,
+          status: dbUser.status,
+        });
+
+        return "/auth/signin?error=AccountUnavailable";
+      }
+
       const adminEmails = getAdminEmails();
 
-      if (adminEmails.includes(email) && isDatabaseConfigured()) {
+      if (adminEmails.includes(email)) {
         await getPrisma().user.updateMany({
           where: { email },
           data: { role: "ADMIN" },
@@ -104,9 +135,12 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as { role?: string }).role || "USER";
+
         token.isPremium = Boolean(
           (user as { isPremium?: boolean }).isPremium,
         );
+
+        token.status = (user as { status?: string }).status || "ACTIVE";
       }
 
       if (token.email && isDatabaseConfigured()) {
@@ -115,10 +149,12 @@ export const authOptions: NextAuthOptions = {
 
         const dbUser = await getPrisma().user.findUnique({
           where: { email },
+
           select: {
             id: true,
             role: true,
             isPremium: true,
+            status: true,
           },
         });
 
@@ -137,6 +173,7 @@ export const authOptions: NextAuthOptions = {
           token.id = dbUser.id;
           token.role = role;
           token.isPremium = dbUser.isPremium;
+          token.status = dbUser.status;
         }
       }
 
@@ -148,6 +185,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = String(token.id || "");
         session.user.role = String(token.role || "USER");
         session.user.isPremium = Boolean(token.isPremium);
+        session.user.status = String(token.status || "ACTIVE");
       }
 
       return session;
