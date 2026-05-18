@@ -87,27 +87,11 @@ export async function POST(
 
   try {
     const rawToken = String(
-      parsed.data.token || ""
+      parsed.data.code || ""
     );
 
     const password =
       parsed.data.password;
-
-    const confirmPassword =
-      parsed.data.confirmPassword;
-
-    if (
-      password !==
-      confirmPassword
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Passwords do not match.",
-        },
-        { status: 400 }
-      );
-    }
 
     const passwordCheck =
       signupSchema.shape.password.safeParse(
