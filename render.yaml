@@ -61,6 +61,7 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
+
   - type: web
     name: curioticket-web-staging
     runtime: node
@@ -129,6 +130,7 @@ databases:
     databaseName: curioticket
     user: curioticket
     plan: free
+
   - name: curioticket-postgres-staging
     databaseName: curioticket_staging
     user: curioticket_staging
