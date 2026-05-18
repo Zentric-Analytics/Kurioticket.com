@@ -9,6 +9,7 @@ import {
   getAdminEmails,
   getAuthSecret,
 } from "@/lib/env";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 
 import {
   isGoogleAuthConfigured,
@@ -26,6 +27,7 @@ import {
   getEmailVerificationRedirect,
   sendEmailVerificationCode,
 } from "@/services/emailVerificationService";
+import { logAuthEvent } from "@/services/authService";
 
 const providers: NextAuthOptions["providers"] =
   [
@@ -68,6 +70,16 @@ const providers: NextAuthOptions["providers"] =
 
         const { email, password } =
           parsed.data;
+
+        try {
+          checkAuthRateLimit({ action: "signin", email, limit: 10, windowMs: 15 * 60 * 1000 });
+        } catch (error) {
+          if (error instanceof AuthRateLimitError) {
+            throw new Error("RateLimited");
+          }
+
+          throw error;
+        }
 
         const user =
           await getPrisma().user.findUnique(
@@ -147,6 +159,8 @@ const providers: NextAuthOptions["providers"] =
         if (
           !user.emailVerified
         ) {
+          logAuthEvent("login-blocked-unverified", { email });
+
           await sendEmailVerificationCode(
             {
               email,
@@ -288,6 +302,8 @@ export const authOptions: NextAuthOptions =
           dbUser &&
           !dbUser.emailVerified
         ) {
+          logAuthEvent("login-blocked-unverified", { email });
+
           await sendEmailVerificationCode(
             {
               email,
