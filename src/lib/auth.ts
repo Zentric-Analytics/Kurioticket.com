@@ -1,10 +1,15 @@
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
+
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
+
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
-import { getAdminEmails, getAuthSecret } from "@/lib/env";
+import {
+  getAdminEmails,
+  getAuthSecret,
+} from "@/lib/env";
 
 import {
   isGoogleAuthConfigured,
@@ -51,11 +56,13 @@ const providers: NextAuthOptions["providers"] = [
         return null;
       }
 
-      const { email, password } = parsed.data;
+      const { email, password } =
+        parsed.data;
 
-      const user = await getPrisma().user.findUnique({
-        where: { email },
-      });
+      const user =
+        await getPrisma().user.findUnique({
+          where: { email },
+        });
 
       if (!user?.passwordHash) {
         console.error(
@@ -94,10 +101,11 @@ const providers: NextAuthOptions["providers"] = [
         );
       }
 
-      const valid = await bcrypt.compare(
-        password,
-        user.passwordHash,
-      );
+      const valid =
+        await bcrypt.compare(
+          password,
+          user.passwordHash,
+        );
 
       if (!valid) {
         console.error(
@@ -140,7 +148,9 @@ if (isGoogleAuthConfigured()) {
 
 export const authOptions: NextAuthOptions = {
   adapter: isDatabaseConfigured()
-    ? PrismaAdapter(getPrisma() as never)
+    ? PrismaAdapter(
+        getPrisma() as never,
+      )
     : undefined,
 
   providers,
@@ -159,7 +169,9 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user }) {
       const email =
-        user.email?.toLowerCase().trim();
+        user.email
+          ?.toLowerCase()
+          .trim();
 
       if (!email) {
         return false;
@@ -204,12 +216,18 @@ export const authOptions: NextAuthOptions = {
         return "/auth/signin?error=AccountUnavailable";
       }
 
-      const adminEmails = getAdminEmails();
+      const adminEmails =
+        getAdminEmails();
 
-      if (adminEmails.includes(email)) {
+      if (
+        adminEmails.includes(email)
+      ) {
         await getPrisma().user.updateMany({
           where: { email },
-          data: { role: "ADMIN" },
+
+          data: {
+            role: "ADMIN",
+          },
         });
 
         user.role = "ADMIN";
@@ -223,18 +241,26 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
 
         token.role =
-          (user as { role?: string }).role ||
-          "USER";
+          (
+            user as {
+              role?: string;
+            }
+          ).role || "USER";
 
         token.isPremium = Boolean(
-          (user as {
-            isPremium?: boolean;
-          }).isPremium,
+          (
+            user as {
+              isPremium?: boolean;
+            }
+          ).isPremium,
         );
 
         token.status =
-          (user as { status?: string }).status ||
-          "ACTIVE";
+          (
+            user as {
+              status?: string;
+            }
+          ).status || "ACTIVE";
       }
 
       if (
@@ -261,21 +287,29 @@ export const authOptions: NextAuthOptions = {
 
         if (dbUser) {
           const isAdminEmail =
-            adminEmails.includes(email);
+            adminEmails.includes(
+              email,
+            );
 
-          const role = isAdminEmail
-            ? "ADMIN"
-            : dbUser.role === "ADMIN"
-              ? "USER"
-              : dbUser.role;
+          const role =
+            isAdminEmail
+              ? "ADMIN"
+              : dbUser.role === "ADMIN"
+                ? "USER"
+                : dbUser.role;
 
           if (
             isAdminEmail &&
             dbUser.role !== "ADMIN"
           ) {
             await getPrisma().user.update({
-              where: { id: dbUser.id },
-              data: { role: "ADMIN" },
+              where: {
+                id: dbUser.id,
+              },
+
+              data: {
+                role: "ADMIN",
+              },
             });
           }
 
@@ -291,7 +325,10 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
 
-    async session({ session, token }) {
+    async session({
+      session,
+      token,
+    }) {
       if (session.user) {
         session.user.id = String(
           token.id || "",
@@ -301,9 +338,10 @@ export const authOptions: NextAuthOptions = {
           token.role || "USER",
         );
 
-        session.user.isPremium = Boolean(
-          token.isPremium,
-        );
+        session.user.isPremium =
+          Boolean(
+            token.isPremium,
+          );
 
         session.user.status = String(
           token.status || "ACTIVE",

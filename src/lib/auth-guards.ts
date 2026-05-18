@@ -1,64 +1,37 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+
 import { authOptions } from "@/lib/auth";
 import { getAdminEmails } from "@/lib/env";
 
-export function getLoginRedirect(
-  pathname = "/dashboard",
-) {
-  return `/auth/signin?callbackUrl=${encodeURIComponent(
-    pathname,
-  )}`;
+export function getLoginRedirect(pathname = "/dashboard") {
+  return `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`;
 }
 
-export async function requireUserSession(
-  pathname = "/dashboard",
-) {
-  const session = await getServerSession(
-    authOptions,
-  );
+export async function requireUserSession(pathname = "/dashboard") {
+  const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     redirect(getLoginRedirect(pathname));
   }
 
-  if (
-    session.user.status &&
-    session.user.status !== "ACTIVE"
-  ) {
-    redirect(
-      "/auth/signin?error=AccountUnavailable",
-    );
+  if (session.user.status && session.user.status !== "ACTIVE") {
+    redirect("/auth/signin?error=AccountUnavailable");
   }
 
   return session;
 }
 
-export async function requireAdminSession(
-  pathname = "/admin",
-) {
-  const session =
-    await requireUserSession(pathname);
+export async function requireAdminSession(pathname = "/admin") {
+  const session = await requireUserSession(pathname);
 
-  if (
-    session.user.role !== "ADMIN" ||
-    !isConfiguredAdminEmail(
-      session.user.email,
-    )
-  ) {
+  if (session.user.role !== "ADMIN" || !isConfiguredAdminEmail(session.user.email)) {
     redirect("/dashboard");
   }
 
   return session;
 }
 
-function isConfiguredAdminEmail(
-  email?: string | null,
-) {
-  return Boolean(
-    email &&
-      getAdminEmails().includes(
-        email.toLowerCase().trim(),
-      ),
-  );
+function isConfiguredAdminEmail(email?: string | null) {
+  return Boolean(email && getAdminEmails().includes(email.toLowerCase().trim()));
 }
