@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { DatabaseUnavailableError } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
 
@@ -50,6 +51,14 @@ export async function POST(
   }
 
   try {
+    checkAuthRateLimit({
+      action: "signup",
+      email: parsed.data.email,
+      request,
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    });
+
     const user =
       await createPasswordUser(
         parsed.data,
@@ -76,6 +85,27 @@ export async function POST(
       "[signup]",
       error,
     );
+
+    if (
+      error instanceof
+      AuthRateLimitError
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Too many signup attempts. Please wait and try again.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After":
+              String(
+                error.retryAfterSeconds,
+              ),
+          },
+        },
+      );
+    }
 
     if (
       error instanceof

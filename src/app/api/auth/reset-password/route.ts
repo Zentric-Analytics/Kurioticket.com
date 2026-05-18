@@ -1,26 +1,230 @@
 import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { getPrisma } from "@/lib/prisma";
-import { signupSchema } from "@/lib/validation";
 
-export async function POST(request: Request) {
+import {
+  AuthRateLimitError,
+  checkAuthRateLimit,
+} from "@/lib/auth-rate-limit";
+import { getPrisma } from "@/lib/prisma";
+import {
+  resetPasswordSchema,
+  signupSchema,
+} from "@/lib/validation";
+
+export const runtime = "nodejs";
+
+export async function POST(
+  request: Request,
+) {
+  let body: unknown;
+
   try {
-    const body = (await request.json()) as { token?: string; password?: string; confirmPassword?: string; email?: string };
-    const rawToken = String(body.token || "");
-    const password = String(body.password || "");
-    if (!rawToken || password !== String(body.confirmPassword || "")) return NextResponse.json({ error: "Passwords do not match." }, { status: 400 });
-    const passwordCheck = signupSchema.shape.password.safeParse(password);
-    if (!passwordCheck.success) return NextResponse.json({ error: "Password must meet minimum requirements." }, { status: 400 });
-    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
-    const resetToken = await getPrisma().verificationToken.findUnique({ where: { token: hashedToken } });
-    if (!resetToken || !resetToken.identifier.startsWith("password-reset:") || resetToken.expires <= new Date()) return NextResponse.json({ error: "Invalid or expired reset link." }, { status: 400 });
-    const email = resetToken.identifier.replace("password-reset:", "");
-    const hash = await bcrypt.hash(password, 12);
-    await getPrisma().user.update({ where: { email }, data: { passwordHash: hash } });
-    await getPrisma().verificationToken.deleteMany({ where: { identifier: resetToken.identifier } });
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "Unable to reset password right now." }, { status: 503 });
+    body = await request.json();
+  } catch (error) {
+    console.error(
+      "[reset-password:invalid-json]",
+      error,
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          "Unable to reset password right now.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const parsed =
+    resetPasswordSchema.safeParse(
+      body,
+    );
+
+  const email = parsed.success
+    ? parsed.data.email
+    : undefined;
+
+  // Rate limiting
+  try {
+    checkAuthRateLimit({
+      action: "reset-password",
+      email,
+      request,
+      limit: 8,
+      windowMs:
+        15 * 60 * 1000,
+    });
+  } catch (error) {
+    if (
+      error instanceof
+      AuthRateLimitError
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Too many password reset attempts. Please wait and try again.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After":
+              String(
+                error.retryAfterSeconds,
+              ),
+          },
+        },
+      );
+    }
+
+    throw error;
+  }
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error:
+          "Please enter a valid password and try again.",
+      },
+      { status: 400 },
+    );
+  }
+
+  try {
+    const rawToken = String(
+      parsed.data.token || "",
+    );
+
+    const password =
+      parsed.data.password;
+
+    const confirmPassword =
+      parsed.data.confirmPassword;
+
+    // Validate password match
+    if (
+      password !==
+      confirmPassword
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Passwords do not match.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // Validate password rules
+    const passwordCheck =
+      signupSchema.shape.password.safeParse(
+        password,
+      );
+
+    if (
+      !passwordCheck.success
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Password must meet minimum requirements.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const hashedToken =
+      crypto
+        .createHash("sha256")
+        .update(rawToken)
+        .digest("hex");
+
+    const prisma =
+      getPrisma();
+
+    const resetToken =
+      await prisma.verificationToken.findUnique(
+        {
+          where: {
+            token:
+              hashedToken,
+          },
+        },
+      );
+
+    const isInvalid =
+      !resetToken ||
+      !resetToken.identifier.startsWith(
+        "password-reset:",
+      ) ||
+      resetToken.expires <=
+        new Date();
+
+    if (isInvalid) {
+      return NextResponse.json(
+        {
+          error:
+            "This reset link is invalid or has expired.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const userEmail =
+      resetToken.identifier.replace(
+        "password-reset:",
+        "",
+      );
+
+    // Hash new password
+    const passwordHash =
+      await bcrypt.hash(
+        password,
+        12,
+      );
+
+    // Update password
+    await prisma.user.update(
+      {
+        where: {
+          email:
+            userEmail,
+        },
+        data: {
+          passwordHash,
+        },
+      },
+    );
+
+    // Delete used token
+    await prisma.verificationToken.deleteMany(
+      {
+        where: {
+          identifier:
+            resetToken.identifier,
+        },
+      },
+    );
+
+    return NextResponse.json(
+      {
+        ok: true,
+        message:
+          "Password reset successfully.",
+      },
+    );
+  } catch (error) {
+    console.error(
+      "[reset-password:error]",
+      error,
+    );
+
+    return NextResponse.json(
+      {
+        error:
+          "Unable to reset password right now.",
+      },
+      { status: 503 },
+    );
   }
 }
