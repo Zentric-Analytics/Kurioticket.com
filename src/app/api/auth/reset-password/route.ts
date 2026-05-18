@@ -15,7 +15,7 @@ import {
 export const runtime = "nodejs";
 
 export async function POST(
-  request: Request,
+  request: Request
 ) {
   let body: unknown;
 
@@ -24,7 +24,7 @@ export async function POST(
   } catch (error) {
     console.error(
       "[reset-password:invalid-json]",
-      error,
+      error
     );
 
     return NextResponse.json(
@@ -32,28 +32,24 @@ export async function POST(
         error:
           "Unable to reset password right now.",
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   const parsed =
-    resetPasswordSchema.safeParse(
-      body,
-    );
+    resetPasswordSchema.safeParse(body);
 
   const email = parsed.success
     ? parsed.data.email
     : undefined;
 
-  // Rate limiting
   try {
     checkAuthRateLimit({
       action: "reset-password",
       email,
       request,
       limit: 8,
-      windowMs:
-        15 * 60 * 1000,
+      windowMs: 15 * 60 * 1000,
     });
   } catch (error) {
     if (
@@ -68,12 +64,11 @@ export async function POST(
         {
           status: 429,
           headers: {
-            "Retry-After":
-              String(
-                error.retryAfterSeconds,
-              ),
+            "Retry-After": String(
+              error.retryAfterSeconds
+            ),
           },
-        },
+        }
       );
     }
 
@@ -86,13 +81,13 @@ export async function POST(
         error:
           "Please enter a valid password and try again.",
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   try {
     const rawToken = String(
-      parsed.data.token || "",
+      parsed.data.token || ""
     );
 
     const password =
@@ -101,7 +96,6 @@ export async function POST(
     const confirmPassword =
       parsed.data.confirmPassword;
 
-    // Validate password match
     if (
       password !==
       confirmPassword
@@ -111,14 +105,13 @@ export async function POST(
           error:
             "Passwords do not match.",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
-    // Validate password rules
     const passwordCheck =
       signupSchema.shape.password.safeParse(
-        password,
+        password
       );
 
     if (
@@ -129,7 +122,7 @@ export async function POST(
           error:
             "Password must meet minimum requirements.",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -149,13 +142,13 @@ export async function POST(
             token:
               hashedToken,
           },
-        },
+        }
       );
 
     const isInvalid =
       !resetToken ||
       !resetToken.identifier.startsWith(
-        "password-reset:",
+        "password-reset:"
       ) ||
       resetToken.expires <=
         new Date();
@@ -166,57 +159,49 @@ export async function POST(
           error:
             "This reset link is invalid or has expired.",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
     const userEmail =
       resetToken.identifier.replace(
         "password-reset:",
-        "",
+        ""
       );
 
-    // Hash new password
     const passwordHash =
       await bcrypt.hash(
         password,
-        12,
+        12
       );
 
-    // Update password
-    await prisma.user.update(
-      {
-        where: {
-          email:
-            userEmail,
-        },
-        data: {
-          passwordHash,
-        },
+    await prisma.user.update({
+      where: {
+        email: userEmail,
       },
-    );
+      data: {
+        passwordHash,
+      },
+    });
 
-    // Delete used token
     await prisma.verificationToken.deleteMany(
       {
         where: {
           identifier:
             resetToken.identifier,
         },
-      },
+      }
     );
 
-    return NextResponse.json(
-      {
-        ok: true,
-        message:
-          "Password reset successfully.",
-      },
-    );
+    return NextResponse.json({
+      ok: true,
+      message:
+        "Password reset successfully.",
+    });
   } catch (error) {
     console.error(
       "[reset-password:error]",
-      error,
+      error
     );
 
     return NextResponse.json(
@@ -224,7 +209,7 @@ export async function POST(
         error:
           "Unable to reset password right now.",
       },
-      { status: 503 },
+      { status: 503 }
     );
   }
 }

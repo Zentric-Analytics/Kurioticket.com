@@ -23,11 +23,9 @@ export function SigninForm({
   initialMessage = "",
 }: SigninFormProps) {
   const [error, setError] = useState(initialError);
-  const [message, setMessage] =
-    useState(initialMessage);
+  const [message, setMessage] = useState(initialMessage);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] =
-    useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(formData: FormData) {
     setLoading(true);
@@ -35,12 +33,8 @@ export function SigninForm({
     setMessage("");
 
     const parsed = signinSchema.safeParse({
-      email: String(
-        formData.get("email") || ""
-      ),
-      password: String(
-        formData.get("password") || ""
-      ),
+      email: String(formData.get("email") || ""),
+      password: String(formData.get("password") || ""),
     });
 
     if (!parsed.success) {
@@ -51,42 +45,37 @@ export function SigninForm({
       return;
     }
 
-    const result = await signIn(
-      "credentials",
-      {
-        redirect: false,
-        email: parsed.data.email,
-        password: parsed.data.password,
+    const response = await fetch("/api/auth/request-login-code", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ...parsed.data,
         callbackUrl,
-      }
-    );
+      }),
+    });
+
+    const data = await response.json();
 
     setLoading(false);
 
-    if (
-      result?.error ===
-      "EmailVerificationRequired"
-    ) {
-      window.location.href = `/auth/verify-email?email=${encodeURIComponent(
-        parsed.data.email
-      )}`;
-      return;
-    }
-
-    if (!result?.ok) {
+    if (!response.ok) {
       setError(
-        result?.error ===
-          "This account is not available. Please contact support."
-          ? result.error
-          : result?.error === "RateLimited"
-          ? "Too many sign-in attempts. Please wait and try again."
-          : "We could not sign you in. Check your email and password, then try again."
+        String(
+          data.error ||
+            "We could not sign you in. Check your email and password, then try again."
+        )
       );
       return;
     }
 
-    window.location.href =
-      result.url || callbackUrl;
+    window.location.href = String(
+      data.redirectTo ||
+        `/auth/verify-login?email=${encodeURIComponent(
+          parsed.data.email
+        )}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+    );
   }
 
   return (
@@ -143,11 +132,7 @@ export function SigninForm({
               <div className="relative">
                 <Input
                   name="password"
-                  type={
-                    showPassword
-                      ? "text"
-                      : "password"
-                  }
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   required
                   className="h-12 rounded-xl border-slate-300 pr-24 text-slate-900 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
@@ -155,11 +140,7 @@ export function SigninForm({
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setShowPassword(
-                      (prev) => !prev
-                    )
-                  }
+                  onClick={() => setShowPassword((prev) => !prev)}
                   className="focus-ring absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                   aria-label={
                     showPassword
@@ -167,9 +148,7 @@ export function SigninForm({
                       : "Show password"
                   }
                 >
-                  {showPassword
-                    ? "Hide"
-                    : "Show"}
+                  {showPassword ? "Hide" : "Show"}
                 </button>
               </div>
             </Field>
@@ -203,9 +182,7 @@ export function SigninForm({
               disabled={loading}
               className="h-12 w-full rounded-xl bg-slate-900 text-white hover:bg-slate-800"
             >
-              {loading
-                ? "Signing in..."
-                : "Log in"}
+              {loading ? "Sending code..." : "Continue"}
             </Button>
           </form>
 

@@ -28,15 +28,22 @@ export function ForgotPasswordForm() {
     }
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(parsed.data),
-      });
+      const response = await fetch(
+        "/api/auth/forgot-password",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(
+            parsed.data
+          ),
+        }
+      );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
       if (!response.ok) {
         setError(
@@ -48,15 +55,13 @@ export function ForgotPasswordForm() {
         return;
       }
 
-      const successMessage =
-        "If an account exists for this email, password reset instructions have been sent.";
-
-      setMessage(successMessage);
-
-      // preserve codex flow
-      window.location.href = "/auth/check-email";
+      setMessage(
+        "If an account exists for this email, password reset instructions have been sent."
+      );
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(
+        "Something went wrong. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -69,10 +74,14 @@ export function ForgotPasswordForm() {
       </h1>
 
       <p className="mt-2 text-sm text-slate-600">
-        Enter your email to receive secure reset instructions.
+        Enter your email to receive a secure
+        password reset link.
       </p>
 
-      <form action={submit} className="mt-6 grid gap-4">
+      <form
+        action={submit}
+        className="mt-6 grid gap-4"
+      >
         <Field label="Email">
           <Input
             name="email"
@@ -99,7 +108,9 @@ export function ForgotPasswordForm() {
           disabled={loading}
           className="h-12 rounded-xl bg-slate-900 hover:bg-slate-800"
         >
-          {loading ? "Sending..." : "Send reset link"}
+          {loading
+            ? "Sending..."
+            : "Send reset link"}
         </Button>
       </form>
 

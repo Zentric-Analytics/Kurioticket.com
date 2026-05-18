@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
+import {
+  AuthRateLimitError,
+  checkAuthRateLimit,
+} from "@/lib/auth-rate-limit";
 import { signinSchema } from "@/lib/validation";
 import {
   EmailVerificationCooldownError,
@@ -17,12 +20,20 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch (error) {
     console.error("[verify-email:invalid-json]", error);
-    return NextResponse.json({ error: "Unable to verify email right now." }, { status: 400 });
+
+    return NextResponse.json(
+      { error: "Unable to verify email right now." },
+      { status: 400 }
+    );
   }
 
   const input = parseVerifyEmailBody(body);
+
   if (!input) {
-    return NextResponse.json({ error: "Unable to verify email right now." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Unable to verify email right now." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -36,8 +47,16 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof AuthRateLimitError) {
       return NextResponse.json(
-        { error: "Too many verification attempts. Please wait and try again." },
-        { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } },
+        {
+          error:
+            "Too many verification attempts. Please wait and try again.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(error.retryAfterSeconds),
+          },
+        }
       );
     }
 
@@ -47,7 +66,13 @@ export async function POST(request: Request) {
   const verified = await verifyEmailCode(input);
 
   if (!verified) {
-    return NextResponse.json({ error: "The verification code is invalid or expired." }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          "The verification code is invalid or expired.",
+      },
+      { status: 400 }
+    );
   }
 
   return NextResponse.json({ ok: true });
@@ -59,7 +84,11 @@ export async function PUT(request: Request) {
   try {
     body = await request.json();
   } catch (error) {
-    console.error("[verify-email-resend:invalid-json]", error);
+    console.error(
+      "[verify-email-resend:invalid-json]",
+      error
+    );
+
     return NextResponse.json({ ok: true });
   }
 
@@ -76,8 +105,17 @@ export async function PUT(request: Request) {
   } catch (error) {
     if (error instanceof AuthRateLimitError) {
       return NextResponse.json(
-        { ok: false, error: "Too many resend attempts. Please wait and try again." },
-        { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } },
+        {
+          ok: false,
+          error:
+            "Too many resend attempts. Please wait and try again.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(error.retryAfterSeconds),
+          },
+        }
       );
     }
 
@@ -105,14 +143,27 @@ export async function PUT(request: Request) {
       } catch (error) {
         if (error instanceof EmailVerificationCooldownError) {
           return NextResponse.json(
-            { ok: false, error: "Please wait before requesting another verification code." },
-            { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } },
+            {
+              ok: false,
+              error:
+                "Please wait before requesting another verification code.",
+            },
+            {
+              status: 429,
+              headers: {
+                "Retry-After": String(error.retryAfterSeconds),
+              },
+            }
           );
         }
 
         return NextResponse.json(
-          { ok: false, error: "Unable to send verification code right now." },
-          { status: 503 },
+          {
+            ok: false,
+            error:
+              "Unable to send verification code right now.",
+          },
+          { status: 503 }
         );
       }
     }
@@ -136,8 +187,12 @@ function parseVerifyEmailBody(body: unknown) {
 function parseEmail(body: unknown) {
   if (!body || typeof body !== "object") return "";
 
-  const email = String((body as Record<string, unknown>).email || "");
-  const parsed = signinSchema.shape.email.safeParse(email);
+  const email = String(
+    (body as Record<string, unknown>).email || ""
+  );
+
+  const parsed =
+    signinSchema.shape.email.safeParse(email);
 
   return parsed.success ? parsed.data : "";
 }

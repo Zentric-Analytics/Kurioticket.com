@@ -14,6 +14,7 @@ type SigninPageProps = {
     callbackUrl?: string;
     error?: string;
     reset?: string;
+    reason?: string;
   }>;
 };
 
@@ -36,6 +37,8 @@ export default async function SigninPage({
   const initialMessage =
     params?.reset === "success"
       ? "Your password was reset. Log in with your new password."
+      : params?.reason === "inactive"
+      ? "You were signed out after 30 minutes of inactivity. Log in again to continue."
       : "";
 
   const googleEnabled =
