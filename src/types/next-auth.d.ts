@@ -6,12 +6,16 @@ declare module "next-auth" {
       id: string;
       role: string;
       isPremium: boolean;
+      status: string;
+      emailVerified: boolean;
     } & DefaultSession["user"];
   }
 
   interface User {
     role?: string;
     isPremium?: boolean;
+    status?: string;
+    emailVerified?: Date | string | null;
   }
 }
 
@@ -20,5 +24,7 @@ declare module "next-auth/jwt" {
     id?: string;
     role?: string;
     isPremium?: boolean;
+    status?: string;
+    emailVerified?: boolean;
   }
 }

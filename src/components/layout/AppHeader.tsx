@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Bell, ChevronDown, Globe2, Menu, Sparkles, UserCircle, X } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import { Bell, ChevronDown, Globe2, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
 import { Button, LinkButton } from "@/components/ui/Button";
 
 const navItems = [
@@ -16,6 +17,8 @@ const navItems = [
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
+  const { data: session, status } = useSession();
+  const isSignedIn = status === "authenticated" && Boolean(session?.user);
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
@@ -44,13 +47,28 @@ export function AppHeader() {
           <LinkButton href="/dashboard" variant="ghost" size="sm" className="h-10 w-10 px-0" aria-label="Notifications">
             <Bell size={18} />
           </LinkButton>
-          <LinkButton href="/auth/signin" variant="ghost" size="sm" className="gap-2">
-            <UserCircle size={22} />
-            Login
-          </LinkButton>
-          <LinkButton href="/auth/signup" variant="accent" size="sm">
-            Sign Up
-          </LinkButton>
+          {isSignedIn ? (
+            <>
+              <LinkButton href="/dashboard" variant="ghost" size="sm" className="gap-2">
+                <UserCircle size={22} />
+                Dashboard
+              </LinkButton>
+              <Button variant="accent" size="sm" className="gap-2" onClick={() => signOut({ callbackUrl: "/" })}>
+                <LogOut size={18} />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <LinkButton href="/auth/signin" variant="ghost" size="sm" className="gap-2">
+                <UserCircle size={22} />
+                Login
+              </LinkButton>
+              <LinkButton href="/auth/signup" variant="accent" size="sm">
+                Sign Up
+              </LinkButton>
+            </>
+          )}
         </div>
 
         <Button
@@ -85,12 +103,32 @@ export function AppHeader() {
                   {item.label}
                 </Link>
               ))}
-              <Link href="/auth/signin" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted">
-                Login
-              </Link>
-              <Link href="/auth/signup" onClick={() => setOpen(false)} className="rounded-md bg-teal px-3 py-3 text-base font-semibold text-white">
-                Sign Up
-              </Link>
+              {isSignedIn ? (
+                <>
+                  <Link href="/dashboard" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted">
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                    className="rounded-md bg-teal px-3 py-3 text-left text-base font-semibold text-white"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/signin" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted">
+                    Login
+                  </Link>
+                  <Link href="/auth/signup" onClick={() => setOpen(false)} className="rounded-md bg-teal px-3 py-3 text-base font-semibold text-white">
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </nav>
           </aside>
         </>
