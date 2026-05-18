@@ -15,7 +15,10 @@ declare module "next-auth" {
     role?: string;
     isPremium?: boolean;
     status?: string;
-    emailVerified?: Date | string | null;
+    emailVerified?:
+      | Date
+      | string
+      | null;
   }
 }
 

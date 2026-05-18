@@ -15,9 +15,11 @@ export default function SignupPage() {
   return (
     <>
       <AppHeader />
+
       <main className="page-shell flex flex-1 items-center py-10">
         <SignupForm googleEnabled={googleEnabled} />
       </main>
+
       <Footer />
     </>
   );
