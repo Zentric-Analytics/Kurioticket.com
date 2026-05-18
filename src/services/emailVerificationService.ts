@@ -1,7 +1,11 @@
 import { createHash, randomInt } from "node:crypto";
 import { getBaseUrl } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
-import { EmailDeliveryError, sendTransactionalEmail, verificationCodeEmail } from "@/services/emailService";
+import {
+  EmailDeliveryError,
+  sendTransactionalEmail,
+  verificationCodeEmail,
+} from "@/services/emailService";
 
 const verificationCodeTtlMinutes = 10;
 const resendCooldownMs = 60 * 1000;
@@ -28,9 +32,15 @@ export function getEmailVerificationRedirect(email: string) {
   return `/auth/verify-email?email=${encodeURIComponent(email.toLowerCase().trim())}`;
 }
 
-export async function sendEmailVerificationCode(input: { email: string; name?: string | null; action?: string; enforceCooldown?: boolean }) {
+export async function sendEmailVerificationCode(input: {
+  email: string;
+  name?: string | null;
+  action?: string;
+  enforceCooldown?: boolean;
+}) {
   const email = input.email.toLowerCase().trim();
   const code = randomInt(100000, 1000000).toString();
+
   if (input.enforceCooldown) {
     enforceResendCooldown(email);
   }
@@ -39,7 +49,10 @@ export async function sendEmailVerificationCode(input: { email: string; name?: s
   const expires = new Date(Date.now() + verificationCodeTtlMinutes * 60 * 1000);
   const identifier = getVerificationIdentifier(email);
 
-  await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+  await getPrisma().verificationToken.deleteMany({
+    where: { identifier },
+  });
+
   await getPrisma().verificationToken.create({
     data: {
       identifier,
@@ -52,7 +65,12 @@ export async function sendEmailVerificationCode(input: { email: string; name?: s
     await sendTransactionalEmail({
       to: email,
       subject: "Curioticket verification code",
-      html: verificationCodeEmail({ code, name: input.name, expiresInMinutes: verificationCodeTtlMinutes, verifyUrl: `${getBaseUrl()}${getEmailVerificationRedirect(email)}` }),
+      html: verificationCodeEmail({
+        code,
+        name: input.name,
+        expiresInMinutes: verificationCodeTtlMinutes,
+        verifyUrl: `${getBaseUrl()}${getEmailVerificationRedirect(email)}`,
+      }),
       idempotencyKey: `email-verification-${email}-${token.slice(0, 16)}`,
       requireConfigured: true,
     });
@@ -70,10 +88,7 @@ export async function sendEmailVerificationCode(input: { email: string; name?: s
       action: input.action || "email-verification",
       email,
       message: error instanceof Error ? error.message : String(error),
-      status:
-        error instanceof EmailDeliveryError
-          ? error.statusCode
-          : undefined,
+      status: error instanceof EmailDeliveryError ? error.statusCode : undefined,
     });
 
     throw new EmailVerificationError("Unable to send verification code right now.");
@@ -83,13 +98,19 @@ export async function sendEmailVerificationCode(input: { email: string; name?: s
 export async function verifyEmailCode(input: { email: string; code: string }) {
   const email = input.email.toLowerCase().trim();
   const code = input.code.trim();
+
   if (!/^\d{6}$/.test(code)) {
-    console.warn("[auth:verification-failed]", { email, reason: "invalid-format" });
+    console.warn("[auth:verification-failed]", {
+      email,
+      reason: "invalid-format",
+    });
+
     return false;
   }
 
   const identifier = getVerificationIdentifier(email);
   const token = hashVerificationCode(email, code);
+
   const verificationToken = await getPrisma().verificationToken.findUnique({
     where: {
       identifier_token: {
@@ -106,8 +127,14 @@ export async function verifyEmailCode(input: { email: string; code: string }) {
     });
 
     if (verificationToken) {
-      await getPrisma().verificationToken.deleteMany({ where: { identifier, token } });
+      await getPrisma().verificationToken.deleteMany({
+        where: {
+          identifier,
+          token,
+        },
+      });
     }
+
     return false;
   }
 
@@ -115,13 +142,20 @@ export async function verifyEmailCode(input: { email: string; code: string }) {
     where: { email },
     data: { emailVerified: new Date() },
   });
-  await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+
+  await getPrisma().verificationToken.deleteMany({
+    where: { identifier },
+  });
 
   const verified = updateResult.count > 0;
+
   if (verified) {
     console.info("[auth:verification-succeeded]", { email });
   } else {
-    console.warn("[auth:verification-failed]", { email, reason: "user-not-found" });
+    console.warn("[auth:verification-failed]", {
+      email,
+      reason: "user-not-found",
+    });
   }
 
   return verified;

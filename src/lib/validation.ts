@@ -13,9 +13,7 @@ export const flightSearchSchema = z
     departureDate: futureDate,
     returnDate: z.string().optional(),
     travelers: z.coerce.number().int().min(1).max(9).default(1),
-    cabinClass: z
-      .enum(["economy", "premium-economy", "business", "first"])
-      .default("economy"),
+    cabinClass: z.enum(["economy", "premium-economy", "business", "first"]).default("economy"),
     sort: z.enum(["cheapest", "best", "fastest", "stops"]).optional(),
   })
   .refine((data) => data.tripType !== "round-trip" || Boolean(data.returnDate), {
@@ -39,6 +37,7 @@ export const hotelSearchSchema = z
 
 const emailMessage = "Enter a valid email address.";
 const passwordMessage = "Password must meet minimum requirements.";
+
 const emailLocalPartPattern = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~.-]+$/;
 const emailDomainLabelPattern = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 const emailTopLevelDomainPattern = /^[A-Za-z]{2,63}$/;
@@ -54,6 +53,7 @@ export function isStrictEmailAddress(value: string) {
   if (parts.length !== 2) return false;
 
   const [localPart, domain] = parts;
+
   if (!localPart || !domain) return false;
   if (localPart.length > 64) return false;
   if (localPart.startsWith(".") || localPart.endsWith(".")) return false;
