@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { DatabaseUnavailableError } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
-import { createPasswordUser } from "@/services/authService";
+import { DuplicateEmailError, createPasswordUser } from "@/services/authService";
 
 export const runtime = "nodejs";
 
@@ -16,6 +16,7 @@ export async function POST(request: Request) {
   }
 
   const parsed = signupSchema.safeParse(body);
+
   if (!parsed.success) {
     return NextResponse.json(
       { error: getPublicSignupValidationError(parsed.error.flatten().fieldErrors) },
@@ -25,9 +26,23 @@ export async function POST(request: Request) {
 
   try {
     const user = await createPasswordUser(parsed.data);
-    return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } }, { status: 201 });
+
+    return NextResponse.json(
+      {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+      },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("[signup]", error);
+
+    if (error instanceof DuplicateEmailError) {
+      return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
+    }
 
     if (error instanceof DatabaseUnavailableError || isMissingMigrationError(error)) {
       return NextResponse.json({ error: "Unable to create account right now." }, { status: 503 });

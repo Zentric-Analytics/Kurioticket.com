@@ -5,7 +5,7 @@ services:
     plan: free
     branch: main
     autoDeploy: true
-    buildCommand: npm ci && npm run db:deploy && npm run build
+    buildCommand: npm ci && npm run db:deploy:render && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
@@ -61,13 +61,14 @@ services:
         sync: false
       - key: ADMIN_EMAILS
         sync: false
+
   - type: web
     name: curioticket-web-staging
     runtime: node
     plan: free
     branch: dev
     autoDeploy: true
-    buildCommand: npm ci && npm run db:deploy && npm run build
+    buildCommand: npm ci && npm run db:deploy:render && npm run build
     startCommand: npm run start
     healthCheckPath: /api/health
     envVars:
@@ -129,6 +130,7 @@ databases:
     databaseName: curioticket
     user: curioticket
     plan: free
+
   - name: curioticket-postgres-staging
     databaseName: curioticket_staging
     user: curioticket_staging

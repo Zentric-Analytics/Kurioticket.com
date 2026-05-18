@@ -12,7 +12,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "security:secrets": "node scripts/verify-no-secrets.mjs",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:deploy:render": "node scripts/deploy-render-migrations.mjs"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",

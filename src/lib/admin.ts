@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logSafeAuthDiagnostics } from "@/lib/auth-diagnostics";
 import { getAdminEmails } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
 
@@ -8,9 +9,27 @@ type AdminRequest = Request & { headers: Headers };
 
 export async function requireAdminApiSession() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "ADMIN" || session.user.status !== "ACTIVE") {
-    return { response: NextResponse.json({ error: "Admin access required." }, { status: 403 }) };
+
+  if (
+    !session?.user?.id ||
+    session.user.role !== "ADMIN" ||
+    session.user.status !== "ACTIVE" ||
+    !isConfiguredAdminEmail(session.user.email)
+  ) {
+    logSafeAuthDiagnostics("[admin:api-access-denied]", {
+      email: session?.user?.email,
+      role: session?.user?.role,
+      status: session?.user?.status,
+    });
+
+    return {
+      response: NextResponse.json(
+        { error: "Admin access required." },
+        { status: 403 },
+      ),
+    };
   }
+
   return { session };
 }
 

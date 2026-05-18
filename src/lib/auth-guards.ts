@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
+import { getAdminEmails } from "@/lib/env";
 
 export function getLoginRedirect(pathname = "/dashboard") {
   return `/auth/signin?callbackUrl=${encodeURIComponent(pathname)}`;
@@ -23,9 +24,13 @@ export async function requireUserSession(pathname = "/dashboard") {
 export async function requireAdminSession(pathname = "/admin") {
   const session = await requireUserSession(pathname);
 
-  if (session.user.role !== "ADMIN") {
+  if (session.user.role !== "ADMIN" || !isConfiguredAdminEmail(session.user.email)) {
     redirect("/dashboard");
   }
 
   return session;
+}
+
+function isConfiguredAdminEmail(email?: string | null) {
+  return Boolean(email && getAdminEmails().includes(email.toLowerCase().trim()));
 }
