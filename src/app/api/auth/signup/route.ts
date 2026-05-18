@@ -12,14 +12,22 @@ export async function POST(request: Request) {
     body = await request.json();
   } catch (error) {
     console.error("[signup:invalid-json]", error);
-    return NextResponse.json({ error: "Unable to create account right now." }, { status: 400 });
+
+    return NextResponse.json(
+      { error: "Unable to create account right now." },
+      { status: 400 },
+    );
   }
 
   const parsed = signupSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: getPublicSignupValidationError(parsed.error.flatten().fieldErrors) },
+      {
+        error: getPublicSignupValidationError(
+          parsed.error.flatten().fieldErrors,
+        ),
+      },
       { status: 400 },
     );
   }
@@ -41,24 +49,48 @@ export async function POST(request: Request) {
     console.error("[signup]", error);
 
     if (error instanceof DuplicateEmailError) {
-      return NextResponse.json({ error: "An account with this email already exists." }, { status: 409 });
+      return NextResponse.json(
+        { error: "An account with this email already exists." },
+        { status: 409 },
+      );
     }
 
-    if (error instanceof DatabaseUnavailableError || isMissingMigrationError(error)) {
-      return NextResponse.json({ error: "Unable to create account right now." }, { status: 503 });
+    if (
+      error instanceof DatabaseUnavailableError ||
+      isMissingMigrationError(error)
+    ) {
+      return NextResponse.json(
+        { error: "Unable to create account right now." },
+        { status: 503 },
+      );
     }
 
-    return NextResponse.json({ error: "Unable to create account right now." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Unable to create account right now." },
+      { status: 400 },
+    );
   }
 }
 
-function getPublicSignupValidationError(fieldErrors: Record<string, string[] | undefined>) {
-  if (fieldErrors.email?.length) return "Enter a valid email address.";
-  if (fieldErrors.password?.length) return "Password must meet minimum requirements.";
+function getPublicSignupValidationError(
+  fieldErrors: Record<string, string[] | undefined>,
+) {
+  if (fieldErrors.email?.length) {
+    return "Enter a valid email address.";
+  }
+
+  if (fieldErrors.password?.length) {
+    return "Password must meet minimum requirements.";
+  }
+
   return "Unable to create account right now.";
 }
 
 function isMissingMigrationError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
-  return /table .* does not exist|relation .* does not exist|database .* does not exist/i.test(message);
+  const message =
+    error instanceof Error ? error.message : String(error);
+
+  return /table .* does not exist|relation .* does not exist|database .* does not exist/i.test(
+    message,
+  );
 }
