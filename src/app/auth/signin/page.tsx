@@ -10,21 +10,42 @@ export const metadata = {
 };
 
 type SigninPageProps = {
-  searchParams?: Promise<{ callbackUrl?: string; error?: string }>;
+  searchParams?: Promise<{
+    callbackUrl?: string;
+    error?: string;
+  }>;
 };
 
-export default async function SigninPage({ searchParams }: SigninPageProps) {
+export default async function SigninPage({
+  searchParams,
+}: SigninPageProps) {
   const params = await searchParams;
-  const callbackUrl = params?.callbackUrl?.startsWith("/") && !params.callbackUrl.startsWith("//") ? params.callbackUrl : "/dashboard";
-  const initialError = params?.error === "AccountUnavailable" ? "This account is not available. Please contact support." : "";
+
+  const callbackUrl =
+    params?.callbackUrl?.startsWith("/") &&
+    !params.callbackUrl.startsWith("//")
+      ? params.callbackUrl
+      : "/dashboard";
+
+  const initialError =
+    params?.error === "AccountUnavailable"
+      ? "This account is not available. Please contact support."
+      : "";
+
   const googleEnabled = isGoogleAuthConfigured();
 
   return (
     <>
       <AppHeader />
+
       <main className="page-shell flex flex-1 items-center py-10">
-        <SigninForm callbackUrl={callbackUrl} googleEnabled={googleEnabled} initialError={initialError} />
+        <SigninForm
+          callbackUrl={callbackUrl}
+          googleEnabled={googleEnabled}
+          initialError={initialError}
+        />
       </main>
+
       <Footer />
     </>
   );

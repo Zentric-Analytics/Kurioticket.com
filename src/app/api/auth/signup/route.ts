@@ -16,13 +16,27 @@ export async function POST(request: Request) {
   }
 
   const parsed = signupSchema.safeParse(body);
+
   if (!parsed.success) {
-    return NextResponse.json({ error: getPublicSignupValidationError(parsed.error.flatten().fieldErrors) }, { status: 400 });
+    return NextResponse.json(
+      { error: getPublicSignupValidationError(parsed.error.flatten().fieldErrors) },
+      { status: 400 },
+    );
   }
 
   try {
     const user = await createPasswordUser(parsed.data);
-    return NextResponse.json({ user: { id: user.id, email: user.email, name: user.name } }, { status: 201 });
+
+    return NextResponse.json(
+      {
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+        },
+      },
+      { status: 201 },
+    );
   } catch (error) {
     console.error("[signup]", error);
 
