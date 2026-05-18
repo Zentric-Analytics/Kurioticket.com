@@ -6,34 +6,54 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+import { signupSchema } from "@/lib/validation";
 
-export function SignupForm() {
+type SignupFormProps = {
+  googleEnabled?: boolean;
+};
+
+export function SignupForm({ googleEnabled = false }: SignupFormProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function submit(formData: FormData) {
     setLoading(true);
     setError("");
-    const email = String(formData.get("email") || "");
-    const password = String(formData.get("password") || "");
+    const input = {
+      name: String(formData.get("name") || ""),
+      email: String(formData.get("email") || ""),
+      password: String(formData.get("password") || ""),
+    };
+    const parsed = signupSchema.safeParse(input);
+
+    if (!parsed.success) {
+      setLoading(false);
+      setError(getPublicSignupValidationError(parsed.error.flatten().fieldErrors));
+      return;
+    }
+
+    const { email, password } = parsed.data;
     const response = await fetch("/api/auth/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: String(formData.get("name") || ""),
-        email,
-        password,
-      }),
+      body: JSON.stringify(parsed.data),
     });
     const data = await response.json();
     if (!response.ok) {
       setLoading(false);
-      setError(data.error || "Unable to create account.");
+      setError(String(data.error || "Unable to create account right now."));
       return;
     }
 
-    await signIn("credentials", { redirect: false, email, password });
-    window.location.href = "/onboarding";
+    const signInResult = await signIn("credentials", { redirect: false, email, password, callbackUrl: "/onboarding" });
+    setLoading(false);
+
+    if (!signInResult?.ok) {
+      setError("Your account was created, but automatic login failed. Please log in with your new password.");
+      return;
+    }
+
+    window.location.href = signInResult.url || "/onboarding";
   }
 
   return (
@@ -56,12 +76,20 @@ export function SignupForm() {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         <Button disabled={loading}>{loading ? "Creating account..." : "Sign Up"}</Button>
       </form>
-      <Button variant="secondary" className="mt-3 w-full" onClick={() => signIn("google", { callbackUrl: "/onboarding" })}>
-        Continue with Google
-      </Button>
+      {googleEnabled ? (
+        <Button variant="secondary" className="mt-3 w-full" onClick={() => signIn("google", { callbackUrl: "/onboarding" })}>
+          Continue with Google
+        </Button>
+      ) : null}
       <p className="mt-4 text-sm text-muted">
         Already have an account? <Link className="font-semibold text-teal-dark" href="/auth/signin">Log in</Link>
       </p>
     </Card>
   );
+}
+
+function getPublicSignupValidationError(fieldErrors: Record<string, string[] | undefined>) {
+  if (fieldErrors.email?.length) return "Enter a valid email address.";
+  if (fieldErrors.password?.length) return "Password must meet minimum requirements.";
+  return "Unable to create account right now.";
 }
