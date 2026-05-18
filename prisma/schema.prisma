@@ -14,6 +14,12 @@ enum UserRole {
   ADMIN
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
 enum SubscriptionStatus {
   INCOMPLETE
   TRIALING
@@ -122,6 +128,7 @@ model User {
   image                   String?
   passwordHash            String?
   role                    UserRole            @default(USER)
+  status                  UserStatus          @default(ACTIVE)
   isPremium               Boolean             @default(false)
   priceAlertLimitOverride Int?
   onboardedAt             DateTime?
@@ -144,6 +151,7 @@ model User {
   savedTrips              SavedTrip[]
 
   @@index([role])
+  @@index([status])
   @@index([isPremium])
   @@index([createdAt])
 }
@@ -414,6 +422,27 @@ model ProviderHealthLog {
   @@index([service])
   @@index([status])
   @@index([checkedAt])
+}
+
+model AdminAuditLog {
+  id          String   @id @default(cuid())
+  adminUserId String?
+  adminEmail  String
+  action      String
+  targetType  String
+  targetId    String?
+  targetEmail String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([adminUserId])
+  @@index([adminEmail])
+  @@index([action])
+  @@index([targetType, targetId])
+  @@index([targetEmail])
+  @@index([createdAt])
 }
 
 model Notification {

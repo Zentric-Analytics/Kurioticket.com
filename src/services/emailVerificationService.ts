@@ -1,0 +1,81 @@
+import { createHash, randomInt } from "node:crypto";
+import { getBaseUrl } from "@/lib/env";
+import { getPrisma } from "@/lib/prisma";
+import { sendTransactionalEmail, verificationCodeEmail } from "@/services/emailService";
+
+const verificationCodeTtlMinutes = 10;
+
+export class EmailVerificationError extends Error {
+  constructor(message = "Unable to verify email right now.") {
+    super(message);
+    this.name = "EmailVerificationError";
+  }
+}
+
+export function getEmailVerificationRedirect(email: string) {
+  return `/auth/verify-email?email=${encodeURIComponent(email.toLowerCase().trim())}`;
+}
+
+export async function sendEmailVerificationCode(input: { email: string; name?: string | null }) {
+  const email = input.email.toLowerCase().trim();
+  const code = randomInt(100000, 1000000).toString();
+  const token = hashVerificationCode(email, code);
+  const expires = new Date(Date.now() + verificationCodeTtlMinutes * 60 * 1000);
+  const identifier = getVerificationIdentifier(email);
+
+  await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+  await getPrisma().verificationToken.create({
+    data: {
+      identifier,
+      token,
+      expires,
+    },
+  });
+
+  await sendTransactionalEmail({
+    to: email,
+    subject: "Your Curioticket verification code",
+    html: verificationCodeEmail({ code, name: input.name, expiresInMinutes: verificationCodeTtlMinutes, verifyUrl: `${getBaseUrl()}${getEmailVerificationRedirect(email)}` }),
+    idempotencyKey: `email-verification-${email}-${Math.floor(Date.now() / 60000)}`,
+  });
+}
+
+export async function verifyEmailCode(input: { email: string; code: string }) {
+  const email = input.email.toLowerCase().trim();
+  const code = input.code.trim();
+  if (!/^\d{6}$/.test(code)) return false;
+
+  const identifier = getVerificationIdentifier(email);
+  const token = hashVerificationCode(email, code);
+  const verificationToken = await getPrisma().verificationToken.findUnique({
+    where: {
+      identifier_token: {
+        identifier,
+        token,
+      },
+    },
+  });
+
+  if (!verificationToken || verificationToken.expires <= new Date()) {
+    if (verificationToken) {
+      await getPrisma().verificationToken.deleteMany({ where: { identifier, token } });
+    }
+    return false;
+  }
+
+  const updateResult = await getPrisma().user.updateMany({
+    where: { email },
+    data: { emailVerified: new Date() },
+  });
+  await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+
+  return updateResult.count > 0;
+}
+
+function getVerificationIdentifier(email: string) {
+  return `email-verification:${email}`;
+}
+
+function hashVerificationCode(email: string, code: string) {
+  return createHash("sha256").update(`${email.toLowerCase().trim()}:${code}`).digest("hex");
+}

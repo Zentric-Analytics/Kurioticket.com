@@ -37,10 +37,81 @@ export const hotelSearchSchema = z
     path: ["checkOut"],
   });
 
+const emailMessage = "Enter a valid email address.";
+const passwordMessage = "Password must meet minimum requirements.";
+const emailLocalPartPattern = /^[A-Za-z0-9!#$%&'*+/=?^_`{|}~.-]+$/;
+const emailDomainLabelPattern = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+const emailTopLevelDomainPattern = /^[A-Za-z]{2,63}$/;
+const consumerEmailDomains = new Set([
+  "aol.com",
+  "gmail.com",
+  "googlemail.com",
+  "hotmail.com",
+  "icloud.com",
+  "live.com",
+  "me.com",
+  "msn.com",
+  "outlook.com",
+  "proton.me",
+  "protonmail.com",
+  "yahoo.com",
+]);
+
+export function isStrictEmailAddress(value: string) {
+  if (value !== value.trim()) return false;
+  if (value.length < 3 || value.length > 254) return false;
+  if (!/^[\x00-\x7F]+$/.test(value)) return false;
+  if (/\s/.test(value)) return false;
+  if (value.includes("..")) return false;
+
+  const parts = value.split("@");
+  if (parts.length !== 2) return false;
+
+  const [localPart, domain] = parts;
+  if (!localPart || !domain) return false;
+  if (localPart.length > 64) return false;
+  if (localPart.startsWith(".") || localPart.endsWith(".")) return false;
+  if (!emailLocalPartPattern.test(localPart)) return false;
+
+  if (isSuspiciousConsumerMailbox(localPart, domain)) return false;
+
+  if (domain.length > 253) return false;
+  if (domain.startsWith(".") || domain.endsWith(".")) return false;
+
+  const domainLabels = domain.split(".");
+  if (domainLabels.length < 2) return false;
+  if (!emailTopLevelDomainPattern.test(domainLabels[domainLabels.length - 1])) return false;
+
+  return domainLabels.every((label) => emailDomainLabelPattern.test(label));
+}
+
+function isSuspiciousConsumerMailbox(localPart: string, domain: string) {
+  return consumerEmailDomains.has(domain) && localPart.length >= 20 && /^[a-z]+$/.test(localPart);
+}
+
+export const emailSchema = z
+  .string()
+  .min(1, emailMessage)
+  .max(254, emailMessage)
+  .refine(isStrictEmailAddress, emailMessage)
+  .transform((email) => email.toLowerCase());
+
+const passwordSchema = z
+  .string()
+  .min(8, passwordMessage)
+  .max(100, passwordMessage)
+  .regex(/[A-Za-z]/, passwordMessage)
+  .regex(/[0-9]/, passwordMessage);
+
+export const signinSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, passwordMessage).max(100, passwordMessage),
+});
+
 export const signupSchema = z.object({
-  name: z.string().trim().min(2, "Enter your full name.").max(120),
-  email: z.string().trim().email("Enter a valid email address.").max(255),
-  password: z.string().min(8, "Use at least 8 characters.").max(100),
+  name: z.string().trim().min(2, "Unable to create account right now.").max(120, "Unable to create account right now."),
+  email: emailSchema,
+  password: passwordSchema,
 });
 
 export const supportTicketSchema = z.object({

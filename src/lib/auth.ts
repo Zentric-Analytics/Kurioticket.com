@@ -4,7 +4,10 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { getAdminEmails, getAuthSecret } from "@/lib/env";
-import { getPrisma } from "@/lib/prisma";
+import { isGoogleAuthConfigured, logSafeAuthDiagnostics } from "@/lib/auth-diagnostics";
+import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
+import { signinSchema } from "@/lib/validation";
+import { getEmailVerificationRedirect, sendEmailVerificationCode } from "@/services/emailVerificationService";
 
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
@@ -14,16 +17,37 @@ const providers: NextAuthOptions["providers"] = [
       password: { label: "Password", type: "password" },
     },
     async authorize(credentials) {
-      const email = credentials?.email?.toLowerCase().trim();
-      const password = credentials?.password;
+      const parsed = signinSchema.safeParse(credentials);
+      if (!parsed.success) {
+        console.error("[auth:credentials-validation]", parsed.error.flatten().fieldErrors);
+        logSafeAuthDiagnostics("[auth:credentials-validation-diagnostics]");
+        return null;
+      }
 
-      if (!email || !password) return null;
-
+      const { email, password } = parsed.data;
       const user = await getPrisma().user.findUnique({ where: { email } });
-      if (!user?.passwordHash) return null;
+      if (!user?.passwordHash) {
+        console.error("[auth:credentials-user-missing]", { email });
+        logSafeAuthDiagnostics("[auth:credentials-user-missing-diagnostics]", { email });
+        return null;
+      }
+      if (user.status !== "ACTIVE") {
+        console.error("[auth:credentials-account-unavailable]", { email, status: user.status });
+        logSafeAuthDiagnostics("[auth:credentials-account-unavailable-diagnostics]", { email, role: user.role, status: user.status });
+        throw new Error("This account is not available. Please contact support.");
+      }
 
       const valid = await bcrypt.compare(password, user.passwordHash);
-      if (!valid) return null;
+      if (!valid) {
+        console.error("[auth:credentials-invalid-password]", { email });
+        logSafeAuthDiagnostics("[auth:credentials-invalid-password-diagnostics]", { email });
+        return null;
+      }
+
+      if (!user.emailVerified) {
+        await sendEmailVerificationCode({ email, name: user.name });
+        throw new Error("EmailVerificationRequired");
+      }
 
       return {
         id: user.id,
@@ -32,22 +56,24 @@ const providers: NextAuthOptions["providers"] = [
         image: user.image,
         role: user.role,
         isPremium: user.isPremium,
+        status: user.status,
+        emailVerified: user.emailVerified,
       };
     },
   }),
 ];
 
-if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
+if (isGoogleAuthConfigured()) {
   providers.push(
     GoogleProvider({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+      clientId: process.env.AUTH_GOOGLE_ID || "",
+      clientSecret: process.env.AUTH_GOOGLE_SECRET || "",
     }),
   );
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: process.env.DATABASE_URL ? PrismaAdapter(getPrisma() as never) : undefined,
+  adapter: isDatabaseConfigured() ? PrismaAdapter(getPrisma() as never) : undefined,
   providers,
   secret: getAuthSecret() || undefined,
   session: {
@@ -59,15 +85,32 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user }) {
-      const email = user.email?.toLowerCase();
-      if (!email) return true;
+      const email = user.email?.toLowerCase().trim();
+      if (!email) return false;
+
+      if (!isDatabaseConfigured()) return true;
+
+      const dbUser = await getPrisma().user.findUnique({
+        where: { email },
+        select: { id: true, status: true, role: true, emailVerified: true, name: true },
+      });
+      if (dbUser?.status && dbUser.status !== "ACTIVE") {
+        console.error("[auth:signin-account-unavailable]", { email, status: dbUser.status });
+        logSafeAuthDiagnostics("[auth:signin-account-unavailable-diagnostics]", { email, role: dbUser.role, status: dbUser.status });
+        return "/auth/signin?error=AccountUnavailable";
+      }
+      if (dbUser && !dbUser.emailVerified) {
+        await sendEmailVerificationCode({ email, name: dbUser.name });
+        return getEmailVerificationRedirect(email);
+      }
 
       const adminEmails = getAdminEmails();
       if (adminEmails.includes(email)) {
-        await getPrisma().user.update({
+        await getPrisma().user.updateMany({
           where: { email },
           data: { role: "ADMIN" },
         });
+        user.role = "ADMIN";
       }
 
       return true;
@@ -77,17 +120,28 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = (user as { role?: string }).role || "USER";
         token.isPremium = Boolean((user as { isPremium?: boolean }).isPremium);
+        token.status = (user as { status?: string }).status || "ACTIVE";
+        token.emailVerified = Boolean((user as { emailVerified?: Date | string | null }).emailVerified);
       }
 
-      if (token.email && process.env.DATABASE_URL) {
+      if (token.email && isDatabaseConfigured()) {
+        const email = token.email.toLowerCase();
+        const adminEmails = getAdminEmails();
         const dbUser = await getPrisma().user.findUnique({
-          where: { email: token.email },
-          select: { id: true, role: true, isPremium: true },
+          where: { email },
+          select: { id: true, role: true, isPremium: true, status: true, emailVerified: true },
         });
         if (dbUser) {
+          const isAdminEmail = adminEmails.includes(email);
+          const role = isAdminEmail ? "ADMIN" : dbUser.role === "ADMIN" ? "USER" : dbUser.role;
+          if (isAdminEmail && dbUser.role !== "ADMIN") {
+            await getPrisma().user.update({ where: { id: dbUser.id }, data: { role: "ADMIN" } });
+          }
           token.id = dbUser.id;
-          token.role = dbUser.role;
+          token.role = role;
           token.isPremium = dbUser.isPremium;
+          token.status = dbUser.status;
+          token.emailVerified = Boolean(dbUser.emailVerified);
         }
       }
 
@@ -98,6 +152,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = String(token.id || "");
         session.user.role = String(token.role || "USER");
         session.user.isPremium = Boolean(token.isPremium);
+        session.user.status = String(token.status || "ACTIVE");
+        session.user.emailVerified = Boolean(token.emailVerified);
       }
       return session;
     },
