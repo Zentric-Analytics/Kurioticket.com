@@ -7,7 +7,6 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
-
 import { signupSchema } from "@/lib/validation";
 
 type SignupFormProps = {
@@ -17,7 +16,9 @@ type SignupFormProps = {
 export function SignupForm({
   googleEnabled = false,
 }: SignupFormProps) {
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
+
   const [loading, setLoading] =
     useState(false);
 
@@ -76,7 +77,8 @@ export function SignupForm({
       },
     );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if (!response.ok) {
       setLoading(false);
@@ -96,7 +98,8 @@ export function SignupForm({
         redirect: false,
         email,
         password,
-        callbackUrl: "/onboarding",
+        callbackUrl:
+          "/onboarding",
       });
 
     setLoading(false);

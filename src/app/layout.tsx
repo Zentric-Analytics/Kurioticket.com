@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
 import { AuthProvider } from "@/components/auth/AuthProvider";
 
 const geistSans = Geist({
@@ -18,8 +19,12 @@ export const metadata: Metadata = {
     default: "Curioticket | Find Cheap Flights Fast",
     template: "%s | Curioticket",
   },
-  description: "Compare affordable flights and hotels in seconds with a calmer travel decision platform.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  description:
+    "Compare affordable flights and hotels in seconds with a calmer travel decision platform.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000",
+  ),
 };
 
 export default function RootLayout({
@@ -34,7 +39,9 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
     >
       <body className="flex min-h-full flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
