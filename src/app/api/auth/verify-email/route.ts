@@ -45,7 +45,11 @@ export async function PUT(request: Request) {
       select: { email: true, emailVerified: true, name: true },
     });
     if (user && !user.emailVerified) {
-      await sendEmailVerificationCode({ email, name: user.name });
+      try {
+        await sendEmailVerificationCode({ email, name: user.name, action: "verify-email-resend" });
+      } catch {
+        return NextResponse.json({ ok: false, error: "Unable to send verification code right now." }, { status: 503 });
+      }
     }
   }
 

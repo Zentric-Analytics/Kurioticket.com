@@ -1,7 +1,7 @@
 import { createHash, randomInt } from "node:crypto";
 import { getBaseUrl } from "@/lib/env";
 import { getPrisma } from "@/lib/prisma";
-import { sendTransactionalEmail, verificationCodeEmail } from "@/services/emailService";
+import { EmailDeliveryError, sendTransactionalEmail, verificationCodeEmail } from "@/services/emailService";
 
 const verificationCodeTtlMinutes = 10;
 
@@ -16,7 +16,7 @@ export function getEmailVerificationRedirect(email: string) {
   return `/auth/verify-email?email=${encodeURIComponent(email.toLowerCase().trim())}`;
 }
 
-export async function sendEmailVerificationCode(input: { email: string; name?: string | null }) {
+export async function sendEmailVerificationCode(input: { email: string; name?: string | null; action?: string }) {
   const email = input.email.toLowerCase().trim();
   const code = randomInt(100000, 1000000).toString();
   const token = hashVerificationCode(email, code);
@@ -32,12 +32,32 @@ export async function sendEmailVerificationCode(input: { email: string; name?: s
     },
   });
 
-  await sendTransactionalEmail({
-    to: email,
-    subject: "Your Curioticket verification code",
-    html: verificationCodeEmail({ code, name: input.name, expiresInMinutes: verificationCodeTtlMinutes, verifyUrl: `${getBaseUrl()}${getEmailVerificationRedirect(email)}` }),
-    idempotencyKey: `email-verification-${email}-${Math.floor(Date.now() / 60000)}`,
-  });
+  try {
+    await sendTransactionalEmail({
+      to: email,
+      subject: "Curioticket verification code",
+      html: verificationCodeEmail({ code, name: input.name, expiresInMinutes: verificationCodeTtlMinutes, verifyUrl: `${getBaseUrl()}${getEmailVerificationRedirect(email)}` }),
+      idempotencyKey: `email-verification-${email}-${token.slice(0, 16)}`,
+      requireConfigured: true,
+    });
+
+    console.info("[email-verification:sent]", {
+      action: input.action || "email-verification",
+      email,
+    });
+  } catch (error) {
+    console.error("[email-verification:failed]", {
+      action: input.action || "email-verification",
+      email,
+      message: error instanceof Error ? error.message : String(error),
+      status:
+        error instanceof EmailDeliveryError
+          ? error.statusCode
+          : undefined,
+    });
+
+    throw new EmailVerificationError("Unable to send verification code right now.");
+  }
 }
 
 export async function verifyEmailCode(input: { email: string; code: string }) {
