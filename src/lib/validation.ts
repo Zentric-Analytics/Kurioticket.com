@@ -52,7 +52,13 @@ export const emailSchema = z
   .refine((email) => strictEmailPattern.test(email), emailMessage)
   .refine((email) => {
     const [localPart] = email.split("@");
-    return Boolean(localPart) && !localPart.startsWith(".") && !localPart.endsWith(".") && !localPart.includes("..");
+
+    return (
+      Boolean(localPart) &&
+      !localPart.startsWith(".") &&
+      !localPart.endsWith(".") &&
+      !localPart.includes("..")
+    );
   }, emailMessage);
 
 const passwordSchema = z
@@ -68,7 +74,11 @@ export const signinSchema = z.object({
 });
 
 export const signupSchema = z.object({
-  name: z.string().trim().min(2, "Unable to create account right now.").max(120, "Unable to create account right now."),
+  name: z
+    .string()
+    .trim()
+    .min(2, "Unable to create account right now.")
+    .max(120, "Unable to create account right now."),
   email: emailSchema,
   password: passwordSchema,
 });

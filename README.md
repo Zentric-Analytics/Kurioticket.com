@@ -73,6 +73,14 @@ For production:
 npm run db:deploy
 ```
 
+Render uses:
+
+```bash
+npm run db:deploy:render
+```
+
+The Render migration command first detects whether an existing Render PostgreSQL database already has application tables but no `_prisma_migrations` history. When that legacy state is found, it baselines the initial Prisma migration before applying pending migrations so deployments do not fail on already-existing tables.
+
 The schema includes users, auth sessions, subscriptions, saved flights/hotels/searches, search history, price alerts, support tickets, redirect logs, provider logs, notifications, preferences, trips, legal documents, feature flags, analytics, and provider health logs.
 
 ## Travel Provider Setup

@@ -242,6 +242,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = String(token.id || "");
         session.user.role = String(token.role || "USER");
         session.user.isPremium = Boolean(token.isPremium);
+
         session.user.status = String(
           token.status || "ACTIVE",
         );
