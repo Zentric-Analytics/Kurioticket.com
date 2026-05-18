@@ -16,7 +16,9 @@ type SignupFormProps = {
 export function SignupForm({
   googleEnabled = false,
 }: SignupFormProps) {
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
+
   const [loading, setLoading] =
     useState(false);
 
@@ -30,9 +32,11 @@ export function SignupForm({
       name: String(
         formData.get("name") || "",
       ),
+
       email: String(
         formData.get("email") || "",
       ),
+
       password: String(
         formData.get("password") || "",
       ),
@@ -61,10 +65,12 @@ export function SignupForm({
       "/api/auth/signup",
       {
         method: "POST",
+
         headers: {
           "Content-Type":
             "application/json",
         },
+
         body: JSON.stringify(
           parsed.data,
         ),
@@ -98,7 +104,7 @@ export function SignupForm({
 
     setLoading(false);
 
-    // Preserve backend verification flow from codex branch
+    // Preserve backend verification flow
     if (
       signInResult?.error ===
       "EmailVerificationRequired"
@@ -106,6 +112,7 @@ export function SignupForm({
       window.location.href = `/auth/verify-email?email=${encodeURIComponent(
         email,
       )}`;
+
       return;
     }
 
@@ -129,9 +136,10 @@ export function SignupForm({
       </h1>
 
       <p className="mt-2 text-sm text-muted">
-        No passport, government ID,
-        phone number, or address
-        needed.
+        No passport,
+        government ID,
+        phone number, or
+        address needed.
       </p>
 
       <form
@@ -166,8 +174,9 @@ export function SignupForm({
         </Field>
 
         <p className="text-xs leading-5 text-muted">
-          By creating an account,
-          you agree to{" "}
+          By creating an
+          account, you agree
+          to{" "}
           <Link
             className="font-semibold text-teal-dark"
             href="/legal/terms-of-service"
@@ -181,8 +190,8 @@ export function SignupForm({
           >
             Privacy Policy
           </Link>
-          , and partner redirect
-          disclosures.
+          , and partner
+          redirect disclosures.
         </p>
 
         {error ? (
@@ -214,7 +223,8 @@ export function SignupForm({
       ) : null}
 
       <p className="mt-4 text-sm text-muted">
-        Already have an account?{" "}
+        Already have an
+        account?{" "}
         <Link
           className="font-semibold text-teal-dark"
           href="/auth/signin"
@@ -232,11 +242,16 @@ function getPublicSignupValidationError(
     string[] | undefined
   >,
 ) {
-  if (fieldErrors.email?.length) {
+  if (
+    fieldErrors.email?.length
+  ) {
     return "Enter a valid email address.";
   }
 
-  if (fieldErrors.password?.length) {
+  if (
+    fieldErrors.password
+      ?.length
+  ) {
     return "Password must meet minimum requirements.";
   }
 

@@ -10,13 +10,18 @@ import {
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+) {
   let body: unknown;
 
   try {
     body = await request.json();
   } catch (error) {
-    console.error("[signup:invalid-json]", error);
+    console.error(
+      "[signup:invalid-json]",
+      error,
+    );
 
     return NextResponse.json(
       {
@@ -60,7 +65,10 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("[signup]", error);
+    console.error(
+      "[signup]",
+      error,
+    );
 
     if (
       error instanceof

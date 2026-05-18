@@ -143,7 +143,7 @@ const providers: NextAuthOptions["providers"] =
           return null;
         }
 
-        // Preserve codex verification flow
+        // Email verification enforcement
         if (
           !user.emailVerified
         ) {
@@ -283,7 +283,7 @@ export const authOptions: NextAuthOptions =
           return "/auth/signin?error=AccountUnavailable";
         }
 
-        // Preserve codex verification gate
+        // Email verification gate
         if (
           dbUser &&
           !dbUser.emailVerified
@@ -411,7 +411,6 @@ export const authOptions: NextAuthOptions =
                 email,
               );
 
-            // allowlist overrides DB role
             const role =
               isAdminEmail
                 ? "ADMIN"

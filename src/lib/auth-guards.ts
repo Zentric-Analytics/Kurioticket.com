@@ -3,7 +3,10 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
 import { getAdminEmails } from "@/lib/env";
-import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
+import {
+  getPrisma,
+  isDatabaseConfigured,
+} from "@/lib/prisma";
 import { getEmailVerificationRedirect } from "@/services/emailVerificationService";
 
 export function getLoginRedirect(
@@ -38,7 +41,7 @@ export async function requireUserSession(
     );
   }
 
-  // Preserve codex email verification enforcement
+  // Enforce email verification
   if (isDatabaseConfigured()) {
     const user =
       await getPrisma().user.findUnique(

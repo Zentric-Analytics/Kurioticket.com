@@ -2,12 +2,10 @@ import { promises as dns } from "node:dns";
 import bcrypt from "bcryptjs";
 
 import { getPrisma } from "@/lib/prisma";
-
 import {
   isStrictEmailAddress,
   signupSchema,
 } from "@/lib/validation";
-
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 
 export class DuplicateEmailError extends Error {
@@ -59,6 +57,7 @@ export async function createPasswordUser(
   const { email, password } =
     parsed.data;
 
+  // Preserve strict validation from codex
   if (
     !isStrictEmailAddress(
       email,
@@ -72,6 +71,7 @@ export async function createPasswordUser(
     throw new InvalidEmailError();
   }
 
+  // Preserve MX/domain validation from codex
   if (
     !(await hasValidEmailHost(
       email,
