@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   TicketCheck,
+  TrendingUp,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -38,6 +39,13 @@ const trustItems = [
   { title: "Great Deals", body: "Compare more before you buy", icon: BadgeDollarSign },
 ];
 
+
+
+const spotlightMetrics = [
+  { label: "Routes compared", value: "1,200+", icon: Globe2 },
+  { label: "Hotels indexed", value: "850k+", icon: Hotel },
+  { label: "Avg. savings", value: "Up to 32%", icon: TrendingUp },
+];
 const destinations = [
   {
     city: "Dubai",
@@ -92,12 +100,24 @@ export default function Home() {
 
           <div className="page-shell relative grid min-h-[670px] content-start gap-8 pb-12 pt-12 sm:pt-16">
             <div className="max-w-2xl">
-              <h1 className="max-w-xl text-5xl font-black leading-[0.96] tracking-normal text-slate-950 sm:text-6xl lg:text-7xl">
-                Find Cheap Flights Fast
+              <span className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/80 px-3 py-1 text-xs font-extrabold uppercase tracking-[0.14em] text-violet-700">
+                Premium booking experience
+              </span>
+              <h1 className="mt-4 max-w-xl text-5xl font-black leading-[0.96] tracking-normal text-slate-950 sm:text-6xl lg:text-7xl">
+                Discover flights and hotels worth booking
               </h1>
-              <p className="mt-6 max-w-lg text-lg font-semibold leading-8 text-slate-700">
-                Search hundreds of airlines and travel sites to find the best deals for your next trip.
+              <p className="mt-6 max-w-xl text-lg font-semibold leading-8 text-slate-700">
+                Compare trusted providers in seconds, lock in better prices, and plan your trip with confidence.
               </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <LinkButton href="/flights/results" variant="primary" size="md" className="bg-[#5b21d6] hover:bg-[#4c1d95]">
+                  Find flights
+                  <ArrowRight size={16} />
+                </LinkButton>
+                <LinkButton href="/hotels/results" variant="ghost" size="md" className="border border-violet-200 bg-white/80 text-violet-800 hover:bg-white">
+                  Browse hotels
+                </LinkButton>
+              </div>
               <div className="mt-7 grid gap-4 text-slate-900 sm:grid-cols-2 lg:grid-cols-4">
                 {assurances.map((item) => (
                   <CompactAssurance key={item.label} icon={<item.icon size={20} />} label={item.label} />
@@ -107,6 +127,18 @@ export default function Home() {
 
             <div className="mt-2 max-w-[1080px]">
               <SearchTabs />
+            </div>
+
+            <div className="grid max-w-3xl gap-3 sm:grid-cols-3">
+              {spotlightMetrics.map((item) => (
+                <div key={item.label} className="rounded-lg border border-violet-100 bg-white/80 p-3 shadow-sm backdrop-blur">
+                  <div className="flex items-center gap-2 text-violet-700">
+                    <item.icon size={16} />
+                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500">{item.label}</span>
+                  </div>
+                  <p className="mt-1 text-xl font-black text-slate-950">{item.value}</p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
