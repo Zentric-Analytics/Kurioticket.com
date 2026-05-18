@@ -23,9 +23,11 @@ export function SigninForm({
   initialMessage = "",
 }: SigninFormProps) {
   const [error, setError] = useState(initialError);
-  const [message, setMessage] = useState(initialMessage);
+  const [message, setMessage] =
+    useState(initialMessage);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] =
+    useState(false);
 
   async function submit(formData: FormData) {
     setLoading(true);
@@ -33,30 +35,40 @@ export function SigninForm({
     setMessage("");
 
     const parsed = signinSchema.safeParse({
-      email: String(formData.get("email") || ""),
-      password: String(formData.get("password") || ""),
+      email: String(
+        formData.get("email") || ""
+      ),
+      password: String(
+        formData.get("password") || ""
+      ),
     });
 
     if (!parsed.success) {
       setLoading(false);
       setError(
-        "We could not sign you in. Check your email and password, then try again.",
+        "We could not sign you in. Check your email and password, then try again."
       );
       return;
     }
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email: parsed.data.email,
-      password: parsed.data.password,
-      callbackUrl,
-    });
+    const result = await signIn(
+      "credentials",
+      {
+        redirect: false,
+        email: parsed.data.email,
+        password: parsed.data.password,
+        callbackUrl,
+      }
+    );
 
     setLoading(false);
 
-    if (result?.error === "EmailVerificationRequired") {
+    if (
+      result?.error ===
+      "EmailVerificationRequired"
+    ) {
       window.location.href = `/auth/verify-email?email=${encodeURIComponent(
-        parsed.data.email,
+        parsed.data.email
       )}`;
       return;
     }
@@ -67,22 +79,22 @@ export function SigninForm({
           "This account is not available. Please contact support."
           ? result.error
           : result?.error === "RateLimited"
-            ? "Too many sign-in attempts. Please wait and try again."
-            : "We could not sign you in. Check your email and password, then try again.",
+          ? "Too many sign-in attempts. Please wait and try again."
+          : "We could not sign you in. Check your email and password, then try again."
       );
       return;
     }
 
-    window.location.href = result.url || callbackUrl;
+    window.location.href =
+      result.url || callbackUrl;
   }
 
   return (
     <section className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.16)] lg:grid-cols-[1.1fr_1fr]">
-      {/* Hero Section */}
       <aside className="relative hidden min-h-[620px] lg:block">
         <Image
-          src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1800&q=80"
-          alt="Traveler exploring a bright city destination"
+          src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1800&q=80"
+          alt="Premium airplane wing view above the clouds at sunrise"
           fill
           priority
           sizes="(max-width: 1024px) 0px, (max-width: 1536px) 52vw, 44vw"
@@ -97,13 +109,11 @@ export function SigninForm({
           </p>
 
           <p className="mt-3 max-w-md text-3xl font-semibold leading-tight">
-            Unlock curated fares, stays, and experiences designed for your next
-            escape.
+            Find premium fares and stays for your next destination.
           </p>
         </div>
       </aside>
 
-      {/* Login Form */}
       <div className="flex min-h-[620px] items-center justify-center bg-gradient-to-b from-slate-50 to-white p-4 sm:p-8 lg:p-12">
         <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-lg backdrop-blur sm:p-8">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
@@ -133,7 +143,11 @@ export function SigninForm({
               <div className="relative">
                 <Input
                   name="password"
-                  type={showPassword ? "text" : "password"}
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
                   autoComplete="current-password"
                   required
                   className="h-12 rounded-xl border-slate-300 pr-24 text-slate-900 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
@@ -142,16 +156,20 @@ export function SigninForm({
                 <button
                   type="button"
                   onClick={() =>
-                    setShowPassword((prev) => !prev)
+                    setShowPassword(
+                      (prev) => !prev
+                    )
                   }
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-800"
+                  className="focus-ring absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
                   aria-label={
                     showPassword
                       ? "Hide password"
                       : "Show password"
                   }
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  {showPassword
+                    ? "Hide"
+                    : "Show"}
                 </button>
               </div>
             </Field>
@@ -159,7 +177,7 @@ export function SigninForm({
             <div className="flex justify-end">
               <Link
                 href="/auth/forgot-password"
-                className="text-sm font-semibold text-cyan-700 transition hover:text-cyan-800"
+                className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
               >
                 Forgot password?
               </Link>
@@ -183,16 +201,18 @@ export function SigninForm({
             <Button
               type="submit"
               disabled={loading}
-              className="h-12 w-full rounded-xl bg-slate-900 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-70"
+              className="h-12 w-full rounded-xl bg-slate-900 text-white hover:bg-slate-800"
             >
-              {loading ? "Signing in..." : "Log in"}
+              {loading
+                ? "Signing in..."
+                : "Log in"}
             </Button>
           </form>
 
           {googleEnabled ? (
             <Button
               variant="secondary"
-              className="mt-3 h-12 w-full rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50"
+              className="mt-3 h-12 w-full rounded-xl border-slate-300 text-slate-700 hover:bg-slate-50"
               onClick={() =>
                 signIn("google", {
                   callbackUrl,
@@ -204,15 +224,17 @@ export function SigninForm({
             </Button>
           ) : null}
 
-          <p className="mt-6 text-center text-sm text-slate-600">
-            New to CurioTicket?{" "}
-            <Link
-              className="font-semibold text-cyan-700 hover:text-cyan-800"
-              href="/auth/signup"
-            >
-              Create an account
-            </Link>
-          </p>
+          <div className="mt-5 flex items-center justify-between text-sm">
+            <p className="text-slate-600">
+              New to CurioTicket?{" "}
+              <Link
+                className="font-semibold text-cyan-700 hover:text-cyan-800"
+                href="/auth/signup"
+              >
+                Create an account
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </section>
