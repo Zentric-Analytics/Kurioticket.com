@@ -1,6 +1,17 @@
 import { Resend } from "resend";
+import type { ErrorResponse } from "resend";
 
 let resendClient: Resend | null = null;
+
+export class EmailDeliveryError extends Error {
+  statusCode?: number | null;
+
+  constructor(message: string, statusCode?: number | null) {
+    super(message);
+    this.name = "EmailDeliveryError";
+    this.statusCode = statusCode;
+  }
+}
 
 function getResend() {
   if (!process.env.RESEND_API_KEY) return null;
@@ -13,16 +24,25 @@ export async function sendTransactionalEmail(input: {
   subject: string;
   html: string;
   idempotencyKey?: string;
+  requireConfigured?: boolean;
 }) {
   const resend = getResend();
-  if (!resend) {
+  const from = process.env.RESEND_FROM_EMAIL || "";
+
+  if (!resend || !from) {
+    if (input.requireConfigured) {
+      throw new EmailDeliveryError(
+        !resend ? "Resend API key is not configured." : "Resend sender email is not configured.",
+      );
+    }
+
     console.info("[email:fallback]", input.subject, input.to);
     return { id: "resend-not-configured" };
   }
 
   const { data, error } = await resend.emails.send(
     {
-      from: process.env.RESEND_FROM_EMAIL || "Curioticket <support@curioticket.com>",
+      from,
       to: input.to,
       subject: input.subject,
       html: input.html,
@@ -30,8 +50,12 @@ export async function sendTransactionalEmail(input: {
     input.idempotencyKey ? { headers: { "Idempotency-Key": input.idempotencyKey } } : undefined,
   );
 
-  if (error) throw new Error(error.message);
+  if (error) throw new EmailDeliveryError(error.message, getResendStatusCode(error));
   return { id: data?.id };
+}
+
+function getResendStatusCode(error: ErrorResponse) {
+  return typeof error.statusCode === "number" ? error.statusCode : null;
 }
 
 export function priceAlertEmail(input: { name?: string | null; route: string; price: string; url: string }) {

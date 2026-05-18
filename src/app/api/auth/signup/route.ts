@@ -7,6 +7,7 @@ import {
   InvalidEmailError,
   createPasswordUser,
 } from "@/services/authService";
+import { EmailVerificationError, sendEmailVerificationCode } from "@/services/emailVerificationService";
 
 export const runtime = "nodejs";
 
@@ -54,6 +55,12 @@ export async function POST(
         parsed.data,
       );
 
+    await sendEmailVerificationCode({
+      email: parsed.data.email,
+      name: parsed.data.name,
+      action: "signup",
+    });
+
     return NextResponse.json(
       {
         user: {
@@ -93,6 +100,19 @@ export async function POST(
             "Enter a valid email address.",
         },
         { status: 400 },
+      );
+    }
+
+    if (
+      error instanceof
+      EmailVerificationError
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Unable to send verification code right now. Please try again.",
+        },
+        { status: 503 },
       );
     }
 
