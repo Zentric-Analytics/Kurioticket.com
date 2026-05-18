@@ -48,6 +48,17 @@ Copy `.env.example` and fill provider credentials:
 
 Never commit `.env` or `.env.local`. Only `NEXT_PUBLIC_` values may be used in browser code. Travel provider keys, Stripe secret keys, Resend keys, OpenAI keys, database URLs, and auth secrets must remain server-side.
 
+### Auth and Google OAuth
+
+Authentication uses NextAuth credentials plus optional Google OAuth. Set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` to show the Google button on sign-in/sign-up. If either variable is missing, the Google button is hidden gracefully.
+
+Allowed Google OAuth callback URLs:
+
+- Staging: `https://staging.curioticket.com/api/auth/callback/google`
+- Production: `https://www.curioticket.com/api/auth/callback/google`
+
+Admin access is controlled only by comma-separated `ADMIN_EMAILS` values. Emails are trimmed and normalized to lowercase, for example `ADMIN_EMAILS=admin@zentricresearch.com`.
+
 ## Prisma
 
 ```bash
@@ -61,6 +72,14 @@ For production:
 ```bash
 npm run db:deploy
 ```
+
+Render uses:
+
+```bash
+npm run db:deploy:render
+```
+
+The Render migration command first detects whether an existing Render PostgreSQL database already has application tables but no `_prisma_migrations` history. When that legacy state is found, it baselines the initial Prisma migration before applying pending migrations so deployments do not fail on already-existing tables.
 
 The schema includes users, auth sessions, subscriptions, saved flights/hotels/searches, search history, price alerts, support tickets, redirect logs, provider logs, notifications, preferences, trips, legal documents, feature flags, analytics, and provider health logs.
 

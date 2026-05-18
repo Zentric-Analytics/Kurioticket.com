@@ -5,13 +5,36 @@ const globalForPrisma = globalThis as unknown as {
   curioticketPrisma?: PrismaClient;
 };
 
+const databaseUrlEnvNames = ["DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL", "POSTGRES_URL_NON_POOLING"] as const;
+
+export class DatabaseUnavailableError extends Error {
+  constructor(message = "Database access is not available. Check DATABASE_URL and run database migrations.") {
+    super(message);
+    this.name = "DatabaseUnavailableError";
+  }
+}
+
+export function getDatabaseUrl() {
+  for (const name of databaseUrlEnvNames) {
+    const value = process.env[name]?.trim();
+    if (value) return value;
+  }
+
+  return "";
+}
+
+export function isDatabaseConfigured() {
+  return Boolean(getDatabaseUrl());
+}
+
 export function getPrisma() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is required for database access.");
+  const connectionString = getDatabaseUrl();
+  if (!connectionString) {
+    throw new DatabaseUnavailableError("Database access is not available. Set DATABASE_URL for this deployment.");
   }
 
   if (!globalForPrisma.curioticketPrisma) {
-    const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+    const adapter = new PrismaPg({ connectionString });
     globalForPrisma.curioticketPrisma = new PrismaClient({
       adapter,
       log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
@@ -22,7 +45,7 @@ export function getPrisma() {
 }
 
 export function getOptionalPrisma() {
-  if (!process.env.DATABASE_URL) return null;
+  if (!isDatabaseConfigured()) return null;
   return getPrisma();
 }
 
