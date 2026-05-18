@@ -1,42 +1,82 @@
 import bcrypt from "bcryptjs";
 import { getPrisma } from "@/lib/prisma";
-import { isStrictEmailAddress, signupSchema } from "@/lib/validation";
+
+import {
+  isStrictEmailAddress,
+  signupSchema,
+} from "@/lib/validation";
+
 import { trackAnalyticsEvent } from "@/services/analyticsService";
 
 export class DuplicateEmailError extends Error {
   constructor() {
-    super("An account with this email already exists.");
+    super(
+      "An account with this email already exists.",
+    );
+
     this.name = "DuplicateEmailError";
   }
 }
 
-export async function createPasswordUser(input: { name: string; email: string; password: string }) {
-  const parsed = signupSchema.safeParse(input);
+export async function createPasswordUser(
+  input: {
+    name: string;
+    email: string;
+    password: string;
+  },
+) {
+  const parsed =
+    signupSchema.safeParse(input);
+
   if (!parsed.success) {
-    console.error("[signup:service-validation]", parsed.error.flatten().fieldErrors);
-    throw new Error("Invalid signup input.");
+    console.error(
+      "[signup:service-validation]",
+      parsed.error.flatten().fieldErrors,
+    );
+
+    throw new Error(
+      "Invalid signup input.",
+    );
   }
 
-  const { email, password } = parsed.data;
+  const { email, password } =
+    parsed.data;
+
   if (!isStrictEmailAddress(email)) {
-    console.error("[signup:service-email-validation]", { email });
-    throw new Error("Invalid signup input.");
+    console.error(
+      "[signup:service-email-validation]",
+      { email },
+    );
+
+    throw new Error(
+      "Invalid signup input.",
+    );
   }
 
-  const name = parsed.data.name.trim();
-  const existing = await getPrisma().user.findUnique({ where: { email } });
-  if (existing) throw new DuplicateEmailError();
+  const name =
+    parsed.data.name.trim();
 
-  const passwordHash = await bcrypt.hash(password, 12);
+  const existing =
+    await getPrisma().user.findUnique({
+      where: { email },
+    });
+
+  if (existing) {
+    throw new DuplicateEmailError();
+  }
+
+  const passwordHash =
+    await bcrypt.hash(password, 12);
 
   try {
-    const user = await getPrisma().user.create({
-      data: {
-        name,
-        email,
-        passwordHash,
-      },
-    });
+    const user =
+      await getPrisma().user.create({
+        data: {
+          name,
+          email,
+          passwordHash,
+        },
+      });
 
     await trackAnalyticsEvent({
       userId: user.id,
@@ -46,11 +86,22 @@ export async function createPasswordUser(input: { name: string; email: string; p
 
     return user;
   } catch (error) {
-    if (isUniqueEmailError(error)) throw new DuplicateEmailError();
+    if (isUniqueEmailError(error)) {
+      throw new DuplicateEmailError();
+    }
+
     throw error;
   }
 }
 
-function isUniqueEmailError(error: unknown) {
-  return error instanceof Error && /Unique constraint failed|P2002|unique/i.test(error.message) && /email/i.test(error.message);
+function isUniqueEmailError(
+  error: unknown,
+) {
+  return (
+    error instanceof Error &&
+    /Unique constraint failed|P2002|unique/i.test(
+      error.message,
+    ) &&
+    /email/i.test(error.message)
+  );
 }
