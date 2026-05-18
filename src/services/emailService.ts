@@ -15,11 +15,7 @@ export class EmailDeliveryError extends Error {
 
 function getResend() {
   if (!process.env.RESEND_API_KEY) return null;
-
-  if (!resendClient) {
-    resendClient = new Resend(process.env.RESEND_API_KEY);
-  }
-
+  if (!resendClient) resendClient = new Resend(process.env.RESEND_API_KEY);
   return resendClient;
 }
 
@@ -36,14 +32,11 @@ export async function sendTransactionalEmail(input: {
   if (!resend || !from) {
     if (input.requireConfigured) {
       throw new EmailDeliveryError(
-        !resend
-          ? "Resend API key is not configured."
-          : "Resend sender email is not configured."
+        !resend ? "Resend API key is not configured." : "Resend sender email is not configured.",
       );
     }
 
     console.info("[email:fallback]", input.subject, input.to);
-
     return { id: "resend-not-configured" };
   }
 
@@ -54,37 +47,18 @@ export async function sendTransactionalEmail(input: {
       subject: input.subject,
       html: input.html,
     },
-    input.idempotencyKey
-      ? {
-          headers: {
-            "Idempotency-Key": input.idempotencyKey,
-          },
-        }
-      : undefined
+    input.idempotencyKey ? { headers: { "Idempotency-Key": input.idempotencyKey } } : undefined,
   );
 
-  if (error) {
-    throw new EmailDeliveryError(
-      error.message,
-      getResendStatusCode(error)
-    );
-  }
-
+  if (error) throw new EmailDeliveryError(error.message, getResendStatusCode(error));
   return { id: data?.id };
 }
 
 function getResendStatusCode(error: ErrorResponse) {
-  return typeof error.statusCode === "number"
-    ? error.statusCode
-    : null;
+  return typeof error.statusCode === "number" ? error.statusCode : null;
 }
 
-export function priceAlertEmail(input: {
-  name?: string | null;
-  route: string;
-  price: string;
-  url: string;
-}) {
+export function priceAlertEmail(input: { name?: string | null; route: string; price: string; url: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">A meaningful price change was found</h1>
@@ -95,10 +69,7 @@ export function priceAlertEmail(input: {
   `;
 }
 
-export function supportTicketEmail(input: {
-  ticketId: string;
-  subject: string;
-}) {
+export function supportTicketEmail(input: { ticketId: string; subject: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">We received your request</h1>
@@ -110,12 +81,7 @@ export function supportTicketEmail(input: {
   `;
 }
 
-export function verificationCodeEmail(input: {
-  code: string;
-  name?: string | null;
-  expiresInMinutes: number;
-  verifyUrl: string;
-}) {
+export function verificationCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number; verifyUrl: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Your Curioticket verification code</h1>
@@ -128,12 +94,7 @@ export function verificationCodeEmail(input: {
   `;
 }
 
-export function passwordResetEmail(input: {
-  code: string;
-  name?: string | null;
-  expiresInMinutes: number;
-  resetUrl: string;
-}) {
+export function passwordResetEmail(input: { code: string; name?: string | null; expiresInMinutes: number; resetUrl: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">Your Curioticket password reset code</h1>
@@ -142,22 +103,6 @@ export function passwordResetEmail(input: {
       <p>This code expires in ${input.expiresInMinutes} minutes.</p>
       <p><a href="${input.resetUrl}" style="color:#0f766e">Reset your password</a></p>
       <p>If you did not request a Curioticket password reset, you can ignore this email.</p>
-    </div>
-  `;
-}
-
-export function loginVerificationCodeEmail(input: {
-  code: string;
-  name?: string | null;
-  expiresInMinutes: number;
-}) {
-  return `
-    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h1 style="font-size:22px">Your Curioticket login verification code</h1>
-      <p>${input.name ? `Hi ${input.name},` : "Hi,"} use this code to finish logging in to Curioticket:</p>
-      <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${input.code}</p>
-      <p>This code expires in ${input.expiresInMinutes} minutes.</p>
-      <p>If you did not try to log in to Curioticket, you can ignore this email.</p>
     </div>
   `;
 }

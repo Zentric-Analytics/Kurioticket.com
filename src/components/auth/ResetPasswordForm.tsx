@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
+import { resetPasswordSchema } from "@/lib/validation";
 
 export function ResetPasswordForm({
   token,
@@ -28,25 +29,21 @@ export function ResetPasswordForm({
       formData.get("confirmPassword") || ""
     );
 
-    if (password.length < 8) {
-      setLoading(false);
-      setError(
-        "Password must be at least 8 characters."
-      );
-      return;
-    }
-
-    if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-      setLoading(false);
-      setError(
-        "Password must include letters and numbers."
-      );
-      return;
-    }
-
     if (password !== confirmPassword) {
       setLoading(false);
       setError("Passwords do not match.");
+      return;
+    }
+
+    const parsed = resetPasswordSchema.safeParse({
+      password,
+    });
+
+    if (!parsed.success) {
+      setLoading(false);
+      setError(
+        "Password must meet minimum requirements."
+      );
       return;
     }
 
@@ -87,9 +84,7 @@ export function ResetPasswordForm({
           "/auth/signin?reset=success";
       }, 1100);
     } catch {
-      setError(
-        "Something went wrong. Please try again."
-      );
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

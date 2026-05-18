@@ -10,20 +10,15 @@ export const metadata = {
 };
 
 type ResetPasswordPageProps = {
-  searchParams?: Promise<{
-    token?: string;
-  }>;
+  searchParams?: Promise<{ token?: string }>;
 };
 
 export default async function ResetPasswordPage({
   searchParams,
 }: ResetPasswordPageProps) {
   const params = await searchParams;
-
   const token =
-    typeof params?.token === "string"
-      ? params.token
-      : "";
+    typeof params?.token === "string" ? params.token : "";
 
   return (
     <>
@@ -39,8 +34,7 @@ export default async function ResetPasswordPage({
             </h1>
 
             <p className="mt-2 text-sm text-slate-600">
-              This password reset link is invalid
-              or incomplete.
+              This password reset link is invalid or incomplete.
             </p>
 
             <Link

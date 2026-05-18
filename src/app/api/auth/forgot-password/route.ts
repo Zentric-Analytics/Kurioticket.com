@@ -18,7 +18,7 @@ const genericResponse = {
 };
 
 export async function POST(
-  request: Request
+  request: Request,
 ) {
   let body: unknown;
 
@@ -27,30 +27,32 @@ export async function POST(
   } catch (error) {
     console.error(
       "[forgot-password:invalid-json]",
-      error
+      error,
     );
 
     return NextResponse.json(
-      genericResponse
+      genericResponse,
     );
   }
 
   const parsed =
     forgotPasswordSchema.safeParse(
-      body
+      body,
     );
 
   const email = parsed.success
     ? parsed.data.email
     : undefined;
 
+  // Rate limiting
   try {
     checkAuthRateLimit({
       action: "forgot-password",
       email,
       request,
       limit: 5,
-      windowMs: 15 * 60 * 1000,
+      windowMs:
+        15 * 60 * 1000,
     });
   } catch (error) {
     if (
@@ -65,20 +67,22 @@ export async function POST(
         {
           status: 429,
           headers: {
-            "Retry-After": String(
-              error.retryAfterSeconds
-            ),
+            "Retry-After":
+              String(
+                error.retryAfterSeconds,
+              ),
           },
-        }
+        },
       );
     }
 
     throw error;
   }
 
+  // Always generic response
   if (!parsed.success) {
     return NextResponse.json(
-      genericResponse
+      genericResponse,
     );
   }
 
@@ -90,19 +94,23 @@ export async function POST(
       getPrisma();
 
     const user =
-      await prisma.user.findUnique({
-        where: {
-          email: normalizedEmail,
+      await prisma.user.findUnique(
+        {
+          where: {
+            email:
+              normalizedEmail,
+          },
         },
-      });
+      );
 
     // Prevent account enumeration
     if (!user) {
       return NextResponse.json(
-        genericResponse
+        genericResponse,
       );
     }
 
+    // Generate secure token
     const rawToken =
       crypto
         .randomBytes(32)
@@ -119,17 +127,21 @@ export async function POST(
     const expires =
       new Date(
         Date.now() +
-          30 * 60 * 1000
+          30 *
+            60 *
+            1000,
       );
 
+    // Delete old tokens
     await prisma.verificationToken.deleteMany(
       {
         where: {
           identifier,
         },
-      }
+      },
     );
 
+    // Save token
     await prisma.verificationToken.create(
       {
         data: {
@@ -138,7 +150,7 @@ export async function POST(
             hashedToken,
           expires,
         },
-      }
+      },
     );
 
     const baseUrl =
@@ -147,58 +159,63 @@ export async function POST(
       "http://localhost:3000";
 
     const resetUrl = `${baseUrl}/auth/reset-password?token=${encodeURIComponent(
-      rawToken
+      rawToken,
+    )}&email=${encodeURIComponent(
+      normalizedEmail,
     )}`;
 
-    await sendTransactionalEmail({
-      to: normalizedEmail,
-      subject:
-        "Reset your CurioTicket password",
-      html: `
-        <div style="font-family: Arial, sans-serif; color: #0f172a; max-width: 600px; margin: auto;">
-          <h1>Reset your password</h1>
+    // Send email
+    await sendTransactionalEmail(
+      {
+        to: normalizedEmail,
+        subject:
+          "Reset your CurioTicket password",
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #0f172a; max-width: 600px; margin: auto;">
+            <h1>Reset your password</h1>
 
-          <p>
-            We received a request to reset your CurioTicket password.
-          </p>
+            <p>
+              We received a request to reset your CurioTicket password.
+            </p>
 
-          <p>
-            Click the secure button below to create a new password.
-            This link expires in 30 minutes.
-          </p>
+            <p>
+              Click the secure button below to create a new password.
+              This link expires in 30 minutes.
+            </p>
 
-          <p style="margin: 32px 0;">
-            <a
-              href="${resetUrl}"
-              style="
-                background:#0f172a;
-                color:#ffffff;
-                padding:14px 24px;
-                border-radius:8px;
-                text-decoration:none;
-                display:inline-block;
-                font-weight:600;
-              "
-            >
-              Reset Password
-            </a>
-          </p>
+            <p style="margin: 32px 0;">
+              <a
+                href="${resetUrl}"
+                style="
+                  background:#0f172a;
+                  color:#ffffff;
+                  padding:14px 24px;
+                  border-radius:8px;
+                  text-decoration:none;
+                  display:inline-block;
+                  font-weight:600;
+                "
+              >
+                Reset Password
+              </a>
+            </p>
 
-          <p>
-            If you did not request this,
-            you can safely ignore this email.
-          </p>
-        </div>
-      `,
-    });
+            <p>
+              If you did not request this,
+              you can safely ignore this email.
+            </p>
+          </div>
+        `,
+      },
+    );
   } catch (error) {
     console.error(
       "[forgot-password:error]",
-      error
+      error,
     );
   }
 
   return NextResponse.json(
-    genericResponse
+    genericResponse,
   );
 }
