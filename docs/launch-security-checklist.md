@@ -56,7 +56,7 @@ Enable or expect GitHub Secret Protection and secret scanning for the repository
 - Run Prisma migrations against production intentionally.
 - Confirm `/api/health` returns OK.
 - Confirm travel provider API calls work server-side.
-- Confirm missing or failed live providers show maintenance messages in production instead of development fallback data.
+- Confirm missing or failed live providers show maintenance messages in production/staging and that local fallback data only runs when explicitly enabled.
 
 ## Provider Checks
 

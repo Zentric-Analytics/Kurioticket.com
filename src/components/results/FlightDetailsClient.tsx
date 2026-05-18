@@ -26,7 +26,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
       .finally(() => setLoading(false));
   }, [id]);
 
-  async function continueToBooking() {
+  async function continueToProvider() {
     const response = await fetch("/api/redirect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -40,7 +40,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
   if (loading) {
     return (
       <main className="page-shell flex-1 py-10">
-        <Card className="p-6 text-muted">Loading flight decision center...</Card>
+        <Card className="p-6 text-muted">Loading flight details...</Card>
       </main>
     );
   }
@@ -62,7 +62,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
         <div className="page-shell py-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-sm font-semibold text-teal-dark">Intelligent Travel Decision Center</p>
+              <p className="text-sm font-semibold text-teal-dark">Flight Metasearch Details</p>
               <h1 className="mt-2 text-3xl font-bold text-navy">
                 {flight.originAirport} <ArrowRight className="inline" size={24} /> {flight.destinationAirport}
               </h1>
@@ -72,7 +72,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
             </div>
             <div className="text-left lg:text-right">
               <div className="text-3xl font-bold text-navy">{formatCurrency(flight.price, flight.currency)}</div>
-              <p className="text-sm text-muted">final price is verified by partner before payment</p>
+              <p className="text-sm text-muted">Price and availability are confirmed on the external provider site</p>
             </div>
           </div>
         </div>
@@ -80,15 +80,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
 
       <div className="page-shell grid gap-6 py-6 lg:grid-cols-[1fr_340px]">
         <section className="space-y-6">
-          {!flight.partnerRedirectUrl && !flight.bookingUrl ? (
-            <Card className="border-amber/30 bg-amber/10 p-5">
-              <h2 className="text-lg font-bold text-navy">Booking Handoff Status</h2>
-              <p className="mt-2 text-sm leading-6 text-amber">
-                This offer is currently displayed using provider test mode. Final booking handoff is not enabled yet.
-              </p>
-            </Card>
-          ) : null}
-
           <Card className="p-5">
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
               <div>
@@ -130,10 +121,9 @@ export function FlightDetailsClient({ id }: { id: string }) {
           </Card>
 
           <Card className="p-5">
-            <h2 className="text-lg font-bold text-navy">Trust and Redirect Transparency</h2>
+            <h2 className="text-lg font-bold text-navy">External Provider Transparency</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              You are being redirected securely to complete your booking through the airline or trusted travel partner.
-              Curioticket does not issue tickets at launch and does not store card or passport data.
+              Curioticket is a flight metasearch platform. We help you compare options, then send you securely to an external provider where prices, rules, availability, and purchase steps are completed.
             </p>
           </Card>
         </section>
@@ -161,8 +151,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
               ))}
             </div>
           </Card>
-          <Button variant="accent" size="lg" className="w-full" onClick={continueToBooking} disabled={!flight.partnerRedirectUrl && !flight.bookingUrl}>
-            Continue to Booking
+          <Button variant="accent" size="lg" className="w-full" onClick={continueToProvider} disabled={!flight.partnerRedirectUrl && !flight.bookingUrl}>
+            Continue to Provider
           </Button>
         </aside>
       </div>

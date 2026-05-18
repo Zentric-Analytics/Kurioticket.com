@@ -30,7 +30,6 @@ export function FlightResultsClient() {
   const params = useSearchParams();
   const [sort, setSort] = useState<SortMode>((params.get("sort") as SortMode) || "cheapest");
   const [results, setResults] = useState<PublicFlightResult[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [messageIndex, setMessageIndex] = useState(0);
@@ -39,47 +38,64 @@ export function FlightResultsClient() {
   const [maxStops, setMaxStops] = useState(3);
 
   const body = useMemo(
-    () => ({
-      tripType: params.get("tripType") || "round-trip",
-      origin: params.get("origin") || "IAH",
-      destination: params.get("destination") || "HND",
-      departureDate: params.get("departureDate") || nextDate(28),
-      returnDate: params.get("returnDate") || nextDate(35),
-      travelers: Number(params.get("travelers") || 1),
-      cabinClass: params.get("cabinClass") || "economy",
-      sort,
-    }),
+    () => {
+      const origin = params.get("origin")?.trim() || "";
+      const destination = params.get("destination")?.trim() || "";
+      const departureDate = params.get("departureDate")?.trim() || "";
+      const tripType = params.get("tripType") || "round-trip";
+      const returnDate = params.get("returnDate")?.trim() || "";
+      const hasSearch = Boolean(origin && destination && departureDate && (tripType !== "round-trip" || returnDate));
+
+      if (!hasSearch) return null;
+
+      return {
+        tripType,
+        origin,
+        destination,
+        departureDate,
+        returnDate,
+        travelers: Number(params.get("travelers") || 1),
+        cabinClass: params.get("cabinClass") || "economy",
+        sort,
+      };
+    },
     [params, sort],
   );
 
   useEffect(() => {
+    if (!body) return;
+
     let active = true;
-    fetch("/api/flights/search", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    })
-      .then(async (response) => {
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Unable to search flights.");
-        return data as { results: PublicFlightResult[]; warnings?: string[] };
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      setError("");
+      fetch("/api/flights/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       })
-      .then((data) => {
-        if (!active) return;
-        setResults(data.results);
-        setWarnings(data.warnings || []);
-        setMaxPrice(Math.max(500, Math.ceil(Math.max(...data.results.map((flight) => flight.price), 500) / 100) * 100));
-      })
-      .catch((searchError) => {
-        if (!active) return;
-        setError(searchError instanceof Error ? searchError.message : "Unable to search flights.");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.error || "Unable to search flights.");
+          return data as { results: PublicFlightResult[]; warnings?: string[] };
+        })
+        .then((data) => {
+          if (!active) return;
+          setResults(data.results);
+          setMaxPrice(Math.max(500, Math.ceil(Math.max(...data.results.map((flight) => flight.price), 500) / 100) * 100));
+        })
+        .catch((searchError) => {
+          if (!active) return;
+          setError(searchError instanceof Error ? searchError.message : "Unable to search flights.");
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, 0);
 
     return () => {
       active = false;
+      window.clearTimeout(timer);
     };
   }, [body]);
 
@@ -90,6 +106,25 @@ export function FlightResultsClient() {
   }, [loading]);
 
   const filtered = results.filter((flight) => flight.price <= maxPrice && flight.stops <= maxStops);
+
+  if (!body) {
+    return (
+      <main className="flex-1 bg-[#f6f8fb]">
+        <div className="page-shell py-10">
+          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="flex items-center gap-2 text-sm font-bold text-teal-dark">
+              <Plane size={16} />
+              Flight search
+            </p>
+            <h1 className="mt-2 text-2xl font-black tracking-normal text-navy">Start a flight search</h1>
+            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-muted">
+              Enter your departure airport, destination, and travel date on the homepage to compare live flight results.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="flex-1 bg-[#f6f8fb]">
@@ -143,12 +178,6 @@ export function FlightResultsClient() {
             <InsightCard icon={<ShieldCheck size={18} />} label="Confidence scoring" value="Value, risk, comfort" />
             <InsightCard icon={<Sparkles size={18} />} label="Premium signals" value="Calm decision support" />
           </div>
-
-          {warnings.length ? (
-            <div className="rounded-xl border border-amber/30 bg-amber/10 p-4 text-sm font-semibold text-amber">
-              {warnings[0]}
-            </div>
-          ) : null}
 
           {loading ? (
             <div className="space-y-4">
@@ -264,8 +293,3 @@ function InsightCard({ icon, label, value }: { icon: ReactNode; label: string; v
   );
 }
 
-function nextDate(offset: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + offset);
-  return date.toISOString().slice(0, 10);
-}

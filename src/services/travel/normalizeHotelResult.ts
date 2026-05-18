@@ -44,7 +44,7 @@ function normalizeAmadeusHotel(raw: unknown, search: HotelSearchParams): Normali
     currency: price.currency || "USD",
     amenities: offer.hotel.amenities?.slice(0, 6) || ["Verified partner inventory"],
     roomType: offer.offers?.[0]?.room?.typeEstimated?.category || "Standard room",
-    cancellationInfo: offer.offers?.[0]?.policies?.cancellations ? "Cancellation policy available" : "Cancellation rules confirmed before booking",
+    cancellationInfo: offer.offers?.[0]?.policies?.cancellations ? "Cancellation policy available" : "Cancellation rules reviewed on external provider site",
     bookingUrl: `https://www.google.com/travel/hotels/${encodeURIComponent(search.destination)}`,
     rawProviderReference: { provider: "amadeus-hotels", id: offer.hotel.hotelId },
   });
@@ -81,9 +81,9 @@ function normalizePartnerHotel(raw: unknown, search: HotelSearchParams): Normali
     pricePerNight: nightly || nightlyPrice(item.total || 0, search),
     totalPrice: item.total || (nightly || 0) * nights(search),
     currency: (item.currency || "USD").toUpperCase(),
-    amenities: item.amenities || ["Free Wi-Fi", "Flexible booking"],
+    amenities: item.amenities || ["Free Wi-Fi", "Flexible cancellation"],
     roomType: "Standard room",
-    cancellationInfo: "Policy shown by booking partner",
+    cancellationInfo: "Policy shown by external provider",
     bookingUrl: item.url || `https://www.google.com/travel/hotels/${encodeURIComponent(search.destination)}`,
     rawProviderReference: { provider: "hotel-partner", id: item.id },
   });
@@ -160,7 +160,7 @@ function buildReasons(amenities: string[], scores: ReturnType<typeof scoreHotel>
   if (scores.valueScore >= 78) reasons.push("Strong value for the stay length.");
   if (scores.arrivalSuitabilityScore >= 80) reasons.push("Good fit for low-stress arrival logistics.");
   if (amenities.length >= 3) reasons.push("Useful amenities for a smoother stay.");
-  if (reasons.length === 0) reasons.push("Affordable stay with transparent partner booking.");
+  if (reasons.length === 0) reasons.push("Affordable stay with transparent external provider comparison.");
   return reasons;
 }
 

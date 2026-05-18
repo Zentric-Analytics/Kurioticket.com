@@ -78,7 +78,7 @@ export function fallbackHotels(search: HotelSearchParams): NormalizedHotelResult
         location: `${search.destination} central stay area`,
         pricePerNight: 178,
         totalPrice: 178 * nights(search),
-        amenities: ["Flexible booking", "Quiet rooms", "Workspace", "24-hour desk"],
+        amenities: ["Flexible cancellation", "Quiet rooms", "Workspace", "24-hour desk"],
       },
       search,
     ),

@@ -11,7 +11,7 @@ export function Footer() {
             Search flights and hotels for free, compare trusted partner prices, and make calmer travel decisions.
           </p>
           <p className="mt-4 text-xs leading-5 text-slate-400">
-            Curioticket is not an airline and does not issue tickets at launch. Final booking and payment happen with the airline, hotel, or booking partner.
+            Curioticket is a travel metasearch platform. External providers confirm current pricing, rules, availability, and purchase steps.
           </p>
         </div>
         <div>

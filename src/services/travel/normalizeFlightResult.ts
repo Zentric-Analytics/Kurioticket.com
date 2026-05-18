@@ -2,6 +2,7 @@ import { nanoid } from "nanoid";
 import type { FlightSearchParams, Layover, NormalizedFlightResult } from "@/lib/types";
 import { minutesToDuration, sanitizeAirportCode } from "@/lib/utils";
 import { scoreFlight } from "@/services/travel/scoring";
+import { buildTravelpayoutsAffiliateUrl, getTravelpayoutsMarker } from "@/services/travel/providers/travelpayoutsProvider";
 
 const airlineNames: Record<string, string> = {
   AA: "American Airlines",
@@ -74,7 +75,7 @@ function normalizeAmadeusFlight(raw: unknown, search: FlightSearchParams): Norma
     layovers,
     cabinClass: search.cabinClass,
     baggageInfo,
-    refundInfo: "Refund rules are confirmed by the booking partner before payment.",
+    refundInfo: "Fare rules are reviewed on the external provider site.",
     price: Number(offer.price.grandTotal),
     currency: offer.price.currency || "USD",
     rawProviderReference: { provider: "amadeus", id: offer.id },
@@ -192,8 +193,8 @@ function normalizeKiwiFlight(raw: unknown, search: FlightSearchParams): Normaliz
     stops: Math.max(route.length - 1, 0),
     layovers: buildKiwiLayovers(route),
     cabinClass: search.cabinClass,
-    baggageInfo: "Baggage rules are shown by the booking partner.",
-    refundInfo: "Refund rules are confirmed by the booking partner.",
+    baggageInfo: "Baggage rules are shown by the external provider.",
+    refundInfo: "Fare rules are reviewed on the external provider site.",
     price: Number(offer.price),
     currency: offer.currency || "USD",
     bookingUrl: offer.deep_link,
@@ -246,7 +247,7 @@ function buildFlight(input: {
   rawProviderReference?: unknown;
 }): NormalizedFlightResult {
   const scores = scoreFlight(input);
-  const partnerUrl = input.bookingUrl || "";
+  const partnerUrl = input.bookingUrl || buildMetasearchPartnerUrl(input);
 
   return {
     id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,
@@ -282,7 +283,7 @@ function buildReasons(input: { price: number; stops: number; baggageInfo: string
   if (scores.valueScore >= 78) reasons.push("Strong balance of price, duration, and comfort.");
   if (scores.riskScore <= 35) reasons.push("Lower disruption risk based on route complexity.");
   if (input.baggageInfo.toLowerCase().includes("included")) reasons.push("Baggage details appear favorable.");
-  if (reasons.length === 0) reasons.push("Affordable option with transparent partner booking.");
+  if (reasons.length === 0) reasons.push("Affordable option with transparent external provider comparison.");
   return reasons;
 }
 
@@ -318,14 +319,14 @@ function buildDuffelLayovers(
 }
 
 function buildDuffelBaggageInfo(baggages?: Array<{ type?: string; quantity?: number }>) {
-  if (!baggages?.length) return "Baggage details are confirmed by Duffel before booking.";
+  if (!baggages?.length) return "Baggage details are reviewed on the external provider site.";
 
   const checked = baggages.find((bag) => bag.type === "checked");
   const carryOn = baggages.find((bag) => bag.type === "carry_on");
   const parts = [];
   if (carryOn?.quantity) parts.push(`${carryOn.quantity} carry-on included`);
   if (checked?.quantity) parts.push(`${checked.quantity} checked bag${checked.quantity > 1 ? "s" : ""} included`);
-  return parts.length ? parts.join(", ") : "Baggage details are confirmed by Duffel before booking.";
+  return parts.length ? parts.join(", ") : "Baggage details are reviewed on the external provider site.";
 }
 
 function buildDuffelRefundInfo(conditions?: {
@@ -348,7 +349,23 @@ function buildDuffelRefundInfo(conditions?: {
     parts.push("Changes not allowed before departure");
   }
 
-  return parts.length ? parts.join(". ") : "Change and refund rules vary by fare and are confirmed before booking.";
+  return parts.length ? parts.join(". ") : "Change and refund rules vary by fare and are reviewed externally.";
+}
+
+function buildMetasearchPartnerUrl(input: {
+  provider: NormalizedFlightResult["provider"];
+  originAirport: string;
+  destinationAirport: string;
+  departureTime: string;
+}) {
+  if (!getTravelpayoutsMarker()) return "";
+
+  return buildTravelpayoutsAffiliateUrl({
+    origin: input.originAirport,
+    destination: input.destinationAirport,
+    departureDate: input.departureTime.slice(0, 10),
+    subId: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-metasearch`,
+  });
 }
 
 function formatDuffelCabin(value?: string) {

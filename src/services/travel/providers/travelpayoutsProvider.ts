@@ -15,13 +15,20 @@ export function getTravelpayoutsMarker() {
 }
 
 export function buildTravelpayoutsAffiliateUrl(input: {
-  url: string;
+  url?: string;
+  origin?: string;
+  destination?: string;
+  departureDate?: string;
+  returnDate?: string;
   subId?: string;
 }) {
   const marker = getTravelpayoutsMarker();
-  const url = new URL("https://www.aviasales.com/search");
+  const url = new URL(input.url || "https://www.aviasales.com/search");
   url.searchParams.set("marker", marker);
-  url.searchParams.set("params", input.url);
+  if (input.origin) url.searchParams.set("origin_iata", input.origin);
+  if (input.destination) url.searchParams.set("destination_iata", input.destination);
+  if (input.departureDate) url.searchParams.set("depart_date", input.departureDate);
+  if (input.returnDate) url.searchParams.set("return_date", input.returnDate);
   if (input.subId) url.searchParams.set("sub_id", input.subId);
   return url.toString();
 }

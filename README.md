@@ -1,8 +1,8 @@
 # Curioticket
 
-Curioticket is an Intelligent Stress-Free Travel Confidence Platform. Phase 1 focuses on free flight and hotel search, normalized provider results, partner redirects, account dashboards, price alerts, premium subscription plumbing, support, legal pages, admin foundations, and Render deployment readiness.
+Curioticket is an Intelligent Stress-Free Travel Confidence Platform. Phase 1 focuses on premium flight and hotel metasearch, normalized provider results, safe external provider redirects, account dashboards, price alerts, premium subscription plumbing, support, legal pages, admin foundations, and Render deployment readiness.
 
-Curioticket is not an airline and does not issue tickets at launch. Users complete final booking and payment with airlines, hotels, or trusted booking partners.
+Curioticket is not an airline, OTA, or ticket issuer. Users compare options on Curioticket and continue externally to airlines, hotels, affiliate partners, or travel providers for current pricing, rules, availability, and purchase steps.
 
 ## Tech Stack
 
@@ -44,6 +44,7 @@ Copy `.env.example` and fill provider credentials:
 - `KIWI_API_KEY`, `TRAVELPAYOUTS_API_KEY`, `TRAVELPAYOUTS_MARKER`
 - `HOTEL_API_KEY`
 - `ADMIN_EMAILS`
+- `ENABLE_DEVELOPMENT_FALLBACKS` should remain `false` outside intentional local testing
 
 Never commit `.env` or `.env.local`. Only `NEXT_PUBLIC_` values may be used in browser code. Travel provider keys, Stripe secret keys, Resend keys, OpenAI keys, database URLs, and auth secrets must remain server-side.
 
@@ -71,17 +72,17 @@ Provider calls happen only in backend services under `src/services/travel`.
 - Amadeus is the secondary flight provider.
 - Kiwi/Tequila is the third flight provider.
 - Travelpayouts is not a replacement for Duffel. It is the affiliate, enrichment, destination discovery, travel trends, SEO, and monetization layer.
-- Hotels use Amadeus Hotels when Amadeus credentials exist, then a hotel partner/Travelpayouts-style fallback if configured.
+- Hotels use Amadeus Hotels when Amadeus credentials exist, then a hotel partner/Travelpayouts-style enrichment path if configured.
 
-If provider credentials are missing, unavailable, or rate-limited in local development, the aggregator returns clearly labeled development fallback results. In production, Curioticket does not pretend fallback data is live data; the search API returns a professional live-provider unavailable message instead. Raw provider responses are never returned to users.
+Provider credentials missing, unavailable, or rate-limited never produce fake live results in production or staging. Local fallback data is paused by default and only runs when `ENABLE_DEVELOPMENT_FALLBACKS=true` is set locally. Raw provider responses are never returned to users.
 
 ### Duffel Setup
 
-Set `DUFFEL_API_KEY` in Render and local `.env.local` when testing live searches. Duffel calls are made only from backend services with `Authorization: Bearer <token>` and the `Duffel-Version` header. Curioticket creates live offer requests and normalizes offers into the internal flight result shape; it does not create Duffel orders or issue tickets at launch.
+Set `DUFFEL_API_KEY` in Render and local `.env.local` when testing live searches. Duffel calls are made only from backend services with `Authorization: Bearer <token>` and the `Duffel-Version` header. Curioticket creates live offer requests and normalizes offers into the internal flight result shape for metasearch comparison.
 
 ### Travelpayouts Setup
 
-Set `TRAVELPAYOUTS_API_KEY` and `TRAVELPAYOUTS_MARKER`. The marker is used for affiliate attribution and the API key is used for data/enrichment health checks and future destination discovery surfaces. Travelpayouts enriches deals, SEO pages, redirects, and travel intelligence; Duffel remains the primary live flight provider.
+Set `TRAVELPAYOUTS_API_KEY` and `TRAVELPAYOUTS_MARKER`. The marker is used for affiliate attribution and the API key is used for data/enrichment health checks and future destination discovery surfaces. Travelpayouts enriches deals, SEO pages, external provider redirects, and travel intelligence; Duffel remains the primary live flight provider.
 
 ### Provider Health Checks
 
@@ -220,7 +221,7 @@ See [docs/launch-security-checklist.md](docs/launch-security-checklist.md) befor
 
 ## Legal Note
 
-Legal documents are startup placeholders written for Curioticket’s free search, affiliate redirect, premium subscription, Stripe, Resend, OpenAI, travel API, and no-ticket-issuing launch model. They should be reviewed by qualified legal counsel before large-scale public launch.
+Legal documents are startup placeholders written for Curioticket’s free metasearch, affiliate redirects, premium subscription, Stripe, Resend, OpenAI, travel API, and external-provider model. They should be reviewed by qualified legal counsel before large-scale public launch.
 
 ## Roadmap
 
