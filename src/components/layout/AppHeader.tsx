@@ -198,9 +198,7 @@ export function AppHeader({
                     type="button"
                     onClick={() => {
                       setOpen(false);
-                      signOut({
-                        callbackUrl: "/",
-                      });
+                      signOut({ callbackUrl: "/" });
                     }}
                     className="rounded-md bg-teal px-3 py-3 text-left text-base font-semibold text-white"
                   >
