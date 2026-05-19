@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
@@ -28,14 +29,23 @@ export function AppHeader({ brandVariant = "default" }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
       <div className="page-shell flex h-20 items-center justify-between gap-4">
-        <Link href="/" className={`flex items-center text-slate-950 ${isHomepageBrand ? "shrink-0 gap-3.5" : "gap-3 text-xl font-extrabold tracking-tight"}`}>
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white shadow-[0_10px_24px_rgba(109,40,217,0.22)]">
-            <Sparkles size={22} />
-          </span>
+        <Link href="/" className={`flex items-center text-slate-950 ${isHomepageBrand ? "shrink-0" : "gap-3 text-xl font-extrabold tracking-tight"}`}>
           {isHomepageBrand ? (
-            <span className="font-sans text-[1.35rem] font-black leading-none tracking-[-0.035em] sm:text-[1.55rem]">Curioticket</span>
+            <Image
+              src="/curioticket-logo.png"
+              alt="Curioticket"
+              width={188}
+              height={44}
+              priority
+              className="h-8 w-auto sm:h-10"
+            />
           ) : (
-            "Curioticket"
+            <>
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white shadow-[0_10px_24px_rgba(109,40,217,0.22)]">
+                <Sparkles size={22} />
+              </span>
+              Curioticket
+            </>
           )}
         </Link>
 
