@@ -250,8 +250,8 @@ function EmptyStateFlightSearchBar() {
   const [directOnly, setDirectOnly] = useState(false);
 
   return (
-    <div className="mt-4 space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="mx-auto mt-4 max-w-6xl space-y-3">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <SearchSelect
           label="Trip type"
           value={tripType}
@@ -277,8 +277,8 @@ function EmptyStateFlightSearchBar() {
         />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm">
-        <div className="grid gap-2 lg:grid-cols-[1.2fr_auto_1.2fr_1fr_1fr_1fr_auto]">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(180px,1.2fr)_auto_minmax(180px,1.2fr)_minmax(150px,1fr)_minmax(150px,1fr)_minmax(220px,1.2fr)_130px]">
           <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
 
           <SwapButton
@@ -306,7 +306,7 @@ function EmptyStateFlightSearchBar() {
             icon={<Users size={15} />}
           />
 
-          <Button type="button" className="h-12 rounded-xl px-5">
+          <Button type="button" className="h-12 w-full rounded-xl px-5 md:w-[130px]">
             <Search size={16} />
             Search
           </Button>
@@ -339,7 +339,7 @@ function SearchField({
   placeholder: string;
 }) {
   return (
-    <label className="flex h-12 min-w-0 items-center rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
+    <label className="flex h-12 min-w-[150px] items-center rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
       <span className="sr-only">{label}</span>
       <input
         aria-label={label}
@@ -372,7 +372,7 @@ function SearchSelect({
     <label
       className={cn(
         "flex min-w-0 items-center gap-2",
-        variant === "text" ? "h-9 rounded-lg bg-transparent px-1 text-navy" : "h-12 rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
+        variant === "text" ? "h-9 w-auto rounded-lg bg-transparent px-1 text-navy" : "h-12 min-w-[210px] rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
       )}
     >
       {icon ?? null}
@@ -403,7 +403,7 @@ function DateField({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
+    <label className="flex h-12 min-w-[150px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
       <CalendarDays size={15} className="text-muted" />
       <span className="sr-only">{label}</span>
       <input
@@ -422,7 +422,7 @@ function SwapButton({ onSwap }: { onSwap: () => void }) {
     <Button
       type="button"
       variant="secondary"
-      className="h-12 rounded-xl border-slate-200 px-3"
+      className="h-12 w-full rounded-xl border-slate-200 px-3 md:w-auto"
       aria-label="Swap origin and destination"
       onClick={onSwap}
     >
