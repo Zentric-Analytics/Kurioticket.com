@@ -42,7 +42,7 @@ export function AppHeader({
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
-      <div className="page-shell flex h-20 items-center justify-between gap-6">
+      <div className="page-shell flex h-[4.75rem] items-center justify-between gap-6">
         <Link
           href="/"
           className="flex shrink-0 items-center self-center"
@@ -53,7 +53,7 @@ export function AppHeader({
             alt="Curioticket"
             width={720}
             height={160}
-            className="h-11 w-auto sm:h-14"
+            className="h-10 w-auto sm:h-12"
             priority
           />
         </Link>
