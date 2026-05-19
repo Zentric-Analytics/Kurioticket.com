@@ -74,7 +74,7 @@ const destinations = [
 export default function Home() {
   return (
     <>
-      <AppHeader />
+      <AppHeader brandVariant="homepage" />
       <main className="flex-1 bg-white">
         <section className="relative overflow-hidden bg-[#f6f3ff]">
           <div className="absolute inset-0">
