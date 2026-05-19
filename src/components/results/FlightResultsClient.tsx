@@ -3,7 +3,18 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ArrowRightLeft, BadgeCheck, CalendarDays, Plane, Search, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
+import {
+  ArrowRightLeft,
+  BadgeCheck,
+  CalendarDays,
+  Plane,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+  Users,
+  X,
+} from "lucide-react";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { FlightCard } from "@/components/results/FlightCard";
@@ -37,30 +48,27 @@ export function FlightResultsClient() {
   const [maxPrice, setMaxPrice] = useState(1200);
   const [maxStops, setMaxStops] = useState(3);
 
-  const body = useMemo(
-    () => {
-      const origin = params.get("origin")?.trim() || "";
-      const destination = params.get("destination")?.trim() || "";
-      const departureDate = params.get("departureDate")?.trim() || "";
-      const tripType = params.get("tripType") || "round-trip";
-      const returnDate = params.get("returnDate")?.trim() || "";
-      const hasSearch = Boolean(origin && destination && departureDate && (tripType !== "round-trip" || returnDate));
+  const body = useMemo(() => {
+    const origin = params.get("origin")?.trim() || "";
+    const destination = params.get("destination")?.trim() || "";
+    const departureDate = params.get("departureDate")?.trim() || "";
+    const tripType = params.get("tripType") || "round-trip";
+    const returnDate = params.get("returnDate")?.trim() || "";
+    const hasSearch = Boolean(origin && destination && departureDate && (tripType !== "round-trip" || returnDate));
 
-      if (!hasSearch) return null;
+    if (!hasSearch) return null;
 
-      return {
-        tripType,
-        origin,
-        destination,
-        departureDate,
-        returnDate,
-        travelers: Number(params.get("travelers") || 1),
-        cabinClass: params.get("cabinClass") || "economy",
-        sort,
-      };
-    },
-    [params, sort],
-  );
+    return {
+      tripType,
+      origin,
+      destination,
+      departureDate,
+      returnDate,
+      travelers: Number(params.get("travelers") || 1),
+      cabinClass: params.get("cabinClass") || "economy",
+      sort,
+    };
+  }, [params, sort]);
 
   useEffect(() => {
     if (!body) return;
