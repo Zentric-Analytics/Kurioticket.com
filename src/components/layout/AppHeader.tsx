@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { Bell, ChevronDown, Globe2, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
+import { Bell, ChevronDown, Globe2, LogOut, Menu, UserCircle, X } from "lucide-react";
 import { Button, LinkButton } from "@/components/ui/Button";
 
 type AppHeaderProps = {
@@ -21,34 +21,23 @@ const navItems = [
 ];
 
 export function AppHeader({ brandVariant = "default" }: AppHeaderProps) {
+  void brandVariant;
   const [open, setOpen] = useState(false);
   const { data: session, status } = useSession();
   const isSignedIn = status === "authenticated" && Boolean(session?.user);
-  const isHomepageBrand = brandVariant === "homepage";
-
+  
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
       <div className="page-shell flex h-20 items-center justify-between gap-4">
-        <Link href="/" className={`flex items-center text-slate-950 ${isHomepageBrand ? "shrink-0 gap-3.5" : "gap-3 text-xl font-extrabold tracking-tight"}`}>
-          {isHomepageBrand ? (
-            <Image
-              src="/homepage-logo.svg"
-              alt="Curioticket logo"
-              width={56}
-              height={56}
-              className="h-14 w-14 shrink-0"
-              priority
-            />
-          ) : (
-            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white shadow-[0_10px_24px_rgba(109,40,217,0.22)]">
-              <Sparkles size={22} />
-            </span>
-          )}
-          {isHomepageBrand ? (
-            <span className="font-sans text-[1.35rem] font-black leading-none tracking-[-0.035em] sm:text-[1.55rem]">Curioticket</span>
-          ) : (
-            "Curioticket"
-          )}
+        <Link href="/" className="flex shrink-0 items-center" aria-label="Curioticket home">
+          <Image
+            src="/curioticket-brand.svg"
+            alt="Curioticket"
+            width={720}
+            height={160}
+            className="h-10 w-auto sm:h-12"
+            priority
+          />
         </Link>
 
         <nav className="hidden items-center gap-2 lg:flex">
