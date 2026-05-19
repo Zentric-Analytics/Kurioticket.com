@@ -112,10 +112,6 @@ export function FlightResultsClient() {
       <main className="flex-1 bg-[#f6f8fb]">
         <div className="page-shell py-10">
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            codex/verify-pr-process-for-curioticket.com-jr97o5
-            <h1 className="text-3xl font-black leading-tight tracking-tight text-navy sm:text-4xl">
-              Start a cheap flight search from 100s of sites at once
-            </h1>
             <h1 className="text-2xl font-black tracking-normal text-navy">Start a flight search</h1>
             <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-muted">
               Enter your departure airport, destination, and travel date on the homepage to compare live flight results.
