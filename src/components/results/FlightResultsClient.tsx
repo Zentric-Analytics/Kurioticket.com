@@ -37,30 +37,27 @@ export function FlightResultsClient() {
   const [maxPrice, setMaxPrice] = useState(1200);
   const [maxStops, setMaxStops] = useState(3);
 
-  const body = useMemo(
-    () => {
-      const origin = params.get("origin")?.trim() || "";
-      const destination = params.get("destination")?.trim() || "";
-      const departureDate = params.get("departureDate")?.trim() || "";
-      const tripType = params.get("tripType") || "round-trip";
-      const returnDate = params.get("returnDate")?.trim() || "";
-      const hasSearch = Boolean(origin && destination && departureDate && (tripType !== "round-trip" || returnDate));
+  const body = useMemo(() => {
+    const origin = params.get("origin")?.trim() || "";
+    const destination = params.get("destination")?.trim() || "";
+    const departureDate = params.get("departureDate")?.trim() || "";
+    const tripType = params.get("tripType") || "round-trip";
+    const returnDate = params.get("returnDate")?.trim() || "";
+    const hasSearch = Boolean(origin && destination && departureDate && (tripType !== "round-trip" || returnDate));
 
-      if (!hasSearch) return null;
+    if (!hasSearch) return null;
 
-      return {
-        tripType,
-        origin,
-        destination,
-        departureDate,
-        returnDate,
-        travelers: Number(params.get("travelers") || 1),
-        cabinClass: params.get("cabinClass") || "economy",
-        sort,
-      };
-    },
-    [params, sort],
-  );
+    return {
+      tripType,
+      origin,
+      destination,
+      departureDate,
+      returnDate,
+      travelers: Number(params.get("travelers") || 1),
+      cabinClass: params.get("cabinClass") || "economy",
+      sort,
+    };
+  }, [params, sort]);
 
   useEffect(() => {
     if (!body) return;
@@ -112,11 +109,7 @@ export function FlightResultsClient() {
       <main className="flex-1 bg-[#f6f8fb]">
         <div className="page-shell py-10">
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="flex items-center gap-2 text-sm font-bold text-teal-dark">
-              <Plane size={16} />
-              Flight search
-            </p>
-            <h1 className="mt-1 text-2xl font-black tracking-normal text-navy">Start a flight search</h1>
+            <h1 className="text-2xl font-black tracking-normal text-navy">Start a flight search</h1>
             <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-muted">
               Enter your departure airport, destination, and travel date on the homepage to compare live flight results.
             </p>
