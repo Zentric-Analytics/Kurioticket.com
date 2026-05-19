@@ -34,9 +34,9 @@ export function AppHeader({ brandVariant = "default" }: AppHeaderProps) {
             <Image
               src="/homepage-logo.svg"
               alt="Curioticket logo"
-              width={44}
-              height={44}
-              className="h-11 w-11 shrink-0"
+              width={65}
+              height={65}
+              className="h-16 w-16 shrink-0"
               priority
             />
           ) : (
