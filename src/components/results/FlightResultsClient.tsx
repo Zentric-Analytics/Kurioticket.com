@@ -109,7 +109,11 @@ export function FlightResultsClient() {
 
   useEffect(() => {
     if (!loading) return;
-    const id = window.setInterval(() => setMessageIndex((current) => (current + 1) % loadingMessages.length), 1100);
+
+    const id = window.setInterval(() => {
+      setMessageIndex((current) => (current + 1) % loadingMessages.length);
+    }, 1100);
+
     return () => window.clearInterval(id);
   }, [loading]);
 
@@ -144,6 +148,7 @@ export function FlightResultsClient() {
               {body.travelers} traveler{body.travelers === 1 ? "" : "s"} · {String(body.cabinClass).replace("-", " ")} · live provider search
             </p>
           </div>
+
           <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
             {sortModes.map((mode) => (
               <button
@@ -200,6 +205,7 @@ export function FlightResultsClient() {
                 </p>
                 <p className="text-sm font-semibold text-muted">Sorted by {sortModes.find((mode) => mode.value === sort)?.label}</p>
               </div>
+
               {filtered.length ? (
                 filtered.map((flight) => <FlightCard key={flight.id} flight={flight} />)
               ) : (
@@ -213,6 +219,7 @@ export function FlightResultsClient() {
       </div>
 
       <div className={cn("fixed inset-0 z-50 bg-navy/40 lg:hidden", filtersOpen ? "block" : "hidden")} onClick={() => setFiltersOpen(false)} />
+
       <aside
         className={cn(
           "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-2xl bg-white p-5 shadow-xl transition-transform lg:hidden",
@@ -225,6 +232,7 @@ export function FlightResultsClient() {
             <X size={20} />
           </Button>
         </div>
+
         <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} />
       </aside>
     </main>
@@ -243,7 +251,7 @@ function EmptyStateFlightSearchBar() {
 
   return (
     <div className="mt-4 space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         <SearchSelect
           label="Trip type"
           value={tripType}
@@ -253,7 +261,9 @@ function EmptyStateFlightSearchBar() {
             { value: "one-way", label: "One-way" },
             { value: "multi-city", label: "Multi-city" },
           ]}
+          variant="text"
         />
+
         <SearchSelect
           label="Baggage"
           value={baggage}
@@ -263,21 +273,27 @@ function EmptyStateFlightSearchBar() {
             { value: "1 bag", label: "1 bag" },
             { value: "2 bags", label: "2 bags" },
           ]}
+          variant="text"
         />
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm">
         <div className="grid gap-2 lg:grid-cols-[1.2fr_auto_1.2fr_1fr_1fr_1fr_auto]">
           <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
+
           <SwapButton
             onSwap={() => {
               setOrigin(destination);
               setDestination(origin);
             }}
           />
+
           <SearchField label="To" placeholder="Where to?" value={destination} onChange={setDestination} />
+
           <DateField label="Departure" value={departureDate} onChange={setDepartureDate} />
+
           <DateField label="Return" value={returnDate} onChange={setReturnDate} />
+
           <SearchSelect
             label="Travelers & class"
             value={travelersClass}
@@ -289,6 +305,7 @@ function EmptyStateFlightSearchBar() {
             ]}
             icon={<Users size={15} />}
           />
+
           <Button type="button" className="h-12 rounded-xl px-5">
             <Search size={16} />
             Search
@@ -342,20 +359,27 @@ function SearchSelect({
   onChange,
   options,
   icon,
+  variant = "default",
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options: Array<{ value: string; label: string }>;
   icon?: ReactNode;
+  variant?: "default" | "text";
 }) {
   return (
-    <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
+    <label
+      className={cn(
+        "flex min-w-0 items-center gap-2",
+        variant === "text" ? "h-9 rounded-lg bg-transparent px-1 text-navy" : "h-12 rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
+      )}
+    >
       {icon ?? null}
       <span className="sr-only">{label}</span>
       <select
         aria-label={label}
-        className="w-full bg-transparent text-sm font-semibold text-navy outline-none"
+        className={cn("w-full bg-transparent text-sm font-semibold outline-none", variant === "text" ? "pr-5 text-navy" : "text-navy")}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       >
@@ -427,6 +451,7 @@ function Filters({
         </div>
         <SlidersHorizontal className="text-teal" size={21} />
       </div>
+
       <div className="mt-6 grid gap-6">
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
@@ -434,21 +459,25 @@ function Filters({
           </span>
           <input className="w-full accent-teal" type="range" min={100} max={2000} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
         </label>
+
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
             Stops up to <span className="font-mono text-navy">{maxStops}</span>
           </span>
           <input className="w-full accent-teal" type="range" min={0} max={3} step={1} value={maxStops} onChange={(event) => setMaxStops(Number(event.target.value))} />
         </label>
+
         <div className="grid gap-3 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-muted">
           <label className="flex items-center gap-2">
             <input type="checkbox" className="accent-teal" defaultChecked />
             Baggage included where available
           </label>
+
           <label className="flex items-center gap-2">
             <input type="checkbox" className="accent-teal" />
             Evening departures
           </label>
+
           <label className="flex items-center gap-2">
             <input type="checkbox" className="accent-teal" />
             Low-risk connections
