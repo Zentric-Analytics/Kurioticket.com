@@ -292,4 +292,3 @@ function InsightCard({ icon, label, value }: { icon: ReactNode; label: string; v
     </div>
   );
 }
-
