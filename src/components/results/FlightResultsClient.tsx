@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
@@ -123,10 +124,15 @@ export function FlightResultsClient() {
     return (
       <main className="flex-1 bg-[#f6f8fb]">
         <div className="page-shell py-10">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h1 className="text-2xl font-black tracking-normal text-navy">Find hundreds of cheap flights with just one search!</h1>
-            <EmptyStateFlightSearchBar />
-          </div>
+          <section className="grid gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
+            <div className="min-w-0">
+              <h1 className="text-4xl font-black leading-[1.05] tracking-tight text-navy sm:text-5xl">
+                Find hundreds of cheap flights with just one search!
+              </h1>
+              <EmptyStateFlightSearchBar />
+            </div>
+            <EmptyStateTravelImage />
+          </section>
         </div>
       </main>
     );
@@ -250,7 +256,7 @@ function EmptyStateFlightSearchBar() {
   const [directOnly, setDirectOnly] = useState(false);
 
   return (
-    <div className="mt-4 ml-0 mr-auto w-full max-w-[66rem] space-y-2.5">
+    <div className="mt-5 mr-auto w-full max-w-5xl space-y-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <SearchSelect
           label="Trip type"
@@ -278,7 +284,7 @@ function EmptyStateFlightSearchBar() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm">
-        <div className="grid gap-1 md:grid-cols-2 xl:grid-cols-[minmax(108px,1fr)_38px_minmax(128px,1fr)_minmax(122px,0.9fr)_minmax(122px,0.9fr)_minmax(152px,0.95fr)_98px]">
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(120px,1fr)_44px_minmax(140px,1fr)_minmax(135px,0.9fr)_minmax(135px,0.9fr)_minmax(170px,1fr)_110px]">
           <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
 
           <SwapButton
@@ -306,7 +312,7 @@ function EmptyStateFlightSearchBar() {
             icon={<Users size={15} />}
           />
 
-          <Button type="button" className="h-12 w-full rounded-xl px-4 xl:w-[98px]">
+          <Button type="button" className="h-12 w-full rounded-xl px-5 xl:w-[110px]">
             <Search size={16} />
             Search
           </Button>
@@ -374,7 +380,7 @@ function SearchSelect({
         "flex min-w-0 items-center gap-2",
         variant === "text"
           ? "h-9 w-auto rounded-lg bg-transparent px-1 text-navy"
-          : "h-12 min-w-[160px] rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
+          : "h-12 min-w-[170px] rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
       )}
     >
       {icon ?? null}
@@ -427,12 +433,31 @@ function SwapButton({ onSwap }: { onSwap: () => void }) {
     <Button
       type="button"
       variant="secondary"
-      className="h-12 w-full rounded-xl border-slate-200 px-2.5 xl:w-[38px]"
+      className="h-12 w-full rounded-xl border-slate-200 px-3 xl:w-[44px]"
       aria-label="Swap origin and destination"
       onClick={onSwap}
     >
       <ArrowRightLeft size={16} />
     </Button>
+  );
+}
+
+function EmptyStateTravelImage() {
+  return (
+    <aside className="relative hidden min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner lg:block">
+      <Image
+        src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80"
+        alt="Airplane wing above clouds"
+        fill
+        sizes="360px"
+        className="object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-navy/45 via-navy/10 to-transparent" />
+      <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/92 p-3 backdrop-blur">
+        <p className="text-xs font-black uppercase tracking-[0.12em] text-navy/70">Smart flight search</p>
+        <p className="mt-1 text-sm font-semibold text-navy">Compare routes, fares, and dates in one place.</p>
+      </div>
+    </aside>
   );
 }
 
