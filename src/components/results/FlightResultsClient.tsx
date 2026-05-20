@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck, Plane, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { ArrowRightLeft, BadgeCheck, CalendarDays, Plane, Search, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { FlightCard } from "@/components/results/FlightCard";
@@ -111,16 +112,15 @@ export function FlightResultsClient() {
     return (
       <main className="flex-1 bg-[#f6f8fb]">
         <div className="page-shell py-10">
-          <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            codex/verify-pr-process-for-curioticket.com-jr97o5
-            <h1 className="text-3xl font-black leading-tight tracking-tight text-navy sm:text-4xl">
-              Start a cheap flight search from 100s of sites at once
-            </h1>
-            <h1 className="text-2xl font-black tracking-normal text-navy">Start a flight search</h1>
-            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-muted">
-              Enter your departure airport, destination, and travel date on the homepage to compare live flight results.
-            </p>
-          </div>
+          <section className="grid gap-6 rounded-3xl border border-slate-200 bg-[#eef1f4] p-6 shadow-sm lg:grid-cols-[minmax(0,1fr)_380px] lg:items-stretch">
+            <div className="min-w-0">
+              <h1 className="text-4xl font-extrabold leading-[1.04] tracking-[-0.02em] text-slate-900 sm:text-5xl lg:text-6xl">
+                Search hundreds of flight sites at once.
+              </h1>
+              <EmptyStateFlightSearchBar />
+            </div>
+            <EmptyStateTravelImage />
+          </section>
         </div>
       </main>
     );
@@ -228,6 +228,213 @@ export function FlightResultsClient() {
     </main>
   );
 }
+
+function EmptyStateFlightSearchBar() {
+  const [tripType, setTripType] = useState("round-trip");
+  const [baggage, setBaggage] = useState("0 bags");
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
+  const [departureDate, setDepartureDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [travelersClass, setTravelersClass] = useState("1 traveler, Economy");
+  const [directOnly, setDirectOnly] = useState(false);
+
+  return (
+    <div className="mt-8 mr-auto w-full max-w-5xl space-y-3">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-slate-700">
+        <SearchSelect
+          label="Trip type"
+          value={tripType}
+          onChange={setTripType}
+          options={[
+            { value: "round-trip", label: "Round-trip" },
+            { value: "one-way", label: "One-way" },
+            { value: "multi-city", label: "Multi-city" },
+          ]}
+          variant="text"
+        />
+        <SearchSelect
+          label="Baggage"
+          value={baggage}
+          onChange={setBaggage}
+          options={[
+            { value: "0 bags", label: "0 bags" },
+            { value: "1 bag", label: "1 bag" },
+            { value: "2 bags", label: "2 bags" },
+          ]}
+          variant="text"
+        />
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-2 shadow-md shadow-slate-300/60">
+        <div className="grid gap-1 md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_44px_minmax(150px,1fr)_minmax(128px,0.9fr)_minmax(128px,0.9fr)_minmax(160px,1fr)_110px]">
+          <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
+          <SwapButton
+            onSwap={() => {
+              setOrigin(destination);
+              setDestination(origin);
+            }}
+          />
+          <SearchField label="To" placeholder="Where to?" value={destination} onChange={setDestination} />
+          <DateField label="Departure" value={departureDate} onChange={setDepartureDate} />
+          <DateField label="Return" value={returnDate} onChange={setReturnDate} />
+          <SearchSelect
+            label="Travelers & class"
+            value={travelersClass}
+            onChange={setTravelersClass}
+            options={[
+              { value: "1 traveler, Economy", label: "1 traveler, Economy" },
+              { value: "2 travelers, Economy", label: "2 travelers, Economy" },
+              { value: "1 traveler, Business", label: "1 traveler, Business" },
+            ]}
+            icon={<Users size={15} />}
+          />
+          <Button type="button" className="h-11 w-full rounded-lg px-5 xl:w-[110px]">
+            <Search size={16} />
+            Search
+          </Button>
+        </div>
+      </div>
+
+      <label htmlFor="direct-flights-only" className="inline-flex items-center gap-2 pt-1 text-sm font-semibold text-slate-600">
+        <input
+          id="direct-flights-only"
+          type="checkbox"
+          className="h-4 w-4 rounded border-slate-300 accent-teal"
+          checked={directOnly}
+          onChange={(event) => setDirectOnly(event.target.checked)}
+        />
+        Direct flights only
+      </label>
+    </div>
+  );
+}
+
+function SearchField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <label className="flex h-11 min-w-[150px] items-center rounded-lg border border-slate-200 bg-white px-3 shadow-sm">
+      <span className="sr-only">{label}</span>
+      <input
+        aria-label={label}
+        className="w-full bg-transparent text-sm font-semibold text-navy outline-none placeholder:text-muted"
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+      />
+    </label>
+  );
+}
+
+function SearchSelect({
+  label,
+  value,
+  onChange,
+  options,
+  icon,
+  variant = "default",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  icon?: ReactNode;
+  variant?: "default" | "text";
+}) {
+  return (
+    <label
+      className={cn(
+        "flex min-w-0 items-center gap-2",
+        variant === "text"
+          ? "h-9 w-auto rounded-lg bg-transparent px-1 text-navy"
+          : "h-11 min-w-[170px] rounded-lg border border-slate-200 bg-white px-3 shadow-sm",
+      )}
+    >
+      {icon ?? null}
+      <span className="sr-only">{label}</span>
+      <select
+        aria-label={label}
+        className={cn(
+          "w-full bg-transparent text-sm font-semibold outline-none",
+          variant === "text" ? "pr-5 text-navy" : "text-navy",
+        )}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex h-11 min-w-[150px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 shadow-sm">
+      <CalendarDays size={15} className="text-muted" />
+      <span className="sr-only">{label}</span>
+      <input
+        aria-label={label}
+        className="w-full bg-transparent text-sm font-semibold text-navy outline-none"
+        type="date"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function SwapButton({ onSwap }: { onSwap: () => void }) {
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      className="h-11 w-full rounded-lg border-slate-200 px-3 xl:w-[44px]"
+      aria-label="Swap origin and destination"
+      onClick={onSwap}
+    >
+      <ArrowRightLeft size={16} />
+    </Button>
+  );
+}
+
+
+function EmptyStateTravelImage() {
+  return (
+    <aside className="relative hidden min-h-[340px] overflow-hidden rounded-2xl bg-slate-100 shadow-inner lg:block">
+      <Image
+        src="https://images.pexels.com/photos/615060/pexels-photo-615060.jpeg?cs=srgb&dl=pexels-christine-renard-198055-615060.jpg&fm=jpg"
+        alt="Traveler looking out from an airplane window"
+        fill
+        sizes="380px"
+        className="object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-transparent" />
+    </aside>
+  );
+}
+
 
 function Filters({
   maxPrice,
