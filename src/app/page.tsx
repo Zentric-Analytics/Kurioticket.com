@@ -7,14 +7,11 @@ import {
   CircleDollarSign,
   CreditCard,
   Globe2,
-  Headphones,
   Heart,
   Hotel,
   Plane,
-  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  TicketCheck,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -23,13 +20,6 @@ import { LinkButton } from "@/components/ui/Button";
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
-
-const assurances = [
-  { label: "Best Prices Guaranteed", icon: ShieldCheck },
-  { label: "Easy Provider Comparison", icon: TicketCheck },
-  { label: "Secure Payments", icon: CreditCard },
-  { label: "24/7 Customer Support", icon: Headphones },
-];
 
 const trustItems = [
   { title: "Millions of Choices", body: "Flights and hotels worldwide", icon: Globe2 },
@@ -98,11 +88,6 @@ export default function Home() {
               <p className="mt-6 max-w-lg text-lg font-semibold leading-8 text-slate-700">
                 Search hundreds of airlines and travel sites to find the best deals for your next trip.
               </p>
-              <div className="mt-7 grid gap-4 text-slate-900 sm:grid-cols-2 lg:grid-cols-4">
-                {assurances.map((item) => (
-                  <CompactAssurance key={item.label} icon={<item.icon size={20} />} label={item.label} />
-                ))}
-              </div>
             </div>
 
             <div className="mt-2 max-w-[1080px]">
@@ -188,15 +173,6 @@ export default function Home() {
       </main>
       <Footer />
     </>
-  );
-}
-
-function CompactAssurance({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/85 text-[#6d28d9] shadow-sm">{icon}</span>
-      <span className="max-w-28 text-xs font-black leading-4">{label}</span>
-    </div>
   );
 }
 
