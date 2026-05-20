@@ -6,6 +6,7 @@ import {
   addMonths,
   eachDayOfInterval,
   endOfMonth,
+  endOfWeek,
   format,
   isAfter,
   isBefore,
@@ -13,8 +14,8 @@ import {
   isSameMonth,
   startOfMonth,
   startOfWeek,
-  endOfWeek,
 } from "date-fns";
+
 import {
   BedDouble,
   CalendarDays,
@@ -32,10 +33,12 @@ export function SearchTabs() {
   const router = useRouter();
 
   const [tab, setTab] = useState<Tab>("flights");
+
   const [tripType, setTripType] =
     useState<TripType>("round-trip");
 
   const [origin, setOrigin] = useState("LOS");
+
   const [destination, setDestination] =
     useState("DXB");
 
@@ -612,4 +615,6 @@ function BookingCalendar({
           </div>
         );
       })}
-    
+    </div>
+  );
+}
