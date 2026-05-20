@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import {
   addMonths,
   eachDayOfInterval,
@@ -29,8 +30,15 @@ import {
 } from "lucide-react";
 
 type Tab = "flights" | "hotels";
-type TripType = "round-trip" | "one-way" | "multi-city";
-type PickerTarget = "departure" | "return";
+
+type TripType =
+  | "round-trip"
+  | "one-way"
+  | "multi-city";
+
+type PickerTarget =
+  | "departure"
+  | "return";
 
 type LocationOption = {
   city: string;
@@ -39,18 +47,43 @@ type LocationOption = {
 };
 
 const LOCATION_OPTIONS: LocationOption[] = [
-  { city: "Lagos", country: "Nigeria", code: "LOS" },
-  { city: "Abuja", country: "Nigeria", code: "ABV" },
-  { city: "Dubai", country: "UAE", code: "DXB" },
-  { city: "London", country: "United Kingdom", code: "LHR" },
-  { city: "Paris", country: "France", code: "CDG" },
-  { city: "New York", country: "USA", code: "JFK" },
+  {
+    city: "Lagos",
+    country: "Nigeria",
+    code: "LOS",
+  },
+  {
+    city: "Abuja",
+    country: "Nigeria",
+    code: "ABV",
+  },
+  {
+    city: "Dubai",
+    country: "UAE",
+    code: "DXB",
+  },
+  {
+    city: "London",
+    country: "United Kingdom",
+    code: "LHR",
+  },
+  {
+    city: "Paris",
+    country: "France",
+    code: "CDG",
+  },
+  {
+    city: "New York",
+    country: "USA",
+    code: "JFK",
+  },
 ];
 
 export function SearchTabs() {
   const router = useRouter();
 
-  const [tab, setTab] = useState<Tab>("flights");
+  const [tab, setTab] =
+    useState<Tab>("flights");
 
   const [tripType, setTripType] =
     useState<TripType>("round-trip");
@@ -58,21 +91,25 @@ export function SearchTabs() {
   const [originInput, setOriginInput] =
     useState("Lagos");
 
-  const [destinationInput, setDestinationInput] =
-    useState("Dubai");
+  const [
+    destinationInput,
+    setDestinationInput,
+  ] = useState("Dubai");
 
   const [originCode, setOriginCode] =
     useState("LOS");
 
-  const [destinationCode, setDestinationCode] =
-    useState("DXB");
+  const [
+    destinationCode,
+    setDestinationCode,
+  ] = useState("DXB");
 
   const [
     activeLocationField,
     setActiveLocationField,
-  ] = useState<"origin" | "destination" | null>(
-    null
-  );
+  ] = useState<
+    "origin" | "destination" | null
+  >(null);
 
   const [travelers, setTravelers] =
     useState(1);
@@ -89,9 +126,8 @@ export function SearchTabs() {
   const [returnDate, setReturnDate] =
     useState(new Date(2026, 5, 17));
 
-  const [viewDate, setViewDate] = useState(
-    new Date(2026, 5, 1)
-  );
+  const [viewDate, setViewDate] =
+    useState(new Date(2026, 5, 1));
 
   const [pickerTarget, setPickerTarget] =
     useState<PickerTarget>("departure");
@@ -112,14 +148,17 @@ export function SearchTabs() {
       return LOCATION_OPTIONS;
     }
 
-    return LOCATION_OPTIONS.filter((location) =>
-      [
-        location.city,
-        location.country,
-        location.code,
-      ].some((piece) =>
-        piece.toLowerCase().includes(normalized)
-      )
+    return LOCATION_OPTIONS.filter(
+      (location) =>
+        [
+          location.city,
+          location.country,
+          location.code,
+        ].some((piece) =>
+          piece
+            .toLowerCase()
+            .includes(normalized)
+        )
     );
   }, [locationQuery]);
 
@@ -268,16 +307,22 @@ export function SearchTabs() {
               value={originInput}
               code={originCode}
               onFocus={() => {
-                setActiveLocationField("origin");
+                setActiveLocationField(
+                  "origin"
+                );
                 setIsCalendarOpen(false);
                 setIsTravelerOpen(false);
               }}
               onChange={(value) => {
                 setOriginInput(value);
                 setOriginCode(
-                  value.toUpperCase().slice(0, 3)
+                  value
+                    .toUpperCase()
+                    .slice(0, 3)
                 );
-                setActiveLocationField("origin");
+                setActiveLocationField(
+                  "origin"
+                );
               }}
             />
 
@@ -295,7 +340,9 @@ export function SearchTabs() {
               onChange={(value) => {
                 setDestinationInput(value);
                 setDestinationCode(
-                  value.toUpperCase().slice(0, 3)
+                  value
+                    .toUpperCase()
+                    .slice(0, 3)
                 );
                 setActiveLocationField(
                   "destination"
@@ -315,13 +362,13 @@ export function SearchTabs() {
               )}
               isActive={
                 isCalendarOpen &&
-                pickerTarget === "departure"
+                pickerTarget ===
+                  "departure"
               }
               onClick={() => {
                 setPickerTarget(
                   "departure"
                 );
-
                 setIsCalendarOpen(true);
                 setActiveLocationField(null);
                 setIsTravelerOpen(false);
@@ -344,7 +391,6 @@ export function SearchTabs() {
               }
               onClick={() => {
                 setPickerTarget("return");
-
                 setIsCalendarOpen(true);
                 setActiveLocationField(null);
                 setIsTravelerOpen(false);
@@ -395,7 +441,9 @@ export function SearchTabs() {
                       key={`${location.city}-${location.code}`}
                       type="button"
                       onClick={() =>
-                        selectLocation(location)
+                        selectLocation(
+                          location
+                        )
                       }
                       className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left hover:bg-violet-50"
                     >
@@ -480,321 +528,5 @@ function LocationField({
         {code}
       </span>
     </label>
-  );
-}
-
-function DateTriggerField({
-  label,
-  value,
-  subtext,
-  isActive,
-  onClick,
-}: {
-  label: string;
-  value: string;
-  subtext: string;
-  isActive: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex min-h-[72px] w-full flex-col justify-center border-t border-violet-100 px-3.5 py-2 text-left transition first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0 ${
-        isActive
-          ? "bg-violet-50/60"
-          : "hover:bg-slate-50"
-      }`}
-    >
-      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
-        {label}
-      </span>
-
-      <div className="mt-1 inline-flex items-center gap-2">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-[#6d28d9]">
-          <CalendarDays size={13} />
-        </span>
-
-        <span className="text-[15px] font-semibold leading-tight text-slate-900">
-          {value}
-        </span>
-      </div>
-
-      <span className="mt-1 text-xs font-medium text-slate-500">
-        {subtext}
-      </span>
-    </button>
-  );
-}
-
-function TravelerField({
-  travelers,
-  cabinClass,
-  isOpen,
-  onToggle,
-  onIncrement,
-  onDecrement,
-  onClassChange,
-}: {
-  travelers: number;
-  cabinClass: string;
-  isOpen: boolean;
-  onToggle: () => void;
-  onIncrement: () => void;
-  onDecrement: () => void;
-  onClassChange: (value: string) => void;
-}) {
-  return (
-    <div className="relative flex min-h-[72px] flex-col justify-center border-t border-violet-100 px-3 py-2 first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="text-left"
-      >
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
-          TRAVELERS & CLASS
-        </span>
-
-        <div className="mt-1 inline-flex items-center gap-2">
-          <Users
-            size={14}
-            className="text-[#6d28d9]"
-          />
-
-          <span className="text-sm font-semibold text-slate-900">
-            {travelers} Traveler
-            {travelers > 1 ? "s" : ""}
-          </span>
-
-          <ChevronDown
-            size={14}
-            className="text-slate-500"
-          />
-        </div>
-
-        <div className="text-xs font-medium text-slate-500">
-          {cabinClass.replace("-", " ")}
-        </div>
-      </button>
-
-      {isOpen ? (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-30 w-full min-w-[220px] rounded-2xl border border-violet-100 bg-white p-3 shadow-[0_12px_30px_rgba(15,23,42,0.14)]">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-700">
-              Travelers
-            </span>
-
-            <div className="inline-flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onDecrement}
-                className="h-8 w-8 rounded-full border border-slate-200"
-              >
-                -
-              </button>
-
-              <span className="w-5 text-center text-sm font-semibold">
-                {travelers}
-              </span>
-
-              <button
-                type="button"
-                onClick={onIncrement}
-                className="h-8 w-8 rounded-full border border-slate-200"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <select
-            value={cabinClass}
-            onChange={(event) =>
-              onClassChange(
-                event.target.value
-              )
-            }
-            className="mt-3 w-full rounded-lg border border-violet-100 px-3 py-2 text-sm font-medium text-slate-800 outline-none"
-          >
-            <option value="economy">
-              Economy
-            </option>
-
-            <option value="premium-economy">
-              Premium Economy
-            </option>
-
-            <option value="business">
-              Business
-            </option>
-
-            <option value="first">
-              First
-            </option>
-          </select>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function BookingCalendar({
-  viewDate,
-  setViewDate,
-  departureDate,
-  returnDate,
-  onDaySelect,
-}: {
-  viewDate: Date;
-  setViewDate: (date: Date) => void;
-  departureDate: Date;
-  returnDate: Date;
-  onDaySelect: (day: Date) => void;
-}) {
-  const months = [
-    viewDate,
-    addMonths(viewDate, 1),
-  ];
-
-  return (
-    <div className="grid gap-3 lg:grid-cols-2">
-      {months.map((month) => {
-        const days = eachDayOfInterval({
-          start: startOfWeek(
-            startOfMonth(month),
-            {
-              weekStartsOn: 0,
-            }
-          ),
-          end: endOfWeek(
-            endOfMonth(month),
-            {
-              weekStartsOn: 0,
-            }
-          ),
-        });
-
-        return (
-          <div
-            key={month.toISOString()}
-            className="rounded-xl border border-violet-100 p-3"
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-base font-bold text-slate-900">
-                {format(
-                  month,
-                  "MMMM yyyy"
-                )}
-              </h3>
-
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setViewDate(
-                      addMonths(
-                        viewDate,
-                        -1
-                      )
-                    )
-                  }
-                  className="rounded-full p-1.5 hover:bg-slate-100"
-                >
-                  <ChevronLeft
-                    size={16}
-                  />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setViewDate(
-                      addMonths(
-                        viewDate,
-                        1
-                      )
-                    )
-                  }
-                  className="rounded-full p-1.5 hover:bg-slate-100"
-                >
-                  <ChevronRight
-                    size={16}
-                  />
-                </button>
-              </div>
-            </div>
-
-            <div className="mb-2 grid grid-cols-7 text-center text-[11px] font-bold text-slate-500">
-              {[
-                "Su",
-                "Mo",
-                "Tu",
-                "We",
-                "Th",
-                "Fr",
-                "Sa",
-              ].map((d) => (
-                <span key={d}>{d}</span>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 gap-1.5">
-              {days.map((day) => {
-                const selected =
-                  isSameDay(
-                    day,
-                    departureDate
-                  ) ||
-                  isSameDay(
-                    day,
-                    returnDate
-                  );
-
-                const inRange =
-                  isAfter(
-                    day,
-                    departureDate
-                  ) &&
-                  isBefore(
-                    day,
-                    returnDate
-                  );
-
-                const inMonth =
-                  isSameMonth(
-                    day,
-                    month
-                  );
-
-                return (
-                  <button
-                    key={day.toISOString()}
-                    type="button"
-                    onClick={() =>
-                      onDaySelect(day)
-                    }
-                    className={`h-10 rounded-lg text-sm font-medium transition ${
-                      !inMonth
-                        ? "text-slate-300"
-                        : "text-slate-700 hover:bg-violet-50"
-                    } ${
-                      inRange
-                        ? "bg-violet-50"
-                        : ""
-                    } ${
-                      selected
-                        ? "bg-[#6d28d9] text-white"
-                        : ""
-                    }`}
-                  >
-                    {format(day, "d")}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })}
-    </div>
   );
 }

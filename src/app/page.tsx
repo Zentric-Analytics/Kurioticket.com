@@ -15,7 +15,6 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-
 import {
   BedDouble,
   CalendarDays,
@@ -33,77 +32,43 @@ export function SearchTabs() {
   const router = useRouter();
 
   const [tab, setTab] = useState<Tab>("flights");
-
-  const [tripType, setTripType] =
-    useState<TripType>("round-trip");
-
+  const [tripType, setTripType] = useState<TripType>("round-trip");
   const [origin, setOrigin] = useState("LOS");
+  const [destination, setDestination] = useState("DXB");
+  const [travelers, setTravelers] = useState("1");
+  const [cabinClass, setCabinClass] = useState("economy");
 
-  const [destination, setDestination] =
-    useState("DXB");
+  const [departureDate, setDepartureDate] = useState(new Date(2026, 5, 11));
+  const [returnDate, setReturnDate] = useState(new Date(2026, 5, 17));
+  const [viewDate, setViewDate] = useState(new Date(2026, 5, 1));
 
-  const [travelers, setTravelers] =
-    useState("1");
-
-  const [cabinClass, setCabinClass] =
-    useState("economy");
-
-  const [departureDate, setDepartureDate] =
-    useState(new Date(2026, 5, 11));
-
-  const [returnDate, setReturnDate] =
-    useState(new Date(2026, 5, 17));
-
-  const [viewDate, setViewDate] = useState(
-    new Date(2026, 5, 1)
-  );
-
-  const [pickerTarget, setPickerTarget] =
-    useState<PickerTarget>("departure");
-
-  const [isCalendarOpen, setIsCalendarOpen] =
-    useState(false);
+  const [pickerTarget, setPickerTarget] = useState<PickerTarget>("departure");
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   function onFlightSubmit() {
     const params = new URLSearchParams({
       tripType,
       origin,
       destination,
-      departureDate: format(
-        departureDate,
-        "yyyy-MM-dd"
-      ),
-      returnDate: format(
-        returnDate,
-        "yyyy-MM-dd"
-      ),
+      departureDate: format(departureDate, "yyyy-MM-dd"),
+      returnDate: format(returnDate, "yyyy-MM-dd"),
       travelers,
       cabinClass,
     });
 
-    router.push(
-      `/flights/results?${params.toString()}`
-    );
+    router.push(`/flights/results?${params.toString()}`);
   }
 
   function onHotelSubmit() {
     const params = new URLSearchParams({
       destination,
-      checkIn: format(
-        departureDate,
-        "yyyy-MM-dd"
-      ),
-      checkOut: format(
-        returnDate,
-        "yyyy-MM-dd"
-      ),
+      checkIn: format(departureDate, "yyyy-MM-dd"),
+      checkOut: format(returnDate, "yyyy-MM-dd"),
       guests: travelers,
       rooms: "1",
     });
 
-    router.push(
-      `/hotels/results?${params.toString()}`
-    );
+    router.push(`/hotels/results?${params.toString()}`);
   }
 
   function onDaySelect(day: Date) {
@@ -159,27 +124,15 @@ export function SearchTabs() {
       {tab === "flights" ? (
         <div className="space-y-2">
           <div className="grid grid-cols-1 gap-2 text-xs font-bold text-slate-700 sm:flex sm:gap-4">
-            {(
-              [
-                "round-trip",
-                "one-way",
-                "multi-city",
-              ] as const
-            ).map((value) => (
-              <label
-                key={value}
-                className="inline-flex items-center gap-2"
-              >
+            {(["round-trip", "one-way", "multi-city"] as const).map((value) => (
+              <label key={value} className="inline-flex items-center gap-2">
                 <input
                   type="radio"
                   name="tripType"
                   checked={tripType === value}
-                  onChange={() =>
-                    setTripType(value)
-                  }
+                  onChange={() => setTripType(value)}
                   className="h-4 w-4 accent-[#6d28d9]"
                 />
-
                 {value === "round-trip"
                   ? "Round Trip"
                   : value === "one-way"
@@ -206,40 +159,20 @@ export function SearchTabs() {
 
             <DateTriggerField
               label="DEPARTURE"
-              value={format(
-                departureDate,
-                "MMM dd, yyyy"
-              )}
-              subtext={format(
-                departureDate,
-                "EEEE"
-              )}
-              isActive={
-                isCalendarOpen &&
-                pickerTarget === "departure"
-              }
+              value={format(departureDate, "MMM dd, yyyy")}
+              subtext={format(departureDate, "EEEE")}
+              isActive={isCalendarOpen && pickerTarget === "departure"}
               onClick={() => {
-                setPickerTarget(
-                  "departure"
-                );
+                setPickerTarget("departure");
                 setIsCalendarOpen(true);
               }}
             />
 
             <DateTriggerField
               label="RETURN"
-              value={format(
-                returnDate,
-                "MMM dd, yyyy"
-              )}
-              subtext={format(
-                returnDate,
-                "EEEE"
-              )}
-              isActive={
-                isCalendarOpen &&
-                pickerTarget === "return"
-              }
+              value={format(returnDate, "MMM dd, yyyy")}
+              subtext={format(returnDate, "EEEE")}
+              isActive={isCalendarOpen && pickerTarget === "return"}
               onClick={() => {
                 setPickerTarget("return");
                 setIsCalendarOpen(true);
@@ -269,9 +202,7 @@ export function SearchTabs() {
                 <BookingCalendar
                   viewDate={viewDate}
                   setViewDate={setViewDate}
-                  departureDate={
-                    departureDate
-                  }
+                  departureDate={departureDate}
                   returnDate={returnDate}
                   onDaySelect={onDaySelect}
                 />
@@ -313,17 +244,11 @@ function EditableField({
 
       <input
         value={value}
-        onChange={(event) =>
-          onChange(
-            event.target.value.toUpperCase()
-          )
-        }
+        onChange={(event) => onChange(event.target.value.toUpperCase())}
         className="mt-0.5 bg-transparent text-lg font-black leading-tight text-slate-950 outline-none"
       />
 
-      <span className="text-xs font-semibold text-slate-600">
-        {subtext}
-      </span>
+      <span className="text-xs font-semibold text-slate-600">{subtext}</span>
     </label>
   );
 }
@@ -346,9 +271,7 @@ function DateTriggerField({
       type="button"
       onClick={onClick}
       className={`flex min-h-[72px] w-full flex-col justify-center border-t border-violet-100 px-3.5 py-2.5 text-left transition first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0 ${
-        isActive
-          ? "bg-violet-50/60"
-          : "hover:bg-slate-50"
+        isActive ? "bg-violet-50/60" : "hover:bg-slate-50"
       }`}
     >
       <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
@@ -381,9 +304,7 @@ function TravelerField({
   travelers: string;
   cabinClass: string;
   setTravelers: (value: string) => void;
-  setCabinClass: (
-    value: string
-  ) => void;
+  setCabinClass: (value: string) => void;
 }) {
   return (
     <div className="flex min-h-[72px] flex-col justify-center border-t border-violet-100 px-3 py-2 first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
@@ -394,54 +315,24 @@ function TravelerField({
       <div className="mt-1 grid grid-cols-1 gap-1">
         <select
           value={travelers}
-          onChange={(event) =>
-            setTravelers(
-              event.target.value
-            )
-          }
+          onChange={(event) => setTravelers(event.target.value)}
           className="w-full bg-transparent text-sm font-bold text-slate-950 outline-none"
         >
-          <option value="1">
-            1 Traveler
-          </option>
-
-          <option value="2">
-            2 Travelers
-          </option>
-
-          <option value="3">
-            3 Travelers
-          </option>
-
-          <option value="4">
-            4 Travelers
-          </option>
+          <option value="1">1 Traveler</option>
+          <option value="2">2 Travelers</option>
+          <option value="3">3 Travelers</option>
+          <option value="4">4 Travelers</option>
         </select>
 
         <select
           value={cabinClass}
-          onChange={(event) =>
-            setCabinClass(
-              event.target.value
-            )
-          }
+          onChange={(event) => setCabinClass(event.target.value)}
           className="w-full bg-transparent text-xs font-semibold text-slate-700 outline-none"
         >
-          <option value="economy">
-            Economy
-          </option>
-
-          <option value="premium-economy">
-            Premium Economy
-          </option>
-
-          <option value="business">
-            Business
-          </option>
-
-          <option value="first">
-            First
-          </option>
+          <option value="economy">Economy</option>
+          <option value="premium-economy">Premium Economy</option>
+          <option value="business">Business</option>
+          <option value="first">First</option>
         </select>
       </div>
     </div>
@@ -461,33 +352,21 @@ function BookingCalendar({
   returnDate: Date;
   onDaySelect: (day: Date) => void;
 }) {
-  const months = [
-    viewDate,
-    addMonths(viewDate, 1),
-  ];
+  const months = [viewDate, addMonths(viewDate, 1)];
 
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       {months.map((month) => {
-        const monthStart =
-          startOfMonth(month);
+        const monthStart = startOfMonth(month);
+        const monthEnd = endOfMonth(month);
 
-        const monthEnd =
-          endOfMonth(month);
+        const gridStart = startOfWeek(monthStart, {
+          weekStartsOn: 0,
+        });
 
-        const gridStart = startOfWeek(
-          monthStart,
-          {
-            weekStartsOn: 0,
-          }
-        );
-
-        const gridEnd = endOfWeek(
-          monthEnd,
-          {
-            weekStartsOn: 0,
-          }
-        );
+        const gridEnd = endOfWeek(monthEnd, {
+          weekStartsOn: 0,
+        });
 
         const days = eachDayOfInterval({
           start: gridStart,
@@ -501,107 +380,54 @@ function BookingCalendar({
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-black text-slate-900">
-                {format(
-                  month,
-                  "MMMM yyyy"
-                )}
+                {format(month, "MMMM yyyy")}
               </h3>
 
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() =>
-                    setViewDate(
-                      addMonths(
-                        viewDate,
-                        -1
-                      )
-                    )
-                  }
+                  onClick={() => setViewDate(addMonths(viewDate, -1))}
                   className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100"
                 >
-                  <ChevronLeft
-                    size={16}
-                  />
+                  <ChevronLeft size={16} />
                 </button>
 
                 <button
                   type="button"
-                  onClick={() =>
-                    setViewDate(
-                      addMonths(
-                        viewDate,
-                        1
-                      )
-                    )
-                  }
+                  onClick={() => setViewDate(addMonths(viewDate, 1))}
                   className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100"
                 >
-                  <ChevronRight
-                    size={16}
-                  />
+                  <ChevronRight size={16} />
                 </button>
               </div>
             </div>
 
             <div className="mb-3 grid grid-cols-7 text-center text-[11px] font-extrabold tracking-wide text-slate-500">
-              {[
-                "Su",
-                "Mo",
-                "Tu",
-                "We",
-                "Th",
-                "Fr",
-                "Sa",
-              ].map((d) => (
-                <span key={d}>{d}</span>
+              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((dayName) => (
+                <span key={dayName}>{dayName}</span>
               ))}
             </div>
 
             <div className="grid grid-cols-7 gap-2">
               {days.map((day) => {
-                const inMonth =
-                  isSameMonth(
-                    day,
-                    month
-                  );
+                const inMonth = isSameMonth(day, month);
 
                 const selected =
-                  isSameDay(
-                    day,
-                    departureDate
-                  ) ||
-                  isSameDay(
-                    day,
-                    returnDate
-                  );
+                  isSameDay(day, departureDate) || isSameDay(day, returnDate);
 
                 const inRange =
-                  isAfter(
-                    day,
-                    departureDate
-                  ) &&
-                  isBefore(
-                    day,
-                    returnDate
-                  );
+                  isAfter(day, departureDate) && isBefore(day, returnDate);
 
                 return (
                   <button
                     key={day.toISOString()}
                     type="button"
-                    onClick={() =>
-                      onDaySelect(day)
-                    }
+                    onClick={() => onDaySelect(day)}
                     className={`h-12 rounded-xl text-base font-semibold transition ${
                       !inMonth
                         ? "text-slate-300"
                         : "text-slate-800 hover:bg-violet-50"
-                    } ${
-                      inRange
-                        ? "bg-violet-50"
-                        : ""
-                    } ${
+                    } ${inRange ? "bg-violet-50" : ""} ${
                       selected
                         ? "bg-[#6d28d9] text-white shadow-sm hover:bg-[#5b21d6]"
                         : ""
