@@ -43,12 +43,12 @@ export function AppHeader({
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
-      <div className="page-shell flex h-20 items-center justify-between gap-4">
+      <div className="page-shell flex h-20 items-center justify-between gap-5 lg:gap-8">
         <Link
           href="/"
           className={`flex items-center text-slate-950 ${
             isHomepageBrand
-              ? "shrink-0 gap-3.5"
+              ? "shrink-0 gap-4 pr-1"
               : "gap-3 text-xl font-extrabold tracking-tight"
           }`}
           aria-label="Curioticket home"
@@ -76,12 +76,12 @@ export function AppHeader({
           )}
         </Link>
 
-        <nav className="hidden items-center gap-2 lg:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-1 lg:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-md px-3 py-2 text-sm font-bold text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
+              className="rounded-md px-3 py-2 text-sm font-bold text-slate-900 transition hover:bg-violet-50 hover:text-[#6d28d9]"
             >
               {item.label}
             </Link>
