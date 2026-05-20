@@ -1,8 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
@@ -126,7 +126,7 @@ export function FlightResultsClient() {
         <div className="page-shell py-10">
           <section className="grid gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
             <div className="min-w-0">
-              <h1 className="text-4xl font-black leading-[1.05] tracking-tight text-navy sm:text-5xl">
+              <h1 className="text-4xl font-extrabold leading-[1.04] tracking-[-0.02em] text-slate-900 sm:text-5xl">
                 Find hundreds of cheap flights with just one search!
               </h1>
               <EmptyStateFlightSearchBar />
@@ -283,8 +283,8 @@ function EmptyStateFlightSearchBar() {
         />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm">
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(120px,1fr)_44px_minmax(140px,1fr)_minmax(135px,0.9fr)_minmax(135px,0.9fr)_minmax(170px,1fr)_110px]">
+      <div className="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
+        <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-[minmax(118px,1fr)_42px_minmax(138px,1fr)_minmax(132px,0.9fr)_minmax(132px,0.9fr)_minmax(166px,1fr)_108px]">
           <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
 
           <SwapButton
@@ -452,10 +452,10 @@ function EmptyStateTravelImage() {
         sizes="360px"
         className="object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-navy/45 via-navy/10 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-br from-navy/40 via-transparent to-sky-300/35" />
       <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/92 p-3 backdrop-blur">
-        <p className="text-xs font-black uppercase tracking-[0.12em] text-navy/70">Smart flight search</p>
-        <p className="mt-1 text-sm font-semibold text-navy">Compare routes, fares, and dates in one place.</p>
+        <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-700">Smart flight search</p>
+        <p className="mt-1 text-sm font-semibold text-slate-900">Compare routes, fares, and dates in one place.</p>
       </div>
     </aside>
   );
