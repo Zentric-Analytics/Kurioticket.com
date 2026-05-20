@@ -250,7 +250,7 @@ function EmptyStateFlightSearchBar() {
   const [directOnly, setDirectOnly] = useState(false);
 
   return (
-    <div className="mt-4 max-w-4xl space-y-3">
+    <div className="mt-4 mr-auto max-w-3xl space-y-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <SearchSelect
           label="Trip type"
@@ -278,7 +278,7 @@ function EmptyStateFlightSearchBar() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm">
-        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
           <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
 
           <SwapButton
