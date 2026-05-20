@@ -79,7 +79,7 @@ Render uses:
 npm run db:deploy:render
 ```
 
-The Render migration command first detects whether an existing Render PostgreSQL database already has application tables but no `_prisma_migrations` history. When that legacy state is found, it baselines the initial Prisma migration before applying pending migrations so deployments do not fail on already-existing tables.
+The Render migration command runs `prisma generate && prisma migrate deploy`. Both Render services also run the migration command in `buildCommand`, and `prestart` runs the same deployment guard before `next start` so pending migrations are applied before the app handles traffic.
 
 The schema includes users, auth sessions, subscriptions, saved flights/hotels/searches, search history, price alerts, support tickets, redirect logs, provider logs, notifications, preferences, trips, legal documents, feature flags, analytics, and provider health logs.
 
@@ -87,11 +87,10 @@ The schema includes users, auth sessions, subscriptions, saved flights/hotels/se
 
 Provider calls happen only in backend services under `src/services/travel`.
 
-- Duffel is the primary live flight provider.
-- Amadeus is the secondary flight provider.
-- Kiwi/Tequila is the third flight provider.
-- Travelpayouts is not a replacement for Duffel. It is the affiliate, enrichment, destination discovery, travel trends, SEO, and monetization layer.
-- Hotels use Amadeus Hotels when Amadeus credentials exist, then a hotel partner/Travelpayouts-style enrichment path if configured.
+- Duffel is the active live flight provider.
+- Amadeus, Kiwi/Tequila, Sabre, Travelport, Skyscanner, and Travelpayouts are paused or future integrations unless explicitly reactivated.
+- Travelpayouts is not an active search or booking provider. If it is used later, it should be treated only as an optional discovery, enrichment, SEO, or affiliate integration and not as a replacement for Duffel.
+- Hotels use the backend hotel provider abstraction when credentials exist; missing provider credentials must not generate fake production results.
 
 Provider credentials missing, unavailable, or rate-limited never produce fake live results in production or staging. Local fallback data is paused by default and only runs when `ENABLE_DEVELOPMENT_FALLBACKS=true` is set locally. Raw provider responses are never returned to users.
 
@@ -101,11 +100,11 @@ Set `DUFFEL_API_KEY` in Render and local `.env.local` when testing live searches
 
 ### Travelpayouts Setup
 
-Set `TRAVELPAYOUTS_API_KEY` and `TRAVELPAYOUTS_MARKER`. The marker is used for affiliate attribution and the API key is used for data/enrichment health checks and future destination discovery surfaces. Travelpayouts enriches deals, SEO pages, external provider redirects, and travel intelligence; Duffel remains the primary live flight provider.
+`TRAVELPAYOUTS_API_KEY` and `TRAVELPAYOUTS_MARKER` are optional placeholders for a paused/future integration. Do not treat Travelpayouts as an active failed provider in production health checks, search operations, or booking handoff status; Duffel remains the active live flight provider.
 
 ### Provider Health Checks
 
-Admins can review provider status at `/admin`. The admin-only endpoint `/api/admin/provider-health` reports Duffel and Travelpayouts configured/missing state, connection test result, response latency, sanitized last error, and environment readiness. Provider errors are logged internally and sanitized before returning to the browser.
+Admins can review provider status at `/admin` and `/admin/providers`. The admin-only endpoint `/api/admin/provider-health` reports active Duffel health plus paused/future provider rows, including Travelpayouts as paused. Provider errors are logged internally and sanitized before returning to the browser.
 
 ## Stripe Setup
 
@@ -147,21 +146,23 @@ This repository includes `render.yaml` for a Render Blueprint:
 - `/api/health` health check
 - production and staging env var placeholders with secrets marked `sync: false`
 
-Production deployment flow:
+Render deployment flow:
 
 ```bash
-git add .
-git commit -m "Describe production-ready change"
-git push origin main
+# Staging deploys from dev
+git push origin work:dev
+
+# Production deploys from main after staging is approved
+git push origin work:main
 ```
 
-Then open:
+For a new Render Blueprint, open:
 
 ```text
 https://dashboard.render.com/blueprint/new
 ```
 
-Select the GitHub repository, fill secret environment variables, apply the Blueprint, and run `npm run db:deploy` after migrations exist.
+Select the GitHub repository, fill secret environment variables, and apply the Blueprint. Render runs `npm run db:deploy:render` automatically during the build for both staging and production.
 
 Production keys must be added in Render environment variables only. Local keys belong in `.env.local`, which is ignored by git.
 

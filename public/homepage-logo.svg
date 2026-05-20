@@ -1,0 +1,57 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cTop" x1="278" y1="180" x2="745" y2="420" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#BB5BFF"/>
+      <stop offset="0.52" stop-color="#3B22E0"/>
+      <stop offset="1" stop-color="#1D7CFF"/>
+    </linearGradient>
+    <linearGradient id="cBottom" x1="286" y1="575" x2="760" y2="875" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#11208C"/>
+      <stop offset="0.52" stop-color="#1A46D1"/>
+      <stop offset="1" stop-color="#A63EFF"/>
+    </linearGradient>
+    <linearGradient id="ring" x1="180" y1="588" x2="900" y2="446" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1E38E6"/>
+      <stop offset="0.43" stop-color="#15A8FF"/>
+      <stop offset="1" stop-color="#1439D8"/>
+    </linearGradient>
+    <linearGradient id="plane" x1="572" y1="446" x2="874" y2="548" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1228B6"/>
+      <stop offset="0.56" stop-color="#0F5EF5"/>
+      <stop offset="1" stop-color="#1E88FF"/>
+    </linearGradient>
+    <filter id="softShadow" x="140" y="130" width="760" height="810" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="510" cy="875" rx="192" ry="28" fill="#6077FF" opacity="0.36" filter="url(#softShadow)"/>
+
+  <path
+    d="M247 588C247 359 431 173 656 173C740 173 808 196 865 226C724 188 565 254 471 369C417 434 384 512 379 588C373 661 404 741 470 804C349 764 247 684 247 588Z"
+    fill="url(#cTop)"
+  />
+
+  <path
+    d="M780 664C749 749 681 818 595 858C504 900 402 903 312 869C406 879 497 848 564 795C624 748 661 683 673 613C688 529 663 450 604 389C723 430 812 538 812 654C812 658 811 661 811 664H780Z"
+    fill="url(#cBottom)"
+  />
+
+  <path
+    d="M190 565C264 513 341 488 426 482C523 475 619 499 715 519C766 530 816 536 868 536C821 552 773 582 721 608C590 673 451 715 314 723C264 725 216 713 180 686C159 671 145 648 144 623C143 602 156 581 190 565Z"
+    fill="white"
+  />
+
+  <path
+    d="M180 658C253 700 353 703 445 690C574 673 697 620 817 548C851 528 884 510 918 499C896 522 868 543 842 564C721 660 564 733 403 756C318 768 239 764 175 725C157 714 144 699 139 683C133 665 146 648 180 658Z"
+    fill="url(#ring)"
+  />
+
+  <path
+    d="M608 473L689 483L878 407C886 404 891 404 894 407C897 410 894 415 884 422L724 512L770 516L870 466C877 463 882 464 884 467C886 470 882 475 875 480L775 545L743 551L640 507L585 514L608 473Z"
+    fill="url(#plane)"
+  />
+
+  <path d="M740 516L740 603L767 581L782 516H740Z" fill="#0E2CC5"/>
+  <path d="M594 515L687 542L646 559L565 540L594 515Z" fill="#1A64F7"/>
+</svg>

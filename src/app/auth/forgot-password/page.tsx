@@ -10,9 +10,11 @@ export default function ForgotPasswordPage() {
   return (
     <>
       <AppHeader />
+
       <main className="page-shell flex flex-1 items-center py-10">
         <ForgotPasswordForm />
       </main>
+
       <Footer />
     </>
   );

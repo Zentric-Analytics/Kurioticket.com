@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
 import { signinSchema } from "@/lib/validation";
 
@@ -31,8 +31,11 @@ export function SigninForm({
   const [loading, setLoading] =
     useState(false);
 
+  const [showPassword, setShowPassword] =
+    useState(false);
+
   async function submit(
-    formData: FormData,
+    formData: FormData
   ) {
     setLoading(true);
     setError("");
@@ -42,13 +45,12 @@ export function SigninForm({
       signinSchema.safeParse({
         email: String(
           formData.get("email") ||
-            "",
+            ""
         ),
-
         password: String(
           formData.get(
-            "password",
-          ) || "",
+            "password"
+          ) || ""
         ),
       });
 
@@ -56,133 +58,217 @@ export function SigninForm({
       setLoading(false);
 
       setError(
-        "We could not sign you in. Check your email and password, then try again.",
+        "We could not sign you in. Check your email and password, then try again."
       );
 
       return;
     }
 
-    const response = await fetch("/api/auth/request-login-code", {
-      method: "POST",
-      headers: {
-        "Content-Type":
-          "application/json",
-      },
-      body: JSON.stringify({
-        ...parsed.data,
-        callbackUrl,
-      }),
-    });
+    try {
+      const response =
+        await fetch(
+          "/api/auth/request-login-code",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify(
+              {
+                ...parsed.data,
+                callbackUrl,
+              }
+            ),
+          }
+        );
 
-    const data = await response.json();
+      const data =
+        await response.json();
 
-    setLoading(false);
+      setLoading(false);
 
-    if (!response.ok) {
-      setError(
+      if (!response.ok) {
+        setError(
+          String(
+            data.error ||
+              "We could not sign you in. Check your email and password, then try again."
+          )
+        );
+
+        return;
+      }
+
+      window.location.href =
         String(
-          data.error ||
-            "We could not sign you in. Check your email and password, then try again.",
-        ),
-      );
+          data.redirectTo ||
+            `/auth/verify-login?email=${encodeURIComponent(
+              parsed.data.email
+            )}&callbackUrl=${encodeURIComponent(
+              callbackUrl
+            )}`
+        );
+    } catch {
+      setLoading(false);
 
-      return;
+      setError(
+        "Something went wrong. Please try again."
+      );
     }
-
-    window.location.href =
-      String(
-        data.redirectTo ||
-          `/auth/verify-login?email=${encodeURIComponent(
-            parsed.data.email,
-          )}&callbackUrl=${encodeURIComponent(
-            callbackUrl,
-          )}`,
-      );
   }
 
   return (
-    <Card className="mx-auto w-full max-w-md p-5">
-      <h1 className="text-2xl font-bold text-navy">
-        Log in
-      </h1>
+    <section className="mx-auto grid w-full max-w-6xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.16)] lg:grid-cols-[1.1fr_1fr]">
+      <aside className="relative hidden min-h-[620px] lg:block">
+        <Image
+          src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1800&q=80"
+          alt="Premium airplane wing view above the clouds at sunrise"
+          fill
+          priority
+          sizes="(max-width: 1024px) 0px, (max-width: 1536px) 52vw, 44vw"
+          className="object-cover"
+        />
 
-      <p className="mt-2 text-sm text-muted">
-        Save searches, manage
-        alerts, and access your
-        travel dashboard.
-      </p>
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-900/55 to-cyan-900/45" />
 
-      <form
-        action={submit}
-        className="mt-5 grid gap-4"
-      >
-        <Field label="Email">
-          <Input
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-          />
-        </Field>
-
-        <Field label="Password">
-          <Input
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-          />
-        </Field>
-
-        <Link
-          className="text-sm font-semibold text-teal-dark"
-          href="/auth/forgot-password"
-        >
-          Forgot password?
-        </Link>
-
-        {message ? (
-          <p className="text-sm text-teal-dark">
-            {message}
+        <div className="absolute inset-x-0 bottom-0 p-10 text-white">
+          <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/90">
+            CurioTicket
           </p>
-        ) : null}
 
-        {error ? (
-          <p className="text-sm text-danger">
-            {error}
+          <p className="mt-3 max-w-md text-3xl font-semibold leading-tight">
+            Find premium fares and stays for your next destination.
           </p>
-        ) : null}
+        </div>
+      </aside>
 
-        <Button disabled={loading}>
-          {loading
-            ? "Signing in..."
-            : "Log in"}
-        </Button>
-      </form>
+      <div className="flex min-h-[620px] items-center justify-center bg-gradient-to-b from-slate-50 to-white p-4 sm:p-8 lg:p-12">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white/95 p-6 shadow-lg backdrop-blur sm:p-8">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            Welcome Back
+          </h1>
 
-      {googleEnabled ? (
-        <Button
-          variant="secondary"
-          className="mt-3 w-full"
-          onClick={() =>
-            signIn("google", {
-              callbackUrl,
-            })
-          }
-        >
-          Continue with Google
-        </Button>
-      ) : null}
+          <p className="mt-2 text-sm text-slate-600">
+            Continue planning your next journey.
+          </p>
 
-      <p className="mt-4 text-sm text-muted">
-        New to Curioticket?{" "}
-        <Link
-          className="font-semibold text-teal-dark"
-          href="/auth/signup"
-        >
-          Create an account
-        </Link>
-      </p>
-    </Card>
+          <form
+            action={submit}
+            className="mt-8 grid gap-5"
+            aria-live="polite"
+          >
+            <Field label="Email">
+              <Input
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="h-12 rounded-xl border-slate-300 text-slate-900 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+              />
+            </Field>
+
+            <Field label="Password">
+              <div className="relative">
+                <Input
+                  name="password"
+                  type={
+                    showPassword
+                      ? "text"
+                      : "password"
+                  }
+                  autoComplete="current-password"
+                  required
+                  className="h-12 rounded-xl border-slate-300 pr-24 text-slate-900 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-200"
+                />
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword(
+                      (prev) =>
+                        !prev
+                    )
+                  }
+                  className="focus-ring absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-3 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                  aria-label={
+                    showPassword
+                      ? "Hide password"
+                      : "Show password"
+                  }
+                >
+                  {showPassword
+                    ? "Hide"
+                    : "Show"}
+                </button>
+              </div>
+            </Field>
+
+            <div className="flex justify-end">
+              <Link
+                href="/auth/forgot-password"
+                className="text-sm font-semibold text-cyan-700 hover:text-cyan-800"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
+            {message ? (
+              <p className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-700">
+                {message}
+              </p>
+            ) : null}
+
+            {error ? (
+              <p
+                className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                role="alert"
+              >
+                {error}
+              </p>
+            ) : null}
+
+            <Button
+              type="submit"
+              disabled={loading}
+              className="h-12 w-full rounded-xl bg-slate-900 text-white hover:bg-slate-800"
+            >
+              {loading
+                ? "Sending code..."
+                : "Continue"}
+            </Button>
+          </form>
+
+          {googleEnabled ? (
+            <Button
+              variant="secondary"
+              className="mt-3 h-12 w-full rounded-xl border-slate-300 text-slate-700 hover:bg-slate-50"
+              onClick={() =>
+                signIn(
+                  "google",
+                  {
+                    callbackUrl,
+                  }
+                )
+              }
+              disabled={loading}
+            >
+              Continue with Google
+            </Button>
+          ) : null}
+
+          <div className="mt-5 flex items-center justify-between text-sm">
+            <p className="text-slate-600">
+              New to CurioTicket?{" "}
+              <Link
+                className="font-semibold text-cyan-700 hover:text-cyan-800"
+                href="/auth/signup"
+              >
+                Create an account
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
