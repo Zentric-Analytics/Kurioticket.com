@@ -124,9 +124,9 @@ export function FlightResultsClient() {
     return (
       <main className="flex-1 bg-[#f6f8fb]">
         <div className="page-shell py-10">
-          <section className="grid gap-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[minmax(0,1fr)_360px] lg:items-stretch">
+          <section className="grid gap-6 rounded-3xl border border-slate-200 bg-[#eef1f4] p-6 shadow-sm lg:grid-cols-[minmax(0,1fr)_380px] lg:items-stretch">
             <div className="min-w-0">
-              <h1 className="text-4xl font-extrabold leading-[1.04] tracking-[-0.02em] text-slate-900 sm:text-5xl">
+              <h1 className="text-4xl font-extrabold leading-[1.04] tracking-[-0.02em] text-slate-900 sm:text-5xl lg:text-6xl">
                 Find hundreds of cheap flights with just one search!
               </h1>
               <EmptyStateFlightSearchBar />
@@ -256,7 +256,7 @@ function EmptyStateFlightSearchBar() {
   const [directOnly, setDirectOnly] = useState(false);
 
   return (
-    <div className="mt-5 mr-auto w-full max-w-5xl space-y-3">
+    <div className="mt-6 mr-auto w-full max-w-5xl space-y-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <SearchSelect
           label="Trip type"
@@ -283,7 +283,7 @@ function EmptyStateFlightSearchBar() {
         />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-2.5 shadow-md shadow-slate-200/70">
         <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-[minmax(118px,1fr)_42px_minmax(138px,1fr)_minmax(132px,0.9fr)_minmax(132px,0.9fr)_minmax(166px,1fr)_108px]">
           <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
 
@@ -444,18 +444,50 @@ function SwapButton({ onSwap }: { onSwap: () => void }) {
 
 function EmptyStateTravelImage() {
   return (
-    <aside className="relative hidden min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner lg:block">
-      <Image
-        src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80"
-        alt="Airplane wing above clouds"
-        fill
-        sizes="360px"
-        className="object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-navy/40 via-transparent to-sky-300/35" />
-      <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/92 p-3 backdrop-blur">
-        <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-700">Smart flight search</p>
-        <p className="mt-1 text-sm font-semibold text-slate-900">Compare routes, fares, and dates in one place.</p>
+    <aside className="relative hidden min-h-[340px] overflow-hidden rounded-2xl bg-gradient-to-br from-sky-100 via-slate-100 to-blue-100 p-3 lg:block">
+      <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-sky-200/60 blur-2xl" />
+      <div className="absolute -bottom-12 -left-10 h-36 w-36 rounded-full bg-blue-200/60 blur-2xl" />
+
+      <div className="relative grid h-full grid-cols-6 grid-rows-6 gap-2">
+        <div className="relative col-span-4 row-span-3 overflow-hidden rounded-[22px]">
+          <Image
+            src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80"
+            alt="Airplane wing above clouds"
+            fill
+            sizes="360px"
+            className="object-cover"
+          />
+        </div>
+
+        <div className="relative col-span-2 row-span-2 overflow-hidden rounded-[20px]">
+          <Image
+            src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80"
+            alt="Desert canyon from above"
+            fill
+            sizes="240px"
+            className="object-cover"
+          />
+        </div>
+
+        <div className="relative col-span-4 row-span-3 overflow-hidden rounded-[22px]">
+          <Image
+            src="https://images.unsplash.com/photo-1602002418082-dd4a2fa6f7ea?auto=format&fit=crop&w=1200&q=80"
+            alt="Passenger looking through airplane window"
+            fill
+            sizes="360px"
+            className="object-cover"
+          />
+        </div>
+
+        <div className="relative col-span-2 row-span-4 overflow-hidden rounded-[20px]">
+          <Image
+            src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=900&q=80"
+            alt="Scenic travel landscape"
+            fill
+            sizes="240px"
+            className="object-cover"
+          />
+        </div>
       </div>
     </aside>
   );
@@ -518,7 +550,7 @@ function Filters({
   );
 }
 
-function InsightCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+function InsightCard({ icon, label, value }: { icon: ReactNode; label: string }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal/10 text-teal">{icon}</span>
