@@ -104,6 +104,18 @@ export function SignupForm({
 
     setLoading(false);
 
+    // Preserve backend verification flow
+    if (
+      signInResult?.error ===
+      "EmailVerificationRequired"
+    ) {
+      window.location.href = `/auth/verify-email?email=${encodeURIComponent(
+        email,
+      )}`;
+
+      return;
+    }
+
     if (!signInResult?.ok) {
       setError(
         "Your account was created, but automatic login failed. Please log in with your new password.",
@@ -124,9 +136,10 @@ export function SignupForm({
       </h1>
 
       <p className="mt-2 text-sm text-muted">
-        No passport, government ID,
-        phone number, or address
-        needed.
+        No passport,
+        government ID,
+        phone number, or
+        address needed.
       </p>
 
       <form
@@ -161,8 +174,9 @@ export function SignupForm({
         </Field>
 
         <p className="text-xs leading-5 text-muted">
-          By creating an account,
-          you agree to{" "}
+          By creating an
+          account, you agree
+          to{" "}
           <Link
             className="font-semibold text-teal-dark"
             href="/legal/terms-of-service"
@@ -176,8 +190,8 @@ export function SignupForm({
           >
             Privacy Policy
           </Link>
-          , and partner redirect
-          disclosures.
+          , and partner
+          redirect disclosures.
         </p>
 
         {error ? (
@@ -209,7 +223,8 @@ export function SignupForm({
       ) : null}
 
       <p className="mt-4 text-sm text-muted">
-        Already have an account?{" "}
+        Already have an
+        account?{" "}
         <Link
           className="font-semibold text-teal-dark"
           href="/auth/signin"
@@ -227,11 +242,16 @@ function getPublicSignupValidationError(
     string[] | undefined
   >,
 ) {
-  if (fieldErrors.email?.length) {
+  if (
+    fieldErrors.email?.length
+  ) {
     return "Enter a valid email address.";
   }
 
-  if (fieldErrors.password?.length) {
+  if (
+    fieldErrors.password
+      ?.length
+  ) {
     return "Password must meet minimum requirements.";
   }
 

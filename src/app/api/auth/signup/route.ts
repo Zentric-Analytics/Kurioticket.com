@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { DatabaseUnavailableError } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
 
@@ -7,38 +8,67 @@ import {
   InvalidEmailError,
   createPasswordUser,
 } from "@/services/authService";
+import { EmailVerificationError, sendEmailVerificationCode } from "@/services/emailVerificationService";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+) {
   let body: unknown;
 
   try {
     body = await request.json();
   } catch (error) {
-    console.error("[signup:invalid-json]", error);
+    console.error(
+      "[signup:invalid-json]",
+      error,
+    );
 
     return NextResponse.json(
-      { error: "Unable to create account right now." },
+      {
+        error:
+          "Unable to create account right now.",
+      },
       { status: 400 },
     );
   }
 
-  const parsed = signupSchema.safeParse(body);
+  const parsed =
+    signupSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
       {
-        error: getPublicSignupValidationError(
-          parsed.error.flatten().fieldErrors,
-        ),
+        error:
+          getPublicSignupValidationError(
+            parsed.error.flatten()
+              .fieldErrors,
+          ),
       },
       { status: 400 },
     );
   }
 
   try {
-    const user = await createPasswordUser(parsed.data);
+    checkAuthRateLimit({
+      action: "signup",
+      email: parsed.data.email,
+      request,
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    });
+
+    const user =
+      await createPasswordUser(
+        parsed.data,
+      );
+
+    await sendEmailVerificationCode({
+      email: parsed.data.email,
+      name: parsed.data.name,
+      action: "signup",
+    });
 
     return NextResponse.json(
       {
@@ -51,56 +81,126 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error("[signup]", error);
+    console.error(
+      "[signup]",
+      error,
+    );
 
-    if (error instanceof DuplicateEmailError) {
+    if (
+      error instanceof
+      AuthRateLimitError
+    ) {
       return NextResponse.json(
-        { error: "An account with this email already exists." },
+        {
+          error:
+            "Too many signup attempts. Please wait and try again.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After":
+              String(
+                error.retryAfterSeconds,
+              ),
+          },
+        },
+      );
+    }
+
+    if (
+      error instanceof
+      DuplicateEmailError
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "An account with this email already exists.",
+        },
         { status: 409 },
       );
     }
 
-    if (error instanceof InvalidEmailError) {
+    if (
+      error instanceof
+      InvalidEmailError
+    ) {
       return NextResponse.json(
-        { error: "Enter a valid email address." },
+        {
+          error:
+            "Enter a valid email address.",
+        },
         { status: 400 },
       );
     }
 
     if (
-      error instanceof DatabaseUnavailableError ||
-      isMissingMigrationError(error)
+      error instanceof
+      EmailVerificationError
     ) {
       return NextResponse.json(
-        { error: "Unable to create account right now." },
+        {
+          error:
+            "Unable to send verification code right now. Please try again.",
+        },
+        { status: 503 },
+      );
+    }
+
+    if (
+      error instanceof
+        DatabaseUnavailableError ||
+      isMissingMigrationError(
+        error,
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Unable to create account right now.",
+        },
         { status: 503 },
       );
     }
 
     return NextResponse.json(
-      { error: "Unable to create account right now." },
+      {
+        error:
+          "Unable to create account right now.",
+      },
       { status: 400 },
     );
   }
 }
 
 function getPublicSignupValidationError(
-  fieldErrors: Record<string, string[] | undefined>,
+  fieldErrors: Record<
+    string,
+    string[] | undefined
+  >,
 ) {
-  if (fieldErrors.email?.length) {
+  if (
+    fieldErrors.email?.length
+  ) {
     return "Enter a valid email address.";
   }
 
-  if (fieldErrors.password?.length) {
+  if (
+    fieldErrors.password
+      ?.length
+  ) {
     return "Password must meet minimum requirements.";
   }
 
   return "Unable to create account right now.";
 }
 
-function isMissingMigrationError(error: unknown) {
+function isMissingMigrationError(
+  error: unknown,
+) {
   const message =
-    error instanceof Error ? error.message : String(error);
+    error instanceof Error
+      ? error.message
+      : String(error);
 
   return /table .* does not exist|relation .* does not exist|database .* does not exist/i.test(
     message,

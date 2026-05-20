@@ -39,9 +39,16 @@ export function AppHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <button type="button" className="focus-ring inline-flex h-10 items-center gap-2 rounded-md px-2 text-sm font-bold text-slate-900">
-            <Globe2 size={18} />
-            EN
+          <button
+            type="button"
+            aria-label="Select language, country, and currency"
+            className="focus-ring inline-flex h-10 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
+          >
+            <Globe2 size={16} />
+            <span>USD</span>
+            <span className="text-base leading-none" aria-hidden="true">
+              🇺🇸
+            </span>
             <ChevronDown size={14} />
           </button>
           <LinkButton href="/dashboard" variant="ghost" size="sm" className="h-10 w-10 px-0" aria-label="Notifications">

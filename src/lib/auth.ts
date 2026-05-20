@@ -9,6 +9,7 @@ import {
   getAdminEmails,
   getAuthSecret,
 } from "@/lib/env";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 
 import {
   isGoogleAuthConfigured,
@@ -22,130 +23,258 @@ import {
 
 import { signinSchema } from "@/lib/validation";
 
-const providers: NextAuthOptions["providers"] = [
-  CredentialsProvider({
-    name: "Email and password",
+import {
+  getEmailVerificationRedirect,
+  sendEmailVerificationCode,
+  verifyLoginCode,
+} from "@/services/emailVerificationService";
+import { logAuthEvent } from "@/services/authService";
 
-    credentials: {
-      email: {
-        label: "Email",
-        type: "email",
+const providers: NextAuthOptions["providers"] =
+  [
+    CredentialsProvider({
+      name: "Email and password",
+
+      credentials: {
+        email: {
+          label: "Email",
+          type: "email",
+        },
+
+        password: {
+          label: "Password",
+          type: "password",
+        },
+
+        loginCode: {
+          label: "Login code",
+          type: "text",
+        },
       },
 
-      password: {
-        label: "Password",
-        type: "password",
-      },
-    },
+      async authorize(
+        credentials,
+      ) {
+        const loginCode =
+          String(
+            credentials?.loginCode ||
+              "",
+          ).trim();
 
-    async authorize(credentials) {
-      const parsed =
-        signinSchema.safeParse(
-          credentials,
-        );
+        if (loginCode) {
+          const parsedEmail =
+            signinSchema.shape.email.safeParse(
+              String(
+                credentials?.email ||
+                  "",
+              ),
+            );
 
-      if (!parsed.success) {
-        console.error(
-          "[auth:credentials-validation]",
-          parsed.error.flatten()
-            .fieldErrors,
-        );
+          if (
+            !parsedEmail.success ||
+            !/^\d{6}$/.test(
+              loginCode,
+            )
+          ) {
+            return null;
+          }
 
-        logSafeAuthDiagnostics(
-          "[auth:credentials-validation-diagnostics]",
-        );
+          const email =
+            parsedEmail.data;
 
-        return null;
-      }
+          try {
+            checkAuthRateLimit({ action: "verify-login", email, limit: 10, windowMs: 15 * 60 * 1000 });
+          } catch (error) {
+            if (error instanceof AuthRateLimitError) {
+              throw new Error("RateLimited");
+            }
 
-      const { email, password } =
-        parsed.data;
+            throw error;
+          }
 
-      const user =
-        await getPrisma().user.findUnique({
-          where: { email },
-        });
+          const validCode =
+            await verifyLoginCode({
+              email,
+              code: loginCode,
+            });
 
-      if (!user?.passwordHash) {
-        console.error(
-          "[auth:credentials-user-missing]",
-          { email },
-        );
+          if (!validCode) {
+            return null;
+          }
 
-        logSafeAuthDiagnostics(
-          "[auth:credentials-user-missing-diagnostics]",
-          { email },
-        );
+          const user =
+            await getPrisma().user.findUnique(
+              {
+                where: {
+                  email,
+                },
+              },
+            );
 
-        return null;
-      }
+          if (
+            !user ||
+            user.status !== "ACTIVE" ||
+            !user.emailVerified
+          ) {
+            return null;
+          }
 
-      if (user.status !== "ACTIVE") {
-        console.error(
-          "[auth:credentials-account-unavailable]",
-          {
-            email,
-            status: user.status,
-          },
-        );
-
-        logSafeAuthDiagnostics(
-          "[auth:credentials-account-unavailable-diagnostics]",
-          {
-            email,
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
             role: user.role,
+            isPremium:
+              user.isPremium,
             status: user.status,
-          },
-        );
+            emailVerified:
+              user.emailVerified,
+          };
+        }
+
+        const parsed =
+          signinSchema.safeParse(
+            credentials,
+          );
+
+        if (!parsed.success) {
+          console.error(
+            "[auth:credentials-validation]",
+            parsed.error.flatten()
+              .fieldErrors,
+          );
+
+          logSafeAuthDiagnostics(
+            "[auth:credentials-validation-diagnostics]",
+          );
+
+          return null;
+        }
+
+        const { email, password } =
+          parsed.data;
+
+        try {
+          checkAuthRateLimit({ action: "signin", email, limit: 10, windowMs: 15 * 60 * 1000 });
+        } catch (error) {
+          if (error instanceof AuthRateLimitError) {
+            throw new Error("RateLimited");
+          }
+
+          throw error;
+        }
+
+        const user =
+          await getPrisma().user.findUnique(
+            {
+              where: {
+                email,
+              },
+            },
+          );
+
+        if (
+          !user?.passwordHash
+        ) {
+          console.error(
+            "[auth:credentials-user-missing]",
+            { email },
+          );
+
+          logSafeAuthDiagnostics(
+            "[auth:credentials-user-missing-diagnostics]",
+            { email },
+          );
+
+          return null;
+        }
+
+        if (
+          user.status !==
+          "ACTIVE"
+        ) {
+          console.error(
+            "[auth:credentials-account-unavailable]",
+            {
+              email,
+              status:
+                user.status,
+            },
+          );
+
+          logSafeAuthDiagnostics(
+            "[auth:credentials-account-unavailable-diagnostics]",
+            {
+              email,
+              role:
+                user.role,
+              status:
+                user.status,
+            },
+          );
+
+          throw new Error(
+            "This account is not available. Please contact support.",
+          );
+        }
+
+        const valid =
+          await bcrypt.compare(
+            password,
+            user.passwordHash,
+          );
+
+        if (!valid) {
+          console.error(
+            "[auth:credentials-invalid-password]",
+            { email },
+          );
+
+          logSafeAuthDiagnostics(
+            "[auth:credentials-invalid-password-diagnostics]",
+            { email },
+          );
+
+          return null;
+        }
+
+        // Email verification enforcement
+        if (
+          !user.emailVerified
+        ) {
+          logAuthEvent("login-blocked-unverified", { email });
+
+          await sendEmailVerificationCode(
+            {
+              email,
+              name: user.name,
+            },
+          );
+
+          throw new Error(
+            "EmailVerificationRequired",
+          );
+        }
 
         throw new Error(
-          "This account is not available. Please contact support.",
+          "LoginVerificationRequired",
         );
-      }
-
-      const valid =
-        await bcrypt.compare(
-          password,
-          user.passwordHash,
-        );
-
-      if (!valid) {
-        console.error(
-          "[auth:credentials-invalid-password]",
-          { email },
-        );
-
-        logSafeAuthDiagnostics(
-          "[auth:credentials-invalid-password-diagnostics]",
-          { email },
-        );
-
-        return null;
-      }
-
-      return {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        image: user.image,
-        role: user.role,
-        isPremium:
-          user.isPremium,
-        status: user.status,
-      };
-    },
-  }),
-];
+      },
+    }),
+  ];
 
 if (isGoogleAuthConfigured()) {
   providers.push(
     GoogleProvider({
       clientId:
-        process.env.AUTH_GOOGLE_ID ||
+        process.env
+          .AUTH_GOOGLE_ID ||
         "",
 
       clientSecret:
-        process.env.AUTH_GOOGLE_SECRET ||
+        process.env
+          .AUTH_GOOGLE_SECRET ||
         "",
     }),
   );
@@ -208,6 +337,9 @@ export const authOptions: NextAuthOptions =
                 id: true,
                 status: true,
                 role: true,
+                emailVerified:
+                  true,
+                name: true,
               },
             },
           );
@@ -238,6 +370,26 @@ export const authOptions: NextAuthOptions =
           );
 
           return "/auth/signin?error=AccountUnavailable";
+        }
+
+        // Email verification gate
+        if (
+          dbUser &&
+          !dbUser.emailVerified
+        ) {
+          logAuthEvent("login-blocked-unverified", { email });
+
+          await sendEmailVerificationCode(
+            {
+              email,
+              name:
+                dbUser.name,
+            },
+          );
+
+          return getEmailVerificationRedirect(
+            email,
+          );
         }
 
         const adminEmails =
@@ -300,6 +452,19 @@ export const authOptions: NextAuthOptions =
               }
             ).status ||
             "ACTIVE";
+
+          token.emailVerified =
+            Boolean(
+              (
+                user as {
+                  emailVerified?:
+                    | Date
+                    | string
+                    | null;
+                }
+              )
+                .emailVerified,
+            );
         }
 
         if (
@@ -325,6 +490,8 @@ export const authOptions: NextAuthOptions =
                   isPremium:
                     true,
                   status: true,
+                  emailVerified:
+                    true,
                 },
               },
             );
@@ -335,7 +502,6 @@ export const authOptions: NextAuthOptions =
                 email,
               );
 
-            // security: allowlist overrides DB role
             const role =
               isAdminEmail
                 ? "ADMIN"
@@ -374,6 +540,11 @@ export const authOptions: NextAuthOptions =
 
             token.status =
               dbUser.status;
+
+            token.emailVerified =
+              Boolean(
+                dbUser.emailVerified,
+              );
           }
         }
 
@@ -408,6 +579,11 @@ export const authOptions: NextAuthOptions =
             String(
               token.status ||
                 "ACTIVE",
+            );
+
+          session.user.emailVerified =
+            Boolean(
+              token.emailVerified,
             );
         }
 
