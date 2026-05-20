@@ -250,7 +250,7 @@ function EmptyStateFlightSearchBar() {
   const [directOnly, setDirectOnly] = useState(false);
 
   return (
-    <div className="mt-4 ml-0 mr-auto w-full max-w-3xl space-y-3">
+    <div className="mt-4 ml-0 mr-auto w-full max-w-[68rem] space-y-2.5">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <SearchSelect
           label="Trip type"
@@ -278,7 +278,7 @@ function EmptyStateFlightSearchBar() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm">
-        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-[minmax(112px,1fr)_40px_minmax(132px,1fr)_minmax(126px,0.9fr)_minmax(126px,0.9fr)_minmax(158px,0.95fr)_102px]">
           <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
 
           <SwapButton
@@ -306,7 +306,7 @@ function EmptyStateFlightSearchBar() {
             icon={<Users size={15} />}
           />
 
-          <Button type="button" className="h-12 w-full rounded-xl px-5 md:w-[120px]">
+          <Button type="button" className="h-12 w-full rounded-xl px-4 xl:w-[102px]">
             <Search size={16} />
             Search
           </Button>
@@ -374,7 +374,7 @@ function SearchSelect({
         "flex min-w-0 items-center gap-2",
         variant === "text"
           ? "h-9 w-auto rounded-lg bg-transparent px-1 text-navy"
-          : "h-12 min-w-[180px] rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
+          : "h-12 min-w-[168px] rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
       )}
     >
       {icon ?? null}
@@ -427,7 +427,7 @@ function SwapButton({ onSwap }: { onSwap: () => void }) {
     <Button
       type="button"
       variant="secondary"
-      className="h-12 w-full rounded-xl border-slate-200 px-3 md:w-auto"
+      className="h-12 w-full rounded-xl border-slate-200 px-2.5 xl:w-[40px]"
       aria-label="Swap origin and destination"
       onClick={onSwap}
     >
