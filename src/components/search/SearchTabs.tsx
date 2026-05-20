@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-
 import {
   addMonths,
   eachDayOfInterval,
@@ -16,192 +15,60 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
-
 import {
   BedDouble,
   CalendarDays,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  MapPin,
   Plane,
   Search,
-  Users,
 } from "lucide-react";
 
 type Tab = "flights" | "hotels";
-
-type TripType =
-  | "round-trip"
-  | "one-way"
-  | "multi-city";
-
-type PickerTarget =
-  | "departure"
-  | "return";
-
-type LocationOption = {
-  city: string;
-  country: string;
-  code: string;
-};
-
-const LOCATION_OPTIONS: LocationOption[] = [
-  {
-    city: "Lagos",
-    country: "Nigeria",
-    code: "LOS",
-  },
-  {
-    city: "Abuja",
-    country: "Nigeria",
-    code: "ABV",
-  },
-  {
-    city: "Dubai",
-    country: "UAE",
-    code: "DXB",
-  },
-  {
-    city: "London",
-    country: "United Kingdom",
-    code: "LHR",
-  },
-  {
-    city: "Paris",
-    country: "France",
-    code: "CDG",
-  },
-  {
-    city: "New York",
-    country: "USA",
-    code: "JFK",
-  },
-];
+type TripType = "round-trip" | "one-way" | "multi-city";
+type PickerTarget = "departure" | "return";
 
 export function SearchTabs() {
   const router = useRouter();
 
-  const [tab, setTab] =
-    useState<Tab>("flights");
+  const [tab, setTab] = useState<Tab>("flights");
+  const [tripType, setTripType] = useState<TripType>("round-trip");
+  const [origin, setOrigin] = useState("LOS");
+  const [destination, setDestination] = useState("DXB");
+  const [travelers, setTravelers] = useState("1");
+  const [cabinClass, setCabinClass] = useState("economy");
 
-  const [tripType, setTripType] =
-    useState<TripType>("round-trip");
+  const [departureDate, setDepartureDate] = useState(new Date(2026, 5, 11));
+  const [returnDate, setReturnDate] = useState(new Date(2026, 5, 17));
+  const [viewDate, setViewDate] = useState(new Date(2026, 5, 1));
 
-  const [originInput, setOriginInput] =
-    useState("Lagos");
-
-  const [
-    destinationInput,
-    setDestinationInput,
-  ] = useState("Dubai");
-
-  const [originCode, setOriginCode] =
-    useState("LOS");
-
-  const [
-    destinationCode,
-    setDestinationCode,
-  ] = useState("DXB");
-
-  const [
-    activeLocationField,
-    setActiveLocationField,
-  ] = useState<
-    "origin" | "destination" | null
-  >(null);
-
-  const [travelers, setTravelers] =
-    useState(1);
-
-  const [cabinClass, setCabinClass] =
-    useState("economy");
-
-  const [isTravelerOpen, setIsTravelerOpen] =
-    useState(false);
-
-  const [departureDate, setDepartureDate] =
-    useState(new Date(2026, 5, 11));
-
-  const [returnDate, setReturnDate] =
-    useState(new Date(2026, 5, 17));
-
-  const [viewDate, setViewDate] =
-    useState(new Date(2026, 5, 1));
-
-  const [pickerTarget, setPickerTarget] =
-    useState<PickerTarget>("departure");
-
-  const [isCalendarOpen, setIsCalendarOpen] =
-    useState(false);
-
-  const locationQuery =
-    activeLocationField === "origin"
-      ? originInput
-      : destinationInput;
-
-  const locationSuggestions = useMemo(() => {
-    const normalized =
-      locationQuery.trim().toLowerCase();
-
-    if (!normalized) {
-      return LOCATION_OPTIONS;
-    }
-
-    return LOCATION_OPTIONS.filter(
-      (location) =>
-        [
-          location.city,
-          location.country,
-          location.code,
-        ].some((piece) =>
-          piece
-            .toLowerCase()
-            .includes(normalized)
-        )
-    );
-  }, [locationQuery]);
+  const [pickerTarget, setPickerTarget] = useState<PickerTarget>("departure");
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   function onFlightSubmit() {
     const params = new URLSearchParams({
       tripType,
-      origin: originCode,
-      destination: destinationCode,
-      departureDate: format(
-        departureDate,
-        "yyyy-MM-dd"
-      ),
-      returnDate: format(
-        returnDate,
-        "yyyy-MM-dd"
-      ),
-      travelers: String(travelers),
+      origin,
+      destination,
+      departureDate: format(departureDate, "yyyy-MM-dd"),
+      returnDate: format(returnDate, "yyyy-MM-dd"),
+      travelers,
       cabinClass,
     });
 
-    router.push(
-      `/flights/results?${params.toString()}`
-    );
+    router.push(`/flights/results?${params.toString()}`);
   }
 
   function onHotelSubmit() {
     const params = new URLSearchParams({
-      destination: destinationInput,
-      checkIn: format(
-        departureDate,
-        "yyyy-MM-dd"
-      ),
-      checkOut: format(
-        returnDate,
-        "yyyy-MM-dd"
-      ),
-      guests: String(travelers),
+      destination,
+      checkIn: format(departureDate, "yyyy-MM-dd"),
+      checkOut: format(returnDate, "yyyy-MM-dd"),
+      guests: travelers,
       rooms: "1",
     });
 
-    router.push(
-      `/hotels/results?${params.toString()}`
-    );
+    router.push(`/hotels/results?${params.toString()}`);
   }
 
   function onDaySelect(day: Date) {
@@ -222,20 +89,6 @@ export function SearchTabs() {
       setReturnDate(day);
       setIsCalendarOpen(false);
     }
-  }
-
-  function selectLocation(
-    location: LocationOption
-  ) {
-    if (activeLocationField === "origin") {
-      setOriginInput(location.city);
-      setOriginCode(location.code);
-    } else {
-      setDestinationInput(location.city);
-      setDestinationCode(location.code);
-    }
-
-    setActiveLocationField(null);
   }
 
   return (
@@ -271,24 +124,13 @@ export function SearchTabs() {
       {tab === "flights" ? (
         <div className="space-y-2">
           <div className="grid grid-cols-1 gap-2 text-xs font-bold text-slate-700 sm:flex sm:gap-4">
-            {(
-              [
-                "round-trip",
-                "one-way",
-                "multi-city",
-              ] as const
-            ).map((value) => (
-              <label
-                key={value}
-                className="inline-flex items-center gap-2"
-              >
+            {(["round-trip", "one-way", "multi-city"] as const).map((value) => (
+              <label key={value} className="inline-flex items-center gap-2">
                 <input
                   type="radio"
                   name="tripType"
                   checked={tripType === value}
-                  onChange={() =>
-                    setTripType(value)
-                  }
+                  onChange={() => setTripType(value)}
                   className="h-4 w-4 accent-[#6d28d9]"
                 />
 
@@ -302,124 +144,47 @@ export function SearchTabs() {
           </div>
 
           <div className="relative grid overflow-visible rounded-2xl border border-violet-100 bg-white shadow-sm lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]">
-            <LocationField
+            <EditableField
               label="FROM"
-              value={originInput}
-              code={originCode}
-              onFocus={() => {
-                setActiveLocationField(
-                  "origin"
-                );
-                setIsCalendarOpen(false);
-                setIsTravelerOpen(false);
-              }}
-              onChange={(value) => {
-                setOriginInput(value);
-                setOriginCode(
-                  value
-                    .toUpperCase()
-                    .slice(0, 3)
-                );
-                setActiveLocationField(
-                  "origin"
-                );
-              }}
+              subtext="Lagos, Nigeria"
+              value={origin}
+              onChange={setOrigin}
             />
 
-            <LocationField
+            <EditableField
               label="TO"
-              value={destinationInput}
-              code={destinationCode}
-              onFocus={() => {
-                setActiveLocationField(
-                  "destination"
-                );
-                setIsCalendarOpen(false);
-                setIsTravelerOpen(false);
-              }}
-              onChange={(value) => {
-                setDestinationInput(value);
-                setDestinationCode(
-                  value
-                    .toUpperCase()
-                    .slice(0, 3)
-                );
-                setActiveLocationField(
-                  "destination"
-                );
-              }}
+              subtext="Dubai, UAE"
+              value={destination}
+              onChange={setDestination}
             />
 
             <DateTriggerField
               label="DEPARTURE"
-              value={format(
-                departureDate,
-                "MMM dd, yyyy"
-              )}
-              subtext={format(
-                departureDate,
-                "EEEE"
-              )}
-              isActive={
-                isCalendarOpen &&
-                pickerTarget ===
-                  "departure"
-              }
+              value={format(departureDate, "MMM dd, yyyy")}
+              subtext={format(departureDate, "EEEE")}
+              isActive={isCalendarOpen && pickerTarget === "departure"}
               onClick={() => {
-                setPickerTarget(
-                  "departure"
-                );
+                setPickerTarget("departure");
                 setIsCalendarOpen(true);
-                setActiveLocationField(null);
-                setIsTravelerOpen(false);
               }}
             />
 
             <DateTriggerField
               label="RETURN"
-              value={format(
-                returnDate,
-                "MMM dd, yyyy"
-              )}
-              subtext={format(
-                returnDate,
-                "EEEE"
-              )}
-              isActive={
-                isCalendarOpen &&
-                pickerTarget === "return"
-              }
+              value={format(returnDate, "MMM dd, yyyy")}
+              subtext={format(returnDate, "EEEE")}
+              isActive={isCalendarOpen && pickerTarget === "return"}
               onClick={() => {
                 setPickerTarget("return");
                 setIsCalendarOpen(true);
-                setActiveLocationField(null);
-                setIsTravelerOpen(false);
               }}
             />
 
             <TravelerField
               travelers={travelers}
               cabinClass={cabinClass}
-              isOpen={isTravelerOpen}
-              onToggle={() => {
-                setIsTravelerOpen(
-                  (value) => !value
-                );
-
-                setActiveLocationField(null);
-                setIsCalendarOpen(false);
-              }}
-              onIncrement={() =>
-                setTravelers((value) =>
-                  Math.min(9, value + 1)
-                )
-              }
-              onDecrement={() =>
-                setTravelers((value) =>
-                  Math.max(1, value - 1)
-                )
-              }
-              onClassChange={setCabinClass}
+              setTravelers={setTravelers}
+              setCabinClass={setCabinClass}
             />
 
             <div className="p-2">
@@ -433,47 +198,12 @@ export function SearchTabs() {
               </button>
             </div>
 
-            {activeLocationField ? (
-              <div className="absolute left-0 top-[calc(100%+8px)] z-30 w-full rounded-2xl border border-violet-100 bg-white p-2 shadow-[0_12px_30px_rgba(15,23,42,0.14)] lg:w-[40%]">
-                {locationSuggestions.map(
-                  (location) => (
-                    <button
-                      key={`${location.city}-${location.code}`}
-                      type="button"
-                      onClick={() =>
-                        selectLocation(
-                          location
-                        )
-                      }
-                      className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left hover:bg-violet-50"
-                    >
-                      <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800">
-                        <MapPin
-                          size={14}
-                          className="text-[#6d28d9]"
-                        />
-
-                        {location.city},{" "}
-                        {location.country}
-                      </span>
-
-                      <span className="text-xs font-bold text-slate-500">
-                        {location.code}
-                      </span>
-                    </button>
-                  )
-                )}
-              </div>
-            ) : null}
-
             {isCalendarOpen ? (
-              <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 rounded-2xl border border-violet-100 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.16)] sm:p-4 lg:left-[25%] lg:right-[14%]">
+              <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 rounded-3xl border border-violet-100 bg-white p-4 shadow-[0_26px_60px_rgba(15,23,42,0.18)] sm:p-5 lg:left-[26%] lg:right-[10%]">
                 <BookingCalendar
                   viewDate={viewDate}
                   setViewDate={setViewDate}
-                  departureDate={
-                    departureDate
-                  }
+                  departureDate={departureDate}
                   returnDate={returnDate}
                   onDaySelect={onDaySelect}
                 />
@@ -496,17 +226,15 @@ export function SearchTabs() {
   );
 }
 
-function LocationField({
+function EditableField({
   label,
+  subtext,
   value,
-  code,
-  onFocus,
   onChange,
 }: {
   label: string;
+  subtext: string;
   value: string;
-  code: string;
-  onFocus: () => void;
   onChange: (value: string) => void;
 }) {
   return (
@@ -517,16 +245,203 @@ function LocationField({
 
       <input
         value={value}
-        onFocus={onFocus}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        className="mt-0.5 bg-transparent text-base font-semibold leading-tight text-slate-950 outline-none"
+        onChange={(event) => onChange(event.target.value.toUpperCase())}
+        className="mt-0.5 bg-transparent text-lg font-black leading-tight text-slate-950 outline-none"
       />
 
-      <span className="text-xs font-semibold text-slate-600">
-        {code}
-      </span>
+      <span className="text-xs font-semibold text-slate-600">{subtext}</span>
     </label>
+  );
+}
+
+function DateTriggerField({
+  label,
+  value,
+  subtext,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  subtext: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-h-[72px] w-full flex-col justify-center border-t border-violet-100 px-3.5 py-2.5 text-left transition first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0 ${
+        isActive ? "bg-violet-50/60" : "hover:bg-slate-50"
+      }`}
+    >
+      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </span>
+
+      <div className="mt-1 inline-flex items-center gap-2.5">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-[#6d28d9]">
+          <CalendarDays size={14} />
+        </span>
+
+        <span className="text-[17px] font-black leading-tight text-slate-950">
+          {value}
+        </span>
+      </div>
+
+      <span className="mt-1 text-xs font-semibold text-slate-600">
+        {subtext}
+      </span>
+    </button>
+  );
+}
+
+function TravelerField({
+  travelers,
+  cabinClass,
+  setTravelers,
+  setCabinClass,
+}: {
+  travelers: string;
+  cabinClass: string;
+  setTravelers: (value: string) => void;
+  setCabinClass: (value: string) => void;
+}) {
+  return (
+    <div className="flex min-h-[72px] flex-col justify-center border-t border-violet-100 px-3 py-2 first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
+      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+        TRAVELERS & CLASS
+      </span>
+
+      <div className="mt-1 grid grid-cols-1 gap-1">
+        <select
+          value={travelers}
+          onChange={(event) => setTravelers(event.target.value)}
+          className="w-full bg-transparent text-sm font-bold text-slate-950 outline-none"
+        >
+          <option value="1">1 Traveler</option>
+          <option value="2">2 Travelers</option>
+          <option value="3">3 Travelers</option>
+          <option value="4">4 Travelers</option>
+        </select>
+
+        <select
+          value={cabinClass}
+          onChange={(event) => setCabinClass(event.target.value)}
+          className="w-full bg-transparent text-xs font-semibold text-slate-700 outline-none"
+        >
+          <option value="economy">Economy</option>
+          <option value="premium-economy">Premium Economy</option>
+          <option value="business">Business</option>
+          <option value="first">First</option>
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function BookingCalendar({
+  viewDate,
+  setViewDate,
+  departureDate,
+  returnDate,
+  onDaySelect,
+}: {
+  viewDate: Date;
+  setViewDate: (date: Date) => void;
+  departureDate: Date;
+  returnDate: Date;
+  onDaySelect: (day: Date) => void;
+}) {
+  const months = [viewDate, addMonths(viewDate, 1)];
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-2">
+      {months.map((month) => {
+        const monthStart = startOfMonth(month);
+        const monthEnd = endOfMonth(month);
+
+        const gridStart = startOfWeek(monthStart, {
+          weekStartsOn: 0,
+        });
+
+        const gridEnd = endOfWeek(monthEnd, {
+          weekStartsOn: 0,
+        });
+
+        const days = eachDayOfInterval({
+          start: gridStart,
+          end: gridEnd,
+        });
+
+        return (
+          <div
+            key={month.toISOString()}
+            className="rounded-2xl border border-violet-100 p-4"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-black text-slate-900">
+                {format(month, "MMMM yyyy")}
+              </h3>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setViewDate(addMonths(viewDate, -1))}
+                  className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setViewDate(addMonths(viewDate, 1))}
+                  className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-3 grid grid-cols-7 text-center text-[11px] font-extrabold tracking-wide text-slate-500">
+              {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((dayName) => (
+                <span key={dayName}>{dayName}</span>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {days.map((day) => {
+                const inMonth = isSameMonth(day, month);
+
+                const selected =
+                  isSameDay(day, departureDate) || isSameDay(day, returnDate);
+
+                const inRange =
+                  isAfter(day, departureDate) && isBefore(day, returnDate);
+
+                return (
+                  <button
+                    key={day.toISOString()}
+                    type="button"
+                    onClick={() => onDaySelect(day)}
+                    className={`h-12 rounded-xl text-base font-semibold transition ${
+                      !inMonth
+                        ? "text-slate-300"
+                        : "text-slate-800 hover:bg-violet-50"
+                    } ${inRange ? "bg-violet-50" : ""} ${
+                      selected
+                        ? "bg-[#6d28d9] text-white shadow-sm hover:bg-[#5b21d6]"
+                        : ""
+                    }`}
+                  >
+                    {format(day, "d")}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
