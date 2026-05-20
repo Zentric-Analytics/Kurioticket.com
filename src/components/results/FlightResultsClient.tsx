@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -421,12 +422,13 @@ function SwapButton({ onSwap }: { onSwap: () => void }) {
 
 function EmptyStateTravelImage() {
   return (
-    <aside className="relative hidden overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner lg:block">
-      <div
-        className="h-full w-full bg-cover bg-center"
-        style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80")' }}
-        aria-label="Airplane wing above clouds"
-        role="img"
+    <aside className="relative hidden min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner lg:block">
+      <Image
+        src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80"
+        alt="Airplane wing above clouds"
+        fill
+        sizes="360px"
+        className="object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-br from-navy/40 via-transparent to-sky-300/35" />
       <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/92 p-3 backdrop-blur">
