@@ -250,7 +250,7 @@ function EmptyStateFlightSearchBar() {
   const [directOnly, setDirectOnly] = useState(false);
 
   return (
-    <div className="mx-auto mt-4 max-w-6xl space-y-3">
+    <div className="mx-auto mt-4 max-w-5xl space-y-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <SearchSelect
           label="Trip type"
@@ -278,7 +278,7 @@ function EmptyStateFlightSearchBar() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm">
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(180px,1.2fr)_auto_minmax(180px,1.2fr)_minmax(150px,1fr)_minmax(150px,1fr)_minmax(220px,1.2fr)_130px]">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[minmax(170px,1fr)_auto_minmax(170px,1fr)_minmax(145px,1fr)_minmax(145px,1fr)_minmax(210px,1fr)_120px]">
           <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
 
           <SwapButton
@@ -306,7 +306,7 @@ function EmptyStateFlightSearchBar() {
             icon={<Users size={15} />}
           />
 
-          <Button type="button" className="h-12 w-full rounded-xl px-5 md:w-[130px]">
+          <Button type="button" className="h-12 w-full rounded-xl px-5 md:w-[120px]">
             <Search size={16} />
             Search
           </Button>
@@ -372,14 +372,19 @@ function SearchSelect({
     <label
       className={cn(
         "flex min-w-0 items-center gap-2",
-        variant === "text" ? "h-9 w-auto rounded-lg bg-transparent px-1 text-navy" : "h-12 min-w-[210px] rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
+        variant === "text"
+          ? "h-9 w-auto rounded-lg bg-transparent px-1 text-navy"
+          : "h-12 min-w-[190px] rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
       )}
     >
       {icon ?? null}
       <span className="sr-only">{label}</span>
       <select
         aria-label={label}
-        className={cn("w-full bg-transparent text-sm font-semibold outline-none", variant === "text" ? "pr-5 text-navy" : "text-navy")}
+        className={cn(
+          "w-full bg-transparent text-sm font-semibold outline-none",
+          variant === "text" ? "pr-5 text-navy" : "text-navy",
+        )}
         value={value}
         onChange={(event) => onChange(event.target.value)}
       >
