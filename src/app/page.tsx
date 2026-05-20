@@ -5,48 +5,22 @@ import Image from "next/image";
 
 import {
   ArrowRight,
-  BadgeDollarSign,
   BellRing,
   CircleDollarSign,
-  CreditCard,
-  Globe2,
   Heart,
   Hotel,
   Plane,
-  SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
-import { SearchTabs } from "@/components/home/SearchTabs";
+import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
 
-const trustItems = [
-  {
-    title: "Millions of Choices",
-    body: "Flights and hotels worldwide",
-    icon: Globe2,
-  },
-  {
-    title: "Flexible Options",
-    body: "Choose what fits your trip",
-    icon: SlidersHorizontal,
-  },
-  {
-    title: "Secure Payments",
-    body: "100% safe and secure",
-    icon: CreditCard,
-  },
-  {
-    title: "Great Deals",
-    body: "Compare more before you buy",
-    icon: BadgeDollarSign,
-  },
-];
 
 const destinations = [
   {
@@ -86,7 +60,7 @@ const destinations = [
   },
 ];
 
-export default function Home() {
+function HomePage() {
   return (
     <>
       <AppHeader brandVariant="homepage" />
@@ -122,34 +96,9 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mx-auto mt-10 max-w-[1120px] rounded-2xl border border-violet-100/80 bg-white/95 p-3 shadow-[0_22px_55px_rgba(15,23,42,0.12)] backdrop-blur">
+            <div className="mx-auto mt-10 max-w-[1140px] rounded-[24px] border border-violet-100/80 bg-white/95 p-3 shadow-[0_18px_45px_rgba(15,23,42,0.11)] backdrop-blur sm:p-4">
               <SearchTabs />
             </div>
-          </div>
-        </section>
-
-        <section className="page-shell pt-10 pb-9">
-          <div className="grid overflow-hidden rounded-xl border border-violet-100 bg-[#faf7ff] shadow-sm md:grid-cols-2 lg:grid-cols-4">
-            {trustItems.map((item) => (
-              <div
-                key={item.title}
-                className="flex gap-4 border-b border-violet-100 p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0"
-              >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#6d28d9] shadow-sm">
-                  <item.icon size={20} />
-                </span>
-
-                <div>
-                  <h2 className="text-sm font-extrabold text-slate-950">
-                    {item.title}
-                  </h2>
-
-                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
-                    {item.body}
-                  </p>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
 
@@ -359,3 +308,5 @@ function PromoPanel({
     </article>
   );
 }
+
+export default HomePage;
