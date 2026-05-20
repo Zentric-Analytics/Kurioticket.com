@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck, Plane, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { ArrowRightLeft, BadgeCheck, CalendarDays, Plane, Search, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { FlightCard } from "@/components/results/FlightCard";
@@ -112,14 +112,8 @@ export function FlightResultsClient() {
       <main className="flex-1 bg-[#f6f8fb]">
         <div className="page-shell py-10">
           <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            codex/verify-pr-process-for-curioticket.com-jr97o5
-            <h1 className="text-3xl font-black leading-tight tracking-tight text-navy sm:text-4xl">
-              Start a cheap flight search from 100s of sites at once
-            </h1>
-            <h1 className="text-2xl font-black tracking-normal text-navy">Start a flight search</h1>
-            <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-muted">
-              Enter your departure airport, destination, and travel date on the homepage to compare live flight results.
-            </p>
+            <h1 className="text-2xl font-black tracking-normal text-navy">Find hundreds of cheap flights with just one search!</h1>
+            <EmptyStateFlightSearchBar />
           </div>
         </div>
       </main>
@@ -226,6 +220,196 @@ export function FlightResultsClient() {
         <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} />
       </aside>
     </main>
+  );
+}
+
+function EmptyStateFlightSearchBar() {
+  const [tripType, setTripType] = useState("round-trip");
+  const [baggage, setBaggage] = useState("0 bags");
+  const [origin, setOrigin] = useState("");
+  const [destination, setDestination] = useState("");
+  const [departureDate, setDepartureDate] = useState("");
+  const [returnDate, setReturnDate] = useState("");
+  const [travelersClass, setTravelersClass] = useState("1 traveler, Economy");
+  const [directOnly, setDirectOnly] = useState(false);
+
+  return (
+    <div className="mt-4 space-y-3 max-w-4xl mx-auto">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <SearchSelect
+          label="Trip type"
+          value={tripType}
+          onChange={setTripType}
+          options={[
+            { value: "round-trip", label: "Round-trip" },
+            { value: "one-way", label: "One-way" },
+            { value: "multi-city", label: "Multi-city" },
+          ]}
+          variant="text"
+        />
+        <SearchSelect
+          label="Baggage"
+          value={baggage}
+          onChange={setBaggage}
+          options={[
+            { value: "0 bags", label: "0 bags" },
+            { value: "1 bag", label: "1 bag" },
+            { value: "2 bags", label: "2 bags" },
+          ]}
+          variant="text"
+        />
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm">
+        <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
+          <SwapButton
+            onSwap={() => {
+              setOrigin(destination);
+              setDestination(origin);
+            }}
+          />
+          <SearchField label="To" placeholder="Where to?" value={destination} onChange={setDestination} />
+          <DateField label="Departure" value={departureDate} onChange={setDepartureDate} />
+          <DateField label="Return" value={returnDate} onChange={setReturnDate} />
+          <SearchSelect
+            label="Travelers & class"
+            value={travelersClass}
+            onChange={setTravelersClass}
+            options={[
+              { value: "1 traveler, Economy", label: "1 traveler, Economy" },
+              { value: "2 travelers, Economy", label: "2 travelers, Economy" },
+              { value: "1 traveler, Business", label: "1 traveler, Business" },
+            ]}
+            icon={<Users size={15} />}
+          />
+          <Button type="button" className="h-12 w-full rounded-xl px-5 md:w-[120px]">
+            <Search size={16} />
+            Search
+          </Button>
+        </div>
+      </div>
+
+      <label htmlFor="direct-flights-only" className="inline-flex items-center gap-2 text-sm font-semibold text-muted">
+        <input
+          id="direct-flights-only"
+          type="checkbox"
+          className="h-4 w-4 rounded border-slate-300 accent-teal"
+          checked={directOnly}
+          onChange={(event) => setDirectOnly(event.target.checked)}
+        />
+        Direct flights only
+      </label>
+    </div>
+  );
+}
+
+function SearchField({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <label className="flex h-12 min-w-[150px] items-center rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
+      <span className="sr-only">{label}</span>
+      <input
+        aria-label={label}
+        className="w-full bg-transparent text-sm font-semibold text-navy outline-none placeholder:text-muted"
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+      />
+    </label>
+  );
+}
+
+function SearchSelect({
+  label,
+  value,
+  onChange,
+  options,
+  icon,
+  variant = "default",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+  icon?: ReactNode;
+  variant?: "default" | "text";
+}) {
+  return (
+    <label
+      className={cn(
+        "flex min-w-0 items-center gap-2",
+        variant === "text"
+          ? "h-9 w-auto rounded-lg bg-transparent px-1 text-navy"
+          : "h-12 min-w-[180px] rounded-xl border border-slate-200 bg-white px-3 shadow-sm",
+      )}
+    >
+      {icon ?? null}
+      <span className="sr-only">{label}</span>
+      <select
+        aria-label={label}
+        className={cn(
+          "w-full bg-transparent text-sm font-semibold outline-none",
+          variant === "text" ? "pr-5 text-navy" : "text-navy",
+        )}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function DateField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex h-12 min-w-[150px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm">
+      <CalendarDays size={15} className="text-muted" />
+      <span className="sr-only">{label}</span>
+      <input
+        aria-label={label}
+        className="w-full bg-transparent text-sm font-semibold text-navy outline-none"
+        type="date"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </label>
+  );
+}
+
+function SwapButton({ onSwap }: { onSwap: () => void }) {
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      className="h-12 w-full rounded-xl border-slate-200 px-3 md:w-auto"
+      aria-label="Swap origin and destination"
+      onClick={onSwap}
+    >
+      <ArrowRightLeft size={16} />
+    </Button>
   );
 }
 
