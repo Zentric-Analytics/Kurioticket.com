@@ -1,24 +1,30 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BedDouble, Plane, Search } from "lucide-react";
+import {
+  BedDouble,
+  CalendarDays,
+  MapPin,
+  Plane,
+  Search,
+  Users,
+} from "lucide-react";
 
 type Tab = "flights" | "hotels";
-type TripType = "round-trip" | "one-way" | "multi-city";
 
 export function SearchTabs() {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("flights");
-  const [tripType, setTripType] = useState<TripType>("round-trip");
 
   function onFlightSubmit(formData: FormData) {
     const params = new URLSearchParams({
-      tripType,
-      origin: "LOS",
-      destination: "DXB",
-      departureDate: "2026-06-11",
-      returnDate: "2026-06-17",
+      tripType: "round-trip",
+      origin: "",
+      destination: String(formData.get("destination") || ""),
+      departureDate: String(formData.get("departureDate") || ""),
+      returnDate: String(formData.get("returnDate") || ""),
       travelers: String(formData.get("travelers") || "1"),
       cabinClass: String(formData.get("cabinClass") || "economy"),
     });
@@ -26,12 +32,12 @@ export function SearchTabs() {
     router.push(`/flights/results?${params.toString()}`);
   }
 
-  function onHotelSubmit() {
+  function onHotelSubmit(formData: FormData) {
     const params = new URLSearchParams({
-      destination: "Dubai, UAE",
-      checkIn: "2026-06-11",
-      checkOut: "2026-06-17",
-      guests: "1",
+      destination: String(formData.get("destination") || ""),
+      checkIn: String(formData.get("departureDate") || ""),
+      checkOut: String(formData.get("returnDate") || ""),
+      guests: String(formData.get("travelers") || "2"),
       rooms: "1",
     });
 
@@ -40,84 +46,157 @@ export function SearchTabs() {
 
   return (
     <div className="w-full">
-      <div className="mb-2 inline-flex rounded-full border border-violet-100 bg-white p-1 shadow-sm">
+      <div className="mb-3 inline-flex rounded-full border border-violet-100 bg-white p-1 shadow-sm">
         <button
           type="button"
-          className={`focus-ring inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-extrabold transition ${tab === "flights" ? "bg-[#6d28d9] text-white" : "text-slate-700 hover:bg-slate-100"}`}
+          className={`focus-ring inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-extrabold transition ${
+            tab === "flights"
+              ? "bg-[#6d28d9] text-white"
+              : "text-slate-700 hover:bg-slate-100"
+          }`}
           onClick={() => setTab("flights")}
         >
-          <Plane size={15} />
+          <Plane size={16} />
           Flights
         </button>
+
         <button
           type="button"
-          className={`focus-ring inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-extrabold transition ${tab === "hotels" ? "bg-[#6d28d9] text-white" : "text-slate-700 hover:bg-slate-100"}`}
+          className={`focus-ring inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-extrabold transition ${
+            tab === "hotels"
+              ? "bg-[#6d28d9] text-white"
+              : "text-slate-700 hover:bg-slate-100"
+          }`}
           onClick={() => setTab("hotels")}
         >
-          <BedDouble size={15} />
+          <BedDouble size={16} />
           Hotels
         </button>
       </div>
 
-      {tab === "flights" ? (
-        <form action={onFlightSubmit} className="space-y-2">
-          <div className="grid grid-cols-1 gap-2 text-xs font-bold text-slate-700 sm:flex sm:gap-4">
-            <label className="inline-flex items-center gap-2">
-              <input type="radio" name="tripType" checked={tripType === "round-trip"} onChange={() => setTripType("round-trip")} className="h-4 w-4 accent-[#6d28d9]" />
-              Round Trip
-            </label>
-            <label className="inline-flex items-center gap-2">
-              <input type="radio" name="tripType" checked={tripType === "one-way"} onChange={() => setTripType("one-way")} className="h-4 w-4 accent-[#6d28d9]" />
-              One Way
-            </label>
-            <label className="inline-flex items-center gap-2">
-              <input type="radio" name="tripType" checked={tripType === "multi-city"} onChange={() => setTripType("multi-city")} className="h-4 w-4 accent-[#6d28d9]" />
-              Multi City
-            </label>
+      <form
+        action={tab === "flights" ? onFlightSubmit : onHotelSubmit}
+        className="grid gap-3 lg:grid-cols-[1.4fr_1fr_1fr_auto]"
+      >
+        <FieldWrap
+          icon={<MapPin size={18} />}
+          label="Destination"
+        >
+          <input
+            name="destination"
+            placeholder={
+              tab === "flights"
+                ? "Where to?"
+                : "City, area, or hotel"
+            }
+            required
+            className="h-7 w-full bg-transparent text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+          />
+        </FieldWrap>
+
+        <FieldWrap
+          icon={<CalendarDays size={18} />}
+          label={
+            tab === "flights"
+              ? "Dates"
+              : "Check-in / Check-out"
+          }
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              type="date"
+              name="departureDate"
+              aria-label={
+                tab === "flights"
+                  ? "Departure date"
+                  : "Check-in date"
+              }
+              required
+              className="h-7 w-full bg-transparent text-sm font-semibold text-slate-950 outline-none"
+            />
+
+            <input
+              type="date"
+              name="returnDate"
+              aria-label={
+                tab === "flights"
+                  ? "Return date"
+                  : "Check-out date"
+              }
+              required
+              className="h-7 w-full bg-transparent text-sm font-semibold text-slate-950 outline-none"
+            />
           </div>
+        </FieldWrap>
 
-          <div className="grid overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]">
-            <FlightField label="FROM" value="LOS" subtext="Lagos, Nigeria" />
-            <FlightField label="TO" value="DXB" subtext="Dubai, UAE" />
-            <FlightField label="DEPARTURE" value="11/06/2026" subtext="Thursday" />
-            <FlightField label="RETURN" value="17/06/2026" subtext="Wednesday" />
-            <FlightField label="TRAVELERS & CLASS" value="1 Traveler" subtext="Economy" />
+        <FieldWrap
+          icon={<Users size={18} />}
+          label={
+            tab === "flights"
+              ? "Travelers & Class"
+              : "Guests"
+          }
+        >
+          <div className="grid grid-cols-2 gap-2">
+            <select
+              name="travelers"
+              defaultValue="1"
+              className="h-7 w-full bg-transparent text-sm font-semibold text-slate-950 outline-none"
+            >
+              <option value="1">1 Traveler</option>
+              <option value="2">2 Travelers</option>
+              <option value="3">3 Travelers</option>
+              <option value="4">4 Travelers</option>
+            </select>
 
-            <div className="p-2">
-              <button
-                type="submit"
-                className="focus-ring inline-flex h-full min-h-[72px] w-full items-center justify-center gap-2 rounded-xl bg-[#5b21d6] px-6 text-sm font-black text-white transition hover:bg-[#4c1d95]"
-              >
-                <Search size={16} />
-                Search Flights
-              </button>
-            </div>
+            <select
+              name="cabinClass"
+              defaultValue="economy"
+              disabled={tab === "hotels"}
+              className="h-7 w-full bg-transparent text-sm font-semibold text-slate-950 outline-none disabled:text-slate-400"
+            >
+              <option value="economy">Economy</option>
+              <option value="premium-economy">
+                Premium
+              </option>
+              <option value="business">Business</option>
+              <option value="first">First</option>
+            </select>
           </div>
+        </FieldWrap>
 
-          <input type="hidden" name="travelers" value="1" />
-          <input type="hidden" name="cabinClass" value="economy" />
-        </form>
-      ) : (
-        <div className="rounded-2xl border border-violet-100 bg-white p-3 shadow-sm">
-          <button
-            type="button"
-            onClick={onHotelSubmit}
-            className="focus-ring inline-flex h-11 items-center justify-center rounded-xl bg-[#5b21d6] px-5 text-sm font-black text-white transition hover:bg-[#4c1d95]"
-          >
-            Search Hotels
-          </button>
-        </div>
-      )}
+        <button
+          type="submit"
+          className="focus-ring inline-flex h-[84px] w-full items-center justify-center gap-2 rounded-2xl bg-[#5b21d6] px-7 text-base font-black text-white transition hover:bg-[#4c1d95] lg:h-auto"
+        >
+          <Search size={18} />
+          Search
+        </button>
+      </form>
     </div>
   );
 }
 
-function FlightField({ label, value, subtext }: { label: string; value: string; subtext: string }) {
+function FieldWrap({
+  label,
+  icon,
+  children,
+}: {
+  label: string;
+  icon: ReactNode;
+  children: ReactNode;
+}) {
   return (
-    <div className="flex min-h-[72px] flex-col justify-center border-t border-violet-100 px-3 py-2 first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
-      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">{label}</span>
-      <span className="mt-0.5 text-lg font-black leading-tight text-slate-950">{value}</span>
-      <span className="text-xs font-semibold text-slate-600">{subtext}</span>
-    </div>
+    <label className="flex min-h-[84px] flex-col justify-center rounded-2xl border border-violet-100 bg-white px-4 shadow-sm">
+      <span className="mb-1 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-500">
+        <span className="text-[#6d28d9]">
+          {icon}
+        </span>
+
+        {label}
+      </span>
+
+      {children}
+    </label>
   );
 }

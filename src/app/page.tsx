@@ -21,7 +21,6 @@ import { LinkButton } from "@/components/ui/Button";
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
 
-
 const destinations = [
   {
     city: "Dubai",
@@ -96,7 +95,7 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mx-auto mt-10 max-w-[1140px] rounded-[24px] border border-violet-100/80 bg-white/95 p-3 shadow-[0_18px_45px_rgba(15,23,42,0.11)] backdrop-blur sm:p-4">
+            <div className="mx-auto mt-10 max-w-[1140px] rounded-[28px] border border-violet-100/80 bg-white/95 p-4 shadow-[0_22px_55px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
               <SearchTabs />
             </div>
           </div>
