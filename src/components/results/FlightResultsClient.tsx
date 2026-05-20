@@ -2,8 +2,20 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { ArrowRightLeft, BadgeCheck, CalendarDays, Plane, Search, ShieldCheck, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
+import {
+  ArrowRightLeft,
+  BadgeCheck,
+  CalendarDays,
+  Plane,
+  Search,
+  ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
+  Users,
+  X,
+} from "lucide-react";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { FlightCard } from "@/components/results/FlightCard";
@@ -37,30 +49,27 @@ export function FlightResultsClient() {
   const [maxPrice, setMaxPrice] = useState(1200);
   const [maxStops, setMaxStops] = useState(3);
 
-  const body = useMemo(
-    () => {
-      const origin = params.get("origin")?.trim() || "";
-      const destination = params.get("destination")?.trim() || "";
-      const departureDate = params.get("departureDate")?.trim() || "";
-      const tripType = params.get("tripType") || "round-trip";
-      const returnDate = params.get("returnDate")?.trim() || "";
-      const hasSearch = Boolean(origin && destination && departureDate && (tripType !== "round-trip" || returnDate));
+  const body = useMemo(() => {
+    const origin = params.get("origin")?.trim() || "";
+    const destination = params.get("destination")?.trim() || "";
+    const departureDate = params.get("departureDate")?.trim() || "";
+    const tripType = params.get("tripType") || "round-trip";
+    const returnDate = params.get("returnDate")?.trim() || "";
+    const hasSearch = Boolean(origin && destination && departureDate && (tripType !== "round-trip" || returnDate));
 
-      if (!hasSearch) return null;
+    if (!hasSearch) return null;
 
-      return {
-        tripType,
-        origin,
-        destination,
-        departureDate,
-        returnDate,
-        travelers: Number(params.get("travelers") || 1),
-        cabinClass: params.get("cabinClass") || "economy",
-        sort,
-      };
-    },
-    [params, sort],
-  );
+    return {
+      tripType,
+      origin,
+      destination,
+      departureDate,
+      returnDate,
+      travelers: Number(params.get("travelers") || 1),
+      cabinClass: params.get("cabinClass") || "economy",
+      sort,
+    };
+  }, [params, sort]);
 
   useEffect(() => {
     if (!body) return;
@@ -101,7 +110,11 @@ export function FlightResultsClient() {
 
   useEffect(() => {
     if (!loading) return;
-    const id = window.setInterval(() => setMessageIndex((current) => (current + 1) % loadingMessages.length), 1100);
+
+    const id = window.setInterval(() => {
+      setMessageIndex((current) => (current + 1) % loadingMessages.length);
+    }, 1100);
+
     return () => window.clearInterval(id);
   }, [loading]);
 
@@ -141,6 +154,7 @@ export function FlightResultsClient() {
               {body.travelers} traveler{body.travelers === 1 ? "" : "s"} · {String(body.cabinClass).replace("-", " ")} · live provider search
             </p>
           </div>
+
           <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
             {sortModes.map((mode) => (
               <button
@@ -197,6 +211,7 @@ export function FlightResultsClient() {
                 </p>
                 <p className="text-sm font-semibold text-muted">Sorted by {sortModes.find((mode) => mode.value === sort)?.label}</p>
               </div>
+
               {filtered.length ? (
                 filtered.map((flight) => <FlightCard key={flight.id} flight={flight} />)
               ) : (
@@ -210,6 +225,7 @@ export function FlightResultsClient() {
       </div>
 
       <div className={cn("fixed inset-0 z-50 bg-navy/40 lg:hidden", filtersOpen ? "block" : "hidden")} onClick={() => setFiltersOpen(false)} />
+
       <aside
         className={cn(
           "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-2xl bg-white p-5 shadow-xl transition-transform lg:hidden",
@@ -222,6 +238,7 @@ export function FlightResultsClient() {
             <X size={20} />
           </Button>
         </div>
+
         <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} />
       </aside>
     </main>
@@ -252,6 +269,7 @@ function EmptyStateFlightSearchBar() {
           ]}
           variant="text"
         />
+
         <SearchSelect
           label="Baggage"
           value={baggage}
@@ -268,15 +286,20 @@ function EmptyStateFlightSearchBar() {
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-sm">
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-[minmax(120px,1fr)_44px_minmax(140px,1fr)_minmax(135px,0.9fr)_minmax(135px,0.9fr)_minmax(170px,1fr)_110px]">
           <SearchField label="From" placeholder="From" value={origin} onChange={setOrigin} />
+
           <SwapButton
             onSwap={() => {
               setOrigin(destination);
               setDestination(origin);
             }}
           />
+
           <SearchField label="To" placeholder="Where to?" value={destination} onChange={setDestination} />
+
           <DateField label="Departure" value={departureDate} onChange={setDepartureDate} />
+
           <DateField label="Return" value={returnDate} onChange={setReturnDate} />
+
           <SearchSelect
             label="Travelers & class"
             value={travelersClass}
@@ -288,6 +311,7 @@ function EmptyStateFlightSearchBar() {
             ]}
             icon={<Users size={15} />}
           />
+
           <Button type="button" className="h-12 w-full rounded-xl px-5 xl:w-[110px]">
             <Search size={16} />
             Search
@@ -418,14 +442,15 @@ function SwapButton({ onSwap }: { onSwap: () => void }) {
   );
 }
 
-
 function EmptyStateTravelImage() {
   return (
-    <aside className="relative hidden overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner lg:block">
-      <img
+    <aside className="relative hidden min-h-[360px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-inner lg:block">
+      <Image
         src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80"
         alt="Airplane wing above clouds"
-        className="h-full w-full object-cover"
+        fill
+        sizes="360px"
+        className="object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-navy/45 via-navy/10 to-transparent" />
       <div className="absolute bottom-4 left-4 right-4 rounded-xl bg-white/92 p-3 backdrop-blur">
@@ -456,6 +481,7 @@ function Filters({
         </div>
         <SlidersHorizontal className="text-teal" size={21} />
       </div>
+
       <div className="mt-6 grid gap-6">
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
@@ -463,21 +489,25 @@ function Filters({
           </span>
           <input className="w-full accent-teal" type="range" min={100} max={2000} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
         </label>
+
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
             Stops up to <span className="font-mono text-navy">{maxStops}</span>
           </span>
           <input className="w-full accent-teal" type="range" min={0} max={3} step={1} value={maxStops} onChange={(event) => setMaxStops(Number(event.target.value))} />
         </label>
+
         <div className="grid gap-3 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-muted">
           <label className="flex items-center gap-2">
             <input type="checkbox" className="accent-teal" defaultChecked />
             Baggage included where available
           </label>
+
           <label className="flex items-center gap-2">
             <input type="checkbox" className="accent-teal" />
             Evening departures
           </label>
+
           <label className="flex items-center gap-2">
             <input type="checkbox" className="accent-teal" />
             Low-risk connections
