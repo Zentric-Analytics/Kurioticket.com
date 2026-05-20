@@ -1,309 +1,620 @@
 "use client";
 
-import type { ReactNode } from "react";
-import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  addMonths,
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isAfter,
+  isBefore,
+  isSameDay,
+  isSameMonth,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
 
 import {
-  ArrowRight,
-  BellRing,
-  CircleDollarSign,
-  Heart,
-  Hotel,
+  BedDouble,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
   Plane,
-  Sparkles,
+  Search,
 } from "lucide-react";
 
-import { AppHeader } from "@/components/layout/AppHeader";
-import { Footer } from "@/components/layout/Footer";
-import { SearchTabs } from "@/components/search/SearchTabs";
-import { LinkButton } from "@/components/ui/Button";
+type Tab = "flights" | "hotels";
+type TripType = "round-trip" | "one-way" | "multi-city";
+type PickerTarget = "departure" | "return";
 
-const heroImage =
-  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
+export function SearchTabs() {
+  const router = useRouter();
 
-const destinations = [
-  {
-    city: "Dubai",
-    country: "UAE",
-    price: "$420",
-    image:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    city: "London",
-    country: "United Kingdom",
-    price: "$380",
-    image:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    city: "Paris",
-    country: "France",
-    price: "$410",
-    image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    city: "Bali",
-    country: "Indonesia",
-    price: "$370",
-    image:
-      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    city: "New York",
-    country: "USA",
-    price: "$390",
-    image:
-      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=700&q=80",
-  },
-];
+  const [tab, setTab] = useState<Tab>("flights");
 
-export default function Home() {
-  return (
-    <>
-      <AppHeader brandVariant="homepage" />
+  const [tripType, setTripType] =
+    useState<TripType>("round-trip");
 
-      <main className="flex-1 bg-white">
-        <section className="relative overflow-hidden bg-[#f6f3ff] pb-16">
-          <div className="absolute inset-0">
-            <Image
-              src={heroImage}
-              alt="Luxury tropical resort by calm water"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-center"
-            />
+  const [origin, setOrigin] = useState("LOS");
 
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.85)_44%,rgba(255,255,255,0.96)_100%)]" />
-          </div>
+  const [destination, setDestination] =
+    useState("DXB");
 
-          <div className="page-shell relative pt-14 sm:pt-18">
-            <div className="mx-auto max-w-4xl text-center">
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#6d28d9]">
-                Plan Better Trips
-              </p>
+  const [travelers, setTravelers] =
+    useState("1");
 
-              <h1 className="mt-4 text-4xl font-black leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
-                Find Cheap Flights Fast
-              </h1>
+  const [cabinClass, setCabinClass] =
+    useState("economy");
 
-              <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-slate-700 sm:text-lg">
-                Search hundreds of airlines and travel sites to find the best
-                deals for your next trip.
-              </p>
-            </div>
+  const [departureDate, setDepartureDate] =
+    useState(new Date(2026, 5, 11));
 
-            <div className="mx-auto mt-10 max-w-[1140px] rounded-[24px] border border-violet-100/80 bg-white/95 p-3 shadow-[0_18px_45px_rgba(15,23,42,0.11)] backdrop-blur sm:p-4">
-              <SearchTabs />
-            </div>
-          </div>
-        </section>
+  const [returnDate, setReturnDate] =
+    useState(new Date(2026, 5, 17));
 
-        <section className="page-shell py-5">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-black tracking-normal text-slate-950">
-              Popular Destinations
-            </h2>
-
-            <LinkButton
-              href="/hotels/tokyo"
-              variant="ghost"
-              size="sm"
-              className="hidden text-[#6d28d9] sm:inline-flex"
-            >
-              View all destinations
-              <ArrowRight size={16} />
-            </LinkButton>
-          </div>
-
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-            {destinations.map((destination) => (
-              <DestinationCard
-                key={destination.city}
-                {...destination}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="page-shell grid gap-5 py-9 lg:grid-cols-2">
-          <PromoPanel
-            tone="violet"
-            title="Amazing flight deals just for you"
-            body="Unlock exclusive offers on domestic and international flights."
-            cta="Explore Flight Deals"
-            href="/deals"
-            icon={<Plane size={74} />}
-          />
-
-          <PromoPanel
-            tone="amber"
-            title="Find your perfect hotel stay"
-            body="From budget to luxury, find hotels that suit your style and budget."
-            cta="Explore Hotel Deals"
-            href="/hotels/results"
-            icon={<Hotel size={74} />}
-          />
-        </section>
-
-        <section className="page-shell pb-12">
-          <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
-            <div className="flex gap-4">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#6d28d9] text-white">
-                <BellRing size={24} />
-              </span>
-
-              <div>
-                <h2 className="text-lg font-black text-slate-950">
-                  Get the best travel deals in your inbox
-                </h2>
-
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  Subscribe to our newsletter and never miss a deal.
-                </p>
-              </div>
-            </div>
-
-            <form className="flex flex-col gap-3 sm:flex-row">
-              <input
-                type="email"
-                placeholder="Enter your email address"
-                className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
-                aria-label="Email address"
-              />
-
-              <button
-                type="submit"
-                className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
-              >
-                Subscribe
-              </button>
-            </form>
-          </div>
-        </section>
-      </main>
-
-      <Footer />
-    </>
+  const [viewDate, setViewDate] = useState(
+    new Date(2026, 5, 1)
   );
-}
 
-function DestinationCard({
-  city,
-  country,
-  price,
-  image,
-}: {
-  city: string;
-  country: string;
-  price: string;
-  image: string;
-}) {
+  const [pickerTarget, setPickerTarget] =
+    useState<PickerTarget>("departure");
+
+  const [isCalendarOpen, setIsCalendarOpen] =
+    useState(false);
+
+  function onFlightSubmit() {
+    const params = new URLSearchParams({
+      tripType,
+      origin,
+      destination,
+      departureDate: format(
+        departureDate,
+        "yyyy-MM-dd"
+      ),
+      returnDate: format(
+        returnDate,
+        "yyyy-MM-dd"
+      ),
+      travelers,
+      cabinClass,
+    });
+
+    router.push(
+      `/flights/results?${params.toString()}`
+    );
+  }
+
+  function onHotelSubmit() {
+    const params = new URLSearchParams({
+      destination,
+      checkIn: format(
+        departureDate,
+        "yyyy-MM-dd"
+      ),
+      checkOut: format(
+        returnDate,
+        "yyyy-MM-dd"
+      ),
+      guests: travelers,
+      rooms: "1",
+    });
+
+    router.push(
+      `/hotels/results?${params.toString()}`
+    );
+  }
+
+  function onDaySelect(day: Date) {
+    if (pickerTarget === "departure") {
+      setDepartureDate(day);
+
+      if (isAfter(day, returnDate)) {
+        setReturnDate(day);
+      }
+
+      setPickerTarget("return");
+      return;
+    }
+
+    if (isBefore(day, departureDate)) {
+      setDepartureDate(day);
+    } else {
+      setReturnDate(day);
+      setIsCalendarOpen(false);
+    }
+  }
+
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative h-44">
-        <Image
-          src={image}
-          alt={`${city}, ${country}`}
-          fill
-          sizes="(min-width: 1024px) 20vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover"
-        />
-
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
+    <div className="w-full">
+      <div className="mb-2 inline-flex rounded-full border border-violet-100 bg-white p-1 shadow-sm">
+        <button
+          type="button"
+          className={`focus-ring inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-extrabold transition ${
+            tab === "flights"
+              ? "bg-[#6d28d9] text-white"
+              : "text-slate-700 hover:bg-slate-100"
+          }`}
+          onClick={() => setTab("flights")}
+        >
+          <Plane size={15} />
+          Flights
+        </button>
 
         <button
           type="button"
-          className="focus-ring absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur"
-          aria-label={`Save ${city}`}
+          className={`focus-ring inline-flex h-9 items-center gap-2 rounded-full px-4 text-sm font-extrabold transition ${
+            tab === "hotels"
+              ? "bg-[#6d28d9] text-white"
+              : "text-slate-700 hover:bg-slate-100"
+          }`}
+          onClick={() => setTab("hotels")}
         >
-          <Heart size={17} />
+          <BedDouble size={15} />
+          Hotels
         </button>
+      </div>
 
-        <div className="absolute bottom-3 left-3 text-white">
-          <h3 className="text-xl font-black">{city}</h3>
-          <p className="text-sm font-semibold">{country}</p>
+      {tab === "flights" ? (
+        <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-2 text-xs font-bold text-slate-700 sm:flex sm:gap-4">
+            {(
+              [
+                "round-trip",
+                "one-way",
+                "multi-city",
+              ] as const
+            ).map((value) => (
+              <label
+                key={value}
+                className="inline-flex items-center gap-2"
+              >
+                <input
+                  type="radio"
+                  name="tripType"
+                  checked={tripType === value}
+                  onChange={() =>
+                    setTripType(value)
+                  }
+                  className="h-4 w-4 accent-[#6d28d9]"
+                />
+
+                {value === "round-trip"
+                  ? "Round Trip"
+                  : value === "one-way"
+                    ? "One Way"
+                    : "Multi City"}
+              </label>
+            ))}
+          </div>
+
+          <div className="relative grid overflow-visible rounded-2xl border border-violet-100 bg-white shadow-sm lg:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]">
+            <EditableField
+              label="FROM"
+              subtext="Lagos, Nigeria"
+              value={origin}
+              onChange={setOrigin}
+            />
+
+            <EditableField
+              label="TO"
+              subtext="Dubai, UAE"
+              value={destination}
+              onChange={setDestination}
+            />
+
+            <DateTriggerField
+              label="DEPARTURE"
+              value={format(
+                departureDate,
+                "MMM dd, yyyy"
+              )}
+              subtext={format(
+                departureDate,
+                "EEEE"
+              )}
+              isActive={
+                isCalendarOpen &&
+                pickerTarget === "departure"
+              }
+              onClick={() => {
+                setPickerTarget(
+                  "departure"
+                );
+                setIsCalendarOpen(true);
+              }}
+            />
+
+            <DateTriggerField
+              label="RETURN"
+              value={format(
+                returnDate,
+                "MMM dd, yyyy"
+              )}
+              subtext={format(
+                returnDate,
+                "EEEE"
+              )}
+              isActive={
+                isCalendarOpen &&
+                pickerTarget === "return"
+              }
+              onClick={() => {
+                setPickerTarget("return");
+                setIsCalendarOpen(true);
+              }}
+            />
+
+            <TravelerField
+              travelers={travelers}
+              cabinClass={cabinClass}
+              setTravelers={setTravelers}
+              setCabinClass={setCabinClass}
+            />
+
+            <div className="p-2">
+              <button
+                type="button"
+                onClick={onFlightSubmit}
+                className="focus-ring inline-flex h-full min-h-[72px] w-full items-center justify-center gap-2 rounded-xl bg-[#5b21d6] px-6 text-sm font-black text-white transition hover:bg-[#4c1d95]"
+              >
+                <Search size={16} />
+                Search Flights
+              </button>
+            </div>
+
+            {isCalendarOpen ? (
+              <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 rounded-3xl border border-violet-100 bg-white p-4 shadow-[0_26px_60px_rgba(15,23,42,0.18)] sm:p-5 lg:left-[26%] lg:right-[10%]">
+                <BookingCalendar
+                  viewDate={viewDate}
+                  setViewDate={setViewDate}
+                  departureDate={
+                    departureDate
+                  }
+                  returnDate={returnDate}
+                  onDaySelect={onDaySelect}
+                />
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>
-
-      <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
-        From
-        <span className="text-lg font-black text-[#6d28d9]">
-          {price}
-        </span>
-      </div>
-    </article>
+      ) : (
+        <div className="rounded-2xl border border-violet-100 bg-white p-3 shadow-sm">
+          <button
+            type="button"
+            onClick={onHotelSubmit}
+            className="focus-ring inline-flex h-11 items-center justify-center rounded-xl bg-[#5b21d6] px-5 text-sm font-black text-white transition hover:bg-[#4c1d95]"
+          >
+            Search Hotels
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
-function PromoPanel({
-  tone,
-  title,
-  body,
-  cta,
-  href,
-  icon,
+function EditableField({
+  label,
+  subtext,
+  value,
+  onChange,
 }: {
-  tone: "violet" | "amber";
-  title: string;
-  body: string;
-  cta: string;
-  href: string;
-  icon: ReactNode;
+  label: string;
+  subtext: string;
+  value: string;
+  onChange: (value: string) => void;
 }) {
-  const isViolet = tone === "violet";
-
   return (
-    <article
-      className={`relative min-h-56 overflow-hidden rounded-xl p-8 ${
-        isViolet ? "bg-[#f1e8ff]" : "bg-[#fff3e3]"
+    <label className="flex min-h-[72px] flex-col justify-center border-t border-violet-100 px-3 py-2 first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
+      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </span>
+
+      <input
+        value={value}
+        onChange={(event) =>
+          onChange(
+            event.target.value.toUpperCase()
+          )
+        }
+        className="mt-0.5 bg-transparent text-lg font-black leading-tight text-slate-950 outline-none"
+      />
+
+      <span className="text-xs font-semibold text-slate-600">
+        {subtext}
+      </span>
+    </label>
+  );
+}
+
+function DateTriggerField({
+  label,
+  value,
+  subtext,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  subtext: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-h-[72px] w-full flex-col justify-center border-t border-violet-100 px-3.5 py-2.5 text-left transition first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0 ${
+        isActive
+          ? "bg-violet-50/60"
+          : "hover:bg-slate-50"
       }`}
     >
-      <div className="relative z-10 max-w-xs">
-        <h2 className="text-2xl font-black leading-tight text-slate-950">
-          {title}
-        </h2>
+      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+        {label}
+      </span>
 
-        <p className="mt-4 text-sm font-semibold leading-6 text-slate-700">
-          {body}
-        </p>
+      <div className="mt-1 inline-flex items-center gap-2.5">
+        <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-[#6d28d9]">
+          <CalendarDays size={14} />
+        </span>
 
-        <LinkButton
-          href={href}
-          variant="primary"
-          size="md"
-          className={`mt-5 ${
-            isViolet
-              ? "bg-[#5b21d6] hover:bg-[#4c1d95]"
-              : "bg-[#e87817] hover:bg-[#c75f0b]"
-          }`}
+        <span className="text-[17px] font-black leading-tight text-slate-950">
+          {value}
+        </span>
+      </div>
+
+      <span className="mt-1 text-xs font-semibold text-slate-600">
+        {subtext}
+      </span>
+    </button>
+  );
+}
+
+function TravelerField({
+  travelers,
+  cabinClass,
+  setTravelers,
+  setCabinClass,
+}: {
+  travelers: string;
+  cabinClass: string;
+  setTravelers: (value: string) => void;
+  setCabinClass: (
+    value: string
+  ) => void;
+}) {
+  return (
+    <div className="flex min-h-[72px] flex-col justify-center border-t border-violet-100 px-3 py-2 first:border-t-0 lg:border-l lg:border-t-0 lg:first:border-l-0">
+      <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+        TRAVELERS & CLASS
+      </span>
+
+      <div className="mt-1 grid grid-cols-1 gap-1">
+        <select
+          value={travelers}
+          onChange={(event) =>
+            setTravelers(
+              event.target.value
+            )
+          }
+          className="w-full bg-transparent text-sm font-bold text-slate-950 outline-none"
         >
-          {cta}
-          <ArrowRight size={16} />
-        </LinkButton>
+          <option value="1">
+            1 Traveler
+          </option>
+
+          <option value="2">
+            2 Travelers
+          </option>
+
+          <option value="3">
+            3 Travelers
+          </option>
+
+          <option value="4">
+            4 Travelers
+          </option>
+        </select>
+
+        <select
+          value={cabinClass}
+          onChange={(event) =>
+            setCabinClass(
+              event.target.value
+            )
+          }
+          className="w-full bg-transparent text-xs font-semibold text-slate-700 outline-none"
+        >
+          <option value="economy">
+            Economy
+          </option>
+
+          <option value="premium-economy">
+            Premium Economy
+          </option>
+
+          <option value="business">
+            Business
+          </option>
+
+          <option value="first">
+            First
+          </option>
+        </select>
       </div>
+    </div>
+  );
+}
 
-      <div
-        className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isViolet
-            ? "bg-white/55 text-[#6d28d9]"
-            : "bg-white/70 text-[#e87817]"
-        }`}
-      >
-        <Sparkles
-          className="absolute left-5 top-5 opacity-40"
-          size={24}
-        />
+function BookingCalendar({
+  viewDate,
+  setViewDate,
+  departureDate,
+  returnDate,
+  onDaySelect,
+}: {
+  viewDate: Date;
+  setViewDate: (date: Date) => void;
+  departureDate: Date;
+  returnDate: Date;
+  onDaySelect: (day: Date) => void;
+}) {
+  const months = [
+    viewDate,
+    addMonths(viewDate, 1),
+  ];
 
-        <CircleDollarSign
-          className="absolute right-7 top-7 opacity-40"
-          size={26}
-        />
+  return (
+    <div className="grid gap-5 lg:grid-cols-2">
+      {months.map((month) => {
+        const monthStart =
+          startOfMonth(month);
 
-        {icon}
-      </div>
-    </article>
+        const monthEnd =
+          endOfMonth(month);
+
+        const gridStart = startOfWeek(
+          monthStart,
+          {
+            weekStartsOn: 0,
+          }
+        );
+
+        const gridEnd = endOfWeek(
+          monthEnd,
+          {
+            weekStartsOn: 0,
+          }
+        );
+
+        const days = eachDayOfInterval({
+          start: gridStart,
+          end: gridEnd,
+        });
+
+        return (
+          <div
+            key={month.toISOString()}
+            className="rounded-2xl border border-violet-100 p-4"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-black text-slate-900">
+                {format(
+                  month,
+                  "MMMM yyyy"
+                )}
+              </h3>
+
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setViewDate(
+                      addMonths(
+                        viewDate,
+                        -1
+                      )
+                    )
+                  }
+                  className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100"
+                >
+                  <ChevronLeft
+                    size={16}
+                  />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setViewDate(
+                      addMonths(
+                        viewDate,
+                        1
+                      )
+                    )
+                  }
+                  className="rounded-full p-2 text-slate-600 transition hover:bg-slate-100"
+                >
+                  <ChevronRight
+                    size={16}
+                  />
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-3 grid grid-cols-7 text-center text-[11px] font-extrabold tracking-wide text-slate-500">
+              {[
+                "Su",
+                "Mo",
+                "Tu",
+                "We",
+                "Th",
+                "Fr",
+                "Sa",
+              ].map((d) => (
+                <span key={d}>{d}</span>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-2">
+              {days.map((day) => {
+                const inMonth =
+                  isSameMonth(
+                    day,
+                    month
+                  );
+
+                const selected =
+                  isSameDay(
+                    day,
+                    departureDate
+                  ) ||
+                  isSameDay(
+                    day,
+                    returnDate
+                  );
+
+                const inRange =
+                  isAfter(
+                    day,
+                    departureDate
+                  ) &&
+                  isBefore(
+                    day,
+                    returnDate
+                  );
+
+                return (
+                  <button
+                    key={day.toISOString()}
+                    type="button"
+                    onClick={() =>
+                      onDaySelect(day)
+                    }
+                    className={`h-12 rounded-xl text-base font-semibold transition ${
+                      !inMonth
+                        ? "text-slate-300"
+                        : "text-slate-800 hover:bg-violet-50"
+                    } ${
+                      inRange
+                        ? "bg-violet-50"
+                        : ""
+                    } ${
+                      selected
+                        ? "bg-[#6d28d9] text-white shadow-sm hover:bg-[#5b21d6]"
+                        : ""
+                    }`}
+                  >
+                    {format(day, "d")}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
