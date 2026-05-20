@@ -250,7 +250,7 @@ function EmptyStateFlightSearchBar() {
   const [directOnly, setDirectOnly] = useState(false);
 
   return (
-    <div className="mx-auto mt-4 max-w-4xl space-y-3">
+    <div className="mt-4 max-w-4xl space-y-3">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <SearchSelect
           label="Trip type"
