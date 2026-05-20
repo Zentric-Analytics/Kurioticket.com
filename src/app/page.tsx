@@ -1,19 +1,18 @@
-import Image from "next/image";
+"use client";
+
 import type { ReactNode } from "react";
+import Image from "next/image";
 import {
   ArrowRight,
   BadgeDollarSign,
   BellRing,
-  CircleDollarSign,
   CreditCard,
   Globe2,
   Headphones,
-  Heart,
   Hotel,
   Plane,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
   TicketCheck,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -114,7 +113,10 @@ export default function HomePage() {
         <section className="page-shell -mt-2 pb-9">
           <div className="grid overflow-hidden rounded-xl border border-violet-100 bg-[#faf7ff] shadow-sm md:grid-cols-2 lg:grid-cols-4">
             {trustItems.map((item) => (
-              <div key={item.title} className="flex gap-4 border-b border-violet-100 p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
+              <div
+                key={item.title}
+                className="flex gap-4 border-b border-violet-100 p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0"
+              >
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#6d28d9] shadow-sm">
                   <item.icon size={20} />
                 </span>
@@ -202,20 +204,14 @@ function CompactAssurance({ icon, label }: { icon: ReactNode; label: string }) {
 
 function DestinationCard({ city, country, price, image }: { city: string; country: string; price: string; image: string }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative h-44">
-        <Image src={image} alt={`${city}, ${country}`} fill sizes="(min-width: 1024px) 20vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
-        <button type="button" className="focus-ring absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur" aria-label={`Save ${city}`}>
-          <Heart size={17} />
-        </button>
-        <div className="absolute bottom-3 left-3 text-white">
-          <h3 className="text-xl font-black">{city}</h3>
-          <p className="text-sm font-semibold">{country}</p>
-        </div>
+    <article className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+      <div className="relative h-36">
+        <Image src={image} alt={`${city}, ${country}`} fill sizes="(min-width: 1024px) 20vw, 50vw" className="object-cover" />
       </div>
-      <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
-        From <span className="text-lg font-black text-[#6d28d9]">{price}</span>
+      <div className="p-4">
+        <h3 className="text-base font-black text-slate-950">{city}</h3>
+        <p className="mt-1 text-xs font-semibold text-slate-500">{country}</p>
+        <p className="mt-3 text-sm font-black text-[#6d28d9]">From {price}</p>
       </div>
     </article>
   );
@@ -237,21 +233,20 @@ function PromoPanel({
   icon: ReactNode;
 }) {
   const isViolet = tone === "violet";
+
   return (
-    <article className={`relative min-h-56 overflow-hidden rounded-xl p-8 ${isViolet ? "bg-[#f1e8ff]" : "bg-[#fff3e3]"}`}>
-      <div className="relative z-10 max-w-xs">
-        <h2 className="text-2xl font-black leading-tight text-slate-950">{title}</h2>
-        <p className="mt-4 text-sm font-semibold leading-6 text-slate-700">{body}</p>
-        <LinkButton href={href} variant="primary" size="md" className={`mt-5 ${isViolet ? "bg-[#5b21d6] hover:bg-[#4c1d95]" : "bg-[#e87817] hover:bg-[#c75f0b]"}`}>
-          {cta}
-          <ArrowRight size={16} />
-        </LinkButton>
+    <div className={isViolet ? "rounded-xl bg-[#efe7ff] p-6 text-slate-950" : "rounded-xl bg-[#fff1dc] p-6 text-slate-950"}>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="max-w-sm text-2xl font-black tracking-normal">{title}</h2>
+          <p className="mt-2 max-w-md text-sm font-semibold leading-6 text-slate-600">{body}</p>
+          <LinkButton href={href} variant="primary" size="sm" className="mt-5">
+            {cta}
+            <ArrowRight size={16} />
+          </LinkButton>
+        </div>
+        <span className={isViolet ? "hidden text-[#6d28d9] sm:block" : "hidden text-[#f97316] sm:block"}>{icon}</span>
       </div>
-      <div className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${isViolet ? "bg-white/55 text-[#6d28d9]" : "bg-white/70 text-[#e87817]"}`}>
-        <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />
-        <CircleDollarSign className="absolute right-7 top-7 opacity-40" size={26} />
-        {icon}
-      </div>
-    </article>
+    </div>
   );
 }
