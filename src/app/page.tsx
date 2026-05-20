@@ -7,14 +7,11 @@ import {
   CircleDollarSign,
   CreditCard,
   Globe2,
-  Headphones,
   Heart,
   Hotel,
   Plane,
-  ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  TicketCheck,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -23,13 +20,6 @@ import { LinkButton } from "@/components/ui/Button";
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
-
-const assurances = [
-  { label: "Best Prices Guaranteed", icon: ShieldCheck },
-  { label: "Easy Provider Comparison", icon: TicketCheck },
-  { label: "Secure Payments", icon: CreditCard },
-  { label: "24/7 Customer Support", icon: Headphones },
-];
 
 const trustItems = [
   { title: "Millions of Choices", body: "Flights and hotels worldwide", icon: Globe2 },
@@ -76,7 +66,7 @@ export default function Home() {
     <>
       <AppHeader brandVariant="homepage" />
       <main className="flex-1 bg-white">
-        <section className="relative overflow-hidden bg-[#f6f3ff]">
+        <section className="relative overflow-hidden bg-[#f6f3ff] pb-16">
           <div className="absolute inset-0">
             <Image
               src={heroImage}
@@ -86,32 +76,27 @@ export default function Home() {
               sizes="100vw"
               className="object-cover object-center"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.88)_34%,rgba(255,255,255,0.38)_62%,rgba(255,255,255,0.06)_100%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.85)_44%,rgba(255,255,255,0.96)_100%)]" />
           </div>
 
-          <div className="page-shell relative grid min-h-[670px] content-start gap-8 pb-12 pt-12 sm:pt-16">
-            <div className="max-w-2xl">
-              <h1 className="max-w-xl text-5xl font-black leading-[0.96] tracking-normal text-slate-950 sm:text-6xl lg:text-7xl">
+          <div className="page-shell relative pt-14 sm:pt-18">
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="text-sm font-bold uppercase tracking-[0.22em] text-[#6d28d9]">Plan Better Trips</p>
+              <h1 className="mt-4 text-4xl font-black leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
                 Find Cheap Flights Fast
               </h1>
-              <p className="mt-6 max-w-lg text-lg font-semibold leading-8 text-slate-700">
+              <p className="mx-auto mt-5 max-w-2xl text-base font-semibold leading-7 text-slate-700 sm:text-lg">
                 Search hundreds of airlines and travel sites to find the best deals for your next trip.
               </p>
-              <div className="mt-7 grid gap-4 text-slate-900 sm:grid-cols-2 lg:grid-cols-4">
-                {assurances.map((item) => (
-                  <CompactAssurance key={item.label} icon={<item.icon size={20} />} label={item.label} />
-                ))}
-              </div>
             </div>
 
-            <div className="mt-2 max-w-[1080px]">
+            <div className="mx-auto mt-10 max-w-[1120px] rounded-2xl border border-violet-100/80 bg-white/95 p-3 shadow-[0_22px_55px_rgba(15,23,42,0.12)] backdrop-blur">
               <SearchTabs />
             </div>
           </div>
         </section>
 
-        <section className="page-shell -mt-2 pb-9">
+        <section className="page-shell pt-10 pb-9">
           <div className="grid overflow-hidden rounded-xl border border-violet-100 bg-[#faf7ff] shadow-sm md:grid-cols-2 lg:grid-cols-4">
             {trustItems.map((item) => (
               <div key={item.title} className="flex gap-4 border-b border-violet-100 p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
@@ -188,15 +173,6 @@ export default function Home() {
       </main>
       <Footer />
     </>
-  );
-}
-
-function CompactAssurance({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/85 text-[#6d28d9] shadow-sm">{icon}</span>
-      <span className="max-w-28 text-xs font-black leading-4">{label}</span>
-    </div>
   );
 }
 
