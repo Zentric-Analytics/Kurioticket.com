@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { DatabaseUnavailableError } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
 
@@ -7,6 +8,7 @@ import {
   InvalidEmailError,
   createPasswordUser,
 } from "@/services/authService";
+import { EmailVerificationError, sendEmailVerificationCode } from "@/services/emailVerificationService";
 
 export const runtime = "nodejs";
 
@@ -49,10 +51,24 @@ export async function POST(
   }
 
   try {
+    checkAuthRateLimit({
+      action: "signup",
+      email: parsed.data.email,
+      request,
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    });
+
     const user =
       await createPasswordUser(
         parsed.data,
       );
+
+    await sendEmailVerificationCode({
+      email: parsed.data.email,
+      name: parsed.data.name,
+      action: "signup",
+    });
 
     return NextResponse.json(
       {
@@ -69,6 +85,27 @@ export async function POST(
       "[signup]",
       error,
     );
+
+    if (
+      error instanceof
+      AuthRateLimitError
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Too many signup attempts. Please wait and try again.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After":
+              String(
+                error.retryAfterSeconds,
+              ),
+          },
+        },
+      );
+    }
 
     if (
       error instanceof
@@ -93,6 +130,19 @@ export async function POST(
             "Enter a valid email address.",
         },
         { status: 400 },
+      );
+    }
+
+    if (
+      error instanceof
+      EmailVerificationError
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Unable to send verification code right now. Please try again.",
+        },
+        { status: 503 },
       );
     }
 
