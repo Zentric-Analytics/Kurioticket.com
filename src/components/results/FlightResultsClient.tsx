@@ -148,14 +148,18 @@ export function FlightResultsClient() {
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
+
       if (activeSuggest === "origin" && originWrapRef.current && !originWrapRef.current.contains(target)) {
         setActiveSuggest(null);
       }
+
       if (activeSuggest === "destination" && destinationWrapRef.current && !destinationWrapRef.current.contains(target)) {
         setActiveSuggest(null);
       }
     }
+
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [activeSuggest]);
 
@@ -163,7 +167,7 @@ export function FlightResultsClient() {
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[#f6f8fb] py-6">
+      <main className="flex-1 bg-[#f6f8fb] py-6 lg:py-8">
         <section className="page-shell">
           <div className="relative overflow-hidden rounded-2xl bg-slate-900">
             <div className="relative min-h-[520px] sm:min-h-[560px] lg:min-h-[500px]">
@@ -175,6 +179,7 @@ export function FlightResultsClient() {
                 className="object-cover object-center"
                 priority
               />
+
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-900/50 to-slate-900/20" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 to-transparent" />
 
@@ -184,7 +189,9 @@ export function FlightResultsClient() {
                 </h1>
 
                 <div className="mt-9 inline-flex rounded-xl bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.24)]">
-                  <label className="sr-only" htmlFor="tripType">Trip type</label>
+                  <label className="sr-only" htmlFor="tripType">
+                    Trip type
+                  </label>
                   <select
                     id="tripType"
                     name="tripType"
@@ -219,7 +226,9 @@ export function FlightResultsClient() {
                 >
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.2fr)_46px_minmax(150px,1.2fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(132px,1fr)_minmax(122px,1fr)] xl:items-center">
                     <div className="relative" ref={originWrapRef}>
-                      <label className="sr-only" htmlFor="origin">From</label>
+                      <label className="sr-only" htmlFor="origin">
+                        From
+                      </label>
                       <input
                         id="origin"
                         name="origin"
@@ -237,6 +246,7 @@ export function FlightResultsClient() {
                         autoComplete="off"
                         className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
                       />
+
                       {activeSuggest === "origin" ? (
                         <SuggestionList
                           suggestions={originSuggestions}
@@ -264,7 +274,9 @@ export function FlightResultsClient() {
                     </div>
 
                     <div className="relative" ref={destinationWrapRef}>
-                      <label className="sr-only" htmlFor="destination">To</label>
+                      <label className="sr-only" htmlFor="destination">
+                        To
+                      </label>
                       <input
                         id="destination"
                         name="destination"
@@ -282,6 +294,7 @@ export function FlightResultsClient() {
                         autoComplete="off"
                         className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
                       />
+
                       {activeSuggest === "destination" ? (
                         <SuggestionList
                           suggestions={destinationSuggestions}
@@ -293,7 +306,9 @@ export function FlightResultsClient() {
                       ) : null}
                     </div>
 
-                    <label className="sr-only" htmlFor="departureDate">Departure</label>
+                    <label className="sr-only" htmlFor="departureDate">
+                      Departure
+                    </label>
                     <input
                       id="departureDate"
                       name="departureDate"
@@ -303,7 +318,9 @@ export function FlightResultsClient() {
                       className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
                     />
 
-                    <label className="sr-only" htmlFor="returnDate">Return</label>
+                    <label className="sr-only" htmlFor="returnDate">
+                      Return
+                    </label>
                     <input
                       id="returnDate"
                       name="returnDate"
@@ -314,7 +331,9 @@ export function FlightResultsClient() {
                       className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
 
-                    <label className="sr-only" htmlFor="travelers">Travelers</label>
+                    <label className="sr-only" htmlFor="travelers">
+                      Travelers
+                    </label>
                     <select
                       id="travelers"
                       name="travelers"
@@ -328,7 +347,9 @@ export function FlightResultsClient() {
                       <option value="4">4 adults</option>
                     </select>
 
-                    <label className="sr-only" htmlFor="cabinClass">Cabin class</label>
+                    <label className="sr-only" htmlFor="cabinClass">
+                      Cabin class
+                    </label>
                     <select
                       id="cabinClass"
                       name="cabinClass"
@@ -354,7 +375,6 @@ export function FlightResultsClient() {
       </main>
     );
   }
-
 
   return (
     <main className="flex-1 bg-[#f6f8fb]">
@@ -468,7 +488,9 @@ export function FlightResultsClient() {
 
 function filterAirportOptions(query: string) {
   const normalized = query.trim().toLowerCase();
+
   if (!normalized) return airportOptions.slice(0, 8);
+
   return airportOptions
     .filter((item) => {
       const haystack = `${item.city} ${item.airport} ${item.code} ${item.country}`.toLowerCase();
