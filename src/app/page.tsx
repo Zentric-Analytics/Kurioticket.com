@@ -91,6 +91,10 @@ export default function Home() {
   }, []);
   const t = useMemo(() => i18n[language], [language]);
   const assurancesLocalized = assurances.map((item, i) => ({ ...item, label: t.assurances[i] }));
+  const trustItemsLocalized = trustItems.map((item, i) => ({
+    ...item,
+    title: t.assurances[i],
+  }));
   return (
     <>
       <AppHeader />
