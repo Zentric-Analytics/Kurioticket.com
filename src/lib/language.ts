@@ -19,3 +19,11 @@ export function setLanguageInStorage(code: LanguageCode) {
   window.localStorage.setItem(languageStorageKey, code);
   window.dispatchEvent(new CustomEvent("curioticket-language-change", { detail: code }));
 }
+
+
+export const translations = {
+  en: { flights: "Flights", hotels: "Hotels", deals: "Deals", destinations: "Destinations", explore: "Explore", support: "Support", login: "Login", signUp: "Sign Up" },
+  fr: { flights: "Vols", hotels: "Hôtels", deals: "Offres", destinations: "Destinations", explore: "Explorer", support: "Support", login: "Connexion", signUp: "Inscription" },
+  es: { flights: "Vuelos", hotels: "Hoteles", deals: "Ofertas", destinations: "Destinos", explore: "Explorar", support: "Soporte", login: "Iniciar sesión", signUp: "Regístrate" },
+  ar: { flights: "رحلات", hotels: "فنادق", deals: "عروض", destinations: "وجهات", explore: "استكشف", support: "الدعم", login: "تسجيل الدخول", signUp: "إنشاء حساب" },
+} as const;
