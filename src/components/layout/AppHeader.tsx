@@ -45,6 +45,13 @@ const navTranslations = {
   ar: { Flights: "رحلات", Hotels: "فنادق", Deals: "عروض", Destinations: "وجهات", Explore: "استكشف", Support: "الدعم", Login: "تسجيل الدخول", SignUp: "إنشاء حساب" },
 } as const;
 
+const navTranslations = {
+  en: { Flights: "Flights", Hotels: "Hotels", Deals: "Deals", Destinations: "Destinations", Explore: "Explore", Support: "Support", Login: "Login", SignUp: "Sign Up" },
+  fr: { Flights: "Vols", Hotels: "Hôtels", Deals: "Offres", Destinations: "Destinations", Explore: "Explorer", Support: "Support", Login: "Connexion", SignUp: "Inscription" },
+  es: { Flights: "Vuelos", Hotels: "Hoteles", Deals: "Ofertas", Destinations: "Destinos", Explore: "Explorar", Support: "Soporte", Login: "Iniciar sesión", SignUp: "Regístrate" },
+  ar: { Flights: "رحلات", Hotels: "فنادق", Deals: "عروض", Destinations: "وجهات", Explore: "استكشف", Support: "الدعم", Login: "تسجيل الدخول", SignUp: "إنشاء حساب" },
+} as const;
+
 export function AppHeader() {
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -79,6 +86,23 @@ export function AppHeader() {
         syncLanguage,
       );
   }, []);
+
+  function selectLanguage(nextLanguage: LanguageCode) {
+    setLanguage(nextLanguage);
+    setLanguageInStorage(nextLanguage);
+    setLanguageOpen(false);
+  }
+
+
+  useEffect(() => {
+    function syncLanguage() {
+      setLanguage(getLanguageFromStorage());
+    }
+    window.addEventListener("curioticket-language-change", syncLanguage as EventListener);
+    return () => window.removeEventListener("curioticket-language-change", syncLanguage as EventListener);
+  }, []);
+
+  const selectedLanguage = languageOptions.find((item) => item.code === language) || languageOptions[0];
 
   function selectLanguage(nextLanguage: LanguageCode) {
     setLanguage(nextLanguage);
