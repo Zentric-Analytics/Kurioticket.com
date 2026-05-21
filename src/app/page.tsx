@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import {
   ArrowRight,
   BadgeDollarSign,
-  BellRing,
   CircleDollarSign,
   CreditCard,
   Globe2,
@@ -164,9 +163,6 @@ export default function Home() {
         <section className="page-shell pb-12">
           <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
             <div className="flex gap-4">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#6d28d9] text-white">
-                <BellRing size={24} />
-              </span>
               <div>
                 <h2 className="text-lg font-black text-slate-950">Get the best travel deals in your inbox</h2>
                 <p className="mt-1 text-sm font-semibold text-slate-600">Subscribe to our newsletter and never miss a deal.</p>
