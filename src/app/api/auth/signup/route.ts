@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
-import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
-import { DatabaseUnavailableError } from "@/lib/prisma";
+import {
+  AuthRateLimitError,
+  checkAuthRateLimit,
+} from "@/lib/auth-rate-limit";
+import {
+  DatabaseUnavailableError,
+} from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
 
 import {
@@ -8,7 +14,11 @@ import {
   InvalidEmailError,
   createPasswordUser,
 } from "@/services/authService";
-import { EmailVerificationError, sendEmailVerificationCode } from "@/services/emailVerificationService";
+
+import {
+  EmailVerificationError,
+  sendEmailVerificationCode,
+} from "@/services/emailVerificationService";
 
 export const runtime = "nodejs";
 
@@ -50,13 +60,17 @@ export async function POST(
     );
   }
 
+  let createdUserId: string | null =
+    null;
+
   try {
     checkAuthRateLimit({
       action: "signup",
       email: parsed.data.email,
       request,
       limit: 5,
-      windowMs: 15 * 60 * 1000,
+      windowMs:
+        15 * 60 * 1000,
     });
 
     const user =
@@ -64,9 +78,13 @@ export async function POST(
         parsed.data,
       );
 
+    createdUserId = user.id;
+
     await sendEmailVerificationCode({
-      email: parsed.data.email,
-      name: parsed.data.name,
+      email:
+        parsed.data.email,
+      name:
+        parsed.data.name,
       action: "signup",
     });
 
@@ -137,6 +155,42 @@ export async function POST(
       error instanceof
       EmailVerificationError
     ) {
+      if (createdUserId) {
+        const email =
+          parsed.data.email
+            .toLowerCase()
+            .trim();
+
+        try {
+          await getPrisma().verificationToken.deleteMany(
+            {
+              where: {
+                identifier:
+                  `email-verification:${email}`,
+              },
+            },
+          );
+
+          await getPrisma().user.deleteMany(
+            {
+              where: {
+                id: createdUserId,
+                email,
+                emailVerified:
+                  null,
+              },
+            },
+          );
+        } catch (
+          rollbackError
+        ) {
+          console.error(
+            "[signup:rollback-failed]",
+            rollbackError,
+          );
+        }
+      }
+
       return NextResponse.json(
         {
           error:
