@@ -4,7 +4,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BadgeCheck, Plane, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { BadgeCheck, Plane, Repeat2, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { FlightCard } from "@/components/results/FlightCard";
@@ -39,6 +39,8 @@ export function FlightResultsClient() {
   const [maxPrice, setMaxPrice] = useState(1200);
   const [maxStops, setMaxStops] = useState(3);
   const [tripTypeInput, setTripTypeInput] = useState(params.get("tripType") || "round-trip");
+  const [originInput, setOriginInput] = useState(params.get("origin") || "");
+  const [destinationInput, setDestinationInput] = useState(params.get("destination") || "");
 
   const body = useMemo(
     () => {
@@ -117,33 +119,34 @@ export function FlightResultsClient() {
           <div className="grid gap-0 lg:grid-cols-[1fr_320px]">
             <div className="p-6 sm:p-8 lg:p-10">
               <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl">Start a flight search</h1>
+
               <form
-                className="mt-6"
+                className="mt-7"
                 onSubmit={(event) => {
                   event.preventDefault();
+
                   const formData = new FormData(event.currentTarget);
                   const nextParams = new URLSearchParams({
                     tripType: tripTypeInput,
-                    origin: String(formData.get("origin") || ""),
-                    destination: String(formData.get("destination") || ""),
+                    origin: originInput.trim() || String(formData.get("origin") || ""),
+                    destination: destinationInput.trim() || String(formData.get("destination") || ""),
                     departureDate: String(formData.get("departureDate") || ""),
                     returnDate: String(formData.get("returnDate") || ""),
                     travelers: String(formData.get("travelers") || "1"),
                     cabinClass: String(formData.get("cabinClass") || "economy"),
                   });
+
                   router.push(`/flights/results?${nextParams.toString()}`);
                 }}
               >
                 <div className="mb-3 inline-flex items-center gap-2">
-                  <label htmlFor="tripType" className="text-sm font-semibold text-slate-700">
-                    Trip type
-                  </label>
                   <select
                     id="tripType"
                     name="tripType"
                     value={tripTypeInput}
                     onChange={(event) => setTripTypeInput(event.target.value)}
-                    className="focus-ring rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800"
+                    aria-label="Round-trip selector"
+                    className="focus-ring rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800"
                   >
                     <option value="round-trip">Round-trip</option>
                     <option value="one-way">One-way</option>
@@ -151,37 +154,103 @@ export function FlightResultsClient() {
                   </select>
                 </div>
 
-                <div className="grid gap-2 rounded-xl border border-slate-300 bg-white p-2 shadow-sm md:grid-cols-[1.2fr_1.2fr_1fr_1fr_1fr_1fr_auto]">
-                  <input name="origin" required placeholder="From" className="focus-ring h-11 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-900" />
-                  <input name="destination" required placeholder="To?" className="focus-ring h-11 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-900" />
-                  <input name="departureDate" required type="date" className="focus-ring h-11 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-900" />
-                  <input
-                    name="returnDate"
-                    type="date"
-                    disabled={tripTypeInput === "one-way"}
-                    required={tripTypeInput !== "one-way"}
-                    className="focus-ring h-11 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100"
-                  />
-                  <select name="travelers" defaultValue="1" className="focus-ring h-11 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-900">
-                    <option value="1">1 adult</option>
-                    <option value="2">2 adults</option>
-                    <option value="3">3 adults</option>
-                    <option value="4">4 adults</option>
-                  </select>
-                  <select name="cabinClass" defaultValue="economy" className="focus-ring h-11 rounded-md border border-slate-200 px-3 text-sm font-semibold text-slate-900">
-                    <option value="economy">Economy</option>
-                    <option value="premium-economy">Premium Economy</option>
-                    <option value="business">Business</option>
-                    <option value="first">First</option>
-                  </select>
-                  <Button type="submit" className="h-11 bg-blue-600 px-6 font-bold text-white hover:bg-blue-700">
-                    Search
-                  </Button>
+                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_6px_16px_rgba(15,23,42,0.08)]">
+                  <div className="grid xl:grid-cols-[minmax(120px,1fr)_56px_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(180px,1.1fr)_auto]">
+                    <div className="border-b border-slate-200 xl:border-b-0 xl:border-r">
+                      <input
+                        name="origin"
+                        required
+                        value={originInput}
+                        onChange={(event) => setOriginInput(event.target.value)}
+                        placeholder="From"
+                        className="focus-ring h-12 w-full min-w-0 bg-transparent px-4 text-sm font-semibold text-slate-900"
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-center border-b border-slate-200 xl:border-b-0 xl:border-r">
+                      <button
+                        type="button"
+                        aria-label="Swap origin and destination"
+                        onClick={() => {
+                          const currentOrigin = originInput;
+                          setOriginInput(destinationInput);
+                          setDestinationInput(currentOrigin);
+                        }}
+                        className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                      >
+                        <Repeat2 size={16} />
+                      </button>
+                    </div>
+
+                    <div className="border-b border-slate-200 xl:border-b-0 xl:border-r">
+                      <input
+                        name="destination"
+                        required
+                        value={destinationInput}
+                        onChange={(event) => setDestinationInput(event.target.value)}
+                        placeholder="To?"
+                        className="focus-ring h-12 w-full min-w-0 bg-transparent px-4 text-sm font-semibold text-slate-900"
+                      />
+                    </div>
+
+                    <label className="border-b border-slate-200 px-3 py-1.5 xl:border-b-0 xl:border-r">
+                      <span className="block text-[11px] font-bold text-slate-500">Departure</span>
+                      <input
+                        name="departureDate"
+                        required
+                        type="date"
+                        aria-label="Departure"
+                        className="focus-ring h-7 w-full min-w-0 bg-transparent text-sm font-semibold text-slate-900"
+                      />
+                    </label>
+
+                    <label className="border-b border-slate-200 px-3 py-1.5 xl:border-b-0 xl:border-r">
+                      <span className="block text-[11px] font-bold text-slate-500">Return</span>
+                      <input
+                        name="returnDate"
+                        type="date"
+                        disabled={tripTypeInput === "one-way"}
+                        required={tripTypeInput !== "one-way"}
+                        aria-label="Return"
+                        className="focus-ring h-7 w-full min-w-0 bg-transparent text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100"
+                      />
+                    </label>
+
+                    <div className="grid grid-cols-2 border-b border-slate-200 xl:border-b-0 xl:border-r">
+                      <select
+                        name="travelers"
+                        defaultValue="1"
+                        className="focus-ring h-12 min-w-0 bg-transparent px-3 text-sm font-semibold text-slate-900"
+                        aria-label="Travelers"
+                      >
+                        <option value="1">1 adult</option>
+                        <option value="2">2 adults</option>
+                        <option value="3">3 adults</option>
+                        <option value="4">4 adults</option>
+                      </select>
+
+                      <select
+                        name="cabinClass"
+                        defaultValue="economy"
+                        className="focus-ring h-12 min-w-0 border-l border-slate-200 bg-transparent px-3 text-sm font-semibold text-slate-900"
+                        aria-label="Cabin class"
+                      >
+                        <option value="economy">Economy</option>
+                        <option value="premium-economy">Premium Economy</option>
+                        <option value="business">Business</option>
+                        <option value="first">First</option>
+                      </select>
+                    </div>
+
+                    <Button type="submit" className="h-12 rounded-none bg-blue-600 px-6 font-bold text-white hover:bg-blue-700 xl:rounded-l-none xl:rounded-r-lg">
+                      Search
+                    </Button>
+                  </div>
                 </div>
               </form>
             </div>
 
-            <aside className="relative min-h-[260px] border-t border-slate-200 lg:min-h-full lg:border-l lg:border-t-0">
+            <aside className="relative min-h-[240px] border-t border-slate-200 lg:min-h-[420px] lg:border-l lg:border-t-0">
               <Image
                 src="https://images.pexels.com/photos/615060/pexels-photo-615060.jpeg?cs=srgb&dl=pexels-christine-renard-198055-615060.jpg&fm=jpg"
                 alt="Airplane wing over a river canyon landscape"
@@ -212,6 +281,7 @@ export function FlightResultsClient() {
               {body.travelers} traveler{body.travelers === 1 ? "" : "s"} · {String(body.cabinClass).replace("-", " ")} · live provider search
             </p>
           </div>
+
           <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
             {sortModes.map((mode) => (
               <button
@@ -229,6 +299,7 @@ export function FlightResultsClient() {
                 {mode.label}
               </button>
             ))}
+
             <Button variant="secondary" className="border-slate-200 md:hidden" onClick={() => setFiltersOpen(true)}>
               <SlidersHorizontal size={17} />
               Filters
@@ -266,8 +337,9 @@ export function FlightResultsClient() {
                 <p className="text-sm font-bold text-navy">
                   {filtered.length} option{filtered.length === 1 ? "" : "s"} found
                 </p>
-                <p className="text-sm font-semibold text-muted">Sorted by {sortModes.find((mode) => mode.value === sort)?.label}</p>
+                <p className="text-sm font-semibold text-muted">Sorted by {sortModes.find((mode) => mode.value)?.label}</p>
               </div>
+
               {filtered.length ? (
                 filtered.map((flight) => <FlightCard key={flight.id} flight={flight} />)
               ) : (
@@ -281,6 +353,7 @@ export function FlightResultsClient() {
       </div>
 
       <div className={cn("fixed inset-0 z-50 bg-navy/40 lg:hidden", filtersOpen ? "block" : "hidden")} onClick={() => setFiltersOpen(false)} />
+
       <aside
         className={cn(
           "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-2xl bg-white p-5 shadow-xl transition-transform lg:hidden",
@@ -293,6 +366,7 @@ export function FlightResultsClient() {
             <X size={20} />
           </Button>
         </div>
+
         <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} />
       </aside>
     </main>
@@ -319,6 +393,7 @@ function Filters({
         </div>
         <SlidersHorizontal className="text-teal" size={21} />
       </div>
+
       <div className="mt-6 grid gap-6">
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
@@ -326,12 +401,14 @@ function Filters({
           </span>
           <input className="w-full accent-teal" type="range" min={100} max={2000} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
         </label>
+
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
             Stops up to <span className="font-mono text-navy">{maxStops}</span>
           </span>
           <input className="w-full accent-teal" type="range" min={0} max={3} step={1} value={maxStops} onChange={(event) => setMaxStops(Number(event.target.value))} />
         </label>
+
         <div className="grid gap-3 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-muted">
           <label className="flex items-center gap-2">
             <input type="checkbox" className="accent-teal" defaultChecked />
