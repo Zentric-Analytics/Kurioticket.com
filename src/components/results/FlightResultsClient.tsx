@@ -121,7 +121,7 @@ export function FlightResultsClient() {
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[#f6f8fb] py-6">
+      <main className="flex-1 bg-[#f6f8fb] py-6 lg:py-8">
         <section className="page-shell">
           <div className="relative overflow-hidden rounded-2xl bg-slate-900">
             <div className="relative min-h-[520px] sm:min-h-[560px] lg:min-h-[500px]">
@@ -143,7 +143,9 @@ export function FlightResultsClient() {
                 </h1>
 
                 <div className="mt-6 inline-flex rounded-xl bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.24)]">
-                  <label className="sr-only" htmlFor="tripType">Trip type</label>
+                  <label className="sr-only" htmlFor="tripType">
+                    Trip type
+                  </label>
                   <select
                     id="tripType"
                     name="tripType"
@@ -177,7 +179,9 @@ export function FlightResultsClient() {
                   }}
                 >
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.25fr)_50px_minmax(150px,1.25fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(130px,1fr)_minmax(112px,0.95fr)] xl:items-center">
-                    <label className="sr-only" htmlFor="origin">From</label>
+                    <label className="sr-only" htmlFor="origin">
+                      From
+                    </label>
                     <input
                       id="origin"
                       name="origin"
@@ -203,7 +207,9 @@ export function FlightResultsClient() {
                       </button>
                     </div>
 
-                    <label className="sr-only" htmlFor="destination">To</label>
+                    <label className="sr-only" htmlFor="destination">
+                      To
+                    </label>
                     <input
                       id="destination"
                       name="destination"
@@ -214,7 +220,9 @@ export function FlightResultsClient() {
                       className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
                     />
 
-                    <label className="sr-only" htmlFor="departureDate">Departure</label>
+                    <label className="sr-only" htmlFor="departureDate">
+                      Departure
+                    </label>
                     <input
                       id="departureDate"
                       name="departureDate"
@@ -224,7 +232,9 @@ export function FlightResultsClient() {
                       className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
                     />
 
-                    <label className="sr-only" htmlFor="returnDate">Return</label>
+                    <label className="sr-only" htmlFor="returnDate">
+                      Return
+                    </label>
                     <input
                       id="returnDate"
                       name="returnDate"
@@ -235,7 +245,9 @@ export function FlightResultsClient() {
                       className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
 
-                    <label className="sr-only" htmlFor="travelers">Travelers</label>
+                    <label className="sr-only" htmlFor="travelers">
+                      Travelers
+                    </label>
                     <select
                       id="travelers"
                       name="travelers"
@@ -249,7 +261,9 @@ export function FlightResultsClient() {
                       <option value="4">4 adults</option>
                     </select>
 
-                    <label className="sr-only" htmlFor="cabinClass">Cabin class</label>
+                    <label className="sr-only" htmlFor="cabinClass">
+                      Cabin class
+                    </label>
                     <select
                       id="cabinClass"
                       name="cabinClass"
@@ -275,7 +289,6 @@ export function FlightResultsClient() {
       </main>
     );
   }
-
 
   return (
     <main className="flex-1 bg-[#f6f8fb]">
