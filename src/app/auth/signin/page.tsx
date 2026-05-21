@@ -13,6 +13,8 @@ type SigninPageProps = {
   searchParams?: Promise<{
     callbackUrl?: string;
     error?: string;
+    reset?: string;
+    reason?: string;
   }>;
 };
 
@@ -32,6 +34,13 @@ export default async function SigninPage({
       ? "This account is not available. Please contact support."
       : "";
 
+  const initialMessage =
+    params?.reset === "success"
+      ? "Your password was reset. Log in with your new password."
+      : params?.reason === "inactive"
+        ? "You were signed out after 30 minutes of inactivity. Log in again to continue."
+        : "";
+
   const googleEnabled =
     isGoogleAuthConfigured();
 
@@ -44,6 +53,7 @@ export default async function SigninPage({
           callbackUrl={callbackUrl}
           googleEnabled={googleEnabled}
           initialError={initialError}
+          initialMessage={initialMessage}
         />
       </main>
 
