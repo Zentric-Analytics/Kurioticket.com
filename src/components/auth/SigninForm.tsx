@@ -13,15 +13,20 @@ type SigninFormProps = {
   callbackUrl?: string;
   googleEnabled?: boolean;
   initialError?: string;
+  initialMessage?: string;
 };
 
 export function SigninForm({
   callbackUrl = "/dashboard",
   googleEnabled = false,
   initialError = "",
+  initialMessage = "",
 }: SigninFormProps) {
   const [error, setError] =
     useState(initialError);
+
+  const [message, setMessage] =
+    useState(initialMessage);
 
   const [loading, setLoading] =
     useState(false);
@@ -31,6 +36,7 @@ export function SigninForm({
   ) {
     setLoading(true);
     setError("");
+    setMessage("");
 
     const parsed =
       signinSchema.safeParse({
@@ -56,46 +62,42 @@ export function SigninForm({
       return;
     }
 
-    const result = await signIn(
-      "credentials",
-      {
-        redirect: false,
-        email:
-          parsed.data.email,
-        password:
-          parsed.data.password,
-        callbackUrl,
+    const response = await fetch("/api/auth/request-login-code", {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
       },
-    );
+      body: JSON.stringify({
+        ...parsed.data,
+        callbackUrl,
+      }),
+    });
+
+    const data = await response.json();
 
     setLoading(false);
 
-    // Preserve backend auth flow
-    if (
-      result?.error ===
-      "EmailVerificationRequired"
-    ) {
-      window.location.href = `/auth/verify-email?email=${encodeURIComponent(
-        parsed.data.email,
-      )}`;
-
-      return;
-    }
-
-    if (!result?.ok) {
+    if (!response.ok) {
       setError(
-        result?.error ===
-          "This account is not available. Please contact support."
-          ? result.error
-          : "We could not sign you in. Check your email and password, then try again.",
+        String(
+          data.error ||
+            "We could not sign you in. Check your email and password, then try again.",
+        ),
       );
 
       return;
     }
 
     window.location.href =
-      result.url ||
-      callbackUrl;
+      String(
+        data.redirectTo ||
+          `/auth/verify-login?email=${encodeURIComponent(
+            parsed.data.email,
+          )}&callbackUrl=${encodeURIComponent(
+            callbackUrl,
+          )}`,
+      );
   }
 
   return (
@@ -131,6 +133,19 @@ export function SigninForm({
             required
           />
         </Field>
+
+        <Link
+          className="text-sm font-semibold text-teal-dark"
+          href="/auth/forgot-password"
+        >
+          Forgot password?
+        </Link>
+
+        {message ? (
+          <p className="text-sm text-teal-dark">
+            {message}
+          </p>
+        ) : null}
 
         {error ? (
           <p className="text-sm text-danger">

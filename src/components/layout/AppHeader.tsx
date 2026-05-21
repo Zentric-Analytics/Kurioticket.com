@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { Bell, ChevronDown, Globe2, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
+import { Bell, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
+import { RegionSelector } from "@/components/region/RegionSelector";
 import { Button, LinkButton } from "@/components/ui/Button";
 
 const navItems = [
@@ -39,11 +40,7 @@ export function AppHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <button type="button" className="focus-ring inline-flex h-10 items-center gap-2 rounded-md px-2 text-sm font-bold text-slate-900">
-            <Globe2 size={18} />
-            EN
-            <ChevronDown size={14} />
-          </button>
+          <RegionSelector />
           <LinkButton href="/dashboard" variant="ghost" size="sm" className="h-10 w-10 px-0" aria-label="Notifications">
             <Bell size={18} />
           </LinkButton>
