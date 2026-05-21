@@ -144,7 +144,7 @@ export function FlightResultsClient() {
             </div>
           </div>
 
-          <div className="relative z-20 -mt-16 px-3 pb-6 sm:px-6 lg:-mt-20 lg:px-10">
+          <div className="relative z-20 -mt-16 px-3 pb-4 sm:px-6 lg:-mt-20 lg:px-10">
             <form
               className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_16px_38px_rgba(15,23,42,0.18)] sm:p-6"
               onSubmit={(event) => {
@@ -180,7 +180,7 @@ export function FlightResultsClient() {
                   </select>
                 </label>
 
-                <div className="grid gap-3 xl:grid-cols-[minmax(170px,1.2fr)_52px_minmax(170px,1.2fr)_minmax(150px,1fr)_minmax(150px,1fr)] 2xl:grid-cols-[minmax(170px,1.2fr)_52px_minmax(170px,1.2fr)_minmax(150px,1fr)_minmax(150px,1fr)_minmax(150px,1fr)_minmax(150px,1fr)_auto]">
+                <div className="grid gap-3 lg:grid-cols-[minmax(120px,1.15fr)_52px_minmax(120px,1.15fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_auto]">
                   <label className="grid gap-1">
                     <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">From</span>
                     <input
@@ -273,8 +273,8 @@ export function FlightResultsClient() {
                     </select>
                   </label>
 
-                  <div className="flex items-end xl:col-span-5 2xl:col-span-1">
-                    <Button type="submit" className="h-12 w-full rounded-lg bg-blue-600 px-8 font-bold text-white hover:bg-blue-700 xl:min-w-[170px]">
+                  <div className="flex items-end">
+                    <Button type="submit" className="h-12 w-full rounded-lg bg-blue-600 px-7 font-bold text-white hover:bg-blue-700 lg:min-w-[128px]">
                       Search
                     </Button>
                   </div>
