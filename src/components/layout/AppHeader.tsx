@@ -14,79 +14,22 @@ import {
 } from "lucide-react";
 
 import { Button, LinkButton } from "@/components/ui/Button";
+import {
+  getLanguageFromStorage,
+  languageOptions,
+  setLanguageInStorage,
+  translations,
+  type LanguageCode,
+} from "@/lib/language";
 
 const navItems = [
-  { href: "/flights/results", label: "Flights" },
-  { href: "/hotels/results", label: "Hotels" },
-  { href: "/deals", label: "Deals" },
-  { href: "/hotels/tokyo", label: "Destinations" },
-  { href: "/guides", label: "Explore" },
-  { href: "/support", label: "Support" },
-];
-
-const languageOptions = [
-  { code: "en", label: "English", flag: "🇺🇸" },
-  { code: "fr", label: "French", flag: "🇫🇷" },
-  { code: "es", label: "Spanish", flag: "🇪🇸" },
-  { code: "ar", label: "Arabic", flag: "🇸🇦" },
+  { href: "/flights/results", label: "Flights", key: "flights" },
+  { href: "/hotels/results", label: "Hotels", key: "hotels" },
+  { href: "/deals", label: "Deals", key: "deals" },
+  { href: "/hotels/tokyo", label: "Destinations", key: "destinations" },
+  { href: "/guides", label: "Explore", key: "explore" },
+  { href: "/support", label: "Support", key: "support" },
 ] as const;
-
-type LanguageCode = (typeof languageOptions)[number]["code"];
-
-const languageStorageKey = "curioticket-language";
-
-const translations = {
-  en: {
-    Flights: "Flights",
-    Hotels: "Hotels",
-    Deals: "Deals",
-    Destinations: "Destinations",
-    Explore: "Explore",
-    Support: "Support",
-    Login: "Login",
-    SignUp: "Sign Up",
-  },
-  fr: {
-    Flights: "Vols",
-    Hotels: "Hôtels",
-    Deals: "Offres",
-    Destinations: "Destinations",
-    Explore: "Explorer",
-    Support: "Support",
-    Login: "Connexion",
-    SignUp: "Inscription",
-  },
-  es: {
-    Flights: "Vuelos",
-    Hotels: "Hoteles",
-    Deals: "Ofertas",
-    Destinations: "Destinos",
-    Explore: "Explorar",
-    Support: "Soporte",
-    Login: "Iniciar sesión",
-    SignUp: "Regístrate",
-  },
-  ar: {
-    Flights: "رحلات",
-    Hotels: "فنادق",
-    Deals: "عروض",
-    Destinations: "وجهات",
-    Explore: "استكشف",
-    Support: "الدعم",
-    Login: "تسجيل الدخول",
-    SignUp: "إنشاء حساب",
-  },
-} as const;
-
-function getStoredLanguage(): LanguageCode {
-  if (typeof window === "undefined") return "en";
-
-  const storedLanguage = window.localStorage.getItem(languageStorageKey);
-
-  return languageOptions.some((item) => item.code === storedLanguage)
-    ? (storedLanguage as LanguageCode)
-    : "en";
-}
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
@@ -99,17 +42,33 @@ export function AppHeader() {
     status === "authenticated" && Boolean(session?.user);
 
   const selectedLanguage =
-    languageOptions.find((item) => item.code === language) ??
+    languageOptions.find((item) => item.code === language) ||
     languageOptions[0];
 
+  const t = translations[language];
+
   useEffect(() => {
-    setLanguage(getStoredLanguage());
+    setLanguage(getLanguageFromStorage());
+
+    function syncLanguage() {
+      setLanguage(getLanguageFromStorage());
+    }
+
+    window.addEventListener(
+      "curioticket-language-change",
+      syncLanguage,
+    );
+
+    return () =>
+      window.removeEventListener(
+        "curioticket-language-change",
+        syncLanguage,
+      );
   }, []);
 
   function selectLanguage(nextLanguage: LanguageCode) {
     setLanguage(nextLanguage);
-    window.localStorage.setItem(languageStorageKey, nextLanguage);
-    window.dispatchEvent(new Event("curioticket-language-change"));
+    setLanguageInStorage(nextLanguage);
     setLanguageOpen(false);
   }
 
@@ -134,7 +93,7 @@ export function AppHeader() {
               href={item.href}
               className="rounded-md px-3 py-2 text-base font-black text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
             >
-              {translations[language][item.label as keyof typeof translations.en]}
+              {t[item.key] || item.label}
             </Link>
           ))}
         </nav>
@@ -150,9 +109,11 @@ export function AppHeader() {
               className="focus-ring inline-flex h-10 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
             >
               <Globe2 size={16} />
+
               <span>
                 {selectedLanguage.flag} {selectedLanguage.label}
               </span>
+
               <ChevronDown size={14} />
             </button>
 
@@ -206,7 +167,7 @@ export function AppHeader() {
                 href="/auth/signin"
                 className="focus-ring inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-semibold text-navy transition hover:bg-surface-muted"
               >
-                {translations[language].Login}
+                {t.login || "Login"}
               </Link>
 
               <LinkButton
@@ -215,7 +176,7 @@ export function AppHeader() {
                 size="sm"
                 className="bg-[#6d28d9] hover:bg-[#5b21b6]"
               >
-                {translations[language].SignUp}
+                {t.signUp || "Sign Up"}
               </LinkButton>
             </>
           )}
@@ -264,7 +225,7 @@ export function AppHeader() {
                   onClick={() => setOpen(false)}
                   className="rounded-md px-3 py-3 text-lg font-bold text-navy hover:bg-surface-muted"
                 >
-                  {translations[language][item.label as keyof typeof translations.en]}
+                  {t[item.key] || item.label}
                 </Link>
               ))}
 
@@ -296,7 +257,7 @@ export function AppHeader() {
                     onClick={() => setOpen(false)}
                     className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
                   >
-                    {translations[language].Login}
+                    {t.login || "Login"}
                   </Link>
 
                   <Link
@@ -304,7 +265,7 @@ export function AppHeader() {
                     onClick={() => setOpen(false)}
                     className="rounded-md bg-[#6d28d9] px-3 py-3 text-base font-semibold text-white"
                   >
-                    {translations[language].SignUp}
+                    {t.signUp || "Sign Up"}
                   </Link>
                 </>
               )}
