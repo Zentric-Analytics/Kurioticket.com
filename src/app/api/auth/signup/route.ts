@@ -6,6 +6,7 @@ import {
 import {
   DatabaseUnavailableError,
 } from "@/lib/prisma";
+
 import { getPrisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
 
@@ -22,46 +23,34 @@ import {
 
 export const runtime = "nodejs";
 
-export async function POST(
-  request: Request,
-) {
+export async function POST(request: Request) {
   let body: unknown;
 
   try {
     body = await request.json();
   } catch (error) {
-    console.error(
-      "[signup:invalid-json]",
-      error,
-    );
+    console.error("[signup:invalid-json]", error);
 
     return NextResponse.json(
-      {
-        error:
-          "Unable to create account right now.",
-      },
-      { status: 400 },
+      { error: "Unable to create account right now." },
+      { status: 400 }
     );
   }
 
-  const parsed =
-    signupSchema.safeParse(body);
+  const parsed = signupSchema.safeParse(body);
 
   if (!parsed.success) {
     return NextResponse.json(
       {
-        error:
-          getPublicSignupValidationError(
-            parsed.error.flatten()
-              .fieldErrors,
-          ),
+        error: getPublicSignupValidationError(
+          parsed.error.flatten().fieldErrors
+        ),
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
-  let createdUserId: string | null =
-    null;
+  let createdUserId: string | null = null;
 
   try {
     checkAuthRateLimit({
@@ -69,22 +58,15 @@ export async function POST(
       email: parsed.data.email,
       request,
       limit: 5,
-      windowMs:
-        15 * 60 * 1000,
+      windowMs: 15 * 60 * 1000,
     });
 
-    const user =
-      await createPasswordUser(
-        parsed.data,
-      );
-
+    const user = await createPasswordUser(parsed.data);
     createdUserId = user.id;
 
     await sendEmailVerificationCode({
-      email:
-        parsed.data.email,
-      name:
-        parsed.data.name,
+      email: parsed.data.email,
+      name: parsed.data.name,
       action: "signup",
     });
 
@@ -96,98 +78,63 @@ export async function POST(
           name: user.name,
         },
       },
-      { status: 201 },
+      { status: 201 }
     );
   } catch (error) {
-    console.error(
-      "[signup]",
-      error,
-    );
+    console.error("[signup]", error);
 
-    if (
-      error instanceof
-      AuthRateLimitError
-    ) {
+    if (error instanceof AuthRateLimitError) {
       return NextResponse.json(
         {
-          error:
-            "Too many signup attempts. Please wait and try again.",
+          error: "Too many signup attempts. Please wait and try again.",
         },
         {
           status: 429,
           headers: {
-            "Retry-After":
-              String(
-                error.retryAfterSeconds,
-              ),
+            "Retry-After": String(error.retryAfterSeconds),
           },
-        },
+        }
       );
     }
 
-    if (
-      error instanceof
-      DuplicateEmailError
-    ) {
+    if (error instanceof DuplicateEmailError) {
       return NextResponse.json(
         {
-          error:
-            "An account with this email already exists.",
+          error: "An account with this email already exists.",
         },
-        { status: 409 },
+        { status: 409 }
       );
     }
 
-    if (
-      error instanceof
-      InvalidEmailError
-    ) {
+    if (error instanceof InvalidEmailError) {
       return NextResponse.json(
         {
-          error:
-            "Enter a valid email address.",
+          error: "Enter a valid email address.",
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
-    if (
-      error instanceof
-      EmailVerificationError
-    ) {
+    if (error instanceof EmailVerificationError) {
       if (createdUserId) {
-        const email =
-          parsed.data.email
-            .toLowerCase()
-            .trim();
+        const email = parsed.data.email.toLowerCase().trim();
 
         try {
-          await getPrisma().verificationToken.deleteMany(
-            {
-              where: {
-                identifier:
-                  `email-verification:${email}`,
-              },
+          await getPrisma().verificationToken.deleteMany({
+            where: {
+              identifier: `email-verification:${email}`,
             },
-          );
+          });
 
-          await getPrisma().user.deleteMany(
-            {
-              where: {
-                id: createdUserId,
-                email,
-                emailVerified:
-                  null,
-              },
+          await getPrisma().user.deleteMany({
+            where: {
+              id: createdUserId,
+              email,
+              emailVerified: null,
             },
-          );
-        } catch (
-          rollbackError
-        ) {
-          console.error(
-            "[signup:rollback-failed]",
-            rollbackError,
-          );
+          });
+        } catch (rollbackError) {
+          console.error("[signup:rollback-failed]", rollbackError);
         }
       }
 
@@ -196,67 +143,49 @@ export async function POST(
           error:
             "Unable to send verification code right now. Please try again.",
         },
-        { status: 503 },
+        { status: 503 }
       );
     }
 
     if (
-      error instanceof
-        DatabaseUnavailableError ||
-      isMissingMigrationError(
-        error,
-      )
+      error instanceof DatabaseUnavailableError ||
+      isMissingMigrationError(error)
     ) {
       return NextResponse.json(
         {
-          error:
-            "Unable to create account right now.",
+          error: "Unable to create account right now.",
         },
-        { status: 503 },
+        { status: 503 }
       );
     }
 
     return NextResponse.json(
       {
-        error:
-          "Unable to create account right now.",
+        error: "Unable to create account right now.",
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 }
 
 function getPublicSignupValidationError(
-  fieldErrors: Record<
-    string,
-    string[] | undefined
-  >,
+  fieldErrors: Record<string, string[] | undefined>
 ) {
-  if (
-    fieldErrors.email?.length
-  ) {
+  if (fieldErrors.email?.length) {
     return "Enter a valid email address.";
   }
 
-  if (
-    fieldErrors.password
-      ?.length
-  ) {
+  if (fieldErrors.password?.length) {
     return "Password must meet minimum requirements.";
   }
 
   return "Unable to create account right now.";
 }
 
-function isMissingMigrationError(
-  error: unknown,
-) {
-  const message =
-    error instanceof Error
-      ? error.message
-      : String(error);
+function isMissingMigrationError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
 
   return /table .* does not exist|relation .* does not exist|database .* does not exist/i.test(
-    message,
+    message
   );
 }

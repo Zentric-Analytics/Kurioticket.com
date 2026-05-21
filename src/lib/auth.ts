@@ -5,21 +5,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
-import {
-  getAdminEmails,
-  getAuthSecret,
-} from "@/lib/env";
+import { getAdminEmails, getAuthSecret } from "@/lib/env";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 
-import {
-  isGoogleAuthConfigured,
-  logSafeAuthDiagnostics,
-} from "@/lib/auth-diagnostics";
+import { isGoogleAuthConfigured, logSafeAuthDiagnostics } from "@/lib/auth-diagnostics";
 
-import {
-  getPrisma,
-  isDatabaseConfigured,
-} from "@/lib/prisma";
+import { getPrisma, isDatabaseConfigured } from "@/lib/prisma";
 
 import { signinSchema } from "@/lib/validation";
 
@@ -28,566 +19,268 @@ import {
   sendEmailVerificationCode,
   verifyLoginCode,
 } from "@/services/emailVerificationService";
+
 import { logAuthEvent } from "@/services/authService";
 
-const providers: NextAuthOptions["providers"] =
-  [
-    CredentialsProvider({
-      name: "Email and password",
+const providers: NextAuthOptions["providers"] = [
+  CredentialsProvider({
+    name: "Email and password",
 
-      credentials: {
-        email: {
-          label: "Email",
-          type: "email",
-        },
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Password", type: "password" },
+      loginCode: { label: "Login code", type: "text" },
+    },
 
-        password: {
-          label: "Password",
-          type: "password",
-        },
+    async authorize(credentials, request) {
+      const loginCode = String(credentials?.loginCode || "").trim();
 
-        loginCode: {
-          label: "Login code",
-          type: "text",
-        },
-      },
+      const rateLimitRequest = request
+        ? ({
+            headers: new Headers(request.headers as HeadersInit),
+          } as Request)
+        : undefined;
 
-      async authorize(
-        credentials,
-      ) {
-        const loginCode =
-          String(
-            credentials?.loginCode ||
-              "",
-          ).trim();
+      if (loginCode) {
+        const parsedEmail = signinSchema.shape.email.safeParse(
+          String(credentials?.email || "")
+        );
 
-        if (loginCode) {
-          const parsedEmail =
-            signinSchema.shape.email.safeParse(
-              String(
-                credentials?.email ||
-                  "",
-              ),
-            );
-
-          if (
-            !parsedEmail.success ||
-            !/^\d{6}$/.test(
-              loginCode,
-            )
-          ) {
-            return null;
-          }
-
-          const email =
-            parsedEmail.data;
-
-          try {
-            checkAuthRateLimit({ action: "verify-login", email, limit: 10, windowMs: 15 * 60 * 1000 });
-          } catch (error) {
-            if (error instanceof AuthRateLimitError) {
-              throw new Error("RateLimited");
-            }
-
-            throw error;
-          }
-
-          const validCode =
-            await verifyLoginCode({
-              email,
-              code: loginCode,
-            });
-
-          if (!validCode) {
-            return null;
-          }
-
-          const user =
-            await getPrisma().user.findUnique(
-              {
-                where: {
-                  email,
-                },
-              },
-            );
-
-          if (
-            !user ||
-            user.status !== "ACTIVE" ||
-            !user.emailVerified
-          ) {
-            return null;
-          }
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            image: user.image,
-            role: user.role,
-            isPremium:
-              user.isPremium,
-            status: user.status,
-            emailVerified:
-              user.emailVerified,
-          };
-        }
-
-        const parsed =
-          signinSchema.safeParse(
-            credentials,
-          );
-
-        if (!parsed.success) {
-          console.error(
-            "[auth:credentials-validation]",
-            parsed.error.flatten()
-              .fieldErrors,
-          );
-
-          logSafeAuthDiagnostics(
-            "[auth:credentials-validation-diagnostics]",
-          );
-
+        if (!parsedEmail.success || !/^\d{6}$/.test(loginCode)) {
           return null;
         }
 
-        const { email, password } =
-          parsed.data;
+        const email = parsedEmail.data;
 
         try {
-          checkAuthRateLimit({ action: "signin", email, limit: 10, windowMs: 15 * 60 * 1000 });
+          checkAuthRateLimit({
+            action: "verify-login",
+            email,
+            request: rateLimitRequest,
+            limit: 10,
+            windowMs: 15 * 60 * 1000,
+          });
         } catch (error) {
           if (error instanceof AuthRateLimitError) {
             throw new Error("RateLimited");
           }
-
           throw error;
         }
 
-        const user =
-          await getPrisma().user.findUnique(
-            {
-              where: {
-                email,
-              },
-            },
-          );
+        const validCode = await verifyLoginCode({
+          email,
+          code: loginCode,
+        });
 
-        if (
-          !user?.passwordHash
-        ) {
-          console.error(
-            "[auth:credentials-user-missing]",
-            { email },
-          );
+        if (!validCode) return null;
 
-          logSafeAuthDiagnostics(
-            "[auth:credentials-user-missing-diagnostics]",
-            { email },
-          );
+        const user = await getPrisma().user.findUnique({
+          where: { email },
+        });
 
+        if (!user || user.status !== "ACTIVE" || !user.emailVerified) {
           return null;
         }
 
-        if (
-          user.status !==
-          "ACTIVE"
-        ) {
-          console.error(
-            "[auth:credentials-account-unavailable]",
-            {
-              email,
-              status:
-                user.status,
-            },
-          );
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          role: user.role,
+          isPremium: user.isPremium,
+          status: user.status,
+          emailVerified: user.emailVerified,
+        };
+      }
 
-          logSafeAuthDiagnostics(
-            "[auth:credentials-account-unavailable-diagnostics]",
-            {
-              email,
-              role:
-                user.role,
-              status:
-                user.status,
-            },
-          );
+      const parsed = signinSchema.safeParse(credentials);
 
-          throw new Error(
-            "This account is not available. Please contact support.",
-          );
+      if (!parsed.success) {
+        console.error("[auth:credentials-validation]", parsed.error.flatten().fieldErrors);
+        logSafeAuthDiagnostics("[auth:credentials-validation-diagnostics]");
+        return null;
+      }
+
+      const { email, password } = parsed.data;
+
+      try {
+        checkAuthRateLimit({
+          action: "signin",
+          email,
+          request: rateLimitRequest,
+          limit: 10,
+          windowMs: 15 * 60 * 1000,
+        });
+      } catch (error) {
+        if (error instanceof AuthRateLimitError) {
+          throw new Error("RateLimited");
         }
+        throw error;
+      }
 
-        const valid =
-          await bcrypt.compare(
-            password,
-            user.passwordHash,
-          );
+      const user = await getPrisma().user.findUnique({
+        where: { email },
+      });
 
-        if (!valid) {
-          console.error(
-            "[auth:credentials-invalid-password]",
-            { email },
-          );
+      if (!user?.passwordHash) return null;
 
-          logSafeAuthDiagnostics(
-            "[auth:credentials-invalid-password-diagnostics]",
-            { email },
-          );
+      if (user.status !== "ACTIVE") {
+        throw new Error("This account is not available. Please contact support.");
+      }
 
-          return null;
-        }
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) return null;
 
-        // Email verification enforcement
-        if (
-          !user.emailVerified
-        ) {
-          logAuthEvent("login-blocked-unverified", { email });
+      if (!user.emailVerified) {
+        logAuthEvent("login-blocked-unverified", { email });
 
-          await sendEmailVerificationCode(
-            {
-              email,
-              name: user.name,
-            },
-          );
+        await sendEmailVerificationCode({
+          email,
+          name: user.name,
+        });
 
-          throw new Error(
-            "EmailVerificationRequired",
-          );
-        }
+        throw new Error("EmailVerificationRequired");
+      }
 
-        throw new Error(
-          "LoginVerificationRequired",
-        );
-      },
-    }),
-  ];
+      throw new Error("LoginVerificationRequired");
+    },
+  }),
+];
 
 if (isGoogleAuthConfigured()) {
   providers.push(
     GoogleProvider({
-      clientId:
-        process.env
-          .AUTH_GOOGLE_ID ||
-        "",
-
-      clientSecret:
-        process.env
-          .AUTH_GOOGLE_SECRET ||
-        "",
-    }),
+      clientId: process.env.AUTH_GOOGLE_ID || "",
+      clientSecret: process.env.AUTH_GOOGLE_SECRET || "",
+    })
   );
 }
 
-export const authOptions: NextAuthOptions =
-  {
-    adapter:
-      isDatabaseConfigured()
-        ? PrismaAdapter(
-            getPrisma() as never,
-          )
-        : undefined,
+export const authOptions: NextAuthOptions = {
+  adapter: isDatabaseConfigured()
+    ? PrismaAdapter(getPrisma() as never)
+    : undefined,
 
-    providers,
+  providers,
 
-    secret:
-      getAuthSecret() ||
-      undefined,
+  secret: getAuthSecret() || undefined,
 
-    session: {
-      strategy: "jwt",
+  session: { strategy: "jwt" },
+
+  pages: {
+    signIn: "/auth/signin",
+    newUser: "/onboarding",
+  },
+
+  callbacks: {
+    async signIn({ user }) {
+      const email = user.email?.toLowerCase().trim();
+      if (!email) return false;
+
+      if (!isDatabaseConfigured()) return true;
+
+      const dbUser = await getPrisma().user.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          status: true,
+          role: true,
+          emailVerified: true,
+          name: true,
+        },
+      });
+
+      if (dbUser?.status && dbUser.status !== "ACTIVE") {
+        return "/auth/signin?error=AccountUnavailable";
+      }
+
+      if (dbUser && !dbUser.emailVerified) {
+        logAuthEvent("login-blocked-unverified", { email });
+
+        await sendEmailVerificationCode({
+          email,
+          name: dbUser.name,
+        });
+
+        return getEmailVerificationRedirect(email);
+      }
+
+      const adminEmails = getAdminEmails();
+
+      if (adminEmails.includes(email)) {
+        await getPrisma().user.updateMany({
+          where: { email },
+          data: { role: "ADMIN" },
+        });
+
+        user.role = "ADMIN";
+      }
+
+      return true;
     },
 
-    pages: {
-      signIn:
-        "/auth/signin",
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role || "USER";
+        token.isPremium = Boolean((user as any).isPremium);
+        token.status = (user as any).status || "ACTIVE";
+        token.emailVerified = Boolean((user as any).emailVerified);
+      }
 
-      newUser:
-        "/onboarding",
-    },
+      if (token.email && isDatabaseConfigured()) {
+        const email = token.email.toLowerCase();
+        const adminEmails = getAdminEmails();
 
-    callbacks: {
-      async signIn({
-        user,
-      }) {
-        const email =
-          user.email
-            ?.toLowerCase()
-            .trim();
+        const dbUser = await getPrisma().user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            role: true,
+            isPremium: true,
+            status: true,
+            emailVerified: true,
+          },
+        });
 
-        if (!email) {
-          return false;
-        }
+        if (dbUser) {
+          const isAdminEmail = adminEmails.includes(email);
 
-        if (
-          !isDatabaseConfigured()
-        ) {
-          return true;
-        }
+          const role = isAdminEmail
+            ? "ADMIN"
+            : dbUser.role === "ADMIN"
+              ? "USER"
+              : dbUser.role;
 
-        const dbUser =
-          await getPrisma().user.findUnique(
-            {
-              where: {
-                email,
-              },
-
-              select: {
-                id: true,
-                status: true,
-                role: true,
-                emailVerified:
-                  true,
-                name: true,
-              },
-            },
-          );
-
-        if (
-          dbUser?.status &&
-          dbUser.status !==
-            "ACTIVE"
-        ) {
-          console.error(
-            "[auth:signin-account-unavailable]",
-            {
-              email,
-              status:
-                dbUser.status,
-            },
-          );
-
-          logSafeAuthDiagnostics(
-            "[auth:signin-account-unavailable-diagnostics]",
-            {
-              email,
-              role:
-                dbUser.role,
-              status:
-                dbUser.status,
-            },
-          );
-
-          return "/auth/signin?error=AccountUnavailable";
-        }
-
-        // Email verification gate
-        if (
-          dbUser &&
-          !dbUser.emailVerified
-        ) {
-          logAuthEvent("login-blocked-unverified", { email });
-
-          await sendEmailVerificationCode(
-            {
-              email,
-              name:
-                dbUser.name,
-            },
-          );
-
-          return getEmailVerificationRedirect(
-            email,
-          );
-        }
-
-        const adminEmails =
-          getAdminEmails();
-
-        if (
-          adminEmails.includes(
-            email,
-          )
-        ) {
-          await getPrisma().user.updateMany(
-            {
-              where: {
-                email,
-              },
-
-              data: {
-                role:
-                  "ADMIN",
-              },
-            },
-          );
-
-          user.role =
-            "ADMIN";
-        }
-
-        return true;
-      },
-
-      async jwt({
-        token,
-        user,
-      }) {
-        if (user) {
-          token.id =
-            user.id;
-
-          token.role =
-            (
-              user as {
-                role?: string;
-              }
-            ).role ||
-            "USER";
-
-          token.isPremium =
-            Boolean(
-              (
-                user as {
-                  isPremium?: boolean;
-                }
-              ).isPremium,
-            );
-
-          token.status =
-            (
-              user as {
-                status?: string;
-              }
-            ).status ||
-            "ACTIVE";
-
-          token.emailVerified =
-            Boolean(
-              (
-                user as {
-                  emailVerified?:
-                    | Date
-                    | string
-                    | null;
-                }
-              )
-                .emailVerified,
-            );
-        }
-
-        if (
-          token.email &&
-          isDatabaseConfigured()
-        ) {
-          const email =
-            token.email.toLowerCase();
-
-          const adminEmails =
-            getAdminEmails();
-
-          const dbUser =
-            await getPrisma().user.findUnique(
-              {
-                where: {
-                  email,
-                },
-
-                select: {
-                  id: true,
-                  role: true,
-                  isPremium:
-                    true,
-                  status: true,
-                  emailVerified:
-                    true,
-                },
-              },
-            );
-
-          if (dbUser) {
-            const isAdminEmail =
-              adminEmails.includes(
-                email,
-              );
-
-            const role =
-              isAdminEmail
-                ? "ADMIN"
-                : dbUser.role ===
-                    "ADMIN"
-                  ? "USER"
-                  : dbUser.role;
-
-            if (
-              isAdminEmail &&
-              dbUser.role !==
-                "ADMIN"
-            ) {
-              await getPrisma().user.update(
-                {
-                  where: {
-                    id: dbUser.id,
-                  },
-
-                  data: {
-                    role:
-                      "ADMIN",
-                  },
-                },
-              );
-            }
-
-            token.id =
-              dbUser.id;
-
-            token.role =
-              role;
-
-            token.isPremium =
-              dbUser.isPremium;
-
-            token.status =
-              dbUser.status;
-
-            token.emailVerified =
-              Boolean(
-                dbUser.emailVerified,
-              );
+          if (isAdminEmail && dbUser.role !== "ADMIN") {
+            await getPrisma().user.update({
+              where: { id: dbUser.id },
+              data: { role: "ADMIN" },
+            });
           }
+
+          token.id = dbUser.id;
+          token.role = role;
+          token.isPremium = dbUser.isPremium;
+          token.status = dbUser.status;
+          token.emailVerified = Boolean(dbUser.emailVerified);
         }
+      }
 
-        return token;
-      },
-
-      async session({
-        session,
-        token,
-      }) {
-        if (
-          session.user
-        ) {
-          session.user.id =
-            String(
-              token.id ||
-                "",
-            );
-
-          session.user.role =
-            String(
-              token.role ||
-                "USER",
-            );
-
-          session.user.isPremium =
-            Boolean(
-              token.isPremium,
-            );
-
-          session.user.status =
-            String(
-              token.status ||
-                "ACTIVE",
-            );
-
-          session.user.emailVerified =
-            Boolean(
-              token.emailVerified,
-            );
-        }
-
-        return session;
-      },
+      return token;
     },
-  };
+
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = String(token.id || "");
+        session.user.role = String(token.role || "USER");
+        session.user.isPremium = Boolean(token.isPremium);
+        session.user.status = String(token.status || "ACTIVE");
+        session.user.emailVerified = Boolean(token.emailVerified);
+      }
+
+      return session;
+    },
+  },
+};
