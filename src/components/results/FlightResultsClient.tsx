@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BadgeCheck, Plane, Repeat2, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
@@ -27,6 +27,28 @@ const sortModes: Array<{ label: string; value: SortMode }> = [
   { label: "Fewest Stops", value: "stops" },
 ];
 
+type AirportOption = {
+  city: string;
+  airport: string;
+  code: string;
+  country: string;
+};
+
+const airportOptions: AirportOption[] = [
+  { city: "Lagos", airport: "Murtala Muhammed International Airport", code: "LOS", country: "Nigeria" },
+  { city: "Abuja", airport: "Nnamdi Azikiwe International Airport", code: "ABV", country: "Nigeria" },
+  { city: "London", airport: "Heathrow Airport", code: "LHR", country: "United Kingdom" },
+  { city: "London", airport: "Gatwick Airport", code: "LGW", country: "United Kingdom" },
+  { city: "Dubai", airport: "Dubai International Airport", code: "DXB", country: "United Arab Emirates" },
+  { city: "Doha", airport: "Hamad International Airport", code: "DOH", country: "Qatar" },
+  { city: "Paris", airport: "Charles de Gaulle Airport", code: "CDG", country: "France" },
+  { city: "New York", airport: "John F. Kennedy International Airport", code: "JFK", country: "United States" },
+  { city: "Istanbul", airport: "Istanbul Airport", code: "IST", country: "Türkiye" },
+  { city: "Nairobi", airport: "Jomo Kenyatta International Airport", code: "NBO", country: "Kenya" },
+  { city: "Johannesburg", airport: "O.R. Tambo International Airport", code: "JNB", country: "South Africa" },
+  { city: "Toronto", airport: "Toronto Pearson International Airport", code: "YYZ", country: "Canada" },
+];
+
 export function FlightResultsClient() {
   const params = useSearchParams();
   const router = useRouter();
@@ -42,6 +64,12 @@ export function FlightResultsClient() {
   const [tripTypeInput, setTripTypeInput] = useState(params.get("tripType") || "round-trip");
   const [originInput, setOriginInput] = useState(params.get("origin") || "");
   const [destinationInput, setDestinationInput] = useState(params.get("destination") || "");
+  const [activeSuggest, setActiveSuggest] = useState<"origin" | "destination" | null>(null);
+  const originWrapRef = useRef<HTMLDivElement | null>(null);
+  const destinationWrapRef = useRef<HTMLDivElement | null>(null);
+
+  const originSuggestions = useMemo(() => filterAirportOptions(originInput), [originInput]);
+  const destinationSuggestions = useMemo(() => filterAirportOptions(destinationInput), [destinationInput]);
 
   const body = useMemo(
     () => {
@@ -117,6 +145,20 @@ export function FlightResultsClient() {
     return () => window.clearInterval(id);
   }, [loading]);
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
+      if (activeSuggest === "origin" && originWrapRef.current && !originWrapRef.current.contains(target)) {
+        setActiveSuggest(null);
+      }
+      if (activeSuggest === "destination" && destinationWrapRef.current && !destinationWrapRef.current.contains(target)) {
+        setActiveSuggest(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeSuggest]);
+
   const filtered = results.filter((flight) => flight.price <= maxPrice && flight.stops <= maxStops);
 
   if (!body) {
@@ -124,7 +166,7 @@ export function FlightResultsClient() {
       <main className="flex-1 bg-[#f6f8fb] py-6">
         <section className="page-shell">
           <div className="relative overflow-hidden rounded-2xl bg-slate-900">
-            <div className="relative h-[340px] sm:h-[390px] lg:h-[430px]">
+            <div className="relative min-h-[520px] sm:min-h-[560px] lg:min-h-[500px]">
               <Image
                 src="https://images.pexels.com/photos/615060/pexels-photo-615060.jpeg?cs=srgb&dl=pexels-christine-renard-198055-615060.jpg&fm=jpg"
                 alt="Airplane wing over a river canyon landscape"
@@ -133,122 +175,151 @@ export function FlightResultsClient() {
                 className="object-cover object-center"
                 priority
               />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-900/50 to-slate-900/20" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 to-transparent" />
 
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-900/45 to-slate-900/15" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/30 to-transparent" />
+              <div className="relative z-10 p-5 sm:p-7 lg:p-8">
+                <h1 className="mt-0 max-w-4xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
+                  Find hundreds of cheap flights with just one search!
+                </h1>
 
-              <div className="absolute left-6 top-6 z-10 max-w-2xl sm:left-8 sm:top-8 lg:left-10 lg:top-10">
-                <p className="text-sm font-bold uppercase tracking-wide text-white/85">Flights</p>
-                <h1 className="mt-2 text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl">Start a flight search</h1>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative z-20 -mt-16 px-3 pb-4 sm:px-6 lg:-mt-20 lg:px-10">
-            <form
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_16px_38px_rgba(15,23,42,0.18)] sm:p-6"
-              onSubmit={(event) => {
-                event.preventDefault();
-
-                const formData = new FormData(event.currentTarget);
-                const nextParams = new URLSearchParams({
-                  tripType: tripTypeInput,
-                  origin: originInput.trim() || String(formData.get("origin") || ""),
-                  destination: destinationInput.trim() || String(formData.get("destination") || ""),
-                  departureDate: String(formData.get("departureDate") || ""),
-                  returnDate: String(formData.get("returnDate") || ""),
-                  travelers: String(formData.get("travelers") || "1"),
-                  cabinClass: String(formData.get("cabinClass") || "economy"),
-                });
-
-                router.push(`/flights/results?${nextParams.toString()}`);
-              }}
-            >
-              <div className="grid gap-4">
-                <label className="grid gap-1">
-                  <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Trip type</span>
+                <div className="mt-9 inline-flex rounded-xl bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.24)]">
+                  <label className="sr-only" htmlFor="tripType">Trip type</label>
                   <select
                     id="tripType"
                     name="tripType"
                     value={tripTypeInput}
                     onChange={(event) => setTripTypeInput(event.target.value)}
-                    className="focus-ring h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 sm:w-52"
+                    className="focus-ring h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
                   >
                     <option value="round-trip">Round-trip</option>
                     <option value="one-way">One-way</option>
                     <option value="multi-city">Multi-city</option>
                   </select>
-                </label>
+                </div>
 
-                <div className="grid gap-3 lg:grid-cols-[minmax(120px,1.15fr)_52px_minmax(120px,1.15fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_auto]">
-                  <label className="grid gap-1">
-                    <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">From</span>
+                <form
+                  className="mt-4 w-full max-w-[1060px] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)]"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+
+                    const formData = new FormData(event.currentTarget);
+                    const nextParams = new URLSearchParams({
+                      tripType: tripTypeInput,
+                      origin: originInput.trim() || String(formData.get("origin") || ""),
+                      destination: destinationInput.trim() || String(formData.get("destination") || ""),
+                      departureDate: String(formData.get("departureDate") || ""),
+                      returnDate: String(formData.get("returnDate") || ""),
+                      travelers: String(formData.get("travelers") || "1"),
+                      cabinClass: String(formData.get("cabinClass") || "economy"),
+                    });
+
+                    router.push(`/flights/results?${nextParams.toString()}`);
+                  }}
+                >
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.2fr)_46px_minmax(150px,1.2fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(132px,1fr)_minmax(122px,1fr)] xl:items-center">
+                    <div className="relative" ref={originWrapRef}>
+                      <label className="sr-only" htmlFor="origin">From</label>
+                      <input
+                        id="origin"
+                        name="origin"
+                        required
+                        value={originInput}
+                        onFocus={() => setActiveSuggest("origin")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") setActiveSuggest(null);
+                        }}
+                        onChange={(event) => {
+                          setOriginInput(event.target.value);
+                          setActiveSuggest("origin");
+                        }}
+                        placeholder="From"
+                        autoComplete="off"
+                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
+                      />
+                      {activeSuggest === "origin" ? (
+                        <SuggestionList
+                          suggestions={originSuggestions}
+                          onSelect={(value) => {
+                            setOriginInput(value);
+                            setActiveSuggest(null);
+                          }}
+                        />
+                      ) : null}
+                    </div>
+
+                    <div className="flex items-center justify-center">
+                      <button
+                        type="button"
+                        aria-label="Swap origin and destination"
+                        onClick={() => {
+                          const currentOrigin = originInput;
+                          setOriginInput(destinationInput);
+                          setDestinationInput(currentOrigin);
+                        }}
+                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+                      >
+                        <Repeat2 size={18} />
+                      </button>
+                    </div>
+
+                    <div className="relative" ref={destinationWrapRef}>
+                      <label className="sr-only" htmlFor="destination">To</label>
+                      <input
+                        id="destination"
+                        name="destination"
+                        required
+                        value={destinationInput}
+                        onFocus={() => setActiveSuggest("destination")}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") setActiveSuggest(null);
+                        }}
+                        onChange={(event) => {
+                          setDestinationInput(event.target.value);
+                          setActiveSuggest("destination");
+                        }}
+                        placeholder="To?"
+                        autoComplete="off"
+                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
+                      />
+                      {activeSuggest === "destination" ? (
+                        <SuggestionList
+                          suggestions={destinationSuggestions}
+                          onSelect={(value) => {
+                            setDestinationInput(value);
+                            setActiveSuggest(null);
+                          }}
+                        />
+                      ) : null}
+                    </div>
+
+                    <label className="sr-only" htmlFor="departureDate">Departure</label>
                     <input
-                      name="origin"
-                      required
-                      value={originInput}
-                      onChange={(event) => setOriginInput(event.target.value)}
-                      placeholder="From"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 placeholder:font-semibold placeholder:text-slate-400"
-                    />
-                  </label>
-
-                  <div className="flex items-end justify-center pb-0.5">
-                    <button
-                      type="button"
-                      aria-label="Swap origin and destination"
-                      onClick={() => {
-                        const currentOrigin = originInput;
-                        setOriginInput(destinationInput);
-                        setDestinationInput(currentOrigin);
-                      }}
-                      className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
-                    >
-                      <Repeat2 size={18} />
-                    </button>
-                  </div>
-
-                  <label className="grid gap-1">
-                    <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">To</span>
-                    <input
-                      name="destination"
-                      required
-                      value={destinationInput}
-                      onChange={(event) => setDestinationInput(event.target.value)}
-                      placeholder="To?"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 placeholder:font-semibold placeholder:text-slate-400"
-                    />
-                  </label>
-
-                  <label className="grid gap-1">
-                    <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Departure</span>
-                    <input
+                      id="departureDate"
                       name="departureDate"
                       required
                       type="date"
                       aria-label="Departure"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
+                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
                     />
-                  </label>
 
-                  <label className="grid gap-1">
-                    <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Return</span>
+                    <label className="sr-only" htmlFor="returnDate">Return</label>
                     <input
+                      id="returnDate"
                       name="returnDate"
                       type="date"
                       disabled={tripTypeInput !== "round-trip"}
                       required={tripTypeInput === "round-trip"}
                       aria-label="Return"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
                     />
-                  </label>
 
-                  <label className="grid gap-1">
-                    <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Travelers</span>
+                    <label className="sr-only" htmlFor="travelers">Travelers</label>
                     <select
+                      id="travelers"
                       name="travelers"
                       defaultValue="1"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
+                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
                       aria-label="Travelers"
                     >
                       <option value="1">1 adult</option>
@@ -256,14 +327,13 @@ export function FlightResultsClient() {
                       <option value="3">3 adults</option>
                       <option value="4">4 adults</option>
                     </select>
-                  </label>
 
-                  <label className="grid gap-1">
-                    <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Cabin class</span>
+                    <label className="sr-only" htmlFor="cabinClass">Cabin class</label>
                     <select
+                      id="cabinClass"
                       name="cabinClass"
                       defaultValue="economy"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
+                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
                       aria-label="Cabin class"
                     >
                       <option value="economy">Economy</option>
@@ -271,21 +341,20 @@ export function FlightResultsClient() {
                       <option value="business">Business</option>
                       <option value="first">First</option>
                     </select>
-                  </label>
 
-                  <div className="flex items-end">
-                    <Button type="submit" className="h-12 w-full rounded-lg bg-blue-600 px-7 font-bold text-white hover:bg-blue-700 lg:min-w-[128px]">
+                    <Button type="submit" className="h-11 w-full min-w-0 rounded-lg bg-[#0a66c2] px-5 font-bold text-white hover:bg-[#085aa9]">
                       Search
                     </Button>
                   </div>
-                </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         </section>
       </main>
     );
   }
+
 
   return (
     <main className="flex-1 bg-[#f6f8fb]">
@@ -394,6 +463,43 @@ export function FlightResultsClient() {
         <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} />
       </aside>
     </main>
+  );
+}
+
+function filterAirportOptions(query: string) {
+  const normalized = query.trim().toLowerCase();
+  if (!normalized) return airportOptions.slice(0, 8);
+  return airportOptions
+    .filter((item) => {
+      const haystack = `${item.city} ${item.airport} ${item.code} ${item.country}`.toLowerCase();
+      return haystack.includes(normalized);
+    })
+    .slice(0, 8);
+}
+
+function formatAirportOption(item: AirportOption) {
+  return `${item.city} — ${item.airport} (${item.code}), ${item.country}`;
+}
+
+function SuggestionList({ suggestions, onSelect }: { suggestions: AirportOption[]; onSelect: (value: string) => void }) {
+  return (
+    <div className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-xl">
+      {suggestions.length ? (
+        suggestions.map((item) => (
+          <button
+            key={`${item.code}-${item.airport}`}
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => onSelect(formatAirportOption(item))}
+            className="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-slate-50 last:border-b-0"
+          >
+            {formatAirportOption(item)}
+          </button>
+        ))
+      ) : (
+        <p className="px-3 py-2 text-sm text-slate-500">No matching airports found</p>
+      )}
+    </div>
   );
 }
 
