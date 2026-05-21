@@ -201,7 +201,6 @@ export function FlightResultsClient() {
                   >
                     <option value="round-trip">Round-trip</option>
                     <option value="one-way">One-way</option>
-                    <option value="multi-city">Multi-city</option>
                   </select>
                 </div>
 
@@ -290,7 +289,7 @@ export function FlightResultsClient() {
                           setDestinationInput(event.target.value);
                           setActiveSuggest("destination");
                         }}
-                        placeholder="To?"
+                        placeholder="To"
                         autoComplete="off"
                         className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
                       />
