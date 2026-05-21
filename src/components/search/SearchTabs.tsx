@@ -101,7 +101,7 @@ export function SearchTabs({
             <SearchField label={t.guests} name="guests" type="number" defaultValue={defaults.guests} helper={t.adults} />
             <SearchField label={t.rooms} name="rooms" type="number" defaultValue={defaults.rooms} helper={t.room} />
           </div>
-          <div className={`${compactHero ? "flex justify-end" : "flex justify-center"}`}><Button size="lg" variant="primary" className={`w-full sm:w-auto ${compactHero ? "h-14 rounded-xl bg-[#0057b8] px-16 text-base font-black hover:bg-[#004b9d]" : "bg-[#5b21d6] px-12 hover:bg-[#4c1d95]"}`}><Search size={18} />{t.searchHotels}</Button></div>
+          <div className={`${compactHero ? "flex justify-end" : "flex justify-center"}`}><Button size="lg" variant="primary" className={`w-full sm:w-auto ${compactHero ? "h-14 rounded-xl bg-[#6d28d9] px-16 text-base font-black text-white hover:bg-[#5b21b6]" : "bg-[#5b21d6] px-12 hover:bg-[#4c1d95]"}`}><Search size={18} />{t.searchHotels}</Button></div>
         </form>
       )}
     </div>
