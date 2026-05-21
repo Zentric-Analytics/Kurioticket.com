@@ -90,7 +90,7 @@ export function SearchTabs({
               </select>
             </label>
           </div>
-          <div className={`${compactHero ? "flex justify-end" : "flex justify-center"}`}><Button size="lg" variant="primary" className={`w-full sm:w-auto ${compactHero ? "h-14 rounded-xl bg-[#0057b8] px-16 text-base font-black hover:bg-[#004b9d]" : "bg-[#5b21d6] px-12 hover:bg-[#4c1d95]"}`}><Search size={18} />{t.searchFlights}</Button></div>
+          <div className={`${compactHero ? "flex justify-end" : "flex justify-center"}`}><Button size="lg" variant="primary" className={`w-full sm:w-auto ${compactHero ? "h-14 rounded-xl bg-[#6d28d9] px-16 text-base font-black text-white transition-colors duration-200 hover:bg-[#5b21b6]" : "bg-[#5b21d6] px-12 hover:bg-[#4c1d95]"}`}><Search size={18} />{t.searchFlights}</Button></div>
         </form>
       ) : (
         <form action={onHotelSubmit} className={`grid gap-6 ${compactHero ? "p-4 sm:p-5" : "p-5 sm:p-7"}`}>
