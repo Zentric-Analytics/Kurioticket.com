@@ -132,7 +132,7 @@ export default function Home() {
 
         <section className="page-shell -mt-2 pb-9">
           <div className="grid overflow-hidden rounded-xl border border-violet-100 bg-[#faf7ff] shadow-sm md:grid-cols-2 lg:grid-cols-4">
-            {trustItems.map((item) => (
+            {trustItemsLocalized.map((item) => (
               <div key={item.title} className="flex gap-4 border-b border-violet-100 p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#6d28d9] shadow-sm">
                   <item.icon size={20} />
