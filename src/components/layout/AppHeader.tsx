@@ -30,9 +30,9 @@ export function AppHeader() {
           Curioticket
         </Link>
 
-        <nav className="hidden items-center gap-2 lg:flex">
+        <nav className="hidden items-center gap-3 lg:flex">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-base font-extrabold text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]">
+            <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-base font-black text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]">
               {item.label}
             </Link>
           ))}
@@ -51,9 +51,11 @@ export function AppHeader() {
             </span>
             <ChevronDown size={14} />
           </button>
+
           <LinkButton href="/dashboard" variant="ghost" size="sm" className="h-10 w-10 px-0" aria-label="Notifications">
             <Bell size={18} />
           </LinkButton>
+
           {isSignedIn ? (
             <>
               <LinkButton href="/dashboard" variant="ghost" size="sm" className="gap-2">
@@ -99,6 +101,7 @@ export function AppHeader() {
                 <X size={20} />
               </Button>
             </div>
+
             <nav className="mt-6 grid gap-2">
               {navItems.map((item) => (
                 <Link
@@ -110,6 +113,7 @@ export function AppHeader() {
                   {item.label}
                 </Link>
               ))}
+
               {isSignedIn ? (
                 <>
                   <Link href="/dashboard" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted">
