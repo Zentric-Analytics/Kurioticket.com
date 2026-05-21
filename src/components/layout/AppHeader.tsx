@@ -27,6 +27,7 @@ const navItems = [
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
+
   const { data: session, status } = useSession();
 
   const isSignedIn =
