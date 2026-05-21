@@ -73,7 +73,7 @@ export default function Home() {
     <>
       <AppHeader />
       <main className="flex-1 bg-white">
-        <section className="relative overflow-hidden bg-[#f6f3ff]">
+        <section className="relative overflow-visible bg-[#f8f7ff]">
           <div className="absolute inset-0">
             <Image
               src={heroImage}
@@ -83,22 +83,29 @@ export default function Home() {
               sizes="100vw"
               className="object-cover object-center"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.88)_34%,rgba(255,255,255,0.38)_62%,rgba(255,255,255,0.06)_100%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />
+            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.97)_4%,rgba(255,255,255,0.93)_37%,rgba(255,255,255,0.62)_58%,rgba(255,255,255,0.12)_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
 
-          <div className="page-shell relative grid min-h-[670px] content-start gap-8 pb-12 pt-12 sm:pt-16">
-            <div className="max-w-2xl">
-              <h1 className="max-w-xl text-5xl font-black leading-[0.96] tracking-normal text-slate-950 sm:text-6xl lg:text-7xl">
-                {t.heroTitle}
-              </h1>
-              <p className="mt-6 max-w-lg text-lg font-semibold leading-8 text-slate-700">
-                {t.heroSubtitle}
-              </p>
+          <div className="page-shell relative pb-0 pt-12 sm:pt-16 lg:pt-20">
+            <div className="grid min-h-[520px] items-start gap-10 pb-28 sm:min-h-[560px] sm:pb-32 lg:min-h-[610px] lg:max-w-[780px] lg:pb-36">
+              <div className="space-y-5">
+                <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/80 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
+                  Trusted travel search platform
+                </p>
+                <h1 className="max-w-2xl text-4xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                  {t.heroTitle}
+                </h1>
+                <p className="max-w-xl text-base font-semibold leading-7 text-slate-700 sm:text-lg sm:leading-8">
+                  {t.heroSubtitle}
+                </p>
+              </div>
             </div>
 
-            <div className="mt-2 max-w-[1080px]">
-              <SearchTabs t={t as unknown as Record<string, string>} />
+            <div className="relative z-10 -mt-20 pb-10 sm:-mt-24 sm:pb-12 lg:-mt-28">
+              <div className="rounded-2xl border border-white/80 bg-white/95 p-2 shadow-[0_24px_65px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:rounded-3xl sm:p-3">
+                <SearchTabs t={t as unknown as Record<string, string>} />
+              </div>
             </div>
           </div>
         </section>
