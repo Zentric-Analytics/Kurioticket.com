@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   description:
     "Compare affordable flights and hotels in seconds with a calmer travel decision platform.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   ),
 };
 
@@ -48,16 +48,16 @@ export default async function RootLayout({
   const headerStore = await headers();
 
   const cookieRegion = normalizeRegion(
-    cookieStore.get(REGION_COOKIE_KEY)?.value,
+    cookieStore.get(REGION_COOKIE_KEY)?.value
   );
 
   const headerRegion = normalizeRegion(
-    headerStore.get("x-curioticket-region"),
+    headerStore.get("x-curioticket-region")
   );
 
   const ipRegion = countryToRegion(
     headerStore.get("x-vercel-ip-country") ||
-      headerStore.get("cf-ipcountry"),
+      headerStore.get("cf-ipcountry")
   );
 
   const initialRegion = (

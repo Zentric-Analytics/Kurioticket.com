@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BedDouble, Plane } from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +14,10 @@ type SearchTabsProps = {
 
 type TabMode = "flights" | "hotels";
 
-export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
+export function SearchTabs({
+  t,
+  compactHero = false,
+}: SearchTabsProps) {
   const router = useRouter();
   const [tab, setTab] = useState<TabMode>("flights");
 
@@ -36,9 +40,9 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
         "rounded-2xl border border-slate-200 bg-white p-3 sm:p-4",
         compactHero
           ? "shadow-none border-transparent bg-transparent p-0"
-          : "shadow-sm"
+          : "shadow-sm",
       ),
-    [compactHero]
+    [compactHero],
   );
 
   return (
@@ -48,10 +52,8 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
           type="button"
           onClick={() => setTab("flights")}
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold",
-            tab === "flights"
-              ? "bg-white text-navy shadow-sm"
-              : "text-slate-600"
+            "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold",
+            tab === "flights" ? "bg-white text-navy shadow-sm" : "text-slate-600",
           )}
         >
           <Plane size={16} />
@@ -62,10 +64,8 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
           type="button"
           onClick={() => setTab("hotels")}
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold",
-            tab === "hotels"
-              ? "bg-white text-navy shadow-sm"
-              : "text-slate-600"
+            "inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold",
+            tab === "hotels" ? "bg-white text-navy shadow-sm" : "text-slate-600",
           )}
         >
           <BedDouble size={16} />
@@ -75,7 +75,7 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
 
       {tab === "flights" ? (
         <form
-          className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_140px]"
+          className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6"
           onSubmit={(event) => {
             event.preventDefault();
 
@@ -144,13 +144,16 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
             <option value="first">First</option>
           </select>
 
-          <Button type="submit" className="h-11 rounded-lg bg-[#5b21d6] text-white font-bold hover:bg-[#4c1d95]">
+          <Button
+            type="submit"
+            className="h-11 rounded-lg bg-[#5b21d6] text-white font-bold hover:bg-[#4c1d95]"
+          >
             {t.searchFlights || "Search Flights"}
           </Button>
         </form>
       ) : (
         <form
-          className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(160px,1.2fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,0.8fr)_minmax(90px,0.7fr)_140px]"
+          className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6"
           onSubmit={(event) => {
             event.preventDefault();
 
@@ -173,23 +176,45 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
             className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
           />
 
-          <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
-          <input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+          <input
+            type="date"
+            value={checkIn}
+            onChange={(e) => setCheckIn(e.target.value)}
+            className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+          />
 
-          <select value={guests} onChange={(e) => setGuests(e.target.value)}>
-            <option value="1">1 Adults</option>
+          <input
+            type="date"
+            value={checkOut}
+            onChange={(e) => setCheckOut(e.target.value)}
+            className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+          />
+
+          <select
+            value={guests}
+            onChange={(e) => setGuests(e.target.value)}
+            className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+          >
+            <option value="1">1 Adult</option>
             <option value="2">2 Adults</option>
             <option value="3">3 Adults</option>
             <option value="4">4 Adults</option>
           </select>
 
-          <select value={rooms} onChange={(e) => setRooms(e.target.value)}>
+          <select
+            value={rooms}
+            onChange={(e) => setRooms(e.target.value)}
+            className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+          >
             <option value="1">1 Room</option>
             <option value="2">2 Rooms</option>
             <option value="3">3 Rooms</option>
           </select>
 
-          <Button type="submit" className="h-11 rounded-lg bg-[#5b21d6] text-white font-bold hover:bg-[#4c1d95]">
+          <Button
+            type="submit"
+            className="h-11 rounded-lg bg-[#5b21d6] text-white font-bold hover:bg-[#4c1d95]"
+          >
             {t.searchHotels || "Search Hotels"}
           </Button>
         </form>

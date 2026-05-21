@@ -1,37 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
-import { forgotPasswordSchema } from "@/lib/validation";
+import { resetPasswordSchema } from "@/lib/validation";
 
-export function ForgotPasswordForm() {
+export function ResetPasswordForm({
+  email = "",
+}: {
+  email?: string;
+}) {
+  const [code, setCode] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   async function submit(formData: FormData) {
     setLoading(true);
     setError("");
     setMessage("");
 
-    const parsed = forgotPasswordSchema.safeParse({
+    const parsed = resetPasswordSchema.safeParse({
       email: String(formData.get("email") || ""),
+      code: String(formData.get("code") || ""),
+      password: String(formData.get("password") || ""),
     });
 
     if (!parsed.success) {
       setLoading(false);
-      setError("Enter a valid email address.");
+      setError(
+        "Enter a valid email, 6-digit code, and a valid password.",
+      );
       return;
     }
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
+      const response = await fetch("/api/auth/reset-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(parsed.data),
       });
 
@@ -39,40 +51,30 @@ export function ForgotPasswordForm() {
       setLoading(false);
 
       if (!response.ok) {
-        setError(
-          String(
-            data.error ||
-              "Unable to request a password reset right now.",
-          ),
-        );
+        setError(String(data.error || "Unable to reset password right now."));
         return;
       }
 
-      const normalizedEmail =
-        parsed.data.email.toLowerCase().trim();
+      setMessage("Password reset successful. Redirecting to sign in...");
 
-      setMessage(
-        "Code sent. Redirecting you to reset password...",
-      );
-
-      window.location.href = `/auth/reset-password?email=${encodeURIComponent(
-        normalizedEmail,
-      )}`;
-    } catch (error) {
-      console.error("[forgot-password]", error);
+      startTransition(() => {
+        window.location.href = "/auth/signin?reset=success";
+      });
+    } catch (err) {
+      console.error("[reset-password]", err);
       setLoading(false);
-      setError("Unable to request a password reset right now.");
+      setError("Unable to reset password right now.");
     }
   }
 
   return (
     <Card className="mx-auto w-full max-w-md p-5">
       <h1 className="text-2xl font-bold text-navy">
-        Reset your password
+        Create a new password
       </h1>
 
       <p className="mt-2 text-sm text-muted">
-        Enter your email and we will send a 6-digit reset code if an account exists.
+        Enter the 6-digit code we emailed you and your new password.
       </p>
 
       <form action={submit} className="mt-5 grid gap-4">
@@ -81,14 +83,47 @@ export function ForgotPasswordForm() {
             name="email"
             type="email"
             autoComplete="email"
+            defaultValue={email}
             required
-            disabled={loading}
-            placeholder="you@example.com"
+            disabled={loading || isPending}
+          />
+        </Field>
+
+        <Field label="Reset code">
+          <Input
+            name="code"
+            inputMode="numeric"
+            maxLength={6}
+            minLength={6}
+            pattern="[0-9]{6}"
+            required
+            value={code}
+            onChange={(event) =>
+              setCode(
+                event.target.value
+                  .replace(/\D/g, "")
+                  .slice(0, 6),
+              )
+            }
+            disabled={loading || isPending}
+          />
+        </Field>
+
+        <Field label="New password">
+          <Input
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            minLength={8}
+            required
+            disabled={loading || isPending}
           />
         </Field>
 
         {error ? (
-          <p className="text-sm text-danger">{error}</p>
+          <p className="text-sm text-danger" aria-live="polite">
+            {error}
+          </p>
         ) : null}
 
         {message ? (
@@ -100,18 +135,15 @@ export function ForgotPasswordForm() {
           </p>
         ) : null}
 
-        <Button disabled={loading}>
-          {loading ? "Sending..." : "Send reset code"}
+        <Button disabled={loading || isPending || code.length !== 6}>
+          {loading || isPending ? "Resetting..." : "Reset password"}
         </Button>
       </form>
 
       <p className="mt-4 text-sm text-muted">
-        Have a code?{" "}
-        <Link
-          className="font-semibold text-teal-dark"
-          href="/auth/reset-password"
-        >
-          Reset password
+        Remember your password?{" "}
+        <Link className="font-semibold text-teal-dark" href="/auth/signin">
+          Log in
         </Link>
       </p>
     </Card>

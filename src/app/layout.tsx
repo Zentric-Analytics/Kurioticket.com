@@ -58,10 +58,12 @@ export default async function RootLayout({
       headerStore.get("cf-ipcountry")
   );
 
-  const initialRegion = (cookieRegion ||
+  const initialRegion = (
+    cookieRegion ||
     headerRegion ||
     ipRegion ||
-    "GLOBAL") as RegionMode;
+    "GLOBAL"
+  ) as RegionMode;
 
   return (
     <html

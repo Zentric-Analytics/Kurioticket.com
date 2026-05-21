@@ -5,9 +5,8 @@ import {
 } from "@/lib/auth-rate-limit";
 import {
   DatabaseUnavailableError,
+  getPrisma,
 } from "@/lib/prisma";
-
-import { getPrisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
 
 import {
@@ -86,7 +85,8 @@ export async function POST(request: Request) {
     if (error instanceof AuthRateLimitError) {
       return NextResponse.json(
         {
-          error: "Too many signup attempts. Please wait and try again.",
+          error:
+            "Too many signup attempts. Please wait and try again.",
         },
         {
           status: 429,
@@ -183,7 +183,8 @@ function getPublicSignupValidationError(
 }
 
 function isMissingMigrationError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message =
+    error instanceof Error ? error.message : String(error);
 
   return /table .* does not exist|relation .* does not exist|database .* does not exist/i.test(
     message

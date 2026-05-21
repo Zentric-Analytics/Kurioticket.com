@@ -40,7 +40,11 @@ export function ForgotPasswordForm() {
       setLoading(false);
 
       if (!response.ok) {
-        setError(String(data.error || "Unable to request a password reset right now."));
+        setError(
+          String(
+            data.error || "Unable to request a password reset right now."
+          )
+        );
         return;
       }
 
@@ -50,7 +54,7 @@ export function ForgotPasswordForm() {
 
       startTransition(() => {
         window.location.href = `/auth/reset-password?email=${encodeURIComponent(
-          normalizedEmail,
+          normalizedEmail
         )}`;
       });
     } catch (error) {
@@ -83,7 +87,10 @@ export function ForgotPasswordForm() {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
         {message ? (
-          <p className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark" aria-live="polite">
+          <p
+            className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark"
+            aria-live="polite"
+          >
             {message}
           </p>
         ) : null}
@@ -95,7 +102,10 @@ export function ForgotPasswordForm() {
 
       <p className="mt-4 text-sm text-muted">
         Have a code?{" "}
-        <Link className="font-semibold text-teal-dark" href="/auth/reset-password">
+        <Link
+          className="font-semibold text-teal-dark"
+          href="/auth/reset-password"
+        >
           Reset password
         </Link>
       </p>

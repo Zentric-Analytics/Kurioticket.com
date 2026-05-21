@@ -43,20 +43,25 @@ export function SearchTabs({
     () =>
       cn(
         "rounded-2xl border border-slate-200 bg-white p-3 sm:p-4",
-        compactHero ? "border-transparent bg-transparent p-0 shadow-none" : "shadow-sm"
+        compactHero
+          ? "border-transparent bg-transparent p-0 shadow-none"
+          : "shadow-sm"
       ),
     [compactHero]
   );
 
   return (
     <section className={wrapper}>
+      {/* Tabs */}
       <div className="mb-3 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
         <button
           type="button"
           onClick={() => setTab("flights")}
           className={cn(
             "focus-ring inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold",
-            tab === "flights" ? "bg-white text-navy shadow-sm" : "text-slate-600"
+            tab === "flights"
+              ? "bg-white text-navy shadow-sm"
+              : "text-slate-600"
           )}
         >
           <Plane size={16} />
@@ -68,7 +73,9 @@ export function SearchTabs({
           onClick={() => setTab("hotels")}
           className={cn(
             "focus-ring inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold",
-            tab === "hotels" ? "bg-white text-navy shadow-sm" : "text-slate-600"
+            tab === "hotels"
+              ? "bg-white text-navy shadow-sm"
+              : "text-slate-600"
           )}
         >
           <BedDouble size={16} />
@@ -76,13 +83,14 @@ export function SearchTabs({
         </button>
       </div>
 
+      {/* FLIGHTS */}
       {tab === "flights" ? (
         <form
           className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_140px]"
           onSubmit={(event) => {
             event.preventDefault();
 
-            const nextParams = new URLSearchParams({
+            const params = new URLSearchParams({
               tripType,
               origin: from.trim(),
               destination: to.trim(),
@@ -92,7 +100,7 @@ export function SearchTabs({
               cabinClass,
             });
 
-            router.push(`/flights/results?${nextParams.toString()}`);
+            router.push(`/flights/results?${params.toString()}`);
           }}
         >
           <input
@@ -123,7 +131,6 @@ export function SearchTabs({
             type="date"
             value={returnDate}
             onChange={(e) => setReturnDate(e.target.value)}
-            required={tripType !== "one-way"}
             disabled={tripType === "one-way"}
             className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold disabled:opacity-50"
           />
@@ -158,12 +165,13 @@ export function SearchTabs({
           </Button>
         </form>
       ) : (
+        /* HOTELS */
         <form
           className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(160px,1.2fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,0.8fr)_minmax(90px,0.7fr)_140px]"
           onSubmit={(event) => {
             event.preventDefault();
 
-            const nextParams = new URLSearchParams({
+            const params = new URLSearchParams({
               destination,
               checkIn,
               checkOut,
@@ -171,7 +179,7 @@ export function SearchTabs({
               rooms,
             });
 
-            router.push(`/hotels/results?${nextParams.toString()}`);
+            router.push(`/hotels/results?${params.toString()}`);
           }}
         >
           <input
