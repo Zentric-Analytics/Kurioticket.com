@@ -65,19 +65,24 @@ export function SigninForm({
       return;
     }
 
-    const response = await fetch("/api/auth/request-login-code", {
-      method: "POST",
-      headers: {
-        "Content-Type":
-          "application/json",
-      },
-      body: JSON.stringify({
-        ...parsed.data,
-        callbackUrl,
-      }),
-    });
+    const response =
+      await fetch(
+        "/api/auth/request-login-code",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            ...parsed.data,
+            callbackUrl,
+          }),
+        },
+      );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     setLoading(false);
 
@@ -102,7 +107,9 @@ export function SigninForm({
           )}`,
       );
 
-    setMessage("Code sent. Redirecting to verification...");
+    setMessage(
+      "Code sent. Redirecting to verification...",
+    );
 
     startTransition(() => {
       window.location.href =
@@ -132,7 +139,10 @@ export function SigninForm({
             type="email"
             autoComplete="email"
             required
-            disabled={loading || isPending}
+            disabled={
+              loading ||
+              isPending
+            }
           />
         </Field>
 
@@ -142,7 +152,10 @@ export function SigninForm({
             type="password"
             autoComplete="current-password"
             required
-            disabled={loading || isPending}
+            disabled={
+              loading ||
+              isPending
+            }
           />
         </Field>
 
@@ -154,19 +167,31 @@ export function SigninForm({
         </Link>
 
         {message ? (
-          <p className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark" aria-live="polite">
+          <p
+            className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark"
+            aria-live="polite"
+          >
             {message}
           </p>
         ) : null}
 
         {error ? (
-          <p className="text-sm text-danger" aria-live="polite">
+          <p
+            className="text-sm text-danger"
+            aria-live="polite"
+          >
             {error}
           </p>
         ) : null}
 
-        <Button disabled={loading || isPending}>
-          {loading || isPending
+        <Button
+          disabled={
+            loading ||
+            isPending
+          }
+        >
+          {loading ||
+          isPending
             ? "Signing in..."
             : "Log in"}
         </Button>
