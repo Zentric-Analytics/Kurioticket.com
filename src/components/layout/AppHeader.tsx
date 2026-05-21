@@ -24,13 +24,34 @@ const navItems = [
   { href: "/support", label: "Support" },
 ];
 
+const languageOptions = ["English", "French", "Spanish", "Arabic"] as const;
+type LanguageOption = (typeof languageOptions)[number];
+const languageStorageKey = "curioticket-language";
+
 export function AppHeader() {
   const [open, setOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const [language, setLanguage] = useState<LanguageOption>(() => {
+    if (typeof window === "undefined") return "English";
+
+    const storedLanguage = window.localStorage.getItem(languageStorageKey);
+
+    return storedLanguage &&
+      languageOptions.includes(storedLanguage as LanguageOption)
+      ? (storedLanguage as LanguageOption)
+      : "English";
+  });
 
   const { data: session, status } = useSession();
 
   const isSignedIn =
     status === "authenticated" && Boolean(session?.user);
+
+  function selectLanguage(nextLanguage: LanguageOption) {
+    setLanguage(nextLanguage);
+    window.localStorage.setItem(languageStorageKey, nextLanguage);
+    setLanguageOpen(false);
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
@@ -59,24 +80,41 @@ export function AppHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <button
-            type="button"
-            aria-label="Select language, country, and currency"
-            className="focus-ring inline-flex h-10 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
-          >
-            <Globe2 size={16} />
-
-            <span>USD</span>
-
-            <span
-              className="text-base leading-none"
-              aria-hidden="true"
+          <div className="relative">
+            <button
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={languageOpen}
+              aria-label="Select language"
+              onClick={() => setLanguageOpen((value) => !value)}
+              className="focus-ring inline-flex h-10 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
             >
-              🇺🇸
-            </span>
+              <Globe2 size={16} />
+              <span>{language}</span>
+              <ChevronDown size={14} />
+            </button>
 
-            <ChevronDown size={14} />
-          </button>
+            {languageOpen ? (
+              <div
+                className="absolute right-0 top-12 z-50 min-w-40 rounded-md border border-slate-200 bg-white p-1 shadow-lg"
+                role="menu"
+                aria-label="Language options"
+              >
+                {languageOptions.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={language === item}
+                    onClick={() => selectLanguage(item)}
+                    className="w-full rounded px-3 py-2 text-left text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
 
           {isSignedIn ? (
             <>
