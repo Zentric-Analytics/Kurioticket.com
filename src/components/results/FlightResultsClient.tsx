@@ -4,7 +4,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BadgeCheck, Plane, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { BadgeCheck, Plane, Repeat2, ShieldCheck, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { FlightCard } from "@/components/results/FlightCard";
@@ -121,147 +121,165 @@ export function FlightResultsClient() {
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[#f6f8fb] py-6">
+      <main className="flex-1 bg-[#f6f8fb] py-6 lg:py-8">
         <section className="page-shell">
-          <div className="grid overflow-hidden rounded-2xl bg-[#e9ecef] lg:grid-cols-[1fr_320px]">
-            <div className="p-6 sm:p-8 lg:p-10">
-              <p className="text-sm font-bold text-slate-700">Round-trip</p>
-              <h1 className="mt-2 text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl">
-                Start a flight search
-              </h1>
-
-              <form
-                className="mt-8 rounded-xl border border-slate-200 bg-white p-2 shadow-[0_6px_16px_rgba(15,23,42,0.12)]"
-                onSubmit={(event) => {
-                  event.preventDefault();
-
-                  const formData = new FormData(event.currentTarget);
-                  const nextParams = new URLSearchParams({
-                    tripType: tripTypeInput,
-                    origin: originInput.trim() || String(formData.get("origin") || ""),
-                    destination: destinationInput.trim() || String(formData.get("destination") || ""),
-                    departureDate: String(formData.get("departureDate") || ""),
-                    returnDate: String(formData.get("returnDate") || ""),
-                    travelers: String(formData.get("travelers") || "1"),
-                    cabinClass: String(formData.get("cabinClass") || "economy"),
-                  });
-
-                  router.push(`/flights/results?${nextParams.toString()}`);
-                }}
-              >
-                <div className="grid gap-2 lg:grid-cols-[minmax(120px,0.85fr)_minmax(160px,1fr)_minmax(160px,1fr)_minmax(130px,0.9fr)_minmax(130px,0.9fr)_minmax(150px,1fr)_minmax(150px,1fr)_auto] lg:items-center">
-                  <label className="grid gap-1">
-                    <span className="sr-only">Trip type</span>
-                    <select
-                      id="tripType"
-                      name="tripType"
-                      value={tripTypeInput}
-                      onChange={(event) => setTripTypeInput(event.target.value)}
-                      className="focus-ring h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900"
-                    >
-                      <option value="round-trip">Round-trip</option>
-                      <option value="one-way">One-way</option>
-                      <option value="multi-city">Multi-city</option>
-                    </select>
-                  </label>
-
-                  <label className="grid gap-1">
-                    <span className="sr-only">From</span>
-                    <input
-                      name="origin"
-                      required
-                      value={originInput}
-                      onChange={(event) => setOriginInput(event.target.value)}
-                      placeholder="From"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 placeholder:font-semibold placeholder:text-slate-400"
-                    />
-                  </label>
-
-                  <label className="grid gap-1">
-                    <span className="sr-only">To</span>
-                    <input
-                      name="destination"
-                      required
-                      value={destinationInput}
-                      onChange={(event) => setDestinationInput(event.target.value)}
-                      placeholder="To?"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 placeholder:font-semibold placeholder:text-slate-400"
-                    />
-                  </label>
-
-                  <label className="grid gap-1">
-                    <span className="sr-only">Departure</span>
-                    <input
-                      name="departureDate"
-                      required
-                      type="date"
-                      aria-label="Departure"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
-                    />
-                  </label>
-
-                  <label className="grid gap-1">
-                    <span className="sr-only">Return</span>
-                    <input
-                      name="returnDate"
-                      type="date"
-                      disabled={tripTypeInput !== "round-trip"}
-                      required={tripTypeInput === "round-trip"}
-                      aria-label="Return"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                    />
-                  </label>
-
-                  <label className="grid gap-1">
-                    <span className="sr-only">Travelers</span>
-                    <select
-                      name="travelers"
-                      defaultValue="1"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
-                      aria-label="Travelers"
-                    >
-                      <option value="1">1 adult</option>
-                      <option value="2">2 adults</option>
-                      <option value="3">3 adults</option>
-                      <option value="4">4 adults</option>
-                    </select>
-                  </label>
-
-                  <label className="grid gap-1">
-                    <span className="sr-only">Cabin class</span>
-                    <select
-                      name="cabinClass"
-                      defaultValue="economy"
-                      className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
-                      aria-label="Cabin class"
-                    >
-                      <option value="economy">Economy</option>
-                      <option value="premium-economy">Premium Economy</option>
-                      <option value="business">Business</option>
-                      <option value="first">First</option>
-                    </select>
-                  </label>
-
-                  <div className="flex">
-                    <Button type="submit" className="h-12 w-full rounded-lg bg-[#0a66c2] px-7 font-bold text-white hover:bg-[#085aa9] lg:min-w-[120px]">
-                      Search
-                    </Button>
-                  </div>
-                </div>
-              </form>
-            </div>
-
-            <div className="relative min-h-[260px] lg:min-h-full">
+          <div className="relative overflow-hidden rounded-2xl bg-slate-900">
+            <div className="relative h-[320px] sm:h-[360px] lg:h-[410px]">
               <Image
                 src="https://images.pexels.com/photos/615060/pexels-photo-615060.jpeg?cs=srgb&dl=pexels-christine-renard-198055-615060.jpg&fm=jpg"
                 alt="Airplane wing over a river canyon landscape"
                 fill
-                sizes="(min-width: 1024px) 320px, 100vw"
+                sizes="100vw"
                 className="object-cover object-center"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-slate-900/5" />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/70 via-slate-900/45 to-slate-900/15" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 to-transparent" />
+
+              <div className="absolute left-6 top-6 z-10 max-w-2xl sm:left-8 sm:top-8 lg:left-10 lg:top-10">
+                <p className="text-sm font-bold uppercase tracking-wide text-white/85">Flights</p>
+                <h1 className="mt-2 text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl">
+                  Find hundreds of cheap flights with just one search!
+                </h1>
+              </div>
             </div>
+          </div>
+
+          <div className="relative z-20 -mt-14 px-3 pb-4 sm:-mt-16 sm:px-6 lg:-mt-20 lg:px-10">
+            <form
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_38px_rgba(15,23,42,0.18)] sm:p-5"
+              onSubmit={(event) => {
+                event.preventDefault();
+
+                const formData = new FormData(event.currentTarget);
+                const nextParams = new URLSearchParams({
+                  tripType: tripTypeInput,
+                  origin: originInput.trim() || String(formData.get("origin") || ""),
+                  destination: destinationInput.trim() || String(formData.get("destination") || ""),
+                  departureDate: String(formData.get("departureDate") || ""),
+                  returnDate: String(formData.get("returnDate") || ""),
+                  travelers: String(formData.get("travelers") || "1"),
+                  cabinClass: String(formData.get("cabinClass") || "economy"),
+                });
+
+                router.push(`/flights/results?${nextParams.toString()}`);
+              }}
+            >
+              <div className="grid gap-3 lg:grid-cols-[minmax(120px,1.05fr)_minmax(150px,1.2fr)_52px_minmax(150px,1.2fr)_minmax(135px,1fr)_minmax(135px,1fr)_minmax(130px,1fr)_minmax(145px,1fr)_auto] lg:items-end">
+                <label className="grid gap-1">
+                  <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Trip type</span>
+                  <select
+                    id="tripType"
+                    name="tripType"
+                    value={tripTypeInput}
+                    onChange={(event) => setTripTypeInput(event.target.value)}
+                    className="focus-ring h-12 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900"
+                  >
+                    <option value="round-trip">Round-trip</option>
+                    <option value="one-way">One-way</option>
+                    <option value="multi-city">Multi-city</option>
+                  </select>
+                </label>
+
+                <label className="grid gap-1">
+                  <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">From</span>
+                  <input
+                    name="origin"
+                    required
+                    value={originInput}
+                    onChange={(event) => setOriginInput(event.target.value)}
+                    placeholder="From"
+                    className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 placeholder:font-semibold placeholder:text-slate-400"
+                  />
+                </label>
+
+                <div className="flex items-end justify-center pb-0.5">
+                  <button
+                    type="button"
+                    aria-label="Swap origin and destination"
+                    onClick={() => {
+                      const currentOrigin = originInput;
+                      setOriginInput(destinationInput);
+                      setDestinationInput(currentOrigin);
+                    }}
+                    className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    <Repeat2 size={18} />
+                  </button>
+                </div>
+
+                <label className="grid gap-1">
+                  <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">To</span>
+                  <input
+                    name="destination"
+                    required
+                    value={destinationInput}
+                    onChange={(event) => setDestinationInput(event.target.value)}
+                    placeholder="To?"
+                    className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 placeholder:font-semibold placeholder:text-slate-400"
+                  />
+                </label>
+
+                <label className="grid gap-1">
+                  <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Departure</span>
+                  <input
+                    name="departureDate"
+                    required
+                    type="date"
+                    aria-label="Departure"
+                    className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
+                  />
+                </label>
+
+                <label className="grid gap-1">
+                  <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Return</span>
+                  <input
+                    name="returnDate"
+                    type="date"
+                    disabled={tripTypeInput !== "round-trip"}
+                    required={tripTypeInput === "round-trip"}
+                    aria-label="Return"
+                    className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  />
+                </label>
+
+                <label className="grid gap-1">
+                  <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Travelers</span>
+                  <select
+                    name="travelers"
+                    defaultValue="1"
+                    className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
+                    aria-label="Travelers"
+                  >
+                    <option value="1">1 adult</option>
+                    <option value="2">2 adults</option>
+                    <option value="3">3 adults</option>
+                    <option value="4">4 adults</option>
+                  </select>
+                </label>
+
+                <label className="grid gap-1">
+                  <span className="text-xs font-extrabold uppercase tracking-wide text-slate-600">Cabin class</span>
+                  <select
+                    name="cabinClass"
+                    defaultValue="economy"
+                    className="focus-ring h-12 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-bold text-slate-900"
+                    aria-label="Cabin class"
+                  >
+                    <option value="economy">Economy</option>
+                    <option value="premium-economy">Premium Economy</option>
+                    <option value="business">Business</option>
+                    <option value="first">First</option>
+                  </select>
+                </label>
+
+                <div className="flex">
+                  <Button type="submit" className="h-12 w-full rounded-lg bg-[#0a66c2] px-7 font-bold text-white hover:bg-[#085aa9] lg:min-w-[120px]">
+                    Search
+                  </Button>
+                </div>
+              </div>
+            </form>
           </div>
         </section>
       </main>
