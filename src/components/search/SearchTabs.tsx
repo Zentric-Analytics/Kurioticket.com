@@ -46,7 +46,7 @@ export function SearchTabs({
   }
 
   return (
-    <div className={`w-full rounded-xl border bg-white ${compactHero ? "border-[#f2b203] shadow-[0_14px_45px_rgba(2,36,96,0.16)]" : "border-slate-100 shadow-[0_18px_60px_rgba(15,23,42,0.12)]"}`}>
+    <div className={`w-full rounded-xl border bg-white ${compactHero ? "border-[#6d28d9] shadow-[0_14px_45px_rgba(2,36,96,0.16)]" : "border-slate-100 shadow-[0_18px_60px_rgba(15,23,42,0.12)]"}`}>
       <div className="flex w-full max-w-xs overflow-hidden rounded-t-xl border-b border-slate-200 bg-white">
         <button type="button" className={`focus-ring flex h-16 flex-1 items-center justify-center gap-2 border-b-2 text-base font-extrabold ${tab === "flights" ? "border-[#6d28d9] text-[#6d28d9]" : "border-transparent bg-slate-50 text-slate-700"}`} onClick={() => setTab("flights")}>
           <Plane size={18} />
@@ -74,7 +74,7 @@ export function SearchTabs({
               {t.searchHotelsInstead}
             </button>
           </div>
-          <div className={`grid overflow-hidden rounded-xl border bg-white md:grid-cols-[1fr_auto_1fr] lg:grid-cols-[1fr_auto_1fr_1fr_1fr_1fr] ${compactHero ? "border-[#f2b203]" : "border-slate-200"}`}>
+          <div className={`grid overflow-hidden rounded-xl border bg-white md:grid-cols-[1fr_auto_1fr] lg:grid-cols-[1fr_auto_1fr_1fr_1fr_1fr] ${compactHero ? "border-[#6d28d9]" : "border-slate-200"}`}>
             <SearchField label={t.from} name="origin" helper={t.cityAirport} placeholder={t.from} />
             <div className="hidden items-center justify-center border-slate-200 px-2 md:flex lg:border-r"><span className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-100 bg-violet-50 text-[#6d28d9]"><Repeat2 size={18} /></span></div>
             <SearchField label={t.to} name="destination" helper={t.cityAirport} placeholder={t.to} />
@@ -94,7 +94,7 @@ export function SearchTabs({
         </form>
       ) : (
         <form action={onHotelSubmit} className={`grid gap-6 ${compactHero ? "p-4 sm:p-5" : "p-5 sm:p-7"}`}>
-          <div className={`grid overflow-hidden rounded-xl border bg-white md:grid-cols-2 lg:grid-cols-5 ${compactHero ? "border-[#f2b203]" : "border-slate-200"}`}>
+          <div className={`grid overflow-hidden rounded-xl border bg-white md:grid-cols-2 lg:grid-cols-5 ${compactHero ? "border-[#6d28d9]" : "border-slate-200"}`}>
             <SearchField label={t.destination} name="destination" helper={t.cityHotelArea} placeholder={t.destination} />
             <SearchField label={t.checkIn} name="checkIn" type="date" helper={t.selectDate} icon={<CalendarDays size={17} />} />
             <SearchField label={t.checkOut} name="checkOut" type="date" helper={t.selectDate} icon={<CalendarDays size={17} />} />
