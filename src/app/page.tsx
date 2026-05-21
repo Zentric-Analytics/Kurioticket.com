@@ -87,24 +87,23 @@ export default function Home() {
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
 
-          <div className="page-shell relative pb-0 pt-6 sm:pt-8 lg:pt-10">
-            <div className="grid min-h-[460px] items-center gap-8 pb-24 sm:min-h-[500px] sm:pb-28 lg:min-h-[540px] lg:max-w-[780px] lg:pb-32">
-              <div className="space-y-4">
-                <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/80 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
+          <div className="page-shell relative pb-8 pt-6 sm:pb-10 sm:pt-8 lg:pt-10">
+            <div className="grid min-h-[390px] content-start gap-4 pb-5 sm:min-h-[420px] sm:gap-5 sm:pb-6 lg:min-h-[450px] lg:max-w-[1000px]">
+              <div className="space-y-3 pt-2">
+                <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/85 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
                   Trusted travel search platform
                 </p>
-                <h1 className="max-w-2xl text-4xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
                   {t.heroTitle}
                 </h1>
                 <p className="max-w-xl text-base font-semibold leading-7 text-slate-700 sm:text-lg sm:leading-8">
                   {t.heroSubtitle}
                 </p>
               </div>
-            </div>
-
-            <div className="relative z-10 -mt-16 pb-10 sm:-mt-20 sm:pb-12 lg:-mt-24">
-              <div className="rounded-2xl border border-white/80 bg-white/95 p-2 shadow-[0_24px_65px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:rounded-3xl sm:p-3">
-                <SearchTabs t={t as unknown as Record<string, string>} />
+              <div className="relative z-10 mt-2 w-full max-w-[1080px]">
+                <div className="rounded-2xl border border-white/85 bg-white/95 p-2 shadow-[0_24px_65px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:rounded-3xl sm:p-3">
+                  <SearchTabs t={t as unknown as Record<string, string>} compactHero />
+                </div>
               </div>
             </div>
           </div>
