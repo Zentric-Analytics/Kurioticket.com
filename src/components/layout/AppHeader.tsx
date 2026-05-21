@@ -3,9 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { ChevronDown, Globe2, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
+import {
+  ChevronDown,
+  Globe2,
+  LogOut,
+  Menu,
+  Sparkles,
+  UserCircle,
+  X,
+} from "lucide-react";
+
 import { Button, LinkButton } from "@/components/ui/Button";
-import { getLanguageFromStorage, languageOptions, setLanguageInStorage, type LanguageCode } from "@/lib/language";
 
 const navItems = [
   { href: "/flights/results", label: "Flights" },
@@ -16,44 +24,117 @@ const navItems = [
   { href: "/support", label: "Support" },
 ];
 
+const languageOptions = [
+  { code: "en", label: "English", flag: "🇺🇸" },
+  { code: "fr", label: "French", flag: "🇫🇷" },
+  { code: "es", label: "Spanish", flag: "🇪🇸" },
+  { code: "ar", label: "Arabic", flag: "🇸🇦" },
+] as const;
+
+type LanguageCode = (typeof languageOptions)[number]["code"];
+
+const languageStorageKey = "curioticket-language";
+
+const translations = {
+  en: {
+    Flights: "Flights",
+    Hotels: "Hotels",
+    Deals: "Deals",
+    Destinations: "Destinations",
+    Explore: "Explore",
+    Support: "Support",
+    Login: "Login",
+    SignUp: "Sign Up",
+  },
+  fr: {
+    Flights: "Vols",
+    Hotels: "Hôtels",
+    Deals: "Offres",
+    Destinations: "Destinations",
+    Explore: "Explorer",
+    Support: "Support",
+    Login: "Connexion",
+    SignUp: "Inscription",
+  },
+  es: {
+    Flights: "Vuelos",
+    Hotels: "Hoteles",
+    Deals: "Ofertas",
+    Destinations: "Destinos",
+    Explore: "Explorar",
+    Support: "Soporte",
+    Login: "Iniciar sesión",
+    SignUp: "Regístrate",
+  },
+  ar: {
+    Flights: "رحلات",
+    Hotels: "فنادق",
+    Deals: "عروض",
+    Destinations: "وجهات",
+    Explore: "استكشف",
+    Support: "الدعم",
+    Login: "تسجيل الدخول",
+    SignUp: "إنشاء حساب",
+  },
+} as const;
+
+function getStoredLanguage(): LanguageCode {
+  if (typeof window === "undefined") return "en";
+
+  const storedLanguage = window.localStorage.getItem(languageStorageKey);
+
+  return languageOptions.some((item) => item.code === storedLanguage)
+    ? (storedLanguage as LanguageCode)
+    : "en";
+}
+
 export function AppHeader() {
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
-  const [language, setLanguage] = useState<LanguageCode>(getLanguageFromStorage);
-  const { data: session, status } = useSession();
-  const isSignedIn = status === "authenticated" && Boolean(session?.user);
+  const [language, setLanguage] = useState<LanguageCode>("en");
 
+  const { data: session, status } = useSession();
+
+  const isSignedIn =
+    status === "authenticated" && Boolean(session?.user);
+
+  const selectedLanguage =
+    languageOptions.find((item) => item.code === language) ??
+    languageOptions[0];
 
   useEffect(() => {
-    function syncLanguage() {
-      setLanguage(getLanguageFromStorage());
-    }
-    window.addEventListener("curioticket-language-change", syncLanguage as EventListener);
-    return () => window.removeEventListener("curioticket-language-change", syncLanguage as EventListener);
+    setLanguage(getStoredLanguage());
   }, []);
-
-  const selectedLanguage = languageOptions.find((item) => item.code === language) || languageOptions[0];
 
   function selectLanguage(nextLanguage: LanguageCode) {
     setLanguage(nextLanguage);
-    setLanguageInStorage(nextLanguage);
+    window.localStorage.setItem(languageStorageKey, nextLanguage);
+    window.dispatchEvent(new Event("curioticket-language-change"));
     setLanguageOpen(false);
   }
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
       <div className="page-shell flex h-20 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-3 text-2xl font-black tracking-tight text-slate-950">
+        <Link
+          href="/"
+          className="flex items-center gap-3 text-2xl font-black tracking-tight text-slate-950"
+        >
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white shadow-[0_10px_24px_rgba(109,40,217,0.22)]">
             <Sparkles size={22} />
           </span>
+
           Curioticket
         </Link>
 
         <nav className="hidden items-center gap-1.5 lg:flex">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-base font-black text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]">
-              {({ en: item.label, fr: {Flights:"Vols",Hotels:"Hôtels",Deals:"Offres",Destinations:"Destinations",Explore:"Explorer",Support:"Support"}[item.label] || item.label, es: {Flights:"Vuelos",Hotels:"Hoteles",Deals:"Ofertas",Destinations:"Destinos",Explore:"Explorar",Support:"Soporte"}[item.label] || item.label, ar: {Flights:"رحلات",Hotels:"فنادق",Deals:"عروض",Destinations:"وجهات",Explore:"استكشف",Support:"الدعم"}[item.label] || item.label } as const)[language]}
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-md px-3 py-2 text-base font-black text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
+            >
+              {translations[language][item.label as keyof typeof translations.en]}
             </Link>
           ))}
         </nav>
@@ -69,44 +150,72 @@ export function AppHeader() {
               className="focus-ring inline-flex h-10 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
             >
               <Globe2 size={16} />
-              <span>{`${selectedLanguage.flag} ${selectedLanguage.label}`}</span>
+              <span>
+                {selectedLanguage.flag} {selectedLanguage.label}
+              </span>
               <ChevronDown size={14} />
             </button>
+
             {languageOpen ? (
-              <div className="absolute right-0 top-12 z-50 min-w-40 rounded-md border border-slate-200 bg-white p-1 shadow-lg" role="menu" aria-label="Language options">
+              <div
+                className="absolute right-0 top-12 z-50 min-w-40 rounded-md border border-slate-200 bg-white p-1 shadow-lg"
+                role="menu"
+                aria-label="Language options"
+              >
                 {languageOptions.map((item) => (
                   <button
-                    key={`${item.flag} ${item.label}`}
+                    key={item.code}
                     type="button"
                     role="menuitemradio"
                     aria-checked={language === item.code}
                     onClick={() => selectLanguage(item.code)}
                     className="w-full rounded px-3 py-2 text-left text-sm font-semibold text-slate-900 hover:bg-slate-50"
                   >
-                    {`${item.flag} ${item.label}`}
+                    {item.flag} {item.label}
                   </button>
                 ))}
               </div>
             ) : null}
           </div>
+
           {isSignedIn ? (
             <>
-              <LinkButton href="/dashboard" variant="ghost" size="sm" className="gap-2">
+              <LinkButton
+                href="/dashboard"
+                variant="ghost"
+                size="sm"
+                className="gap-2"
+              >
                 <UserCircle size={22} />
                 Dashboard
               </LinkButton>
-              <Button variant="accent" size="sm" className="gap-2" onClick={() => signOut({ callbackUrl: "/" })}>
+
+              <Button
+                variant="accent"
+                size="sm"
+                className="gap-2"
+                onClick={() => signOut({ callbackUrl: "/" })}
+              >
                 <LogOut size={18} />
                 Logout
               </Button>
             </>
           ) : (
             <>
-              <Link href="/auth/signin" className="focus-ring inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-semibold text-navy transition hover:bg-surface-muted">
-                {({ en: "Login", fr: "Connexion", es: "Iniciar sesión", ar: "تسجيل الدخول" } as const)[language]}
+              <Link
+                href="/auth/signin"
+                className="focus-ring inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-semibold text-navy transition hover:bg-surface-muted"
+              >
+                {translations[language].Login}
               </Link>
-              <LinkButton href="/auth/signup" variant="accent" size="sm" className="bg-[#5b21d6] hover:bg-[#4c1d95]">
-                {({ en: "Sign Up", fr: "Inscription", es: "Regístrate", ar: "إنشاء حساب" } as const)[language]}
+
+              <LinkButton
+                href="/auth/signup"
+                variant="accent"
+                size="sm"
+                className="bg-[#6d28d9] hover:bg-[#5b21b6]"
+              >
+                {translations[language].SignUp}
               </LinkButton>
             </>
           )}
@@ -125,14 +234,28 @@ export function AppHeader() {
 
       {open ? (
         <>
-          <div className="fixed inset-0 z-50 bg-navy/40 md:hidden" onClick={() => setOpen(false)} />
+          <div
+            className="fixed inset-0 z-50 bg-navy/40 md:hidden"
+            onClick={() => setOpen(false)}
+          />
+
           <aside className="fixed right-0 top-0 z-50 h-dvh w-[min(86vw,360px)] border-l border-border bg-white p-5 shadow-xl md:hidden">
             <div className="flex items-center justify-between">
-              <span className="text-base font-bold text-navy">Menu</span>
-              <Button variant="ghost" size="sm" className="h-10 w-10 px-0" aria-label="Close menu" onClick={() => setOpen(false)}>
+              <span className="text-base font-bold text-navy">
+                Menu
+              </span>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-10 w-10 px-0"
+                aria-label="Close menu"
+                onClick={() => setOpen(false)}
+              >
                 <X size={20} />
               </Button>
             </div>
+
             <nav className="mt-6 grid gap-2">
               {navItems.map((item) => (
                 <Link
@@ -141,32 +264,47 @@ export function AppHeader() {
                   onClick={() => setOpen(false)}
                   className="rounded-md px-3 py-3 text-lg font-bold text-navy hover:bg-surface-muted"
                 >
-                  {item.label}
+                  {translations[language][item.label as keyof typeof translations.en]}
                 </Link>
               ))}
+
               {isSignedIn ? (
                 <>
-                  <Link href="/dashboard" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted">
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setOpen(false)}
+                    className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
+                  >
                     Dashboard
                   </Link>
+
                   <button
                     type="button"
                     onClick={() => {
                       setOpen(false);
                       signOut({ callbackUrl: "/" });
                     }}
-                    className="rounded-md bg-teal px-3 py-3 text-left text-base font-semibold text-white"
+                    className="rounded-md bg-[#6d28d9] px-3 py-3 text-left text-base font-semibold text-white"
                   >
                     Logout
                   </button>
                 </>
               ) : (
                 <>
-                  <Link href="/auth/signin" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted">
-                    Login
+                  <Link
+                    href="/auth/signin"
+                    onClick={() => setOpen(false)}
+                    className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
+                  >
+                    {translations[language].Login}
                   </Link>
-                  <Link href="/auth/signup" onClick={() => setOpen(false)} className="rounded-md bg-teal px-3 py-3 text-base font-semibold text-white">
-                    Sign Up
+
+                  <Link
+                    href="/auth/signup"
+                    onClick={() => setOpen(false)}
+                    className="rounded-md bg-[#6d28d9] px-3 py-3 text-base font-semibold text-white"
+                  >
+                    {translations[language].SignUp}
                   </Link>
                 </>
               )}
