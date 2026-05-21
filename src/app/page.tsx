@@ -1,42 +1,32 @@
+"use client";
+
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  BadgeDollarSign,
-  BellRing,
   CircleDollarSign,
-  CreditCard,
-  Globe2,
-  Headphones,
   Heart,
   Hotel,
   Plane,
-  ShieldCheck,
-  SlidersHorizontal,
   Sparkles,
-  TicketCheck,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
+import { getLanguageFromStorage, type LanguageCode } from "@/lib/language";
 import { LinkButton } from "@/components/ui/Button";
+
+
+const i18n = {
+  en: { heroTitle: "Find Cheap Flights Fast", heroSubtitle: "Search hundreds of airlines and travel sites to find the best deals for your next trip.", assurances: ["Best Prices Guaranteed", "Easy Provider Comparison", "Secure Payments", "24/7 Customer Support"], flights: "Flights", hotels: "Hotels", searchFlights: "Search Flights", searchHotels: "Search Hotels", from: "From", to: "To", departure: "Departure", return: "Return", destination: "Destination", checkIn: "Check-in", checkOut: "Check-out", guests: "Guests", rooms: "Rooms", cityAirport: "City or airport", cityHotelArea: "City or hotel area", selectDate: "Select date", notNeeded: "Not needed", travelersClass: "Travelers & Class", oneTraveler: "1 Traveler", twoTravelers: "2 Travelers", threeTravelers: "3 Travelers", fourTravelers: "4 Travelers", economy: "Economy", premiumEconomy: "Premium economy", business: "Business", first: "First", adults: "Adults", room: "Room", searchHotelsInstead: "Search hotels instead" },
+  fr: { heroTitle: "Trouvez des vols pas chers rapidement", heroSubtitle: "Recherchez des centaines de compagnies aériennes et de sites de voyage pour trouver les meilleures offres.", assurances: ["Meilleurs prix garantis", "Comparaison facile", "Paiements sécurisés", "Assistance 24h/24"], flights: "Vols", hotels: "Hôtels", searchFlights: "Rechercher des vols", searchHotels: "Rechercher des hôtels", from: "Départ", to: "Arrivée", departure: "Départ", return: "Retour", destination: "Destination", checkIn: "Arrivée", checkOut: "Départ", guests: "Voyageurs", rooms: "Chambres", cityAirport: "Ville ou aéroport", cityHotelArea: "Ville ou zone hôtelière", selectDate: "Choisir une date", notNeeded: "Non requis", travelersClass: "Voyageurs et classe", oneTraveler: "1 voyageur", twoTravelers: "2 voyageurs", threeTravelers: "3 voyageurs", fourTravelers: "4 voyageurs", economy: "Économie", premiumEconomy: "Éco premium", business: "Affaires", first: "Première", adults: "Adultes", room: "Chambre", searchHotelsInstead: "Rechercher des hôtels" },
+  es: { heroTitle: "Encuentra vuelos baratos rápido", heroSubtitle: "Busca en cientos de aerolíneas y sitios de viaje para encontrar las mejores ofertas.", assurances: ["Mejores precios garantizados", "Comparación fácil", "Pagos seguros", "Soporte 24/7"], flights: "Vuelos", hotels: "Hoteles", searchFlights: "Buscar vuelos", searchHotels: "Buscar hoteles", from: "Desde", to: "Hacia", departure: "Salida", return: "Regreso", destination: "Destino", checkIn: "Entrada", checkOut: "Salida", guests: "Huéspedes", rooms: "Habitaciones", cityAirport: "Ciudad o aeropuerto", cityHotelArea: "Ciudad o zona hotelera", selectDate: "Selecciona fecha", notNeeded: "No necesario", travelersClass: "Viajeros y clase", oneTraveler: "1 viajero", twoTravelers: "2 viajeros", threeTravelers: "3 viajeros", fourTravelers: "4 viajeros", economy: "Económica", premiumEconomy: "Económica premium", business: "Business", first: "Primera", adults: "Adultos", room: "Habitación", searchHotelsInstead: "Buscar hoteles" },
+  ar: { heroTitle: "اعثر على رحلات رخيصة بسرعة", heroSubtitle: "ابحث بين مئات شركات الطيران ومواقع السفر للعثور على أفضل العروض.", assurances: ["أفضل الأسعار مضمونة", "مقارنة سهلة", "مدفوعات آمنة", "دعم 24/7"], flights: "رحلات", hotels: "فنادق", searchFlights: "ابحث عن رحلات", searchHotels: "ابحث عن فنادق", from: "من", to: "إلى", departure: "المغادرة", return: "العودة", destination: "الوجهة", checkIn: "تسجيل الوصول", checkOut: "تسجيل المغادرة", guests: "الضيوف", rooms: "الغرف", cityAirport: "مدينة أو مطار", cityHotelArea: "مدينة أو منطقة فندقية", selectDate: "اختر التاريخ", notNeeded: "غير مطلوب", travelersClass: "المسافرون والدرجة", oneTraveler: "مسافر 1", twoTravelers: "مسافران", threeTravelers: "3 مسافرين", fourTravelers: "4 مسافرين", economy: "اقتصادية", premiumEconomy: "اقتصادية ممتازة", business: "رجال الأعمال", first: "الأولى", adults: "بالغون", room: "غرفة", searchHotelsInstead: "ابحث عن فنادق" }
+} as const;
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
-
-const assurances = [
-  { label: "Best Prices Guaranteed", icon: ShieldCheck },
-  { label: "Easy Provider Comparison", icon: TicketCheck },
-  { label: "Secure Payments", icon: CreditCard },
-  { label: "24/7 Customer Support", icon: Headphones },
-];
-
-const trustItems = [
-  { title: "Millions of Choices", body: "Flights and hotels worldwide", icon: Globe2 },
-  { title: "Flexible Options", body: "Choose what fits your trip", icon: SlidersHorizontal },
-  { title: "Secure Payments", body: "100% safe and secure", icon: CreditCard },
-  { title: "Great Deals", body: "Compare more before you buy", icon: BadgeDollarSign },
-];
 
 const destinations = [
   {
@@ -72,11 +62,18 @@ const destinations = [
 ];
 
 export default function Home() {
+  const [language, setLanguage] = useState<LanguageCode>(getLanguageFromStorage);
+  useEffect(() => {
+    const sync = () => setLanguage(getLanguageFromStorage());
+    window.addEventListener("curioticket-language-change", sync as EventListener);
+    return () => window.removeEventListener("curioticket-language-change", sync as EventListener);
+  }, []);
+  const t = useMemo(() => i18n[language], [language]);
   return (
     <>
       <AppHeader />
       <main className="flex-1 bg-white">
-        <section className="relative overflow-hidden bg-[#f6f3ff]">
+        <section className="relative overflow-visible bg-[#f8f7ff]">
           <div className="absolute inset-0">
             <Image
               src={heroImage}
@@ -86,44 +83,29 @@ export default function Home() {
               sizes="100vw"
               className="object-cover object-center"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.88)_34%,rgba(255,255,255,0.38)_62%,rgba(255,255,255,0.06)_100%)]" />
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />
+            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.97)_4%,rgba(255,255,255,0.93)_37%,rgba(255,255,255,0.62)_58%,rgba(255,255,255,0.12)_100%)]" />
+            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
 
-          <div className="page-shell relative grid min-h-[670px] content-start gap-8 pb-12 pt-12 sm:pt-16">
-            <div className="max-w-2xl">
-              <h1 className="max-w-xl text-5xl font-black leading-[0.96] tracking-normal text-slate-950 sm:text-6xl lg:text-7xl">
-                Find Cheap Flights Fast
-              </h1>
-              <p className="mt-6 max-w-lg text-lg font-semibold leading-8 text-slate-700">
-                Search hundreds of airlines and travel sites to find the best deals for your next trip.
-              </p>
-              <div className="mt-7 grid gap-4 text-slate-900 sm:grid-cols-2 lg:grid-cols-4">
-                {assurances.map((item) => (
-                  <CompactAssurance key={item.label} icon={<item.icon size={20} />} label={item.label} />
-                ))}
+          <div className="page-shell relative pb-8 pt-6 sm:pb-10 sm:pt-8 lg:pt-10">
+            <div className="grid min-h-[390px] content-start gap-4 pb-5 sm:min-h-[420px] sm:gap-5 sm:pb-6 lg:min-h-[450px] lg:max-w-[1000px]">
+              <div className="space-y-3 pt-2">
+                <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/85 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
+                  Trusted travel search platform
+                </p>
+                <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                  {t.heroTitle}
+                </h1>
+                <p className="max-w-xl text-base font-semibold leading-7 text-slate-700 sm:text-lg sm:leading-8">
+                  {t.heroSubtitle}
+                </p>
               </div>
-            </div>
-
-            <div className="mt-2 max-w-[1080px]">
-              <SearchTabs />
-            </div>
-          </div>
-        </section>
-
-        <section className="page-shell -mt-2 pb-9">
-          <div className="grid overflow-hidden rounded-xl border border-violet-100 bg-[#faf7ff] shadow-sm md:grid-cols-2 lg:grid-cols-4">
-            {trustItems.map((item) => (
-              <div key={item.title} className="flex gap-4 border-b border-violet-100 p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#6d28d9] shadow-sm">
-                  <item.icon size={20} />
-                </span>
-                <div>
-                  <h2 className="text-sm font-extrabold text-slate-950">{item.title}</h2>
-                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">{item.body}</p>
+              <div className="relative z-10 mt-2 w-full max-w-[1080px]">
+                <div className="rounded-2xl border border-white/85 bg-white/95 p-2 shadow-[0_24px_65px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:rounded-3xl sm:p-3">
+                  <SearchTabs t={t as unknown as Record<string, string>} compactHero />
                 </div>
               </div>
-            ))}
+            </div>
           </div>
         </section>
 
@@ -164,9 +146,6 @@ export default function Home() {
         <section className="page-shell pb-12">
           <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
             <div className="flex gap-4">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#6d28d9] text-white">
-                <BellRing size={24} />
-              </span>
               <div>
                 <h2 className="text-lg font-black text-slate-950">Get the best travel deals in your inbox</h2>
                 <p className="mt-1 text-sm font-semibold text-slate-600">Subscribe to our newsletter and never miss a deal.</p>
@@ -188,15 +167,6 @@ export default function Home() {
       </main>
       <Footer />
     </>
-  );
-}
-
-function CompactAssurance({ icon, label }: { icon: ReactNode; label: string }) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white/85 text-[#6d28d9] shadow-sm">{icon}</span>
-      <span className="max-w-28 text-xs font-black leading-4">{label}</span>
-    </div>
   );
 }
 
