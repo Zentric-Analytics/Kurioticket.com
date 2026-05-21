@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   BadgeDollarSign,
@@ -18,7 +21,16 @@ import {
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
+import { getLanguageFromStorage, type LanguageCode } from "@/lib/language";
 import { LinkButton } from "@/components/ui/Button";
+
+
+const i18n = {
+  en: { heroTitle: "Find Cheap Flights Fast", heroSubtitle: "Search hundreds of airlines and travel sites to find the best deals for your next trip.", assurances: ["Best Prices Guaranteed", "Easy Provider Comparison", "Secure Payments", "24/7 Customer Support"], flights: "Flights", hotels: "Hotels", searchFlights: "Search Flights", searchHotels: "Search Hotels", from: "From", to: "To", departure: "Departure", return: "Return", destination: "Destination", checkIn: "Check-in", checkOut: "Check-out", guests: "Guests", rooms: "Rooms", cityAirport: "City or airport", cityHotelArea: "City or hotel area", selectDate: "Select date", notNeeded: "Not needed", travelersClass: "Travelers & Class", oneTraveler: "1 Traveler", twoTravelers: "2 Travelers", threeTravelers: "3 Travelers", fourTravelers: "4 Travelers", economy: "Economy", premiumEconomy: "Premium economy", business: "Business", first: "First", adults: "Adults", room: "Room", searchHotelsInstead: "Search hotels instead" },
+  fr: { heroTitle: "Trouvez des vols pas chers rapidement", heroSubtitle: "Recherchez des centaines de compagnies aériennes et de sites de voyage pour trouver les meilleures offres.", assurances: ["Meilleurs prix garantis", "Comparaison facile", "Paiements sécurisés", "Assistance 24h/24"], flights: "Vols", hotels: "Hôtels", searchFlights: "Rechercher des vols", searchHotels: "Rechercher des hôtels", from: "Départ", to: "Arrivée", departure: "Départ", return: "Retour", destination: "Destination", checkIn: "Arrivée", checkOut: "Départ", guests: "Voyageurs", rooms: "Chambres", cityAirport: "Ville ou aéroport", cityHotelArea: "Ville ou zone hôtelière", selectDate: "Choisir une date", notNeeded: "Non requis", travelersClass: "Voyageurs et classe", oneTraveler: "1 voyageur", twoTravelers: "2 voyageurs", threeTravelers: "3 voyageurs", fourTravelers: "4 voyageurs", economy: "Économie", premiumEconomy: "Éco premium", business: "Affaires", first: "Première", adults: "Adultes", room: "Chambre", searchHotelsInstead: "Rechercher des hôtels" },
+  es: { heroTitle: "Encuentra vuelos baratos rápido", heroSubtitle: "Busca en cientos de aerolíneas y sitios de viaje para encontrar las mejores ofertas.", assurances: ["Mejores precios garantizados", "Comparación fácil", "Pagos seguros", "Soporte 24/7"], flights: "Vuelos", hotels: "Hoteles", searchFlights: "Buscar vuelos", searchHotels: "Buscar hoteles", from: "Desde", to: "Hacia", departure: "Salida", return: "Regreso", destination: "Destino", checkIn: "Entrada", checkOut: "Salida", guests: "Huéspedes", rooms: "Habitaciones", cityAirport: "Ciudad o aeropuerto", cityHotelArea: "Ciudad o zona hotelera", selectDate: "Selecciona fecha", notNeeded: "No necesario", travelersClass: "Viajeros y clase", oneTraveler: "1 viajero", twoTravelers: "2 viajeros", threeTravelers: "3 viajeros", fourTravelers: "4 viajeros", economy: "Económica", premiumEconomy: "Económica premium", business: "Business", first: "Primera", adults: "Adultos", room: "Habitación", searchHotelsInstead: "Buscar hoteles" },
+  ar: { heroTitle: "اعثر على رحلات رخيصة بسرعة", heroSubtitle: "ابحث بين مئات شركات الطيران ومواقع السفر للعثور على أفضل العروض.", assurances: ["أفضل الأسعار مضمونة", "مقارنة سهلة", "مدفوعات آمنة", "دعم 24/7"], flights: "رحلات", hotels: "فنادق", searchFlights: "ابحث عن رحلات", searchHotels: "ابحث عن فنادق", from: "من", to: "إلى", departure: "المغادرة", return: "العودة", destination: "الوجهة", checkIn: "تسجيل الوصول", checkOut: "تسجيل المغادرة", guests: "الضيوف", rooms: "الغرف", cityAirport: "مدينة أو مطار", cityHotelArea: "مدينة أو منطقة فندقية", selectDate: "اختر التاريخ", notNeeded: "غير مطلوب", travelersClass: "المسافرون والدرجة", oneTraveler: "مسافر 1", twoTravelers: "مسافران", threeTravelers: "3 مسافرين", fourTravelers: "4 مسافرين", economy: "اقتصادية", premiumEconomy: "اقتصادية ممتازة", business: "رجال الأعمال", first: "الأولى", adults: "بالغون", room: "غرفة", searchHotelsInstead: "ابحث عن فنادق" }
+} as const;
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
@@ -71,6 +83,14 @@ const destinations = [
 ];
 
 export default function Home() {
+  const [language, setLanguage] = useState<LanguageCode>(getLanguageFromStorage);
+  useEffect(() => {
+    const sync = () => setLanguage(getLanguageFromStorage());
+    window.addEventListener("curioticket-language-change", sync as EventListener);
+    return () => window.removeEventListener("curioticket-language-change", sync as EventListener);
+  }, []);
+  const t = useMemo(() => i18n[language], [language]);
+  const assurancesLocalized = assurances.map((item, i) => ({ ...item, label: t.assurances[i] }));
   return (
     <>
       <AppHeader />
@@ -92,20 +112,20 @@ export default function Home() {
           <div className="page-shell relative grid min-h-[670px] content-start gap-8 pb-12 pt-12 sm:pt-16">
             <div className="max-w-2xl">
               <h1 className="max-w-xl text-5xl font-black leading-[0.96] tracking-normal text-slate-950 sm:text-6xl lg:text-7xl">
-                Find Cheap Flights Fast
+                {t.heroTitle}
               </h1>
               <p className="mt-6 max-w-lg text-lg font-semibold leading-8 text-slate-700">
-                Search hundreds of airlines and travel sites to find the best deals for your next trip.
+                {t.heroSubtitle}
               </p>
               <div className="mt-7 grid gap-4 text-slate-900 sm:grid-cols-2 lg:grid-cols-4">
-                {assurances.map((item) => (
+                {assurancesLocalized.map((item) => (
                   <CompactAssurance key={item.label} icon={<item.icon size={20} />} label={item.label} />
                 ))}
               </div>
             </div>
 
             <div className="mt-2 max-w-[1080px]">
-              <SearchTabs />
+              <SearchTabs t={t as unknown as Record<string, string>} />
             </div>
           </div>
         </section>

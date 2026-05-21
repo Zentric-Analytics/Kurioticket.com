@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import {
   ChevronDown,
@@ -24,32 +24,92 @@ const navItems = [
   { href: "/support", label: "Support" },
 ];
 
-const languageOptions = ["English", "French", "Spanish", "Arabic"] as const;
-type LanguageOption = (typeof languageOptions)[number];
+const languageOptions = [
+  { code: "en", label: "English", flag: "🇺🇸" },
+  { code: "fr", label: "French", flag: "🇫🇷" },
+  { code: "es", label: "Spanish", flag: "🇪🇸" },
+  { code: "ar", label: "Arabic", flag: "🇸🇦" },
+] as const;
+
+type LanguageCode = (typeof languageOptions)[number]["code"];
+
 const languageStorageKey = "curioticket-language";
+
+const translations = {
+  en: {
+    Flights: "Flights",
+    Hotels: "Hotels",
+    Deals: "Deals",
+    Destinations: "Destinations",
+    Explore: "Explore",
+    Support: "Support",
+    Login: "Login",
+    SignUp: "Sign Up",
+  },
+  fr: {
+    Flights: "Vols",
+    Hotels: "Hôtels",
+    Deals: "Offres",
+    Destinations: "Destinations",
+    Explore: "Explorer",
+    Support: "Support",
+    Login: "Connexion",
+    SignUp: "Inscription",
+  },
+  es: {
+    Flights: "Vuelos",
+    Hotels: "Hoteles",
+    Deals: "Ofertas",
+    Destinations: "Destinos",
+    Explore: "Explorar",
+    Support: "Soporte",
+    Login: "Iniciar sesión",
+    SignUp: "Regístrate",
+  },
+  ar: {
+    Flights: "رحلات",
+    Hotels: "فنادق",
+    Deals: "عروض",
+    Destinations: "وجهات",
+    Explore: "استكشف",
+    Support: "الدعم",
+    Login: "تسجيل الدخول",
+    SignUp: "إنشاء حساب",
+  },
+} as const;
+
+function getStoredLanguage(): LanguageCode {
+  if (typeof window === "undefined") return "en";
+
+  const storedLanguage = window.localStorage.getItem(languageStorageKey);
+
+  return languageOptions.some((item) => item.code === storedLanguage)
+    ? (storedLanguage as LanguageCode)
+    : "en";
+}
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
-  const [language, setLanguage] = useState<LanguageOption>(() => {
-    if (typeof window === "undefined") return "English";
-
-    const storedLanguage = window.localStorage.getItem(languageStorageKey);
-
-    return storedLanguage &&
-      languageOptions.includes(storedLanguage as LanguageOption)
-      ? (storedLanguage as LanguageOption)
-      : "English";
-  });
+  const [language, setLanguage] = useState<LanguageCode>("en");
 
   const { data: session, status } = useSession();
 
   const isSignedIn =
     status === "authenticated" && Boolean(session?.user);
 
-  function selectLanguage(nextLanguage: LanguageOption) {
+  const selectedLanguage =
+    languageOptions.find((item) => item.code === language) ??
+    languageOptions[0];
+
+  useEffect(() => {
+    setLanguage(getStoredLanguage());
+  }, []);
+
+  function selectLanguage(nextLanguage: LanguageCode) {
     setLanguage(nextLanguage);
     window.localStorage.setItem(languageStorageKey, nextLanguage);
+    window.dispatchEvent(new Event("curioticket-language-change"));
     setLanguageOpen(false);
   }
 
@@ -74,7 +134,7 @@ export function AppHeader() {
               href={item.href}
               className="rounded-md px-3 py-2 text-base font-black text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
             >
-              {item.label}
+              {translations[language][item.label as keyof typeof translations.en]}
             </Link>
           ))}
         </nav>
@@ -90,7 +150,9 @@ export function AppHeader() {
               className="focus-ring inline-flex h-10 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
             >
               <Globe2 size={16} />
-              <span>{language}</span>
+              <span>
+                {selectedLanguage.flag} {selectedLanguage.label}
+              </span>
               <ChevronDown size={14} />
             </button>
 
@@ -102,14 +164,14 @@ export function AppHeader() {
               >
                 {languageOptions.map((item) => (
                   <button
-                    key={item}
+                    key={item.code}
                     type="button"
                     role="menuitemradio"
-                    aria-checked={language === item}
-                    onClick={() => selectLanguage(item)}
+                    aria-checked={language === item.code}
+                    onClick={() => selectLanguage(item.code)}
                     className="w-full rounded px-3 py-2 text-left text-sm font-semibold text-slate-900 hover:bg-slate-50"
                   >
-                    {item}
+                    {item.flag} {item.label}
                   </button>
                 ))}
               </div>
@@ -144,15 +206,16 @@ export function AppHeader() {
                 href="/auth/signin"
                 className="focus-ring inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-semibold text-navy transition hover:bg-surface-muted"
               >
-                Login
+                {translations[language].Login}
               </Link>
 
               <LinkButton
                 href="/auth/signup"
                 variant="accent"
                 size="sm"
+                className="bg-[#6d28d9] hover:bg-[#5b21b6]"
               >
-                Sign Up
+                {translations[language].SignUp}
               </LinkButton>
             </>
           )}
@@ -201,7 +264,7 @@ export function AppHeader() {
                   onClick={() => setOpen(false)}
                   className="rounded-md px-3 py-3 text-lg font-bold text-navy hover:bg-surface-muted"
                 >
-                  {item.label}
+                  {translations[language][item.label as keyof typeof translations.en]}
                 </Link>
               ))}
 
@@ -221,7 +284,7 @@ export function AppHeader() {
                       setOpen(false);
                       signOut({ callbackUrl: "/" });
                     }}
-                    className="rounded-md bg-teal px-3 py-3 text-left text-base font-semibold text-white"
+                    className="rounded-md bg-[#6d28d9] px-3 py-3 text-left text-base font-semibold text-white"
                   >
                     Logout
                   </button>
@@ -233,15 +296,15 @@ export function AppHeader() {
                     onClick={() => setOpen(false)}
                     className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
                   >
-                    Login
+                    {translations[language].Login}
                   </Link>
 
                   <Link
                     href="/auth/signup"
                     onClick={() => setOpen(false)}
-                    className="rounded-md bg-teal px-3 py-3 text-base font-semibold text-white"
+                    className="rounded-md bg-[#6d28d9] px-3 py-3 text-base font-semibold text-white"
                   >
-                    Sign Up
+                    {translations[language].SignUp}
                   </Link>
                 </>
               )}
