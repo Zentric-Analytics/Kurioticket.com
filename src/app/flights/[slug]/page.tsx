@@ -3,6 +3,10 @@ import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { Card } from "@/components/ui/Card";
 
+const searchTabTranslations = {
+  flights: "Flights", hotels: "Hotels", searchHotelsInstead: "Search hotels instead", from: "From", to: "To", departure: "Departure", return: "Return", destination: "Destination", checkIn: "Check-in", checkOut: "Check-out", guests: "Guests", rooms: "Rooms", cityAirport: "City or airport", cityHotelArea: "City or hotel area", selectDate: "Select date", notNeeded: "Not needed", travelersClass: "Travelers & Class", oneTraveler: "1 Traveler", twoTravelers: "2 Travelers", threeTravelers: "3 Travelers", fourTravelers: "4 Travelers", economy: "Economy", premiumEconomy: "Premium economy", business: "Business", first: "First", adults: "Adults", room: "Room", searchFlights: "Search Flights", searchHotels: "Search Hotels" };
+
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   return { title: cheapRouteTitle(slug) };
@@ -24,7 +28,7 @@ export default async function FlightRouteLandingPage({ params }: { params: Promi
           </div>
         </section>
         <div className="page-shell grid gap-6 py-8 lg:grid-cols-[1fr_360px]">
-          <SearchTabs />
+          <SearchTabs t={searchTabTranslations} />
           <Card className="p-5">
             <h2 className="font-bold text-navy">Content roadmap</h2>
             <ul className="mt-3 grid gap-2 text-sm text-muted">
