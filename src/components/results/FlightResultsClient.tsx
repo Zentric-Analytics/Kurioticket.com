@@ -119,10 +119,12 @@ export function FlightResultsClient() {
           <div className="grid gap-0 lg:grid-cols-[1fr_320px]">
             <div className="p-6 sm:p-8 lg:p-10">
               <h1 className="text-4xl font-black leading-tight tracking-tight text-slate-900 sm:text-5xl">Start a flight search</h1>
+
               <form
                 className="mt-7"
                 onSubmit={(event) => {
                   event.preventDefault();
+
                   const formData = new FormData(event.currentTarget);
                   const nextParams = new URLSearchParams({
                     tripType: tripTypeInput,
@@ -133,6 +135,7 @@ export function FlightResultsClient() {
                     travelers: String(formData.get("travelers") || "1"),
                     cabinClass: String(formData.get("cabinClass") || "economy"),
                   });
+
                   router.push(`/flights/results?${nextParams.toString()}`);
                 }}
               >
@@ -163,6 +166,7 @@ export function FlightResultsClient() {
                         className="focus-ring h-12 w-full min-w-0 bg-transparent px-4 text-sm font-semibold text-slate-900"
                       />
                     </div>
+
                     <div className="flex items-center justify-center border-b border-slate-200 xl:border-b-0 xl:border-r">
                       <button
                         type="button"
@@ -177,6 +181,7 @@ export function FlightResultsClient() {
                         <Repeat2 size={16} />
                       </button>
                     </div>
+
                     <div className="border-b border-slate-200 xl:border-b-0 xl:border-r">
                       <input
                         name="destination"
@@ -187,10 +192,18 @@ export function FlightResultsClient() {
                         className="focus-ring h-12 w-full min-w-0 bg-transparent px-4 text-sm font-semibold text-slate-900"
                       />
                     </div>
+
                     <label className="border-b border-slate-200 px-3 py-1.5 xl:border-b-0 xl:border-r">
                       <span className="block text-[11px] font-bold text-slate-500">Departure</span>
-                      <input name="departureDate" required type="date" aria-label="Departure" className="focus-ring h-7 w-full min-w-0 bg-transparent text-sm font-semibold text-slate-900" />
+                      <input
+                        name="departureDate"
+                        required
+                        type="date"
+                        aria-label="Departure"
+                        className="focus-ring h-7 w-full min-w-0 bg-transparent text-sm font-semibold text-slate-900"
+                      />
                     </label>
+
                     <label className="border-b border-slate-200 px-3 py-1.5 xl:border-b-0 xl:border-r">
                       <span className="block text-[11px] font-bold text-slate-500">Return</span>
                       <input
@@ -202,20 +215,33 @@ export function FlightResultsClient() {
                         className="focus-ring h-7 w-full min-w-0 bg-transparent text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100"
                       />
                     </label>
+
                     <div className="grid grid-cols-2 border-b border-slate-200 xl:border-b-0 xl:border-r">
-                      <select name="travelers" defaultValue="1" className="focus-ring h-12 min-w-0 bg-transparent px-3 text-sm font-semibold text-slate-900" aria-label="Travelers">
+                      <select
+                        name="travelers"
+                        defaultValue="1"
+                        className="focus-ring h-12 min-w-0 bg-transparent px-3 text-sm font-semibold text-slate-900"
+                        aria-label="Travelers"
+                      >
                         <option value="1">1 adult</option>
                         <option value="2">2 adults</option>
                         <option value="3">3 adults</option>
                         <option value="4">4 adults</option>
                       </select>
-                      <select name="cabinClass" defaultValue="economy" className="focus-ring h-12 min-w-0 border-l border-slate-200 bg-transparent px-3 text-sm font-semibold text-slate-900" aria-label="Cabin class">
+
+                      <select
+                        name="cabinClass"
+                        defaultValue="economy"
+                        className="focus-ring h-12 min-w-0 border-l border-slate-200 bg-transparent px-3 text-sm font-semibold text-slate-900"
+                        aria-label="Cabin class"
+                      >
                         <option value="economy">Economy</option>
                         <option value="premium-economy">Premium Economy</option>
                         <option value="business">Business</option>
                         <option value="first">First</option>
                       </select>
                     </div>
+
                     <Button type="submit" className="h-12 rounded-none bg-blue-600 px-6 font-bold text-white hover:bg-blue-700 xl:rounded-l-none xl:rounded-r-lg">
                       Search
                     </Button>
@@ -255,6 +281,7 @@ export function FlightResultsClient() {
               {body.travelers} traveler{body.travelers === 1 ? "" : "s"} · {String(body.cabinClass).replace("-", " ")} · live provider search
             </p>
           </div>
+
           <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
             {sortModes.map((mode) => (
               <button
@@ -272,6 +299,7 @@ export function FlightResultsClient() {
                 {mode.label}
               </button>
             ))}
+
             <Button variant="secondary" className="border-slate-200 md:hidden" onClick={() => setFiltersOpen(true)}>
               <SlidersHorizontal size={17} />
               Filters
@@ -309,8 +337,9 @@ export function FlightResultsClient() {
                 <p className="text-sm font-bold text-navy">
                   {filtered.length} option{filtered.length === 1 ? "" : "s"} found
                 </p>
-                <p className="text-sm font-semibold text-muted">Sorted by {sortModes.find((mode) => mode.value === sort)?.label}</p>
+                <p className="text-sm font-semibold text-muted">Sorted by {sortModes.find((mode) => mode.value)?.label}</p>
               </div>
+
               {filtered.length ? (
                 filtered.map((flight) => <FlightCard key={flight.id} flight={flight} />)
               ) : (
@@ -324,6 +353,7 @@ export function FlightResultsClient() {
       </div>
 
       <div className={cn("fixed inset-0 z-50 bg-navy/40 lg:hidden", filtersOpen ? "block" : "hidden")} onClick={() => setFiltersOpen(false)} />
+
       <aside
         className={cn(
           "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-2xl bg-white p-5 shadow-xl transition-transform lg:hidden",
@@ -336,6 +366,7 @@ export function FlightResultsClient() {
             <X size={20} />
           </Button>
         </div>
+
         <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} />
       </aside>
     </main>
@@ -362,6 +393,7 @@ function Filters({
         </div>
         <SlidersHorizontal className="text-teal" size={21} />
       </div>
+
       <div className="mt-6 grid gap-6">
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
@@ -369,12 +401,14 @@ function Filters({
           </span>
           <input className="w-full accent-teal" type="range" min={100} max={2000} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
         </label>
+
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
             Stops up to <span className="font-mono text-navy">{maxStops}</span>
           </span>
           <input className="w-full accent-teal" type="range" min={0} max={3} step={1} value={maxStops} onChange={(event) => setMaxStops(Number(event.target.value))} />
         </label>
+
         <div className="grid gap-3 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-muted">
           <label className="flex items-center gap-2">
             <input type="checkbox" className="accent-teal" defaultChecked />
