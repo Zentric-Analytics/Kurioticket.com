@@ -136,13 +136,12 @@ export function FlightResultsClient() {
               <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-900/50 to-slate-900/20" />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 to-transparent" />
 
-              <div className="relative z-10 p-6 sm:p-8 lg:p-10">
-                <p className="text-sm font-extrabold uppercase tracking-wide text-white/90">FLIGHTS</p>
-                <h1 className="mt-3 max-w-3xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
+              <div className="relative z-10 p-5 sm:p-7 lg:p-8">
+                <h1 className="mt-0 max-w-3xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
                   Find hundreds of cheap flights with just one search!
                 </h1>
 
-                <div className="mt-6 inline-flex rounded-xl bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.24)]">
+                <div className="mt-5 inline-flex rounded-xl bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.24)]">
                   <label className="sr-only" htmlFor="tripType">
                     Trip type
                   </label>
@@ -160,7 +159,7 @@ export function FlightResultsClient() {
                 </div>
 
                 <form
-                  className="mt-4 w-full max-w-[1080px] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)]"
+                  className="mt-3 w-full max-w-[860px] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)]"
                   onSubmit={(event) => {
                     event.preventDefault();
 
@@ -178,7 +177,7 @@ export function FlightResultsClient() {
                     router.push(`/flights/results?${nextParams.toString()}`);
                   }}
                 >
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.25fr)_50px_minmax(150px,1.25fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(130px,1fr)_minmax(112px,0.95fr)] xl:items-center">
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(138px,1.2fr)_44px_minmax(138px,1.2fr)_minmax(112px,1fr)_minmax(112px,1fr)_minmax(112px,1fr)_minmax(122px,1fr)_minmax(102px,0.9fr)] xl:items-center">
                     <label className="sr-only" htmlFor="origin">
                       From
                     </label>
@@ -277,7 +276,7 @@ export function FlightResultsClient() {
                       <option value="first">First</option>
                     </select>
 
-                    <Button type="submit" className="h-11 w-full rounded-lg bg-[#0a66c2] px-6 font-bold text-white hover:bg-[#085aa9]">
+                    <Button type="submit" className="h-11 w-full min-w-0 rounded-lg bg-[#0a66c2] px-4 font-bold text-white hover:bg-[#085aa9]">
                       Search
                     </Button>
                   </div>
