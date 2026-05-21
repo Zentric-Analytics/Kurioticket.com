@@ -105,9 +105,7 @@ export function AppHeader() {
                 variant="accent"
                 size="sm"
                 className="gap-2"
-                onClick={() =>
-                  signOut({ callbackUrl: "/" })
-                }
+                onClick={() => signOut({ callbackUrl: "/" })}
               >
                 <LogOut size={18} />
                 Logout
