@@ -23,16 +23,16 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
       <div className="page-shell flex h-20 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-slate-950">
+        <Link href="/" className="flex items-center gap-3 text-2xl font-black tracking-tight text-slate-950">
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white shadow-[0_10px_24px_rgba(109,40,217,0.22)]">
             <Sparkles size={22} />
           </span>
           Curioticket
         </Link>
 
-        <nav className="hidden items-center gap-2 lg:flex">
+        <nav className="hidden items-center gap-3 lg:flex">
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-sm font-bold text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]">
+            <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-base font-black text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]">
               {item.label}
             </Link>
           ))}
@@ -105,7 +105,7 @@ export function AppHeader() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
+                  className="rounded-md px-3 py-3 text-lg font-bold text-navy hover:bg-surface-muted"
                 >
                   {item.label}
                 </Link>
