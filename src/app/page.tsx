@@ -5,14 +5,10 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  BadgeDollarSign,
   CircleDollarSign,
-  CreditCard,
-  Globe2,
   Heart,
   Hotel,
   Plane,
-  SlidersHorizontal,
   Sparkles,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -31,13 +27,6 @@ const i18n = {
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
-
-const trustItems = [
-  { title: "Millions of Choices", body: "Flights and hotels worldwide", icon: Globe2 },
-  { title: "Flexible Options", body: "Choose what fits your trip", icon: SlidersHorizontal },
-  { title: "Secure Payments", body: "100% safe and secure", icon: CreditCard },
-  { title: "Great Deals", body: "Compare more before you buy", icon: BadgeDollarSign },
-];
 
 const destinations = [
   {
@@ -80,10 +69,6 @@ export default function Home() {
     return () => window.removeEventListener("curioticket-language-change", sync as EventListener);
   }, []);
   const t = useMemo(() => i18n[language], [language]);
-  const trustItemsLocalized = trustItems.map((item, i) => ({
-    ...item,
-    title: t.assurances[i],
-  }));
   return (
     <>
       <AppHeader />
@@ -115,22 +100,6 @@ export default function Home() {
             <div className="mt-2 max-w-[1080px]">
               <SearchTabs t={t as unknown as Record<string, string>} />
             </div>
-          </div>
-        </section>
-
-        <section className="page-shell -mt-2 pb-9">
-          <div className="grid overflow-hidden rounded-xl border border-violet-100 bg-[#faf7ff] shadow-sm md:grid-cols-2 lg:grid-cols-4">
-            {trustItemsLocalized.map((item) => (
-              <div key={item.title} className="flex gap-4 border-b border-violet-100 p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-[#6d28d9] shadow-sm">
-                  <item.icon size={20} />
-                </span>
-                <div>
-                  <h2 className="text-sm font-extrabold text-slate-950">{item.title}</h2>
-                  <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">{item.body}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
 
