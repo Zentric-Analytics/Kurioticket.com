@@ -59,7 +59,7 @@ export function AppHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-2.5 md:flex">
           <button
             type="button"
             aria-label="Select language, country, and currency"
