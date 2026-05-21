@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import {
-  Bell,
   ChevronDown,
   Globe2,
   LogOut,
@@ -47,7 +46,7 @@ export function AppHeader() {
           Curioticket
         </Link>
 
-        <nav className="hidden items-center gap-3 lg:flex">
+        <nav className="hidden items-center gap-1.5 lg:flex">
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -59,7 +58,7 @@ export function AppHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2.5 md:flex">
+        <div className="hidden items-center gap-2 md:flex">
           <button
             type="button"
             aria-label="Select language, country, and currency"
@@ -78,16 +77,6 @@ export function AppHeader() {
 
             <ChevronDown size={14} />
           </button>
-
-          <LinkButton
-            href="/dashboard"
-            variant="ghost"
-            size="sm"
-            className="h-10 w-10 px-0"
-            aria-label="Notifications"
-          >
-            <Bell size={18} />
-          </LinkButton>
 
           {isSignedIn ? (
             <>
@@ -113,15 +102,12 @@ export function AppHeader() {
             </>
           ) : (
             <>
-              <LinkButton
+              <Link
                 href="/auth/signin"
-                variant="ghost"
-                size="sm"
-                className="gap-2"
+                className="focus-ring inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-semibold text-navy transition hover:bg-surface-muted"
               >
-                <UserCircle size={22} />
                 Login
-              </LinkButton>
+              </Link>
 
               <LinkButton
                 href="/auth/signup"
