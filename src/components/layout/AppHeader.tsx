@@ -72,6 +72,23 @@ export function AppHeader() {
     setLanguageOpen(false);
   }
 
+
+  useEffect(() => {
+    function syncLanguage() {
+      setLanguage(getLanguageFromStorage());
+    }
+    window.addEventListener("curioticket-language-change", syncLanguage as EventListener);
+    return () => window.removeEventListener("curioticket-language-change", syncLanguage as EventListener);
+  }, []);
+
+  const selectedLanguage = languageOptions.find((item) => item.code === language) || languageOptions[0];
+
+  function selectLanguage(nextLanguage: LanguageCode) {
+    setLanguage(nextLanguage);
+    setLanguageInStorage(nextLanguage);
+    setLanguageOpen(false);
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
       <div className="page-shell flex h-20 items-center justify-between gap-4">
