@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { DatabaseUnavailableError } from "@/lib/prisma";
+import { getPrisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validation";
 
 import {
@@ -7,6 +9,7 @@ import {
   InvalidEmailError,
   createPasswordUser,
 } from "@/services/authService";
+import { EmailVerificationError, sendEmailVerificationCode } from "@/services/emailVerificationService";
 
 export const runtime = "nodejs";
 
@@ -48,11 +51,29 @@ export async function POST(
     );
   }
 
+  let createdUserId: string | null = null;
+
   try {
+
+    checkAuthRateLimit({
+      action: "signup",
+      email: parsed.data.email,
+      request,
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    });
+
     const user =
       await createPasswordUser(
         parsed.data,
       );
+    createdUserId = user.id;
+
+    await sendEmailVerificationCode({
+      email: parsed.data.email,
+      name: parsed.data.name,
+      action: "signup",
+    });
 
     return NextResponse.json(
       {
@@ -69,6 +90,27 @@ export async function POST(
       "[signup]",
       error,
     );
+
+    if (
+      error instanceof
+      AuthRateLimitError
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Too many signup attempts. Please wait and try again.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After":
+              String(
+                error.retryAfterSeconds,
+              ),
+          },
+        },
+      );
+    }
 
     if (
       error instanceof
@@ -93,6 +135,35 @@ export async function POST(
             "Enter a valid email address.",
         },
         { status: 400 },
+      );
+    }
+
+    if (
+      error instanceof
+      EmailVerificationError
+    ) {
+      if (createdUserId) {
+        const email = parsed.data.email.toLowerCase().trim();
+        await getPrisma().verificationToken.deleteMany({
+          where: {
+            identifier: `email-verification:${email}`,
+          },
+        });
+        await getPrisma().user.deleteMany({
+          where: {
+            id: createdUserId,
+            email,
+            emailVerified: null,
+          },
+        });
+      }
+
+      return NextResponse.json(
+        {
+          error:
+            "Unable to send verification code right now. Please try again.",
+        },
+        { status: 503 },
       );
     }
 
