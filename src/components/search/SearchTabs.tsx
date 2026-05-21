@@ -111,42 +111,38 @@ export function SearchTabs({
             <div className="hidden items-center justify-center border-slate-200 px-2 md:flex lg:border-r"><span className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-100 bg-violet-50 text-[#6d28d9]"><Repeat2 size={18} /></span></div>
             <SearchField label={t.to} name="destination" helper={t.cityAirport} placeholder={t.to} />
             {compactHero ? (
-              <>
-                <div ref={calendarRef} className="relative border-t border-slate-200 p-4 lg:border-l lg:border-t-0">
-                  <DateDisplay label={t.departure} value={departureDate} helper={t.selectDate} onClick={() => { setActiveDateField("departureDate"); setCalendarOpen(true); }} />
-                  <input type="hidden" name="departureDate" value={departureDate} required />
-                  {calendarOpen ? (
-                    <FlightCalendar
-                      monthCursor={monthCursor}
-                      setMonthCursor={setMonthCursor}
-                      departureDate={departureDate}
-                      returnDate={returnDate}
-                      activeField={activeDateField}
-                      onSelect={(value) => {
-                        if (activeDateField === "departureDate") {
+              <div ref={calendarRef} className="relative border-t border-slate-200 p-4 lg:border-l lg:border-t-0">
+                <DateDisplay label={t.departure} value={departureDate} helper={t.selectDate} onClick={() => { setActiveDateField("departureDate"); setCalendarOpen(true); }} />
+                <input type="hidden" name="departureDate" value={departureDate} required />
+                <DateDisplay label={t.return} value={returnDate} helper={tripType === "one-way" ? t.notNeeded : t.selectDate} disabled={tripType === "one-way"} onClick={() => { if (tripType !== "one-way") { setActiveDateField("returnDate"); setCalendarOpen(true); } }} className="mt-3 border-t border-slate-200 pt-3" />
+                <input type="hidden" name="returnDate" value={tripType === "one-way" ? "" : returnDate} />
+                {calendarOpen ? (
+                  <FlightCalendar
+                    monthCursor={monthCursor}
+                    setMonthCursor={setMonthCursor}
+                    departureDate={departureDate}
+                    returnDate={returnDate}
+                    activeField={activeDateField}
+                    onSelect={(value) => {
+                      if (activeDateField === "departureDate") {
+                        setDepartureDate(value);
+                        if (!returnDate || returnDate < value) setReturnDate("");
+                        setActiveDateField("returnDate");
+                      } else {
+                        if (!departureDate || value < departureDate) {
                           setDepartureDate(value);
-                          if (!returnDate || returnDate < value) setReturnDate("");
+                          setReturnDate("");
                           setActiveDateField("returnDate");
-                        } else {
-                          if (!departureDate || value < departureDate) {
-                            setDepartureDate(value);
-                            setReturnDate("");
-                            setActiveDateField("returnDate");
-                            return;
-                          }
-                          setReturnDate(value);
-                          setCalendarOpen(false);
-                          setActiveDateField(null);
+                          return;
                         }
-                      }}
-                    />
-                  ) : null}
-                </div>
-                <div className="border-t border-slate-200 p-4 lg:border-l lg:border-t-0">
-                  <DateDisplay label={t.return} value={returnDate} helper={tripType === "one-way" ? t.notNeeded : t.selectDate} disabled={tripType === "one-way"} onClick={() => { if (tripType !== "one-way") { setActiveDateField("returnDate"); setCalendarOpen(true); } }} />
-                  <input type="hidden" name="returnDate" value={tripType === "one-way" ? "" : returnDate} />
-                </div>
-              </>
+                        setReturnDate(value);
+                        setCalendarOpen(false);
+                        setActiveDateField(null);
+                      }
+                    }}
+                  />
+                ) : null}
+              </div>
             ) : (
               <>
                 <SearchField label={t.departure} name="departureDate" helper={t.selectDate} type="date" icon={<CalendarDays size={17} />} />
