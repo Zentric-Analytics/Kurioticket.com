@@ -93,13 +93,17 @@ export function AppHeader() {
     [t]
   );
 
-  const handleLanguageSelect = (code: (typeof locales)[number]["code"]) => {
+  const handleLanguageSelect = (
+    code: (typeof locales)[number]["code"]
+  ) => {
     setLocale(code);
     setLanguageOpen(false);
     setLanguageQuery("");
   };
 
-  const handleMobileNavKey = (event: React.KeyboardEvent<HTMLButtonElement>) => {
+  const handleMobileNavKey = (
+    event: React.KeyboardEvent<HTMLButtonElement>
+  ) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       setOpen((value) => !value);
@@ -121,10 +125,13 @@ export function AppHeader() {
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6d28d9] text-white">
               <Sparkles size={24} />
             </span>
+
             Curioticket
           </Link>
 
-          <div className="hidden items-center gap-4 md:flex">
+          <div className="hidden items-center gap-3 md:flex">
+            <RegionSelector />
+
             <div className="relative" ref={languageRef}>
               <Button
                 variant="ghost"
@@ -135,8 +142,12 @@ export function AppHeader() {
                 aria-expanded={languageOpen}
                 aria-label={t.selectLanguage}
               >
-                <span className="text-sm font-semibold text-slate-900">
-                  {selectedLanguage?.flag} {selectedLanguage?.label}
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  <span aria-hidden="true">
+                    {selectedLanguage?.flag}
+                  </span>
+
+                  <span>{selectedLanguage?.label}</span>
                 </span>
 
                 <ChevronDown size={14} className="text-slate-600" />
@@ -180,7 +191,9 @@ export function AppHeader() {
                             key={option.code}
                             role="menuitemradio"
                             aria-checked={active}
-                            onClick={() => handleLanguageSelect(option.code)}
+                            onClick={() =>
+                              handleLanguageSelect(option.code)
+                            }
                             className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors ${
                               active
                                 ? "border-violet-300 bg-violet-50"
@@ -188,17 +201,23 @@ export function AppHeader() {
                             }`}
                           >
                             <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                              <span aria-hidden="true">{option.flag}</span>
+                              <span aria-hidden="true">
+                                {option.flag}
+                              </span>
+
                               <span>{option.label}</span>
                             </span>
 
-                            <span className="text-xs text-slate-500">
-                              {option.code}
-                            </span>
+                            <span className="inline-flex items-center gap-2 text-xs text-slate-500">
+                              <span>{option.code}</span>
 
-                            {active ? (
-                              <Check size={16} className="text-violet-600" />
-                            ) : null}
+                              {active ? (
+                                <Check
+                                  size={16}
+                                  className="text-violet-600"
+                                />
+                              ) : null}
+                            </span>
                           </button>
                         );
                       })}
@@ -207,8 +226,6 @@ export function AppHeader() {
                 </>
               )}
             </div>
-
-            <RegionSelector />
 
             {isSignedIn ? (
               <>
@@ -240,6 +257,7 @@ export function AppHeader() {
                   className="h-11 gap-2 rounded-full px-4 text-base"
                 >
                   <LogOut size={16} />
+
                   {t.logout}
                 </Button>
               </>
@@ -304,6 +322,25 @@ export function AppHeader() {
 
       {open && (
         <div className="fixed inset-x-0 top-[104px] z-30 bg-white/95 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.12)] backdrop-blur-md md:hidden">
+          <div className="mb-4 flex items-center gap-2">
+            <RegionSelector />
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLanguageOpen((value) => !value)}
+              className="h-11 gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm"
+            >
+              <span aria-hidden="true">
+                {selectedLanguage?.flag}
+              </span>
+
+              <span className="text-sm font-semibold">
+                {selectedLanguage?.label}
+              </span>
+            </Button>
+          </div>
+
           <nav className="grid gap-2">
             {navItems.map((item) => (
               <Link
