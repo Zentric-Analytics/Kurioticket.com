@@ -185,3 +185,118 @@
     </form>
   </>
 ) : (
+  <form
+    className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(160px,1.2fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,0.8fr)_minmax(90px,0.7fr)_140px]"
+    onSubmit={(event) => {
+      event.preventDefault();
+
+      const params =
+        new URLSearchParams({
+          destination,
+          checkIn,
+          checkOut,
+          guests,
+          rooms,
+        });
+
+      router.push(
+        `/hotels/results?${params.toString()}`
+      );
+    }}
+  >
+    <input
+      value={destination}
+      onChange={(e) =>
+        setDestination(
+          e.target.value
+        )
+      }
+      required
+      placeholder={
+        t.destination ||
+        "Destination"
+      }
+      className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+    />
+
+    <input
+      type="date"
+      value={checkIn}
+      onChange={(e) =>
+        setCheckIn(
+          e.target.value
+        )
+      }
+      required
+      className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+    />
+
+    <input
+      type="date"
+      value={checkOut}
+      onChange={(e) =>
+        setCheckOut(
+          e.target.value
+        )
+      }
+      required
+      className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+    />
+
+    <select
+      value={guests}
+      onChange={(e) =>
+        setGuests(
+          e.target.value
+        )
+      }
+      className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+    >
+      <option value="1">
+        1 {t.adults || "Adults"}
+      </option>
+
+      <option value="2">
+        2 {t.adults || "Adults"}
+      </option>
+
+      <option value="3">
+        3 {t.adults || "Adults"}
+      </option>
+
+      <option value="4">
+        4 {t.adults || "Adults"}
+      </option>
+    </select>
+
+    <select
+      value={rooms}
+      onChange={(e) =>
+        setRooms(
+          e.target.value
+        )
+      }
+      className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+    >
+      <option value="1">
+        1 {t.room || "Room"}
+      </option>
+
+      <option value="2">
+        2 {t.rooms || "Rooms"}
+      </option>
+
+      <option value="3">
+        3 {t.rooms || "Rooms"}
+      </option>
+    </select>
+
+    <Button
+      type="submit"
+      className="h-11 rounded-lg bg-[#5b21d6] font-bold text-white hover:bg-[#4c1d95]"
+    >
+      {t.searchHotels ||
+        "Search Hotels"}
+    </Button>
+  </form>
+)}

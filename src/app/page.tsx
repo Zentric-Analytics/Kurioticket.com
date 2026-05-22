@@ -16,8 +16,10 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
+
 import {
   LANGUAGE_CHANGE_EVENT,
+  getDefaultLanguage,
   getLanguageFromStorage,
   getUiTranslations,
   type LanguageCode,
@@ -64,8 +66,10 @@ const i18n = {
     room: "Room",
     searchHotelsInstead: "Search hotels instead",
   },
+
   fr: {
-    heroTitle: "Trouvez des vols pas chers rapidement",
+    heroTitle:
+      "Trouvez des vols pas chers rapidement",
     heroSubtitle:
       "Recherchez des centaines de compagnies aériennes et de sites de voyage pour trouver les meilleures offres.",
     assurances: [
@@ -76,8 +80,10 @@ const i18n = {
     ],
     flights: "Vols",
     hotels: "Hôtels",
-    searchFlights: "Rechercher des vols",
-    searchHotels: "Rechercher des hôtels",
+    searchFlights:
+      "Rechercher des vols",
+    searchHotels:
+      "Rechercher des hôtels",
     from: "Départ",
     to: "Arrivée",
     departure: "Départ",
@@ -87,25 +93,36 @@ const i18n = {
     checkOut: "Départ",
     guests: "Voyageurs",
     rooms: "Chambres",
-    cityAirport: "Ville ou aéroport",
-    cityHotelArea: "Ville ou zone hôtelière",
-    selectDate: "Choisir une date",
+    cityAirport:
+      "Ville ou aéroport",
+    cityHotelArea:
+      "Ville ou zone hôtelière",
+    selectDate:
+      "Choisir une date",
     notNeeded: "Non requis",
-    travelersClass: "Voyageurs et classe",
+    travelersClass:
+      "Voyageurs et classe",
     oneTraveler: "1 voyageur",
-    twoTravelers: "2 voyageurs",
-    threeTravelers: "3 voyageurs",
-    fourTravelers: "4 voyageurs",
+    twoTravelers:
+      "2 voyageurs",
+    threeTravelers:
+      "3 voyageurs",
+    fourTravelers:
+      "4 voyageurs",
     economy: "Économie",
-    premiumEconomy: "Éco premium",
+    premiumEconomy:
+      "Éco premium",
     business: "Affaires",
     first: "Première",
     adults: "Adultes",
     room: "Chambre",
-    searchHotelsInstead: "Rechercher des hôtels",
+    searchHotelsInstead:
+      "Rechercher des hôtels",
   },
+
   es: {
-    heroTitle: "Encuentra vuelos baratos rápido",
+    heroTitle:
+      "Encuentra vuelos baratos rápido",
     heroSubtitle:
       "Busca en cientos de aerolíneas y sitios de viaje para encontrar las mejores ofertas.",
     assurances: [
@@ -116,8 +133,10 @@ const i18n = {
     ],
     flights: "Vuelos",
     hotels: "Hoteles",
-    searchFlights: "Buscar vuelos",
-    searchHotels: "Buscar hoteles",
+    searchFlights:
+      "Buscar vuelos",
+    searchHotels:
+      "Buscar hoteles",
     from: "Desde",
     to: "Hacia",
     departure: "Salida",
@@ -127,25 +146,38 @@ const i18n = {
     checkOut: "Salida",
     guests: "Huéspedes",
     rooms: "Habitaciones",
-    cityAirport: "Ciudad o aeropuerto",
-    cityHotelArea: "Ciudad o zona hotelera",
-    selectDate: "Selecciona fecha",
-    notNeeded: "No necesario",
-    travelersClass: "Viajeros y clase",
-    oneTraveler: "1 viajero",
-    twoTravelers: "2 viajeros",
-    threeTravelers: "3 viajeros",
-    fourTravelers: "4 viajeros",
+    cityAirport:
+      "Ciudad o aeropuerto",
+    cityHotelArea:
+      "Ciudad o zona hotelera",
+    selectDate:
+      "Selecciona fecha",
+    notNeeded:
+      "No necesario",
+    travelersClass:
+      "Viajeros y clase",
+    oneTraveler:
+      "1 viajero",
+    twoTravelers:
+      "2 viajeros",
+    threeTravelers:
+      "3 viajeros",
+    fourTravelers:
+      "4 viajeros",
     economy: "Económica",
-    premiumEconomy: "Económica premium",
+    premiumEconomy:
+      "Económica premium",
     business: "Business",
     first: "Primera",
     adults: "Adultos",
     room: "Habitación",
-    searchHotelsInstead: "Buscar hoteles",
+    searchHotelsInstead:
+      "Buscar hoteles",
   },
+
   ar: {
-    heroTitle: "اعثر على رحلات رخيصة بسرعة",
+    heroTitle:
+      "اعثر على رحلات رخيصة بسرعة",
     heroSubtitle:
       "ابحث بين مئات شركات الطيران ومواقع السفر للعثور على أفضل العروض.",
     assurances: [
@@ -156,38 +188,57 @@ const i18n = {
     ],
     flights: "رحلات",
     hotels: "فنادق",
-    searchFlights: "ابحث عن رحلات",
-    searchHotels: "ابحث عن فنادق",
+    searchFlights:
+      "ابحث عن رحلات",
+    searchHotels:
+      "ابحث عن فنادق",
     from: "من",
     to: "إلى",
     departure: "المغادرة",
     return: "العودة",
     destination: "الوجهة",
-    checkIn: "تسجيل الوصول",
-    checkOut: "تسجيل المغادرة",
+    checkIn:
+      "تسجيل الوصول",
+    checkOut:
+      "تسجيل المغادرة",
     guests: "الضيوف",
     rooms: "الغرف",
-    cityAirport: "مدينة أو مطار",
-    cityHotelArea: "مدينة أو منطقة فندقية",
-    selectDate: "اختر التاريخ",
-    notNeeded: "غير مطلوب",
-    travelersClass: "المسافرون والدرجة",
-    oneTraveler: "مسافر 1",
-    twoTravelers: "مسافران",
-    threeTravelers: "3 مسافرين",
-    fourTravelers: "4 مسافرين",
+    cityAirport:
+      "مدينة أو مطار",
+    cityHotelArea:
+      "مدينة أو منطقة فندقية",
+    selectDate:
+      "اختر التاريخ",
+    notNeeded:
+      "غير مطلوب",
+    travelersClass:
+      "المسافرون والدرجة",
+    oneTraveler:
+      "مسافر 1",
+    twoTravelers:
+      "مسافران",
+    threeTravelers:
+      "3 مسافرين",
+    fourTravelers:
+      "4 مسافرين",
     economy: "اقتصادية",
-    premiumEconomy: "اقتصادية ممتازة",
-    business: "رجال الأعمال",
+    premiumEconomy:
+      "اقتصادية ممتازة",
+    business:
+      "رجال الأعمال",
     first: "الأولى",
     adults: "بالغون",
     room: "غرفة",
-    searchHotelsInstead: "ابحث عن فنادق",
+    searchHotelsInstead:
+      "ابحث عن فنادق",
   },
 } as const;
 
-function getI18nLanguageKey(language: LanguageCode): keyof typeof i18n {
-  const baseLanguage = String(language).split("-")[0];
+function getI18nLanguageKey(
+  language: LanguageCode
+): keyof typeof i18n {
+  const baseLanguage =
+    String(language).split("-")[0];
 
   return baseLanguage in i18n
     ? (baseLanguage as keyof typeof i18n)
@@ -207,7 +258,8 @@ const destinations = [
   },
   {
     city: "London",
-    country: "United Kingdom",
+    country:
+      "United Kingdom",
     price: "$380",
     image:
       "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=700&q=80",
@@ -236,28 +288,51 @@ const destinations = [
 ];
 
 export default function Home() {
-  const [language, setLanguage] = useState<LanguageCode>(() =>
-    getLanguageFromStorage()
-  );
+  const [language, setLanguage] =
+    useState<LanguageCode>(
+      getDefaultLanguage()
+    );
 
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterMessage, setNewsletterMessage] = useState("");
+  const [
+    newsletterEmail,
+    setNewsletterEmail,
+  ] = useState("");
+
+  const [
+    newsletterMessage,
+    setNewsletterMessage,
+  ] = useState("");
 
   useEffect(() => {
     const syncLanguage = () => {
-      setLanguage(getLanguageFromStorage());
+      setLanguage(
+        getLanguageFromStorage()
+      );
     };
 
-    window.addEventListener(LANGUAGE_CHANGE_EVENT, syncLanguage);
+    syncLanguage();
+
+    window.addEventListener(
+      LANGUAGE_CHANGE_EVENT,
+      syncLanguage
+    );
 
     return () => {
-      window.removeEventListener(LANGUAGE_CHANGE_EVENT, syncLanguage);
+      window.removeEventListener(
+        LANGUAGE_CHANGE_EVENT,
+        syncLanguage
+      );
     };
   }, []);
 
   const t = useMemo(() => {
-    const pageT = i18n[getI18nLanguageKey(language)];
-    const sharedT = getUiTranslations(language);
+    const pageT =
+      i18n[
+        getI18nLanguageKey(language)
+      ];
+
+    const sharedT =
+      getUiTranslations(language);
 
     return {
       ...sharedT,
@@ -265,14 +340,19 @@ export default function Home() {
     };
   }, [language]);
 
-  function handleNewsletterSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleNewsletterSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     if (!newsletterEmail.trim()) {
       return;
     }
 
-    setNewsletterMessage("Thanks! We’ll keep you posted with travel deals.");
+    setNewsletterMessage(
+      "Thanks! We’ll keep you posted with travel deals."
+    );
+
     setNewsletterEmail("");
   }
 
@@ -291,7 +371,9 @@ export default function Home() {
               sizes="100vw"
               className="object-cover object-center"
             />
+
             <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.97)_4%,rgba(255,255,255,0.93)_37%,rgba(255,255,255,0.62)_58%,rgba(255,255,255,0.12)_100%)]" />
+
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
 
@@ -299,7 +381,8 @@ export default function Home() {
             <div className="grid min-h-[390px] content-start gap-4 pb-5 sm:min-h-[420px] sm:gap-5 sm:pb-6 lg:min-h-[450px] lg:max-w-[1000px]">
               <div className="space-y-3 pt-2">
                 <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/85 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
-                  {t.heroBadge || "Trusted travel search platform"}
+                  {t.heroBadge ||
+                    "Trusted travel search platform"}
                 </p>
 
                 <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
@@ -311,20 +394,30 @@ export default function Home() {
                 </p>
 
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {t.assurances.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-[#d9ccff] bg-white/90 px-3 py-1 text-xs font-bold text-[#5b21d6]"
-                    >
-                      {item}
-                    </span>
-                  ))}
+                  {t.assurances.map(
+                    (item) => (
+                      <span
+                        key={item}
+                        className="rounded-full border border-[#d9ccff] bg-white/90 px-3 py-1 text-xs font-bold text-[#5b21d6]"
+                      >
+                        {item}
+                      </span>
+                    )
+                  )}
                 </div>
               </div>
 
               <div className="relative z-10 mt-2 w-full max-w-[1080px]">
                 <div className="rounded-2xl border border-white/85 bg-white/95 p-2 shadow-[0_24px_65px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:rounded-3xl sm:p-3">
-                  <SearchTabs t={t as Record<string, string>} compactHero />
+                  <SearchTabs
+                    t={
+                      t as Record<
+                        string,
+                        string
+                      >
+                    }
+                    compactHero
+                  />
                 </div>
               </div>
             </div>
@@ -335,20 +428,28 @@ export default function Home() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
               [
-                t.featuresMillionsTitle || "Millions of Choices",
-                t.featuresMillionsBody || "Flights and hotels worldwide",
+                t.featuresMillionsTitle ||
+                  "Millions of Choices",
+                t.featuresMillionsBody ||
+                  "Flights and hotels worldwide",
               ],
               [
-                t.featuresFlexibleTitle || "Flexible Options",
-                t.featuresFlexibleBody || "Choose what fits your trip",
+                t.featuresFlexibleTitle ||
+                  "Flexible Options",
+                t.featuresFlexibleBody ||
+                  "Choose what fits your trip",
               ],
               [
-                t.featuresSecureTitle || "Secure Payments",
-                t.featuresSecureBody || "100% safe and secure",
+                t.featuresSecureTitle ||
+                  "Secure Payments",
+                t.featuresSecureBody ||
+                  "100% safe and secure",
               ],
               [
-                t.featuresDealsTitle || "Great Deals",
-                t.featuresDealsBody || "Compare more before you buy",
+                t.featuresDealsTitle ||
+                  "Great Deals",
+                t.featuresDealsBody ||
+                  "Compare more before you buy",
               ],
             ].map(([title, body]) => (
               <article
@@ -370,7 +471,8 @@ export default function Home() {
         <section className="page-shell py-5">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-black tracking-normal text-slate-950">
-              {t.popularDestinations || "Popular Destinations"}
+              {t.popularDestinations ||
+                "Popular Destinations"}
             </h2>
 
             <LinkButton
@@ -379,41 +481,66 @@ export default function Home() {
               size="sm"
               className="hidden text-[#6d28d9] sm:inline-flex"
             >
-              {t.viewAllDestinations || "View all destinations"}
+              {t.viewAllDestinations ||
+                "View all destinations"}
+
               <ArrowRight size={16} />
             </LinkButton>
           </div>
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-            {destinations.map((destination) => (
-              <DestinationCard key={destination.city} {...destination} />
-            ))}
+            {destinations.map(
+              (destination) => (
+                <DestinationCard
+                  key={
+                    destination.city
+                  }
+                  {...destination}
+                />
+              )
+            )}
           </div>
         </section>
 
         <section className="page-shell grid gap-5 py-9 lg:grid-cols-2">
           <PromoPanel
             tone="violet"
-            title={t.promoFlightsTitle || "Amazing flight deals just for you"}
+            title={
+              t.promoFlightsTitle ||
+              "Amazing flight deals just for you"
+            }
             body={
               t.promoFlightsBody ||
               "Unlock exclusive offers on domestic and international flights."
             }
-            cta={t.promoFlightsCta || "Explore Flight Deals"}
+            cta={
+              t.promoFlightsCta ||
+              "Explore Flight Deals"
+            }
             href="/deals"
-            icon={<Plane size={74} />}
+            icon={
+              <Plane size={74} />
+            }
           />
 
           <PromoPanel
             tone="amber"
-            title={t.promoHotelsTitle || "Find your perfect hotel stay"}
+            title={
+              t.promoHotelsTitle ||
+              "Find your perfect hotel stay"
+            }
             body={
               t.promoHotelsBody ||
               "From budget to luxury, find hotels that suit your style and budget."
             }
-            cta={t.promoHotelsCta || "Explore Hotel Deals"}
+            cta={
+              t.promoHotelsCta ||
+              "Explore Hotel Deals"
+            }
             href="/hotels/results"
-            icon={<Hotel size={74} />}
+            icon={
+              <Hotel size={74} />
+            }
           />
         </section>
 
@@ -433,16 +560,25 @@ export default function Home() {
 
             <form
               className="flex flex-col gap-3 sm:flex-row"
-              onSubmit={handleNewsletterSubmit}
+              onSubmit={
+                handleNewsletterSubmit
+              }
             >
               <input
                 type="email"
-                value={newsletterEmail}
-                onChange={(event) =>
-                  setNewsletterEmail(event.target.value)
+                value={
+                  newsletterEmail
+                }
+                onChange={(
+                  event
+                ) =>
+                  setNewsletterEmail(
+                    event.target.value
+                  )
                 }
                 placeholder={
-                  t.newsletterPlaceholder || "Enter your email address"
+                  t.newsletterPlaceholder ||
+                  "Enter your email address"
                 }
                 className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
                 aria-label="Email address"
@@ -453,13 +589,16 @@ export default function Home() {
                 type="submit"
                 className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
               >
-                {t.subscribe || "Subscribe"}
+                {t.subscribe ||
+                  "Subscribe"}
               </button>
             </form>
 
             {newsletterMessage ? (
               <p className="text-sm font-semibold text-[#4c1d95]">
-                {newsletterMessage}
+                {
+                  newsletterMessage
+                }
               </p>
             ) : null}
           </div>
@@ -504,9 +643,13 @@ function DestinationCard({
         </button>
 
         <div className="absolute bottom-3 left-3 text-white">
-          <h3 className="text-xl font-black">{city}</h3>
+          <h3 className="text-xl font-black">
+            {city}
+          </h3>
 
-          <p className="text-sm font-semibold">{country}</p>
+          <p className="text-sm font-semibold">
+            {country}
+          </p>
         </div>
       </div>
 
@@ -535,12 +678,15 @@ function PromoPanel({
   href: string;
   icon: ReactNode;
 }) {
-  const isViolet = tone === "violet";
+  const isViolet =
+    tone === "violet";
 
   return (
     <article
       className={`relative min-h-56 overflow-hidden rounded-xl p-8 ${
-        isViolet ? "bg-[#f1e8ff]" : "bg-[#fff3e3]"
+        isViolet
+          ? "bg-[#f1e8ff]"
+          : "bg-[#fff3e3]"
       }`}
     >
       <div className="relative z-10 max-w-xs">
@@ -563,6 +709,7 @@ function PromoPanel({
           }`}
         >
           {cta}
+
           <ArrowRight size={16} />
         </LinkButton>
       </div>

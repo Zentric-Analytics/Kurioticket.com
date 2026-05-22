@@ -17,6 +17,7 @@ import {
 
 import {
   applyLanguageToDocument,
+  getDefaultLanguage,
   getFlagEmoji,
   getLanguageFromStorage,
   getLanguageOption,
@@ -33,14 +34,15 @@ import { Button, LinkButton } from "@/components/ui/Button";
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
-  const [languageOpen, setLanguageOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] =
+    useState(false);
 
   const [language, setLanguage] =
     useState<LanguageCode>(() => {
       try {
         return getLanguageFromStorage();
       } catch {
-        return "en" as LanguageCode;
+        return getDefaultLanguage();
       }
     });
 
@@ -127,9 +129,7 @@ export function AppHeader() {
     const onClickOutside = (
       event: MouseEvent
     ) => {
-      if (
-        !languageRef.current
-      ) {
+      if (!languageRef.current) {
         return;
       }
 
@@ -159,9 +159,7 @@ export function AppHeader() {
     const onKeyDown = (
       event: KeyboardEvent
     ) => {
-      if (
-        event.key === "Escape"
-      ) {
+      if (event.key === "Escape") {
         setLanguageOpen(false);
         setOpen(false);
       }
@@ -219,17 +217,15 @@ export function AppHeader() {
         </Link>
 
         <nav className="hidden items-center gap-2 lg:flex">
-          {navItems.map(
-            (item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-md px-3 py-2 text-sm font-bold text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
-              >
-                {item.label}
-              </Link>
-            )
-          )}
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-md px-3 py-2 text-sm font-bold text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
@@ -242,8 +238,7 @@ export function AppHeader() {
               size="sm"
               onClick={() =>
                 setLanguageOpen(
-                  (value) =>
-                    !value
+                  (value) => !value
                 )
               }
               className="h-10 gap-2 rounded-full border border-slate-200/80 bg-white px-3.5 shadow-sm"
@@ -277,30 +272,20 @@ export function AppHeader() {
                 className="absolute right-0 top-12 z-50 w-[min(92vw,660px)] rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_20px_55px_-24px_rgba(15,23,42,0.4)]"
               >
                 <h2 className="text-base font-black text-slate-950">
-                  {
-                    t.selectLanguage
-                  }
+                  {t.selectLanguage}
                 </h2>
 
                 <div className="mt-3">
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                    {
-                      t.suggestedLanguages
-                    }
+                    {t.suggestedLanguages}
                   </p>
 
                   <div className="grid gap-2 sm:grid-cols-2">
                     {suggestedLanguages.map(
-                      (
-                        option
-                      ) => (
+                      (option) => (
                         <LanguageOptionRow
-                          key={
-                            option.code
-                          }
-                          option={
-                            option
-                          }
+                          key={option.code}
+                          option={option}
                           selected={
                             option.code ===
                             language
@@ -316,23 +301,15 @@ export function AppHeader() {
 
                 <div className="mt-4 border-t border-slate-200 pt-4">
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                    {
-                      t.allLanguages
-                    }
+                    {t.allLanguages}
                   </p>
 
                   <div className="grid max-h-[320px] gap-2 overflow-auto pr-1 sm:grid-cols-2">
                     {languageOptions.map(
-                      (
-                        option
-                      ) => (
+                      (option) => (
                         <LanguageOptionRow
-                          key={
-                            option.code
-                          }
-                          option={
-                            option
-                          }
+                          key={option.code}
+                          option={option}
                           selected={
                             option.code ===
                             language
@@ -369,9 +346,7 @@ export function AppHeader() {
                 size="sm"
                 className="gap-2"
               >
-                <UserCircle
-                  size={22}
-                />
+                <UserCircle size={22} />
                 {t.dashboard}
               </LinkButton>
 
@@ -381,14 +356,11 @@ export function AppHeader() {
                 className="gap-2"
                 onClick={() =>
                   signOut({
-                    callbackUrl:
-                      "/",
+                    callbackUrl: "/",
                   })
                 }
               >
-                <LogOut
-                  size={18}
-                />
+                <LogOut size={18} />
                 {t.logout}
               </Button>
             </>
@@ -400,9 +372,7 @@ export function AppHeader() {
                 size="sm"
                 className="gap-2"
               >
-                <UserCircle
-                  size={22}
-                />
+                <UserCircle size={22} />
                 {t.login}
               </LinkButton>
 
@@ -429,105 +399,6 @@ export function AppHeader() {
           <Menu size={20} />
         </Button>
       </div>
-
-      {open && (
-        <>
-          <div
-            className="fixed inset-0 z-50 bg-navy/40 md:hidden"
-            onClick={() =>
-              setOpen(false)
-            }
-          />
-
-          <aside className="fixed right-0 top-0 z-50 h-dvh w-[min(86vw,360px)] border-l bg-white p-5 shadow-xl md:hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-base font-bold text-navy">
-                {t.menu}
-              </span>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-10 w-10 px-0"
-                aria-label="Close menu"
-                onClick={() =>
-                  setOpen(false)
-                }
-              >
-                <X size={20} />
-              </Button>
-            </div>
-
-            <nav className="mt-6 grid gap-2">
-              {navItems.map(
-                (item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() =>
-                      setOpen(false)
-                    }
-                    className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
-                  >
-                    {item.label}
-                  </Link>
-                )
-              )}
-
-              {isSignedIn ? (
-                <>
-                  <Link
-                    href="/dashboard"
-                    onClick={() =>
-                      setOpen(false)
-                    }
-                    className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
-                  >
-                    {t.dashboard}
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpen(false);
-
-                      signOut({
-                        callbackUrl:
-                          "/",
-                      });
-                    }}
-                    className="rounded-md bg-teal px-3 py-3 text-left text-base font-semibold text-white"
-                  >
-                    {t.logout}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/auth/signin"
-                    onClick={() =>
-                      setOpen(false)
-                    }
-                    className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
-                  >
-                    {t.login}
-                  </Link>
-
-                  <Link
-                    href="/auth/signup"
-                    onClick={() =>
-                      setOpen(false)
-                    }
-                    className="rounded-md bg-teal px-3 py-3 text-base font-semibold text-white"
-                  >
-                    {t.signUp}
-                  </Link>
-                </>
-              )}
-            </nav>
-          </aside>
-        </>
-      )}
     </header>
   );
 }

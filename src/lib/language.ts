@@ -467,10 +467,83 @@ export function getDefaultLanguage(): LanguageCode {
   return "en-US";
 }
 
+export function normalizeLanguage(
+  value?: string | null
+): LanguageCode {
+  if (!value) {
+    return getDefaultLanguage();
+  }
+
+  const trimmed = value.trim();
+
+  if (!trimmed) {
+    return getDefaultLanguage();
+  }
+
+  const exactMatch =
+    languageOptions.find(
+      (option) =>
+        option.code === trimmed
+    );
+
+  if (exactMatch) {
+    return exactMatch.code;
+  }
+
+  const upper =
+    trimmed.toUpperCase();
+
+  const lower =
+    trimmed.toLowerCase();
+
+  if (
+    upper === "EN" ||
+    lower === "en" ||
+    lower === "en-us"
+  ) {
+    return "en-US";
+  }
+
+  if (
+    upper === "GB" ||
+    lower === "en-gb"
+  ) {
+    return "en-GB";
+  }
+
+  if (
+    upper === "FR" ||
+    lower === "fr" ||
+    lower === "fr-fr"
+  ) {
+    return "fr-FR";
+  }
+
+  if (
+    upper === "ES" ||
+    lower === "es" ||
+    lower === "es-es"
+  ) {
+    return "es-ES";
+  }
+
+  if (
+    upper === "AR" ||
+    lower === "ar" ||
+    lower === "ar-sa"
+  ) {
+    return "ar-SA";
+  }
+
+  return getDefaultLanguage();
+}
+
 export function getLanguageOption(
   code?: string | null
 ) {
-  if (!code) return undefined;
+  if (!code) {
+    return undefined;
+  }
 
   return languageOptions.find(
     (option) =>
@@ -488,12 +561,17 @@ export function getLanguageFromStorage(): LanguageCode {
       LANGUAGE_STORAGE_KEY
     );
 
-  const option =
-    getLanguageOption(value);
+  const normalized =
+    normalizeLanguage(value);
 
-  return option
-    ? option.code
-    : getDefaultLanguage();
+  if (value !== normalized) {
+    window.localStorage.setItem(
+      LANGUAGE_STORAGE_KEY,
+      normalized
+    );
+  }
+
+  return normalized;
 }
 
 export function getTranslationLanguage(
@@ -530,7 +608,9 @@ export function applyLanguageToDocument(
       getDefaultLanguage()
     );
 
-  if (!option) return;
+  if (!option) {
+    return;
+  }
 
   document.documentElement.lang =
     option.code;
