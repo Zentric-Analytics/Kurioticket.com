@@ -64,11 +64,25 @@ export function Footer() {
           </h2>
 
           <div className="mt-3 grid gap-2 text-sm text-slate-300">
-            <Link href="/flights/results">{t.flights}</Link>
-            <Link href="/hotels/results">{t.hotels}</Link>
-            <Link href="/pricing">{t.premium}</Link>
-            <Link href="/support">{t.support}</Link>
-            <Link href="/dashboard">{t.dashboard}</Link>
+            <Link href="/flights/results">
+              {t.flights}
+            </Link>
+
+            <Link href="/hotels/results">
+              {t.hotels}
+            </Link>
+
+            <Link href="/pricing">
+              {t.premium}
+            </Link>
+
+            <Link href="/support">
+              {t.support}
+            </Link>
+
+            <Link href="/dashboard">
+              {t.dashboard}
+            </Link>
           </div>
         </div>
 
@@ -78,7 +92,9 @@ export function Footer() {
           </h2>
 
           <div className="mt-3 grid gap-2 text-sm text-slate-300">
-            <Link href="/legal">{t.legalCenter}</Link>
+            <Link href="/legal">
+              {t.legalCenter}
+            </Link>
 
             {legalDocuments.slice(0, 5).map((document) => (
               <Link
