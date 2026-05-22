@@ -27,62 +27,93 @@ import {
   setLanguageInStorage,
   type LanguageCode,
 } from "@/lib/language";
+
 import { RegionSelector } from "@/components/region/RegionSelector";
 import { Button, LinkButton } from "@/components/ui/Button";
-
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
+
   const [language, setLanguage] =
     useState<LanguageCode>(getLanguageFromStorage);
 
   const languageRef = useRef<HTMLDivElement>(null);
 
   const { data: session, status } = useSession();
+
   const isSignedIn =
     status === "authenticated" && Boolean(session?.user);
 
   const selectedLanguage =
     getLanguageOption(language) || languageOptions[0];
 
-  const suggestedLanguages = useMemo(() => getSuggestedLanguages(), []);
-  const t = useMemo(() => getUiTranslations(language), [language]);
+  const suggestedLanguages = useMemo(
+    () => getSuggestedLanguages(),
+    []
+  );
 
-  const navItems = useMemo(() => [
-    { href: "/flights/results", label: t.flights },
-    { href: "/hotels/results", label: t.hotels },
-    { href: "/deals", label: t.deals },
-    { href: "/hotels/tokyo", label: t.destinations },
-    { href: "/guides", label: t.explore },
-    { href: "/support", label: t.support },
-  ], [t]);
+  const t = useMemo(
+    () => getUiTranslations(language),
+    [language]
+  );
+
+  const navItems = useMemo(
+    () => [
+      { href: "/flights/results", label: t.flights },
+      { href: "/hotels/results", label: t.hotels },
+      { href: "/deals", label: t.deals },
+      { href: "/hotels/tokyo", label: t.destinations },
+      { href: "/guides", label: t.explore },
+      { href: "/support", label: t.support },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     applyLanguageToDocument(language);
   }, [language]);
 
   useEffect(() => {
-    const onChange = () => setLanguage(getLanguageFromStorage());
-    window.addEventListener(LANGUAGE_CHANGE_EVENT, onChange as EventListener);
+    const onChange = () => {
+      setLanguage(getLanguageFromStorage());
+    };
+
+    window.addEventListener(
+      LANGUAGE_CHANGE_EVENT,
+      onChange as EventListener
+    );
+
     return () => {
-      window.removeEventListener(LANGUAGE_CHANGE_EVENT, onChange as EventListener);
+      window.removeEventListener(
+        LANGUAGE_CHANGE_EVENT,
+        onChange as EventListener
+      );
     };
   }, []);
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
       if (!languageRef.current) return;
+
       if (!languageRef.current.contains(event.target as Node)) {
         setLanguageOpen(false);
       }
     };
 
     document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        onClickOutside
+      );
+    };
   }, []);
 
-  const handleLanguageSelect = (code: LanguageCode) => {
+  const handleLanguageSelect = (
+    code: LanguageCode
+  ) => {
     setLanguage(code);
     setLanguageInStorage(code);
     setLanguageOpen(false);
@@ -119,7 +150,9 @@ export function AppHeader() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setLanguageOpen((value) => !value)}
+              onClick={() =>
+                setLanguageOpen((value) => !value)
+              }
               className="h-10 gap-2 rounded-full border border-slate-200/80 bg-white px-3.5 shadow-sm"
               aria-haspopup="dialog"
               aria-expanded={languageOpen}
@@ -128,10 +161,15 @@ export function AppHeader() {
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-sm">
                 {getFlagEmoji(selectedLanguage.flagCode)}
               </span>
+
               <span className="text-sm font-bold text-slate-900">
                 {selectedLanguage.label}
               </span>
-              <ChevronDown size={14} className="text-slate-600" />
+
+              <ChevronDown
+                size={14}
+                className="text-slate-600"
+              />
             </Button>
 
             {languageOpen && (
@@ -144,13 +182,18 @@ export function AppHeader() {
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                     {t.suggestedLanguages}
                   </p>
+
                   <div className="grid gap-2 sm:grid-cols-2">
                     {suggestedLanguages.map((option) => (
                       <LanguageOptionRow
                         key={option.code}
                         option={option}
-                        selected={option.code === language}
-                        onSelect={handleLanguageSelect}
+                        selected={
+                          option.code === language
+                        }
+                        onSelect={
+                          handleLanguageSelect
+                        }
                       />
                     ))}
                   </div>
@@ -160,13 +203,18 @@ export function AppHeader() {
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                     {t.allLanguages}
                   </p>
+
                   <div className="grid max-h-[320px] gap-2 overflow-auto pr-1 sm:grid-cols-2">
                     {languageOptions.map((option) => (
                       <LanguageOptionRow
                         key={option.code}
                         option={option}
-                        selected={option.code === language}
-                        onSelect={handleLanguageSelect}
+                        selected={
+                          option.code === language
+                        }
+                        onSelect={
+                          handleLanguageSelect
+                        }
                       />
                     ))}
                   </div>
@@ -203,7 +251,11 @@ export function AppHeader() {
                 variant="accent"
                 size="sm"
                 className="gap-2"
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={() =>
+                  signOut({
+                    callbackUrl: "/",
+                  })
+                }
               >
                 <LogOut size={18} />
                 {t.logout}
@@ -293,7 +345,10 @@ export function AppHeader() {
                     type="button"
                     onClick={() => {
                       setOpen(false);
-                      signOut({ callbackUrl: "/" });
+
+                      signOut({
+                        callbackUrl: "/",
+                      });
                     }}
                     className="rounded-md bg-teal px-3 py-3 text-left text-base font-semibold text-white"
                   >
@@ -349,12 +404,19 @@ function LanguageOptionRow({
       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-base">
         {getFlagEmoji(option.flagCode)}
       </span>
+
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-slate-900">
           {option.label}
         </p>
-              </div>
-      {selected && <Check size={16} className="text-[#6d28d9]" />}
+      </div>
+
+      {selected && (
+        <Check
+          size={16}
+          className="text-[#6d28d9]"
+        />
+      )}
     </button>
   );
 }
