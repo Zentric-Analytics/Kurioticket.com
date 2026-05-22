@@ -64,10 +64,17 @@ export function FlightResultsClient() {
   const [tripTypeInput, setTripTypeInput] = useState(params.get("tripType") || "round-trip");
   const [originInput, setOriginInput] = useState(params.get("origin") || "");
   const [destinationInput, setDestinationInput] = useState(params.get("destination") || "");
+  const [departureDateInput, setDepartureDateInput] = useState(params.get("departureDate") || "");
+  const [returnDateInput, setReturnDateInput] = useState(params.get("returnDate") || "");
   const [activeSuggest, setActiveSuggest] = useState<"origin" | "destination" | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [activeDatePicker, setActiveDatePicker] = useState<"departure" | "return" | null>(null);
+  const [datePickerPosition, setDatePickerPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
+  const departureWrapRef = useRef<HTMLDivElement | null>(null);
+  const returnWrapRef = useRef<HTMLDivElement | null>(null);
 
   const originSuggestions = useMemo(() => filterAirportOptions(originInput), [originInput]);
   const destinationSuggestions = useMemo(() => filterAirportOptions(destinationInput), [destinationInput]);
@@ -197,6 +204,63 @@ export function FlightResultsClient() {
     };
   }, [activeSuggest]);
 
+  useEffect(() => {
+    function updateDatePickerPosition(target: "departure" | "return") {
+      const viewportPadding = 16;
+      const preferredWidth = 720;
+      const wrap = target === "departure" ? departureWrapRef.current : returnWrapRef.current;
+      const trigger = wrap?.querySelector("button");
+
+      if (!trigger) return;
+
+      const rect = trigger.getBoundingClientRect();
+      const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
+      const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
+      const top = rect.bottom + 8;
+
+      setDatePickerPosition({ top, left, width });
+    }
+
+    if (activeDatePicker) updateDatePickerPosition(activeDatePicker);
+
+    function handleViewportChange() {
+      if (!activeDatePicker) return;
+      updateDatePickerPosition(activeDatePicker);
+    }
+
+    function handleClose(event: MouseEvent) {
+      const target = event.target as Node;
+      const popover = document.getElementById("flight-date-picker-popover");
+      const clickedPopover = popover?.contains(target);
+      const clickedDeparture = departureWrapRef.current?.contains(target);
+      const clickedReturn = returnWrapRef.current?.contains(target);
+
+      if (!clickedPopover && !clickedDeparture && !clickedReturn) {
+        setActiveDatePicker(null);
+        setDatePickerPosition(null);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setActiveDatePicker(null);
+        setDatePickerPosition(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClose);
+    document.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClose);
+      document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [activeDatePicker]);
+
   const filtered = results.filter((flight) => flight.price <= maxPrice && flight.stops <= maxStops);
 
   if (!body) {
@@ -230,7 +294,19 @@ export function FlightResultsClient() {
                     id="tripType"
                     name="tripType"
                     value={tripTypeInput}
-                    onChange={(event) => setTripTypeInput(event.target.value)}
+                    onChange={(event) => {
+                      const nextTripType = event.target.value;
+                      setTripTypeInput(nextTripType);
+
+                      if (nextTripType !== "round-trip") {
+                        setReturnDateInput("");
+
+                        if (activeDatePicker === "return") {
+                          setActiveDatePicker(null);
+                          setDatePickerPosition(null);
+                        }
+                      }
+                    }}
                     className="focus-ring h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
                   >
                     <option value="round-trip">Round-trip</option>
@@ -243,13 +319,15 @@ export function FlightResultsClient() {
                   onSubmit={(event) => {
                     event.preventDefault();
 
+                    if (!departureDateInput || (tripTypeInput === "round-trip" && !returnDateInput)) return;
+
                     const formData = new FormData(event.currentTarget);
                     const nextParams = new URLSearchParams({
                       tripType: tripTypeInput,
                       origin: originInput.trim() || String(formData.get("origin") || ""),
                       destination: destinationInput.trim() || String(formData.get("destination") || ""),
-                      departureDate: String(formData.get("departureDate") || ""),
-                      returnDate: String(formData.get("returnDate") || ""),
+                      departureDate: departureDateInput || String(formData.get("departureDate") || ""),
+                      returnDate: returnDateInput || String(formData.get("returnDate") || ""),
                       travelers: String(formData.get("travelers") || "1"),
                       cabinClass: String(formData.get("cabinClass") || "economy"),
                     });
@@ -257,6 +335,9 @@ export function FlightResultsClient() {
                     router.push(`/flights/results?${nextParams.toString()}`);
                   }}
                 >
+                  <input type="hidden" name="departureDate" value={departureDateInput} />
+                  <input type="hidden" name="returnDate" value={returnDateInput} />
+
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.2fr)_46px_minmax(150px,1.2fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(132px,1fr)_minmax(122px,1fr)] xl:items-center">
                     <div className="relative" ref={originWrapRef}>
                       <label className="sr-only" htmlFor="origin">
@@ -351,30 +432,30 @@ export function FlightResultsClient() {
                       ) : null}
                     </div>
 
-                    <label className="sr-only" htmlFor="departureDate">
-                      Departure
-                    </label>
-                    <input
-                      id="departureDate"
-                      name="departureDate"
-                      required
-                      type="date"
-                      aria-label="Departure"
-                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
-                    />
+                    <div className="relative" ref={departureWrapRef}>
+                      <button
+                        type="button"
+                        aria-label="Departure date"
+                        onClick={() => setActiveDatePicker("departure")}
+                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900"
+                      >
+                        {departureDateInput ? formatDateLabel(departureDateInput) : "Departure"}
+                      </button>
+                    </div>
 
-                    <label className="sr-only" htmlFor="returnDate">
-                      Return
-                    </label>
-                    <input
-                      id="returnDate"
-                      name="returnDate"
-                      type="date"
-                      disabled={tripTypeInput !== "round-trip"}
-                      required={tripTypeInput === "round-trip"}
-                      aria-label="Return"
-                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                    />
+                    <div className="relative" ref={returnWrapRef}>
+                      <button
+                        type="button"
+                        aria-label="Return date"
+                        disabled={tripTypeInput !== "round-trip"}
+                        onClick={() => {
+                          if (tripTypeInput === "round-trip") setActiveDatePicker("return");
+                        }}
+                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      >
+                        {returnDateInput ? formatDateLabel(returnDateInput) : "Return"}
+                      </button>
+                    </div>
 
                     <label className="sr-only" htmlFor="travelers">
                       Travelers
@@ -413,6 +494,59 @@ export function FlightResultsClient() {
                     </Button>
                   </div>
                 </form>
+
+                {activeDatePicker && datePickerPosition ? (
+                  <DatePickerPopover
+                    position={datePickerPosition}
+                    month={calendarMonth}
+                    departureValue={departureDateInput}
+                    returnValue={returnDateInput}
+                    activePicker={activeDatePicker}
+                    onMonthChange={setCalendarMonth}
+                    onSelect={(date) => {
+                      const value = formatDateValue(date);
+
+                      if (activeDatePicker === "departure") {
+                        setDepartureDateInput(value);
+
+                        if (tripTypeInput === "round-trip") {
+                          setActiveDatePicker("return");
+                        } else {
+                          setActiveDatePicker(null);
+                          setDatePickerPosition(null);
+                        }
+
+                        return;
+                      }
+
+                      setReturnDateInput(value);
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                    }}
+                    onClear={() => {
+                      if (activeDatePicker === "departure") setDepartureDateInput("");
+                      if (activeDatePicker === "return") setReturnDateInput("");
+                    }}
+                    onToday={() => {
+                      const today = new Date();
+                      const value = formatDateValue(today);
+
+                      if (activeDatePicker === "departure") {
+                        setDepartureDateInput(value);
+
+                        if (tripTypeInput === "round-trip") {
+                          setActiveDatePicker("return");
+                          return;
+                        }
+                      } else {
+                        setReturnDateInput(value);
+                      }
+
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                    }}
+                  />
+                ) : null}
               </div>
             </div>
           </div>
@@ -546,6 +680,178 @@ function filterAirportOptions(query: string) {
 
 function airportInputValue(item: AirportOption) {
   return item.code;
+}
+
+function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addMonths(date: Date, amount: number): Date {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function formatDateValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateLabel(value: string): string {
+  if (!value) return "";
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function buildMonthDays(month: Date): Array<Date | null> {
+  const firstDay = startOfMonth(month);
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const cells: Array<Date | null> = [];
+
+  for (let i = 0; i < startOffset; i += 1) {
+    cells.push(null);
+  }
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    cells.push(new Date(month.getFullYear(), month.getMonth(), day));
+  }
+
+  while (cells.length % 7 !== 0) {
+    cells.push(null);
+  }
+
+  return cells;
+}
+
+function isSameDateValue(date: Date, value: string): boolean {
+  return Boolean(value) && formatDateValue(date) === value;
+}
+
+function DatePickerPopover({
+  position,
+  month,
+  departureValue,
+  returnValue,
+  activePicker,
+  onMonthChange,
+  onSelect,
+  onClear,
+  onToday,
+}: {
+  position: { top: number; left: number; width: number };
+  month: Date;
+  departureValue: string;
+  returnValue: string;
+  activePicker: "departure" | "return";
+  onMonthChange: (month: Date) => void;
+  onSelect: (date: Date) => void;
+  onClear: () => void;
+  onToday: () => void;
+}) {
+  const leftMonth = startOfMonth(month);
+  const rightMonth = addMonths(leftMonth, 1);
+  const today = new Date();
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const renderMonth = (renderedMonth: Date) => (
+    <div className="min-w-0">
+      <p className="mb-2 text-center text-sm font-bold text-slate-900">
+        {renderedMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
+      </p>
+
+      <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+        {weekdays.map((day) => (
+          <span key={`${renderedMonth.toISOString()}-${day}`}>{day}</span>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1">
+        {buildMonthDays(renderedMonth).map((date, index) => {
+          if (!date) {
+            return <span key={`${renderedMonth.toISOString()}-blank-${index}`} className="h-9" />;
+          }
+
+          const selectedDeparture = isSameDateValue(date, departureValue);
+          const selectedReturn = isSameDateValue(date, returnValue);
+          const isToday = isSameDateValue(date, formatDateValue(today));
+
+          return (
+            <button
+              key={date.toISOString()}
+              type="button"
+              onClick={() => onSelect(date)}
+              className={cn(
+                "h-9 rounded-md text-sm font-semibold transition hover:bg-slate-100 focus:bg-slate-100 focus:outline-none",
+                selectedDeparture || selectedReturn ? "bg-[#0a66c2] text-white hover:bg-[#085aa9] focus:bg-[#085aa9]" : "text-slate-800",
+                isToday && !(selectedDeparture || selectedReturn) ? "ring-1 ring-slate-300" : "",
+              )}
+            >
+              {date.getDate()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      id="flight-date-picker-popover"
+      role="dialog"
+      aria-label={activePicker === "departure" ? "Select departure date" : "Select return date"}
+      style={{ position: "fixed", top: position.top, left: position.left, width: position.width, zIndex: 9999 }}
+      className="max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl ring-1 ring-black/5"
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          type="button"
+          aria-label="Previous month"
+          className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          onClick={() => onMonthChange(addMonths(leftMonth, -1))}
+        >
+          Prev
+        </button>
+
+        <button
+          type="button"
+          aria-label="Next month"
+          className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          onClick={() => onMonthChange(addMonths(leftMonth, 1))}
+        >
+          Next
+        </button>
+      </div>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        {renderMonth(leftMonth)}
+        {renderMonth(rightMonth)}
+      </div>
+
+      <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+        <button
+          type="button"
+          className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          onClick={onClear}
+        >
+          Clear
+        </button>
+
+        <button
+          type="button"
+          className="focus-ring rounded-md bg-[#0a66c2] px-3 py-1.5 text-sm font-bold text-white hover:bg-[#085aa9]"
+          onClick={onToday}
+        >
+          Today
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function SuggestionList({
