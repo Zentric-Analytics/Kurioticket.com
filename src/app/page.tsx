@@ -14,7 +14,7 @@ import {
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
-import { getLanguageFromStorage, type LanguageCode } from "@/lib/language";
+import { LANGUAGE_CHANGE_EVENT, getLanguageFromStorage, getTranslationLanguage, type LanguageCode } from "@/lib/language";
 import { LinkButton } from "@/components/ui/Button";
 
 
@@ -65,10 +65,10 @@ export default function Home() {
   const [language, setLanguage] = useState<LanguageCode>(getLanguageFromStorage);
   useEffect(() => {
     const sync = () => setLanguage(getLanguageFromStorage());
-    window.addEventListener("curioticket-language-change", sync as EventListener);
-    return () => window.removeEventListener("curioticket-language-change", sync as EventListener);
+    window.addEventListener(LANGUAGE_CHANGE_EVENT, sync as EventListener);
+    return () => window.removeEventListener(LANGUAGE_CHANGE_EVENT, sync as EventListener);
   }, []);
-  const t = useMemo(() => i18n[language], [language]);
+  const t = useMemo(() => i18n[getTranslationLanguage(language)], [language]);
   return (
     <>
       <AppHeader />
