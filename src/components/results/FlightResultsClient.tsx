@@ -504,7 +504,7 @@ function airportInputValue(item: AirportOption) {
 
 function SuggestionList({ suggestions, onSelect }: { suggestions: AirportOption[]; onSelect: (value: string) => void }) {
   return (
-    <div className="absolute left-0 top-[calc(100%+8px)] z-[90] max-h-72 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 sm:w-[380px]">
+    <div className="absolute left-0 top-[calc(100%+8px)] z-[90] max-h-72 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5 sm:w-[380px] lg:w-[420px]">
       {suggestions.length ? (
         suggestions.map((item) => (
           <button
@@ -512,7 +512,7 @@ function SuggestionList({ suggestions, onSelect }: { suggestions: AirportOption[
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(airportInputValue(item))}
-            className="block w-full border-b border-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-50 focus:bg-slate-50 last:border-b-0"
+            className="block w-full border-b border-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none last:border-b-0"
           >
             <span className="flex items-start gap-2.5">
               <Plane size={15} className="mt-0.5 shrink-0 text-slate-400" />
@@ -528,7 +528,7 @@ function SuggestionList({ suggestions, onSelect }: { suggestions: AirportOption[
           </button>
         ))
       ) : (
-        <p className="px-4 py-3 text-xs font-medium text-slate-500 whitespace-nowrap">No matching airports found</p>
+        <p className="whitespace-nowrap px-4 py-3 text-xs font-medium text-slate-500">No matching airports found</p>
       )}
     </div>
   );
