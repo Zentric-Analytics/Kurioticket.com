@@ -93,6 +93,25 @@ export function AppHeader() {
     [t]
   );
 
+  const getFlagFallback = (code: string) =>
+    code
+      .split("-")
+      .map((part) => part.slice(0, 2).toUpperCase())
+      .join("")
+      .slice(0, 2);
+
+  const renderFlag = (
+    flag: string | undefined,
+    code: string
+  ) =>
+    flag ? (
+      <span aria-hidden="true">{flag}</span>
+    ) : (
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">
+        {getFlagFallback(code)}
+      </span>
+    );
+
   const handleLanguageSelect = (
     code: (typeof locales)[number]["code"]
   ) => {
@@ -143,9 +162,10 @@ export function AppHeader() {
                 aria-label={t.selectLanguage}
               >
                 <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  <span aria-hidden="true">
-                    {selectedLanguage?.flag}
-                  </span>
+                  {renderFlag(
+                    selectedLanguage?.flag,
+                    selectedLanguage?.code
+                  )}
 
                   <span>{selectedLanguage?.label}</span>
                 </span>
@@ -201,9 +221,7 @@ export function AppHeader() {
                             }`}
                           >
                             <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                              <span aria-hidden="true">
-                                {option.flag}
-                              </span>
+                              {renderFlag(option.flag, option.code)}
 
                               <span>{option.label}</span>
                             </span>
@@ -331,9 +349,10 @@ export function AppHeader() {
               onClick={() => setLanguageOpen((value) => !value)}
               className="h-11 gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm"
             >
-              <span aria-hidden="true">
-                {selectedLanguage?.flag}
-              </span>
+              {renderFlag(
+                selectedLanguage?.flag,
+                selectedLanguage?.code
+              )}
 
               <span className="text-sm font-semibold">
                 {selectedLanguage?.label}
