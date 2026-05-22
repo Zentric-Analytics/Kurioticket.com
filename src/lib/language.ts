@@ -126,8 +126,15 @@ export const languageOptions: LanguageOption[] =
     {
       code: "id-ID",
       label: "Bahasa Indonesia",
-	  flagCode: "ID",
-	  dir: "ltr",
-	  suggested: false,
-	},
-	  
+      flagCode: "ID",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "ru-RU",
+      label: "Русский",
+      flagCode: "RU",
+      dir: "ltr",
+      suggested: false,
+    },
+  ];
