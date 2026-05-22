@@ -64,9 +64,24 @@ export function FlightResultsClient() {
   const [tripTypeInput, setTripTypeInput] = useState(params.get("tripType") || "round-trip");
   const [originInput, setOriginInput] = useState(params.get("origin") || "");
   const [destinationInput, setDestinationInput] = useState(params.get("destination") || "");
+  const [departureDateInput, setDepartureDateInput] = useState(params.get("departureDate") || "");
+  const [returnDateInput, setReturnDateInput] = useState(params.get("returnDate") || "");
+  const [adultCount, setAdultCount] = useState(() => Math.max(1, Number(params.get("travelers") || 1)));
+  const [childCount, setChildCount] = useState(0);
+  const [infantCount, setInfantCount] = useState(0);
+  const [cabinClassInput, setCabinClassInput] = useState(params.get("cabinClass") || "economy");
+  const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
+  const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const [activeSuggest, setActiveSuggest] = useState<"origin" | "destination" | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [activeDatePicker, setActiveDatePicker] = useState<"departure" | "return" | null>(null);
+  const [datePickerPosition, setDatePickerPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
+  const departureWrapRef = useRef<HTMLDivElement | null>(null);
+  const returnWrapRef = useRef<HTMLDivElement | null>(null);
+  const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
 
   const originSuggestions = useMemo(() => filterAirportOptions(originInput), [originInput]);
   const destinationSuggestions = useMemo(() => filterAirportOptions(destinationInput), [destinationInput]);
@@ -146,22 +161,156 @@ export function FlightResultsClient() {
   }, [loading]);
 
   useEffect(() => {
+    function updateDropdownPosition(target: "origin" | "destination") {
+      const viewportPadding = 16;
+      const preferredWidth = 520;
+      const wrap = target === "origin" ? originWrapRef.current : destinationWrapRef.current;
+      const input = wrap?.querySelector("input");
+      if (!input) return;
+      const rect = input.getBoundingClientRect();
+      const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
+      const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
+      const top = rect.bottom + 8;
+      setDropdownPosition({ top, left, width });
+    }
+
+    if (activeSuggest) updateDropdownPosition(activeSuggest);
+
+    function handleViewportChange() {
+      if (!activeSuggest) return;
+      updateDropdownPosition(activeSuggest);
+    }
+
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
 
-      if (activeSuggest === "origin" && originWrapRef.current && !originWrapRef.current.contains(target)) {
+      const dropdown = document.getElementById("flight-airport-suggestions");
+      const clickedDropdown = dropdown?.contains(target);
+
+      if (!clickedDropdown && activeSuggest === "origin" && originWrapRef.current && !originWrapRef.current.contains(target)) {
         setActiveSuggest(null);
+        setDropdownPosition(null);
       }
 
-      if (activeSuggest === "destination" && destinationWrapRef.current && !destinationWrapRef.current.contains(target)) {
+      if (!clickedDropdown && activeSuggest === "destination" && destinationWrapRef.current && !destinationWrapRef.current.contains(target)) {
         setActiveSuggest(null);
+        setDropdownPosition(null);
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
 
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
   }, [activeSuggest]);
+
+  useEffect(() => {
+    function updateDatePickerPosition(target: "departure" | "return") {
+      const viewportPadding = 16;
+      const preferredWidth = 720;
+      const wrap = target === "departure" ? departureWrapRef.current : returnWrapRef.current;
+      const trigger = wrap?.querySelector("button");
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
+      const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
+      const top = rect.bottom + 8;
+      setDatePickerPosition({ top, left, width });
+    }
+
+    if (activeDatePicker) updateDatePickerPosition(activeDatePicker);
+
+    function handleViewportChange() {
+      if (!activeDatePicker) return;
+      updateDatePickerPosition(activeDatePicker);
+    }
+
+    function handleClose(event: MouseEvent) {
+      const target = event.target as Node;
+      const popover = document.getElementById("flight-date-picker-popover");
+      const clickedPopover = popover?.contains(target);
+      const clickedDeparture = departureWrapRef.current?.contains(target);
+      const clickedReturn = returnWrapRef.current?.contains(target);
+
+      if (!clickedPopover && !clickedDeparture && !clickedReturn) {
+        setActiveDatePicker(null);
+        setDatePickerPosition(null);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setActiveDatePicker(null);
+        setDatePickerPosition(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClose);
+    document.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+    return () => {
+      document.removeEventListener("mousedown", handleClose);
+      document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [activeDatePicker]);
+
+  useEffect(() => {
+    function updateTravelerPopoverPosition() {
+      const viewportPadding = 16;
+      const preferredWidth = 520;
+      const trigger = travelerCabinWrapRef.current?.querySelector("button");
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
+      const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
+      const top = rect.bottom + 8;
+      setTravelerPopoverPosition({ top, left, width });
+    }
+
+    if (travelerPopoverOpen) updateTravelerPopoverPosition();
+
+    function handleClose(event: MouseEvent) {
+      const target = event.target as Node;
+      const popover = document.getElementById("traveler-cabin-popover");
+      const clickedPopover = popover?.contains(target);
+      const clickedTrigger = travelerCabinWrapRef.current?.contains(target);
+      if (!clickedPopover && !clickedTrigger) {
+        setTravelerPopoverOpen(false);
+        setTravelerPopoverPosition(null);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setTravelerPopoverOpen(false);
+        setTravelerPopoverPosition(null);
+      }
+    }
+
+    function handleViewportChange() {
+      if (travelerPopoverOpen) updateTravelerPopoverPosition();
+    }
+
+    document.addEventListener("mousedown", handleClose);
+    document.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClose);
+      document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [travelerPopoverOpen]);
 
   const filtered = results.filter((flight) => flight.price <= maxPrice && flight.stops <= maxStops);
 
@@ -188,42 +337,59 @@ export function FlightResultsClient() {
                   Find hundreds of cheap flights with just one search!
                 </h1>
 
-                <div className="mt-9 inline-flex rounded-xl bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.24)]">
-                  <label className="sr-only" htmlFor="tripType">
-                    Trip type
-                  </label>
-                  <select
-                    id="tripType"
-                    name="tripType"
-                    value={tripTypeInput}
-                    onChange={(event) => setTripTypeInput(event.target.value)}
-                    className="focus-ring h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
-                  >
-                    <option value="round-trip">Round-trip</option>
-                    <option value="one-way">One-way</option>
-                    <option value="multi-city">Multi-city</option>
-                  </select>
+                <div className="mt-9 inline-flex items-center gap-2">
+                  {[
+                    { label: "Round Trip", value: "round-trip" },
+                    { label: "One Way", value: "one-way" },
+                    { label: "Multi City", value: "multi-city" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => {
+                        setTripTypeInput(option.value);
+                        if (option.value !== "round-trip") {
+                          setReturnDateInput("");
+                          if (activeDatePicker === "return") {
+                            setActiveDatePicker(null);
+                            setDatePickerPosition(null);
+                          }
+                        }
+                      }}
+                      className={cn(
+                        "focus-ring rounded-full px-4 py-2 text-sm font-bold transition",
+                        tripTypeInput === option.value ? "bg-violet-100 text-[#6d28d9]" : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
                 </div>
 
                 <form
                   className="mt-4 w-full max-w-[1060px] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)]"
                   onSubmit={(event) => {
                     event.preventDefault();
+                    if (!departureDateInput || (tripTypeInput === "round-trip" && !returnDateInput)) return;
 
                     const formData = new FormData(event.currentTarget);
                     const nextParams = new URLSearchParams({
                       tripType: tripTypeInput,
                       origin: originInput.trim() || String(formData.get("origin") || ""),
                       destination: destinationInput.trim() || String(formData.get("destination") || ""),
-                      departureDate: String(formData.get("departureDate") || ""),
-                      returnDate: String(formData.get("returnDate") || ""),
-                      travelers: String(formData.get("travelers") || "1"),
-                      cabinClass: String(formData.get("cabinClass") || "economy"),
+                      departureDate: departureDateInput || String(formData.get("departureDate") || ""),
+                      returnDate: returnDateInput || String(formData.get("returnDate") || ""),
+                      travelers: String(adultCount + childCount),
+                      cabinClass: cabinClassInput,
                     });
 
                     router.push(`/flights/results?${nextParams.toString()}`);
                   }}
                 >
+                  <input type="hidden" name="departureDate" value={departureDateInput} />
+                  <input type="hidden" name="returnDate" value={returnDateInput} />
+                  <input type="hidden" name="travelers" value={String(adultCount + childCount)} />
+                  <input type="hidden" name="cabinClass" value={cabinClassInput} />
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.2fr)_46px_minmax(150px,1.2fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(132px,1fr)_minmax(122px,1fr)] xl:items-center">
                     <div className="relative" ref={originWrapRef}>
                       <label className="sr-only" htmlFor="origin">
@@ -236,7 +402,10 @@ export function FlightResultsClient() {
                         value={originInput}
                         onFocus={() => setActiveSuggest("origin")}
                         onKeyDown={(event) => {
-                          if (event.key === "Escape") setActiveSuggest(null);
+                          if (event.key === "Escape") {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
                         }}
                         onChange={(event) => {
                           setOriginInput(event.target.value);
@@ -247,12 +416,15 @@ export function FlightResultsClient() {
                         className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
                       />
 
-                      {activeSuggest === "origin" ? (
+                      {activeSuggest === "origin" && dropdownPosition ? (
                         <SuggestionList
+                          id="flight-airport-suggestions"
+                          position={dropdownPosition}
                           suggestions={originSuggestions}
                           onSelect={(value) => {
                             setOriginInput(value);
                             setActiveSuggest(null);
+                            setDropdownPosition(null);
                           }}
                         />
                       ) : null}
@@ -284,90 +456,133 @@ export function FlightResultsClient() {
                         value={destinationInput}
                         onFocus={() => setActiveSuggest("destination")}
                         onKeyDown={(event) => {
-                          if (event.key === "Escape") setActiveSuggest(null);
+                          if (event.key === "Escape") {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
                         }}
                         onChange={(event) => {
                           setDestinationInput(event.target.value);
                           setActiveSuggest("destination");
                         }}
-                        placeholder="To?"
+                        placeholder="To"
                         autoComplete="off"
                         className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
                       />
 
-                      {activeSuggest === "destination" ? (
+                      {activeSuggest === "destination" && dropdownPosition ? (
                         <SuggestionList
+                          id="flight-airport-suggestions"
+                          position={dropdownPosition}
                           suggestions={destinationSuggestions}
                           onSelect={(value) => {
                             setDestinationInput(value);
                             setActiveSuggest(null);
+                            setDropdownPosition(null);
                           }}
                         />
                       ) : null}
                     </div>
 
-                    <label className="sr-only" htmlFor="departureDate">
-                      Departure
-                    </label>
-                    <input
-                      id="departureDate"
-                      name="departureDate"
-                      required
-                      type="date"
-                      aria-label="Departure"
-                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
-                    />
+                    <div className="relative" ref={departureWrapRef}>
+                      <button
+                        type="button"
+                        aria-label="Departure date"
+                        onClick={() => setActiveDatePicker("departure")}
+                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900"
+                      >
+                        {departureDateInput ? formatDateLabel(departureDateInput) : "Departure"}
+                      </button>
+                    </div>
 
-                    <label className="sr-only" htmlFor="returnDate">
-                      Return
-                    </label>
-                    <input
-                      id="returnDate"
-                      name="returnDate"
-                      type="date"
-                      disabled={tripTypeInput !== "round-trip"}
-                      required={tripTypeInput === "round-trip"}
-                      aria-label="Return"
-                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                    />
+                    <div className="relative" ref={returnWrapRef}>
+                      <button
+                        type="button"
+                        aria-label="Return date"
+                        disabled={tripTypeInput !== "round-trip"}
+                        onClick={() => {
+                          if (tripTypeInput === "round-trip") setActiveDatePicker("return");
+                        }}
+                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                      >
+                        {returnDateInput ? formatDateLabel(returnDateInput) : "Return"}
+                      </button>
+                    </div>
 
-                    <label className="sr-only" htmlFor="travelers">
-                      Travelers
-                    </label>
-                    <select
-                      id="travelers"
-                      name="travelers"
-                      defaultValue="1"
-                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
-                      aria-label="Travelers"
-                    >
-                      <option value="1">1 adult</option>
-                      <option value="2">2 adults</option>
-                      <option value="3">3 adults</option>
-                      <option value="4">4 adults</option>
-                    </select>
+                    <div className="relative xl:col-span-2" ref={travelerCabinWrapRef}>
+                      <button
+                        type="button"
+                        aria-label="Travelers and cabin class"
+                        onClick={() => setTravelerPopoverOpen((current) => !current)}
+                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900"
+                      >
+                        {buildTravelerCabinSummary(adultCount, childCount, infantCount, cabinClassInput)}
+                      </button>
+                    </div>
 
-                    <label className="sr-only" htmlFor="cabinClass">
-                      Cabin class
-                    </label>
-                    <select
-                      id="cabinClass"
-                      name="cabinClass"
-                      defaultValue="economy"
-                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
-                      aria-label="Cabin class"
-                    >
-                      <option value="economy">Economy</option>
-                      <option value="premium-economy">Premium Economy</option>
-                      <option value="business">Business</option>
-                      <option value="first">First</option>
-                    </select>
-
-                    <Button type="submit" className="h-11 w-full min-w-0 rounded-lg bg-[#0a66c2] px-5 font-bold text-white hover:bg-[#085aa9]">
+                    <Button type="submit" className="h-11 w-full min-w-0 rounded-lg bg-[#6d28d9] px-5 font-bold text-white hover:bg-[#5b21b6]">
                       Search
                     </Button>
                   </div>
                 </form>
+                {activeDatePicker && datePickerPosition ? (
+                  <DatePickerPopover
+                    position={datePickerPosition}
+                    month={calendarMonth}
+                    departureValue={departureDateInput}
+                    returnValue={returnDateInput}
+                    activePicker={activeDatePicker}
+                    onMonthChange={setCalendarMonth}
+                    onSelect={(date) => {
+                      const value = formatDateValue(date);
+                      if (activeDatePicker === "departure") {
+                        setDepartureDateInput(value);
+                        if (tripTypeInput === "round-trip") {
+                          setActiveDatePicker("return");
+                        } else {
+                          setActiveDatePicker(null);
+                          setDatePickerPosition(null);
+                        }
+                        return;
+                      }
+                      setReturnDateInput(value);
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                    }}
+                    onClear={() => {
+                      if (activeDatePicker === "departure") setDepartureDateInput("");
+                      if (activeDatePicker === "return") setReturnDateInput("");
+                    }}
+                    onToday={() => {
+                      const today = new Date();
+                      const value = formatDateValue(today);
+                      if (activeDatePicker === "departure") {
+                        setDepartureDateInput(value);
+                        if (tripTypeInput === "round-trip") {
+                          setActiveDatePicker("return");
+                          return;
+                        }
+                      } else {
+                        setReturnDateInput(value);
+                      }
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                    }}
+                  />
+                ) : null}
+                {travelerPopoverOpen && travelerPopoverPosition ? (
+                  <TravelerCabinPopover
+                    position={travelerPopoverPosition}
+                    adultCount={adultCount}
+                    childCount={childCount}
+                    infantCount={infantCount}
+                    cabinClass={cabinClassInput}
+                    setAdultCount={setAdultCount}
+                    setChildCount={setChildCount}
+                    setInfantCount={setInfantCount}
+                    setCabinClass={setCabinClassInput}
+                  />
+                ) : null}
               </div>
             </div>
           </div>
@@ -499,27 +714,282 @@ function filterAirportOptions(query: string) {
     .slice(0, 8);
 }
 
-function formatAirportOption(item: AirportOption) {
-  return `${item.city} — ${item.airport} (${item.code}), ${item.country}`;
+function airportInputValue(item: AirportOption) {
+  return item.code;
 }
 
-function SuggestionList({ suggestions, onSelect }: { suggestions: AirportOption[]; onSelect: (value: string) => void }) {
+function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addMonths(date: Date, amount: number): Date {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function formatDateValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateLabel(value: string): string {
+  if (!value) return "";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function buildMonthDays(month: Date): Array<Date | null> {
+  const firstDay = startOfMonth(month);
+  const startOffset = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const cells: Array<Date | null> = [];
+  for (let i = 0; i < startOffset; i += 1) cells.push(null);
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    cells.push(new Date(month.getFullYear(), month.getMonth(), day));
+  }
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+}
+
+function isSameDateValue(date: Date, value: string): boolean {
+  return Boolean(value) && formatDateValue(date) === value;
+}
+
+function DatePickerPopover({
+  position,
+  month,
+  departureValue,
+  returnValue,
+  onMonthChange,
+  onSelect,
+  onClear,
+  onToday,
+}: {
+  position: { top: number; left: number; width: number };
+  month: Date;
+  departureValue: string;
+  returnValue: string;
+  activePicker: "departure" | "return";
+  onMonthChange: (month: Date) => void;
+  onSelect: (date: Date) => void;
+  onClear: () => void;
+  onToday: () => void;
+}) {
+  const leftMonth = startOfMonth(month);
+  const rightMonth = addMonths(leftMonth, 1);
+  const today = new Date();
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const renderMonth = (renderedMonth: Date) => (
+    <div className="min-w-0">
+      <p className="mb-2 text-center text-sm font-bold text-slate-900">{renderedMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</p>
+      <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+        {weekdays.map((day) => (
+          <span key={`${renderedMonth.toISOString()}-${day}`}>{day}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {buildMonthDays(renderedMonth).map((date, index) => {
+          if (!date) return <span key={`${renderedMonth.toISOString()}-blank-${index}`} className="h-9" />;
+          const selectedDeparture = isSameDateValue(date, departureValue);
+          const selectedReturn = isSameDateValue(date, returnValue);
+          const isToday = isSameDateValue(date, formatDateValue(today));
+          return (
+            <button
+              key={date.toISOString()}
+              type="button"
+              onClick={() => onSelect(date)}
+              className={cn(
+                "h-9 rounded-md text-sm font-semibold transition hover:bg-slate-100 focus:bg-slate-100 focus:outline-none",
+                selectedDeparture || selectedReturn ? "bg-[#0a66c2] text-white hover:bg-[#085aa9] focus:bg-[#085aa9]" : "text-slate-800",
+                isToday && !(selectedDeparture || selectedReturn) ? "ring-1 ring-slate-300" : "",
+              )}
+            >
+              {date.getDate()}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
-    <div className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-xl">
+    <div
+      id="flight-date-picker-popover"
+      style={{ position: "fixed", top: position.top, left: position.left, width: position.width, zIndex: 9999 }}
+      className="max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl ring-1 ring-black/5"
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <button type="button" aria-label="Previous month" className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700" onClick={() => onMonthChange(addMonths(leftMonth, -1))}>Prev</button>
+        <button type="button" aria-label="Next month" className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700" onClick={() => onMonthChange(addMonths(leftMonth, 1))}>Next</button>
+      </div>
+      <div className="grid gap-5 md:grid-cols-2">
+        {renderMonth(leftMonth)}
+        {renderMonth(rightMonth)}
+      </div>
+      <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+        <button type="button" className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700" onClick={onClear}>
+          Clear
+        </button>
+        <button type="button" className="focus-ring rounded-md bg-[#0a66c2] px-3 py-1.5 text-sm font-bold text-white hover:bg-[#085aa9]" onClick={onToday}>
+          Today
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function buildTravelerCabinSummary(adultCount: number, childCount: number, infantCount: number, cabinClass: string) {
+  const parts: string[] = [];
+  parts.push(`${adultCount} adult${adultCount === 1 ? "" : "s"}`);
+  if (childCount > 0) parts.push(`${childCount} child${childCount === 1 ? "" : "ren"}`);
+  if (infantCount > 0) parts.push(`${infantCount} infant${infantCount === 1 ? "" : "s"}`);
+  const cabinLabel = {
+    economy: "Economy",
+    "premium-economy": "Premium Economy",
+    business: "Business",
+    first: "First",
+  }[cabinClass] || "Economy";
+  return `${parts.join(", ")}, ${cabinLabel}`;
+}
+
+function TravelerCabinPopover({
+  position,
+  adultCount,
+  childCount,
+  infantCount,
+  cabinClass,
+  setAdultCount,
+  setChildCount,
+  setInfantCount,
+  setCabinClass,
+}: {
+  position: { top: number; left: number; width: number };
+  adultCount: number;
+  childCount: number;
+  infantCount: number;
+  cabinClass: string;
+  setAdultCount: (value: number | ((prev: number) => number)) => void;
+  setChildCount: (value: number | ((prev: number) => number)) => void;
+  setInfantCount: (value: number | ((prev: number) => number)) => void;
+  setCabinClass: (value: string) => void;
+}) {
+  const counterRow = (label: string, value: number, onMinus: () => void, onPlus: () => void, disableMinus: boolean, disablePlus: boolean) => (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm font-semibold text-slate-800">{label}</span>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={onMinus} disabled={disableMinus} className="focus-ring h-8 w-8 rounded-md border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">-</button>
+        <span className="w-6 text-center text-sm font-bold text-slate-900">{value}</span>
+        <button type="button" onClick={onPlus} disabled={disablePlus} className="focus-ring h-8 w-8 rounded-md border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">+</button>
+      </div>
+    </div>
+  );
+
+  const cabinOptions = [
+    { value: "economy", label: "Economy" },
+    { value: "premium-economy", label: "Premium Economy" },
+    { value: "business", label: "Business" },
+    { value: "first", label: "First" },
+  ];
+
+  return (
+    <div
+      id="traveler-cabin-popover"
+      style={{ position: "fixed", top: position.top, left: position.left, width: position.width, zIndex: 9999 }}
+      className="max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl ring-1 ring-black/5"
+    >
+      <h3 className="text-sm font-black text-slate-900">Travelers</h3>
+      <div className="mt-3 space-y-3">
+        {counterRow(
+          "Adults 18+",
+          adultCount,
+          () =>
+            setAdultCount((current) => {
+              const next = Math.max(1, current - 1);
+              setInfantCount((infants) => Math.min(infants, next));
+              return next;
+            }),
+          () => setAdultCount((current) => Math.min(9, current + 1)),
+          adultCount <= 1,
+          adultCount >= 9,
+        )}
+        {counterRow("Children 0–17", childCount, () => setChildCount((current) => Math.max(0, current - 1)), () => setChildCount((current) => Math.min(9, current + 1)), childCount <= 0, childCount >= 9)}
+        {counterRow(
+          "Infants on lap under 2",
+          infantCount,
+          () => setInfantCount((current) => Math.max(0, current - 1)),
+          () => setInfantCount((current) => Math.min(adultCount, current + 1)),
+          infantCount <= 0,
+          infantCount >= adultCount,
+        )}
+      </div>
+      <h3 className="mt-5 text-sm font-black text-slate-900">Cabin Class</h3>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {cabinOptions.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            aria-pressed={cabinClass === option.value}
+            onClick={() => setCabinClass(option.value)}
+            className={cn(
+              "focus-ring rounded-md border px-3 py-2 text-sm font-semibold transition",
+              cabinClass === option.value ? "border-slate-900 bg-slate-100 text-slate-900" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+            )}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SuggestionList({
+  id,
+  suggestions,
+  onSelect,
+  position,
+}: {
+  id: string;
+  suggestions: AirportOption[];
+  onSelect: (value: string) => void;
+  position: { top: number; left: number; width: number };
+}) {
+  return (
+    <div
+      id={id}
+      style={{ position: "fixed", top: position.top, left: position.left, width: position.width, zIndex: 9999 }}
+      className="max-h-[320px] max-w-[calc(100vw-2rem)] overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl ring-1 ring-black/5"
+    >
       {suggestions.length ? (
         suggestions.map((item) => (
           <button
             key={`${item.code}-${item.airport}`}
             type="button"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => onSelect(formatAirportOption(item))}
-            className="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-slate-50 last:border-b-0"
+            onClick={() => onSelect(airportInputValue(item))}
+            className="block w-full border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none last:border-b-0"
           >
-            {formatAirportOption(item)}
+            <span className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                <Plane size={16} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-bold text-slate-950">
+                  {item.city}, {item.country}
+                </span>
+                <span className="block truncate text-xs font-medium text-slate-500">
+                  {item.airport}
+                </span>
+              </span>
+              <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-500">{item.code}</span>
+              <span className="h-5 w-5 shrink-0 rounded border border-slate-300 bg-white" aria-hidden="true" />
+            </span>
           </button>
         ))
       ) : (
-        <p className="px-3 py-2 text-sm text-slate-500">No matching airports found</p>
+        <p className="px-4 py-3 text-xs font-medium text-slate-500 whitespace-nowrap">No matching airports found</p>
       )}
     </div>
   );
