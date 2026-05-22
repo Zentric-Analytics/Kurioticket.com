@@ -14,7 +14,9 @@
     "db:studio": "prisma studio",
     "security:secrets": "node scripts/verify-no-secrets.mjs",
     "postinstall": "prisma generate",
-    "db:deploy:render": "prisma generate && prisma migrate deploy"
+    "db:deploy:render": "prisma generate && prisma migrate deploy",
+    "check:conflicts": "sh -c 'rg -n \"<<<<<<<|=======|>>>>>>>\" --glob \"!node_modules/**\" --glob \"!package.json\" . && { echo \"Conflict markers found\"; exit 1; } || exit 0'",
+    "prebuild": "npm run check:conflicts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
