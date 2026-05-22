@@ -19,6 +19,7 @@ import { LinkButton } from "@/components/ui/Button";
 import {
   LANGUAGE_CHANGE_EVENT,
   getLanguageFromStorage,
+  getUiTranslations,
   type LanguageCode,
 } from "@/lib/language";
 
@@ -252,7 +253,13 @@ export default function Home() {
   }, []);
 
   const t = useMemo(() => {
-    return i18n[getI18nLanguageKey(language)];
+    const pageT = i18n[getI18nLanguageKey(language)];
+    const sharedT = getUiTranslations(language);
+
+    return {
+      ...sharedT,
+      ...pageT,
+    };
   }, [language]);
 
   return (
@@ -278,7 +285,7 @@ export default function Home() {
             <div className="grid min-h-[390px] content-start gap-4 pb-5 sm:min-h-[420px] sm:gap-5 sm:pb-6 lg:min-h-[450px] lg:max-w-[1000px]">
               <div className="space-y-3 pt-2">
                 <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/85 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
-                  Trusted travel search platform
+                  {t.heroBadge || "Trusted travel search platform"}
                 </p>
 
                 <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
@@ -304,7 +311,7 @@ export default function Home() {
               <div className="relative z-10 mt-2 w-full max-w-[1080px]">
                 <div className="rounded-2xl border border-white/85 bg-white/95 p-2 shadow-[0_24px_65px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:rounded-3xl sm:p-3">
                   <SearchTabs
-                    t={t as unknown as Record<string, string>}
+                    t={t as Record<string, string>}
                     compactHero
                   />
                 </div>
@@ -316,10 +323,22 @@ export default function Home() {
         <section className="page-shell pb-5">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              ["Millions of Choices", "Flights and hotels worldwide"],
-              ["Flexible Options", "Choose what fits your trip"],
-              ["Secure Payments", "100% safe and secure"],
-              ["Great Deals", "Compare more before you buy"],
+              [
+                t.featuresMillionsTitle || "Millions of Choices",
+                t.featuresMillionsBody || "Flights and hotels worldwide",
+              ],
+              [
+                t.featuresFlexibleTitle || "Flexible Options",
+                t.featuresFlexibleBody || "Choose what fits your trip",
+              ],
+              [
+                t.featuresSecureTitle || "Secure Payments",
+                t.featuresSecureBody || "100% safe and secure",
+              ],
+              [
+                t.featuresDealsTitle || "Great Deals",
+                t.featuresDealsBody || "Compare more before you buy",
+              ],
             ].map(([title, body]) => (
               <article
                 key={title}
@@ -339,7 +358,7 @@ export default function Home() {
         <section className="page-shell py-5">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-black tracking-normal text-slate-950">
-              Popular Destinations
+              {t.popularDestinations || "Popular Destinations"}
             </h2>
 
             <LinkButton
@@ -348,7 +367,7 @@ export default function Home() {
               size="sm"
               className="hidden text-[#6d28d9] sm:inline-flex"
             >
-              View all destinations
+              {t.viewAllDestinations || "View all destinations"}
               <ArrowRight size={16} />
             </LinkButton>
           </div>
@@ -363,18 +382,24 @@ export default function Home() {
         <section className="page-shell grid gap-5 py-9 lg:grid-cols-2">
           <PromoPanel
             tone="violet"
-            title="Amazing flight deals just for you"
-            body="Unlock exclusive offers on domestic and international flights."
-            cta="Explore Flight Deals"
+            title={t.promoFlightsTitle || "Amazing flight deals just for you"}
+            body={
+              t.promoFlightsBody ||
+              "Unlock exclusive offers on domestic and international flights."
+            }
+            cta={t.promoFlightsCta || "Explore Flight Deals"}
             href="/deals"
             icon={<Plane size={74} />}
           />
 
           <PromoPanel
             tone="amber"
-            title="Find your perfect hotel stay"
-            body="From budget to luxury, find hotels that suit your style and budget."
-            cta="Explore Hotel Deals"
+            title={t.promoHotelsTitle || "Find your perfect hotel stay"}
+            body={
+              t.promoHotelsBody ||
+              "From budget to luxury, find hotels that suit your style and budget."
+            }
+            cta={t.promoHotelsCta || "Explore Hotel Deals"}
             href="/hotels/results"
             icon={<Hotel size={74} />}
           />
@@ -384,11 +409,13 @@ export default function Home() {
           <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
             <div>
               <h2 className="text-lg font-black text-slate-950">
-                Get the best travel deals in your inbox
+                {t.newsletterTitle ||
+                  "Get the best travel deals in your inbox"}
               </h2>
 
               <p className="mt-1 text-sm font-semibold text-slate-600">
-                Subscribe to our newsletter and never miss a deal.
+                {t.newsletterBody ||
+                  "Subscribe to our newsletter and never miss a deal."}
               </p>
             </div>
 
@@ -400,7 +427,9 @@ export default function Home() {
             >
               <input
                 type="email"
-                placeholder="Enter your email address"
+                placeholder={
+                  t.newsletterPlaceholder || "Enter your email address"
+                }
                 className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
                 aria-label="Email address"
               />
@@ -409,7 +438,7 @@ export default function Home() {
                 type="submit"
                 className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
               >
-                Subscribe
+                {t.subscribe || "Subscribe"}
               </button>
             </form>
           </div>
