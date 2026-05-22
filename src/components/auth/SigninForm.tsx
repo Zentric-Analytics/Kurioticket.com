@@ -17,7 +17,7 @@ type SigninFormProps = {
 };
 
 export function SigninForm({
-  callbackUrl = "/dashboard",
+  callbackUrl = "/",
   googleEnabled = false,
   initialError = "",
   initialMessage = "",

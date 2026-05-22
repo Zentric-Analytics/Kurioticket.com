@@ -15,7 +15,7 @@ type VerifyLoginFormProps = {
 
 export function VerifyLoginForm({
   email,
-  callbackUrl = "/dashboard",
+  callbackUrl = "/",
 }: VerifyLoginFormProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
