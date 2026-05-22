@@ -34,6 +34,8 @@ type AirportOption = {
   country: string;
 };
 
+type CabinClassValue = "economy" | "premium-economy" | "business" | "first";
+
 const airportOptions: AirportOption[] = [
   { city: "Lagos", airport: "Murtala Muhammed International Airport", code: "LOS", country: "Nigeria" },
   { city: "Abuja", airport: "Nnamdi Azikiwe International Airport", code: "ABV", country: "Nigeria" },
@@ -47,6 +49,13 @@ const airportOptions: AirportOption[] = [
   { city: "Nairobi", airport: "Jomo Kenyatta International Airport", code: "NBO", country: "Kenya" },
   { city: "Johannesburg", airport: "O.R. Tambo International Airport", code: "JNB", country: "South Africa" },
   { city: "Toronto", airport: "Toronto Pearson International Airport", code: "YYZ", country: "Canada" },
+];
+
+const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
+  { label: "Economy", value: "economy" },
+  { label: "Premium Economy", value: "premium-economy" },
+  { label: "Business", value: "business" },
+  { label: "First", value: "first" },
 ];
 
 export function FlightResultsClient() {
@@ -66,15 +75,26 @@ export function FlightResultsClient() {
   const [destinationInput, setDestinationInput] = useState(params.get("destination") || "");
   const [departureDateInput, setDepartureDateInput] = useState(params.get("departureDate") || "");
   const [returnDateInput, setReturnDateInput] = useState(params.get("returnDate") || "");
+  const [adultCount, setAdultCount] = useState(() => {
+    const value = Number(params.get("travelers") || 1);
+    return Number.isFinite(value) ? Math.max(1, value) : 1;
+  });
+  const [childCount, setChildCount] = useState(0);
+  const [infantCount, setInfantCount] = useState(0);
+  const [cabinClassInput, setCabinClassInput] = useState<CabinClassValue>((params.get("cabinClass") as CabinClassValue) || "economy");
   const [activeSuggest, setActiveSuggest] = useState<"origin" | "destination" | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const [activeDatePicker, setActiveDatePicker] = useState<"departure" | "return" | null>(null);
   const [datePickerPosition, setDatePickerPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
+  const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
+  const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
+  const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
 
   const originSuggestions = useMemo(() => filterAirportOptions(originInput), [originInput]);
   const destinationSuggestions = useMemo(() => filterAirportOptions(destinationInput), [destinationInput]);
@@ -261,6 +281,61 @@ export function FlightResultsClient() {
     };
   }, [activeDatePicker]);
 
+  useEffect(() => {
+    function updateTravelerPopoverPosition() {
+      const viewportPadding = 16;
+      const preferredWidth = 520;
+      const trigger = travelerCabinWrapRef.current?.querySelector("button");
+
+      if (!trigger) return;
+
+      const rect = trigger.getBoundingClientRect();
+      const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
+      const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
+      const top = rect.bottom + 8;
+
+      setTravelerPopoverPosition({ top, left, width });
+    }
+
+    if (travelerPopoverOpen) updateTravelerPopoverPosition();
+
+    function handleViewportChange() {
+      if (!travelerPopoverOpen) return;
+      updateTravelerPopoverPosition();
+    }
+
+    function handleClose(event: MouseEvent) {
+      const target = event.target as Node;
+      const popover = document.getElementById("flight-traveler-cabin-popover");
+      const clickedPopover = popover?.contains(target);
+      const clickedTrigger = travelerCabinWrapRef.current?.contains(target);
+
+      if (!clickedPopover && !clickedTrigger) {
+        setTravelerPopoverOpen(false);
+        setTravelerPopoverPosition(null);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setTravelerPopoverOpen(false);
+        setTravelerPopoverPosition(null);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClose);
+    document.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClose);
+      document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [travelerPopoverOpen]);
+
   const filtered = results.filter((flight) => flight.price <= maxPrice && flight.stops <= maxStops);
 
   if (!body) {
@@ -328,8 +403,8 @@ export function FlightResultsClient() {
                       destination: destinationInput.trim() || String(formData.get("destination") || ""),
                       departureDate: departureDateInput || String(formData.get("departureDate") || ""),
                       returnDate: returnDateInput || String(formData.get("returnDate") || ""),
-                      travelers: String(formData.get("travelers") || "1"),
-                      cabinClass: String(formData.get("cabinClass") || "economy"),
+                      travelers: String(adultCount + childCount),
+                      cabinClass: cabinClassInput,
                     });
 
                     router.push(`/flights/results?${nextParams.toString()}`);
@@ -337,6 +412,8 @@ export function FlightResultsClient() {
                 >
                   <input type="hidden" name="departureDate" value={departureDateInput} />
                   <input type="hidden" name="returnDate" value={returnDateInput} />
+                  <input type="hidden" name="travelers" value={String(adultCount + childCount)} />
+                  <input type="hidden" name="cabinClass" value={cabinClassInput} />
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.2fr)_46px_minmax(150px,1.2fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(132px,1fr)_minmax(122px,1fr)] xl:items-center">
                     <div className="relative" ref={originWrapRef}>
@@ -457,37 +534,22 @@ export function FlightResultsClient() {
                       </button>
                     </div>
 
-                    <label className="sr-only" htmlFor="travelers">
-                      Travelers
-                    </label>
-                    <select
-                      id="travelers"
-                      name="travelers"
-                      defaultValue="1"
-                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
-                      aria-label="Travelers"
-                    >
-                      <option value="1">1 adult</option>
-                      <option value="2">2 adults</option>
-                      <option value="3">3 adults</option>
-                      <option value="4">4 adults</option>
-                    </select>
-
-                    <label className="sr-only" htmlFor="cabinClass">
-                      Cabin class
-                    </label>
-                    <select
-                      id="cabinClass"
-                      name="cabinClass"
-                      defaultValue="economy"
-                      className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900"
-                      aria-label="Cabin class"
-                    >
-                      <option value="economy">Economy</option>
-                      <option value="premium-economy">Premium Economy</option>
-                      <option value="business">Business</option>
-                      <option value="first">First</option>
-                    </select>
+                    <div className="relative xl:col-span-2" ref={travelerCabinWrapRef}>
+                      <button
+                        type="button"
+                        aria-label="Travelers and cabin class"
+                        onClick={() => {
+                          setTravelerPopoverOpen((current) => {
+                            const next = !current;
+                            if (!next) setTravelerPopoverPosition(null);
+                            return next;
+                          });
+                        }}
+                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900"
+                      >
+                        {buildTravelerCabinSummary(adultCount, childCount, infantCount, cabinClassInput)}
+                      </button>
+                    </div>
 
                     <Button type="submit" className="h-11 w-full min-w-0 rounded-lg bg-[#0a66c2] px-5 font-bold text-white hover:bg-[#085aa9]">
                       Search
@@ -545,6 +607,28 @@ export function FlightResultsClient() {
                       setActiveDatePicker(null);
                       setDatePickerPosition(null);
                     }}
+                  />
+                ) : null}
+
+                {travelerPopoverOpen && travelerPopoverPosition ? (
+                  <TravelerCabinPopover
+                    position={travelerPopoverPosition}
+                    adultCount={adultCount}
+                    childCount={childCount}
+                    infantCount={infantCount}
+                    cabinClass={cabinClassInput}
+                    onAdultChange={(nextValue) => {
+                      const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+                      setAdultCount(nextAdultCount);
+                      setInfantCount((current) => Math.min(current, nextAdultCount));
+                    }}
+                    onChildChange={(nextValue) => {
+                      setChildCount(Math.min(9, Math.max(0, nextValue)));
+                    }}
+                    onInfantChange={(nextValue) => {
+                      setInfantCount(Math.min(adultCount, Math.max(0, nextValue)));
+                    }}
+                    onCabinClassChange={setCabinClassInput}
                   />
                 ) : null}
               </div>
@@ -733,6 +817,30 @@ function isSameDateValue(date: Date, value: string): boolean {
   return Boolean(value) && formatDateValue(date) === value;
 }
 
+function cabinClassLabel(value: string) {
+  return cabinClassOptions.find((option) => option.value === value)?.label || "Economy";
+}
+
+function pluralize(count: number, singular: string, plural: string) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function buildTravelerCabinSummary(adults: number, children: number, infants: number, cabinClass: string) {
+  const parts = [pluralize(adults, "adult", "adults")];
+
+  if (children > 0) {
+    parts.push(pluralize(children, "child", "children"));
+  }
+
+  if (infants > 0) {
+    parts.push(pluralize(infants, "infant", "infants"));
+  }
+
+  parts.push(cabinClassLabel(cabinClass));
+
+  return parts.join(", ");
+}
+
 function DatePickerPopover({
   position,
   month,
@@ -848,6 +956,150 @@ function DatePickerPopover({
           onClick={onToday}
         >
           Today
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function TravelerCabinPopover({
+  position,
+  adultCount,
+  childCount,
+  infantCount,
+  cabinClass,
+  onAdultChange,
+  onChildChange,
+  onInfantChange,
+  onCabinClassChange,
+}: {
+  position: { top: number; left: number; width: number };
+  adultCount: number;
+  childCount: number;
+  infantCount: number;
+  cabinClass: CabinClassValue;
+  onAdultChange: (value: number) => void;
+  onChildChange: (value: number) => void;
+  onInfantChange: (value: number) => void;
+  onCabinClassChange: (value: CabinClassValue) => void;
+}) {
+  return (
+    <div
+      id="flight-traveler-cabin-popover"
+      role="dialog"
+      aria-label="Travelers and cabin class"
+      style={{ position: "fixed", top: position.top, left: position.left, width: position.width, zIndex: 9999 }}
+      className="max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl ring-1 ring-black/5"
+    >
+      <div>
+        <h3 className="text-base font-black text-slate-950">Travelers</h3>
+
+        <div className="mt-4 divide-y divide-slate-100">
+          <CounterRow
+            label="Adults"
+            description="18+"
+            value={adultCount}
+            min={1}
+            max={9}
+            onChange={onAdultChange}
+          />
+
+          <CounterRow
+            label="Children"
+            description="0–17"
+            value={childCount}
+            min={0}
+            max={9}
+            onChange={onChildChange}
+          />
+
+          <CounterRow
+            label="Infants on lap"
+            description="Under 2"
+            value={infantCount}
+            min={0}
+            max={adultCount}
+            onChange={onInfantChange}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 border-t border-slate-100 pt-5">
+        <h3 className="text-base font-black text-slate-950">Cabin Class</h3>
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {cabinClassOptions.map((option) => {
+            const selected = option.value === cabinClass;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => onCabinClassChange(option.value)}
+                className={cn(
+                  "focus-ring rounded-lg border px-3 py-2.5 text-left text-sm font-bold transition",
+                  selected
+                    ? "border-[#0a66c2] bg-blue-50 text-[#0a66c2]"
+                    : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50",
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CounterRow({
+  label,
+  description,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+}) {
+  const decrementDisabled = value <= min;
+  const incrementDisabled = value >= max;
+
+  return (
+    <div className="flex items-center justify-between gap-4 py-3">
+      <div>
+        <p className="text-sm font-bold text-slate-950">{label}</p>
+        <p className="text-xs font-semibold text-slate-500">{description}</p>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          aria-label={`Decrease ${label}`}
+          disabled={decrementDisabled}
+          onClick={() => onChange(value - 1)}
+          className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          −
+        </button>
+
+        <span className="w-6 text-center text-sm font-black text-slate-950">{value}</span>
+
+        <button
+          type="button"
+          aria-label={`Increase ${label}`}
+          disabled={incrementDisabled}
+          onClick={() => onChange(value + 1)}
+          className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          +
         </button>
       </div>
     </div>
