@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7fafc;
-  --foreground: #0b172a;
-  --navy: #071526;
-  --navy-soft: #10233c;
+  --background: #f5f7ff;
+  --foreground: #0f172a;
+  --navy: #1e1b4b;
+  --navy-soft: #312e81;
   --surface: #ffffff;
-  --surface-muted: #eef4f7;
-  --border: #d9e4ea;
+  --surface-muted: #eef2ff;
+  --border: #dbe3f3;
   --muted: #64748b;
-  --teal: #0f9f9a;
-  --teal-dark: #0f766e;
+  --teal: #7c3aed;
+  --teal-dark: #5b21b6;
   --blue: #2563eb;
-  --amber: #b7791f;
+  --amber: #c27a2c;
   --danger: #b91c1c;
 }
 
@@ -62,7 +62,7 @@ textarea {
 }
 
 ::selection {
-  background: rgba(15, 159, 154, 0.24);
+  background: rgba(99, 102, 241, 0.28);
 }
 
 .page-shell {
@@ -75,7 +75,7 @@ textarea {
 }
 
 .focus-ring:focus-visible {
-  box-shadow: 0 0 0 3px rgba(15, 159, 154, 0.28);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.3);
 }
 
 .legal-paper {
