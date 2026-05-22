@@ -11,133 +11,14 @@ export type LanguageDirection =
 export type LanguageOption = {
   code: string;
   label: string;
-  flagCode: string;
   dir: LanguageDirection;
-  suggested: boolean;
 };
 
-export const languageOptions: LanguageOption[] =
-  [
-    {
-      code: "en-US",
-      label: "English (US)",
-      flagCode: "US",
-      dir: "ltr",
-      suggested: true,
-    },
-    {
-      code: "en-GB",
-      label: "English (UK)",
-      flagCode: "GB",
-      dir: "ltr",
-      suggested: true,
-    },
-    {
-      code: "fr-FR",
-      label: "Français",
-      flagCode: "FR",
-      dir: "ltr",
-      suggested: true,
-    },
-    {
-      code: "es-ES",
-      label: "Español",
-      flagCode: "ES",
-      dir: "ltr",
-      suggested: true,
-    },
-    {
-      code: "de-DE",
-      label: "Deutsch",
-      flagCode: "DE",
-      dir: "ltr",
-      suggested: true,
-    },
-    {
-      code: "it-IT",
-      label: "Italiano",
-      flagCode: "IT",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "pt-PT",
-      label: "Português",
-      flagCode: "PT",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "nl-NL",
-      label: "Nederlands",
-      flagCode: "NL",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "pl-PL",
-      label: "Polski",
-      flagCode: "PL",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "ar-SA",
-      label: "العربية",
-      flagCode: "SA",
-      dir: "rtl",
-      suggested: true,
-    },
-    {
-      code: "tr-TR",
-      label: "Türkçe",
-      flagCode: "TR",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "zh-CN",
-      label: "简体中文",
-      flagCode: "CN",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "ja-JP",
-      label: "日本語",
-      flagCode: "JP",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "ko-KR",
-      label: "한국어",
-      flagCode: "KR",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "hi-IN",
-      label: "हिन्दी",
-      flagCode: "IN",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "id-ID",
-      label: "Bahasa Indonesia",
-      flagCode: "ID",
-      dir: "ltr",
-      suggested: false,
-    },
-    {
-      code: "ru-RU",
-      label: "Русский",
-      flagCode: "RU",
-      dir: "ltr",
-      suggested: false,
-    },
-  ];
+export const languageOptions: LanguageOption[] = supportedLocales.map((locale) => ({
+  code: locale.code,
+  label: locale.label,
+  dir: locale.rtl ? "rtl" : "ltr",
+}));
 
 export type LanguageCode =
   (typeof languageOptions)[number]["code"];
@@ -291,7 +172,7 @@ export function getFlagEmoji(
 }
 
 export function getDefaultLanguage(): LanguageCode {
-  return "en-US";
+  return "en-us";
 }
 
 export function normalizeLanguage(
@@ -316,47 +197,13 @@ export function normalizeLanguage(
     return exactMatch.code;
   }
 
-  const upper = trimmed.toUpperCase();
   const lower = trimmed.toLowerCase();
-
-  if (
-    upper === "EN" ||
-    lower === "en" ||
-    lower === "en-us"
-  ) {
-    return "en-US";
-  }
-
-  if (
-    upper === "GB" ||
-    lower === "en-gb"
-  ) {
-    return "en-GB";
-  }
-
-  if (
-    upper === "FR" ||
-    lower === "fr" ||
-    lower === "fr-fr"
-  ) {
-    return "fr-FR";
-  }
-
-  if (
-    upper === "ES" ||
-    lower === "es" ||
-    lower === "es-es"
-  ) {
-    return "es-ES";
-  }
-
-  if (
-    upper === "AR" ||
-    lower === "ar" ||
-    lower === "ar-sa"
-  ) {
-    return "ar-SA";
-  }
+  if (lower === "en") return "en-us";
+  if (lower === "en-uk") return "en-gb";
+  if (lower === "pt") return "pt-pt";
+  if (lower === "zh") return "zh-cn";
+  const byBase = languageOptions.find((option) => option.code === lower.split("-")[0]);
+  if (byBase) return byBase.code;
 
   return getDefaultLanguage();
 }
@@ -465,7 +312,6 @@ export function setLanguageInStorage(
 }
 
 export function getSuggestedLanguages() {
-  return languageOptions.filter(
-    (option) => option.suggested
-  );
+  return languageOptions.slice(0, 12);
 }
+import { supportedLocales } from "@/lib/supportedLocales";
