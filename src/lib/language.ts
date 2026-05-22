@@ -125,4 +125,9 @@ export const languageOptions: LanguageOption[] =
     },
     {
       code: "id-ID",
-      label: "Bahasa
+      label: "Bahasa Indonesia",
+	  flagCode: "ID",
+	  dir: "ltr",
+	  suggested: false,
+	},
+	  
