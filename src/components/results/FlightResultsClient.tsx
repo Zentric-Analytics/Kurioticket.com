@@ -415,7 +415,7 @@ export function FlightResultsClient() {
                   <input type="hidden" name="travelers" value={String(adultCount + childCount)} />
                   <input type="hidden" name="cabinClass" value={cabinClassInput} />
 
-                  <div className="grid grid-cols-1 gap-2 overflow-hidden lg:grid-cols-[minmax(170px,1.2fr)_46px_minmax(170px,1.2fr)_minmax(138px,1fr)_minmax(138px,1fr)_minmax(210px,1.25fr)_minmax(138px,1fr)] lg:items-center">
+                  <div className="grid grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[minmax(190px,1.25fr)_52px_minmax(190px,1.25fr)_minmax(150px,1fr)_minmax(150px,1fr)_minmax(240px,1.3fr)_minmax(150px,1fr)] lg:items-center">
                     <div className="relative" ref={originWrapRef}>
                       <label className="sr-only" htmlFor="origin">
                         From
