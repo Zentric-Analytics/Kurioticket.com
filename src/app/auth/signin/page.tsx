@@ -27,7 +27,7 @@ export default async function SigninPage({
     params?.callbackUrl?.startsWith("/") &&
     !params.callbackUrl.startsWith("//")
       ? params.callbackUrl
-      : "/dashboard";
+      : "/";
 
   const initialError =
     params?.error === "AccountUnavailable"
