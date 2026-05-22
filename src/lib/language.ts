@@ -1,4 +1,5 @@
-export const LANGUAGE_STORAGE_KEY = "ct_language";
+export const LANGUAGE_STORAGE_KEY =
+  "ct_language";
 
 export const LANGUAGE_CHANGE_EVENT =
   "curioticket-language-change";
@@ -15,127 +16,128 @@ export type LanguageOption = {
   suggested: boolean;
 };
 
-export const languageOptions: LanguageOption[] = [
-  {
-    code: "en-US",
-    label: "English (US)",
-    flagCode: "US",
-    dir: "ltr",
-    suggested: true,
-  },
-  {
-    code: "en-GB",
-    label: "English (UK)",
-    flagCode: "GB",
-    dir: "ltr",
-    suggested: true,
-  },
-  {
-    code: "fr-FR",
-    label: "Français",
-    flagCode: "FR",
-    dir: "ltr",
-    suggested: true,
-  },
-  {
-    code: "es-ES",
-    label: "Español",
-    flagCode: "ES",
-    dir: "ltr",
-    suggested: true,
-  },
-  {
-    code: "de-DE",
-    label: "Deutsch",
-    flagCode: "DE",
-    dir: "ltr",
-    suggested: true,
-  },
-  {
-    code: "it-IT",
-    label: "Italiano",
-    flagCode: "IT",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "pt-PT",
-    label: "Português",
-    flagCode: "PT",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "nl-NL",
-    label: "Nederlands",
-    flagCode: "NL",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "pl-PL",
-    label: "Polski",
-    flagCode: "PL",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "ar-SA",
-    label: "العربية",
-    flagCode: "SA",
-    dir: "rtl",
-    suggested: true,
-  },
-  {
-    code: "tr-TR",
-    label: "Türkçe",
-    flagCode: "TR",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "zh-CN",
-    label: "简体中文",
-    flagCode: "CN",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "ja-JP",
-    label: "日本語",
-    flagCode: "JP",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "ko-KR",
-    label: "한국어",
-    flagCode: "KR",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "hi-IN",
-    label: "हिन्दी",
-    flagCode: "IN",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "id-ID",
-    label: "Bahasa Indonesia",
-    flagCode: "ID",
-    dir: "ltr",
-    suggested: false,
-  },
-  {
-    code: "ru-RU",
-    label: "Русский",
-    flagCode: "RU",
-    dir: "ltr",
-    suggested: false,
-  },
-];
+export const languageOptions: LanguageOption[] =
+  [
+    {
+      code: "en-US",
+      label: "English (US)",
+      flagCode: "US",
+      dir: "ltr",
+      suggested: true,
+    },
+    {
+      code: "en-GB",
+      label: "English (UK)",
+      flagCode: "GB",
+      dir: "ltr",
+      suggested: true,
+    },
+    {
+      code: "fr-FR",
+      label: "Français",
+      flagCode: "FR",
+      dir: "ltr",
+      suggested: true,
+    },
+    {
+      code: "es-ES",
+      label: "Español",
+      flagCode: "ES",
+      dir: "ltr",
+      suggested: true,
+    },
+    {
+      code: "de-DE",
+      label: "Deutsch",
+      flagCode: "DE",
+      dir: "ltr",
+      suggested: true,
+    },
+    {
+      code: "it-IT",
+      label: "Italiano",
+      flagCode: "IT",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "pt-PT",
+      label: "Português",
+      flagCode: "PT",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "nl-NL",
+      label: "Nederlands",
+      flagCode: "NL",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "pl-PL",
+      label: "Polski",
+      flagCode: "PL",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "ar-SA",
+      label: "العربية",
+      flagCode: "SA",
+      dir: "rtl",
+      suggested: true,
+    },
+    {
+      code: "tr-TR",
+      label: "Türkçe",
+      flagCode: "TR",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "zh-CN",
+      label: "简体中文",
+      flagCode: "CN",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "ja-JP",
+      label: "日本語",
+      flagCode: "JP",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "ko-KR",
+      label: "한국어",
+      flagCode: "KR",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "hi-IN",
+      label: "हिन्दी",
+      flagCode: "IN",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "id-ID",
+      label: "Bahasa Indonesia",
+      flagCode: "ID",
+      dir: "ltr",
+      suggested: false,
+    },
+    {
+      code: "ru-RU",
+      label: "Русский",
+      flagCode: "RU",
+      dir: "ltr",
+      suggested: false,
+    },
+  ];
 
 export type LanguageCode =
   (typeof languageOptions)[number]["code"];
@@ -153,14 +155,17 @@ export const uiTranslations = {
     login: "Login",
     signUp: "Sign Up",
     menu: "Menu",
-    selectLanguage: "Select your language",
+    selectLanguage:
+      "Select your language",
     suggestedLanguages:
       "Suggested languages",
-    allLanguages: "All languages",
+    allLanguages:
+      "All languages",
     platform: "Platform",
     legal: "Legal",
     premium: "Premium",
-    legalCenter: "Legal Center",
+    legalCenter:
+      "Legal Center",
     footerAbout:
       "Search flights and hotels for free, compare trusted partner prices, and make calmer travel decisions.",
     footerMeta:
@@ -170,38 +175,6 @@ export const uiTranslations = {
     tripMulti: "multi city",
     heroBadge:
       "Trusted travel search platform",
-    featuresMillionsTitle:
-      "Millions of Choices",
-    featuresMillionsBody:
-      "Flights and hotels worldwide",
-    featuresFlexibleTitle:
-      "Flexible Options",
-    featuresFlexibleBody:
-      "Choose what fits your trip",
-    featuresSecureTitle:
-      "Secure Payments",
-    featuresSecureBody:
-      "100% safe and secure",
-    featuresDealsTitle:
-      "Great Deals",
-    featuresDealsBody:
-      "Compare more before you buy",
-    popularDestinations:
-      "Popular Destinations",
-    viewAllDestinations:
-      "View all destinations",
-    promoFlightsTitle:
-      "Amazing flight deals just for you",
-    promoFlightsBody:
-      "Unlock exclusive offers on domestic and international flights.",
-    promoFlightsCta:
-      "Explore Flight Deals",
-    promoHotelsTitle:
-      "Find your perfect hotel stay",
-    promoHotelsBody:
-      "From budget to luxury, find hotels that suit your style and budget.",
-    promoHotelsCta:
-      "Explore Hotel Deals",
     newsletterTitle:
       "Get the best travel deals in your inbox",
     newsletterBody:
@@ -216,10 +189,12 @@ export const uiTranslations = {
     flights: "Vols",
     hotels: "Hôtels",
     deals: "Offres",
-    destinations: "Destinations",
+    destinations:
+      "Destinations",
     explore: "Explorer",
     support: "Assistance",
-    dashboard: "Tableau de bord",
+    dashboard:
+      "Tableau de bord",
     logout: "Déconnexion",
     login: "Connexion",
     signUp: "S’inscrire",
@@ -230,7 +205,8 @@ export const uiTranslations = {
       "Langues suggérées",
     allLanguages:
       "Toutes les langues",
-    platform: "Plateforme",
+    platform:
+      "Plateforme",
     legal: "Légal",
     premium: "Premium",
     legalCenter:
@@ -238,66 +214,42 @@ export const uiTranslations = {
     footerAbout:
       "Recherchez des vols et des hôtels gratuitement, comparez des prix partenaires fiables et voyagez plus sereinement.",
     footerMeta:
-      "Curioticket est une plateforme de métarecherche de voyage. Les fournisseurs externes confirment les tarifs, règles, disponibilités et achats.",
-    tripRound: "aller-retour",
-    tripOneWay: "aller simple",
+      "Curioticket est une plateforme de métarecherche de voyage.",
+    tripRound:
+      "aller-retour",
+    tripOneWay:
+      "aller simple",
     tripMulti:
       "multi-destinations",
     heroBadge:
       "Plateforme de recherche de voyage fiable",
-    featuresMillionsTitle:
-      "Des millions de choix",
-    featuresMillionsBody:
-      "Vols et hôtels dans le monde entier",
-    featuresFlexibleTitle:
-      "Options flexibles",
-    featuresFlexibleBody:
-      "Choisissez ce qui convient à votre voyage",
-    featuresSecureTitle:
-      "Paiements sécurisés",
-    featuresSecureBody:
-      "100% sûr et sécurisé",
-    featuresDealsTitle:
-      "Super offres",
-    featuresDealsBody:
-      "Comparez davantage avant d’acheter",
-    popularDestinations:
-      "Destinations populaires",
-    viewAllDestinations:
-      "Voir toutes les destinations",
-    promoFlightsTitle:
-      "Des offres de vols incroyables pour vous",
-    promoFlightsBody:
-      "Débloquez des offres exclusives sur les vols nationaux et internationaux.",
-    promoFlightsCta:
-      "Voir les offres de vols",
-    promoHotelsTitle:
-      "Trouvez votre hôtel idéal",
-    promoHotelsBody:
-      "Du budget au luxe, trouvez des hôtels adaptés à votre style.",
-    promoHotelsCta:
-      "Voir les offres d’hôtels",
     newsletterTitle:
       "Recevez les meilleures offres de voyage",
     newsletterBody:
-      "Abonnez-vous à notre newsletter et ne manquez jamais une offre.",
+      "Abonnez-vous à notre newsletter.",
     newsletterPlaceholder:
       "Entrez votre adresse e-mail",
-    subscribe: "S’abonner",
-    fromPrice: "À partir de",
+    subscribe:
+      "S’abonner",
+    fromPrice:
+      "À partir de",
   },
 
   es: {
     flights: "Vuelos",
     hotels: "Hoteles",
     deals: "Ofertas",
-    destinations: "Destinos",
+    destinations:
+      "Destinos",
     explore: "Explorar",
     support: "Soporte",
     dashboard: "Panel",
-    logout: "Cerrar sesión",
-    login: "Iniciar sesión",
-    signUp: "Registrarse",
+    logout:
+      "Cerrar sesión",
+    login:
+      "Iniciar sesión",
+    signUp:
+      "Registrarse",
     menu: "Menú",
     selectLanguage:
       "Selecciona tu idioma",
@@ -305,15 +257,16 @@ export const uiTranslations = {
       "Idiomas sugeridos",
     allLanguages:
       "Todos los idiomas",
-    platform: "Plataforma",
+    platform:
+      "Plataforma",
     legal: "Legal",
     premium: "Premium",
     legalCenter:
       "Centro legal",
     footerAbout:
-      "Busca vuelos y hoteles gratis, compara precios de socios confiables y toma decisiones de viaje con calma.",
+      "Busca vuelos y hoteles gratis y compara precios.",
     footerMeta:
-      "Curioticket es una plataforma de metabúsqueda de viajes. Los proveedores externos confirman precios, reglas, disponibilidad y compra.",
+      "Curioticket es una plataforma de metabúsqueda.",
     tripRound:
       "ida y vuelta",
     tripOneWay:
@@ -322,54 +275,26 @@ export const uiTranslations = {
       "multiciudad",
     heroBadge:
       "Plataforma confiable de búsqueda de viajes",
-    featuresMillionsTitle:
-      "Millones de opciones",
-    featuresMillionsBody:
-      "Vuelos y hoteles en todo el mundo",
-    featuresFlexibleTitle:
-      "Opciones flexibles",
-    featuresFlexibleBody:
-      "Elige lo que se adapte a tu viaje",
-    featuresSecureTitle:
-      "Pagos seguros",
-    featuresSecureBody:
-      "100% seguro",
-    featuresDealsTitle:
-      "Grandes ofertas",
-    featuresDealsBody:
-      "Compara más antes de comprar",
-    popularDestinations:
-      "Destinos populares",
-    viewAllDestinations:
-      "Ver todos los destinos",
-    promoFlightsTitle:
-      "Increíbles ofertas de vuelos para ti",
-    promoFlightsBody:
-      "Desbloquea ofertas exclusivas en vuelos nacionales e internacionales.",
-    promoFlightsCta:
-      "Explorar ofertas de vuelos",
-    promoHotelsTitle:
-      "Encuentra tu hotel ideal",
-    promoHotelsBody:
-      "Desde económico hasta lujo, encuentra hoteles para tu estilo.",
-    promoHotelsCta:
-      "Explorar ofertas de hoteles",
     newsletterTitle:
-      "Recibe las mejores ofertas de viaje",
+      "Recibe las mejores ofertas",
     newsletterBody:
-      "Suscríbete a nuestro boletín y no te pierdas ninguna oferta.",
+      "Suscríbete y no te pierdas ninguna oferta.",
     newsletterPlaceholder:
       "Ingresa tu correo electrónico",
-    subscribe: "Suscribirse",
-    fromPrice: "Desde",
+    subscribe:
+      "Suscribirse",
+    fromPrice:
+      "Desde",
   },
 
   ar: {
     flights: "رحلات",
     hotels: "فنادق",
     deals: "العروض",
-    destinations: "الوجهات",
-    explore: "استكشاف",
+    destinations:
+      "الوجهات",
+    explore:
+      "استكشاف",
     support: "الدعم",
     dashboard:
       "لوحة التحكم",
@@ -386,15 +311,17 @@ export const uiTranslations = {
       "اللغات المقترحة",
     allLanguages:
       "جميع اللغات",
-    platform: "المنصة",
+    platform:
+      "المنصة",
     legal: "قانوني",
-    premium: "بريميوم",
+    premium:
+      "بريميوم",
     legalCenter:
       "المركز القانوني",
     footerAbout:
-      "ابحث عن الرحلات والفنادق مجانًا، وقارن أسعار شركاء موثوقين، واتخذ قرارات سفر أكثر هدوءًا.",
+      "ابحث عن الرحلات والفنادق مجانًا.",
     footerMeta:
-      "كريوتيكيت منصة بحث ميتا للسفر. يؤكد المزوّدون الخارجيون الأسعار والقواعد والتوافر وخطوات الشراء.",
+      "كريوتيكيت منصة بحث ميتا للسفر.",
     tripRound:
       "ذهاب وعودة",
     tripOneWay:
@@ -403,46 +330,16 @@ export const uiTranslations = {
       "متعدد المدن",
     heroBadge:
       "منصة موثوقة للبحث عن السفر",
-    featuresMillionsTitle:
-      "ملايين الخيارات",
-    featuresMillionsBody:
-      "رحلات وفنادق حول العالم",
-    featuresFlexibleTitle:
-      "خيارات مرنة",
-    featuresFlexibleBody:
-      "اختر ما يناسب رحلتك",
-    featuresSecureTitle:
-      "مدفوعات آمنة",
-    featuresSecureBody:
-      "آمن ومحمي 100%",
-    featuresDealsTitle:
-      "عروض رائعة",
-    featuresDealsBody:
-      "قارن أكثر قبل الشراء",
-    popularDestinations:
-      "الوجهات الشائعة",
-    viewAllDestinations:
-      "عرض جميع الوجهات",
-    promoFlightsTitle:
-      "عروض رحلات مذهلة لك",
-    promoFlightsBody:
-      "اكتشف عروضًا حصرية على الرحلات المحلية والدولية.",
-    promoFlightsCta:
-      "استكشف عروض الرحلات",
-    promoHotelsTitle:
-      "اعثر على الفندق المثالي",
-    promoHotelsBody:
-      "من الاقتصادي إلى الفاخر، اعثر على الفنادق المناسبة لك.",
-    promoHotelsCta:
-      "استكشف عروض الفنادق",
     newsletterTitle:
       "احصل على أفضل عروض السفر",
     newsletterBody:
-      "اشترك في النشرة البريدية ولا تفوت أي عرض.",
+      "اشترك في النشرة البريدية.",
     newsletterPlaceholder:
       "أدخل بريدك الإلكتروني",
-    subscribe: "اشترك",
-    fromPrice: "ابتداءً من",
+    subscribe:
+      "اشترك",
+    fromPrice:
+      "ابتداءً من",
   },
 } as const;
 
@@ -457,7 +354,8 @@ export function getFlagEmoji(
     .split("")
     .map((char) =>
       String.fromCodePoint(
-        127397 + char.charCodeAt(0)
+        127397 +
+          char.charCodeAt(0)
       )
     )
     .join("");
@@ -474,7 +372,8 @@ export function normalizeLanguage(
     return getDefaultLanguage();
   }
 
-  const trimmed = value.trim();
+  const trimmed =
+    value.trim();
 
   if (!trimmed) {
     return getDefaultLanguage();
@@ -483,7 +382,8 @@ export function normalizeLanguage(
   const exactMatch =
     languageOptions.find(
       (option) =>
-        option.code === trimmed
+        option.code ===
+        trimmed
     );
 
   if (exactMatch) {
@@ -552,7 +452,10 @@ export function getLanguageOption(
 }
 
 export function getLanguageFromStorage(): LanguageCode {
-  if (typeof window === "undefined") {
+  if (
+    typeof window ===
+    "undefined"
+  ) {
     return getDefaultLanguage();
   }
 
@@ -590,7 +493,9 @@ export function getUiTranslations(
 ) {
   return (
     uiTranslations[
-      getTranslationLanguage(code)
+      getTranslationLanguage(
+        code
+      )
     ] || uiTranslations.en
   );
 }
@@ -598,7 +503,10 @@ export function getUiTranslations(
 export function applyLanguageToDocument(
   code: LanguageCode
 ) {
-  if (typeof document === "undefined") {
+  if (
+    typeof document ===
+    "undefined"
+  ) {
     return;
   }
 
@@ -622,7 +530,10 @@ export function applyLanguageToDocument(
 export function setLanguageInStorage(
   code: LanguageCode
 ) {
-  if (typeof window === "undefined") {
+  if (
+    typeof window ===
+    "undefined"
+  ) {
     return;
   }
 
@@ -631,7 +542,9 @@ export function setLanguageInStorage(
     code
   );
 
-  applyLanguageToDocument(code);
+  applyLanguageToDocument(
+    code
+  );
 
   window.dispatchEvent(
     new CustomEvent(
@@ -645,6 +558,7 @@ export function setLanguageInStorage(
 
 export function getSuggestedLanguages() {
   return languageOptions.filter(
-    (option) => option.suggested
+    (option) =>
+      option.suggested
   );
 }
