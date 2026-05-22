@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+
 import {
   Bell,
   ChevronDown,
@@ -31,11 +32,16 @@ export function AppHeader() {
 
   const [language, setLanguage] = useState(() => {
     if (typeof window === "undefined") return "EN";
-    return window.localStorage.getItem("ct_language")?.toUpperCase() || "EN";
+
+    return (
+      window.localStorage.getItem("ct_language")?.toUpperCase() || "EN"
+    );
   });
 
   const { data: session, status } = useSession();
-  const isSignedIn = status === "authenticated" && Boolean(session?.user);
+
+  const isSignedIn =
+    status === "authenticated" && Boolean(session?.user);
 
   const handleLanguageChange = (value: string) => {
     setLanguage(value);
@@ -45,7 +51,6 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
       <div className="page-shell flex h-20 items-center justify-between gap-4">
-        {/* Logo */}
         <Link
           href="/"
           className="flex items-center gap-3 text-xl font-extrabold text-slate-950"
@@ -53,10 +58,10 @@ export function AppHeader() {
           <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white">
             <Sparkles size={22} />
           </span>
+
           Curioticket
         </Link>
 
-        {/* Desktop nav */}
         <nav className="hidden items-center gap-2 lg:flex">
           {navItems.map((item) => (
             <Link
@@ -69,14 +74,13 @@ export function AppHeader() {
           ))}
         </nav>
 
-        {/* Right controls */}
         <div className="hidden items-center gap-3 md:flex">
-          {/* Language selector */}
           <div className="relative">
             <Globe2
               size={18}
               className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-700"
             />
+
             <ChevronDown
               size={14}
               className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-700"
@@ -84,7 +88,9 @@ export function AppHeader() {
 
             <select
               value={language}
-              onChange={(e) => handleLanguageChange(e.target.value)}
+              onChange={(event) =>
+                handleLanguageChange(event.target.value)
+              }
               aria-label="Select language"
               className="focus-ring h-10 rounded-md border border-transparent bg-transparent pl-8 pr-7 text-sm font-bold text-slate-900"
             >
@@ -96,7 +102,6 @@ export function AppHeader() {
 
           <RegionSelector />
 
-          {/* Notifications */}
           <LinkButton
             href="/dashboard"
             variant="ghost"
@@ -107,7 +112,6 @@ export function AppHeader() {
             <Bell size={18} />
           </LinkButton>
 
-          {/* Auth */}
           {isSignedIn ? (
             <>
               <LinkButton
@@ -142,14 +146,17 @@ export function AppHeader() {
                 Login
               </LinkButton>
 
-              <LinkButton href="/auth/signup" variant="accent" size="sm">
+              <LinkButton
+                href="/auth/signup"
+                variant="accent"
+                size="sm"
+              >
                 Sign Up
               </LinkButton>
             </>
           )}
         </div>
 
-        {/* Mobile menu button */}
         <Button
           variant="secondary"
           size="sm"
@@ -161,7 +168,6 @@ export function AppHeader() {
         </Button>
       </div>
 
-      {/* Mobile drawer */}
       {open && (
         <>
           <div
@@ -171,7 +177,9 @@ export function AppHeader() {
 
           <aside className="fixed right-0 top-0 z-50 h-dvh w-[min(86vw,360px)] border-l bg-white p-5 shadow-xl md:hidden">
             <div className="flex items-center justify-between">
-              <span className="text-base font-bold text-navy">Menu</span>
+              <span className="text-base font-bold text-navy">
+                Menu
+              </span>
 
               <Button
                 variant="ghost"

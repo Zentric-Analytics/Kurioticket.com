@@ -33,7 +33,7 @@ export function ResetPasswordForm({
     if (!parsed.success) {
       setLoading(false);
       setError(
-        "Enter a valid email, 6-digit code, and a valid password.",
+        "Enter a valid email, 6-digit code, and a valid password."
       );
       return;
     }
@@ -51,11 +51,15 @@ export function ResetPasswordForm({
       setLoading(false);
 
       if (!response.ok) {
-        setError(String(data.error || "Unable to reset password right now."));
+        setError(
+          String(data.error || "Unable to reset password right now.")
+        );
         return;
       }
 
-      setMessage("Password reset successful. Redirecting to sign in...");
+      setMessage(
+        "Password reset successful. Redirecting to sign in..."
+      );
 
       startTransition(() => {
         window.location.href = "/auth/signin?reset=success";
@@ -86,6 +90,7 @@ export function ResetPasswordForm({
             defaultValue={email}
             required
             disabled={loading || isPending}
+            placeholder="you@example.com"
           />
         </Field>
 
@@ -102,7 +107,7 @@ export function ResetPasswordForm({
               setCode(
                 event.target.value
                   .replace(/\D/g, "")
-                  .slice(0, 6),
+                  .slice(0, 6)
               )
             }
             disabled={loading || isPending}
@@ -136,13 +141,18 @@ export function ResetPasswordForm({
         ) : null}
 
         <Button disabled={loading || isPending || code.length !== 6}>
-          {loading || isPending ? "Resetting..." : "Reset password"}
+          {loading || isPending
+            ? "Resetting..."
+            : "Reset password"}
         </Button>
       </form>
 
       <p className="mt-4 text-sm text-muted">
         Remember your password?{" "}
-        <Link className="font-semibold text-teal-dark" href="/auth/signin">
+        <Link
+          className="font-semibold text-teal-dark"
+          href="/auth/signin"
+        >
           Log in
         </Link>
       </p>

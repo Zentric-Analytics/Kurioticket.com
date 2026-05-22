@@ -40,47 +40,55 @@ export function SigninForm({
     if (!parsed.success) {
       setLoading(false);
       setError(
-        "We could not sign you in. Check your email and password, then try again.",
+        "We could not sign you in. Check your email and password, then try again."
       );
       return;
     }
 
-    const response = await fetch("/api/auth/request-login-code", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...parsed.data,
-        callbackUrl,
-      }),
-    });
+    try {
+      const response = await fetch("/api/auth/request-login-code", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...parsed.data,
+          callbackUrl,
+        }),
+      });
 
-    const data = await response.json();
-    setLoading(false);
+      const data = await response.json();
+      setLoading(false);
 
-    if (!response.ok) {
+      if (!response.ok) {
+        setError(
+          String(
+            data.error ||
+              "We could not sign you in. Check your email and password, then try again."
+          )
+        );
+        return;
+      }
+
+      const redirectTo = String(
+        data.redirectTo ||
+          `/auth/verify-login?email=${encodeURIComponent(
+            parsed.data.email
+          )}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+      );
+
+      setMessage("Code sent. Redirecting to verification...");
+
+      startTransition(() => {
+        window.location.href = redirectTo;
+      });
+    } catch (error) {
+      console.error("[signin]", error);
+      setLoading(false);
       setError(
-        String(
-          data.error ||
-            "We could not sign you in. Check your email and password, then try again.",
-        ),
+        "We could not sign you in. Check your email and password, then try again."
       );
-      return;
     }
-
-    const redirectTo = String(
-      data.redirectTo ||
-        `/auth/verify-login?email=${encodeURIComponent(
-          parsed.data.email,
-        )}&callbackUrl=${encodeURIComponent(callbackUrl)}`,
-    );
-
-    setMessage("Code sent. Redirecting to verification...");
-
-    startTransition(() => {
-      window.location.href = redirectTo;
-    });
   }
 
   return (

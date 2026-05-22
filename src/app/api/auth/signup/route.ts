@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
+
 import {
   AuthRateLimitError,
   checkAuthRateLimit,
 } from "@/lib/auth-rate-limit";
+
 import {
   DatabaseUnavailableError,
   getPrisma,
 } from "@/lib/prisma";
+
 import { signupSchema } from "@/lib/validation";
 
 import {
@@ -85,8 +88,7 @@ export async function POST(request: Request) {
     if (error instanceof AuthRateLimitError) {
       return NextResponse.json(
         {
-          error:
-            "Too many signup attempts. Please wait and try again.",
+          error: "Too many signup attempts. Please wait and try again.",
         },
         {
           status: 429,
