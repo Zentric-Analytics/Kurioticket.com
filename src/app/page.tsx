@@ -1,83 +1,51 @@
-import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
-import { Geist, Geist_Mono } from "next/font/google";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { Footer } from "@/components/layout/Footer";
+import { SearchTabs } from "@/components/search/SearchTabs";
 
-import "./globals.css";
-
-import { AuthProvider } from "@/components/auth/AuthProvider";
-import { RegionProvider } from "@/components/region/RegionProvider";
-
-import {
-  REGION_COOKIE_KEY,
-  type RegionMode,
-} from "@/config/regionConfig";
-
-import {
-  countryToRegion,
-  normalizeRegion,
-} from "@/lib/region/detectRegion";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: {
-    default: "Curioticket | Find Cheap Flights Fast",
-    template: "%s | Curioticket",
-  },
-  description:
-    "Compare affordable flights and hotels in seconds with a calmer travel decision platform.",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-  ),
+const searchTabTranslations = {
+  flights: "Flights",
+  hotels: "Hotels",
+  from: "From",
+  to: "To",
+  departure: "Departure",
+  return: "Return",
+  oneTraveler: "1 Traveler",
+  twoTravelers: "2 Travelers",
+  threeTravelers: "3 Travelers",
+  fourTravelers: "4 Travelers",
+  economy: "Economy",
+  premiumEconomy: "Premium economy",
+  business: "Business",
+  first: "First",
+  destination: "Destination",
+  searchFlights: "Search Flights",
+  searchHotels: "Search Hotels",
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-
-  const cookieRegion = normalizeRegion(
-    cookieStore.get(REGION_COOKIE_KEY)?.value
-  );
-
-  const headerRegion = normalizeRegion(
-    headerStore.get("x-curioticket-region")
-  );
-
-  const ipRegion = countryToRegion(
-    headerStore.get("x-vercel-ip-country") ||
-      headerStore.get("cf-ipcountry")
-  );
-
-  const initialRegion = (
-    cookieRegion ||
-    headerRegion ||
-    ipRegion ||
-    "GLOBAL"
-  ) as RegionMode;
-
+export default function HomePage() {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} flex min-h-full flex-col`}
-      >
-        <AuthProvider>
-          <RegionProvider initialMode={initialRegion}>
-            {children}
-          </RegionProvider>
-        </AuthProvider>
-      </body>
-    </html>
+    <>
+      <AppHeader />
+
+      <main className="flex-1 bg-slate-50">
+        <section className="page-shell py-10 md:py-14">
+          <div className="mx-auto max-w-5xl rounded-3xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
+            <h1 className="text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+              Find better flight and hotel deals in seconds.
+            </h1>
+
+            <p className="mt-4 max-w-3xl text-base text-slate-600 md:text-lg">
+              Compare providers, narrow options quickly, and book with more confidence.
+            </p>
+
+            <div className="mt-8">
+              <SearchTabs t={searchTabTranslations} />
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </>
   );
 }
