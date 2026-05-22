@@ -16,7 +16,11 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
-import { getLanguageFromStorage, type LanguageCode } from "@/lib/language";
+import {
+  LANGUAGE_CHANGE_EVENT,
+  getLanguageFromStorage,
+  type LanguageCode,
+} from "@/lib/language";
 
 const i18n = {
   en: {
@@ -42,6 +46,11 @@ const i18n = {
     checkOut: "Check-out",
     guests: "Guests",
     rooms: "Rooms",
+    cityAirport: "City or airport",
+    cityHotelArea: "City or hotel area",
+    selectDate: "Select date",
+    notNeeded: "Not needed",
+    travelersClass: "Travelers & Class",
     oneTraveler: "1 Traveler",
     twoTravelers: "2 Travelers",
     threeTravelers: "3 Travelers",
@@ -52,6 +61,7 @@ const i18n = {
     first: "First",
     adults: "Adults",
     room: "Room",
+    searchHotelsInstead: "Search hotels instead",
   },
   fr: {
     heroTitle: "Trouvez des vols pas chers rapidement",
@@ -76,6 +86,11 @@ const i18n = {
     checkOut: "Départ",
     guests: "Voyageurs",
     rooms: "Chambres",
+    cityAirport: "Ville ou aéroport",
+    cityHotelArea: "Ville ou zone hôtelière",
+    selectDate: "Choisir une date",
+    notNeeded: "Non requis",
+    travelersClass: "Voyageurs et classe",
     oneTraveler: "1 voyageur",
     twoTravelers: "2 voyageurs",
     threeTravelers: "3 voyageurs",
@@ -86,6 +101,7 @@ const i18n = {
     first: "Première",
     adults: "Adultes",
     room: "Chambre",
+    searchHotelsInstead: "Rechercher des hôtels",
   },
   es: {
     heroTitle: "Encuentra vuelos baratos rápido",
@@ -110,6 +126,11 @@ const i18n = {
     checkOut: "Salida",
     guests: "Huéspedes",
     rooms: "Habitaciones",
+    cityAirport: "Ciudad o aeropuerto",
+    cityHotelArea: "Ciudad o zona hotelera",
+    selectDate: "Selecciona fecha",
+    notNeeded: "No necesario",
+    travelersClass: "Viajeros y clase",
     oneTraveler: "1 viajero",
     twoTravelers: "2 viajeros",
     threeTravelers: "3 viajeros",
@@ -120,6 +141,7 @@ const i18n = {
     first: "Primera",
     adults: "Adultos",
     room: "Habitación",
+    searchHotelsInstead: "Buscar hoteles",
   },
   ar: {
     heroTitle: "اعثر على رحلات رخيصة بسرعة",
@@ -144,6 +166,11 @@ const i18n = {
     checkOut: "تسجيل المغادرة",
     guests: "الضيوف",
     rooms: "الغرف",
+    cityAirport: "مدينة أو مطار",
+    cityHotelArea: "مدينة أو منطقة فندقية",
+    selectDate: "اختر التاريخ",
+    notNeeded: "غير مطلوب",
+    travelersClass: "المسافرون والدرجة",
     oneTraveler: "مسافر 1",
     twoTravelers: "مسافران",
     threeTravelers: "3 مسافرين",
@@ -154,6 +181,7 @@ const i18n = {
     first: "الأولى",
     adults: "بالغون",
     room: "غرفة",
+    searchHotelsInstead: "ابحث عن فنادق",
   },
 } as const;
 
@@ -208,21 +236,17 @@ export default function Home() {
       setLanguage(getLanguageFromStorage());
     };
 
-    window.addEventListener(
-      "curioticket-language-change",
-      syncLanguage
-    );
+    window.addEventListener(LANGUAGE_CHANGE_EVENT, syncLanguage);
 
     return () => {
-      window.removeEventListener(
-        "curioticket-language-change",
-        syncLanguage
-      );
+      window.removeEventListener(LANGUAGE_CHANGE_EVENT, syncLanguage);
     };
   }, []);
 
   const t = useMemo(() => {
-    return i18n[language] || i18n.en;
+    return language in i18n
+      ? i18n[language as keyof typeof i18n]
+      : i18n.en;
   }, [language]);
 
   return (
@@ -325,10 +349,7 @@ export default function Home() {
 
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
             {destinations.map((destination) => (
-              <DestinationCard
-                key={destination.city}
-                {...destination}
-              />
+              <DestinationCard key={destination.city} {...destination} />
             ))}
           </div>
         </section>
