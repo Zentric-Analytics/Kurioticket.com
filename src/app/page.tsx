@@ -185,6 +185,14 @@ const i18n = {
   },
 } as const;
 
+function getI18nLanguageKey(language: LanguageCode): keyof typeof i18n {
+  const baseLanguage = String(language).split("-")[0];
+
+  return baseLanguage in i18n
+    ? (baseLanguage as keyof typeof i18n)
+    : "en";
+}
+
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
 
@@ -244,9 +252,7 @@ export default function Home() {
   }, []);
 
   const t = useMemo(() => {
-    return language in i18n
-      ? i18n[language as keyof typeof i18n]
-      : i18n.en;
+    return i18n[getI18nLanguageKey(language)];
   }, [language]);
 
   return (
