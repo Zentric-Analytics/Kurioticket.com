@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { Bell, ChevronDown, Globe2, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
+import { RegionSelector } from "@/components/region/RegionSelector";
 import { Button, LinkButton } from "@/components/ui/Button";
 
 const navItems = [
@@ -17,8 +18,20 @@ const navItems = [
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
+  const [language, setLanguage] = useState(() => {
+    if (typeof window === "undefined") {
+      return "EN";
+    }
+
+    return window.localStorage.getItem("ct_language")?.toUpperCase() || "EN";
+  });
   const { data: session, status } = useSession();
   const isSignedIn = status === "authenticated" && Boolean(session?.user);
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    window.localStorage.setItem("ct_language", value);
+  };
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
@@ -39,11 +52,21 @@ export function AppHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <button type="button" className="focus-ring inline-flex h-10 items-center gap-2 rounded-md px-2 text-sm font-bold text-slate-900">
-            <Globe2 size={18} />
-            EN
-            <ChevronDown size={14} />
-          </button>
+          <div className="relative">
+            <Globe2 size={18} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-700" />
+            <ChevronDown size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-700" />
+            <select
+              value={language}
+              onChange={(event) => handleLanguageChange(event.target.value)}
+              aria-label="Select language"
+              className="focus-ring h-10 rounded-md border border-transparent bg-transparent pl-8 pr-7 text-sm font-bold text-slate-900"
+            >
+              <option value="EN">EN</option>
+              <option value="FR">FR</option>
+              <option value="ES">ES</option>
+            </select>
+          </div>
+          <RegionSelector />
           <LinkButton href="/dashboard" variant="ghost" size="sm" className="h-10 w-10 px-0" aria-label="Notifications">
             <Bell size={18} />
           </LinkButton>

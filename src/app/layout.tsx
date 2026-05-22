@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies, headers } from "next/headers";
 import {
   Geist,
   Geist_Mono,
@@ -7,6 +8,9 @@ import {
 import "./globals.css";
 
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { RegionProvider } from "@/components/region/RegionProvider";
+import { REGION_COOKIE_KEY, type RegionMode } from "@/config/regionConfig";
+import { countryToRegion, normalizeRegion } from "@/lib/region/detectRegion";
 
 const geistSans = Geist({
   variable:
@@ -41,11 +45,18 @@ export const metadata: Metadata =
       ),
   };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  const cookieRegion = normalizeRegion(cookieStore.get(REGION_COOKIE_KEY)?.value);
+  const headerRegion = normalizeRegion(headerStore.get("x-curioticket-region"));
+  const ipRegion = countryToRegion(headerStore.get("x-vercel-ip-country") || headerStore.get("cf-ipcountry"));
+  const initialRegion = (cookieRegion || headerRegion || ipRegion || "GLOBAL") as RegionMode;
+
   return (
     <html
       lang="en"
@@ -54,7 +65,7 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <AuthProvider>
-          {children}
+          <RegionProvider initialMode={initialRegion}>{children}</RegionProvider>
         </AuthProvider>
       </body>
     </html>

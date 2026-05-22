@@ -83,15 +83,15 @@ export function SearchTabs() {
             </button>
           </div>
           <div className="grid overflow-hidden rounded-xl border border-slate-200 bg-white md:grid-cols-[1fr_auto_1fr] lg:grid-cols-[1fr_auto_1fr_1fr_1fr_1fr]">
-            <SearchField label="From" name="origin" helper="City or airport" placeholder="From" />
+            <SearchField label="From" name="origin" helper="City or airport" placeholder="From city or airport" />
             <div className="hidden items-center justify-center border-slate-200 px-2 md:flex lg:border-r">
               <span className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-100 bg-violet-50 text-[#6d28d9]">
                 <Repeat2 size={18} />
               </span>
             </div>
-            <SearchField label="To" name="destination" helper="City or airport" placeholder="To" />
-            <SearchField label="Departure" name="departureDate" helper="Select date" type="date" icon={<CalendarDays size={17} />} />
-            <SearchField label="Return" name="returnDate" helper={tripType === "one-way" ? "Not needed" : "Select date"} type="date" icon={<CalendarDays size={17} />} disabled={tripType === "one-way"} />
+            <SearchField label="To" name="destination" helper="City or airport" placeholder="To city or airport" />
+            <SearchField label="Departure date" name="departureDate" helper="Choose departure date" placeholder="YYYY-MM-DD" type="date" icon={<CalendarDays size={17} />} />
+            <SearchField label="Return date" name="returnDate" helper={tripType === "one-way" ? "Not needed" : "Choose return date"} placeholder="YYYY-MM-DD" type="date" icon={<CalendarDays size={17} />} disabled={tripType === "one-way"} />
             <label className="block border-t border-slate-200 p-4 lg:border-l lg:border-t-0">
               <span className="block text-xs font-bold text-slate-600">Travelers & Class</span>
               <select name="travelers" defaultValue="1" className="mt-2 w-full bg-transparent text-lg font-extrabold text-slate-950 outline-none">
