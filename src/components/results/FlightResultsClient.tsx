@@ -528,7 +528,7 @@ function SuggestionList({ suggestions, onSelect }: { suggestions: AirportOption[
           </button>
         ))
       ) : (
-        <p className="px-4 py-3 text-xs font-medium text-slate-500 whitespace-nowrap">No matching airports found</p>
+        <p className="whitespace-nowrap px-4 py-3 text-xs font-medium text-slate-500">No matching airports found</p>
       )}
     </div>
   );
