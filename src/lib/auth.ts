@@ -67,9 +67,9 @@ const providers: NextAuthOptions["providers"] = [
       ).trim();
 
       /**
-       * =========================
+       * -------------------------
        * LOGIN VIA 6-DIGIT CODE
-       * =========================
+       * -------------------------
        */
       if (loginCode) {
         const parsedEmail =
@@ -138,9 +138,9 @@ const providers: NextAuthOptions["providers"] = [
       }
 
       /**
-       * =========================
+       * -------------------------
        * EMAIL + PASSWORD LOGIN
-       * =========================
+       * -------------------------
        */
       const parsed = signinSchema.safeParse(
         credentials
