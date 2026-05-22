@@ -58,6 +58,13 @@ const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
   { label: "First", value: "first" },
 ];
 
+const exploreCountries = [
+  { name: "Spain", image: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=700&q=80" },
+  { name: "Italy", image: "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=700&q=80" },
+  { name: "Japan", image: "https://images.unsplash.com/photo-1492571350019-22de08371fd3?auto=format&fit=crop&w=700&q=80" },
+  { name: "Brazil", image: "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=700&q=80" },
+];
+
 export function FlightResultsClient() {
   const params = useSearchParams();
   const router = useRouter();
@@ -342,8 +349,8 @@ export function FlightResultsClient() {
     return (
       <main className="flex-1 bg-[#f6f8fb] py-6 lg:py-8">
         <section className="page-shell">
-          <div className="relative overflow-hidden rounded-2xl bg-slate-900">
-            <div className="relative min-h-[520px] sm:min-h-[560px] lg:min-h-[500px]">
+          <div className="relative overflow-hidden rounded-3xl bg-[#0d2a66]">
+            <div className="relative min-h-[600px] sm:min-h-[620px] lg:min-h-[500px]">
               <Image
                 src="https://images.pexels.com/photos/615060/pexels-photo-615060.jpeg?cs=srgb&dl=pexels-christine-renard-198055-615060.jpg&fm=jpg"
                 alt="Airplane wing over a river canyon landscape"
@@ -353,11 +360,11 @@ export function FlightResultsClient() {
                 priority
               />
 
-              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/75 via-slate-900/50 to-slate-900/20" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e4a]/90 via-[#0c2f77]/75 to-[#2f1f7a]/55" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0b1e4a]/75 via-[#0b1e4a]/20 to-transparent" />
 
-              <div className="relative z-10 p-5 sm:p-7 lg:p-8">
-                <h1 className="mt-0 max-w-4xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:text-6xl">
+              <div className="relative z-10 p-5 sm:p-7 lg:p-8 lg:pb-36">
+                <h1 className="mt-0 max-w-4xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:max-w-3xl lg:text-6xl">
                   Find hundreds of cheap flights with just one search!
                 </h1>
 
@@ -390,7 +397,7 @@ export function FlightResultsClient() {
                 </div>
 
                 <form
-                  className="mt-4 w-full max-w-[1060px] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)]"
+                  className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)] lg:absolute lg:bottom-8 lg:left-8 lg:right-8 lg:mt-0 lg:w-auto"
                   onSubmit={(event) => {
                     event.preventDefault();
 
@@ -415,7 +422,7 @@ export function FlightResultsClient() {
                   <input type="hidden" name="travelers" value={String(adultCount + childCount)} />
                   <input type="hidden" name="cabinClass" value={cabinClassInput} />
 
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.2fr)_46px_minmax(150px,1.2fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(132px,1fr)_minmax(122px,1fr)] xl:items-center">
+                  <div className="grid grid-cols-1 gap-3 overflow-hidden lg:grid-cols-[minmax(190px,1.25fr)_52px_minmax(190px,1.25fr)_minmax(150px,1fr)_minmax(150px,1fr)_minmax(240px,1.3fr)_minmax(150px,1fr)] lg:items-center">
                     <div className="relative" ref={originWrapRef}>
                       <label className="sr-only" htmlFor="origin">
                         From
@@ -534,7 +541,7 @@ export function FlightResultsClient() {
                       </button>
                     </div>
 
-                    <div className="relative xl:col-span-2" ref={travelerCabinWrapRef}>
+                    <div className="relative" ref={travelerCabinWrapRef}>
                       <button
                         type="button"
                         aria-label="Travelers and cabin class"
@@ -633,6 +640,82 @@ export function FlightResultsClient() {
                 ) : null}
               </div>
             </div>
+          </div>
+
+          <div className="mt-8 space-y-8">
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="text-3xl font-black text-slate-900">Explore Anywhere</h2>
+              <p className="mt-1 text-sm text-slate-600">Discover destinations and open routes around the world.</p>
+              <div className="relative mt-4 h-56 overflow-hidden rounded-xl sm:h-64">
+                <Image src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1600&q=80" alt="Map overview" fill className="object-cover" />
+                <div className="absolute inset-0 bg-slate-900/20" />
+                <Button className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0a66c2] px-6">Open Map</Button>
+              </div>
+            </section>
+
+            <section>
+              <h2 className="text-3xl font-black text-slate-900">Explore by country</h2>
+              <p className="mt-1 text-sm text-slate-600">Discover trending destinations, just a flight away.</p>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {exploreCountries.map((country) => (
+                  <article key={country.name} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <div className="relative h-36">
+                      <Image src={country.image} alt={country.name} fill className="object-cover" />
+                    </div>
+                    <p className="px-4 py-3 text-base font-bold text-slate-900">{country.name}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="text-3xl font-black text-slate-900">Popular flights near you</h2>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {["Houston → Mexico City", "Houston → San Salvador", "Houston → Cancún"].map((route) => (
+                  <div key={route} className="rounded-xl border border-slate-200 p-4 font-semibold text-slate-800">{route}</div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="text-3xl font-black text-slate-900">Top flights from United States</h2>
+              <p className="mt-1 text-sm text-slate-600">Explore destinations you can reach from United States.</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {["Houston → New York", "Houston → Las Vegas", "Houston → Orlando", "Houston → Los Angeles", "Houston → Miami", "Houston → Chicago", "Houston → Fort Lauderdale", "Houston → Atlanta", "Houston → Dallas"].map((route) => (
+                  <div key={route} className="rounded-xl border border-slate-200 p-4 font-semibold text-slate-800">{route}</div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+              <div className="grid gap-4 md:grid-cols-3">
+                <div><p className="font-black text-slate-900">Search a huge selection</p><p className="text-sm text-slate-600">Easily compare flights and prices in one place.</p></div>
+                <div><p className="font-black text-slate-900">Pay no hidden fees</p><p className="text-sm text-slate-600">Clear price breakdown from search to booking.</p></div>
+                <div><p className="font-black text-slate-900">Get more flexibility</p><p className="text-sm text-slate-600">Flexible ticket options on select routes.</p></div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-5">
+              <h2 className="text-3xl font-black text-slate-900">Frequently asked questions</h2>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {["How do I find cheap flights on Curioticket?", "Can I book one-way flights?", "How far in advance should I book?", "Do flights get cheaper closer to departure?", "What is a flexible ticket?", "Are there card fees when booking?"].map((question) => (
+                  <details key={question} className="rounded-lg border border-slate-200 p-3">
+                    <summary className="cursor-pointer font-semibold text-slate-900">{question}</summary>
+                    <p className="mt-2 text-sm text-slate-600">Use flexible dates, compare airports, and watch fare trends to find better value.</p>
+                  </details>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                <div><h3 className="font-bold">Support</h3><p className="mt-2 text-sm text-slate-600">Manage your trips<br/>Customer service help</p></div>
+                <div><h3 className="font-bold">Discover</h3><p className="mt-2 text-sm text-slate-600">Seasonal deals<br/>Travel articles</p></div>
+                <div><h3 className="font-bold">Terms</h3><p className="mt-2 text-sm text-slate-600">Privacy notice<br/>Terms of service</p></div>
+                <div><h3 className="font-bold">Partners</h3><p className="mt-2 text-sm text-slate-600">Partner help<br/>List your property</p></div>
+                <div><h3 className="font-bold">About</h3><p className="mt-2 text-sm text-slate-600">How we work<br/>Sustainability</p></div>
+              </div>
+            </section>
           </div>
         </section>
       </main>

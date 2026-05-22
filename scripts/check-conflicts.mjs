@@ -6,7 +6,9 @@ const EXCLUDED_DIRS = new Set(["node_modules", ".git", ".next"]);
 const EXCLUDED_FILES = new Set(["package.json", "package-lock.json"]);
 
 async function walk(dir, out) {
-  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const entries = await fs.readdir(dir, {
+    withFileTypes: true,
+  });
 
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
@@ -91,7 +93,9 @@ async function main() {
     process.exit(0);
   } catch (error) {
     console.error("Conflict scan failed.");
-    console.error(error instanceof Error ? error.message : String(error));
+    console.error(
+      error instanceof Error ? error.message : String(error)
+    );
     process.exit(1);
   }
 }
