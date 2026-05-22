@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { Bell, Check, ChevronDown, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
@@ -27,6 +28,7 @@ export function AppHeader() {
   const [language, setLanguage] = useState<LanguageCode>(getDefaultLanguage());
   const languageRef = useRef<HTMLDivElement>(null);
 
+  const pathname = usePathname();
   const { data: session, status } = useSession();
   const isSignedIn = status === "authenticated" && Boolean(session?.user);
 
@@ -108,7 +110,7 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
+      <header className="sticky top-0 z-40 bg-white/90 shadow-sm backdrop-blur-md">
         <div className="page-shell flex h-20 items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3 text-xl font-extrabold text-slate-950">
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white">
@@ -122,7 +124,7 @@ export function AppHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-md px-3 py-2 text-sm font-bold text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
+                className={`rounded-md px-3 py-2 text-sm font-bold transition ${pathname === item.href ? "bg-violet-50 text-[#6d28d9]" : "text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"}`}
               >
                 {item.label}
               </Link>
@@ -228,7 +230,7 @@ export function AppHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-violet-50"
+                className={`rounded-xl px-3 py-2 text-sm font-semibold transition ${pathname === item.href ? "bg-violet-50 text-[#6d28d9]" : "text-slate-900 hover:bg-violet-50"}`}
                 onClick={() => setOpen(false)}
               >
                 {item.label}
