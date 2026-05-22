@@ -378,8 +378,6 @@ export function SearchTabs({
             "Hotels"}
         </button>
       </div>
-
-      {/* KEEP THE REST OF THE FILE EXACTLY FROM THE CLEAN VERSION I SENT EARLIER */}
     </section>
   );
 }
