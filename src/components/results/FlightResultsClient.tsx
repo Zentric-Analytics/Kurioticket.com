@@ -152,11 +152,14 @@ export function FlightResultsClient() {
       const preferredWidth = 520;
       const wrap = target === "origin" ? originWrapRef.current : destinationWrapRef.current;
       const input = wrap?.querySelector("input");
+
       if (!input) return;
+
       const rect = input.getBoundingClientRect();
       const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
       const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
       const top = rect.bottom + 8;
+
       setDropdownPosition({ top, left, width });
     }
 
@@ -169,7 +172,6 @@ export function FlightResultsClient() {
 
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-
       const dropdown = document.getElementById("flight-airport-suggestions");
       const clickedDropdown = dropdown?.contains(target);
 
@@ -576,6 +578,7 @@ function SuggestionList({
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
                 <Plane size={16} />
               </span>
+
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-bold text-slate-950">
                   {item.city}, {item.country}
@@ -584,13 +587,14 @@ function SuggestionList({
                   {item.airport}
                 </span>
               </span>
+
               <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-500">{item.code}</span>
               <span className="h-5 w-5 shrink-0 rounded border border-slate-300 bg-white" aria-hidden="true" />
             </span>
           </button>
         ))
       ) : (
-        <p className="px-4 py-3 text-xs font-medium text-slate-500 whitespace-nowrap">No matching airports found</p>
+        <p className="whitespace-nowrap px-4 py-3 text-xs font-medium text-slate-500">No matching airports found</p>
       )}
     </div>
   );
