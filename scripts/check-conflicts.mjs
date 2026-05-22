@@ -4,6 +4,7 @@ import path from "node:path";
 const ROOT = process.cwd();
 const EXCLUDED_DIRS = new Set(["node_modules", ".git", ".next"]);
 const EXCLUDED_FILES = new Set(["package.json", "package-lock.json"]);
+
 async function walk(dir, out) {
   const entries = await fs.readdir(dir, { withFileTypes: true });
 
@@ -12,15 +13,24 @@ async function walk(dir, out) {
     const relPath = path.relative(ROOT, fullPath);
 
     if (entry.isDirectory()) {
-      if (EXCLUDED_DIRS.has(entry.name)) continue;
+      if (EXCLUDED_DIRS.has(entry.name)) {
+        continue;
+      }
+
       await walk(fullPath, out);
       continue;
     }
 
-    if (!entry.isFile()) continue;
-    if (EXCLUDED_FILES.has(entry.name)) continue;
+    if (!entry.isFile()) {
+      continue;
+    }
+
+    if (EXCLUDED_FILES.has(entry.name)) {
+      continue;
+    }
 
     let content;
+
     try {
       content = await fs.readFile(fullPath, "utf8");
     } catch {
@@ -40,10 +50,11 @@ function hasConflictBlock(content) {
 
   for (const line of lines) {
     if (!inConflict) {
-      if (line.startsWith("<<<<<<< ")) {
+      if (line.startsWith("<<<<<<<")) {
         inConflict = true;
         hasMiddle = false;
       }
+
       continue;
     }
 
@@ -52,7 +63,7 @@ function hasConflictBlock(content) {
       continue;
     }
 
-    if (hasMiddle && line.startsWith(">>>>>>> ")) {
+    if (hasMiddle && line.startsWith(">>>>>>>")) {
       return true;
     }
   }
@@ -63,13 +74,16 @@ function hasConflictBlock(content) {
 async function main() {
   try {
     const matches = [];
+
     await walk(ROOT, matches);
 
     if (matches.length > 0) {
       console.error("Conflict markers found in:");
+
       for (const file of matches.sort()) {
         console.error(` - ${file}`);
       }
+
       process.exit(1);
     }
 
