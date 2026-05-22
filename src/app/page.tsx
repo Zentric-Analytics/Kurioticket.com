@@ -3,6 +3,7 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
+
 import {
   ArrowRight,
   BadgeCheck,
@@ -21,6 +22,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
+
 import {
   LANGUAGE_CHANGE_EVENT,
   getDefaultLanguage,
@@ -70,6 +72,7 @@ const i18n = {
     room: "Room",
     searchHotelsInstead: "Search hotels instead",
   },
+
   fr: {
     heroTitle: "Trouvez des vols pas chers rapidement",
     heroSubtitle:
@@ -110,6 +113,7 @@ const i18n = {
     room: "Chambre",
     searchHotelsInstead: "Rechercher des hôtels",
   },
+
   es: {
     heroTitle: "Encuentra vuelos baratos rápido",
     heroSubtitle:
@@ -150,6 +154,7 @@ const i18n = {
     room: "Habitación",
     searchHotelsInstead: "Buscar hoteles",
   },
+
   ar: {
     heroTitle: "اعثر على رحلات رخيصة بسرعة",
     heroSubtitle:
@@ -192,8 +197,11 @@ const i18n = {
   },
 } as const;
 
-function getI18nLanguageKey(language: LanguageCode): keyof typeof i18n {
-  const baseLanguage = String(language).split("-")[0];
+function getI18nLanguageKey(
+  language: LanguageCode
+): keyof typeof i18n {
+  const baseLanguage =
+    String(language).split("-")[0];
 
   return baseLanguage in i18n
     ? (baseLanguage as keyof typeof i18n)
@@ -242,44 +250,47 @@ const destinations = [
 ];
 
 export default function Home() {
-  const [language, setLanguage] = useState<LanguageCode>(getDefaultLanguage());
-  const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [newsletterMessage, setNewsletterMessage] = useState("");
+  const [language, setLanguage] =
+    useState<LanguageCode>(
+      getDefaultLanguage()
+    );
 
   useEffect(() => {
     const sync = () => {
-      setLanguage(getLanguageFromStorage());
+      setLanguage(
+        getLanguageFromStorage()
+      );
     };
 
     sync();
 
-    window.addEventListener(LANGUAGE_CHANGE_EVENT, sync as EventListener);
+    window.addEventListener(
+      LANGUAGE_CHANGE_EVENT,
+      sync as EventListener
+    );
 
     return () => {
-      window.removeEventListener(LANGUAGE_CHANGE_EVENT, sync as EventListener);
+      window.removeEventListener(
+        LANGUAGE_CHANGE_EVENT,
+        sync as EventListener
+      );
     };
   }, []);
 
   const t = useMemo(() => {
-    const pageT = i18n[getI18nLanguageKey(language)];
-    const sharedT = getUiTranslations(language);
+    const pageT =
+      i18n[
+        getI18nLanguageKey(language)
+      ];
+
+    const sharedT =
+      getUiTranslations(language);
 
     return {
       ...sharedT,
       ...pageT,
     };
   }, [language]);
-
-  const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!newsletterEmail.trim()) {
-      return;
-    }
-
-    setNewsletterMessage("Thanks! We’ll keep you posted with travel deals.");
-    setNewsletterEmail("");
-  };
 
   return (
     <>
@@ -290,7 +301,7 @@ export default function Home() {
           <div className="absolute inset-0">
             <Image
               src={heroImage}
-              alt="Luxury tropical resort by calm water"
+              alt="Luxury tropical resort"
               fill
               priority
               sizes="100vw"
@@ -298,17 +309,11 @@ export default function Home() {
             />
 
             <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.97)_4%,rgba(255,255,255,0.93)_37%,rgba(255,255,255,0.62)_58%,rgba(255,255,255,0.12)_100%)]" />
-
-            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
 
           <div className="page-shell relative pb-8 pt-6 sm:pb-10 sm:pt-8 lg:pt-10">
             <div className="grid min-h-[390px] content-start gap-4 pb-5 sm:min-h-[420px] sm:gap-5 sm:pb-6 lg:min-h-[450px] lg:max-w-[1000px]">
               <div className="space-y-3 pt-2">
-                <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/85 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
-                  {t.heroBadge || "Trusted travel search platform"}
-                </p>
-
                 <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
                   {t.heroTitle}
                 </h1>
@@ -318,21 +323,28 @@ export default function Home() {
                 </p>
 
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {t.assurances.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-[#d9ccff] bg-white/90 px-3 py-1 text-xs font-bold text-[#5b21d6]"
-                    >
-                      {item}
-                    </span>
-                  ))}
+                  {t.assurances.map(
+                    (item) => (
+                      <span
+                        key={item}
+                        className="rounded-full border border-[#d9ccff] bg-white/90 px-3 py-1 text-xs font-bold text-[#5b21d6]"
+                      >
+                        {item}
+                      </span>
+                    )
+                  )}
                 </div>
               </div>
 
               <div className="relative z-10 mt-2 w-full max-w-[1080px]">
                 <div className="rounded-2xl border border-white/85 bg-white/95 p-2 shadow-[0_24px_65px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:rounded-3xl sm:p-3">
                   <SearchTabs
-                    t={t as unknown as Record<string, string>}
+                    t={
+                      t as unknown as Record<
+                        string,
+                        string
+                      >
+                    }
                     compactHero
                   />
                 </div>
@@ -341,183 +353,18 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell pb-6">
-          <div className="grid gap-3 rounded-2xl border border-[#ece8ff] bg-[#f7f5ff] p-4 sm:grid-cols-2 lg:grid-cols-4">
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <BadgeCheck size={16} />
-              </span>
-
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresMillionsTitle || "Millions of Choices"}
-                </h2>
-
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresMillionsBody || "Flights and hotels worldwide"}
-                </p>
-              </div>
-            </article>
-
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <Ticket size={16} />
-              </span>
-
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresFlexibleTitle || "Flexible Options"}
-                </h2>
-
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresFlexibleBody || "Choose what fits your trip"}
-                </p>
-              </div>
-            </article>
-
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <ShieldCheck size={16} />
-              </span>
-
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresSecureTitle || "Secure Payments"}
-                </h2>
-
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresSecureBody || "100% safe and secure"}
-                </p>
-              </div>
-            </article>
-
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <WalletCards size={16} />
-              </span>
-
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresDealsTitle || "Great Deals"}
-                </h2>
-
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresDealsBody || "Compare more before you buy"}
-                </p>
-              </div>
-            </article>
-          </div>
-        </section>
-
         <section className="page-shell py-5">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-black tracking-normal text-slate-950">
-              {t.popularDestinations || "Popular Destinations"}
-            </h2>
-
-            <LinkButton
-              href="/hotels/tokyo"
-              variant="ghost"
-              size="sm"
-              className="hidden text-[#6d28d9] sm:inline-flex"
-            >
-              {t.viewAllDestinations || "View all destinations"}
-              <ArrowRight size={16} />
-            </LinkButton>
-          </div>
-
-          <div className="relative mt-6">
-            <button
-              type="button"
-              aria-label="Next destinations"
-              className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow sm:flex"
-            >
-              <ChevronRight size={18} />
-            </button>
-
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-              {destinations.map((destination) => (
-                <DestinationCard key={destination.city} {...destination} />
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="page-shell grid gap-5 py-9 lg:grid-cols-2">
-          <PromoPanel
-            tone="violet"
-            title={t.promoFlightsTitle || "Amazing flight deals just for you"}
-            body={
-              t.promoFlightsBody ||
-              "Unlock exclusive offers on domestic and international flights."
-            }
-            cta={t.promoFlightsCta || "Explore Flight Deals"}
-            href="/deals"
-            icon={<Plane size={74} />}
-          />
-
-          <PromoPanel
-            tone="amber"
-            title={t.promoHotelsTitle || "Find your perfect hotel stay"}
-            body={
-              t.promoHotelsBody ||
-              "From budget to luxury, find hotels that suit your style and budget."
-            }
-            cta={t.promoHotelsCta || "Explore Hotel Deals"}
-            href="/hotels/results"
-            icon={<Hotel size={74} />}
-          />
-        </section>
-
-        <section className="page-shell pb-12">
-          <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
-            <div className="flex items-start gap-4">
-              <span className="rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <Ticket size={18} />
-              </span>
-
-              <div>
-                <h2 className="text-lg font-black text-slate-950">
-                  {t.newsletterTitle ||
-                    "Get the best travel deals in your inbox"}
-                </h2>
-
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  {t.newsletterBody ||
-                    "Subscribe to our newsletter and never miss a deal."}
-                </p>
-              </div>
-            </div>
-
-            <form
-              className="flex flex-col gap-3 sm:flex-row"
-              onSubmit={handleNewsletterSubmit}
-            >
-              <input
-                type="email"
-                value={newsletterEmail}
-                onChange={(event) => setNewsletterEmail(event.target.value)}
-                placeholder={
-                  t.newsletterPlaceholder || "Enter your email address"
-                }
-                className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
-                aria-label="Email address"
-                required
-              />
-
-              <button
-                type="submit"
-                className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
-              >
-                {t.subscribe || "Subscribe"}
-              </button>
-            </form>
-
-            {newsletterMessage ? (
-              <p className="text-sm font-semibold text-[#4c1d95]">
-                {newsletterMessage}
-              </p>
-            ) : null}
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+            {destinations.map(
+              (destination) => (
+                <DestinationCard
+                  key={
+                    destination.city
+                  }
+                  {...destination}
+                />
+              )
+            )}
           </div>
         </section>
       </main>
@@ -539,7 +386,7 @@ function DestinationCard({
   image: string;
 }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
       <div className="relative h-44">
         <Image
           src={image}
@@ -553,15 +400,19 @@ function DestinationCard({
 
         <button
           type="button"
-          className="focus-ring absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur"
-          aria-label={`Save ${city}`}
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur"
         >
           <Heart size={17} />
         </button>
 
         <div className="absolute bottom-3 left-3 text-white">
-          <h3 className="text-xl font-black">{city}</h3>
-          <p className="text-sm font-semibold">{country}</p>
+          <h3 className="text-xl font-black">
+            {city}
+          </h3>
+
+          <p className="text-sm font-semibold">
+            {country}
+          </p>
         </div>
       </div>
 
@@ -590,12 +441,15 @@ function PromoPanel({
   href: string;
   icon: ReactNode;
 }) {
-  const isViolet = tone === "violet";
+  const isViolet =
+    tone === "violet";
 
   return (
     <article
       className={`relative min-h-56 overflow-hidden rounded-xl p-8 ${
-        isViolet ? "bg-[#f1e8ff]" : "bg-[#fff3e3]"
+        isViolet
+          ? "bg-[#f1e8ff]"
+          : "bg-[#fff3e3]"
       }`}
     >
       <div className="relative z-10 max-w-xs">

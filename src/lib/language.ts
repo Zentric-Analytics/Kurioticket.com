@@ -1,4 +1,5 @@
-export const LANGUAGE_STORAGE_KEY = "ct_language";
+export const LANGUAGE_STORAGE_KEY =
+  "ct_language";
 
 export const LANGUAGE_CHANGE_EVENT =
   "curioticket-language-change";
