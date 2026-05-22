@@ -1,147 +1,560 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { ChevronDown, Globe2, LogOut, Menu, Sparkles, UserCircle, X } from "lucide-react";
 
-import { Button, LinkButton } from "@/components/ui/Button";
-import { getLanguageFromStorage, languageOptions, setLanguageInStorage, translations, type LanguageCode } from "@/lib/language";
+import {
+  Bell,
+  Check,
+  ChevronDown,
+  LogOut,
+  Menu,
+  Sparkles,
+  UserCircle,
+  X,
+} from "lucide-react";
 
-const navItems = [
-  { href: "/flights/results", label: "Flights", key: "flights" },
-  { href: "/hotels/results", label: "Hotels", key: "hotels" },
-  { href: "/deals", label: "Deals", key: "deals" },
-  { href: "/hotels/tokyo", label: "Destinations", key: "destinations" },
-  { href: "/guides", label: "Explore", key: "explore" },
-  { href: "/support", label: "Support", key: "support" },
-] as const;
+import {
+  applyLanguageToDocument,
+  getDefaultLanguage,
+  getFlagEmoji,
+  getLanguageFromStorage,
+  getLanguageOption,
+  getSuggestedLanguages,
+  getUiTranslations,
+  LANGUAGE_CHANGE_EVENT,
+  languageOptions,
+  setLanguageInStorage,
+  type LanguageCode,
+} from "@/lib/language";
+
+import { RegionSelector } from "@/components/region/RegionSelector";
+
+import {
+  Button,
+  LinkButton,
+} from "@/components/ui/Button";
 
 export function AppHeader() {
-  const [open, setOpen] = useState(false);
-  const [languageOpen, setLanguageOpen] = useState(false);
-  const [language, setLanguage] = useState<LanguageCode>("en");
-  const { data: session, status } = useSession();
+  const [open, setOpen] =
+    useState(false);
 
-  const isSignedIn = status === "authenticated" && Boolean(session?.user);
-  const selectedLanguage = languageOptions.find((item) => item.code === language) || languageOptions[0];
-  const t = translations[language];
+  const [
+    languageOpen,
+    setLanguageOpen,
+  ] = useState(false);
+
+  const [language, setLanguage] =
+    useState<LanguageCode>(
+      getDefaultLanguage()
+    );
+
+  const languageRef =
+    useRef<HTMLDivElement>(null);
+
+  const { data: session, status } =
+    useSession();
+
+  const isSignedIn =
+    status === "authenticated" &&
+    Boolean(session?.user);
+
+  const selectedLanguage =
+    getLanguageOption(language) ||
+    languageOptions[0];
+
+  const suggestedLanguages =
+    useMemo(
+      () => getSuggestedLanguages(),
+      []
+    );
+
+  const t = useMemo(
+    () => getUiTranslations(language),
+    [language]
+  );
+
+  const navItems = useMemo(
+    () => [
+      {
+        href: "/flights/results",
+        label: t.flights,
+      },
+      {
+        href: "/hotels/results",
+        label: t.hotels,
+      },
+      {
+        href: "/deals",
+        label: t.deals,
+      },
+      {
+        href: "/hotels/tokyo",
+        label: t.destinations,
+      },
+      {
+        href: "/guides",
+        label: t.explore,
+      },
+      {
+        href: "/support",
+        label: t.support,
+      },
+    ],
+    [t]
+  );
 
   useEffect(() => {
-    setLanguage(getLanguageFromStorage());
-    function syncLanguage() {
-      setLanguage(getLanguageFromStorage());
-    }
-    window.addEventListener("curioticket-language-change", syncLanguage as EventListener);
-    return () => window.removeEventListener("curioticket-language-change", syncLanguage as EventListener);
+    applyLanguageToDocument(language);
+  }, [language]);
+
+  useEffect(() => {
+    const syncLanguage = () => {
+      setLanguage(
+        getLanguageFromStorage()
+      );
+    };
+
+    syncLanguage();
+
+    window.addEventListener(
+      LANGUAGE_CHANGE_EVENT,
+      syncLanguage as EventListener
+    );
+
+    return () => {
+      window.removeEventListener(
+        LANGUAGE_CHANGE_EVENT,
+        syncLanguage as EventListener
+      );
+    };
   }, []);
 
-  function selectLanguage(nextLanguage: LanguageCode) {
-    setLanguage(nextLanguage);
-    setLanguageInStorage(nextLanguage);
+  useEffect(() => {
+    const onClickOutside = (
+      event: MouseEvent
+    ) => {
+      if (!languageRef.current) {
+        return;
+      }
+
+      if (
+        !languageRef.current.contains(
+          event.target as Node
+        )
+      ) {
+        setLanguageOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      onClickOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        onClickOutside
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === "Escape") {
+        setLanguageOpen(false);
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      onKeyDown
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        onKeyDown
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      document.body.style.overflow =
+        "";
+
+      return;
+    }
+
+    document.body.style.overflow =
+      "hidden";
+
+    return () => {
+      document.body.style.overflow =
+        "";
+    };
+  }, [open]);
+
+  const handleLanguageSelect = (
+    code: LanguageCode
+  ) => {
+    setLanguage(code);
+    setLanguageInStorage(code);
     setLanguageOpen(false);
-  }
+  };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
-      <div className="page-shell flex h-20 items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-3 text-2xl font-black tracking-tight text-slate-950">
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white shadow-[0_10px_24px_rgba(109,40,217,0.22)]">
-            <Sparkles size={22} />
-          </span>
-          Curioticket
-        </Link>
+    <>
+      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur">
+        <div className="page-shell flex h-20 items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="flex items-center gap-3 text-xl font-extrabold text-slate-950"
+          >
+            <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#6d28d9] text-white">
+              <Sparkles size={22} />
+            </span>
 
-        <nav className="hidden items-center gap-1.5 lg:flex">
-          {navItems.map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-md px-3 py-2 text-base font-black text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]">
-              {t[item.key] || item.label}
-            </Link>
-          ))}
-        </nav>
+            Curioticket
+          </Link>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <div className="relative">
-            <button
-              type="button"
-              aria-haspopup="menu"
-              aria-expanded={languageOpen}
-              aria-label="Select language"
-              onClick={() => setLanguageOpen((value) => !value)}
-              className="focus-ring inline-flex h-10 items-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-bold text-slate-900 hover:bg-slate-50"
+          <nav className="hidden items-center gap-2 lg:flex">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-md px-3 py-2 text-sm font-bold text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="hidden items-center gap-3 md:flex">
+            <div
+              className="relative"
+              ref={languageRef}
             >
-              <Globe2 size={16} />
-              <span>{selectedLanguage.flag} {selectedLanguage.label}</span>
-              <ChevronDown size={14} />
-            </button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setLanguageOpen(
+                    (value) => !value
+                  )
+                }
+                className="h-10 gap-2 rounded-full border border-slate-200/80 bg-white px-3.5 shadow-sm"
+                aria-haspopup="menu"
+                aria-expanded={
+                  languageOpen
+                }
+                aria-label="Select language"
+              >
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-sm">
+                  {getFlagEmoji(
+                    selectedLanguage.flagCode
+                  )}
+                </span>
 
-            {languageOpen ? (
-              <div className="absolute right-0 top-12 z-50 min-w-40 rounded-md border border-slate-200 bg-white p-1 shadow-lg" role="menu" aria-label="Language options">
-                {languageOptions.map((item) => (
-                  <button
-                    key={item.code}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={language === item.code}
-                    onClick={() => selectLanguage(item.code)}
-                    className="w-full rounded px-3 py-2 text-left text-sm font-semibold text-slate-900 hover:bg-slate-50"
-                  >
-                    {item.flag} {item.label}
-                  </button>
-                ))}
-              </div>
-            ) : null}
+                <span className="text-sm font-bold text-slate-900">
+                  {
+                    selectedLanguage.label
+                  }
+                </span>
+
+                <ChevronDown
+                  size={14}
+                  className="text-slate-600"
+                />
+              </Button>
+
+              {languageOpen && (
+                <section
+                  role="menu"
+                  className="absolute right-0 top-12 z-50 w-[min(92vw,660px)] rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_20px_55px_-24px_rgba(15,23,42,0.4)]"
+                >
+                  <h2 className="text-base font-black text-slate-950">
+                    {t.selectLanguage}
+                  </h2>
+
+                  <div className="mt-3">
+                    <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                      {
+                        t.suggestedLanguages
+                      }
+                    </p>
+
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {suggestedLanguages.map(
+                        (option) => (
+                          <LanguageOptionRow
+                            key={
+                              option.code
+                            }
+                            option={option}
+                            selected={
+                              option.code ===
+                              language
+                            }
+                            onSelect={
+                              handleLanguageSelect
+                            }
+                          />
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 border-t border-slate-200 pt-4">
+                    <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+                      {t.allLanguages}
+                    </p>
+
+                    <div className="grid max-h-[320px] gap-2 overflow-auto pr-1 sm:grid-cols-2">
+                      {languageOptions.map(
+                        (option) => (
+                          <LanguageOptionRow
+                            key={
+                              option.code
+                            }
+                            option={option}
+                            selected={
+                              option.code ===
+                              language
+                            }
+                            onSelect={
+                              handleLanguageSelect
+                            }
+                          />
+                        )
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
+            </div>
+
+            <RegionSelector />
+
+            <LinkButton
+              href="/dashboard"
+              variant="ghost"
+              size="sm"
+              className="h-10 w-10 px-0"
+              aria-label="Notifications"
+            >
+              <Bell size={18} />
+            </LinkButton>
+
+            {isSignedIn ? (
+              <>
+                <LinkButton
+                  href="/dashboard"
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <UserCircle size={22} />
+                  {t.dashboard}
+                </LinkButton>
+
+                <Button
+                  variant="accent"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() =>
+                    signOut({
+                      callbackUrl: "/",
+                    })
+                  }
+                >
+                  <LogOut size={18} />
+                  {t.logout}
+                </Button>
+              </>
+            ) : (
+              <>
+                <LinkButton
+                  href="/auth/signin"
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                >
+                  <UserCircle size={22} />
+                  {t.login}
+                </LinkButton>
+
+                <LinkButton
+                  href="/auth/signup"
+                  variant="accent"
+                  size="sm"
+                >
+                  {t.signUp}
+                </LinkButton>
+              </>
+            )}
           </div>
 
-          {isSignedIn ? (
-            <>
-              <LinkButton href="/dashboard" variant="ghost" size="sm" className="gap-2"><UserCircle size={22} />Dashboard</LinkButton>
-              <Button variant="accent" size="sm" className="gap-2" onClick={() => signOut({ callbackUrl: "/" })}><LogOut size={18} />Logout</Button>
-            </>
-          ) : (
-            <>
-              <Link href="/auth/signin" className="focus-ring inline-flex h-9 items-center justify-center rounded-md px-3 text-sm font-semibold text-navy transition hover:bg-surface-muted">{t.login}</Link>
-              <LinkButton href="/auth/signup" variant="accent" size="sm" className="bg-[#6d28d9] hover:bg-[#5b21b6]">{t.signUp}</LinkButton>
-            </>
-          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="h-10 w-10 px-0 md:hidden"
+            aria-label="Open menu"
+            onClick={() =>
+              setOpen(true)
+            }
+          >
+            <Menu size={20} />
+          </Button>
         </div>
+      </header>
 
-        <Button variant="secondary" size="sm" className="h-10 w-10 px-0 md:hidden" aria-label="Open menu" onClick={() => setOpen(true)}>
-          <Menu size={20} />
-        </Button>
-      </div>
-
-      {open ? (
+      {open && (
         <>
-          <div className="fixed inset-0 z-50 bg-navy/40 md:hidden" onClick={() => setOpen(false)} />
-          <aside className="fixed right-0 top-0 z-50 h-dvh w-[min(86vw,360px)] border-l border-border bg-white p-5 shadow-xl md:hidden">
+          <div
+            className="fixed inset-0 z-50 bg-black/40 md:hidden"
+            onClick={() =>
+              setOpen(false)
+            }
+          />
+
+          <aside className="fixed right-0 top-0 z-50 h-dvh w-[min(86vw,360px)] border-l bg-white p-5 shadow-xl md:hidden">
             <div className="flex items-center justify-between">
-              <span className="text-base font-bold text-navy">Menu</span>
-              <Button variant="ghost" size="sm" className="h-10 w-10 px-0" aria-label="Close menu" onClick={() => setOpen(false)}><X size={20} /></Button>
+              <span className="text-base font-bold text-slate-900">
+                {t.menu}
+              </span>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-10 w-10 px-0"
+                aria-label="Close menu"
+                onClick={() =>
+                  setOpen(false)
+                }
+              >
+                <X size={20} />
+              </Button>
             </div>
 
             <nav className="mt-6 grid gap-2">
               {navItems.map((item) => (
-                <Link key={item.href} href={item.href} onClick={() => setOpen(false)} className="rounded-md px-3 py-3 text-lg font-bold text-navy hover:bg-surface-muted">
-                  {t[item.key] || item.label}
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() =>
+                    setOpen(false)
+                  }
+                  className="rounded-md px-3 py-3 text-base font-semibold text-slate-900 hover:bg-slate-100"
+                >
+                  {item.label}
                 </Link>
               ))}
 
               {isSignedIn ? (
                 <>
-                  <Link href="/dashboard" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted">Dashboard</Link>
-                  <button type="button" onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }} className="rounded-md bg-[#6d28d9] px-3 py-3 text-left text-base font-semibold text-white">Logout</button>
+                  <Link
+                    href="/dashboard"
+                    onClick={() =>
+                      setOpen(false)
+                    }
+                    className="rounded-md px-3 py-3 text-base font-semibold text-slate-900 hover:bg-slate-100"
+                  >
+                    {t.dashboard}
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+
+                      signOut({
+                        callbackUrl: "/",
+                      });
+                    }}
+                    className="rounded-md bg-[#5b21d6] px-3 py-3 text-left text-base font-semibold text-white"
+                  >
+                    {t.logout}
+                  </button>
                 </>
               ) : (
                 <>
-                  <Link href="/auth/signin" onClick={() => setOpen(false)} className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted">{t.login}</Link>
-                  <Link href="/auth/signup" onClick={() => setOpen(false)} className="rounded-md bg-[#6d28d9] px-3 py-3 text-base font-semibold text-white">{t.signUp}</Link>
+                  <Link
+                    href="/auth/signin"
+                    onClick={() =>
+                      setOpen(false)
+                    }
+                    className="rounded-md px-3 py-3 text-base font-semibold text-slate-900 hover:bg-slate-100"
+                  >
+                    {t.login}
+                  </Link>
+
+                  <Link
+                    href="/auth/signup"
+                    onClick={() =>
+                      setOpen(false)
+                    }
+                    className="rounded-md bg-[#5b21d6] px-3 py-3 text-base font-semibold text-white"
+                  >
+                    {t.signUp}
+                  </Link>
                 </>
               )}
             </nav>
           </aside>
         </>
-      ) : null}
-    </header>
+      )}
+    </>
+  );
+}
+
+function LanguageOptionRow({
+  option,
+  selected,
+  onSelect,
+}: {
+  option: (typeof languageOptions)[number];
+  selected: boolean;
+  onSelect: (
+    code: LanguageCode
+  ) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() =>
+        onSelect(option.code)
+      }
+      className={`flex items-center gap-3.5 rounded-xl border border-slate-200/80 px-3.5 py-2.5 text-left transition ${
+        selected
+          ? "border-[#6d28d9] bg-violet-50"
+          : "hover:bg-slate-50/80"
+      }`}
+    >
+      <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-base">
+        {getFlagEmoji(
+          option.flagCode
+        )}
+      </span>
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-bold text-slate-900">
+          {option.label}
+        </p>
+      </div>
+
+      {selected && (
+        <Check
+          size={16}
+          className="text-[#6d28d9]"
+        />
+      )}
+    </button>
   );
 }
