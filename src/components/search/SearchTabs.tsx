@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/Button";
@@ -60,6 +60,7 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [activeDateField, setActiveDateField] = useState<DateField>("departure");
   const [currentMonth, setCurrentMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const [flightFormError, setFlightFormError] = useState("");
 
   const today = useMemo(() => {
     const now = new Date();
@@ -89,6 +90,7 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
   };
 
   const openCalendar = (field: DateField) => {
+    setFlightFormError("");
     setActiveDateField(field);
     const anchor = field === "departure" ? departure : returning;
     setCurrentMonth(new Date((anchor || today).getFullYear(), (anchor || today).getMonth(), 1));
@@ -97,6 +99,7 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
 
   const selectDay = (day: Date) => {
     if (day < today) return;
+    setFlightFormError("");
     const value = toDateValue(day);
 
     if (activeDateField === "departure") {
@@ -118,6 +121,29 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
 
     setReturnDate(value);
     setIsCalendarOpen(false);
+  };
+
+
+  const handleFlightSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!departureDate) {
+      setFlightFormError(t.departureDateRequired || "Please select a departure date.");
+      setActiveDateField("departure");
+      openCalendar("departure");
+      return;
+    }
+
+    if (tripType !== "one-way" && !returnDate) {
+      setFlightFormError(t.returnDateRequired || "Please select a return date.");
+      setActiveDateField("return");
+      openCalendar("return");
+      return;
+    }
+
+    setFlightFormError("");
+    const params = new URLSearchParams({ tripType, origin: from.trim(), destination: to.trim(), departureDate, returnDate: tripType === "one-way" ? "" : returnDate, travelers, cabinClass });
+    router.push(`/flights/results?${params.toString()}`);
   };
 
   const renderMonth = (monthStart: Date) => {
@@ -182,11 +208,7 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
             <button type="button" onClick={() => setTab("hotels")} className="ml-auto text-[#5b21d6] underline-offset-2 hover:underline">{t.searchHotelsInstead || "Search hotels instead"}</button>
           </div>
 
-          <form className="relative grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_140px]" onSubmit={(event) => {
-            event.preventDefault();
-            const params = new URLSearchParams({ tripType, origin: from.trim(), destination: to.trim(), departureDate, returnDate: tripType === "one-way" ? "" : returnDate, travelers, cabinClass });
-            router.push(`/flights/results?${params.toString()}`);
-          }}>
+          <form className="relative grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_140px]" onSubmit={handleFlightSubmit}>
             <input value={from} onChange={(event) => setFrom(event.target.value)} required placeholder={t.from || "From"} className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold" />
             <input value={to} onChange={(event) => setTo(event.target.value)} required placeholder={t.to || "To"} className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold" />
 
@@ -200,6 +222,7 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
                 {returnDate || (tripType === "one-way" ? t.notNeeded || "Not needed" : t.selectDate || "Select date")}
               </button>
             </div>
+            {flightFormError ? <p className="text-sm font-semibold text-red-600">{flightFormError}</p> : null}
             {isCalendarOpen ? (
               <div
                 ref={datePickerRef}
