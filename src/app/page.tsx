@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
@@ -240,6 +240,9 @@ export default function Home() {
     getLanguageFromStorage()
   );
 
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterMessage, setNewsletterMessage] = useState("");
+
   useEffect(() => {
     const syncLanguage = () => {
       setLanguage(getLanguageFromStorage());
@@ -261,6 +264,17 @@ export default function Home() {
       ...pageT,
     };
   }, [language]);
+
+  function handleNewsletterSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!newsletterEmail.trim()) {
+      return;
+    }
+
+    setNewsletterMessage("Thanks! We’ll keep you posted with travel deals.");
+    setNewsletterEmail("");
+  }
 
   return (
     <>
@@ -310,10 +324,7 @@ export default function Home() {
 
               <div className="relative z-10 mt-2 w-full max-w-[1080px]">
                 <div className="rounded-2xl border border-white/85 bg-white/95 p-2 shadow-[0_24px_65px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:rounded-3xl sm:p-3">
-                  <SearchTabs
-                    t={t as Record<string, string>}
-                    compactHero
-                  />
+                  <SearchTabs t={t as Record<string, string>} compactHero />
                 </div>
               </div>
             </div>
@@ -347,6 +358,7 @@ export default function Home() {
                 <h2 className="text-base font-black text-slate-900">
                   {title}
                 </h2>
+
                 <p className="mt-1 text-sm font-semibold text-slate-600">
                   {body}
                 </p>
@@ -421,17 +433,20 @@ export default function Home() {
 
             <form
               className="flex flex-col gap-3 sm:flex-row"
-              onSubmit={(event) => {
-                event.preventDefault();
-              }}
+              onSubmit={handleNewsletterSubmit}
             >
               <input
                 type="email"
+                value={newsletterEmail}
+                onChange={(event) =>
+                  setNewsletterEmail(event.target.value)
+                }
                 placeholder={
                   t.newsletterPlaceholder || "Enter your email address"
                 }
                 className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
                 aria-label="Email address"
+                required
               />
 
               <button
@@ -441,6 +456,12 @@ export default function Home() {
                 {t.subscribe || "Subscribe"}
               </button>
             </form>
+
+            {newsletterMessage ? (
+              <p className="text-sm font-semibold text-[#4c1d95]">
+                {newsletterMessage}
+              </p>
+            ) : null}
           </div>
         </section>
       </main>
@@ -484,6 +505,7 @@ function DestinationCard({
 
         <div className="absolute bottom-3 left-3 text-white">
           <h3 className="text-xl font-black">{city}</h3>
+
           <p className="text-sm font-semibold">{country}</p>
         </div>
       </div>
@@ -556,10 +578,12 @@ function PromoPanel({
           className="absolute left-5 top-5 opacity-40"
           size={24}
         />
+
         <CircleDollarSign
           className="absolute right-7 top-7 opacity-40"
           size={26}
         />
+
         {icon}
       </div>
     </article>
