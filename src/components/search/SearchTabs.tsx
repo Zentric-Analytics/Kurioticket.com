@@ -1,8 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { format } from "date-fns";
+import { type DateRange } from "react-day-picker";
 import { useState } from "react";
 
+import { DateRangePicker } from "@/components/search/DateRangePicker";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -23,16 +26,19 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
 
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [departureDate, setDepartureDate] = useState("");
-  const [returnDate, setReturnDate] = useState("");
+  const [flightDateRange, setFlightDateRange] = useState<DateRange | undefined>();
   const [travelers, setTravelers] = useState("1");
   const [cabinClass, setCabinClass] = useState("economy");
 
   const [destination, setDestination] = useState("");
-  const [checkIn, setCheckIn] = useState("");
-  const [checkOut, setCheckOut] = useState("");
+  const [hotelDateRange, setHotelDateRange] = useState<DateRange | undefined>();
   const [guests, setGuests] = useState("1");
   const [rooms, setRooms] = useState("1");
+  const departureDate = flightDateRange?.from ? format(flightDateRange.from, "yyyy-MM-dd") : "";
+  const returnDate = flightDateRange?.to ? format(flightDateRange.to, "yyyy-MM-dd") : "";
+  const checkIn = hotelDateRange?.from ? format(hotelDateRange.from, "yyyy-MM-dd") : "";
+  const checkOut = hotelDateRange?.to ? format(hotelDateRange.to, "yyyy-MM-dd") : "";
+
 
   const wrapper = cn(
     "rounded-2xl bg-white",
@@ -137,21 +143,23 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
               className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
             />
 
-            <input
-              type="date"
-              value={departureDate}
-              onChange={(event) => setDepartureDate(event.target.value)}
+            <DateRangePicker
+              label={t.departure || "Departure"}
+              placeholder={t.departure || "Departure"}
+              value={flightDateRange}
+              field="from"
               required
-              className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
+              onChange={setFlightDateRange}
             />
 
-            <input
-              type="date"
-              value={returnDate}
-              onChange={(event) => setReturnDate(event.target.value)}
+            <DateRangePicker
+              label={t.return || "Return"}
+              placeholder={tripType === "one-way" ? t.notNeeded || "Not needed" : t.return || "Return"}
+              value={flightDateRange}
+              field="to"
+              onChange={setFlightDateRange}
               disabled={tripType === "one-way"}
               required={tripType !== "one-way"}
-              className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
             />
 
             <select
@@ -209,21 +217,23 @@ export function SearchTabs({ t, compactHero = false }: SearchTabsProps) {
             className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
           />
 
-          <input
-            type="date"
-            value={checkIn}
-            onChange={(event) => setCheckIn(event.target.value)}
-            required
-            className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
-          />
+            <DateRangePicker
+              label={t.checkIn || "Check-in"}
+              placeholder={t.checkIn || "Check-in"}
+              value={hotelDateRange}
+              field="from"
+              required
+              onChange={setHotelDateRange}
+            />
 
-          <input
-            type="date"
-            value={checkOut}
-            onChange={(event) => setCheckOut(event.target.value)}
-            required
-            className="focus-ring h-11 rounded-lg border border-slate-300 px-3 text-sm font-semibold"
-          />
+            <DateRangePicker
+              label={t.checkOut || "Check-out"}
+              placeholder={t.checkOut || "Check-out"}
+              value={hotelDateRange}
+              field="to"
+              required
+              onChange={setHotelDateRange}
+            />
 
           <select
             value={guests}
