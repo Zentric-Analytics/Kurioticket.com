@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { RegionSelector } from "@/components/region/RegionSelector";
+import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 import { Button, LinkButton } from "@/components/ui/Button";
 
 export function AppHeader() {
@@ -93,24 +93,24 @@ export function AppHeader() {
     [t]
   );
 
-  const getFlagFallback = (code: string) =>
-    code
-      .split("-")
-      .map((part) => part.slice(0, 2).toUpperCase())
-      .join("")
-      .slice(0, 2);
-
-  const renderFlag = (
-    flag: string | undefined,
-    code: string
-  ) =>
-    flag ? (
-      <span aria-hidden="true">{flag}</span>
-    ) : (
-      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-[10px] font-bold text-slate-700">
-        {getFlagFallback(code)}
+  const renderFlag = (countryCode: string | undefined, fallbackText: string | undefined) => (
+    <span className="relative inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+      {countryCode ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      ) : null}
+      <span className="absolute inset-0 inline-flex items-center justify-center text-[9px] font-bold text-slate-700">
+        {fallbackText ?? "US"}
       </span>
-    );
+    </span>
+  );
 
   const handleLanguageSelect = (
     code: (typeof locales)[number]["code"]
@@ -149,7 +149,7 @@ export function AppHeader() {
           </Link>
 
           <div className="hidden items-center gap-3 md:flex">
-            <RegionSelector />
+            <CountryCurrencySelector />
 
             <div className="relative" ref={languageRef}>
               <Button
@@ -163,11 +163,9 @@ export function AppHeader() {
               >
                 <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
                   {renderFlag(
-                    selectedLanguage?.flag,
-                    selectedLanguage?.code
+                    selectedLanguage?.countryCode,
+                    selectedLanguage?.fallbackText
                   )}
-
-                  <span>{selectedLanguage?.label}</span>
                 </span>
 
                 <ChevronDown size={14} className="text-slate-600" />
@@ -221,7 +219,7 @@ export function AppHeader() {
                             }`}
                           >
                             <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                              {renderFlag(option.flag, option.code)}
+                              {renderFlag(option.countryCode, option.fallbackText)}
 
                               <span>{option.label}</span>
                             </span>
@@ -341,7 +339,7 @@ export function AppHeader() {
       {open && (
         <div className="fixed inset-x-0 top-[104px] z-30 bg-white/95 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.12)] backdrop-blur-md md:hidden">
           <div className="mb-4 flex items-center gap-2">
-            <RegionSelector />
+            <CountryCurrencySelector />
 
             <Button
               variant="ghost"
@@ -350,8 +348,8 @@ export function AppHeader() {
               className="h-11 gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm"
             >
               {renderFlag(
-                selectedLanguage?.flag,
-                selectedLanguage?.code
+                selectedLanguage?.countryCode,
+                selectedLanguage?.fallbackText
               )}
 
               <span className="text-sm font-semibold">

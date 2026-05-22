@@ -1,13 +1,14 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState } from "react";
-import { REGION_COOKIE_KEY, REGION_STORAGE_KEY, regionConfig, type RegionMode } from "@/config/regionConfig";
-import { normalizeRegion } from "@/lib/region/detectRegion";
+import { REGION_COOKIE_KEY, REGION_STORAGE_KEY, countryCurrencyOptions } from "@/config/regionConfig";
+import { normalizeRegion, type RegionMode } from "@/lib/region/detectRegion";
 
 type RegionContextValue = {
   mode: RegionMode;
   setMode: (mode: RegionMode) => void;
-  flags: (typeof regionConfig)[RegionMode];
+  selectedOption: (typeof countryCurrencyOptions)[number];
+  options: typeof countryCurrencyOptions;
 };
 
 const RegionContext = createContext<RegionContextValue | null>(null);
@@ -24,10 +25,9 @@ export function RegionProvider({ initialMode, children }: { initialMode: RegionM
     document.cookie = `${REGION_COOKIE_KEY}=${nextMode}; path=/; max-age=31536000; samesite=lax`;
   };
 
-  const value = useMemo(
-    () => ({ mode, setMode, flags: regionConfig[mode] }),
-    [mode],
-  );
+  const selectedOption = countryCurrencyOptions.find((option) => option.code === mode) ?? countryCurrencyOptions[0];
+
+  const value = useMemo(() => ({ mode, setMode, selectedOption, options: countryCurrencyOptions }), [mode, selectedOption]);
 
   return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;
 }
