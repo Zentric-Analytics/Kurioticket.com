@@ -201,7 +201,6 @@ export function FlightResultsClient() {
                   >
                     <option value="round-trip">Round-trip</option>
                     <option value="one-way">One-way</option>
-                    <option value="multi-city">Multi-city</option>
                   </select>
                 </div>
 
@@ -290,7 +289,7 @@ export function FlightResultsClient() {
                           setDestinationInput(event.target.value);
                           setActiveSuggest("destination");
                         }}
-                        placeholder="To?"
+                        placeholder="To"
                         autoComplete="off"
                         className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
                       />
@@ -499,27 +498,37 @@ function filterAirportOptions(query: string) {
     .slice(0, 8);
 }
 
-function formatAirportOption(item: AirportOption) {
-  return `${item.city} — ${item.airport} (${item.code}), ${item.country}`;
+function airportInputValue(item: AirportOption) {
+  return item.code;
 }
 
 function SuggestionList({ suggestions, onSelect }: { suggestions: AirportOption[]; onSelect: (value: string) => void }) {
   return (
-    <div className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-xl">
+    <div className="absolute left-0 top-[calc(100%+8px)] z-[80] max-h-72 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl sm:w-[380px]">
       {suggestions.length ? (
         suggestions.map((item) => (
           <button
             key={`${item.code}-${item.airport}`}
             type="button"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => onSelect(formatAirportOption(item))}
-            className="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-slate-50 last:border-b-0"
+            onClick={() => onSelect(airportInputValue(item))}
+            className="block w-full border-b border-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-50 last:border-b-0"
           >
-            {formatAirportOption(item)}
+            <span className="flex items-start gap-2.5">
+              <Plane size={15} className="mt-0.5 shrink-0 text-slate-400" />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-bold text-slate-950">
+                  {item.city} ({item.code})
+                </span>
+                <span className="block truncate text-xs font-medium text-slate-500">
+                  {item.airport}, {item.country}
+                </span>
+              </span>
+            </span>
           </button>
         ))
       ) : (
-        <p className="px-3 py-2 text-sm text-slate-500">No matching airports found</p>
+        <p className="px-4 py-3 text-xs font-medium text-slate-500">No matching airports found</p>
       )}
     </div>
   );
