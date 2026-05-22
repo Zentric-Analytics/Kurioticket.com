@@ -18,19 +18,21 @@ export default function DealsPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 py-8">
-        <h1 className="text-3xl font-bold text-navy">Best Deals</h1>
-        <p className="mt-2 max-w-2xl text-muted">Featured deal controls are ready for admin curation and future provider-backed deal feeds.</p>
+      <main className="flex-1 bg-gradient-to-b from-indigo-50 via-white to-violet-50/40 py-10">
+        <section className="page-shell">
+        <h1 className="text-4xl font-extrabold tracking-tight text-indigo-950">Best Deals</h1>
+        <p className="mt-3 max-w-2xl text-slate-600">Featured deal controls are ready for admin curation and future provider-backed deal feeds.</p>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {deals.map(([route, price, note]) => (
-            <Card key={route} className="p-5">
-              <p className="text-sm font-semibold text-muted">{route}</p>
-              <div className="mt-2 text-3xl font-bold text-navy">{price}</div>
-              <p className="mt-2 text-sm text-muted">{note}</p>
-              <LinkButton href="/flights/results" variant="secondary" className="mt-4">Search route</LinkButton>
+            <Card key={route} className="border-indigo-100 p-6">
+              <p className="text-sm font-semibold text-slate-500">{route}</p>
+              <div className="mt-2 text-3xl font-extrabold text-indigo-950">{price}</div>
+              <p className="mt-2 text-sm text-slate-600">{note}</p>
+              <LinkButton href="/flights/results" variant="secondary" className="mt-4 border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">Search route</LinkButton>
             </Card>
           ))}
         </div>
+        </section>
       </main>
       <Footer />
     </>

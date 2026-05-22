@@ -17,19 +17,21 @@ export default async function HotelDestinationPage({ params }: { params: Promise
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 py-8">
-        <p className="text-sm font-semibold text-teal-dark">Future hotel destination page</p>
-        <h1 className="mt-2 text-3xl font-bold text-navy">{titleize(slug)} hotels</h1>
-        <p className="mt-3 max-w-2xl text-muted">
+      <main className="flex-1 bg-gradient-to-b from-indigo-50 via-white to-violet-50/40 py-10">
+        <section className="page-shell">
+        <p className="text-sm font-semibold text-violet-700">Future hotel destination page</p>
+        <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-indigo-950">{titleize(slug)} hotels</h1>
+        <p className="mt-3 max-w-2xl text-slate-600">
           Prepared for destination lodging guides, arrival convenience, best areas, transportation difficulty, and hotel quality intelligence.
         </p>
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]">
           <SearchTabs t={searchTabTranslations} />
-          <Card className="p-5">
-            <h2 className="font-bold text-navy">Destination content system</h2>
-            <p className="mt-2 text-sm text-muted">Editors can add local convenience, airport transfer notes, and area recommendations in Phase 2.</p>
+          <Card className="border-indigo-100 p-6">
+            <h2 className="text-lg font-bold text-indigo-950">Destination content system</h2>
+            <p className="mt-2 text-sm text-slate-600">Editors can add local convenience, airport transfer notes, and area recommendations in Phase 2.</p>
           </Card>
         </div>
+        </section>
       </main>
       <Footer />
     </>
