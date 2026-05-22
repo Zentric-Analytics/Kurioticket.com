@@ -415,7 +415,7 @@ export function FlightResultsClient() {
                   <input type="hidden" name="travelers" value={String(adultCount + childCount)} />
                   <input type="hidden" name="cabinClass" value={cabinClassInput} />
 
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.2fr)_46px_minmax(150px,1.2fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(132px,1fr)_minmax(122px,1fr)] xl:items-center">
+                  <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(165px,1.2fr)_46px_minmax(165px,1.2fr)_minmax(130px,1fr)_minmax(130px,1fr)_minmax(190px,1.2fr)_minmax(132px,1fr)] lg:items-center">
                     <div className="relative" ref={originWrapRef}>
                       <label className="sr-only" htmlFor="origin">
                         From
@@ -534,7 +534,7 @@ export function FlightResultsClient() {
                       </button>
                     </div>
 
-                    <div className="relative xl:col-span-2" ref={travelerCabinWrapRef}>
+                    <div className="relative" ref={travelerCabinWrapRef}>
                       <button
                         type="button"
                         aria-label="Travelers and cabin class"
