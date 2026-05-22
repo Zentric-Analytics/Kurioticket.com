@@ -1,45 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
 
 import { legalDocuments } from "@/data/legalDocuments";
-import {
-  LANGUAGE_CHANGE_EVENT,
-  getDefaultLanguage,
-  getLanguageFromStorage,
-  getUiTranslations,
-  type LanguageCode,
-} from "@/lib/language";
+import { useLocale } from "@/components/layout/LocaleProvider";
 
 export function Footer() {
-  const [language, setLanguage] =
-    useState<LanguageCode>(getDefaultLanguage());
-
-  useEffect(() => {
-    const sync = () => {
-      setLanguage(getLanguageFromStorage());
-    };
-
-    sync();
-
-    window.addEventListener(
-      LANGUAGE_CHANGE_EVENT,
-      sync as EventListener
-    );
-
-    return () => {
-      window.removeEventListener(
-        LANGUAGE_CHANGE_EVENT,
-        sync as EventListener
-      );
-    };
-  }, []);
-
-  const t = useMemo(
-    () => getUiTranslations(language),
-    [language]
-  );
+  const { t } = useLocale();
 
   return (
     <footer className="border-t border-indigo-800/40 bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-900 text-white">
