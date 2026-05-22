@@ -392,7 +392,12 @@ export default function Home() {
               </p>
             </div>
 
-            <form className="flex flex-col gap-3 sm:flex-row">
+            <form
+              className="flex flex-col gap-3 sm:flex-row"
+              onSubmit={(event) => {
+                event.preventDefault();
+              }}
+            >
               <input
                 type="email"
                 placeholder="Enter your email address"
