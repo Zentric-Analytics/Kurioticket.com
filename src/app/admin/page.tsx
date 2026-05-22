@@ -1,13 +1,13 @@
 import Link from "next/link";
 import {
+  Users,
   Activity,
+  Plane,
   Gauge,
   LifeBuoy,
   ListChecks,
-  Plane,
   ServerCog,
   Settings,
-  Users,
 } from "lucide-react";
 
 import {
@@ -17,11 +17,12 @@ import {
 } from "@/components/admin/AdminPageShell";
 
 import { Card } from "@/components/ui/Card";
-import { requireAdminSession } from "@/lib/auth-guards";
+
 import {
   getDuffelAdminHealth,
   getSafeSystemStatus,
 } from "@/lib/admin-data";
+
 import { getOptionalPrisma } from "@/lib/prisma";
 
 const adminModules = [
@@ -29,49 +30,64 @@ const adminModules = [
     href: "/admin/users",
     title: "Users",
     icon: Users,
-    body: "Search users, review status, suspend/reactivate accounts, and inspect roles.",
+    body:
+      "Search users, review status, suspend/reactivate accounts, and inspect roles.",
   },
+
   {
     href: "/admin/providers",
     title: "Providers",
     icon: Activity,
-    body: "Monitor Duffel and track paused/future provider integrations.",
+    body:
+      "Monitor Duffel and track paused/future provider integrations.",
   },
+
   {
     href: "/admin/searches",
     title: "Searches",
     icon: Plane,
-    body: "Review recent flight metasearch activity and result counts.",
+    body:
+      "Review recent flight metasearch activity and result counts.",
   },
+
   {
     href: "/admin/redirects",
     title: "Redirects",
     icon: Gauge,
-    body: "Inspect future external booking handoff logs.",
+    body:
+      "Inspect future external booking handoff logs.",
   },
+
   {
     href: "/admin/support",
     title: "Support",
     icon: LifeBuoy,
-    body: "Review support tickets and operational queues.",
+    body:
+      "Review support tickets and operational queues.",
   },
+
   {
     href: "/admin/logs",
     title: "Logs",
     icon: ListChecks,
-    body: "Audit sensitive admin actions and account changes.",
+    body:
+      "Audit sensitive admin actions and account changes.",
   },
+
   {
     href: "/admin/system",
     title: "System",
     icon: ServerCog,
-    body: "Check safe environment, auth, database, and runtime status.",
+    body:
+      "Check safe environment, auth, database, and runtime status.",
   },
+
   {
     href: "/admin/settings",
     title: "Settings",
     icon: Settings,
-    body: "Read-only operational settings and active/paused systems.",
+    body:
+      "Read-only operational settings and active/paused systems.",
   },
 ];
 
@@ -80,9 +96,11 @@ export const metadata = {
 };
 
 export default async function AdminPage() {
-  await requireAdminSession("/admin");
-
-  const [metrics, system, duffel] = await Promise.all([
+  const [
+    metrics,
+    system,
+    duffel,
+  ] = await Promise.all([
     getAdminMetrics(),
     getSafeSystemStatus(),
     getDuffelAdminHealth(),
@@ -144,38 +162,42 @@ export default async function AdminPage() {
 
         <MetricCard
           label="Recent admin actions"
-          value={metrics.recentAdminActions}
+          value={
+            metrics.recentAdminActions
+          }
           hint="Last 7 days"
         />
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {adminModules.map((module) => (
-          <Link
-            key={module.href}
-            href={module.href}
-            className="block rounded-xl focus-ring"
-          >
-            <Card className="h-full p-4 transition hover:-translate-y-0.5 hover:border-teal hover:shadow-lg">
-              <module.icon
-                className="text-teal"
-                size={22}
-              />
+        {adminModules.map(
+          (module) => (
+            <Link
+              key={module.href}
+              href={module.href}
+              className="block rounded-xl focus-ring"
+            >
+              <Card className="h-full p-4 transition hover:-translate-y-0.5 hover:border-teal hover:shadow-lg">
+                <module.icon
+                  className="text-teal"
+                  size={22}
+                />
 
-              <h2 className="mt-3 font-bold text-navy">
-                {module.title}
-              </h2>
+                <h2 className="mt-3 font-bold text-navy">
+                  {module.title}
+                </h2>
 
-              <p className="mt-1 text-sm leading-6 text-muted">
-                {module.body}
-              </p>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  {module.body}
+                </p>
 
-              <span className="mt-4 inline-block text-sm font-bold text-teal-dark">
-                Open {module.title} →
-              </span>
-            </Card>
-          </Link>
-        ))}
+                <span className="mt-4 inline-block text-sm font-bold text-teal-dark">
+                  Open {module.title} →
+                </span>
+              </Card>
+            </Link>
+          ),
+        )}
       </div>
 
       <Card className="mt-6 p-4">
@@ -209,7 +231,8 @@ export default async function AdminPage() {
           </StatusPill>
 
           <StatusPill>
-            Paused: OpenAI premium features
+            Paused: OpenAI premium
+            features
           </StatusPill>
         </div>
       </Card>
@@ -218,7 +241,8 @@ export default async function AdminPage() {
 }
 
 async function getAdminMetrics() {
-  const db = getOptionalPrisma();
+  const db =
+    getOptionalPrisma();
 
   if (!db) {
     return {
@@ -232,7 +256,12 @@ async function getAdminMetrics() {
   }
 
   const since = new Date(
-    Date.now() - 7 * 24 * 60 * 60 * 1000
+    Date.now() -
+      7 *
+        24 *
+        60 *
+        60 *
+        1000,
   );
 
   const [

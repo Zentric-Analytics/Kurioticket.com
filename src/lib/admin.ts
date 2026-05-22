@@ -11,14 +11,19 @@ type AdminRequest = Request & {
 };
 
 export async function requireAdminApiSession() {
-  const session = await getServerSession(
-    authOptions,
-  );
+  const session =
+    await getServerSession(
+      authOptions,
+    );
 
   if (
     !session?.user?.id ||
-    session.user.role !== "ADMIN" ||
-    session.user.status !== "ACTIVE" ||
+    session.user.role !==
+      "ADMIN" ||
+    session.user.status !==
+      "ACTIVE" ||
+    !session.user
+      .emailVerified ||
     !isConfiguredAdminEmail(
       session.user.email,
     )
@@ -26,22 +31,26 @@ export async function requireAdminApiSession() {
     logSafeAuthDiagnostics(
       "[admin:api-access-denied]",
       {
-        email: session?.user?.email,
-        role: session?.user?.role,
-        status: session?.user?.status,
+        email:
+          session?.user?.email,
+        role:
+          session?.user?.role,
+        status:
+          session?.user?.status,
       },
     );
 
     return {
-      response: NextResponse.json(
-        {
-          error:
-            "Admin access required.",
-        },
-        {
-          status: 403,
-        },
-      ),
+      response:
+        NextResponse.json(
+          {
+            error:
+              "Admin access required.",
+          },
+          {
+            status: 403,
+          },
+        ),
     };
   }
 
@@ -54,7 +63,9 @@ export function isConfiguredAdminEmail(
   return Boolean(
     email &&
       getAdminEmails().includes(
-        email.toLowerCase().trim(),
+        email
+          .toLowerCase()
+          .trim(),
       ),
   );
 }
@@ -67,7 +78,6 @@ export async function countActiveAdminsExcluding(
       id: {
         not: userId,
       },
-
       role: "ADMIN",
       status: "ACTIVE",
     },
@@ -76,12 +86,20 @@ export async function countActiveAdminsExcluding(
 
 export async function writeAdminAuditLog(
   input: {
-    adminUserId?: string | null;
-    adminEmail?: string | null;
+    adminUserId?:
+      | string
+      | null;
+    adminEmail?:
+      | string
+      | null;
     action: string;
     targetType: string;
-    targetId?: string | null;
-    targetEmail?: string | null;
+    targetId?:
+      | string
+      | null;
+    targetEmail?:
+      | string
+      | null;
     metadata?: Record<
       string,
       unknown
@@ -101,7 +119,8 @@ export async function writeAdminAuditLog(
             input.adminEmail?.toLowerCase() ||
             "unknown-admin",
 
-          action: input.action,
+          action:
+            input.action,
 
           targetType:
             input.targetType,
@@ -143,7 +162,9 @@ export function getRequestIp(
 ) {
   return (
     request?.headers
-      .get("x-forwarded-for")
+      .get(
+        "x-forwarded-for",
+      )
       ?.split(",")[0]
       ?.trim() ||
     request?.headers.get(
@@ -158,10 +179,13 @@ export function parsePositiveInt(
   fallback: number,
   max = 100,
 ) {
-  const parsed = Number(value);
+  const parsed =
+    Number(value);
 
   if (
-    !Number.isFinite(parsed) ||
+    !Number.isFinite(
+      parsed,
+    ) ||
     parsed < 1
   ) {
     return fallback;

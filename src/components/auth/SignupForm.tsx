@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 
@@ -22,11 +22,18 @@ export function SignupForm({
   const [loading, setLoading] =
     useState(false);
 
+  const [message, setMessage] =
+    useState("");
+
+  const [isPending, startTransition] =
+    useTransition();
+
   async function submit(
     formData: FormData,
   ) {
     setLoading(true);
     setError("");
+    setMessage("");
 
     const input = {
       name: String(
@@ -104,6 +111,22 @@ export function SignupForm({
 
     setLoading(false);
 
+    // Preserve backend verification flow
+    if (
+      signInResult?.error ===
+      "EmailVerificationRequired"
+    ) {
+      setMessage("Verification required. Redirecting...");
+
+      startTransition(() => {
+        window.location.href = `/auth/verify-email?email=${encodeURIComponent(
+          email,
+        )}`;
+      });
+
+      return;
+    }
+
     if (!signInResult?.ok) {
       setError(
         "Your account was created, but automatic login failed. Please log in with your new password.",
@@ -112,9 +135,13 @@ export function SignupForm({
       return;
     }
 
-    window.location.href =
-      signInResult.url ||
-      "/onboarding";
+    setMessage("Account created. Redirecting...");
+
+    startTransition(() => {
+      window.location.href =
+        signInResult.url ||
+        "/onboarding";
+    });
   }
 
   return (
@@ -124,9 +151,10 @@ export function SignupForm({
       </h1>
 
       <p className="mt-2 text-sm text-muted">
-        No passport, government ID,
-        phone number, or address
-        needed.
+        No passport,
+        government ID,
+        phone number, or
+        address needed.
       </p>
 
       <form
@@ -138,6 +166,7 @@ export function SignupForm({
             name="name"
             autoComplete="name"
             required
+            disabled={loading || isPending}
           />
         </Field>
 
@@ -147,6 +176,7 @@ export function SignupForm({
             type="email"
             autoComplete="email"
             required
+            disabled={loading || isPending}
           />
         </Field>
 
@@ -157,12 +187,14 @@ export function SignupForm({
             autoComplete="new-password"
             minLength={8}
             required
+            disabled={loading || isPending}
           />
         </Field>
 
         <p className="text-xs leading-5 text-muted">
-          By creating an account,
-          you agree to{" "}
+          By creating an
+          account, you agree
+          to{" "}
           <Link
             className="font-semibold text-teal-dark"
             href="/legal/terms-of-service"
@@ -176,18 +208,24 @@ export function SignupForm({
           >
             Privacy Policy
           </Link>
-          , and partner redirect
-          disclosures.
+          , and partner
+          redirect disclosures.
         </p>
 
         {error ? (
-          <p className="text-sm text-danger">
+          <p className="text-sm text-danger" aria-live="polite">
             {error}
           </p>
         ) : null}
 
-        <Button disabled={loading}>
-          {loading
+        {message ? (
+          <p className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark" aria-live="polite">
+            {message}
+          </p>
+        ) : null}
+
+        <Button disabled={loading || isPending}>
+          {loading || isPending
             ? "Creating account..."
             : "Sign Up"}
         </Button>
@@ -209,7 +247,8 @@ export function SignupForm({
       ) : null}
 
       <p className="mt-4 text-sm text-muted">
-        Already have an account?{" "}
+        Already have an
+        account?{" "}
         <Link
           className="font-semibold text-teal-dark"
           href="/auth/signin"
@@ -227,11 +266,16 @@ function getPublicSignupValidationError(
     string[] | undefined
   >,
 ) {
-  if (fieldErrors.email?.length) {
+  if (
+    fieldErrors.email?.length
+  ) {
     return "Enter a valid email address.";
   }
 
-  if (fieldErrors.password?.length) {
+  if (
+    fieldErrors.password
+      ?.length
+  ) {
     return "Password must meet minimum requirements.";
   }
 
