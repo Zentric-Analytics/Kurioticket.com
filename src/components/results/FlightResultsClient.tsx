@@ -65,6 +65,7 @@ export function FlightResultsClient() {
   const [originInput, setOriginInput] = useState(params.get("origin") || "");
   const [destinationInput, setDestinationInput] = useState(params.get("destination") || "");
   const [activeSuggest, setActiveSuggest] = useState<"origin" | "destination" | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -146,21 +147,52 @@ export function FlightResultsClient() {
   }, [loading]);
 
   useEffect(() => {
+    function updateDropdownPosition(target: "origin" | "destination") {
+      const viewportPadding = 16;
+      const preferredWidth = 520;
+      const wrap = target === "origin" ? originWrapRef.current : destinationWrapRef.current;
+      const input = wrap?.querySelector("input");
+      if (!input) return;
+      const rect = input.getBoundingClientRect();
+      const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
+      const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
+      const top = rect.bottom + 8;
+      setDropdownPosition({ top, left, width });
+    }
+
+    if (activeSuggest) updateDropdownPosition(activeSuggest);
+
+    function handleViewportChange() {
+      if (!activeSuggest) return;
+      updateDropdownPosition(activeSuggest);
+    }
+
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
 
-      if (activeSuggest === "origin" && originWrapRef.current && !originWrapRef.current.contains(target)) {
+      const dropdown = document.getElementById("flight-airport-suggestions");
+      const clickedDropdown = dropdown?.contains(target);
+
+      if (!clickedDropdown && activeSuggest === "origin" && originWrapRef.current && !originWrapRef.current.contains(target)) {
         setActiveSuggest(null);
+        setDropdownPosition(null);
       }
 
-      if (activeSuggest === "destination" && destinationWrapRef.current && !destinationWrapRef.current.contains(target)) {
+      if (!clickedDropdown && activeSuggest === "destination" && destinationWrapRef.current && !destinationWrapRef.current.contains(target)) {
         setActiveSuggest(null);
+        setDropdownPosition(null);
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
 
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
   }, [activeSuggest]);
 
   const filtered = results.filter((flight) => flight.price <= maxPrice && flight.stops <= maxStops);
@@ -201,7 +233,6 @@ export function FlightResultsClient() {
                   >
                     <option value="round-trip">Round-trip</option>
                     <option value="one-way">One-way</option>
-                    <option value="multi-city">Multi-city</option>
                   </select>
                 </div>
 
@@ -236,7 +267,10 @@ export function FlightResultsClient() {
                         value={originInput}
                         onFocus={() => setActiveSuggest("origin")}
                         onKeyDown={(event) => {
-                          if (event.key === "Escape") setActiveSuggest(null);
+                          if (event.key === "Escape") {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
                         }}
                         onChange={(event) => {
                           setOriginInput(event.target.value);
@@ -247,12 +281,15 @@ export function FlightResultsClient() {
                         className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
                       />
 
-                      {activeSuggest === "origin" ? (
+                      {activeSuggest === "origin" && dropdownPosition ? (
                         <SuggestionList
+                          id="flight-airport-suggestions"
+                          position={dropdownPosition}
                           suggestions={originSuggestions}
                           onSelect={(value) => {
                             setOriginInput(value);
                             setActiveSuggest(null);
+                            setDropdownPosition(null);
                           }}
                         />
                       ) : null}
@@ -284,23 +321,29 @@ export function FlightResultsClient() {
                         value={destinationInput}
                         onFocus={() => setActiveSuggest("destination")}
                         onKeyDown={(event) => {
-                          if (event.key === "Escape") setActiveSuggest(null);
+                          if (event.key === "Escape") {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
                         }}
                         onChange={(event) => {
                           setDestinationInput(event.target.value);
                           setActiveSuggest("destination");
                         }}
-                        placeholder="To?"
+                        placeholder="To"
                         autoComplete="off"
                         className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
                       />
 
-                      {activeSuggest === "destination" ? (
+                      {activeSuggest === "destination" && dropdownPosition ? (
                         <SuggestionList
+                          id="flight-airport-suggestions"
+                          position={dropdownPosition}
                           suggestions={destinationSuggestions}
                           onSelect={(value) => {
                             setDestinationInput(value);
                             setActiveSuggest(null);
+                            setDropdownPosition(null);
                           }}
                         />
                       ) : null}
@@ -499,27 +542,55 @@ function filterAirportOptions(query: string) {
     .slice(0, 8);
 }
 
-function formatAirportOption(item: AirportOption) {
-  return `${item.city} — ${item.airport} (${item.code}), ${item.country}`;
+function airportInputValue(item: AirportOption) {
+  return item.code;
 }
 
-function SuggestionList({ suggestions, onSelect }: { suggestions: AirportOption[]; onSelect: (value: string) => void }) {
+function SuggestionList({
+  id,
+  suggestions,
+  onSelect,
+  position,
+}: {
+  id: string;
+  suggestions: AirportOption[];
+  onSelect: (value: string) => void;
+  position: { top: number; left: number; width: number };
+}) {
   return (
-    <div className="absolute left-0 top-[calc(100%+6px)] z-50 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-xl">
+    <div
+      id={id}
+      style={{ position: "fixed", top: position.top, left: position.left, width: position.width, zIndex: 9999 }}
+      className="max-h-[320px] max-w-[calc(100vw-2rem)] overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl ring-1 ring-black/5"
+    >
       {suggestions.length ? (
         suggestions.map((item) => (
           <button
             key={`${item.code}-${item.airport}`}
             type="button"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => onSelect(formatAirportOption(item))}
-            className="block w-full border-b border-slate-100 px-3 py-2 text-left text-sm hover:bg-slate-50 last:border-b-0"
+            onClick={() => onSelect(airportInputValue(item))}
+            className="block w-full border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none last:border-b-0"
           >
-            {formatAirportOption(item)}
+            <span className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+                <Plane size={16} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-bold text-slate-950">
+                  {item.city}, {item.country}
+                </span>
+                <span className="block truncate text-xs font-medium text-slate-500">
+                  {item.airport}
+                </span>
+              </span>
+              <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-500">{item.code}</span>
+              <span className="h-5 w-5 shrink-0 rounded border border-slate-300 bg-white" aria-hidden="true" />
+            </span>
           </button>
         ))
       ) : (
-        <p className="px-3 py-2 text-sm text-slate-500">No matching airports found</p>
+        <p className="px-4 py-3 text-xs font-medium text-slate-500 whitespace-nowrap">No matching airports found</p>
       )}
     </div>
   );
