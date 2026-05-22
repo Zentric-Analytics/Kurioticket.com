@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { signinSchema } from "@/lib/validation";
-import { sendEmailVerificationCode, verifyEmailCode } from "@/services/emailVerificationService";
+import { EmailVerificationCooldownError, sendEmailVerificationCode, verifyEmailCode } from "@/services/emailVerificationService";
 import { getPrisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -18,6 +19,19 @@ export async function POST(request: Request) {
   const input = parseVerifyEmailBody(body);
   if (!input) {
     return NextResponse.json({ error: "Unable to verify email right now." }, { status: 400 });
+  }
+
+  try {
+    checkAuthRateLimit({ action: "verify-email", email: input.email, request, limit: 10, windowMs: 15 * 60 * 1000 });
+  } catch (error) {
+    if (error instanceof AuthRateLimitError) {
+      return NextResponse.json(
+        { error: "Too many verification attempts. Please wait and try again." },
+        { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } },
+      );
+    }
+
+    throw error;
   }
 
   const verified = await verifyEmailCode(input);
@@ -39,13 +53,42 @@ export async function PUT(request: Request) {
   }
 
   const email = parseEmail(body);
+  try {
+    checkAuthRateLimit({ action: "verify-email-resend", email: email || undefined, request, limit: 5, windowMs: 15 * 60 * 1000 });
+  } catch (error) {
+    if (error instanceof AuthRateLimitError) {
+      return NextResponse.json(
+        { ok: false, error: "Too many resend attempts. Please wait and try again." },
+        { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } },
+      );
+    }
+
+    throw error;
+  }
+
   if (email) {
     const user = await getPrisma().user.findUnique({
       where: { email },
       select: { email: true, emailVerified: true, name: true },
     });
     if (user && !user.emailVerified) {
-      await sendEmailVerificationCode({ email, name: user.name });
+      try {
+        await sendEmailVerificationCode({
+          email,
+          name: user.name,
+          action: "verify-email-resend",
+          enforceCooldown: true,
+        });
+      } catch (error) {
+        if (error instanceof EmailVerificationCooldownError) {
+          return NextResponse.json(
+            { ok: false, error: "Please wait before requesting another verification code." },
+            { status: 429, headers: { "Retry-After": String(error.retryAfterSeconds) } },
+          );
+        }
+
+        return NextResponse.json({ ok: false, error: "Unable to send verification code right now." }, { status: 503 });
+      }
     }
   }
 

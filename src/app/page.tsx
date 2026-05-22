@@ -90,7 +90,7 @@ export default function Home() {
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-white to-transparent" />
           </div>
 
-          <div className="page-shell relative grid min-h-[670px] content-start gap-8 pb-12 pt-12 sm:pt-16">
+          <div className="page-shell relative grid min-h-[670px] content-start gap-6 pb-10 pt-10 sm:gap-8 sm:pb-12 sm:pt-16">
             <div className="max-w-2xl">
               <h1 className="max-w-xl text-5xl font-black leading-[0.96] tracking-normal text-slate-950 sm:text-6xl lg:text-7xl">
                 Find Cheap Flights Fast
@@ -111,7 +111,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell -mt-2 pb-9">
+        <section className="page-shell -mt-1 pb-7 sm:-mt-2 sm:pb-9">
           <div className="grid overflow-hidden rounded-xl border border-violet-100 bg-[#faf7ff] shadow-sm md:grid-cols-2 lg:grid-cols-4">
             {trustItems.map((item) => (
               <div key={item.title} className="flex gap-4 border-b border-violet-100 p-5 last:border-b-0 lg:border-b-0 lg:border-r lg:last:border-r-0">
@@ -127,7 +127,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell py-5">
+        <section className="page-shell py-6 sm:py-8">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-black tracking-normal text-slate-950">Popular Destinations</h2>
             <LinkButton href="/hotels/tokyo" variant="ghost" size="sm" className="hidden text-[#6d28d9] sm:inline-flex">
@@ -135,14 +135,14 @@ export default function Home() {
               <ArrowRight size={16} />
             </LinkButton>
           </div>
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-5 grid gap-4 min-[420px]:grid-cols-2 lg:grid-cols-5">
             {destinations.map((destination) => (
               <DestinationCard key={destination.city} {...destination} />
             ))}
           </div>
         </section>
 
-        <section className="page-shell grid gap-5 py-9 lg:grid-cols-2">
+        <section className="page-shell grid gap-4 py-7 sm:gap-5 sm:py-9 lg:grid-cols-2">
           <PromoPanel
             tone="violet"
             title="Amazing flight deals just for you"
@@ -161,7 +161,7 @@ export default function Home() {
           />
         </section>
 
-        <section className="page-shell pb-12">
+        <section className="page-shell pb-10 sm:pb-12">
           <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
             <div className="flex gap-4">
               <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#6d28d9] text-white">
@@ -203,9 +203,9 @@ function CompactAssurance({ icon, label }: { icon: ReactNode; label: string }) {
 function DestinationCard({ city, country, price, image }: { city: string; country: string; price: string; image: string }) {
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative h-44">
+      <div className="relative h-36 min-[420px]:h-32 sm:h-40 lg:h-44">
         <Image src={image} alt={`${city}, ${country}`} fill sizes="(min-width: 1024px) 20vw, (min-width: 640px) 50vw, 100vw" className="object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-slate-950/10 to-transparent" />
         <button type="button" className="focus-ring absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur" aria-label={`Save ${city}`}>
           <Heart size={17} />
         </button>

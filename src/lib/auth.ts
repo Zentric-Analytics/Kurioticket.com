@@ -9,6 +9,7 @@ import {
   getAdminEmails,
   getAuthSecret,
 } from "@/lib/env";
+import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 
 import {
   isGoogleAuthConfigured,
@@ -25,7 +26,9 @@ import { signinSchema } from "@/lib/validation";
 import {
   getEmailVerificationRedirect,
   sendEmailVerificationCode,
+  verifyLoginCode,
 } from "@/services/emailVerificationService";
+import { logAuthEvent } from "@/services/authService";
 
 const providers: NextAuthOptions["providers"] =
   [
@@ -42,11 +45,104 @@ const providers: NextAuthOptions["providers"] =
           label: "Password",
           type: "password",
         },
+
+        loginCode: {
+          label: "Login code",
+          type: "text",
+        },
       },
 
       async authorize(
         credentials,
+        request,
       ) {
+        const rateLimitRequest =
+          request
+            ? ({
+                headers:
+                  new Headers(
+                    request.headers as HeadersInit,
+                  ),
+              } as Request)
+            : undefined;
+        const loginCode =
+          String(
+            credentials?.loginCode ||
+              "",
+          ).trim();
+
+        if (loginCode) {
+          const parsedEmail =
+            signinSchema.shape.email.safeParse(
+              String(
+                credentials?.email ||
+                  "",
+              ),
+            );
+
+          if (
+            !parsedEmail.success ||
+            !/^\d{6}$/.test(
+              loginCode,
+            )
+          ) {
+            return null;
+          }
+
+          const email =
+            parsedEmail.data;
+
+          try {
+            checkAuthRateLimit({ action: "verify-login", email, request: rateLimitRequest, limit: 10, windowMs: 15 * 60 * 1000 });
+          } catch (error) {
+            if (error instanceof AuthRateLimitError) {
+              throw new Error("RateLimited");
+            }
+
+            throw error;
+          }
+
+          const validCode =
+            await verifyLoginCode({
+              email,
+              code: loginCode,
+            });
+
+          if (!validCode) {
+            return null;
+          }
+
+          const user =
+            await getPrisma().user.findUnique(
+              {
+                where: {
+                  email,
+                },
+              },
+            );
+
+          if (
+            !user ||
+            user.status !== "ACTIVE" ||
+            !user.emailVerified
+          ) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: user.role,
+            isPremium:
+              user.isPremium,
+            status: user.status,
+            emailVerified:
+              user.emailVerified,
+          };
+        }
+
         const parsed =
           signinSchema.safeParse(
             credentials,
@@ -68,6 +164,16 @@ const providers: NextAuthOptions["providers"] =
 
         const { email, password } =
           parsed.data;
+
+        try {
+          checkAuthRateLimit({ action: "signin", email, request: rateLimitRequest, limit: 10, windowMs: 15 * 60 * 1000 });
+        } catch (error) {
+          if (error instanceof AuthRateLimitError) {
+            throw new Error("RateLimited");
+          }
+
+          throw error;
+        }
 
         const user =
           await getPrisma().user.findUnique(
@@ -147,6 +253,8 @@ const providers: NextAuthOptions["providers"] =
         if (
           !user.emailVerified
         ) {
+          logAuthEvent("login-blocked-unverified", { email });
+
           await sendEmailVerificationCode(
             {
               email,
@@ -159,18 +267,9 @@ const providers: NextAuthOptions["providers"] =
           );
         }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          role: user.role,
-          isPremium:
-            user.isPremium,
-          status: user.status,
-          emailVerified:
-            user.emailVerified,
-        };
+        throw new Error(
+          "LoginVerificationRequired",
+        );
       },
     }),
   ];
@@ -288,6 +387,8 @@ export const authOptions: NextAuthOptions =
           dbUser &&
           !dbUser.emailVerified
         ) {
+          logAuthEvent("login-blocked-unverified", { email });
+
           await sendEmailVerificationCode(
             {
               email,
