@@ -34,6 +34,8 @@ type AirportOption = {
   country: string;
 };
 
+type CabinClassValue = "economy" | "premium-economy" | "business" | "first";
+
 const airportOptions: AirportOption[] = [
   { city: "Lagos", airport: "Murtala Muhammed International Airport", code: "LOS", country: "Nigeria" },
   { city: "Abuja", airport: "Nnamdi Azikiwe International Airport", code: "ABV", country: "Nigeria" },
@@ -47,6 +49,13 @@ const airportOptions: AirportOption[] = [
   { city: "Nairobi", airport: "Jomo Kenyatta International Airport", code: "NBO", country: "Kenya" },
   { city: "Johannesburg", airport: "O.R. Tambo International Airport", code: "JNB", country: "South Africa" },
   { city: "Toronto", airport: "Toronto Pearson International Airport", code: "YYZ", country: "Canada" },
+];
+
+const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
+  { label: "Economy", value: "economy" },
+  { label: "Premium Economy", value: "premium-economy" },
+  { label: "Business", value: "business" },
+  { label: "First", value: "first" },
 ];
 
 export function FlightResultsClient() {
@@ -66,17 +75,21 @@ export function FlightResultsClient() {
   const [destinationInput, setDestinationInput] = useState(params.get("destination") || "");
   const [departureDateInput, setDepartureDateInput] = useState(params.get("departureDate") || "");
   const [returnDateInput, setReturnDateInput] = useState(params.get("returnDate") || "");
-  const [adultCount, setAdultCount] = useState(() => Math.max(1, Number(params.get("travelers") || 1)));
+  const [adultCount, setAdultCount] = useState(() => {
+    const value = Number(params.get("travelers") || 1);
+    return Number.isFinite(value) ? Math.max(1, value) : 1;
+  });
   const [childCount, setChildCount] = useState(0);
   const [infantCount, setInfantCount] = useState(0);
-  const [cabinClassInput, setCabinClassInput] = useState(params.get("cabinClass") || "economy");
-  const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
-  const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [cabinClassInput, setCabinClassInput] = useState<CabinClassValue>((params.get("cabinClass") as CabinClassValue) || "economy");
   const [activeSuggest, setActiveSuggest] = useState<"origin" | "destination" | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const [activeDatePicker, setActiveDatePicker] = useState<"departure" | "return" | null>(null);
   const [datePickerPosition, setDatePickerPosition] = useState<{ top: number; left: number; width: number } | null>(null);
   const [calendarMonth, setCalendarMonth] = useState(() => startOfMonth(new Date()));
+  const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
+  const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
@@ -166,11 +179,14 @@ export function FlightResultsClient() {
       const preferredWidth = 520;
       const wrap = target === "origin" ? originWrapRef.current : destinationWrapRef.current;
       const input = wrap?.querySelector("input");
+
       if (!input) return;
+
       const rect = input.getBoundingClientRect();
       const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
       const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
       const top = rect.bottom + 8;
+
       setDropdownPosition({ top, left, width });
     }
 
@@ -183,7 +199,6 @@ export function FlightResultsClient() {
 
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-
       const dropdown = document.getElementById("flight-airport-suggestions");
       const clickedDropdown = dropdown?.contains(target);
 
@@ -215,11 +230,14 @@ export function FlightResultsClient() {
       const preferredWidth = 720;
       const wrap = target === "departure" ? departureWrapRef.current : returnWrapRef.current;
       const trigger = wrap?.querySelector("button");
+
       if (!trigger) return;
+
       const rect = trigger.getBoundingClientRect();
       const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
       const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
       const top = rect.bottom + 8;
+
       setDatePickerPosition({ top, left, width });
     }
 
@@ -254,6 +272,7 @@ export function FlightResultsClient() {
     document.addEventListener("keydown", handleEscape);
     window.addEventListener("resize", handleViewportChange);
     window.addEventListener("scroll", handleViewportChange, true);
+
     return () => {
       document.removeEventListener("mousedown", handleClose);
       document.removeEventListener("keydown", handleEscape);
@@ -267,21 +286,30 @@ export function FlightResultsClient() {
       const viewportPadding = 16;
       const preferredWidth = 520;
       const trigger = travelerCabinWrapRef.current?.querySelector("button");
+
       if (!trigger) return;
+
       const rect = trigger.getBoundingClientRect();
       const width = Math.min(preferredWidth, window.innerWidth - viewportPadding * 2);
       const left = Math.max(viewportPadding, Math.min(rect.left, window.innerWidth - width - viewportPadding));
       const top = rect.bottom + 8;
+
       setTravelerPopoverPosition({ top, left, width });
     }
 
     if (travelerPopoverOpen) updateTravelerPopoverPosition();
 
+    function handleViewportChange() {
+      if (!travelerPopoverOpen) return;
+      updateTravelerPopoverPosition();
+    }
+
     function handleClose(event: MouseEvent) {
       const target = event.target as Node;
-      const popover = document.getElementById("traveler-cabin-popover");
+      const popover = document.getElementById("flight-traveler-cabin-popover");
       const clickedPopover = popover?.contains(target);
       const clickedTrigger = travelerCabinWrapRef.current?.contains(target);
+
       if (!clickedPopover && !clickedTrigger) {
         setTravelerPopoverOpen(false);
         setTravelerPopoverPosition(null);
@@ -293,10 +321,6 @@ export function FlightResultsClient() {
         setTravelerPopoverOpen(false);
         setTravelerPopoverPosition(null);
       }
-    }
-
-    function handleViewportChange() {
-      if (travelerPopoverOpen) updateTravelerPopoverPosition();
     }
 
     document.addEventListener("mousedown", handleClose);
@@ -348,8 +372,10 @@ export function FlightResultsClient() {
                     onChange={(event) => {
                       const nextTripType = event.target.value;
                       setTripTypeInput(nextTripType);
+
                       if (nextTripType !== "round-trip") {
                         setReturnDateInput("");
+
                         if (activeDatePicker === "return") {
                           setActiveDatePicker(null);
                           setDatePickerPosition(null);
@@ -367,6 +393,7 @@ export function FlightResultsClient() {
                   className="mt-4 w-full max-w-[1060px] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)]"
                   onSubmit={(event) => {
                     event.preventDefault();
+
                     if (!departureDateInput || (tripTypeInput === "round-trip" && !returnDateInput)) return;
 
                     const formData = new FormData(event.currentTarget);
@@ -387,6 +414,7 @@ export function FlightResultsClient() {
                   <input type="hidden" name="returnDate" value={returnDateInput} />
                   <input type="hidden" name="travelers" value={String(adultCount + childCount)} />
                   <input type="hidden" name="cabinClass" value={cabinClassInput} />
+
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(150px,1.2fr)_46px_minmax(150px,1.2fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(122px,1fr)_minmax(132px,1fr)_minmax(122px,1fr)] xl:items-center">
                     <div className="relative" ref={originWrapRef}>
                       <label className="sr-only" htmlFor="origin">
@@ -510,7 +538,13 @@ export function FlightResultsClient() {
                       <button
                         type="button"
                         aria-label="Travelers and cabin class"
-                        onClick={() => setTravelerPopoverOpen((current) => !current)}
+                        onClick={() => {
+                          setTravelerPopoverOpen((current) => {
+                            const next = !current;
+                            if (!next) setTravelerPopoverPosition(null);
+                            return next;
+                          });
+                        }}
                         className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900"
                       >
                         {buildTravelerCabinSummary(adultCount, childCount, infantCount, cabinClassInput)}
@@ -522,6 +556,7 @@ export function FlightResultsClient() {
                     </Button>
                   </div>
                 </form>
+
                 {activeDatePicker && datePickerPosition ? (
                   <DatePickerPopover
                     position={datePickerPosition}
@@ -532,16 +567,20 @@ export function FlightResultsClient() {
                     onMonthChange={setCalendarMonth}
                     onSelect={(date) => {
                       const value = formatDateValue(date);
+
                       if (activeDatePicker === "departure") {
                         setDepartureDateInput(value);
+
                         if (tripTypeInput === "round-trip") {
                           setActiveDatePicker("return");
                         } else {
                           setActiveDatePicker(null);
                           setDatePickerPosition(null);
                         }
+
                         return;
                       }
+
                       setReturnDateInput(value);
                       setActiveDatePicker(null);
                       setDatePickerPosition(null);
@@ -553,8 +592,10 @@ export function FlightResultsClient() {
                     onToday={() => {
                       const today = new Date();
                       const value = formatDateValue(today);
+
                       if (activeDatePicker === "departure") {
                         setDepartureDateInput(value);
+
                         if (tripTypeInput === "round-trip") {
                           setActiveDatePicker("return");
                           return;
@@ -562,11 +603,13 @@ export function FlightResultsClient() {
                       } else {
                         setReturnDateInput(value);
                       }
+
                       setActiveDatePicker(null);
                       setDatePickerPosition(null);
                     }}
                   />
                 ) : null}
+
                 {travelerPopoverOpen && travelerPopoverPosition ? (
                   <TravelerCabinPopover
                     position={travelerPopoverPosition}
@@ -574,10 +617,18 @@ export function FlightResultsClient() {
                     childCount={childCount}
                     infantCount={infantCount}
                     cabinClass={cabinClassInput}
-                    setAdultCount={setAdultCount}
-                    setChildCount={setChildCount}
-                    setInfantCount={setInfantCount}
-                    setCabinClass={setCabinClassInput}
+                    onAdultChange={(nextValue) => {
+                      const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+                      setAdultCount(nextAdultCount);
+                      setInfantCount((current) => Math.min(current, nextAdultCount));
+                    }}
+                    onChildChange={(nextValue) => {
+                      setChildCount(Math.min(9, Math.max(0, nextValue)));
+                    }}
+                    onInfantChange={(nextValue) => {
+                      setInfantCount(Math.min(adultCount, Math.max(0, nextValue)));
+                    }}
+                    onCabinClassChange={setCabinClassInput}
                   />
                 ) : null}
               </div>
@@ -727,13 +778,17 @@ function formatDateValue(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
+
   return `${year}-${month}-${day}`;
 }
 
 function formatDateLabel(value: string): string {
   if (!value) return "";
+
   const date = new Date(`${value}T00:00:00`);
+
   if (Number.isNaN(date.getTime())) return value;
+
   return date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 }
 
@@ -742,11 +797,19 @@ function buildMonthDays(month: Date): Array<Date | null> {
   const startOffset = (firstDay.getDay() + 6) % 7;
   const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const cells: Array<Date | null> = [];
-  for (let i = 0; i < startOffset; i += 1) cells.push(null);
+
+  for (let i = 0; i < startOffset; i += 1) {
+    cells.push(null);
+  }
+
   for (let day = 1; day <= daysInMonth; day += 1) {
     cells.push(new Date(month.getFullYear(), month.getMonth(), day));
   }
-  while (cells.length % 7 !== 0) cells.push(null);
+
+  while (cells.length % 7 !== 0) {
+    cells.push(null);
+  }
+
   return cells;
 }
 
@@ -754,11 +817,36 @@ function isSameDateValue(date: Date, value: string): boolean {
   return Boolean(value) && formatDateValue(date) === value;
 }
 
+function cabinClassLabel(value: string) {
+  return cabinClassOptions.find((option) => option.value === value)?.label || "Economy";
+}
+
+function pluralize(count: number, singular: string, plural: string) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function buildTravelerCabinSummary(adults: number, children: number, infants: number, cabinClass: string) {
+  const parts = [pluralize(adults, "adult", "adults")];
+
+  if (children > 0) {
+    parts.push(pluralize(children, "child", "children"));
+  }
+
+  if (infants > 0) {
+    parts.push(pluralize(infants, "infant", "infants"));
+  }
+
+  parts.push(cabinClassLabel(cabinClass));
+
+  return parts.join(", ");
+}
+
 function DatePickerPopover({
   position,
   month,
   departureValue,
   returnValue,
+  activePicker,
   onMonthChange,
   onSelect,
   onClear,
@@ -778,20 +866,29 @@ function DatePickerPopover({
   const rightMonth = addMonths(leftMonth, 1);
   const today = new Date();
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
-      <p className="mb-2 text-center text-sm font-bold text-slate-900">{renderedMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}</p>
+      <p className="mb-2 text-center text-sm font-bold text-slate-900">
+        {renderedMonth.toLocaleDateString("en-GB", { month: "long", year: "numeric" })}
+      </p>
+
       <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
         {weekdays.map((day) => (
           <span key={`${renderedMonth.toISOString()}-${day}`}>{day}</span>
         ))}
       </div>
+
       <div className="grid grid-cols-7 gap-1">
         {buildMonthDays(renderedMonth).map((date, index) => {
-          if (!date) return <span key={`${renderedMonth.toISOString()}-blank-${index}`} className="h-9" />;
+          if (!date) {
+            return <span key={`${renderedMonth.toISOString()}-blank-${index}`} className="h-9" />;
+          }
+
           const selectedDeparture = isSameDateValue(date, departureValue);
           const selectedReturn = isSameDateValue(date, returnValue);
           const isToday = isSameDateValue(date, formatDateValue(today));
+
           return (
             <button
               key={date.toISOString()}
@@ -814,41 +911,55 @@ function DatePickerPopover({
   return (
     <div
       id="flight-date-picker-popover"
+      role="dialog"
+      aria-label={activePicker === "departure" ? "Select departure date" : "Select return date"}
       style={{ position: "fixed", top: position.top, left: position.left, width: position.width, zIndex: 9999 }}
       className="max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl ring-1 ring-black/5"
     >
       <div className="mb-4 flex items-center justify-between">
-        <button type="button" aria-label="Previous month" className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700" onClick={() => onMonthChange(addMonths(leftMonth, -1))}>Prev</button>
-        <button type="button" aria-label="Next month" className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700" onClick={() => onMonthChange(addMonths(leftMonth, 1))}>Next</button>
+        <button
+          type="button"
+          aria-label="Previous month"
+          className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          onClick={() => onMonthChange(addMonths(leftMonth, -1))}
+        >
+          Prev
+        </button>
+
+        <button
+          type="button"
+          aria-label="Next month"
+          className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          onClick={() => onMonthChange(addMonths(leftMonth, 1))}
+        >
+          Next
+        </button>
       </div>
+
       <div className="grid gap-5 md:grid-cols-2">
         {renderMonth(leftMonth)}
         {renderMonth(rightMonth)}
       </div>
+
       <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
-        <button type="button" className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700" onClick={onClear}>
+        <button
+          type="button"
+          className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          onClick={onClear}
+        >
           Clear
         </button>
-        <button type="button" className="focus-ring rounded-md bg-[#0a66c2] px-3 py-1.5 text-sm font-bold text-white hover:bg-[#085aa9]" onClick={onToday}>
+
+        <button
+          type="button"
+          className="focus-ring rounded-md bg-[#0a66c2] px-3 py-1.5 text-sm font-bold text-white hover:bg-[#085aa9]"
+          onClick={onToday}
+        >
           Today
         </button>
       </div>
     </div>
   );
-}
-
-function buildTravelerCabinSummary(adultCount: number, childCount: number, infantCount: number, cabinClass: string) {
-  const parts: string[] = [];
-  parts.push(`${adultCount} adult${adultCount === 1 ? "" : "s"}`);
-  if (childCount > 0) parts.push(`${childCount} child${childCount === 1 ? "" : "ren"}`);
-  if (infantCount > 0) parts.push(`${infantCount} infant${infantCount === 1 ? "" : "s"}`);
-  const cabinLabel = {
-    economy: "Economy",
-    "premium-economy": "Premium Economy",
-    business: "Business",
-    first: "First",
-  }[cabinClass] || "Economy";
-  return `${parts.join(", ")}, ${cabinLabel}`;
 }
 
 function TravelerCabinPopover({
@@ -857,86 +968,139 @@ function TravelerCabinPopover({
   childCount,
   infantCount,
   cabinClass,
-  setAdultCount,
-  setChildCount,
-  setInfantCount,
-  setCabinClass,
+  onAdultChange,
+  onChildChange,
+  onInfantChange,
+  onCabinClassChange,
 }: {
   position: { top: number; left: number; width: number };
   adultCount: number;
   childCount: number;
   infantCount: number;
-  cabinClass: string;
-  setAdultCount: (value: number | ((prev: number) => number)) => void;
-  setChildCount: (value: number | ((prev: number) => number)) => void;
-  setInfantCount: (value: number | ((prev: number) => number)) => void;
-  setCabinClass: (value: string) => void;
+  cabinClass: CabinClassValue;
+  onAdultChange: (value: number) => void;
+  onChildChange: (value: number) => void;
+  onInfantChange: (value: number) => void;
+  onCabinClassChange: (value: CabinClassValue) => void;
 }) {
-  const counterRow = (label: string, value: number, onMinus: () => void, onPlus: () => void, disableMinus: boolean, disablePlus: boolean) => (
-    <div className="flex items-center justify-between gap-3">
-      <span className="text-sm font-semibold text-slate-800">{label}</span>
-      <div className="flex items-center gap-2">
-        <button type="button" onClick={onMinus} disabled={disableMinus} className="focus-ring h-8 w-8 rounded-md border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">-</button>
-        <span className="w-6 text-center text-sm font-bold text-slate-900">{value}</span>
-        <button type="button" onClick={onPlus} disabled={disablePlus} className="focus-ring h-8 w-8 rounded-md border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40">+</button>
-      </div>
-    </div>
-  );
-
-  const cabinOptions = [
-    { value: "economy", label: "Economy" },
-    { value: "premium-economy", label: "Premium Economy" },
-    { value: "business", label: "Business" },
-    { value: "first", label: "First" },
-  ];
-
   return (
     <div
-      id="traveler-cabin-popover"
+      id="flight-traveler-cabin-popover"
+      role="dialog"
+      aria-label="Travelers and cabin class"
       style={{ position: "fixed", top: position.top, left: position.left, width: position.width, zIndex: 9999 }}
       className="max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl ring-1 ring-black/5"
     >
-      <h3 className="text-sm font-black text-slate-900">Travelers</h3>
-      <div className="mt-3 space-y-3">
-        {counterRow(
-          "Adults 18+",
-          adultCount,
-          () =>
-            setAdultCount((current) => {
-              const next = Math.max(1, current - 1);
-              setInfantCount((infants) => Math.min(infants, next));
-              return next;
-            }),
-          () => setAdultCount((current) => Math.min(9, current + 1)),
-          adultCount <= 1,
-          adultCount >= 9,
-        )}
-        {counterRow("Children 0–17", childCount, () => setChildCount((current) => Math.max(0, current - 1)), () => setChildCount((current) => Math.min(9, current + 1)), childCount <= 0, childCount >= 9)}
-        {counterRow(
-          "Infants on lap under 2",
-          infantCount,
-          () => setInfantCount((current) => Math.max(0, current - 1)),
-          () => setInfantCount((current) => Math.min(adultCount, current + 1)),
-          infantCount <= 0,
-          infantCount >= adultCount,
-        )}
+      <div>
+        <h3 className="text-base font-black text-slate-950">Travelers</h3>
+
+        <div className="mt-4 divide-y divide-slate-100">
+          <CounterRow
+            label="Adults"
+            description="18+"
+            value={adultCount}
+            min={1}
+            max={9}
+            onChange={onAdultChange}
+          />
+
+          <CounterRow
+            label="Children"
+            description="0–17"
+            value={childCount}
+            min={0}
+            max={9}
+            onChange={onChildChange}
+          />
+
+          <CounterRow
+            label="Infants on lap"
+            description="Under 2"
+            value={infantCount}
+            min={0}
+            max={adultCount}
+            onChange={onInfantChange}
+          />
+        </div>
       </div>
-      <h3 className="mt-5 text-sm font-black text-slate-900">Cabin Class</h3>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        {cabinOptions.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={cabinClass === option.value}
-            onClick={() => setCabinClass(option.value)}
-            className={cn(
-              "focus-ring rounded-md border px-3 py-2 text-sm font-semibold transition",
-              cabinClass === option.value ? "border-slate-900 bg-slate-100 text-slate-900" : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
-            )}
-          >
-            {option.label}
-          </button>
-        ))}
+
+      <div className="mt-5 border-t border-slate-100 pt-5">
+        <h3 className="text-base font-black text-slate-950">Cabin Class</h3>
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {cabinClassOptions.map((option) => {
+            const selected = option.value === cabinClass;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => onCabinClassChange(option.value)}
+                className={cn(
+                  "focus-ring rounded-lg border px-3 py-2.5 text-left text-sm font-bold transition",
+                  selected
+                    ? "border-[#0a66c2] bg-blue-50 text-[#0a66c2]"
+                    : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50",
+                )}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CounterRow({
+  label,
+  description,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (value: number) => void;
+}) {
+  const decrementDisabled = value <= min;
+  const incrementDisabled = value >= max;
+
+  return (
+    <div className="flex items-center justify-between gap-4 py-3">
+      <div>
+        <p className="text-sm font-bold text-slate-950">{label}</p>
+        <p className="text-xs font-semibold text-slate-500">{description}</p>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          aria-label={`Decrease ${label}`}
+          disabled={decrementDisabled}
+          onClick={() => onChange(value - 1)}
+          className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          −
+        </button>
+
+        <span className="w-6 text-center text-sm font-black text-slate-950">{value}</span>
+
+        <button
+          type="button"
+          aria-label={`Increase ${label}`}
+          disabled={incrementDisabled}
+          onClick={() => onChange(value + 1)}
+          className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          +
+        </button>
       </div>
     </div>
   );
@@ -972,6 +1136,7 @@ function SuggestionList({
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
                 <Plane size={16} />
               </span>
+
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-bold text-slate-950">
                   {item.city}, {item.country}
@@ -980,13 +1145,14 @@ function SuggestionList({
                   {item.airport}
                 </span>
               </span>
+
               <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-500">{item.code}</span>
               <span className="h-5 w-5 shrink-0 rounded border border-slate-300 bg-white" aria-hidden="true" />
             </span>
           </button>
         ))
       ) : (
-        <p className="px-4 py-3 text-xs font-medium text-slate-500 whitespace-nowrap">No matching airports found</p>
+        <p className="whitespace-nowrap px-4 py-3 text-xs font-medium text-slate-500">No matching airports found</p>
       )}
     </div>
   );
