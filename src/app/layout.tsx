@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import "./globals.css";
 
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { LocaleProvider } from "@/components/layout/LocaleProvider";
 import { RegionProvider } from "@/components/region/RegionProvider";
 
 import {
@@ -64,9 +65,11 @@ export default async function RootLayout({
         className="flex min-h-full flex-col"
       >
         <AuthProvider>
-          <RegionProvider initialMode={initialRegion}>
-            {children}
-          </RegionProvider>
+          <LocaleProvider>
+            <RegionProvider initialMode={initialRegion}>
+              {children}
+            </RegionProvider>
+          </LocaleProvider>
         </AuthProvider>
       </body>
     </html>
