@@ -27,62 +27,178 @@ import {
   setLanguageInStorage,
   type LanguageCode,
 } from "@/lib/language";
+
 import { RegionSelector } from "@/components/region/RegionSelector";
 import { Button, LinkButton } from "@/components/ui/Button";
-
 
 export function AppHeader() {
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
+
   const [language, setLanguage] =
-    useState<LanguageCode>(getLanguageFromStorage);
+    useState<LanguageCode>(() => {
+      try {
+        return getLanguageFromStorage();
+      } catch {
+        return "en" as LanguageCode;
+      }
+    });
 
-  const languageRef = useRef<HTMLDivElement>(null);
+  const languageRef =
+    useRef<HTMLDivElement>(null);
 
-  const { data: session, status } = useSession();
+  const { data: session, status } =
+    useSession();
+
   const isSignedIn =
-    status === "authenticated" && Boolean(session?.user);
+    status === "authenticated" &&
+    Boolean(session?.user);
 
   const selectedLanguage =
-    getLanguageOption(language) || languageOptions[0];
+    getLanguageOption(language) ||
+    languageOptions[0];
 
-  const suggestedLanguages = useMemo(() => getSuggestedLanguages(), []);
-  const t = useMemo(() => getUiTranslations(language), [language]);
+  const suggestedLanguages =
+    useMemo(
+      () => getSuggestedLanguages(),
+      []
+    );
 
-  const navItems = useMemo(() => [
-    { href: "/flights/results", label: t.flights },
-    { href: "/hotels/results", label: t.hotels },
-    { href: "/deals", label: t.deals },
-    { href: "/hotels/tokyo", label: t.destinations },
-    { href: "/guides", label: t.explore },
-    { href: "/support", label: t.support },
-  ], [t]);
+  const t = useMemo(
+    () => getUiTranslations(language),
+    [language]
+  );
+
+  const navItems = useMemo(
+    () => [
+      {
+        href: "/flights/results",
+        label: t.flights,
+      },
+      {
+        href: "/hotels/results",
+        label: t.hotels,
+      },
+      {
+        href: "/deals",
+        label: t.deals,
+      },
+      {
+        href: "/hotels/tokyo",
+        label: t.destinations,
+      },
+      {
+        href: "/guides",
+        label: t.explore,
+      },
+      {
+        href: "/support",
+        label: t.support,
+      },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     applyLanguageToDocument(language);
   }, [language]);
 
   useEffect(() => {
-    const onChange = () => setLanguage(getLanguageFromStorage());
-    window.addEventListener(LANGUAGE_CHANGE_EVENT, onChange as EventListener);
+    const onChange = () => {
+      setLanguage(
+        getLanguageFromStorage()
+      );
+    };
+
+    window.addEventListener(
+      LANGUAGE_CHANGE_EVENT,
+      onChange as EventListener
+    );
+
     return () => {
-      window.removeEventListener(LANGUAGE_CHANGE_EVENT, onChange as EventListener);
+      window.removeEventListener(
+        LANGUAGE_CHANGE_EVENT,
+        onChange as EventListener
+      );
     };
   }, []);
 
   useEffect(() => {
-    const onClickOutside = (event: MouseEvent) => {
-      if (!languageRef.current) return;
-      if (!languageRef.current.contains(event.target as Node)) {
+    const onClickOutside = (
+      event: MouseEvent
+    ) => {
+      if (
+        !languageRef.current
+      ) {
+        return;
+      }
+
+      if (
+        !languageRef.current.contains(
+          event.target as Node
+        )
+      ) {
         setLanguageOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    document.addEventListener(
+      "mousedown",
+      onClickOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        onClickOutside
+      );
+    };
   }, []);
 
-  const handleLanguageSelect = (code: LanguageCode) => {
+  useEffect(() => {
+    const onKeyDown = (
+      event: KeyboardEvent
+    ) => {
+      if (
+        event.key === "Escape"
+      ) {
+        setLanguageOpen(false);
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "keydown",
+      onKeyDown
+    );
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        onKeyDown
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) {
+      document.body.style.overflow =
+        "";
+      return;
+    }
+
+    document.body.style.overflow =
+      "hidden";
+
+    return () => {
+      document.body.style.overflow =
+        "";
+    };
+  }, [open]);
+
+  const handleLanguageSelect = (
+    code: LanguageCode
+  ) => {
     setLanguage(code);
     setLanguageInStorage(code);
     setLanguageOpen(false);
@@ -103,72 +219,130 @@ export function AppHeader() {
         </Link>
 
         <nav className="hidden items-center gap-2 lg:flex">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="rounded-md px-3 py-2 text-sm font-bold text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map(
+            (item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="rounded-md px-3 py-2 text-sm font-bold text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
+              >
+                {item.label}
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <div className="relative" ref={languageRef}>
+          <div
+            className="relative"
+            ref={languageRef}
+          >
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setLanguageOpen((value) => !value)}
+              onClick={() =>
+                setLanguageOpen(
+                  (value) =>
+                    !value
+                )
+              }
               className="h-10 gap-2 rounded-full border border-slate-200/80 bg-white px-3.5 shadow-sm"
-              aria-haspopup="dialog"
-              aria-expanded={languageOpen}
+              aria-haspopup="menu"
+              aria-expanded={
+                languageOpen
+              }
               aria-label="Select language"
             >
               <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-100 text-sm">
-                {getFlagEmoji(selectedLanguage.flagCode)}
+                {getFlagEmoji(
+                  selectedLanguage.flagCode
+                )}
               </span>
+
               <span className="text-sm font-bold text-slate-900">
-                {selectedLanguage.label}
+                {
+                  selectedLanguage.label
+                }
               </span>
-              <ChevronDown size={14} className="text-slate-600" />
+
+              <ChevronDown
+                size={14}
+                className="text-slate-600"
+              />
             </Button>
 
             {languageOpen && (
-              <section className="absolute right-0 top-12 z-50 w-[min(92vw,660px)] rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_20px_55px_-24px_rgba(15,23,42,0.4)]">
+              <section
+                role="menu"
+                className="absolute right-0 top-12 z-50 w-[min(92vw,660px)] rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_20px_55px_-24px_rgba(15,23,42,0.4)]"
+              >
                 <h2 className="text-base font-black text-slate-950">
-                  {t.selectLanguage}
+                  {
+                    t.selectLanguage
+                  }
                 </h2>
 
                 <div className="mt-3">
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                    {t.suggestedLanguages}
+                    {
+                      t.suggestedLanguages
+                    }
                   </p>
+
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {suggestedLanguages.map((option) => (
-                      <LanguageOptionRow
-                        key={option.code}
-                        option={option}
-                        selected={option.code === language}
-                        onSelect={handleLanguageSelect}
-                      />
-                    ))}
+                    {suggestedLanguages.map(
+                      (
+                        option
+                      ) => (
+                        <LanguageOptionRow
+                          key={
+                            option.code
+                          }
+                          option={
+                            option
+                          }
+                          selected={
+                            option.code ===
+                            language
+                          }
+                          onSelect={
+                            handleLanguageSelect
+                          }
+                        />
+                      )
+                    )}
                   </div>
                 </div>
 
                 <div className="mt-4 border-t border-slate-200 pt-4">
                   <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                    {t.allLanguages}
+                    {
+                      t.allLanguages
+                    }
                   </p>
+
                   <div className="grid max-h-[320px] gap-2 overflow-auto pr-1 sm:grid-cols-2">
-                    {languageOptions.map((option) => (
-                      <LanguageOptionRow
-                        key={option.code}
-                        option={option}
-                        selected={option.code === language}
-                        onSelect={handleLanguageSelect}
-                      />
-                    ))}
+                    {languageOptions.map(
+                      (
+                        option
+                      ) => (
+                        <LanguageOptionRow
+                          key={
+                            option.code
+                          }
+                          option={
+                            option
+                          }
+                          selected={
+                            option.code ===
+                            language
+                          }
+                          onSelect={
+                            handleLanguageSelect
+                          }
+                        />
+                      )
+                    )}
                   </div>
                 </div>
               </section>
@@ -195,7 +369,9 @@ export function AppHeader() {
                 size="sm"
                 className="gap-2"
               >
-                <UserCircle size={22} />
+                <UserCircle
+                  size={22}
+                />
                 {t.dashboard}
               </LinkButton>
 
@@ -203,9 +379,16 @@ export function AppHeader() {
                 variant="accent"
                 size="sm"
                 className="gap-2"
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={() =>
+                  signOut({
+                    callbackUrl:
+                      "/",
+                  })
+                }
               >
-                <LogOut size={18} />
+                <LogOut
+                  size={18}
+                />
                 {t.logout}
               </Button>
             </>
@@ -217,7 +400,9 @@ export function AppHeader() {
                 size="sm"
                 className="gap-2"
               >
-                <UserCircle size={22} />
+                <UserCircle
+                  size={22}
+                />
                 {t.login}
               </LinkButton>
 
@@ -237,7 +422,9 @@ export function AppHeader() {
           size="sm"
           className="h-10 w-10 px-0 md:hidden"
           aria-label="Open menu"
-          onClick={() => setOpen(true)}
+          onClick={() =>
+            setOpen(true)
+          }
         >
           <Menu size={20} />
         </Button>
@@ -247,7 +434,9 @@ export function AppHeader() {
         <>
           <div
             className="fixed inset-0 z-50 bg-navy/40 md:hidden"
-            onClick={() => setOpen(false)}
+            onClick={() =>
+              setOpen(false)
+            }
           />
 
           <aside className="fixed right-0 top-0 z-50 h-dvh w-[min(86vw,360px)] border-l bg-white p-5 shadow-xl md:hidden">
@@ -261,29 +450,37 @@ export function AppHeader() {
                 size="sm"
                 className="h-10 w-10 px-0"
                 aria-label="Close menu"
-                onClick={() => setOpen(false)}
+                onClick={() =>
+                  setOpen(false)
+                }
               >
                 <X size={20} />
               </Button>
             </div>
 
             <nav className="mt-6 grid gap-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map(
+                (item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() =>
+                      setOpen(false)
+                    }
+                    className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
+                  >
+                    {item.label}
+                  </Link>
+                )
+              )}
 
               {isSignedIn ? (
                 <>
                   <Link
                     href="/dashboard"
-                    onClick={() => setOpen(false)}
+                    onClick={() =>
+                      setOpen(false)
+                    }
                     className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
                   >
                     {t.dashboard}
@@ -293,7 +490,11 @@ export function AppHeader() {
                     type="button"
                     onClick={() => {
                       setOpen(false);
-                      signOut({ callbackUrl: "/" });
+
+                      signOut({
+                        callbackUrl:
+                          "/",
+                      });
                     }}
                     className="rounded-md bg-teal px-3 py-3 text-left text-base font-semibold text-white"
                   >
@@ -304,7 +505,9 @@ export function AppHeader() {
                 <>
                   <Link
                     href="/auth/signin"
-                    onClick={() => setOpen(false)}
+                    onClick={() =>
+                      setOpen(false)
+                    }
                     className="rounded-md px-3 py-3 text-base font-semibold text-navy hover:bg-surface-muted"
                   >
                     {t.login}
@@ -312,7 +515,9 @@ export function AppHeader() {
 
                   <Link
                     href="/auth/signup"
-                    onClick={() => setOpen(false)}
+                    onClick={() =>
+                      setOpen(false)
+                    }
                     className="rounded-md bg-teal px-3 py-3 text-base font-semibold text-white"
                   >
                     {t.signUp}
@@ -334,12 +539,16 @@ function LanguageOptionRow({
 }: {
   option: (typeof languageOptions)[number];
   selected: boolean;
-  onSelect: (code: LanguageCode) => void;
+  onSelect: (
+    code: LanguageCode
+  ) => void;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onSelect(option.code)}
+      onClick={() =>
+        onSelect(option.code)
+      }
       className={`flex items-center gap-3.5 rounded-xl border border-slate-200/80 px-3.5 py-2.5 text-left transition ${
         selected
           ? "border-[#6d28d9] bg-violet-50"
@@ -347,14 +556,23 @@ function LanguageOptionRow({
       }`}
     >
       <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-base">
-        {getFlagEmoji(option.flagCode)}
+        {getFlagEmoji(
+          option.flagCode
+        )}
       </span>
+
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-slate-900">
           {option.label}
         </p>
-              </div>
-      {selected && <Check size={16} className="text-[#6d28d9]" />}
+      </div>
+
+      {selected && (
+        <Check
+          size={16}
+          className="text-[#6d28d9]"
+        />
+      )}
     </button>
   );
 }
