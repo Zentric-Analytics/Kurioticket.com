@@ -85,32 +85,6 @@ export function SearchTabs({
       </div>
 
       {tab === "flights" ? (
-        <>
-          <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-700">
-            {(["round-trip", "one-way", "multi-city"] as TripType[]).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setTripType(mode)}
-                className={cn(
-                  "focus-ring rounded-full px-3 py-1.5 capitalize",
-                  tripType === mode
-                    ? "bg-violet-100 text-[#5b21d6]"
-                    : "bg-slate-100 text-slate-700"
-                )}
-              >
-                {mode.replace("-", " ")}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setTab("hotels")}
-              className="ml-auto text-[#5b21d6] underline-offset-2 hover:underline"
-            >
-              {t.searchHotelsInstead || "Search hotels instead"}
-            </button>
-          </div>
-
         <form
           className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(140px,1fr)_minmax(140px,1fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(130px,1fr)_minmax(130px,1fr)_140px]"
           onSubmit={(event) => {
@@ -221,7 +195,6 @@ export function SearchTabs({
               "Search Flights"}
           </Button>
         </form>
-        </>
       ) : (
         <form
           className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[minmax(160px,1.2fr)_minmax(120px,1fr)_minmax(120px,1fr)_minmax(100px,0.8fr)_minmax(90px,0.7fr)_140px]"
