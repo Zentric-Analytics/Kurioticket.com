@@ -5,7 +5,12 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
-import { getAdminEmails, getAuthSecret } from "@/lib/env";
+import {
+  getAdminEmails,
+  getAuthSecret,
+  getGoogleClientId,
+  getGoogleClientSecret,
+} from "@/lib/env";
 
 import {
   AuthRateLimitError,
@@ -246,9 +251,10 @@ const providers: NextAuthOptions["providers"] = [
 if (isGoogleAuthConfigured()) {
   providers.push(
     GoogleProvider({
-      clientId: process.env.AUTH_GOOGLE_ID || "",
-      clientSecret:
-        process.env.AUTH_GOOGLE_SECRET || "",
+      clientId: getGoogleClientId(),
+      clientSecret: getGoogleClientSecret(),
+      allowDangerousEmailAccountLinking:
+        true,
     })
   );
 }
@@ -272,7 +278,7 @@ export const authOptions: NextAuthOptions = {
   },
 
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
       const email = user.email
         ?.toLowerCase()
         .trim();
@@ -299,7 +305,36 @@ export const authOptions: NextAuthOptions = {
         return "/auth/signin?error=AccountUnavailable";
       }
 
-      if (dbUser && !dbUser.emailVerified) {
+      const isGoogleSignin =
+        account?.provider === "google";
+
+      const googleEmailVerified =
+        isGoogleSignin &&
+        (profile as {
+          email_verified?: boolean;
+        } | null)?.email_verified ===
+          true;
+
+      if (
+        dbUser &&
+        !dbUser.emailVerified &&
+        googleEmailVerified
+      ) {
+        await getPrisma().user.update({
+          where: { id: dbUser.id },
+          data: {
+            emailVerified: new Date(),
+          },
+        });
+
+        user.emailVerified = new Date();
+      }
+
+      if (
+        dbUser &&
+        !dbUser.emailVerified &&
+        !googleEmailVerified
+      ) {
         logAuthEvent(
           "login-blocked-unverified",
           { email }
