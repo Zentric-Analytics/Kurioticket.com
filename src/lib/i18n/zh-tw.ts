@@ -1,6 +1,2 @@
-import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
-
-export const translations: TranslationDictionary = {
-  ...en,
-};
+export const translations: TranslationDictionary = { flights:"航班",hotels:"飯店",deals:"優惠",destinations:"目的地",explore:"探索",support:"支援",dashboard:"儀表板",logout:"登出",login:"登入",signUp:"註冊",menu:"選單",selectLanguage:"選擇你的語言",suggestedLanguages:"建議語言",allLanguages:"所有語言",platform:"平台",legal:"法律",premium:"Premium",legalCenter:"法律中心",footerAbout:"免費搜尋航班與飯店，比較可信夥伴價格，做出更從容的旅遊決策。",footerMeta:"Curioticket 是一個旅遊比價搜尋平台。",tripRound:"來回",tripOneWay:"單程",tripMulti:"多城市",supportLabel:"支援",fromPrice:"最低",searchLanguage:"搜尋語言或代碼",noLanguagesFound:"找不到語言",notifications:"通知" };

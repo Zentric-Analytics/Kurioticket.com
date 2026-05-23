@@ -1,6 +1,2 @@
-import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
-
-export const translations: TranslationDictionary = {
-  ...en,
-};
+export const translations: TranslationDictionary = { flights:"Uçuşlar",hotels:"Oteller",deals:"Fırsatlar",destinations:"Destinasyonlar",explore:"Keşfet",support:"Destek",dashboard:"Panel",logout:"Çıkış yap",login:"Giriş yap",signUp:"Kayıt ol",menu:"Menü",selectLanguage:"Dilini seç",suggestedLanguages:"Önerilen diller",allLanguages:"Tüm diller",platform:"Platform",legal:"Yasal",premium:"Premium",legalCenter:"Yasal merkez",footerAbout:"Uçuş ve otelleri ücretsiz ara, güvenilir ortak fiyatlarını karşılaştır ve daha sakin seyahat kararları ver.",footerMeta:"Curioticket bir seyahat meta arama platformudur.",tripRound:"gidiş dönüş",tripOneWay:"tek yön",tripMulti:"çok şehir",supportLabel:"Destek",fromPrice:"Başlangıç",searchLanguage:"Dil veya kod ara",noLanguagesFound:"Dil bulunamadı",notifications:"Bildirimler" };

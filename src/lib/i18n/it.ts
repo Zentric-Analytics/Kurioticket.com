@@ -1,6 +1,4 @@
-import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
-
 export const translations: TranslationDictionary = {
-  ...en,
+  flights: "Voli", hotels: "Hotel", deals: "Offerte", destinations: "Destinazioni", explore: "Esplora", support: "Supporto", dashboard: "Dashboard", logout: "Esci", login: "Accedi", signUp: "Registrati", menu: "Menu", selectLanguage: "Seleziona la tua lingua", suggestedLanguages: "Lingue suggerite", allLanguages: "Tutte le lingue", platform: "Piattaforma", legal: "Legale", premium: "Premium", legalCenter: "Centro legale", footerAbout: "Cerca voli e hotel gratis, confronta i prezzi di partner affidabili e prendi decisioni di viaggio più serene.", footerMeta: "Curioticket è una piattaforma di meta-ricerca viaggi.", tripRound: "andata e ritorno", tripOneWay: "solo andata", tripMulti: "multi città", supportLabel: "Supporto", fromPrice: "Da", searchLanguage: "Cerca lingua o codice", noLanguagesFound: "Nessuna lingua trovata", notifications: "Notifiche",
 };
