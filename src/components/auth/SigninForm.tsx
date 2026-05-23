@@ -151,7 +151,12 @@ export function SigninForm({
         <Button
           variant="secondary"
           className="mt-3 w-full"
-          onClick={() => signIn("google", { callbackUrl })}
+          onClick={() =>
+            signIn("google", {
+              callbackUrl:
+                callbackUrl || "/",
+            })
+          }
         >
           Continue with Google
         </Button>

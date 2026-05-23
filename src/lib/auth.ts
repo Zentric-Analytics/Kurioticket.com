@@ -71,11 +71,6 @@ const providers: NextAuthOptions["providers"] = [
         credentials?.loginCode || ""
       ).trim();
 
-      /**
-       * -------------------------
-       * LOGIN VIA 6-DIGIT CODE
-       * -------------------------
-       */
       if (loginCode) {
         const parsedEmail =
           signinSchema.shape.email.safeParse(
@@ -142,11 +137,6 @@ const providers: NextAuthOptions["providers"] = [
         };
       }
 
-      /**
-       * -------------------------
-       * EMAIL + PASSWORD LOGIN
-       * -------------------------
-       */
       const parsed = signinSchema.safeParse(
         credentials
       );
@@ -245,16 +235,12 @@ const providers: NextAuthOptions["providers"] = [
   }),
 ];
 
-/**
- * Google OAuth (optional)
- */
 if (isGoogleAuthConfigured()) {
   providers.push(
     GoogleProvider({
       clientId: getGoogleClientId(),
       clientSecret: getGoogleClientSecret(),
-      allowDangerousEmailAccountLinking:
-        true,
+      allowDangerousEmailAccountLinking: true,
     })
   );
 }
@@ -308,138 +294,4 @@ export const authOptions: NextAuthOptions = {
       const isGoogleSignin =
         account?.provider === "google";
 
-      const googleEmailVerified =
-        isGoogleSignin &&
-        (profile as {
-          email_verified?: boolean;
-        } | null)?.email_verified ===
-          true;
-
-      if (
-        dbUser &&
-        !dbUser.emailVerified &&
-        googleEmailVerified
-      ) {
-        await getPrisma().user.update({
-          where: { id: dbUser.id },
-          data: {
-            emailVerified: new Date(),
-          },
-        });
-
-        user.emailVerified = new Date();
-      }
-
-      if (
-        dbUser &&
-        !dbUser.emailVerified &&
-        !googleEmailVerified
-      ) {
-        logAuthEvent(
-          "login-blocked-unverified",
-          { email }
-        );
-
-        await sendEmailVerificationCode({
-          email,
-          name: dbUser.name,
-        });
-
-        return getEmailVerificationRedirect(
-          email
-        );
-      }
-
-      const adminEmails = getAdminEmails();
-
-      if (adminEmails.includes(email)) {
-        await getPrisma().user.updateMany({
-          where: {
-            email,
-          },
-          data: {
-            role: "ADMIN",
-          },
-        });
-
-        user.role = "ADMIN";
-      }
-
-      return true;
-    },
-
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role =
-          (user as any).role || "USER";
-
-        token.isPremium = Boolean(
-          (user as any).isPremium
-        );
-
-        token.status =
-          (user as any).status || "ACTIVE";
-
-        token.emailVerified = Boolean(
-          (user as any).emailVerified
-        );
-      }
-
-      if (
-        token.email &&
-        isDatabaseConfigured()
-      ) {
-        const email =
-          token.email.toLowerCase();
-
-        const dbUser =
-          await getPrisma().user.findUnique({
-            where: {
-              email,
-            },
-          });
-
-        if (dbUser) {
-          token.id = dbUser.id;
-          token.role = dbUser.role;
-          token.isPremium =
-            dbUser.isPremium;
-
-          token.status = dbUser.status;
-
-          token.emailVerified = Boolean(
-            dbUser.emailVerified
-          );
-        }
-      }
-
-      return token;
-    },
-
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = String(
-          token.id || ""
-        );
-
-        session.user.role = String(
-          token.role || "USER"
-        );
-
-        session.user.isPremium = Boolean(
-          token.isPremium
-        );
-
-        session.user.status = String(
-          token.status || "ACTIVE"
-        );
-
-        session.user.emailVerified =
-          Boolean(token.emailVerified);
-      }
-
-      return session;
-    },
-  },
-};
+      const google

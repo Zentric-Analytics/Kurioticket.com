@@ -1,5 +1,9 @@
 export function getBaseUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    "http://localhost:3000"
+  );
 }
 
 export function getAuthSecret() {
@@ -35,7 +39,10 @@ export function isProductionRuntime() {
 }
 
 export function canUseDevelopmentFallbacks() {
-  return !isProductionRuntime() && process.env.ENABLE_DEVELOPMENT_FALLBACKS === "true";
+  return (
+    !isProductionRuntime() &&
+    process.env.ENABLE_DEVELOPMENT_FALLBACKS === "true"
+  );
 }
 
 export function getAdminEmails() {
@@ -47,6 +54,7 @@ export function getAdminEmails() {
 
 export function requireServerEnv(name: string) {
   const value = process.env[name];
+
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
