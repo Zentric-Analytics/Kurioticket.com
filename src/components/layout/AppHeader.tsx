@@ -59,6 +59,10 @@ export function AppHeader() {
     useRef<HTMLDivElement | null>(
       null
     );
+  const languageMenuRef =
+    useRef<HTMLElement | null>(
+      null
+    );
 
   useEffect(() => {
     const onClickOutside = (
@@ -70,6 +74,9 @@ export function AppHeader() {
 
       if (
         !languageRef.current.contains(
+          event.target as Node
+        ) &&
+        !languageMenuRef.current?.contains(
           event.target as Node
         )
       ) {
@@ -350,6 +357,7 @@ export function AppHeader() {
 
               <section
                 role="menu"
+                ref={languageMenuRef}
                 className="fixed inset-x-4 top-[max(80px,8vh)] z-50 mx-auto max-h-[84vh] w-[min(980px,96vw)] overflow-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl md:inset-x-0 md:p-7"
               >
                 <h2 className="text-base font-black text-slate-950">
