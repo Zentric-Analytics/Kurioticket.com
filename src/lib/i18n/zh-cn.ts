@@ -1,6 +1,2 @@
-import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
-
-export const translations: TranslationDictionary = {
-  ...en,
-};
+export const translations: TranslationDictionary = { flights:"机票",hotels:"酒店",deals:"优惠",destinations:"目的地",explore:"探索",support:"支持",dashboard:"控制台",logout:"退出登录",login:"登录",signUp:"注册",menu:"菜单",selectLanguage:"选择你的语言",suggestedLanguages:"推荐语言",allLanguages:"所有语言",platform:"平台",legal:"法律",premium:"高级",legalCenter:"法律中心",footerAbout:"免费搜索航班和酒店，比较可信合作伙伴价格，更从容地做出旅行决定。",footerMeta:"Curioticket 是一个旅行元搜索平台。",tripRound:"往返",tripOneWay:"单程",tripMulti:"多城市",supportLabel:"支持",fromPrice:"起价",searchLanguage:"搜索语言或代码",noLanguagesFound:"未找到语言",notifications:"通知" };
