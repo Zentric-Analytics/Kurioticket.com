@@ -1,8 +1,18 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-import { getTranslations, localeOptions, type LocaleCode } from "@/lib/i18n";
+import {
+  getTranslations,
+  localeOptions,
+  type LocaleCode,
+} from "@/lib/i18n";
 import {
   getStoredLocale,
   setStoredLocale,
@@ -19,31 +29,50 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 const DEFAULT_LOCALE: LocaleCode = "en-us";
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<LocaleCode>(() => {
-    if (typeof window === "undefined") return DEFAULT_LOCALE;
-    const saved = getStoredLocale();
-    if (localeOptions.some((item) => item.code === saved)) {
-      return saved as LocaleCode;
-    }
-    return DEFAULT_LOCALE;
-  });
+function isSupportedLocale(
+  value: string | null | undefined
+): value is LocaleCode {
+  return Boolean(
+    value &&
+      localeOptions.some((option) => option.code === value)
+  );
+}
 
-  const setLocale = (next: LocaleCode) => {
-    setLocaleState(next);
-    setStoredLocale(next);
+function getInitialLocale(): LocaleCode {
+  if (typeof window === "undefined") {
+    return DEFAULT_LOCALE;
+  }
+
+  const savedLocale = getStoredLocale();
+
+  if (isSupportedLocale(savedLocale)) {
+    return savedLocale;
+  }
+
+  return DEFAULT_LOCALE;
+}
+
+function getTextDirection(locale: LocaleCode) {
+  return locale === "ar" || locale === "he" ? "rtl" : "ltr";
+}
+
+export function LocaleProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [locale, setLocaleState] = useState<LocaleCode>(getInitialLocale);
+
+  const setLocale = (nextLocale: LocaleCode) => {
+    setLocaleState(nextLocale);
+    setStoredLocale(nextLocale);
   };
 
   useEffect(() => {
     setStoredLocale(locale);
-    document.documentElement.lang = locale;
-    document.documentElement.dir = locale === "ar" || locale === "he" ? "rtl" : "ltr";
-  }, [locale]);
 
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.info("[preferences]", { locale, source: "cookie/localStorage/default" });
-    }
+    document.documentElement.lang = locale;
+    document.documentElement.dir = getTextDirection(locale);
   }, [locale]);
 
   const value = useMemo<LocaleContextValue>(
@@ -56,11 +85,19 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     [locale]
   );
 
-  return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
+  return (
+    <LocaleContext.Provider value={value}>
+      {children}
+    </LocaleContext.Provider>
+  );
 }
 
 export function useLocale() {
   const context = useContext(LocaleContext);
-  if (!context) throw new Error("useLocale must be used inside LocaleProvider");
+
+  if (!context) {
+    throw new Error("useLocale must be used inside LocaleProvider");
+  }
+
   return context;
 }
