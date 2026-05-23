@@ -1,6 +1,11 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SigninForm } from "@/components/auth/SigninForm";
+import {
+  getBaseUrl,
+  getGoogleClientId,
+  getGoogleClientSecret,
+} from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -17,21 +22,81 @@ type SigninPageProps = {
   }>;
 };
 
+function getSafeCallbackUrl(
+  callbackUrl?: string
+) {
+  if (!callbackUrl) {
+    return "/dashboard";
+  }
+
+  if (
+    callbackUrl.startsWith("/") &&
+    !callbackUrl.startsWith("//")
+  ) {
+    return callbackUrl;
+  }
+
+  try {
+    const appOrigin = new URL(
+      getBaseUrl()
+    ).origin;
+
+    const parsed = new URL(
+      callbackUrl,
+      appOrigin
+    );
+
+    if (parsed.origin !== appOrigin) {
+      return "/dashboard";
+    }
+
+    const relative = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+
+    return relative.startsWith("/")
+      ? relative
+      : "/dashboard";
+  } catch {
+    return "/dashboard";
+  }
+}
+
+function getGoogleAuthErrorMessage(
+  error?: string
+) {
+  switch (error) {
+    case "AccountUnavailable":
+      return "This account is not available. Please contact support.";
+    case "OAuthCallback":
+      return "Google sign-in was interrupted during callback. Please try again.";
+    case "OAuthAccountNotLinked":
+      return "This email is already associated with another sign-in method. Continue with your original method, or reset your password.";
+    case "AccessDenied":
+      return "Access was denied by Google. Please allow access and try again.";
+    case "Configuration":
+      return "Google sign-in is temporarily unavailable. Please try again shortly, or use email login.";
+    case "Callback":
+      return "Google sign-in callback failed. Please try again, or use email login.";
+    default:
+      return error
+        ? "Google sign-in could not be completed. Please try again, or use email login."
+        : "";
+  }
+}
+
 export default async function SigninPage({
   searchParams,
 }: SigninPageProps) {
   const params = await searchParams;
 
   const callbackUrl =
-    params?.callbackUrl?.startsWith("/") &&
-    !params.callbackUrl.startsWith("//")
-      ? params.callbackUrl
-      : "/";
+    getSafeCallbackUrl(
+      params?.callbackUrl
+    );
 
   const initialError =
-    params?.error === "AccountUnavailable"
-      ? "This account is not available. Please contact support."
-      : "";
+    getGoogleAuthErrorMessage(
+      params?.error
+    );
 
   const initialMessage =
     params?.reset === "success"
@@ -41,8 +106,8 @@ export default async function SigninPage({
         : "";
 
   const googleEnabled = Boolean(
-    process.env.GOOGLE_CLIENT_ID &&
-      process.env.GOOGLE_CLIENT_SECRET
+    getGoogleClientId().trim() &&
+      getGoogleClientSecret().trim()
   );
 
   console.error(
