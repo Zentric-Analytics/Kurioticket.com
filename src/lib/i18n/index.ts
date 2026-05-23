@@ -49,7 +49,8 @@ export const localeOptions = supportedLocales
   .filter((locale) => locale.code in dictionaries)
   .map((locale) => ({
     ...locale,
-    flag: getLocaleFlag(locale.code),
+    countryCode: getLocaleCountryCode(locale.code),
+    fallbackText: getLocaleCountryCode(locale.code),
   }));
 
 const fallbackLocale: LocaleCode = "en-us";
@@ -60,29 +61,29 @@ export function getTranslations(locale?: string | null): TranslationDictionary {
   return dictionaries[normalized] ?? dictionaries[fallbackLocale];
 }
 
-export function getLocaleFlag(code: string): string {
+export function getLocaleCountryCode(code: string): string {
   const map: Record<string, string> = {
-    "en-us": "🇺🇸",
-    "en-gb": "🇬🇧",
-    fr: "🇫🇷",
-    de: "🇩🇪",
-    es: "🇪🇸",
-    it: "🇮🇹",
-    "pt-br": "🇧🇷",
-    "pt-pt": "🇵🇹",
-    ja: "🇯🇵",
-    ko: "🇰🇷",
-    "zh-cn": "🇨🇳",
-    "zh-tw": "🇹🇼",
-    ar: "🇸🇦",
-    he: "🇮🇱",
-    hi: "🇮🇳",
-    tr: "🇹🇷",
-    ru: "🇷🇺",
-    uk: "🇺🇦",
-    nl: "🇳🇱",
-    pl: "🇵🇱",
+    "en-us": "US",
+    "en-gb": "GB",
+    fr: "FR",
+    de: "DE",
+    es: "ES",
+    it: "IT",
+    "pt-br": "BR",
+    "pt-pt": "PT",
+    ja: "JP",
+    ko: "KR",
+    "zh-cn": "CN",
+    "zh-tw": "TW",
+    ar: "SA",
+    he: "IL",
+    hi: "IN",
+    tr: "TR",
+    ru: "RU",
+    uk: "UA",
+    nl: "NL",
+    pl: "PL",
   };
 
-  return map[code] ?? "🌐";
+  return map[code] ?? "US";
 }
