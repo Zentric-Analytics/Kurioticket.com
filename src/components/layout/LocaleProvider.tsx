@@ -44,22 +44,6 @@ function isSupportedLocale(
   );
 }
 
-function getInitialLocale(): LocaleCode {
-  if (typeof window === "undefined") {
-    return DEFAULT_LOCALE;
-  }
-
-  const savedLocale =
-    getStoredLocale();
-
-  if (
-    isSupportedLocale(savedLocale)
-  ) {
-    return savedLocale;
-  }
-
-  return DEFAULT_LOCALE;
-}
 
 function getTextDirection(
   locale: LocaleCode
@@ -77,7 +61,7 @@ export function LocaleProvider({
 }) {
   const [locale, setLocaleState] =
     useState<LocaleCode>(
-      getInitialLocale
+      DEFAULT_LOCALE
     );
 
   const setLocale = (
@@ -87,6 +71,18 @@ export function LocaleProvider({
     setStoredLocale(nextLocale);
   };
 
+
+  useEffect(() => {
+    const savedLocale =
+      getStoredLocale();
+
+    if (
+      isSupportedLocale(savedLocale) &&
+      savedLocale !== locale
+    ) {
+      setLocaleState(savedLocale);
+    }
+  }, [locale]);
   useEffect(() => {
     setStoredLocale(locale);
 

@@ -37,16 +37,20 @@ export function RegionProvider({
   children: React.ReactNode;
 }) {
   const [mode, setModeState] =
-    useState<RegionMode>(() => {
-      if (typeof window === "undefined") {
-        return initialMode;
-      }
+    useState<RegionMode>(initialMode);
 
-      return (
-        normalizeRegion(getStoredRegion()) ??
-        initialMode
-      );
-    });
+
+  useEffect(() => {
+    const storedMode =
+      normalizeRegion(getStoredRegion());
+
+    if (
+      storedMode &&
+      storedMode !== mode
+    ) {
+      setModeState(storedMode);
+    }
+  }, [mode]);
 
   const selectedOption = useMemo(
     () =>
