@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+
 import { signOut, useSession } from "next-auth/react";
 
 import {
@@ -25,77 +26,155 @@ import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences
 export function AppHeader() {
   const pathname = usePathname();
 
-  const { data: session } = useSession();
+  const { data: session } =
+    useSession();
 
-  const isSignedIn = Boolean(session?.user);
+  const isSignedIn = Boolean(
+    session?.user
+  );
 
-  const [open, setOpen] = useState(false);
-  const [languageOpen, setLanguageOpen] = useState(false);
-  const [languageQuery, setLanguageQuery] = useState("");
+  const [open, setOpen] =
+    useState(false);
 
-  const { locale, setLocale, t, locales } = useLocale();
+  const [
+    languageOpen,
+    setLanguageOpen,
+  ] = useState(false);
 
-  const languageRef = useRef<HTMLDivElement | null>(null);
+  const [
+    languageQuery,
+    setLanguageQuery,
+  ] = useState("");
+
+  const {
+    locale,
+    setLocale,
+    t,
+    locales,
+  } = useLocale();
+
+  const languageRef =
+    useRef<HTMLDivElement | null>(
+      null
+    );
 
   useEffect(() => {
-    const onClickOutside = (event: MouseEvent) => {
+    const onClickOutside = (
+      event: MouseEvent
+    ) => {
       if (!languageRef.current) {
         return;
       }
 
-      if (!languageRef.current.contains(event.target as Node)) {
+      if (
+        !languageRef.current.contains(
+          event.target as Node
+        )
+      ) {
         setLanguageOpen(false);
       }
     };
 
-    const onKeyDown = (event: KeyboardEvent) => {
+    const onKeyDown = (
+      event: KeyboardEvent
+    ) => {
       if (event.key === "Escape") {
         setLanguageOpen(false);
         setOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", onClickOutside);
-    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener(
+      "mousedown",
+      onClickOutside
+    );
+
+    document.addEventListener(
+      "keydown",
+      onKeyDown
+    );
 
     return () => {
-      document.removeEventListener("mousedown", onClickOutside);
-      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener(
+        "mousedown",
+        onClickOutside
+      );
+
+      document.removeEventListener(
+        "keydown",
+        onKeyDown
+      );
     };
   }, []);
 
-  const selectedLanguage = useMemo(
-    () => locales.find((option) => option.code === locale) ?? locales[0],
-    [locale, locales]
-  );
+  const selectedLanguage =
+    useMemo(
+      () =>
+        locales.find(
+          (option) =>
+            option.code === locale
+        ) ?? locales[0],
+      [locale, locales]
+    );
 
-  const filteredLanguages = useMemo(() => {
-    const query = languageQuery.trim().toLowerCase();
+  const filteredLanguages =
+    useMemo(() => {
+      const query =
+        languageQuery
+          .trim()
+          .toLowerCase();
 
-    if (!query) {
-      return locales;
-    }
+      if (!query) {
+        return locales;
+      }
 
-    return locales.filter((option) => {
-      return (
-        option.label.toLowerCase().includes(query) ||
-        option.code.toLowerCase().includes(query)
+      return locales.filter(
+        (option) => {
+          return (
+            option.label
+              .toLowerCase()
+              .includes(query) ||
+            option.code
+              .toLowerCase()
+              .includes(query)
+          );
+        }
       );
-    });
-  }, [languageQuery, locales]);
+    }, [languageQuery, locales]);
 
   const navItems = useMemo(
     () => [
-      { href: "/flights/results", label: t.flights },
-      { href: "/hotels/results", label: t.hotels },
-      { href: "/deals", label: t.deals },
-      { href: "/destinations", label: t.destinations },
-      { href: "/explore", label: t.explore },
+      {
+        href: "/flights/results",
+        label: t.flights,
+      },
+      {
+        href: "/hotels/results",
+        label: t.hotels,
+      },
+      {
+        href: "/deals",
+        label: t.deals,
+      },
+      {
+        href: "/destinations",
+        label: t.destinations,
+      },
+      {
+        href: "/explore",
+        label: t.explore,
+      },
 
       ...(isSignedIn
         ? [
-            { href: "/pricing", label: t.premium },
-            { href: "/dashboard", label: t.dashboard },
+            {
+              href: "/pricing",
+              label: t.premium,
+            },
+            {
+              href: "/dashboard",
+              label: t.dashboard,
+            },
           ]
         : []),
     ],
@@ -103,24 +182,34 @@ export function AppHeader() {
   );
 
   const renderFlag = (
-    countryCode: string | undefined,
-    fallbackText: string | undefined
+    countryCode:
+      | string
+      | undefined,
+    fallbackText:
+      | string
+      | undefined
   ) => (
     <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
       {countryCode ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
-          alt={fallbackText ?? "Flag"}
+          alt={
+            fallbackText ??
+            "Flag"
+          }
           className="h-full w-full object-cover"
           onError={(event) => {
-            event.currentTarget.style.display = "none";
+            event.currentTarget.style.display =
+              "none";
 
             const fallback =
-              event.currentTarget.nextElementSibling as HTMLElement | null;
+              event.currentTarget
+                .nextElementSibling as HTMLElement | null;
 
             if (fallback) {
-              fallback.style.display = "inline-flex";
+              fallback.style.display =
+                "inline-flex";
             }
           }}
         />
@@ -133,7 +222,8 @@ export function AppHeader() {
   );
 
   const handleLanguageSelect = (
-    code: (typeof locales)[number]["code"]
+    code:
+      (typeof locales)[number]["code"]
   ) => {
     setLocale(code);
 
@@ -162,15 +252,27 @@ export function AppHeader() {
           <div className="hidden items-center gap-3 md:flex">
             <CountryCurrencySelector />
 
-            <div className="relative" ref={languageRef}>
+            <div
+              className="relative"
+              ref={languageRef}
+            >
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setLanguageOpen((value) => !value)}
+                onClick={() =>
+                  setLanguageOpen(
+                    (value) =>
+                      !value
+                  )
+                }
                 className="h-12 gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm"
                 aria-haspopup="menu"
-                aria-expanded={languageOpen}
-                aria-label={t.selectLanguage}
+                aria-expanded={
+                  languageOpen
+                }
+                aria-label={
+                  t.selectLanguage
+                }
               >
                 {renderFlag(
                   selectedLanguage?.countryCode,
@@ -187,7 +289,11 @@ export function AppHeader() {
                 <>
                   <div
                     className="fixed inset-0 z-40 bg-slate-900/45"
-                    onClick={() => setLanguageOpen(false)}
+                    onClick={() =>
+                      setLanguageOpen(
+                        false
+                      )
+                    }
                   />
 
                   <section
@@ -195,7 +301,9 @@ export function AppHeader() {
                     className="fixed inset-x-4 top-[max(80px,8vh)] z-50 mx-auto max-h-[84vh] w-[min(980px,96vw)] overflow-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl md:inset-x-0 md:p-7"
                   >
                     <h2 className="text-base font-black text-slate-950">
-                      {t.selectLanguage}
+                      {
+                        t.selectLanguage
+                      }
                     </h2>
 
                     <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
@@ -205,56 +313,85 @@ export function AppHeader() {
                       />
 
                       <input
-                        value={languageQuery}
-                        onChange={(event) =>
-                          setLanguageQuery(event.target.value)
+                        value={
+                          languageQuery
                         }
-                        placeholder={t.searchLanguage}
+                        onChange={(
+                          event
+                        ) =>
+                          setLanguageQuery(
+                            event.target
+                              .value
+                          )
+                        }
+                        placeholder={
+                          t.searchLanguage
+                        }
                         className="w-full border-0 bg-transparent text-sm outline-none"
                       />
                     </div>
 
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      {filteredLanguages.map((option) => {
-                        const active = option.code === locale;
+                      {filteredLanguages.map(
+                        (option) => {
+                          const active =
+                            option.code ===
+                            locale;
 
-                        return (
-                          <button
-                            key={option.code}
-                            type="button"
-                            role="menuitemradio"
-                            aria-checked={active}
-                            onClick={() =>
-                              handleLanguageSelect(option.code)
-                            }
-                            className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors ${
-                              active
-                                ? "border-violet-300 bg-violet-50"
-                                : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
-                            }`}
-                          >
-                            <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                              {renderFlag(
-                                option.countryCode,
-                                option.fallbackText
-                              )}
+                          return (
+                            <button
+                              key={
+                                option.code
+                              }
+                              type="button"
+                              role="menuitemradio"
+                              aria-checked={
+                                active
+                              }
+                              onClick={() =>
+                                handleLanguageSelect(
+                                  option.code
+                                )
+                              }
+                              className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors ${
+                                active
+                                  ? "border-violet-300 bg-violet-50"
+                                  : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+                              }`}
+                            >
+                              <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                {renderFlag(
+                                  option.countryCode,
+                                  option.fallbackText
+                                )}
 
-                              <span>{option.label}</span>
-                            </span>
+                                <span>
+                                  {
+                                    option.label
+                                  }
+                                </span>
+                              </span>
 
-                            <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-                              <span>{option.code}</span>
+                              <span className="inline-flex items-center gap-2 text-xs text-slate-500">
+                                <span>
+                                  {
+                                    option.code
+                                  }
+                                </span>
 
-                              {active ? (
-                                <Check
-                                  size={16}
-                                  className="text-violet-600"
-                                />
-                              ) : null}
-                            </span>
-                          </button>
-                        );
-                      })}
+                                {active ? (
+                                  <Check
+                                    size={
+                                      16
+                                    }
+                                    className="text-violet-600"
+                                  />
+                                ) : null}
+                              </span>
+                            </button>
+                          );
+                        }
+                      )}
                     </div>
                   </section>
                 </>
@@ -267,7 +404,9 @@ export function AppHeader() {
                   variant="ghost"
                   size="sm"
                   className="h-11 w-11 rounded-full p-0"
-                  aria-label={t.notifications}
+                  aria-label={
+                    t.notifications
+                  }
                 >
                   <Bell size={18} />
                 </Button>
@@ -277,20 +416,31 @@ export function AppHeader() {
                   size="sm"
                   className="h-11 gap-2 rounded-full border border-slate-200 px-4 text-base"
                 >
-                  <UserCircle size={17} />
+                  <UserCircle
+                    size={17}
+                  />
 
                   <span className="font-semibold">
-                    {session?.user?.name || t.dashboard}
+                    {session?.user
+                      ?.name ||
+                      t.dashboard}
                   </span>
                 </Button>
 
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => signOut({ callbackUrl: "/" })}
+                  onClick={() =>
+                    signOut({
+                      callbackUrl:
+                        "/",
+                    })
+                  }
                   className="h-11 gap-2 rounded-full px-4 text-base"
                 >
-                  <LogOut size={16} />
+                  <LogOut
+                    size={16}
+                  />
 
                   {t.logout}
                 </Button>
@@ -322,33 +472,49 @@ export function AppHeader() {
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 text-slate-700 md:hidden"
             aria-label={t.menu}
             aria-expanded={open}
-            onClick={() => setOpen((value) => !value)}
+            onClick={() =>
+              setOpen(
+                (value) =>
+                  !value
+              )
+            }
           >
-            {open ? <X size={20} /> : <Menu size={20} />}
+            {open ? (
+              <X size={20} />
+            ) : (
+              <Menu size={20} />
+            )}
           </button>
         </div>
 
         <div className="hidden md:block">
           <nav className="page-shell flex items-center gap-3 pb-4">
-            {navItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                pathname.startsWith(`${item.href}/`);
+            {navItems.map(
+              (item) => {
+                const isActive =
+                  pathname ===
+                    item.href ||
+                  pathname.startsWith(
+                    `${item.href}/`
+                  );
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`rounded-lg px-5 py-2.5 text-[1.02rem] font-semibold transition-colors ${
-                    isActive
-                      ? "bg-indigo-100/90 text-indigo-800"
-                      : "text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+                return (
+                  <Link
+                    key={item.href}
+                    href={
+                      item.href
+                    }
+                    className={`rounded-lg px-5 py-2.5 text-[1.02rem] font-semibold transition-colors ${
+                      isActive
+                        ? "bg-indigo-100/90 text-indigo-800"
+                        : "text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              }
+            )}
           </nav>
         </div>
       </header>
@@ -361,7 +527,12 @@ export function AppHeader() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setLanguageOpen((value) => !value)}
+              onClick={() =>
+                setLanguageOpen(
+                  (value) =>
+                    !value
+                )
+              }
               className="h-11 gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm"
             >
               {renderFlag(
@@ -370,22 +541,32 @@ export function AppHeader() {
               )}
 
               <span className="text-sm font-semibold">
-                {selectedLanguage?.label}
+                {
+                  selectedLanguage?.label
+                }
               </span>
             </Button>
           </div>
 
           <nav className="grid gap-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-violet-50"
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map(
+              (item) => (
+                <Link
+                  key={item.href}
+                  href={
+                    item.href
+                  }
+                  className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-violet-50"
+                  onClick={() =>
+                    setOpen(
+                      false
+                    )
+                  }
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
 
             {!isSignedIn ? (
               <div className="mt-2 grid gap-2">
@@ -394,7 +575,11 @@ export function AppHeader() {
                   variant="ghost"
                   size="sm"
                   className="h-11 rounded-xl px-4 font-semibold"
-                  onClick={() => setOpen(false)}
+                  onClick={() =>
+                    setOpen(
+                      false
+                    )
+                  }
                 >
                   {t.login}
                 </LinkButton>
@@ -403,7 +588,11 @@ export function AppHeader() {
                   href="/auth/signup"
                   size="sm"
                   className="h-11 rounded-xl px-4 font-semibold"
-                  onClick={() => setOpen(false)}
+                  onClick={() =>
+                    setOpen(
+                      false
+                    )
+                  }
                 >
                   {t.signUp}
                 </LinkButton>

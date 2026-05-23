@@ -26,7 +26,8 @@ type RegionContextValue = {
   options: typeof countryCurrencyOptions;
 };
 
-const RegionContext = createContext<RegionContextValue | null>(null);
+const RegionContext =
+  createContext<RegionContextValue | null>(null);
 
 export function RegionProvider({
   initialMode,
@@ -45,15 +46,17 @@ export function RegionProvider({
 
   const selectedOption = useMemo(
     () =>
-      countryCurrencyOptions.find((option) => option.code === mode) ??
-      countryCurrencyOptions[0],
+      countryCurrencyOptions.find(
+        (option) => option.code === mode
+      ) ?? countryCurrencyOptions[0],
     [mode]
   );
 
   const setMode = (nextMode: RegionMode) => {
     const nextOption =
-      countryCurrencyOptions.find((option) => option.code === nextMode) ??
-      countryCurrencyOptions[0];
+      countryCurrencyOptions.find(
+        (option) => option.code === nextMode
+      ) ?? countryCurrencyOptions[0];
 
     setModeState(nextOption.code as RegionMode);
     setStoredRegion(nextOption.code as RegionMode);
@@ -96,7 +99,9 @@ export function useRegion() {
   const context = useContext(RegionContext);
 
   if (!context) {
-    throw new Error("useRegion must be used within RegionProvider");
+    throw new Error(
+      "useRegion must be used within RegionProvider"
+    );
   }
 
   return context;

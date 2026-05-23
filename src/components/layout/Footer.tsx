@@ -55,20 +55,20 @@ export function Footer() {
               {t.explore}
             </Link>
 
+            {isSignedIn ? (
+              <Link href="/pricing">
+                {t.premium}
+              </Link>
+            ) : null}
+
             <Link href="/support">
               {t.support}
             </Link>
 
             {isSignedIn ? (
-              <>
-                <Link href="/pricing">
-                  {t.premium}
-                </Link>
-
-                <Link href="/dashboard">
-                  {t.dashboard}
-                </Link>
-              </>
+              <Link href="/dashboard">
+                {t.dashboard}
+              </Link>
             ) : null}
           </div>
         </div>

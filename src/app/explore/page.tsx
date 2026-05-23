@@ -33,7 +33,6 @@ export default function ExplorePage() {
   const { locale } = useLocale();
 
   const lang = locale.startsWith("fr") ? "fr" : "en";
-
   const c = copy[lang];
 
   return (

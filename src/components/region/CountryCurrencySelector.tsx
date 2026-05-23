@@ -1,60 +1,103 @@
 "use client";
 
-import { Check, ChevronDown, Search, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  Check,
+  ChevronDown,
+  Search,
+  X,
+} from "lucide-react";
+
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { useRegion } from "@/components/region/RegionProvider";
+
 import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
 
 export function CountryCurrencySelector() {
-  const { mode, setMode, selectedOption, options } = useRegion();
+  const {
+    mode,
+    setMode,
+    selectedOption,
+    options,
+  } = useRegion();
 
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const [open, setOpen] =
+    useState(false);
+
+  const [query, setQuery] =
+    useState("");
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
+    const onKeyDown = (
+      event: KeyboardEvent
+    ) => {
       if (event.key === "Escape") {
         setOpen(false);
       }
     };
 
-    document.addEventListener("keydown", onKeyDown);
+    document.addEventListener(
+      "keydown",
+      onKeyDown
+    );
 
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener(
+        "keydown",
+        onKeyDown
+      );
     };
   }, []);
 
-  const filteredOptions = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+  const filteredOptions =
+    useMemo(() => {
+      const normalizedQuery =
+        query
+          .trim()
+          .toLowerCase();
 
-    if (!normalizedQuery) {
-      return options;
-    }
+      if (!normalizedQuery) {
+        return options;
+      }
 
-    return options.filter((option) => {
-      return (
-        option.country
-          .toLowerCase()
-          .includes(normalizedQuery) ||
-        option.currency
-          .toLowerCase()
-          .includes(normalizedQuery)
+      return options.filter(
+        (option) => {
+          return (
+            option.country
+              .toLowerCase()
+              .includes(
+                normalizedQuery
+              ) ||
+            option.currency
+              .toLowerCase()
+              .includes(
+                normalizedQuery
+              )
+          );
+        }
       );
-    });
-  }, [options, query]);
+    }, [options, query]);
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() =>
+          setOpen(true)
+        }
         className="inline-flex h-12 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm"
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <span>{selectedOption.currency}</span>
+        <span>
+          {
+            selectedOption.currency
+          }
+        </span>
 
         <ChevronDown
           size={14}
@@ -66,7 +109,9 @@ export function CountryCurrencySelector() {
         <>
           <div
             className="fixed inset-0 z-40 bg-slate-900/45"
-            onClick={() => setOpen(false)}
+            onClick={() =>
+              setOpen(false)
+            }
           />
 
           <section
@@ -89,7 +134,9 @@ export function CountryCurrencySelector() {
 
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={() =>
+                  setOpen(false)
+                }
                 className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
                 aria-label="Close currency selector"
               >
@@ -105,8 +152,13 @@ export function CountryCurrencySelector() {
 
               <input
                 value={query}
-                onChange={(event) =>
-                  setQuery(event.target.value)
+                onChange={(
+                  event
+                ) =>
+                  setQuery(
+                    event.target
+                      .value
+                  )
                 }
                 placeholder="Search country or currency"
                 className="w-full border-0 bg-transparent text-sm outline-none"
@@ -114,45 +166,59 @@ export function CountryCurrencySelector() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {filteredOptions.map((option) => {
-                const isActive = option.code === mode;
+              {filteredOptions.map(
+                (option) => {
+                  const isActive =
+                    option.code ===
+                    mode;
 
-                return (
-                  <button
-                    key={option.code}
-                    type="button"
-                    onClick={() => {
-                      setMode(option.code);
+                  return (
+                    <button
+                      key={
+                        option.code
+                      }
+                      type="button"
+                      onClick={() => {
+                        setMode(
+                          option.code
+                        );
 
-                      setOpen(false);
+                        setOpen(
+                          false
+                        );
 
-                      reloadAfterPreferenceChange();
-                    }}
-                    className={`rounded-xl border px-3 py-3 text-left transition-colors ${
-                      isActive
-                        ? "border-violet-300 bg-violet-50"
-                        : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-slate-900">
-                        {option.country}
-                      </span>
+                        reloadAfterPreferenceChange();
+                      }}
+                      className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+                        isActive
+                          ? "border-violet-300 bg-violet-50"
+                          : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-slate-900">
+                          {
+                            option.country
+                          }
+                        </span>
 
-                      {isActive ? (
-                        <Check
-                          size={16}
-                          className="text-violet-600"
-                        />
-                      ) : null}
-                    </div>
+                        {isActive ? (
+                          <Check
+                            size={16}
+                            className="text-violet-600"
+                          />
+                        ) : null}
+                      </div>
 
-                    <div className="mt-1 text-xs font-semibold text-slate-500">
-                      {option.currency}
-                    </div>
-                  </button>
-                );
-              })}
+                      <div className="mt-1 text-xs font-semibold text-slate-500">
+                        {
+                          option.currency
+                        }
+                      </div>
+                    </button>
+                  );
+                }
+              )}
             </div>
           </section>
         </>

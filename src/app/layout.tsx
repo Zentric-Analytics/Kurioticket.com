@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { LocaleProvider } from "@/components/layout/LocaleProvider";
 import { RegionProvider } from "@/components/region/RegionProvider";
+import { RouteProgressProvider } from "@/components/layout/RouteProgress";
 
 import { REGION_COOKIE_KEY } from "@/config/regionConfig";
 
@@ -65,7 +66,7 @@ export default async function RootLayout({
         <AuthProvider>
           <LocaleProvider>
             <RegionProvider initialMode={initialRegion}>
-              {children}
+              <RouteProgressProvider>{children}</RouteProgressProvider>
             </RegionProvider>
           </LocaleProvider>
         </AuthProvider>
