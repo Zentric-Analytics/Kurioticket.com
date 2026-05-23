@@ -1,4 +1,5 @@
 export type TranslationDictionary = {
+  [key: string]: string;
   flights: string;
   hotels: string;
   deals: string;
