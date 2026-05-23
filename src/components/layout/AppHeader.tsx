@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+
 import {
   Bell,
   Check,
@@ -23,7 +24,9 @@ import { Button, LinkButton } from "@/components/ui/Button";
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
+
   const { data: session } = useSession();
+
   const isSignedIn = Boolean(session?.user);
 
   const [open, setOpen] = useState(false);
@@ -36,7 +39,9 @@ export function AppHeader() {
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
-      if (!languageRef.current) return;
+      if (!languageRef.current) {
+        return;
+      }
 
       if (!languageRef.current.contains(event.target as Node)) {
         setLanguageOpen(false);
@@ -73,7 +78,9 @@ export function AppHeader() {
   const filteredLanguages = useMemo(() => {
     const query = languageQuery.trim().toLowerCase();
 
-    if (!query) return locales;
+    if (!query) {
+      return locales;
+    }
 
     return locales.filter((option) => {
       return (
@@ -90,12 +97,21 @@ export function AppHeader() {
       { href: "/deals", label: t.deals },
       { href: "/destinations", label: t.destinations },
       { href: "/explore", label: t.explore },
-      ...(isSignedIn ? [{ href: "/pricing", label: t.premium }, { href: "/dashboard", label: t.dashboard }] : []),
+
+      ...(isSignedIn
+        ? [
+            { href: "/pricing", label: t.premium },
+            { href: "/dashboard", label: t.dashboard },
+          ]
+        : []),
     ],
     [isSignedIn, t]
   );
 
-  const renderFlag = (countryCode: string | undefined, fallbackText: string | undefined) => (
+  const renderFlag = (
+    countryCode: string | undefined,
+    fallbackText: string | undefined
+  ) => (
     <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
       {countryCode ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -105,12 +121,20 @@ export function AppHeader() {
           className="h-full w-full object-cover"
           onError={(event) => {
             event.currentTarget.style.display = "none";
-            const fallback = event.currentTarget.nextElementSibling as HTMLElement | null;
-            if (fallback) fallback.style.display = "inline-flex";
+
+            const fallback =
+              event.currentTarget.nextElementSibling as HTMLElement | null;
+
+            if (fallback) {
+              fallback.style.display = "inline-flex";
+            }
           }}
         />
       ) : null}
-      <span className="hidden items-center justify-center text-[9px] font-bold text-slate-700">{fallbackText ?? "US"}</span>
+
+      <span className="hidden items-center justify-center text-[9px] font-bold text-slate-700">
+        {fallbackText ?? "US"}
+      </span>
     </span>
   );
 
@@ -118,8 +142,11 @@ export function AppHeader() {
     code: (typeof locales)[number]["code"]
   ) => {
     setLocale(code);
+
     setLanguageOpen(false);
+
     setLanguageQuery("");
+
     router.refresh();
   };
 
@@ -128,6 +155,7 @@ export function AppHeader() {
   ) => {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
+
       setOpen((value) => !value);
     }
 
@@ -171,7 +199,10 @@ export function AppHeader() {
                   )}
                 </span>
 
-                <ChevronDown size={14} className="text-slate-600" />
+                <ChevronDown
+                  size={14}
+                  className="text-slate-600"
+                />
               </Button>
 
               {languageOpen && (
@@ -190,7 +221,10 @@ export function AppHeader() {
                     </h2>
 
                     <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
-                      <Search size={16} className="text-slate-500" />
+                      <Search
+                        size={16}
+                        className="text-slate-500"
+                      />
 
                       <input
                         value={languageQuery}
@@ -215,189 +249,4 @@ export function AppHeader() {
                             onClick={() =>
                               handleLanguageSelect(option.code)
                             }
-                            className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors ${
-                              active
-                                ? "border-violet-300 bg-violet-50"
-                                : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
-                            }`}
-                          >
-                            <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                              {renderFlag(option.countryCode, option.fallbackText)}
-
-                              <span>{option.label}</span>
-                            </span>
-
-                            <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-                              <span>{option.code}</span>
-
-                              {active ? (
-                                <Check
-                                  size={16}
-                                  className="text-violet-600"
-                                />
-                              ) : null}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                </>
-              )}
-            </div>
-
-            {isSignedIn ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-11 w-11 rounded-full p-0"
-                  aria-label={t.notifications}
-                >
-                  <Bell size={18} />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-11 gap-2 rounded-full border border-slate-200 px-4 text-base"
-                >
-                  <UserCircle size={17} />
-
-                  <span className="font-semibold">
-                    {session?.user?.name || t.dashboard}
-                  </span>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="h-11 gap-2 rounded-full px-4 text-base"
-                >
-                  <LogOut size={16} />
-
-                  {t.logout}
-                </Button>
-              </>
-            ) : (
-              <>
-                <LinkButton
-                  href="/auth/signin"
-                  variant="ghost"
-                  size="sm"
-                  className="h-12 rounded-full px-5 text-base font-semibold"
-                >
-                  {t.login}
-                </LinkButton>
-
-                <LinkButton
-                  href="/auth/signup"
-                  size="sm"
-                  className="h-12 rounded-full px-6 text-base font-semibold"
-                >
-                  {t.signUp}
-                </LinkButton>
-              </>
-            )}
-          </div>
-
-          <button
-            type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 text-slate-700 md:hidden"
-            aria-label={t.menu}
-            aria-expanded={open}
-            onClick={() => setOpen((value) => !value)}
-            onKeyDown={handleMobileNavKey}
-          >
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-
-        <div className="hidden md:block">
-          <nav className="page-shell flex items-center gap-3 pb-4">
-            {navItems.map((item) => {
-              const isActive =
-                pathname === item.href ||
-                pathname.startsWith(`${item.href}/`);
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`rounded-lg px-5 py-2.5 text-[1.02rem] font-semibold transition-colors ${
-                    isActive
-                      ? "bg-indigo-100/90 text-indigo-800"
-                      : "text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-      </header>
-
-      {open && (
-        <div className="fixed inset-x-0 top-[104px] z-30 bg-white/95 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.12)] backdrop-blur-md md:hidden">
-          <div className="mb-4 flex items-center gap-2">
-            <CountryCurrencySelector />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLanguageOpen((value) => !value)}
-              className="h-11 gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm"
-            >
-              {renderFlag(
-                selectedLanguage?.countryCode,
-                selectedLanguage?.fallbackText
-              )}
-
-              <span className="text-sm font-semibold">
-                {selectedLanguage?.label}
-              </span>
-            </Button>
-          </div>
-
-          <nav className="grid gap-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-violet-50"
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
-
-            {!isSignedIn ? (
-              <div className="mt-2 grid gap-2">
-                <LinkButton
-                  href="/auth/signin"
-                  variant="ghost"
-                  size="sm"
-                  className="h-11 rounded-xl px-4 font-semibold"
-                  onClick={() => setOpen(false)}
-                >
-                  {t.login}
-                </LinkButton>
-
-                <LinkButton
-                  href="/auth/signup"
-                  size="sm"
-                  className="h-11 rounded-xl px-4 font-semibold"
-                  onClick={() => setOpen(false)}
-                >
-                  {t.signUp}
-                </LinkButton>
-              </div>
-            ) : null}
-          </nav>
-        </div>
-      )}
-    </>
-  );
-}
+                            className={`flex items-center justify-between rounded-xl border px
