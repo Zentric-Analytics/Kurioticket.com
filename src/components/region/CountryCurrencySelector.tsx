@@ -4,7 +4,7 @@ import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useRegion } from "@/components/region/RegionProvider";
-import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
+import { reloadAfterPreferenceChange } from "@/lib/preferences/preferences";
 
 export function CountryCurrencySelector() {
   const { mode, setMode, selectedOption, options } = useRegion();

@@ -1,8 +1,23 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
-import { REGION_COOKIE_KEY, REGION_STORAGE_KEY, countryCurrencyOptions } from "@/config/regionConfig";
-import { normalizeRegion, type RegionMode } from "@/lib/region/detectRegion";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import { countryCurrencyOptions } from "@/config/regionConfig";
+import {
+  getStoredRegion,
+  setStoredCurrency,
+  setStoredRegion,
+} from "@/lib/preferences/preferences";
+import {
+  normalizeRegion,
+  type RegionMode,
+} from "@/lib/region/detectRegion";
 
 type RegionContextValue = {
   mode: RegionMode;
@@ -13,27 +28,76 @@ type RegionContextValue = {
 
 const RegionContext = createContext<RegionContextValue | null>(null);
 
-export function RegionProvider({ initialMode, children }: { initialMode: RegionMode; children: React.ReactNode }) {
+export function RegionProvider({
+  initialMode,
+  children,
+}: {
+  initialMode: RegionMode;
+  children: React.ReactNode;
+}) {
   const [mode, setModeState] = useState<RegionMode>(() => {
-    if (typeof window === "undefined") return initialMode;
-    return normalizeRegion(window.localStorage.getItem(REGION_STORAGE_KEY)) || initialMode;
+    if (typeof window === "undefined") {
+      return initialMode;
+    }
+
+    return normalizeRegion(getStoredRegion()) ?? initialMode;
   });
 
+  const selectedOption = useMemo(
+    () =>
+      countryCurrencyOptions.find((option) => option.code === mode) ??
+      countryCurrencyOptions[0],
+    [mode]
+  );
+
   const setMode = (nextMode: RegionMode) => {
-    setModeState(nextMode);
-    window.localStorage.setItem(REGION_STORAGE_KEY, nextMode);
-    document.cookie = `${REGION_COOKIE_KEY}=${nextMode}; path=/; max-age=31536000; samesite=lax`;
+    const nextOption =
+      countryCurrencyOptions.find((option) => option.code === nextMode) ??
+      countryCurrencyOptions[0];
+
+    setModeState(nextOption.code as RegionMode);
+    setStoredRegion(nextOption.code as RegionMode);
+    setStoredCurrency(nextOption.currency);
   };
 
-  const selectedOption = countryCurrencyOptions.find((option) => option.code === mode) ?? countryCurrencyOptions[0];
+  useEffect(() => {
+    setStoredRegion(selectedOption.code as RegionMode);
+    setStoredCurrency(selectedOption.currency);
+  }, [selectedOption.code, selectedOption.currency]);
 
-  const value = useMemo(() => ({ mode, setMode, selectedOption, options: countryCurrencyOptions }), [mode, selectedOption]);
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.info("[preferences]", {
+        region: selectedOption.code,
+        currency: selectedOption.currency,
+        source: "cookie/localStorage/default",
+      });
+    }
+  }, [selectedOption.code, selectedOption.currency]);
 
-  return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;
+  const value = useMemo(
+    () => ({
+      mode,
+      setMode,
+      selectedOption,
+      options: countryCurrencyOptions,
+    }),
+    [mode, selectedOption]
+  );
+
+  return (
+    <RegionContext.Provider value={value}>
+      {children}
+    </RegionContext.Provider>
+  );
 }
 
 export function useRegion() {
   const context = useContext(RegionContext);
-  if (!context) throw new Error("useRegion must be used within RegionProvider");
+
+  if (!context) {
+    throw new Error("useRegion must be used within RegionProvider");
+  }
+
   return context;
 }

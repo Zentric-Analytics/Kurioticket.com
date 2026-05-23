@@ -20,7 +20,7 @@ import {
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 import { Button, LinkButton } from "@/components/ui/Button";
-import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
+import { reloadAfterPreferenceChange } from "@/lib/preferences/preferences";
 
 export function AppHeader() {
   const pathname = usePathname();

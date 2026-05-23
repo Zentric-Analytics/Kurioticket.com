@@ -1,3 +1,6 @@
+Replace the **entire** `src/app/deals/page.tsx` file with this:
+
+```tsx
 "use client";
 
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -83,3 +86,4 @@ export default function DealsPage() {
     </>
   );
 }
+```
