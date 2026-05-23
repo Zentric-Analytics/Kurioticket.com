@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 
@@ -20,10 +20,10 @@ import {
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 import { Button, LinkButton } from "@/components/ui/Button";
+import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
 
 export function AppHeader() {
   const pathname = usePathname();
-  const router = useRouter();
 
   const { data: session } = useSession();
 
@@ -141,21 +141,7 @@ export function AppHeader() {
 
     setLanguageQuery("");
 
-    router.refresh();
-  };
-
-  const handleMobileNavKey = (
-    event: React.KeyboardEvent<HTMLButtonElement>
-  ) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-
-      setOpen((value) => !value);
-    }
-
-    if (event.key === "Escape") {
-      setOpen(false);
-    }
+    reloadAfterPreferenceChange();
   };
 
   return (
@@ -186,12 +172,10 @@ export function AppHeader() {
                 aria-expanded={languageOpen}
                 aria-label={t.selectLanguage}
               >
-                <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                  {renderFlag(
-                    selectedLanguage?.countryCode,
-                    selectedLanguage?.fallbackText
-                  )}
-                </span>
+                {renderFlag(
+                  selectedLanguage?.countryCode,
+                  selectedLanguage?.fallbackText
+                )}
 
                 <ChevronDown
                   size={14}
@@ -339,7 +323,6 @@ export function AppHeader() {
             aria-label={t.menu}
             aria-expanded={open}
             onClick={() => setOpen((value) => !value)}
-            onKeyDown={handleMobileNavKey}
           >
             {open ? <X size={20} /> : <Menu size={20} />}
           </button>

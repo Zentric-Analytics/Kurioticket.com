@@ -4,6 +4,7 @@ import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useRegion } from "@/components/region/RegionProvider";
+import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
 
 export function CountryCurrencySelector() {
   const { mode, setMode, selectedOption, options } = useRegion();
@@ -25,17 +26,17 @@ export function CountryCurrencySelector() {
     };
   }, []);
 
-  const visibleOptions = useMemo(() => {
-    const q = query.trim().toLowerCase();
+  const filteredOptions = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
 
-    if (!q) {
+    if (!normalizedQuery) {
       return options;
     }
 
     return options.filter((option) => {
       return (
-        option.country.toLowerCase().includes(q) ||
-        option.currency.toLowerCase().includes(q)
+        option.country.toLowerCase().includes(normalizedQuery) ||
+        option.currency.toLowerCase().includes(normalizedQuery)
       );
     });
   }, [options, query]);
@@ -109,7 +110,7 @@ export function CountryCurrencySelector() {
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {visibleOptions.map((option) => {
+              {filteredOptions.map((option) => {
                 const isActive = option.code === mode;
 
                 return (
@@ -118,7 +119,10 @@ export function CountryCurrencySelector() {
                     type="button"
                     onClick={() => {
                       setMode(option.code);
+
                       setOpen(false);
+
+                      reloadAfterPreferenceChange();
                     }}
                     className={`rounded-xl border px-3 py-3 text-left transition-colors ${
                       isActive

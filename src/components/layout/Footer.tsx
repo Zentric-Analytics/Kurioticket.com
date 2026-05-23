@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 import { legalDocuments } from "@/data/legalDocuments";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 export function Footer() {
   const { t } = useLocale();
+  const { data: session } = useSession();
+  const isSignedIn = Boolean(session?.user);
 
   return (
     <footer className="border-t border-indigo-800/40 bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-900 text-white">
@@ -39,17 +42,21 @@ export function Footer() {
               {t.hotels}
             </Link>
 
-            <Link href="/pricing">
-              {t.premium}
-            </Link>
+            {isSignedIn ? (
+              <Link href="/pricing">
+                {t.premium}
+              </Link>
+            ) : null}
 
             <Link href="/support">
               {t.support}
             </Link>
 
-            <Link href="/dashboard">
-              {t.dashboard}
-            </Link>
+            {isSignedIn ? (
+              <Link href="/dashboard">
+                {t.dashboard}
+              </Link>
+            ) : null}
           </div>
         </div>
 
