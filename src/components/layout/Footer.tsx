@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { legalDocuments } from "@/data/legalDocuments";
@@ -38,40 +39,40 @@ export function Footer() {
           </h2>
 
           <div className="mt-3 grid gap-2 text-sm text-indigo-100/90">
-            <a href="/flights/results">
+            <Link href="/flights/results">
               {t.flights}
-            </a>
+            </Link>
 
-            <a href="/hotels/results">
+            <Link href="/hotels/results">
               {t.hotels}
-            </a>
+            </Link>
 
-            <a href="/deals">
+            <Link href="/deals">
               {t.deals}
-            </a>
+            </Link>
 
-            <a href="/destinations">
+            <Link href="/destinations">
               {t.destinations}
-            </a>
+            </Link>
 
-            <a href="/explore">
+            <Link href="/explore">
               {t.explore}
-            </a>
+            </Link>
 
             {isSignedIn ? (
-              <a href="/pricing">
+              <Link href="/pricing">
                 {t.premium}
-              </a>
+              </Link>
             ) : null}
 
-            <a href="/support">
+            <Link href="/support">
               {t.support}
-            </a>
+            </Link>
 
             {isSignedIn ? (
-              <a href="/dashboard">
+              <Link href="/dashboard">
                 {t.dashboard}
-              </a>
+              </Link>
             ) : null}
           </div>
         </div>
@@ -82,19 +83,19 @@ export function Footer() {
           </h2>
 
           <div className="mt-3 grid gap-2 text-sm text-indigo-100/90">
-            <a href="/legal">
+            <Link href="/legal">
               {t.legalCenter}
-            </a>
+            </Link>
 
             {legalDocuments
               .slice(0, 5)
               .map((document) => (
-                <a
+                <Link
                   key={document.slug}
                   href={`/legal/${document.slug}`}
                 >
                   {document.title}
-                </a>
+                </Link>
               ))}
           </div>
         </div>
