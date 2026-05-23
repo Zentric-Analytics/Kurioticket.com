@@ -6,14 +6,12 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 import { LocaleProvider } from "@/components/layout/LocaleProvider";
 import { RegionProvider } from "@/components/region/RegionProvider";
 
-import {
-  REGION_COOKIE_KEY,
-  type RegionMode,
-} from "@/config/regionConfig";
+import { REGION_COOKIE_KEY } from "@/config/regionConfig";
 
 import {
   countryToRegion,
   normalizeRegion,
+  type RegionMode,
 } from "@/lib/region/detectRegion";
 
 
@@ -52,7 +50,7 @@ export default async function RootLayout({
     cookieRegion ||
     headerRegion ||
     ipRegion ||
-    "GLOBAL"
+    "US"
   ) as RegionMode;
 
   return (
