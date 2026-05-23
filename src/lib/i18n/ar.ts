@@ -1,6 +1,33 @@
-import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  ...en,
+  flights: "رحلات الطيران",
+  hotels: "الفنادق",
+  deals: "العروض",
+  destinations: "الوجهات",
+  explore: "استكشف",
+  support: "الدعم",
+  dashboard: "لوحة التحكم",
+  logout: "تسجيل الخروج",
+  login: "تسجيل الدخول",
+  signUp: "إنشاء حساب",
+  menu: "القائمة",
+  selectLanguage: "اختر لغتك",
+  suggestedLanguages: "اللغات المقترحة",
+  allLanguages: "كل اللغات",
+  platform: "المنصة",
+  legal: "القانونية",
+  premium: "بريميوم",
+  legalCenter: "المركز القانوني",
+  footerAbout:
+    "ابحث عن الرحلات والفنادق مجانًا، وقارن أسعار الشركاء الموثوقين، واتخذ قرارات سفر أكثر هدوءًا.",
+  footerMeta: "Curioticket منصة ميتا للبحث عن السفر.",
+  tripRound: "ذهاب وعودة",
+  tripOneWay: "ذهاب فقط",
+  tripMulti: "متعدد المدن",
+  supportLabel: "الدعم",
+  fromPrice: "ابتداءً من",
+  searchLanguage: "ابحث عن لغة أو رمز",
+  noLanguagesFound: "لم يتم العثور على لغات",
+  notifications: "الإشعارات",
 };

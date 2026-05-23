@@ -1,6 +1,33 @@
-import { translations as en } from "./en";
 import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
-  ...en,
+  flights: "Vuelos",
+  hotels: "Hoteles",
+  deals: "Ofertas",
+  destinations: "Destinos",
+  explore: "Explorar",
+  support: "Soporte",
+  dashboard: "Panel",
+  logout: "Cerrar sesión",
+  login: "Iniciar sesión",
+  signUp: "Regístrate",
+  menu: "Menú",
+  selectLanguage: "Selecciona tu idioma",
+  suggestedLanguages: "Idiomas sugeridos",
+  allLanguages: "Todos los idiomas",
+  platform: "Plataforma",
+  legal: "Legal",
+  premium: "Premium",
+  legalCenter: "Centro legal",
+  footerAbout:
+    "Busca vuelos y hoteles gratis, compara precios de socios confiables y toma decisiones de viaje con más calma.",
+  footerMeta: "Curioticket es una plataforma de metabúsqueda de viajes.",
+  tripRound: "ida y vuelta",
+  tripOneWay: "solo ida",
+  tripMulti: "multiciudad",
+  supportLabel: "Soporte",
+  fromPrice: "Desde",
+  searchLanguage: "Buscar idioma o código",
+  noLanguagesFound: "No se encontraron idiomas",
+  notifications: "Notificaciones",
 };

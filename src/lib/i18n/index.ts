@@ -24,8 +24,10 @@ export const dictionaries: Record<string, TranslationDictionary> = {
   "en-us": en,
   "en-gb": en,
   fr,
+  "fr-fr": fr,
   de,
   es,
+  "es-es": es,
   it,
   "pt-br": ptBr,
   "pt-pt": ptPt,
@@ -34,6 +36,7 @@ export const dictionaries: Record<string, TranslationDictionary> = {
   "zh-cn": zhCn,
   "zh-tw": zhTw,
   ar,
+  "ar-sa": ar,
   he,
   hi,
   tr,
@@ -51,10 +54,18 @@ export const localeOptions = supportedLocales.map((locale) => ({
 
 const fallbackLocale: LocaleCode = "en-us";
 
+const localeAliases: Record<string, string> = {
+  en: "en-us",
+  fr: "fr-fr",
+  es: "es-es",
+  ar: "ar-sa",
+};
+
 export function getTranslations(locale?: string | null): TranslationDictionary {
   if (!locale) return dictionaries[fallbackLocale];
   const normalized = locale.trim().toLowerCase();
-  return dictionaries[normalized] ?? dictionaries[fallbackLocale];
+  const resolvedLocale = localeAliases[normalized] ?? normalized;
+  return dictionaries[resolvedLocale] ?? dictionaries[fallbackLocale];
 }
 
 export function getLocaleCountryCode(code: string): string {
@@ -62,8 +73,10 @@ export function getLocaleCountryCode(code: string): string {
     "en-us": "US",
     "en-gb": "GB",
     fr: "FR",
+    "fr-fr": "FR",
     de: "DE",
     es: "ES",
+    "es-es": "ES",
     it: "IT",
     "pt-br": "BR",
     "pt-pt": "PT",
@@ -72,6 +85,7 @@ export function getLocaleCountryCode(code: string): string {
     "zh-cn": "CN",
     "zh-tw": "TW",
     ar: "SA",
+    "ar-sa": "SA",
     he: "IL",
     hi: "IN",
     tr: "TR",

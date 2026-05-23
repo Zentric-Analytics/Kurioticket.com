@@ -273,6 +273,10 @@ export function AppHeader() {
                     selectedLanguage?.fallbackText
                   )}
 
+                  <span className="text-sm font-semibold text-slate-700">
+                    {selectedLanguage?.label}
+                  </span>
+
                   <ChevronDown
                     size={14}
                     className="text-slate-600"
