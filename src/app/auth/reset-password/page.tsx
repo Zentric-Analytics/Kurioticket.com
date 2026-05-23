@@ -9,18 +9,18 @@ export const metadata = {
 };
 
 type ResetPasswordPageProps = {
-  searchParams?: Promise<{ email?: string }>;
+  searchParams?: Promise<{ token?: string }>;
 };
 
 export default async function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
   const params = await searchParams;
-  const email = typeof params?.email === "string" ? params.email : "";
+  const token = typeof params?.token === "string" ? params.token : "";
 
   return (
     <>
       <AppHeader />
       <main className="page-shell flex flex-1 items-center py-10">
-        <ResetPasswordForm email={email} />
+        <ResetPasswordForm token={token} />
       </main>
       <Footer />
     </>
