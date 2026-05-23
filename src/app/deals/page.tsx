@@ -22,6 +22,7 @@ const copy = {
       "Featured deal controls are ready for curation and provider-backed deal feeds.",
     cta: "Search route",
   },
+
   fr: {
     title: "Meilleures offres",
     subtitle:
@@ -62,7 +63,10 @@ export default function DealsPage() {
                 </p>
 
                 <div className="mt-2 text-3xl font-extrabold text-indigo-950">
-                  {formatCurrency(amount, selectedOption.currency)}
+                  {formatCurrency(
+                    amount,
+                    selectedOption.currency
+                  )}
                 </div>
 
                 <LinkButton
