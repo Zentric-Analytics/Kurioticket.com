@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+
 import {
   Bell,
   Check,
@@ -23,7 +24,9 @@ import { reloadAfterPreferenceChange } from "@/lib/preferences/preferences";
 
 export function AppHeader() {
   const pathname = usePathname();
+
   const { data: session } = useSession();
+
   const isSignedIn = Boolean(session?.user);
 
   const [open, setOpen] = useState(false);
@@ -31,11 +34,15 @@ export function AppHeader() {
   const [languageQuery, setLanguageQuery] = useState("");
 
   const { locale, setLocale, t, locales } = useLocale();
+
   const languageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
-      if (!languageRef.current) return;
+      if (!languageRef.current) {
+        return;
+      }
+
       if (!languageRef.current.contains(event.target as Node)) {
         setLanguageOpen(false);
       }
@@ -64,7 +71,10 @@ export function AppHeader() {
 
   const filteredLanguages = useMemo(() => {
     const query = languageQuery.trim().toLowerCase();
-    if (!query) return locales;
+
+    if (!query) {
+      return locales;
+    }
 
     return locales.filter((option) => {
       return (
@@ -81,6 +91,7 @@ export function AppHeader() {
       { href: "/deals", label: t.deals },
       { href: "/destinations", label: t.destinations },
       { href: "/explore", label: t.explore },
+
       ...(isSignedIn
         ? [
             { href: "/pricing", label: t.premium },
@@ -100,27 +111,36 @@ export function AppHeader() {
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
-          alt={fallbackText ?? "flag"}
+          alt={fallbackText ?? "Flag"}
           className="h-full w-full object-cover"
           onError={(event) => {
             event.currentTarget.style.display = "none";
-            const fallback = event.currentTarget.nextElementSibling as
-              | HTMLElement
-              | null;
-            if (fallback) fallback.style.display = "inline-flex";
+
+            const fallback =
+              event.currentTarget.nextElementSibling as HTMLElement | null;
+
+            if (fallback) {
+              fallback.style.display = "inline-flex";
+            }
           }}
         />
       ) : null}
-      <span className="hidden h-full w-full items-center justify-center text-[9px] font-bold text-slate-700">
+
+      <span className="hidden items-center justify-center text-[9px] font-bold text-slate-700">
         {fallbackText ?? "US"}
       </span>
     </span>
   );
 
-  const handleLanguageSelect = (code: (typeof locales)[number]["code"]) => {
+  const handleLanguageSelect = (
+    code: (typeof locales)[number]["code"]
+  ) => {
     setLocale(code);
+
     setLanguageOpen(false);
+
     setLanguageQuery("");
+
     reloadAfterPreferenceChange();
   };
 
@@ -135,6 +155,7 @@ export function AppHeader() {
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6d28d9] text-white">
               <Sparkles size={24} />
             </span>
+
             Curioticket
           </Link>
 
@@ -155,7 +176,11 @@ export function AppHeader() {
                   selectedLanguage?.countryCode,
                   selectedLanguage?.fallbackText
                 )}
-                <ChevronDown size={14} className="text-slate-600" />
+
+                <ChevronDown
+                  size={14}
+                  className="text-slate-600"
+                />
               </Button>
 
               {languageOpen ? (
@@ -174,10 +199,16 @@ export function AppHeader() {
                     </h2>
 
                     <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
-                      <Search size={16} className="text-slate-500" />
+                      <Search
+                        size={16}
+                        className="text-slate-500"
+                      />
+
                       <input
                         value={languageQuery}
-                        onChange={(event) => setLanguageQuery(event.target.value)}
+                        onChange={(event) =>
+                          setLanguageQuery(event.target.value)
+                        }
                         placeholder={t.searchLanguage}
                         className="w-full border-0 bg-transparent text-sm outline-none"
                       />
@@ -186,13 +217,16 @@ export function AppHeader() {
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       {filteredLanguages.map((option) => {
                         const active = option.code === locale;
+
                         return (
                           <button
                             type="button"
                             key={option.code}
                             role="menuitemradio"
                             aria-checked={active}
-                            onClick={() => handleLanguageSelect(option.code)}
+                            onClick={() =>
+                              handleLanguageSelect(option.code)
+                            }
                             className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors ${
                               active
                                 ? "border-violet-300 bg-violet-50"
@@ -200,14 +234,22 @@ export function AppHeader() {
                             }`}
                           >
                             <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                              {renderFlag(option.countryCode, option.fallbackText)}
+                              {renderFlag(
+                                option.countryCode,
+                                option.fallbackText
+                              )}
+
                               <span>{option.label}</span>
                             </span>
 
                             <span className="inline-flex items-center gap-2 text-xs text-slate-500">
                               <span>{option.code}</span>
+
                               {active ? (
-                                <Check size={16} className="text-violet-600" />
+                                <Check
+                                  size={16}
+                                  className="text-violet-600"
+                                />
                               ) : null}
                             </span>
                           </button>
@@ -236,6 +278,7 @@ export function AppHeader() {
                   className="h-11 gap-2 rounded-full border border-slate-200 px-4 text-base"
                 >
                   <UserCircle size={17} />
+
                   <span className="font-semibold">
                     {session?.user?.name || t.dashboard}
                   </span>
@@ -248,6 +291,7 @@ export function AppHeader() {
                   className="h-11 gap-2 rounded-full px-4 text-base"
                 >
                   <LogOut size={16} />
+
                   {t.logout}
                 </Button>
               </>
@@ -288,7 +332,8 @@ export function AppHeader() {
           <nav className="page-shell flex items-center gap-3 pb-4">
             {navItems.map((item) => {
               const isActive =
-                pathname === item.href || pathname.startsWith(`${item.href}/`);
+                pathname === item.href ||
+                pathname.startsWith(`${item.href}/`);
 
               return (
                 <Link
@@ -323,7 +368,10 @@ export function AppHeader() {
                 selectedLanguage?.countryCode,
                 selectedLanguage?.fallbackText
               )}
-              <span className="text-sm font-semibold">{selectedLanguage?.label}</span>
+
+              <span className="text-sm font-semibold">
+                {selectedLanguage?.label}
+              </span>
             </Button>
           </div>
 
