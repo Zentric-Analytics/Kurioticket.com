@@ -1,112 +1,57 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import { countryCurrencyOptions } from "@/config/regionConfig";
-import {
-  getStoredRegion,
-  setStoredCurrency,
-  setStoredRegion,
-} from "@/lib/preferences/preferences";
-import {
-  normalizeRegion,
-  type RegionMode,
-} from "@/lib/region/detectRegion";
+import { getStoredRegion, setStoredCurrency, setStoredRegion } from "@/lib/preferences/preferences";
+import { supportedRegions } from "@/lib/region/supportedRegions";
+
+type RegionCode = (typeof supportedRegions)[number]["code"];
 
 type RegionContextValue = {
-  mode: RegionMode;
-  setMode: (mode: RegionMode) => void;
-  selectedOption: (typeof countryCurrencyOptions)[number];
-  options: typeof countryCurrencyOptions;
+  mode: RegionCode;
+  setMode: (mode: RegionCode) => void;
+  selectedOption: (typeof supportedRegions)[number];
+  options: typeof supportedRegions;
 };
 
-const RegionContext =
-  createContext<RegionContextValue | null>(null);
+const RegionContext = createContext<RegionContextValue | null>(null);
 
-export function RegionProvider({
-  initialMode,
-  children,
-}: {
-  initialMode: RegionMode;
-  children: React.ReactNode;
-}) {
-  const [mode, setModeState] =
-    useState<RegionMode>(() => {
-      const storedMode =
-        normalizeRegion(
-          getStoredRegion()
-        );
-
-      return (
-        storedMode ?? initialMode
-      );
-    });
+export function RegionProvider({ initialMode, children }: { initialMode: string; children: React.ReactNode }) {
+  const [mode, setModeState] = useState<RegionCode>(() => {
+    const storedMode = getStoredRegion();
+    const validStoredMode = supportedRegions.some((option) => option.code === storedMode);
+    if (validStoredMode) return storedMode as RegionCode;
+    if (supportedRegions.some((option) => option.code === initialMode)) return initialMode as RegionCode;
+    return supportedRegions[0].code;
+  });
 
   const selectedOption = useMemo(
-    () =>
-      countryCurrencyOptions.find(
-        (option) => option.code === mode
-      ) ?? countryCurrencyOptions[0],
+    () => supportedRegions.find((option) => option.code === mode) ?? supportedRegions[0],
     [mode]
   );
 
-  const setMode = (nextMode: RegionMode) => {
-    const nextOption =
-      countryCurrencyOptions.find(
-        (option) => option.code === nextMode
-      ) ?? countryCurrencyOptions[0];
-
-    setModeState(nextOption.code as RegionMode);
-    setStoredRegion(nextOption.code as RegionMode);
+  const setMode = (nextMode: RegionCode) => {
+    const nextOption = supportedRegions.find((option) => option.code === nextMode) ?? supportedRegions[0];
+    setModeState(nextOption.code as RegionCode);
+    setStoredRegion(nextOption.code);
     setStoredCurrency(nextOption.currency);
   };
 
   useEffect(() => {
-    setStoredRegion(selectedOption.code as RegionMode);
+    setStoredRegion(selectedOption.code);
     setStoredCurrency(selectedOption.currency);
   }, [selectedOption.code, selectedOption.currency]);
 
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.info("[preferences]", {
-        region: selectedOption.code,
-        currency: selectedOption.currency,
-        source: "cookie/localStorage/default",
-      });
-    }
-  }, [selectedOption.code, selectedOption.currency]);
-
   const value = useMemo(
-    () => ({
-      mode,
-      setMode,
-      selectedOption,
-      options: countryCurrencyOptions,
-    }),
+    () => ({ mode, setMode, selectedOption, options: supportedRegions }),
     [mode, selectedOption]
   );
 
-  return (
-    <RegionContext.Provider value={value}>
-      {children}
-    </RegionContext.Provider>
-  );
+  return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;
 }
 
 export function useRegion() {
   const context = useContext(RegionContext);
-
-  if (!context) {
-    throw new Error(
-      "useRegion must be used within RegionProvider"
-    );
-  }
-
+  if (!context) throw new Error("useRegion must be used within RegionProvider");
   return context;
 }

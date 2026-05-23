@@ -15,7 +15,6 @@ import {
 
 import { useRegion } from "@/components/region/RegionProvider";
 
-import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
 
 export function CountryCurrencySelector() {
   const {
@@ -87,7 +86,7 @@ export function CountryCurrencySelector() {
       <button
         type="button"
         onClick={() =>
-          setOpen(true)
+          setOpen((value) => !value)
         }
         className="inline-flex h-12 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm"
         aria-haspopup="dialog"
@@ -186,8 +185,6 @@ export function CountryCurrencySelector() {
                         setOpen(
                           false
                         );
-
-                        reloadAfterPreferenceChange();
                       }}
                       className={`rounded-xl border px-3 py-3 text-left transition-colors ${
                         isActive

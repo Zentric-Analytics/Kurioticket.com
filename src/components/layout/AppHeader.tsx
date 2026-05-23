@@ -30,7 +30,6 @@ import {
   Button,
   LinkButton,
 } from "@/components/ui/Button";
-import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
 
 export function AppHeader() {
   const { data: session } =
@@ -233,7 +232,6 @@ export function AppHeader() {
 
     setLanguageQuery("");
 
-    reloadAfterPreferenceChange();
   };
 
   return (
@@ -436,6 +434,17 @@ export function AppHeader() {
         {open ? (
           <div className="border-t border-slate-200 bg-white md:hidden">
             <nav className="page-shell grid gap-2 py-4">
+              <div className="pb-2">
+                <CountryCurrencySelector />
+              </div>
+              <button
+                type="button"
+                onClick={() => setLanguageOpen(true)}
+                className="inline-flex h-11 items-center justify-between rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-900"
+              >
+                <span>{selectedLanguage.label}</span>
+                <ChevronDown size={14} className="text-slate-500" />
+              </button>
               {navItems.map((item) => (
                 <Link key={item.href} href={item.href} className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
                   {item.label}
