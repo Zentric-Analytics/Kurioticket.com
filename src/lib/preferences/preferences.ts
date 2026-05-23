@@ -1,5 +1,4 @@
 import { normalizeLanguage, type LanguageCode } from "@/lib/language";
-import { normalizeRegion, type RegionMode } from "@/lib/region/detectRegion";
 
 export const LOCALE_COOKIE_KEY = "curioticket_locale";
 export const REGION_COOKIE_KEY = "curioticket_region";
@@ -37,14 +36,14 @@ export function setStoredLocale(locale: string) {
   }
 }
 
-export function getStoredRegion(): RegionMode {
+export function getStoredRegion(): string {
   const cookie = getCookieValue(REGION_COOKIE_KEY);
-  if (cookie) return normalizeRegion(cookie) ?? "US";
-  if (typeof window !== "undefined") return normalizeRegion(window.localStorage.getItem(REGION_COOKIE_KEY)) ?? normalizeRegion(window.localStorage.getItem("ct_region")) ?? "US";
+  if (cookie) return cookie.toUpperCase();
+  if (typeof window !== "undefined") return (window.localStorage.getItem(REGION_COOKIE_KEY) ?? window.localStorage.getItem("ct_region") ?? "US").toUpperCase();
   return "US";
 }
 
-export function setStoredRegion(regionCode: RegionMode) {
+export function setStoredRegion(regionCode: string) {
   setCookieValue(REGION_COOKIE_KEY, regionCode);
   if (typeof window !== "undefined") {
     window.localStorage.setItem(REGION_COOKIE_KEY, regionCode);
@@ -64,11 +63,4 @@ export function setStoredCurrency(currency: string) {
   if (typeof window !== "undefined") {
     window.localStorage.setItem(CURRENCY_COOKIE_KEY, currency);
   }
-}
-
-export function reloadAfterPreferenceChange() {
-  if (typeof window === "undefined") return;
-  window.setTimeout(() => {
-    window.location.reload();
-  }, 50);
 }

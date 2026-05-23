@@ -45,15 +45,9 @@ export const dictionaries: Record<string, TranslationDictionary> = {
 
 export type LocaleCode = keyof typeof dictionaries;
 
-const VISIBLE_LOCALES = new Set(["en-us", "en-gb", "fr", "de", "es"]);
-
-export const localeOptions = supportedLocales
-  .filter((locale) => locale.code in dictionaries && VISIBLE_LOCALES.has(locale.code))
-  .map((locale) => ({
-    ...locale,
-    countryCode: getLocaleCountryCode(locale.code),
-    fallbackText: getLocaleCountryCode(locale.code),
-  }));
+export const localeOptions = supportedLocales.map((locale) => ({
+  ...locale,
+}));
 
 const fallbackLocale: LocaleCode = "en-us";
 
