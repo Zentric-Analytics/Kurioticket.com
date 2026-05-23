@@ -2,12 +2,8 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
-import {
-  getTranslations,
-  localeOptions,
-  type LocaleCode,
-} from "@/lib/i18n";
-import { LANGUAGE_STORAGE_KEY } from "@/lib/language";
+import { getTranslations, localeOptions, type LocaleCode } from "@/lib/i18n";
+import { getStoredLocale, setStoredLocale } from "@/lib/preferences/preferences";
 
 type LocaleContextValue = {
   locale: LocaleCode;
@@ -23,15 +19,22 @@ const DEFAULT_LOCALE: LocaleCode = "en-us";
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<LocaleCode>(() => {
     if (typeof window === "undefined") return DEFAULT_LOCALE;
-    const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)?.toLowerCase();
-    if (saved && localeOptions.some((item) => item.code === saved)) {
-      return saved as LocaleCode;
+
+    const stored = getStoredLocale();
+    if (localeOptions.some((option) => option.code === stored)) {
+      return stored as LocaleCode;
     }
+
     return DEFAULT_LOCALE;
   });
 
+  const setLocale = (nextLocale: LocaleCode) => {
+    setLocaleState(nextLocale);
+    setStoredLocale(nextLocale);
+  };
+
   useEffect(() => {
-    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
+    setStoredLocale(locale);
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === "ar" || locale === "he" ? "rtl" : "ltr";
   }, [locale]);
@@ -39,7 +42,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const value = useMemo<LocaleContextValue>(
     () => ({
       locale,
-      setLocale: setLocaleState,
+      setLocale,
       t: getTranslations(locale),
       locales: localeOptions,
     }),
