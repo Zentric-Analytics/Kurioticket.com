@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
-import { legalDocuments } from "@/data/legalDocuments";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { legalDocuments } from "@/data/legalDocuments";
 
 export function Footer() {
   const { t } = useLocale();
   const { data: session } = useSession();
+
   const isSignedIn = Boolean(session?.user);
 
   return (
