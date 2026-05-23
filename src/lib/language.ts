@@ -9,14 +9,16 @@ export type LanguageOption = {
   code: string;
   label: string;
   dir: LanguageDirection;
-  flag: string;
+  countryCode: string;
+  fallbackText: string;
 };
 
 export const languageOptions: LanguageOption[] = localeOptions.map((item) => ({
   code: item.code,
   label: item.label,
   dir: item.rtl ? "rtl" : "ltr",
-  flag: item.flag,
+  countryCode: item.countryCode,
+  fallbackText: item.fallbackText,
 }));
 
 export type LanguageCode = LocaleCode;
