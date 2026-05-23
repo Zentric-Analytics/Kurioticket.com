@@ -24,262 +24,9 @@ import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { PriceText } from "@/components/currency/PriceText";
-import type { LanguageCode } from "@/lib/language";
 
-const i18n = {
-  en: {
-    heroTitle: "Find Cheap Flights Fast",
-    heroSubtitle:
-      "Search hundreds of airlines and travel sites to find the best deals for your next trip.",
-    assurances: [
-      "Best Prices Guaranteed",
-      "Easy Provider Comparison",
-      "Secure Payments",
-      "24/7 Customer Support",
-    ],
-    flights: "Flights",
-    hotels: "Hotels",
-    searchFlights: "Search Flights",
-    searchHotels: "Search Hotels",
-    from: "From",
-    to: "To",
-    departure: "Departure",
-    return: "Return",
-    destination: "Destination",
-    checkIn: "Check-in",
-    checkOut: "Check-out",
-    guests: "Guests",
-    rooms: "Rooms",
-    cityAirport: "City or airport",
-    cityHotelArea: "City or hotel area",
-    selectDate: "Select date",
-    notNeeded: "Not needed",
-    travelersClass: "Travelers & Class",
-    oneTraveler: "1 Traveler",
-    twoTravelers: "2 Travelers",
-    threeTravelers: "3 Travelers",
-    fourTravelers: "4 Travelers",
-    economy: "Economy",
-    premiumEconomy: "Premium economy",
-    business: "Business",
-    first: "First",
-    adults: "Adults",
-    room: "Room",
-    searchHotelsInstead: "Search hotels instead",
-    heroBadge: "Trusted travel search platform",
-    featuresMillionsTitle: "Millions of Choices",
-    featuresMillionsBody: "Compare flights and hotels from a wide network of trusted providers in one place.",
-    featuresFlexibleTitle: "Flexible Search",
-    featuresFlexibleBody: "Filter by stopovers, budgets, travel class, and timings to match how you like to travel.",
-    featuresSecureTitle: "Secure Experience",
-    featuresSecureBody: "Your trip planning stays protected with reliable partners and secure booking handoff.",
-    featuresDealsTitle: "Real-Time Deals",
-    featuresDealsBody: "Catch fare drops and exclusive promotions before they disappear.",
-    popularDestinations: "Popular destinations",
-    viewAllDestinations: "View all destinations",
-    promoFlightsTitle: "Flight deals from top airlines",
-    promoFlightsBody: "Discover limited-time fares and compare options instantly.",
-    promoFlightsCta: "Explore flight deals",
-    promoHotelsTitle: "Hotel savings worldwide",
-    promoHotelsBody: "Browse stays from boutique hotels to global chains with price transparency.",
-    promoHotelsCta: "Explore hotel deals",
-    newsletterTitle: "Stay ahead of every travel deal",
-    newsletterBody: "Get curated flight and hotel updates delivered weekly.",
-    newsletterPlaceholder: "Enter your email",
-    subscribe: "Subscribe",
-  },
-  fr: {
-    heroTitle: "Trouvez des vols pas chers rapidement",
-    heroSubtitle:
-      "Recherchez des centaines de compagnies aériennes et de sites de voyage pour trouver les meilleures offres.",
-    assurances: [
-      "Meilleurs prix garantis",
-      "Comparaison facile",
-      "Paiements sécurisés",
-      "Assistance 24h/24",
-    ],
-    flights: "Vols",
-    hotels: "Hôtels",
-    searchFlights: "Rechercher des vols",
-    searchHotels: "Rechercher des hôtels",
-    from: "Départ",
-    to: "Arrivée",
-    departure: "Départ",
-    return: "Retour",
-    destination: "Destination",
-    checkIn: "Arrivée",
-    checkOut: "Départ",
-    guests: "Voyageurs",
-    rooms: "Chambres",
-    cityAirport: "Ville ou aéroport",
-    cityHotelArea: "Ville ou zone hôtelière",
-    selectDate: "Choisir une date",
-    notNeeded: "Non requis",
-    travelersClass: "Voyageurs et classe",
-    oneTraveler: "1 voyageur",
-    twoTravelers: "2 voyageurs",
-    threeTravelers: "3 voyageurs",
-    fourTravelers: "4 voyageurs",
-    economy: "Économie",
-    premiumEconomy: "Éco premium",
-    business: "Affaires",
-    first: "Première",
-    adults: "Adultes",
-    room: "Chambre",
-    searchHotelsInstead: "Rechercher des hôtels",
-    heroBadge: "Plateforme de recherche voyage fiable",
-    featuresMillionsTitle: "Des millions d’options",
-    featuresMillionsBody: "Comparez vols et hôtels de partenaires fiables au même endroit.",
-    featuresFlexibleTitle: "Recherche flexible",
-    featuresFlexibleBody: "Filtrez par escales, budget, classe et horaires selon vos besoins.",
-    featuresSecureTitle: "Expérience sécurisée",
-    featuresSecureBody: "Votre planification reste protégée avec des partenaires de confiance.",
-    featuresDealsTitle: "Offres en temps réel",
-    featuresDealsBody: "Repérez les baisses de prix et promotions exclusives avant tout le monde.",
-    popularDestinations: "Destinations populaires",
-    viewAllDestinations: "Voir toutes les destinations",
-    promoFlightsTitle: "Offres vols des meilleures compagnies",
-    promoFlightsBody: "Découvrez des tarifs limités et comparez rapidement.",
-    promoFlightsCta: "Voir les offres vols",
-    promoHotelsTitle: "Économies hôtels dans le monde",
-    promoHotelsBody: "Parcourez des hébergements variés avec des prix transparents.",
-    promoHotelsCta: "Voir les offres hôtels",
-    newsletterTitle: "Recevez les meilleures offres voyage",
-    newsletterBody: "Des alertes vols et hôtels sélectionnées chaque semaine.",
-    newsletterPlaceholder: "Entrez votre e-mail",
-    subscribe: "S’abonner",
-  },
-  es: {
-    heroTitle: "Encuentra vuelos baratos rápido",
-    heroSubtitle:
-      "Busca en cientos de aerolíneas y sitios de viaje para encontrar las mejores ofertas.",
-    assurances: [
-      "Mejores precios garantizados",
-      "Comparación fácil",
-      "Pagos seguros",
-      "Soporte 24/7",
-    ],
-    flights: "Vuelos",
-    hotels: "Hoteles",
-    searchFlights: "Buscar vuelos",
-    searchHotels: "Buscar hoteles",
-    from: "Desde",
-    to: "Hacia",
-    departure: "Salida",
-    return: "Regreso",
-    destination: "Destino",
-    checkIn: "Entrada",
-    checkOut: "Salida",
-    guests: "Huéspedes",
-    rooms: "Habitaciones",
-    cityAirport: "Ciudad o aeropuerto",
-    cityHotelArea: "Ciudad o zona hotelera",
-    selectDate: "Selecciona fecha",
-    notNeeded: "No necesario",
-    travelersClass: "Viajeros y clase",
-    oneTraveler: "1 viajero",
-    twoTravelers: "2 viajeros",
-    threeTravelers: "3 viajeros",
-    fourTravelers: "4 viajeros",
-    economy: "Económica",
-    premiumEconomy: "Económica premium",
-    business: "Business",
-    first: "Primera",
-    adults: "Adultos",
-    room: "Habitación",
-    searchHotelsInstead: "Buscar hoteles",
-    heroBadge: "Plataforma confiable de búsqueda de viajes",
-    featuresMillionsTitle: "Millones de opciones",
-    featuresMillionsBody: "Compara vuelos y hoteles de proveedores confiables en un solo lugar.",
-    featuresFlexibleTitle: "Búsqueda flexible",
-    featuresFlexibleBody: "Filtra por escalas, presupuesto, clase y horarios para viajar a tu manera.",
-    featuresSecureTitle: "Experiencia segura",
-    featuresSecureBody: "Tu planificación está protegida con socios fiables y reservas seguras.",
-    featuresDealsTitle: "Ofertas en tiempo real",
-    featuresDealsBody: "Aprovecha bajadas de tarifas y promociones exclusivas antes de que terminen.",
-    popularDestinations: "Destinos populares",
-    viewAllDestinations: "Ver todos los destinos",
-    promoFlightsTitle: "Ofertas de vuelos de aerolíneas top",
-    promoFlightsBody: "Descubre tarifas por tiempo limitado y compara en segundos.",
-    promoFlightsCta: "Ver ofertas de vuelos",
-    promoHotelsTitle: "Ahorros en hoteles en todo el mundo",
-    promoHotelsBody: "Explora alojamientos con transparencia de precios.",
-    promoHotelsCta: "Ver ofertas de hoteles",
-    newsletterTitle: "Recibe las mejores ofertas de viaje",
-    newsletterBody: "Novedades semanales de vuelos y hoteles en tu correo.",
-    newsletterPlaceholder: "Ingresa tu correo",
-    subscribe: "Suscribirme",
-  },
-  ar: {
-    heroTitle: "اعثر على رحلات رخيصة بسرعة",
-    heroSubtitle:
-      "ابحث بين مئات شركات الطيران ومواقع السفر للعثور على أفضل العروض.",
-    assurances: [
-      "أفضل الأسعار مضمونة",
-      "مقارنة سهلة",
-      "مدفوعات آمنة",
-      "دعم 24/7",
-    ],
-    flights: "رحلات",
-    hotels: "فنادق",
-    searchFlights: "ابحث عن رحلات",
-    searchHotels: "ابحث عن فنادق",
-    from: "من",
-    to: "إلى",
-    departure: "المغادرة",
-    return: "العودة",
-    destination: "الوجهة",
-    checkIn: "تسجيل الوصول",
-    checkOut: "تسجيل المغادرة",
-    guests: "الضيوف",
-    rooms: "الغرف",
-    cityAirport: "مدينة أو مطار",
-    cityHotelArea: "مدينة أو منطقة فندقية",
-    selectDate: "اختر التاريخ",
-    notNeeded: "غير مطلوب",
-    travelersClass: "المسافرون والدرجة",
-    oneTraveler: "مسافر 1",
-    twoTravelers: "مسافران",
-    threeTravelers: "3 مسافرين",
-    fourTravelers: "4 مسافرين",
-    economy: "اقتصادية",
-    premiumEconomy: "اقتصادية ممتازة",
-    business: "رجال الأعمال",
-    first: "الأولى",
-    adults: "بالغون",
-    room: "غرفة",
-    searchHotelsInstead: "ابحث عن فنادق",
-    heroBadge: "منصة موثوقة للبحث عن السفر",
-    featuresMillionsTitle: "ملايين الخيارات",
-    featuresMillionsBody: "قارن الرحلات والفنادق من مزودي خدمات موثوقين في مكان واحد.",
-    featuresFlexibleTitle: "بحث مرن",
-    featuresFlexibleBody: "فلتر حسب التوقفات والميزانية والدرجة والمواعيد كما يناسبك.",
-    featuresSecureTitle: "تجربة آمنة",
-    featuresSecureBody: "تخطيط رحلتك محمي مع شركاء موثوقين وتحويل حجز آمن.",
-    featuresDealsTitle: "عروض فورية",
-    featuresDealsBody: "اغتنم انخفاض الأسعار والعروض الحصرية قبل انتهائها.",
-    popularDestinations: "وجهات شائعة",
-    viewAllDestinations: "عرض كل الوجهات",
-    promoFlightsTitle: "عروض رحلات من أفضل شركات الطيران",
-    promoFlightsBody: "اكتشف أسعارًا محدودة الوقت وقارن بسرعة.",
-    promoFlightsCta: "استكشف عروض الرحلات",
-    promoHotelsTitle: "توفير على الفنادق حول العالم",
-    promoHotelsBody: "تصفح أماكن إقامة متنوعة مع شفافية في الأسعار.",
-    promoHotelsCta: "استكشف عروض الفنادق",
-    newsletterTitle: "ابقَ على اطلاع بكل عروض السفر",
-    newsletterBody: "تحديثات مختارة للرحلات والفنادق أسبوعيًا.",
-    newsletterPlaceholder: "أدخل بريدك الإلكتروني",
-    subscribe: "اشترك",
-  },
-} as const;
-
-function getI18nLanguageKey(language: LanguageCode): keyof typeof i18n {
-  const baseLanguage = String(language).split("-")[0];
-
-  return baseLanguage in i18n
-    ? (baseLanguage as keyof typeof i18n)
-    : "en";
-}
+import { getTranslations } from "@/lib/i18n";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
@@ -328,7 +75,9 @@ export default function Home() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
 
-  const t = useMemo(() => i18n[getI18nLanguageKey(locale as LanguageCode)], [locale]);
+  const dictionary = useMemo(() => getTranslations(locale), [locale]);
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const assurances = [t("homeAssuranceBestPrice"), t("homeAssuranceCompare"), t("homeAssuranceSecure"), t("homeAssuranceSupport")];
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -366,19 +115,19 @@ export default function Home() {
             <div className="grid min-h-[390px] content-start gap-4 pb-5 sm:min-h-[420px] sm:gap-5 sm:pb-6 lg:min-h-[450px] lg:max-w-[1000px]">
               <div className="space-y-3 pt-2">
                 <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/85 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
-                  {t.heroBadge || "Trusted travel search platform"}
+                  {t("homeHeroBadge")}
                 </p>
 
                 <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-                  {t.heroTitle}
+                  {t("homeHeroTitle")}
                 </h1>
 
                 <p className="max-w-xl text-base font-semibold leading-7 text-slate-700 sm:text-lg sm:leading-8">
-                  {t.heroSubtitle}
+                  {t("homeHeroSubtitle")}
                 </p>
 
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {t.assurances.map((item) => (
+                  {assurances.map((item) => (
                     <span
                       key={item}
                       className="rounded-full border border-[#d9ccff] bg-white/90 px-3 py-1 text-xs font-bold text-[#5b21d6]"
@@ -410,11 +159,11 @@ export default function Home() {
 
               <div>
                 <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresMillionsTitle || "Millions of Choices"}
+                  {t("homeFeaturesMillionsTitle")}
                 </h2>
 
                 <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresMillionsBody || "Flights and hotels worldwide"}
+                  {t("homeFeaturesMillionsBody")}
                 </p>
               </div>
             </article>
@@ -426,11 +175,11 @@ export default function Home() {
 
               <div>
                 <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresFlexibleTitle || "Flexible Options"}
+                  {t("homeFeaturesFlexibleTitle")}
                 </h2>
 
                 <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresFlexibleBody || "Choose what fits your trip"}
+                  {t("homeFeaturesFlexibleBody")}
                 </p>
               </div>
             </article>
@@ -442,11 +191,11 @@ export default function Home() {
 
               <div>
                 <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresSecureTitle || "Secure Payments"}
+                  {t("homeFeaturesSecureTitle")}
                 </h2>
 
                 <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresSecureBody || "100% safe and secure"}
+                  {t("homeFeaturesSecureBody")}
                 </p>
               </div>
             </article>
@@ -458,11 +207,11 @@ export default function Home() {
 
               <div>
                 <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresDealsTitle || "Great Deals"}
+                  {t("homeFeaturesDealsTitle")}
                 </h2>
 
                 <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresDealsBody || "Compare more before you buy"}
+                  {t("homeFeaturesDealsBody")}
                 </p>
               </div>
             </article>
@@ -472,7 +221,7 @@ export default function Home() {
         <section className="page-shell py-5">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-black tracking-normal text-slate-950">
-              {t.popularDestinations || "Popular Destinations"}
+              {t("homePopularDestinations")}
             </h2>
 
             <LinkButton
@@ -481,7 +230,7 @@ export default function Home() {
               size="sm"
               className="hidden text-[#6d28d9] sm:inline-flex"
             >
-              {t.viewAllDestinations || "View all destinations"}
+              {t("homeViewAllDestinations")}
               <ArrowRight size={16} />
             </LinkButton>
           </div>
@@ -506,24 +255,22 @@ export default function Home() {
         <section className="page-shell grid gap-5 py-9 lg:grid-cols-2">
           <PromoPanel
             tone="violet"
-            title={t.promoFlightsTitle || "Amazing flight deals just for you"}
+            title={t("homePromoFlightsTitle")}
             body={
-              t.promoFlightsBody ||
-              "Unlock exclusive offers on domestic and international flights."
+              t("homePromoFlightsBody")
             }
-            cta={t.promoFlightsCta || "Explore Flight Deals"}
+            cta={t("homePromoFlightsCta")}
             href="/deals"
             icon={<Plane size={74} />}
           />
 
           <PromoPanel
             tone="amber"
-            title={t.promoHotelsTitle || "Find your perfect hotel stay"}
+            title={t("homePromoHotelsTitle")}
             body={
-              t.promoHotelsBody ||
-              "From budget to luxury, find hotels that suit your style and budget."
+              t("homePromoHotelsBody")
             }
-            cta={t.promoHotelsCta || "Explore Hotel Deals"}
+            cta={t("homePromoHotelsCta")}
             href="/hotels/results"
             icon={<Hotel size={74} />}
           />
@@ -538,13 +285,11 @@ export default function Home() {
 
               <div>
                 <h2 className="text-lg font-black text-slate-950">
-                  {t.newsletterTitle ||
-                    "Get the best travel deals in your inbox"}
+                  {t("homeNewsletterTitle")}
                 </h2>
 
                 <p className="mt-1 text-sm font-semibold text-slate-600">
-                  {t.newsletterBody ||
-                    "Subscribe to our newsletter and never miss a deal."}
+                  {t("homeNewsletterBody")}
                 </p>
               </div>
             </div>
@@ -558,7 +303,7 @@ export default function Home() {
                 value={newsletterEmail}
                 onChange={(event) => setNewsletterEmail(event.target.value)}
                 placeholder={
-                  t.newsletterPlaceholder || "Enter your email address"
+                  t("homeNewsletterPlaceholder")
                 }
                 className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
                 aria-label="Email address"
@@ -569,7 +314,7 @@ export default function Home() {
                 type="submit"
                 className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
               >
-                {t.subscribe || "Subscribe"}
+                {t("homeSubscribe")}
               </button>
             </form>
 
