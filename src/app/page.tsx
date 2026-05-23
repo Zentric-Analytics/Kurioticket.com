@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -21,13 +21,10 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
-import {
-  LANGUAGE_CHANGE_EVENT,
-  getDefaultLanguage,
-  getLanguageFromStorage,
-  getUiTranslations,
-  type LanguageCode,
-} from "@/lib/language";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRegion } from "@/components/region/RegionProvider";
+import { PriceText } from "@/components/currency/PriceText";
+import type { LanguageCode } from "@/lib/language";
 
 const i18n = {
   en: {
@@ -291,68 +288,47 @@ const destinations = [
   {
     city: "Dubai",
     country: "UAE",
-    price: "$420",
+    amountUsd: 420,
     image:
       "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=700&q=80",
   },
   {
     city: "London",
     country: "United Kingdom",
-    price: "$380",
+    amountUsd: 380,
     image:
       "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=700&q=80",
   },
   {
     city: "Paris",
     country: "France",
-    price: "$410",
+    amountUsd: 410,
     image:
       "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=700&q=80",
   },
   {
     city: "Bali",
     country: "Indonesia",
-    price: "$370",
+    amountUsd: 370,
     image:
       "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=700&q=80",
   },
   {
     city: "New York",
     country: "USA",
-    price: "$390",
+    amountUsd: 390,
     image:
       "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=700&q=80",
   },
 ];
 
 export default function Home() {
-  const [language, setLanguage] = useState<LanguageCode>(getDefaultLanguage());
+  const { locale } = useLocale();
+  const { selectedOption } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
 
-  useEffect(() => {
-    const sync = () => {
-      setLanguage(getLanguageFromStorage());
-    };
-
-    sync();
-
-    window.addEventListener(LANGUAGE_CHANGE_EVENT, sync as EventListener);
-
-    return () => {
-      window.removeEventListener(LANGUAGE_CHANGE_EVENT, sync as EventListener);
-    };
-  }, []);
-
-  const t = useMemo(() => {
-    const pageT = i18n[getI18nLanguageKey(language)];
-    const sharedT = getUiTranslations(language);
-
-    return {
-      ...sharedT,
-      ...pageT,
-    };
-  }, [language]);
+  const t = useMemo(() => i18n[getI18nLanguageKey(locale as LanguageCode)], [locale]);
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -614,12 +590,12 @@ export default function Home() {
 function DestinationCard({
   city,
   country,
-  price,
+  amountUsd,
   image,
 }: {
   city: string;
   country: string;
-  price: string;
+  amountUsd: number;
   image: string;
 }) {
   return (
@@ -650,10 +626,7 @@ function DestinationCard({
       </div>
 
       <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
-        From{" "}
-        <span className="text-lg font-black text-[#6d28d9]">
-          {price}
-        </span>
+        From <span className="text-lg font-black text-[#6d28d9]"><PriceText amountUsd={amountUsd} /></span>
       </div>
     </article>
   );
