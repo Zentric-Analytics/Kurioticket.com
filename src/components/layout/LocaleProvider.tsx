@@ -60,9 +60,16 @@ export function LocaleProvider({
   children: React.ReactNode;
 }) {
   const [locale, setLocaleState] =
-    useState<LocaleCode>(
-      DEFAULT_LOCALE
-    );
+    useState<LocaleCode>(() => {
+      const savedLocale =
+        getStoredLocale();
+
+      return isSupportedLocale(
+        savedLocale
+      )
+        ? savedLocale
+        : DEFAULT_LOCALE;
+    });
 
   const setLocale = (
     nextLocale: LocaleCode
@@ -71,18 +78,6 @@ export function LocaleProvider({
     setStoredLocale(nextLocale);
   };
 
-
-  useEffect(() => {
-    const savedLocale =
-      getStoredLocale();
-
-    if (
-      isSupportedLocale(savedLocale) &&
-      savedLocale !== locale
-    ) {
-      setLocaleState(savedLocale);
-    }
-  }, [locale]);
   useEffect(() => {
     setStoredLocale(locale);
 

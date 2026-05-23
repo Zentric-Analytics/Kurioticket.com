@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
+import type { Adapter } from "next-auth/adapters";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -35,6 +36,13 @@ import {
 } from "@/services/emailVerificationService";
 
 import { logAuthEvent } from "@/services/authService";
+
+type SessionAugmentedUser = {
+  role?: string;
+  isPremium?: boolean;
+  status?: string;
+  emailVerified?: Date | string | null;
+};
 
 const providers: NextAuthOptions["providers"] = [
   CredentialsProvider({
@@ -283,9 +291,9 @@ export const authOptions: NextAuthOptions =
   {
     adapter:
       isDatabaseConfigured()
-        ? PrismaAdapter(
-            getPrisma() as any
-          )
+        ? (PrismaAdapter(
+            getPrisma()
+          ) as Adapter)
         : undefined,
 
     providers,
@@ -429,27 +437,27 @@ export const authOptions: NextAuthOptions =
         user,
       }) {
         if (user) {
+          const authUser =
+            user as typeof user &
+              SessionAugmentedUser;
           token.id = user.id;
 
           token.role =
-            (user as any)
-              .role || "USER";
+            authUser.role ||
+            "USER";
 
           token.isPremium =
             Boolean(
-              (user as any)
-                .isPremium
+              authUser.isPremium
             );
 
           token.status =
-            (user as any)
-              .status ||
+            authUser.status ||
             "ACTIVE";
 
           token.emailVerified =
             Boolean(
-              (user as any)
-                .emailVerified
+              authUser.emailVerified
             );
         }
 

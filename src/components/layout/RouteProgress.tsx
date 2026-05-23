@@ -3,7 +3,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -26,18 +25,18 @@ export function RouteProgressProvider({
 }) {
   const pathname = usePathname();
 
-  const [active, setActive] =
-    useState(false);
+  const [activePath, setActivePath] =
+    useState<string | null>(null);
 
-  useEffect(() => {
-    setActive(false);
-  }, [pathname]);
+  const active =
+    activePath === pathname;
 
   const value = useMemo(
     () => ({
-      start: () => setActive(true),
+      start: () =>
+        setActivePath(pathname),
     }),
-    []
+    [pathname]
   );
 
   return (

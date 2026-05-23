@@ -11,6 +11,7 @@ import {
   signOut,
   useSession,
 } from "next-auth/react";
+import Link from "next/link";
 
 import {
   Bell,
@@ -20,7 +21,6 @@ import {
   Menu,
   Search,
   Sparkles,
-  UserCircle,
   X,
 } from "lucide-react";
 
@@ -240,7 +240,7 @@ export function AppHeader() {
     <>
       <header className="sticky top-0 z-50 bg-white/90 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-md">
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
-          <a
+          <Link
             href="/"
             className="flex items-center gap-3 text-2xl font-extrabold text-slate-950"
           >
@@ -249,7 +249,7 @@ export function AppHeader() {
             </span>
 
             Curioticket
-          </a>
+          </Link>
 
           <div className="hidden flex-1 flex-col gap-3 md:flex">
             <div className="flex items-center justify-end gap-3">
@@ -298,25 +298,25 @@ export function AppHeader() {
                 </>
               ) : (
                 <>
-                  <a href="/auth/signin" className="inline-flex h-12 items-center rounded-full px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                  <Link href="/auth/signin" className="inline-flex h-12 items-center rounded-full px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100">
                     {t.login}
-                  </a>
-                  <a href="/auth/signup" className="inline-flex h-12 items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-700">
+                  </Link>
+                  <Link href="/auth/signup" className="inline-flex h-12 items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-700">
                     {t.signUp}
-                  </a>
+                  </Link>
                 </>
               )}
             </div>
 
             <nav className="flex items-center gap-2">
               {navItems.map((item) => (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
                 >
                   {item.label}
-                </a>
+                </Link>
               ))}
             </nav>
           </div>
@@ -437,14 +437,14 @@ export function AppHeader() {
           <div className="border-t border-slate-200 bg-white md:hidden">
             <nav className="page-shell grid gap-2 py-4">
               {navItems.map((item) => (
-                <a key={item.href} href={item.href} className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                <Link key={item.href} href={item.href} className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
                   {item.label}
-                </a>
+                </Link>
               ))}
               {!isSignedIn ? (
                 <>
-                  <a href="/auth/signin" className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">{t.login}</a>
-                  <a href="/auth/signup" className="rounded-xl bg-violet-600 px-3 py-2 text-sm font-semibold text-white">{t.signUp}</a>
+                  <Link href="/auth/signin" className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">{t.login}</Link>
+                  <Link href="/auth/signup" className="rounded-xl bg-violet-600 px-3 py-2 text-sm font-semibold text-white">{t.signUp}</Link>
                 </>
               ) : null}
             </nav>
