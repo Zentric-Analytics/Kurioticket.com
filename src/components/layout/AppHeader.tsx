@@ -93,7 +93,10 @@ export function AppHeader() {
     [t]
   );
 
-  const renderFlag = (countryCode: string | undefined, fallbackText: string | undefined) => (
+  const renderFlag = (
+    countryCode: string | undefined,
+    fallbackText: string | undefined
+  ) => (
     <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
       {countryCode ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -103,12 +106,20 @@ export function AppHeader() {
           className="h-full w-full object-cover"
           onError={(event) => {
             event.currentTarget.style.display = "none";
-            const fallback = event.currentTarget.nextElementSibling as HTMLElement | null;
-            if (fallback) fallback.style.display = "inline-flex";
+
+            const fallback =
+              event.currentTarget.nextElementSibling as HTMLElement | null;
+
+            if (fallback) {
+              fallback.style.display = "inline-flex";
+            }
           }}
         />
       ) : null}
-      <span className="hidden items-center justify-center text-[9px] font-bold text-slate-700">{fallbackText ?? "US"}</span>
+
+      <span className="hidden items-center justify-center text-[9px] font-bold text-slate-700">
+        {fallbackText ?? "US"}
+      </span>
     </span>
   );
 
@@ -219,7 +230,10 @@ export function AppHeader() {
                             }`}
                           >
                             <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                              {renderFlag(option.countryCode, option.fallbackText)}
+                              {renderFlag(
+                                option.countryCode,
+                                option.fallbackText
+                              )}
 
                               <span>{option.label}</span>
                             </span>
