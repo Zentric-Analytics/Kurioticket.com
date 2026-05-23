@@ -48,8 +48,8 @@ function isSupportedLocale(
 function getTextDirection(
   locale: LocaleCode
 ) {
-  return locale === "ar" ||
-    locale === "he"
+  return locale.startsWith("ar") ||
+    locale.startsWith("he")
     ? "rtl"
     : "ltr";
 }
