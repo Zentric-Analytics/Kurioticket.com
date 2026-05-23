@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/Button";
@@ -8,11 +8,12 @@ import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
 import { forgotPasswordSchema } from "@/lib/validation";
 
+const successMessage = "If an account exists, we sent password reset instructions.";
+
 export function ForgotPasswordForm() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isPending, startTransition] = useTransition();
 
   async function submit(formData: FormData) {
     setLoading(true);
@@ -36,29 +37,16 @@ export function ForgotPasswordForm() {
         body: JSON.stringify(parsed.data),
       });
 
-      const data = await response.json();
       setLoading(false);
 
       if (!response.ok) {
-        setError(
-          String(
-            data.error || "Unable to request a password reset right now."
-          )
-        );
+        const data = await response.json().catch(() => ({}));
+        setError(String(data.error || "Unable to request a password reset right now."));
         return;
       }
 
-      const normalizedEmail = parsed.data.email.toLowerCase().trim();
-
-      setMessage("Code sent. Redirecting you to reset password...");
-
-      startTransition(() => {
-        window.location.href = `/auth/reset-password?email=${encodeURIComponent(
-          normalizedEmail
-        )}`;
-      });
-    } catch (error) {
-      console.error("[forgot-password]", error);
+      setMessage(successMessage);
+    } catch {
       setLoading(false);
       setError("Unable to request a password reset right now.");
     }
@@ -69,7 +57,7 @@ export function ForgotPasswordForm() {
       <h1 className="text-2xl font-bold text-navy">Reset your password</h1>
 
       <p className="mt-2 text-sm text-muted">
-        Enter your email and we will send a 6-digit reset code if an account exists.
+        Enter your email and we&apos;ll send instructions to reset your password.
       </p>
 
       <form action={submit} className="mt-5 grid gap-4">
@@ -79,7 +67,7 @@ export function ForgotPasswordForm() {
             type="email"
             autoComplete="email"
             required
-            disabled={loading || isPending}
+            disabled={loading}
             placeholder="you@example.com"
           />
         </Field>
@@ -87,27 +75,16 @@ export function ForgotPasswordForm() {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
         {message ? (
-          <p
-            className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark"
-            aria-live="polite"
-          >
+          <p className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark" aria-live="polite">
             {message}
           </p>
         ) : null}
 
-        <Button disabled={loading || isPending}>
-          {loading || isPending ? "Sending..." : "Send reset code"}
-        </Button>
+        <Button disabled={loading}>{loading ? "Sending..." : "Send reset link"}</Button>
       </form>
 
       <p className="mt-4 text-sm text-muted">
-        Have a code?{" "}
-        <Link
-          className="font-semibold text-teal-dark"
-          href="/auth/reset-password"
-        >
-          Reset password
-        </Link>
+        Remember your password? <Link className="font-semibold text-teal-dark" href="/auth/signin">Log in</Link>
       </p>
     </Card>
   );

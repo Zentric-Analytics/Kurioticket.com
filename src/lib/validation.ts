@@ -102,11 +102,16 @@ export const forgotPasswordSchema = z.object({
   email: emailSchema,
 });
 
-export const resetPasswordSchema = z.object({
-  email: emailSchema,
-  code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit reset code."),
-  password: passwordSchema,
-});
+export const resetPasswordSchema = z
+  .object({
+    token: z.string().trim().min(1, "Reset token is required."),
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, passwordMessage),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
 
 export const supportTicketSchema = z.object({
   email: emailSchema,
