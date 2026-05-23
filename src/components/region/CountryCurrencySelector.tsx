@@ -51,7 +51,10 @@ export function CountryCurrencySelector() {
       >
         <span>{selectedOption.currency}</span>
 
-        <ChevronDown size={14} className="text-slate-500" />
+        <ChevronDown
+          size={14}
+          className="text-slate-500"
+        />
       </button>
 
       {open ? (
@@ -90,11 +93,16 @@ export function CountryCurrencySelector() {
             </div>
 
             <div className="mb-4 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
-              <Search size={16} className="text-slate-500" />
+              <Search
+                size={16}
+                className="text-slate-500"
+              />
 
               <input
                 value={query}
-                onChange={(event) => setQuery(event.target.value)}
+                onChange={(event) =>
+                  setQuery(event.target.value)
+                }
                 placeholder="Search country or currency"
                 className="w-full border-0 bg-transparent text-sm outline-none"
               />
