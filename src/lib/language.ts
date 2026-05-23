@@ -34,6 +34,9 @@ export function normalizeLanguage(value?: string | null): LanguageCode {
   }
   if (normalized === "en") return "en-us";
   if (normalized === "en-uk") return "en-gb";
+  if (normalized === "fr") return "fr-fr";
+  if (normalized === "es") return "es-es";
+  if (normalized === "ar") return "ar-sa";
   if (normalized === "pt") return "pt-pt";
   if (normalized === "zh") return "zh-cn";
   return getDefaultLanguage();

@@ -18,6 +18,7 @@ import {
   getStoredLocale,
   setStoredLocale,
 } from "@/lib/preferences/preferences";
+import { normalizeLanguage } from "@/lib/language";
 
 type LocaleContextValue = {
   locale: LocaleCode;
@@ -74,8 +75,11 @@ export function LocaleProvider({
   const setLocale = (
     nextLocale: LocaleCode
   ) => {
-    setLocaleState(nextLocale);
-    setStoredLocale(nextLocale);
+    const normalized =
+      normalizeLanguage(nextLocale) as LocaleCode;
+
+    setLocaleState(normalized);
+    setStoredLocale(normalized);
   };
 
   useEffect(() => {
