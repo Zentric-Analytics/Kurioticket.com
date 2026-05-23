@@ -7,7 +7,7 @@ import {
   localeOptions,
   type LocaleCode,
 } from "@/lib/i18n";
-import { LANGUAGE_STORAGE_KEY } from "@/lib/language";
+import { LANGUAGE_STORAGE_KEY, normalizeLanguage } from "@/lib/language";
 
 type LocaleContextValue = {
   locale: LocaleCode;
@@ -23,15 +23,16 @@ const DEFAULT_LOCALE: LocaleCode = "en-us";
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<LocaleCode>(() => {
     if (typeof window === "undefined") return DEFAULT_LOCALE;
-    const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)?.toLowerCase();
-    if (saved && localeOptions.some((item) => item.code === saved)) {
-      return saved as LocaleCode;
-    }
+    const local = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    const cookie = document.cookie.split(";").map((v) => v.trim()).find((v) => v.startsWith(`${LANGUAGE_STORAGE_KEY}=`))?.split("=")[1];
+    const saved = normalizeLanguage(local || cookie);
+    if (localeOptions.some((item) => item.code === saved)) return saved as LocaleCode;
     return DEFAULT_LOCALE;
   });
 
   useEffect(() => {
     window.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
+    document.cookie = `${LANGUAGE_STORAGE_KEY}=${locale}; path=/; max-age=31536000; samesite=lax`;
     document.documentElement.lang = locale;
     document.documentElement.dir = locale === "ar" || locale === "he" ? "rtl" : "ltr";
   }, [locale]);
