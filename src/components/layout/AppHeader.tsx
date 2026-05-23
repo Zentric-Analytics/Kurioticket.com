@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import {
@@ -22,6 +22,7 @@ import { Button, LinkButton } from "@/components/ui/Button";
 
 export function AppHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
   const isSignedIn = Boolean(session?.user);
 
@@ -86,11 +87,17 @@ export function AppHeader() {
     () => [
       { href: "/flights/results", label: t.flights },
       { href: "/hotels/results", label: t.hotels },
-      { href: "/pricing", label: t.premium },
-      { href: "/support", label: t.support },
-      { href: "/dashboard", label: t.dashboard },
+      { href: "/deals", label: t.deals },
+      { href: "/destinations", label: t.destinations },
+      { href: "/explore", label: t.explore },
+      ...(isSignedIn
+        ? [
+            { href: "/pricing", label: t.premium },
+            { href: "/dashboard", label: t.dashboard },
+          ]
+        : []),
     ],
-    [t]
+    [isSignedIn, t]
   );
 
   const renderFlag = (
@@ -129,6 +136,7 @@ export function AppHeader() {
     setLocale(code);
     setLanguageOpen(false);
     setLanguageQuery("");
+    router.refresh();
   };
 
   const handleMobileNavKey = (
@@ -294,7 +302,7 @@ export function AppHeader() {
             ) : (
               <>
                 <LinkButton
-                  href="/auth/login"
+                  href="/auth/signin"
                   variant="ghost"
                   size="sm"
                   className="h-12 rounded-full px-5 text-base font-semibold"
@@ -303,7 +311,7 @@ export function AppHeader() {
                 </LinkButton>
 
                 <LinkButton
-                  href="/auth/register"
+                  href="/auth/signup"
                   size="sm"
                   className="h-12 rounded-full px-6 text-base font-semibold"
                 >
@@ -387,7 +395,7 @@ export function AppHeader() {
             {!isSignedIn ? (
               <div className="mt-2 grid gap-2">
                 <LinkButton
-                  href="/auth/login"
+                  href="/auth/signin"
                   variant="ghost"
                   size="sm"
                   className="h-11 rounded-xl px-4 font-semibold"
@@ -397,7 +405,7 @@ export function AppHeader() {
                 </LinkButton>
 
                 <LinkButton
-                  href="/auth/register"
+                  href="/auth/signup"
                   size="sm"
                   className="h-11 rounded-xl px-4 font-semibold"
                   onClick={() => setOpen(false)}

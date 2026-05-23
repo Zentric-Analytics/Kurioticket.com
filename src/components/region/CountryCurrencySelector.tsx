@@ -1,13 +1,15 @@
 "use client";
 
-import { Check, ChevronDown, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRegion } from "@/components/region/RegionProvider";
 
 export function CountryCurrencySelector() {
   const { mode, setMode, selectedOption, options } = useRegion();
+
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -23,6 +25,21 @@ export function CountryCurrencySelector() {
     };
   }, []);
 
+  const visibleOptions = useMemo(() => {
+    const q = query.trim().toLowerCase();
+
+    if (!q) {
+      return options;
+    }
+
+    return options.filter((option) => {
+      return (
+        option.country.toLowerCase().includes(q) ||
+        option.currency.toLowerCase().includes(q)
+      );
+    });
+  }, [options, query]);
+
   return (
     <>
       <button
@@ -33,6 +50,7 @@ export function CountryCurrencySelector() {
         aria-expanded={open}
       >
         <span>{selectedOption.currency}</span>
+
         <ChevronDown size={14} className="text-slate-500" />
       </button>
 
@@ -71,8 +89,19 @@ export function CountryCurrencySelector() {
               </button>
             </div>
 
+            <div className="mb-4 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
+              <Search size={16} className="text-slate-500" />
+
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search country or currency"
+                className="w-full border-0 bg-transparent text-sm outline-none"
+              />
+            </div>
+
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {options.map((option) => {
+              {visibleOptions.map((option) => {
                 const isActive = option.code === mode;
 
                 return (
@@ -95,7 +124,10 @@ export function CountryCurrencySelector() {
                       </span>
 
                       {isActive ? (
-                        <Check size={16} className="text-violet-600" />
+                        <Check
+                          size={16}
+                          className="text-violet-600"
+                        />
                       ) : null}
                     </div>
 
