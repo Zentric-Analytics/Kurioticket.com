@@ -4,7 +4,7 @@ import { Check, ChevronDown, Search, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { useRegion } from "@/components/region/RegionProvider";
-import { reloadAfterPreferenceChange } from "@/lib/preferences/preferences";
+import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
 
 export function CountryCurrencySelector() {
   const { mode, setMode, selectedOption, options } = useRegion();
@@ -35,8 +35,12 @@ export function CountryCurrencySelector() {
 
     return options.filter((option) => {
       return (
-        option.country.toLowerCase().includes(normalizedQuery) ||
-        option.currency.toLowerCase().includes(normalizedQuery)
+        option.country
+          .toLowerCase()
+          .includes(normalizedQuery) ||
+        option.currency
+          .toLowerCase()
+          .includes(normalizedQuery)
       );
     });
   }, [options, query]);
@@ -78,8 +82,8 @@ export function CountryCurrencySelector() {
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-600">
-                  Choose how prices are displayed. Language preference is
-                  managed separately.
+                  Choose how prices are displayed.
+                  Language preference is managed separately.
                 </p>
               </div>
 
@@ -87,7 +91,7 @@ export function CountryCurrencySelector() {
                 type="button"
                 onClick={() => setOpen(false)}
                 className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
-                aria-label="Close"
+                aria-label="Close currency selector"
               >
                 <X size={18} />
               </button>

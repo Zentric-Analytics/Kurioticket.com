@@ -20,7 +20,7 @@ import {
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 import { Button, LinkButton } from "@/components/ui/Button";
-import { reloadAfterPreferenceChange } from "@/lib/preferences/preferences";
+import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
 
 export function AppHeader() {
   const pathname = usePathname();
@@ -220,8 +220,8 @@ export function AppHeader() {
 
                         return (
                           <button
-                            type="button"
                             key={option.code}
+                            type="button"
                             role="menuitemradio"
                             aria-checked={active}
                             onClick={() =>
