@@ -1,3 +1,6 @@
+Replace the ENTIRE file with this clean conflict-free version:
+
+```tsx
 "use client";
 
 import {
@@ -32,13 +35,13 @@ const LocaleContext =
 const DEFAULT_LOCALE: LocaleCode = "en-us";
 
 function isSupportedLocale(
-  value: string | null | undefined
+  value: string | null | undefined,
 ): value is LocaleCode {
   return Boolean(
     value &&
       localeOptions.some(
-        (option) => option.code === value
-      )
+        (option) => option.code === value,
+      ),
   );
 }
 
@@ -77,7 +80,6 @@ export function LocaleProvider({
 
   useEffect(() => {
     setStoredLocale(locale);
-
     document.documentElement.lang = locale;
     document.documentElement.dir =
       getTextDirection(locale);
@@ -99,7 +101,7 @@ export function LocaleProvider({
       t: getTranslations(locale),
       locales: localeOptions,
     }),
-    [locale]
+    [locale],
   );
 
   return (
@@ -114,9 +116,10 @@ export function useLocale() {
 
   if (!context) {
     throw new Error(
-      "useLocale must be used inside LocaleProvider"
+      "useLocale must be used inside LocaleProvider",
     );
   }
 
   return context;
 }
+```

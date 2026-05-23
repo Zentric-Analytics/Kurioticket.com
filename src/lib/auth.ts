@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
-
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
@@ -58,14 +57,18 @@ const providers: NextAuthOptions["providers"] = [
       },
     },
 
-    async authorize(credentials, request) {
-      const rateLimitRequest = request
-        ? ({
-            headers: new Headers(
-              request.headers as HeadersInit
-            ),
-          } as Request)
-        : undefined;
+    async authorize(
+      credentials,
+      request
+    ) {
+      const rateLimitRequest =
+        request
+          ? ({
+              headers: new Headers(
+                request.headers as HeadersInit
+              ),
+            } as Request)
+          : undefined;
 
       const loginCode = String(
         credentials?.loginCode || ""
@@ -74,7 +77,9 @@ const providers: NextAuthOptions["providers"] = [
       if (loginCode) {
         const parsedEmail =
           signinSchema.shape.email.safeParse(
-            String(credentials?.email || "")
+            String(
+              credentials?.email || ""
+            )
           );
 
         if (
@@ -84,42 +89,53 @@ const providers: NextAuthOptions["providers"] = [
           return null;
         }
 
-        const email = parsedEmail.data;
+        const email =
+          parsedEmail.data;
 
         try {
           checkAuthRateLimit({
             action: "verify-login",
             email,
-            request: rateLimitRequest,
+            request:
+              rateLimitRequest,
             limit: 10,
-            windowMs: 15 * 60 * 1000,
+            windowMs:
+              15 * 60 * 1000,
           });
         } catch (error) {
-          if (error instanceof AuthRateLimitError) {
-            throw new Error("RateLimited");
+          if (
+            error instanceof
+            AuthRateLimitError
+          ) {
+            throw new Error(
+              "RateLimited"
+            );
           }
 
           throw error;
         }
 
-        const validCode = await verifyLoginCode({
-          email,
-          code: loginCode,
-        });
+        const validCode =
+          await verifyLoginCode({
+            email,
+            code: loginCode,
+          });
 
         if (!validCode) {
           return null;
         }
 
-        const user = await getPrisma().user.findUnique({
-          where: {
-            email,
-          },
-        });
+        const user =
+          await getPrisma().user.findUnique(
+            {
+              where: { email },
+            }
+          );
 
         if (
           !user ||
-          user.status !== "ACTIVE" ||
+          user.status !==
+            "ACTIVE" ||
           !user.emailVerified
         ) {
           return null;
@@ -131,22 +147,20 @@ const providers: NextAuthOptions["providers"] = [
           name: user.name,
           image: user.image,
           role: user.role,
-          isPremium: user.isPremium,
+          isPremium:
+            user.isPremium,
           status: user.status,
-          emailVerified: user.emailVerified,
+          emailVerified:
+            user.emailVerified,
         };
       }
 
-      const parsed = signinSchema.safeParse(
-        credentials
-      );
-
-      if (!parsed.success) {
-        console.error(
-          "[auth:credentials-validation]",
-          parsed.error.flatten().fieldErrors
+      const parsed =
+        signinSchema.safeParse(
+          credentials
         );
 
+      if (!parsed.success) {
         logSafeAuthDiagnostics(
           "[auth:credentials-validation-diagnostics]"
         );
@@ -154,36 +168,42 @@ const providers: NextAuthOptions["providers"] = [
         return null;
       }
 
-      const { email, password } = parsed.data;
+      const {
+        email,
+        password,
+      } = parsed.data;
 
       try {
         checkAuthRateLimit({
           action: "signin",
           email,
-          request: rateLimitRequest,
+          request:
+            rateLimitRequest,
           limit: 10,
-          windowMs: 15 * 60 * 1000,
+          windowMs:
+            15 * 60 * 1000,
         });
       } catch (error) {
-        if (error instanceof AuthRateLimitError) {
-          throw new Error("RateLimited");
+        if (
+          error instanceof
+          AuthRateLimitError
+        ) {
+          throw new Error(
+            "RateLimited"
+          );
         }
 
         throw error;
       }
 
-      const user = await getPrisma().user.findUnique({
-        where: {
-          email,
-        },
-      });
-
-      if (!user?.passwordHash) {
-        console.error(
-          "[auth:credentials-user-missing]",
-          { email }
+      const user =
+        await getPrisma().user.findUnique(
+          {
+            where: { email },
+          }
         );
 
+      if (!user?.passwordHash) {
         logSafeAuthDiagnostics(
           "[auth:credentials-user-missing-diagnostics]",
           { email }
@@ -192,14 +212,19 @@ const providers: NextAuthOptions["providers"] = [
         return null;
       }
 
-      if (user.status !== "ACTIVE") {
-        throw new Error("AccountUnavailable");
+      if (
+        user.status !== "ACTIVE"
+      ) {
+        throw new Error(
+          "AccountUnavailable"
+        );
       }
 
-      const valid = await bcrypt.compare(
-        password,
-        user.passwordHash
-      );
+      const valid =
+        await bcrypt.compare(
+          password,
+          user.passwordHash
+        );
 
       if (!valid) {
         return null;
@@ -211,10 +236,12 @@ const providers: NextAuthOptions["providers"] = [
           { email }
         );
 
-        await sendEmailVerificationCode({
-          email,
-          name: user.name,
-        });
+        await sendEmailVerificationCode(
+          {
+            email,
+            name: user.name,
+          }
+        );
 
         throw new Error(
           "EmailVerificationRequired"
@@ -227,9 +254,11 @@ const providers: NextAuthOptions["providers"] = [
         name: user.name,
         image: user.image,
         role: user.role,
-        isPremium: user.isPremium,
+        isPremium:
+          user.isPremium,
         status: user.status,
-        emailVerified: user.emailVerified,
+        emailVerified:
+          user.emailVerified,
       };
     },
   }),
@@ -238,60 +267,263 @@ const providers: NextAuthOptions["providers"] = [
 if (isGoogleAuthConfigured()) {
   providers.push(
     GoogleProvider({
-      clientId: getGoogleClientId(),
-      clientSecret: getGoogleClientSecret(),
-      allowDangerousEmailAccountLinking: true,
+      clientId:
+        getGoogleClientId(),
+
+      clientSecret:
+        getGoogleClientSecret(),
+
+      allowDangerousEmailAccountLinking:
+        true,
     })
   );
 }
 
-export const authOptions: NextAuthOptions = {
-  adapter: isDatabaseConfigured()
-    ? PrismaAdapter(getPrisma() as any)
-    : undefined,
+export const authOptions: NextAuthOptions =
+  {
+    adapter:
+      isDatabaseConfigured()
+        ? PrismaAdapter(
+            getPrisma() as any
+          )
+        : undefined,
 
-  providers,
+    providers,
 
-  secret: getAuthSecret() || undefined,
+    secret:
+      getAuthSecret() ||
+      undefined,
 
-  session: {
-    strategy: "jwt",
-  },
+    session: {
+      strategy: "jwt",
+    },
 
-  pages: {
-    signIn: "/auth/signin",
-    newUser: "/onboarding",
-  },
+    pages: {
+      signIn:
+        "/auth/signin",
 
-  callbacks: {
-    async signIn({ user, account, profile }) {
-      const email = user.email
-        ?.toLowerCase()
-        .trim();
+      newUser:
+        "/onboarding",
+    },
 
-      if (!email) {
-        return false;
-      }
+    callbacks: {
+      async signIn({
+        user,
+        account,
+        profile,
+      }) {
+        const email =
+          user.email
+            ?.toLowerCase()
+            .trim();
 
-      if (!isDatabaseConfigured()) {
+        if (!email) {
+          return false;
+        }
+
+        if (
+          !isDatabaseConfigured()
+        ) {
+          return true;
+        }
+
+        const dbUser =
+          await getPrisma().user.findUnique(
+            {
+              where: {
+                email,
+              },
+            }
+          );
+
+        if (
+          dbUser?.status &&
+          dbUser.status !==
+            "ACTIVE"
+        ) {
+          return "/auth/signin?error=AccountUnavailable";
+        }
+
+        const isGoogleSignIn =
+          account?.provider ===
+          "google";
+
+        const googleVerified =
+          Boolean(
+            (
+              profile as
+                | {
+                    email_verified?: boolean;
+                  }
+                | undefined
+            )?.email_verified
+          );
+
+        if (
+          dbUser &&
+          !dbUser.emailVerified
+        ) {
+          if (
+            isGoogleSignIn &&
+            googleVerified
+          ) {
+            await getPrisma().user.update(
+              {
+                where: {
+                  id: dbUser.id,
+                },
+
+                data: {
+                  emailVerified:
+                    new Date(),
+                },
+              }
+            );
+          } else {
+            logAuthEvent(
+              "login-blocked-unverified",
+              { email }
+            );
+
+            await sendEmailVerificationCode(
+              {
+                email,
+                name: dbUser.name,
+              }
+            );
+
+            return getEmailVerificationRedirect(
+              email
+            );
+          }
+        }
+
+        const adminEmails =
+          getAdminEmails();
+
+        if (
+          adminEmails.includes(
+            email
+          )
+        ) {
+          await getPrisma().user.updateMany(
+            {
+              where: {
+                email,
+              },
+
+              data: {
+                role: "ADMIN",
+              },
+            }
+          );
+
+          user.role = "ADMIN";
+        }
+
         return true;
-      }
+      },
 
-      const dbUser =
-        await getPrisma().user.findUnique({
-          where: {
-            email,
-          },
-        });
+      async jwt({
+        token,
+        user,
+      }) {
+        if (user) {
+          token.id = user.id;
 
-      if (
-        dbUser?.status &&
-        dbUser.status !== "ACTIVE"
-      ) {
-        return "/auth/signin?error=AccountUnavailable";
-      }
+          token.role =
+            (user as any)
+              .role || "USER";
 
-      const isGoogleSignin =
-        account?.provider === "google";
+          token.isPremium =
+            Boolean(
+              (user as any)
+                .isPremium
+            );
 
-      const google
+          token.status =
+            (user as any)
+              .status ||
+            "ACTIVE";
+
+          token.emailVerified =
+            Boolean(
+              (user as any)
+                .emailVerified
+            );
+        }
+
+        if (
+          token.email &&
+          isDatabaseConfigured()
+        ) {
+          const dbUser =
+            await getPrisma().user.findUnique(
+              {
+                where: {
+                  email:
+                    token.email.toLowerCase(),
+                },
+              }
+            );
+
+          if (dbUser) {
+            token.id =
+              dbUser.id;
+
+            token.role =
+              dbUser.role;
+
+            token.isPremium =
+              dbUser.isPremium;
+
+            token.status =
+              dbUser.status;
+
+            token.emailVerified =
+              Boolean(
+                dbUser.emailVerified
+              );
+          }
+        }
+
+        return token;
+      },
+
+      async session({
+        session,
+        token,
+      }) {
+        if (session.user) {
+          session.user.id =
+            String(
+              token.id || ""
+            );
+
+          session.user.role =
+            String(
+              token.role ||
+                "USER"
+            );
+
+          session.user.isPremium =
+            Boolean(
+              token.isPremium
+            );
+
+          session.user.status =
+            String(
+              token.status ||
+                "ACTIVE"
+            );
+
+          session.user.emailVerified =
+            Boolean(
+              token.emailVerified
+            );
+        }
+
+        return session;
+      },
+    },
+  };

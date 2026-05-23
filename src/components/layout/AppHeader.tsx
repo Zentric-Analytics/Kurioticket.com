@@ -26,25 +26,17 @@ import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences
 export function AppHeader() {
   const pathname = usePathname();
 
-  const { data: session } =
-    useSession();
+  const { data: session } = useSession();
 
-  const isSignedIn = Boolean(
-    session?.user
-  );
+  const isSignedIn = Boolean(session?.user);
 
-  const [open, setOpen] =
+  const [open, setOpen] = useState(false);
+
+  const [languageOpen, setLanguageOpen] =
     useState(false);
 
-  const [
-    languageOpen,
-    setLanguageOpen,
-  ] = useState(false);
-
-  const [
-    languageQuery,
-    setLanguageQuery,
-  ] = useState("");
+  const [languageQuery, setLanguageQuery] =
+    useState("");
 
   const {
     locale,
@@ -54,9 +46,7 @@ export function AppHeader() {
   } = useLocale();
 
   const languageRef =
-    useRef<HTMLDivElement | null>(
-      null
-    );
+    useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onClickOutside = (
@@ -286,7 +276,10 @@ export function AppHeader() {
                     }
                   />
 
-                  <section className="fixed inset-x-4 top-[max(80px,8vh)] z-50 mx-auto max-h-[84vh] w-[min(980px,96vw)] overflow-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl md:inset-x-0 md:p-7">
+                  <section
+                    role="menu"
+                    className="fixed inset-x-4 top-[max(80px,8vh)] z-50 mx-auto max-h-[84vh] w-[min(980px,96vw)] overflow-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl md:inset-x-0 md:p-7"
+                  >
                     <h2 className="text-base font-black text-slate-950">
                       {t.selectLanguage}
                     </h2>
@@ -324,6 +317,8 @@ export function AppHeader() {
                                 option.code
                               }
                               type="button"
+                              role="menuitemradio"
+                              aria-checked={active}
                               onClick={() =>
                                 handleLanguageSelect(
                                   option.code
@@ -374,6 +369,7 @@ export function AppHeader() {
                   variant="ghost"
                   size="sm"
                   className="h-11 w-11 rounded-full p-0"
+                  aria-label={t.notifications}
                 >
                   <Bell size={18} />
                 </Button>
@@ -432,6 +428,8 @@ export function AppHeader() {
           <button
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 text-slate-700 md:hidden"
+            aria-label={t.menu}
+            aria-expanded={open}
             onClick={() =>
               setOpen(
                 (value) =>

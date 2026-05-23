@@ -8,22 +8,34 @@ import { Card } from "@/components/ui/Card";
 const copy = {
   en: {
     title: "Destinations",
-    subtitle: "Explore curated destination ideas and travel inspiration.",
-    cards: ["Beach escapes", "City breaks", "Adventure routes"],
+    subtitle:
+      "Explore curated destination ideas and travel inspiration.",
+    cards: [
+      "Beach escapes",
+      "City breaks",
+      "Adventure routes",
+    ],
   },
 
   fr: {
     title: "Destinations",
     subtitle:
       "Découvrez des idées de destinations et de l'inspiration voyage.",
-    cards: ["Escapades plage", "Séjours urbains", "Itinéraires aventure"],
+    cards: [
+      "Escapades plage",
+      "Séjours urbains",
+      "Itinéraires aventure",
+    ],
   },
 };
 
 export default function DestinationsPage() {
   const { locale } = useLocale();
 
-  const lang = locale.startsWith("fr") ? "fr" : "en";
+  const lang = locale.startsWith("fr")
+    ? "fr"
+    : "en";
+
   const c = copy[lang];
 
   return (
