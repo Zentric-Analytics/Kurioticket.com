@@ -1,8 +1,8 @@
-import { getAdminEmails } from "@/lib/env";
+import { getAdminEmails, getGoogleClientId, getGoogleClientSecret } from "@/lib/env";
 import { isDatabaseConfigured } from "@/lib/prisma";
 
 export function isGoogleAuthConfigured() {
-  return Boolean(process.env.AUTH_GOOGLE_ID?.trim() && process.env.AUTH_GOOGLE_SECRET?.trim());
+  return Boolean(getGoogleClientId() && getGoogleClientSecret());
 }
 
 export function getSafeAuthDiagnostics(input?: { email?: string | null; role?: string | null; status?: string | null }) {
