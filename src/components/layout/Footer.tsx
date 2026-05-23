@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
-import { legalDocuments } from "@/data/legalDocuments";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { legalDocuments } from "@/data/legalDocuments";
 
 export function Footer() {
   const { t } = useLocale();
-  const { data: session } = useSession();
-  const isSignedIn = Boolean(session?.user);
+
+  const { data: session } =
+    useSession();
+
+  const isSignedIn = Boolean(
+    session?.user
+  );
 
   return (
     <footer className="border-t border-indigo-800/40 bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-900 text-white">
@@ -82,14 +87,16 @@ export function Footer() {
               {t.legalCenter}
             </Link>
 
-            {legalDocuments.slice(0, 5).map((document) => (
-              <Link
-                key={document.slug}
-                href={`/legal/${document.slug}`}
-              >
-                {document.title}
-              </Link>
-            ))}
+            {legalDocuments
+              .slice(0, 5)
+              .map((document) => (
+                <Link
+                  key={document.slug}
+                  href={`/legal/${document.slug}`}
+                >
+                  {document.title}
+                </Link>
+              ))}
           </div>
         </div>
       </div>
