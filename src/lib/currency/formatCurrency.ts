@@ -8,9 +8,7 @@ export function formatCurrency(
     style: "currency",
     currency,
     maximumFractionDigits:
-      currency === "JPY"
-        ? 0
-        : 2,
+      currency === "JPY" ? 0 : 2,
   }).format(amount);
 }
 
@@ -19,10 +17,7 @@ export function formatCurrencyFromUsd(
   currency: string
 ) {
   return formatCurrency(
-    convertCurrency(
-      amountUsd,
-      currency
-    ),
+    convertCurrency(amountUsd, currency),
     currency
   );
 }

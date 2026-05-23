@@ -35,7 +35,10 @@ export default function DealsPage() {
   const { locale } = useLocale();
   const { selectedOption } = useRegion();
 
-  const lang = locale.startsWith("fr") ? "fr" : "en";
+  const lang = locale.startsWith("fr")
+    ? "fr"
+    : "en";
+
   const c = copy[lang];
 
   return (

@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
-import { signOut, useSession } from "next-auth/react";
+import {
+  signOut,
+  useSession,
+} from "next-auth/react";
 
 import {
   Bell,
@@ -20,17 +28,24 @@ import {
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
-import { Button, LinkButton } from "@/components/ui/Button";
+import {
+  Button,
+  LinkButton,
+} from "@/components/ui/Button";
 import { reloadAfterPreferenceChange } from "@/lib/preferences/reloadPreferences";
 
 export function AppHeader() {
   const pathname = usePathname();
 
-  const { data: session } = useSession();
+  const { data: session } =
+    useSession();
 
-  const isSignedIn = Boolean(session?.user);
+  const isSignedIn = Boolean(
+    session?.user
+  );
 
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] =
+    useState(false);
 
   const [languageOpen, setLanguageOpen] =
     useState(false);
@@ -46,7 +61,9 @@ export function AppHeader() {
   } = useLocale();
 
   const languageRef =
-    useRef<HTMLDivElement | null>(null);
+    useRef<HTMLDivElement | null>(
+      null
+    );
 
   useEffect(() => {
     const onClickOutside = (
@@ -362,193 +379,9 @@ export function AppHeader() {
                 </>
               ) : null}
             </div>
-
-            {isSignedIn ? (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-11 w-11 rounded-full p-0"
-                  aria-label={t.notifications}
-                >
-                  <Bell size={18} />
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-11 gap-2 rounded-full border border-slate-200 px-4 text-base"
-                >
-                  <UserCircle size={17} />
-
-                  <span className="font-semibold">
-                    {session?.user?.name ||
-                      t.dashboard}
-                  </span>
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    signOut({
-                      callbackUrl:
-                        "/",
-                    })
-                  }
-                  className="h-11 gap-2 rounded-full px-4 text-base"
-                >
-                  <LogOut size={16} />
-
-                  {t.logout}
-                </Button>
-              </>
-            ) : (
-              <>
-                <LinkButton
-                  href="/auth/signin"
-                  variant="ghost"
-                  size="sm"
-                  className="h-12 rounded-full px-5 text-base font-semibold"
-                >
-                  {t.login}
-                </LinkButton>
-
-                <LinkButton
-                  href="/auth/signup"
-                  size="sm"
-                  className="h-12 rounded-full px-6 text-base font-semibold"
-                >
-                  {t.signUp}
-                </LinkButton>
-              </>
-            )}
           </div>
-
-          <button
-            type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 text-slate-700 md:hidden"
-            aria-label={t.menu}
-            aria-expanded={open}
-            onClick={() =>
-              setOpen(
-                (value) =>
-                  !value
-              )
-            }
-          >
-            {open ? (
-              <X size={20} />
-            ) : (
-              <Menu size={20} />
-            )}
-          </button>
-        </div>
-
-        <div className="hidden md:block">
-          <nav className="page-shell flex items-center gap-3 pb-4">
-            {navItems.map(
-              (item) => {
-                const isActive =
-                  pathname ===
-                    item.href ||
-                  pathname.startsWith(
-                    `${item.href}/`
-                  );
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`rounded-lg px-5 py-2.5 text-[1.02rem] font-semibold transition-colors ${
-                      isActive
-                        ? "bg-indigo-100/90 text-indigo-800"
-                        : "text-slate-900 hover:bg-violet-50 hover:text-[#6d28d9]"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              }
-            )}
-          </nav>
         </div>
       </header>
-
-      {open ? (
-        <div className="fixed inset-x-0 top-[104px] z-30 bg-white/95 p-4 shadow-[0_14px_30px_rgba(15,23,42,0.12)] backdrop-blur-md md:hidden">
-          <div className="mb-4 flex items-center gap-2">
-            <CountryCurrencySelector />
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setLanguageOpen(
-                  (value) =>
-                    !value
-                )
-              }
-              className="h-11 gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm"
-            >
-              {renderFlag(
-                selectedLanguage?.countryCode,
-                selectedLanguage?.fallbackText
-              )}
-
-              <span className="text-sm font-semibold">
-                {
-                  selectedLanguage?.label
-                }
-              </span>
-            </Button>
-          </div>
-
-          <nav className="grid gap-2">
-            {navItems.map(
-              (item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-violet-50"
-                  onClick={() =>
-                    setOpen(false)
-                  }
-                >
-                  {item.label}
-                </Link>
-              )
-            )}
-
-            {!isSignedIn ? (
-              <div className="mt-2 grid gap-2">
-                <LinkButton
-                  href="/auth/signin"
-                  variant="ghost"
-                  size="sm"
-                  className="h-11 rounded-xl px-4 font-semibold"
-                  onClick={() =>
-                    setOpen(false)
-                  }
-                >
-                  {t.login}
-                </LinkButton>
-
-                <LinkButton
-                  href="/auth/signup"
-                  size="sm"
-                  className="h-11 rounded-xl px-4 font-semibold"
-                  onClick={() =>
-                    setOpen(false)
-                  }
-                >
-                  {t.signUp}
-                </LinkButton>
-              </div>
-            ) : null}
-          </nav>
-        </div>
-      ) : null}
     </>
   );
 }

@@ -35,8 +35,7 @@ export function RouteProgressProvider({
 
   const value = useMemo(
     () => ({
-      start: () =>
-        setActive(true),
+      start: () => setActive(true),
     }),
     []
   );
@@ -53,7 +52,5 @@ export function RouteProgressProvider({
 }
 
 export function useRouteProgress() {
-  return useContext(
-    RouteProgressContext
-  );
+  return useContext(RouteProgressContext);
 }
