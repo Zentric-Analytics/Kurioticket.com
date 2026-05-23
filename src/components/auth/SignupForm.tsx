@@ -150,13 +150,6 @@ export function SignupForm({
         Create your account
       </h1>
 
-      <p className="mt-2 text-sm text-muted">
-        No passport,
-        government ID,
-        phone number, or
-        address needed.
-      </p>
-
       <form
         action={submit}
         className="mt-5 grid gap-4"
