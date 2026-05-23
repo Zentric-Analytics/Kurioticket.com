@@ -93,20 +93,31 @@ export function AppHeader() {
     [t]
   );
 
-  const renderFlag = (countryCode: string | undefined, fallbackText: string | undefined) => (
-    <span className="relative inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+  const renderFlag = (
+    countryCode: string | undefined,
+    fallbackText: string | undefined
+  ) => (
+    <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
       {countryCode ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
-          alt=""
+          alt={fallbackText ?? "Flag"}
           className="h-full w-full object-cover"
           onError={(event) => {
             event.currentTarget.style.display = "none";
+
+            const fallback =
+              event.currentTarget.nextElementSibling as HTMLElement | null;
+
+            if (fallback) {
+              fallback.style.display = "inline-flex";
+            }
           }}
         />
       ) : null}
-      <span className="absolute inset-0 inline-flex items-center justify-center text-[9px] font-bold text-slate-700">
+
+      <span className="hidden items-center justify-center text-[9px] font-bold text-slate-700">
         {fallbackText ?? "US"}
       </span>
     </span>
@@ -174,13 +185,13 @@ export function AppHeader() {
               {languageOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-40 bg-slate-900/40 md:hidden"
+                    className="fixed inset-0 z-40 bg-slate-900/45"
                     onClick={() => setLanguageOpen(false)}
                   />
 
                   <section
                     role="menu"
-                    className="fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-auto rounded-t-3xl border border-slate-200/80 bg-white p-5 shadow-[0_20px_55px_-24px_rgba(15,23,42,0.4)] md:absolute md:inset-auto md:right-0 md:top-14 md:max-h-[70vh] md:w-[min(92vw,720px)] md:rounded-2xl"
+                    className="fixed inset-x-4 top-[max(80px,8vh)] z-50 mx-auto max-h-[84vh] w-[min(980px,96vw)] overflow-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl md:inset-x-0 md:p-7"
                   >
                     <h2 className="text-base font-black text-slate-950">
                       {t.selectLanguage}
@@ -219,7 +230,10 @@ export function AppHeader() {
                             }`}
                           >
                             <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                              {renderFlag(option.countryCode, option.fallbackText)}
+                              {renderFlag(
+                                option.countryCode,
+                                option.fallbackText
+                              )}
 
                               <span>{option.label}</span>
                             </span>
