@@ -462,12 +462,24 @@ export function AppHeader() {
                   {item.label}
                 </Link>
               ))}
-              {!isSignedIn ? (
+              {isSignedIn ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    signOut({ callbackUrl: "/" });
+                  }}
+                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                >
+                  <LogOut size={15} />
+                  {t.logout}
+                </button>
+              ) : (
                 <>
                   <Link href="/auth/signin" className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">{t.login}</Link>
                   <Link href="/auth/signup" className="rounded-xl bg-violet-600 px-3 py-2 text-sm font-semibold text-white">{t.signUp}</Link>
                 </>
-              ) : null}
+              )}
             </nav>
           </div>
         ) : null}
