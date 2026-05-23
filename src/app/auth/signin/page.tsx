@@ -1,7 +1,6 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SigninForm } from "@/components/auth/SigninForm";
-import { isGoogleAuthConfigured } from "@/lib/auth-diagnostics";
 
 export const dynamic = "force-dynamic";
 
@@ -41,8 +40,14 @@ export default async function SigninPage({
         ? "You were signed out after 30 minutes of inactivity. Log in again to continue."
         : "";
 
-  const googleEnabled =
-    isGoogleAuthConfigured();
+  const googleEnabled = Boolean(
+    process.env.GOOGLE_CLIENT_ID &&
+      process.env.GOOGLE_CLIENT_SECRET
+  );
+
+  console.error(
+    `Google OAuth enabled: ${googleEnabled}`
+  );
 
   return (
     <>

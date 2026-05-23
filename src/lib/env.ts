@@ -6,6 +6,14 @@ export function getAuthSecret() {
   return process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "";
 }
 
+export function getGoogleClientId() {
+  return process.env.GOOGLE_CLIENT_ID || "";
+}
+
+export function getGoogleClientSecret() {
+  return process.env.GOOGLE_CLIENT_SECRET || "";
+}
+
 export function hasTravelProviderKeys() {
   return Boolean(
     (process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET) ||
