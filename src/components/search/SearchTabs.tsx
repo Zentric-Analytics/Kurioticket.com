@@ -42,7 +42,10 @@ type SearchTabsProps = {
 
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
+  fallback?: boolean;
 };
+
+type GeoStatus = "idle" | "loading" | "granted" | "denied" | "unavailable";
 
 const labelAirport = (
   item: AirportOption
@@ -122,6 +125,10 @@ export function SearchTabs({
   ] = useState(false);
   const [toLoading, setToLoading] =
     useState(false);
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
+  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoMessage, setGeoMessage] = useState("");
+  const GEO_RADIUS_KM = 120;
 
   const [
     departureDate,
@@ -220,9 +227,53 @@ export function SearchTabs({
       ? toLiveSuggestions
       : toFallbackSuggestions;
 
+  const buildPlacesUrl = (query: string, context: "origin" | "destination") => {
+    const params = new URLSearchParams();
+    if (query.length >= 2) params.set("q", query);
+    params.set("context", context);
+
+    if (geoCoords && (context === "origin" || context === "destination")) {
+      params.set("lat", geoCoords.lat.toFixed(2));
+      params.set("lng", geoCoords.lng.toFixed(2));
+      params.set("radius", String(GEO_RADIUS_KM));
+    }
+
+    return `/api/flights/places?${params.toString()}`;
+  };
+
+  const requestCurrentLocation = () => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setGeoStatus("unavailable");
+      setGeoMessage("Location unavailable. You can still search by typing.");
+      return;
+    }
+
+    setGeoStatus("loading");
+    setGeoMessage("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const roundedLat = Number(position.coords.latitude.toFixed(2));
+        const roundedLng = Number(position.coords.longitude.toFixed(2));
+        setGeoCoords({ lat: roundedLat, lng: roundedLng });
+        setGeoStatus("granted");
+      },
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) {
+          setGeoStatus("denied");
+          setGeoMessage("Location permission denied. Search is still available.");
+          return;
+        }
+        setGeoStatus("unavailable");
+        setGeoMessage("Could not access location. Search is still available.");
+      },
+      { timeout: 7000, maximumAge: 300000, enableHighAccuracy: false }
+    );
+  };
+
   useEffect(() => {
     const query = from.trim();
-    if (query.length < 2) {
+    const shouldFetchNearby = query.length === 0 && geoStatus === "granted";
+    if (query.length < 2 && !shouldFetchNearby) {
       setFromLoading(false);
       setFromLiveSuggestions([]);
       return;
@@ -237,7 +288,7 @@ export function SearchTabs({
           try {
             const response =
               await fetch(
-                `/api/flights/places?q=${encodeURIComponent(query)}`,
+                buildPlacesUrl(query, "origin"),
                 {
                   signal:
                     controller.signal,
@@ -285,7 +336,7 @@ export function SearchTabs({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [from]);
+  }, [from, geoStatus, geoCoords]);
 
   useEffect(() => {
     const query = to.trim();
@@ -304,7 +355,7 @@ export function SearchTabs({
           try {
             const response =
               await fetch(
-                `/api/flights/places?q=${encodeURIComponent(query)}`,
+                buildPlacesUrl(query, "destination"),
                 {
                   signal:
                     controller.signal,
@@ -352,7 +403,7 @@ export function SearchTabs({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [to]);
+  }, [to, geoCoords]);
 
   useEffect(() => {
     const onPointerDown = (
@@ -961,6 +1012,21 @@ export function SearchTabs({
                 />
                 {fromOpen ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                    {from.trim().length === 0 && geoStatus === "granted" ? (
+                      <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Nearby airports</p>
+                    ) : null}
+                    {from.trim().length === 0 && geoStatus !== "granted" ? (
+                      <button
+                        type="button"
+                        onClick={requestCurrentLocation}
+                        className="block w-full px-3 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        {geoStatus === "loading" ? "Getting your location…" : "Find airports near me"}
+                      </button>
+                    ) : null}
+                    {geoMessage ? (
+                      <p className="px-3 py-1 text-xs text-slate-500">{geoMessage}</p>
+                    ) : null}
                     {fromLoading ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
