@@ -20,6 +20,8 @@ export type PlaceSearchContext = {
   lng?: number;
   radiusKm?: number;
   context?: "origin" | "destination";
+  countryCode?: string;
+  locale?: string;
 };
 
 const cabinClassMap: Record<FlightSearchParams["cabinClass"], string> = {
@@ -142,34 +144,33 @@ const toNumber = (value: unknown) => {
 };
 
 const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearchContext) => {
-  if (!searchContext?.lat || !searchContext?.lng || !searchContext.context) {
-    return places;
-  }
-
   const withIndex = places.map((place, index) => ({ place, index }));
 
   const distanceFor = (place: DuffelPlaceSuggestion) => {
-    if (typeof place.latitude !== "number" || typeof place.longitude !== "number") {
+    if (
+      typeof searchContext?.lat !== "number" ||
+      typeof searchContext?.lng !== "number" ||
+      typeof place.latitude !== "number" ||
+      typeof place.longitude !== "number"
+    ) {
       return Number.POSITIVE_INFINITY;
     }
 
-    return distanceKm(searchContext.lat!, searchContext.lng!, place.latitude, place.longitude);
+    return distanceKm(searchContext.lat, searchContext.lng, place.latitude, place.longitude);
   };
 
-  const destinationBoost = searchContext.context === "destination" ? 0.12 : 1;
+  const destinationBoost = searchContext?.context === "destination" ? 0.12 : 1;
 
   return withIndex
     .sort((a, b) => {
       const aDistance = distanceFor(a.place);
       const bDistance = distanceFor(b.place);
 
-      if (searchContext.context === "origin") {
-        if (aDistance !== bDistance) {
-          return aDistance - bDistance;
-        }
+      if (searchContext?.context === "origin" && Number.isFinite(aDistance) && Number.isFinite(bDistance) && aDistance !== bDistance) {
+        return aDistance - bDistance;
       }
 
-      if (searchContext.context === "destination") {
+      if (searchContext?.context === "destination") {
         const aScore = Number.isFinite(aDistance) ? aDistance * destinationBoost : Number.POSITIVE_INFINITY;
         const bScore = Number.isFinite(bDistance) ? bDistance * destinationBoost : Number.POSITIVE_INFINITY;
         if (aScore !== bScore) {
