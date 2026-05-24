@@ -58,6 +58,8 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const dateWrapRef =
     useRef<HTMLDivElement>(null);
+  const tripTypeWrapRef =
+    useRef<HTMLDivElement>(null);
 
   const [tab, setTab] =
     useState<TabMode>("flights");
@@ -66,6 +68,8 @@ export function SearchTabs({
     useState<TripType>(
       "round-trip"
     );
+  const [tripTypeOpen, setTripTypeOpen] =
+    useState(false);
 
   const [from, setFrom] =
     useState("");
@@ -206,6 +210,13 @@ export function SearchTabs({
           false
         );
       }
+      if (
+        !tripTypeWrapRef.current?.contains(
+          event.target as Node
+        )
+      ) {
+        setTripTypeOpen(false);
+      }
     };
     const onEscape = (
       event: KeyboardEvent
@@ -214,6 +225,7 @@ export function SearchTabs({
         setFlightDatesOpen(
           false
         );
+        setTripTypeOpen(false);
       }
     };
 
@@ -1184,35 +1196,88 @@ export function SearchTabs({
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5 lg:px-1">
-            {/* Multi-city requires a separate results flow before exposing it. */}
-            {(
-              [
-                "round-trip",
-                "one-way",
-              ] as const
-            ).map((mode) => (
+          <div className="pt-0.5 lg:px-1">
+            <div
+              ref={tripTypeWrapRef}
+              className="relative inline-flex"
+            >
               <button
-                key={mode}
                 type="button"
+                aria-expanded={
+                  tripTypeOpen
+                }
+                aria-haspopup="listbox"
                 onClick={() =>
-                  setTripType(
-                    mode
+                  setTripTypeOpen(
+                    (
+                      prevOpen
+                    ) =>
+                      !prevOpen
                   )
                 }
-                className={cn(
-                  "focus-ring rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors",
-                  tripType ===
-                    mode
-                    ? "border-navy bg-slate-900 text-white"
-                    : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-slate-900"
-                )}
+                className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-900"
               >
                 {tripTypeLabel(
-                  mode
+                  tripType
                 )}
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "text-[10px] leading-none text-slate-500 transition-transform",
+                    tripTypeOpen &&
+                      "rotate-180"
+                  )}
+                >
+                  ▾
+                </span>
               </button>
-            ))}
+
+              {tripTypeOpen && (
+                <div
+                  role="listbox"
+                  className="absolute left-0 top-full z-30 mt-1 min-w-[190px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                >
+                  {(
+                    [
+                      "round-trip",
+                      "one-way",
+                    ] as const
+                  ).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => {
+                        setTripType(
+                          mode
+                        );
+                        setTripTypeOpen(
+                          false
+                        );
+                      }}
+                      className={cn(
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors",
+                        tripType ===
+                          mode
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      )}
+                    >
+                      {tripTypeLabel(
+                        mode
+                      )}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled
+                    className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-slate-400"
+                  >
+                    Multi-city —
+                    Coming soon
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </form>
       ) : (
