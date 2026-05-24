@@ -130,10 +130,10 @@ export function SearchTabs({
   const wrapper = useMemo(
     () =>
       cn(
-        "rounded-2xl border border-slate-200 bg-white/95 shadow-[0_18px_45px_rgba(15,23,42,0.10)] backdrop-blur-sm",
+        "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
         compactHero
           ? "p-1.5 sm:p-2"
-          : "p-2.5"
+          : "p-2"
       ),
     [compactHero]
   );
@@ -453,13 +453,13 @@ export function SearchTabs({
           onSubmit={
             onFlightSubmit
           }
-          className="space-y-2"
+          className="space-y-1.5"
         >
-          <div className="overflow-visible">
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.1fr)_auto_minmax(0,1.1fr)_minmax(0,1.35fr)_minmax(0,1.15fr)_112px] lg:items-stretch lg:gap-1.5">
+          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_48px_minmax(0,1.15fr)_minmax(0,1.35fr)_minmax(0,1.15fr)_112px] lg:gap-0">
               <div
                 ref={fromWrapRef}
-                className="relative min-h-[56px] rounded-xl border border-slate-200 bg-white px-3 py-1.5"
+                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200"
               >
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.origin ||
@@ -543,11 +543,11 @@ export function SearchTabs({
                 ) : null}
               </div>
 
-              <div className="flex items-center justify-center">
+              <div className="flex min-h-[54px] items-center justify-center rounded-xl border border-slate-200 bg-white lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900 lg:h-full lg:min-h-[56px]"
+                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
                   aria-label="Swap origin and destination"
                 >
                   <ArrowRightLeft size={16} />
@@ -556,7 +556,7 @@ export function SearchTabs({
 
               <div
                 ref={toWrapRef}
-                className="relative min-h-[56px] rounded-xl border border-slate-200 bg-white px-3 py-1.5"
+                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.destination ||
@@ -637,7 +637,7 @@ export function SearchTabs({
                 ) : null}
               </div>
 
-              <div className="grid min-h-[56px] grid-cols-1 gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-2 sm:divide-x sm:divide-slate-200">
+              <div className="grid min-h-[54px] grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-2 sm:divide-x sm:divide-slate-200 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
                 <div className="sm:pr-2">
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.departureDate ||
@@ -657,7 +657,7 @@ export function SearchTabs({
                           .value
                       )
                     }
-                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
+                    className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
                     required
                   />
                 </div>
@@ -669,12 +669,12 @@ export function SearchTabs({
                     onChange={(event) => setReturnDate(event.target.value)}
                     disabled={tripType !== "round-trip"}
                     required={tripType === "round-trip"}
-                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors disabled:cursor-not-allowed disabled:text-slate-400"
+                    className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors disabled:cursor-not-allowed disabled:text-slate-400"
                   />
                 </div>
               </div>
 
-              <div className="grid min-h-[56px] grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5">
+              <div className="grid min-h-[54px] grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
                 <div>
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.travelers || "Travelers"}</label>
                   <input
@@ -751,7 +751,7 @@ export function SearchTabs({
                   disabled={
                     isFlightSearchDisabled
                   }
-                  className="h-10 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[56px]"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-[54px]"
                 >
                   {t.search ||
                     "Search"}
@@ -759,7 +759,7 @@ export function SearchTabs({
               </div>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          <div className="flex flex-wrap items-center gap-1.5 pt-0.5 lg:px-1">
             {/* Multi-city requires a separate results flow before exposing it. */}
             {(
               [
@@ -776,10 +776,10 @@ export function SearchTabs({
                   )
                 }
                 className={cn(
-                  "focus-ring rounded-full border px-2.5 py-1 text-xs font-semibold transition-colors sm:text-sm",
+                  "focus-ring rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors",
                   tripType ===
                     mode
-                    ? "border-navy bg-navy text-white"
+                    ? "border-navy bg-slate-900 text-white"
                     : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-slate-900"
                 )}
               >
@@ -795,11 +795,11 @@ export function SearchTabs({
           onSubmit={
             onHotelSubmit
           }
-          className="space-y-2"
+          className="space-y-1.5"
         >
-          <div className="overflow-hidden">
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1.35fr)_minmax(0,1.15fr)_112px] lg:items-stretch">
-              <div className="min-h-[56px] rounded-xl border border-slate-200 bg-white px-3 py-1.5">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px] lg:gap-0">
+              <div className="min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200">
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.destination ||
                     "Destination"}
@@ -823,7 +823,7 @@ export function SearchTabs({
                   required
                 />
               </div>
-              <div className="grid min-h-[56px] grid-cols-1 gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-2 sm:divide-x sm:divide-slate-200">
+              <div className="grid min-h-[54px] grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-2 sm:divide-x sm:divide-slate-200 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
                 <div className="sm:pr-2">
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.checkIn ||
@@ -871,7 +871,7 @@ export function SearchTabs({
                   />
                 </div>
               </div>
-              <div className="grid min-h-[56px] grid-cols-2 gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5">
+              <div className="grid min-h-[54px] grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
                 <div>
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.guests ||
@@ -947,7 +947,7 @@ export function SearchTabs({
                   disabled={
                     isHotelSearchDisabled
                   }
-                  className="h-10 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[56px]"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-[54px]"
                 >
                   {t.search ||
                     "Search"}
