@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import {
+  ArrowRightLeft,
   BedDouble,
   Plane,
 } from "lucide-react";
@@ -129,10 +130,10 @@ export function SearchTabs({
   const wrapper = useMemo(
     () =>
       cn(
-        "rounded-2xl bg-white",
+        "rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.65)] backdrop-blur-sm",
         compactHero
-          ? "p-0"
-          : "border border-slate-200 p-4"
+          ? "p-2"
+          : "p-3 sm:p-4"
       ),
     [compactHero]
   );
@@ -296,6 +297,18 @@ export function SearchTabs({
     }
   };
 
+  const onSwapAirports = () => {
+    const fromValue = from;
+    const fromCanonicalCode = fromCode;
+
+    setFrom(to);
+    setFromCode(toCode);
+    setTo(fromValue);
+    setToCode(fromCanonicalCode);
+    setFromOpen(false);
+    setToOpen(false);
+  };
+
   const isFlightSearchDisabled =
     !from.trim() ||
     !to.trim() ||
@@ -399,17 +412,17 @@ export function SearchTabs({
 
   return (
     <section className={wrapper}>
-      <div className="mb-3 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
+      <div className="mb-4 inline-flex rounded-2xl border border-slate-200 bg-slate-100/90 p-1">
         <button
           type="button"
           onClick={() =>
             setTab("flights")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold",
+            "focus-ring inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-colors",
             tab === "flights"
               ? "bg-white text-navy shadow-sm"
-              : "text-slate-600"
+              : "text-slate-600 hover:text-slate-800"
           )}
         >
           <Plane size={16} />
@@ -423,10 +436,10 @@ export function SearchTabs({
             setTab("hotels")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold",
+            "focus-ring inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-colors",
             tab === "hotels"
               ? "bg-white text-navy shadow-sm"
-              : "text-slate-600"
+              : "text-slate-600 hover:text-slate-800"
           )}
         >
           <BedDouble size={16} />
@@ -441,10 +454,7 @@ export function SearchTabs({
             onFlightSubmit
           }
           className={cn(
-            "space-y-4",
-            compactHero
-              ? "rounded-2xl border border-slate-200 p-4"
-              : ""
+            "space-y-4 rounded-2xl border border-slate-200 bg-slate-50/55 p-3 sm:p-4"
           )}
         >
           <div className="flex flex-wrap items-center gap-2">
@@ -463,11 +473,11 @@ export function SearchTabs({
                   )
                 }
                 className={cn(
-                  "focus-ring rounded-full border px-3 py-1.5 text-sm font-semibold",
+                  "focus-ring rounded-full border px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors sm:text-sm",
                   tripType ===
                     mode
                     ? "border-navy bg-navy text-white"
-                    : "border-slate-300 text-slate-700"
+                    : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-slate-900"
                 )}
               >
                 {tripTypeLabel(
@@ -477,313 +487,332 @@ export function SearchTabs({
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <div
-              ref={fromWrapRef}
-              className="relative"
-            >
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.origin ||
-                  "Origin"}
-              </label>
-              <input
-                type="text"
-                value={from}
-                onChange={(
-                  event
-                ) => {
-                  setFrom(
+          <div className="rounded-2xl border border-slate-200 bg-white p-2 md:p-3">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1.2fr_auto_1.2fr_1fr_1fr_auto] xl:items-end xl:gap-0">
+              <div
+                ref={fromWrapRef}
+                className="relative"
+              >
+                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+                  {t.origin ||
+                    "Origin"}
+                </label>
+                <input
+                  type="text"
+                  value={from}
+                  onChange={(
                     event
-                      .target
-                      .value
-                  );
-                  setFromCode("");
-                  setFromOpen(
-                    true
-                  );
-                  setFromHighlight(
-                    0
-                  );
-                }}
-                onFocus={() =>
-                  setFromOpen(
-                    true
-                  )
-                }
-                onKeyDown={(
-                  event
-                ) =>
-                  onKeyNav(
-                    event,
-                    true
-                  )
-                }
-                placeholder="City or airport"
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-                required
-              />
-              {fromOpen &&
-              fromSuggestions.length ? (
-                <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-                  {fromSuggestions.map(
-                    (
-                      option,
-                      index
-                    ) => (
-                      <button
-                        key={`${option.code}-${option.airport}`}
-                        type="button"
-                        onClick={() => {
-                          setFrom(
-                            formatAirportLabel(
-                              option
-                            )
-                          );
-                          setFromCode(
-                            option.code
-                          );
-                          setFromOpen(
-                            false
-                          );
-                        }}
-                        className={cn(
-                          "block w-full px-3 py-2 text-left text-sm",
-                          fromHighlight ===
-                            index
-                            ? "bg-slate-100"
-                            : "hover:bg-slate-50"
-                        )}
-                      >
-                        {formatAirportLabel(
-                          option
-                        )}
-                      </button>
+                  ) => {
+                    setFrom(
+                      event
+                        .target
+                        .value
+                    );
+                    setFromCode("");
+                    setFromOpen(
+                      true
+                    );
+                    setFromHighlight(
+                      0
+                    );
+                  }}
+                  onFocus={() =>
+                    setFromOpen(
+                      true
                     )
-                  )}
-                </div>
-              ) : null}
-            </div>
-
-            <div
-              ref={toWrapRef}
-              className="relative"
-            >
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.destination ||
-                  "Destination"}
-              </label>
-              <input
-                type="text"
-                value={to}
-                onChange={(
-                  event
-                ) => {
-                  setTo(
-                    event.target
-                      .value
-                  );
-                  setToCode("");
-                  setToOpen(
-                    true
-                  );
-                  setToHighlight(
-                    0
-                  );
-                }}
-                onFocus={() =>
-                  setToOpen(true)
-                }
-                onKeyDown={(
-                  event
-                ) =>
-                  onKeyNav(
-                    event,
-                    false
-                  )
-                }
-                placeholder="City or airport"
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-                required
-              />
-              {toOpen &&
-              toSuggestions.length ? (
-                <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
-                  {toSuggestions.map(
-                    (
-                      option,
-                      index
-                    ) => (
-                      <button
-                        key={`${option.code}-${option.airport}`}
-                        type="button"
-                        onClick={() => {
-                          setTo(
-                            formatAirportLabel(
-                              option
-                            )
-                          );
-                          setToCode(
-                            option.code
-                          );
-                          setToOpen(
-                            false
-                          );
-                        }}
-                        className={cn(
-                          "block w-full px-3 py-2 text-left text-sm",
-                          toHighlight ===
-                            index
-                            ? "bg-slate-100"
-                            : "hover:bg-slate-50"
-                        )}
-                      >
-                        {formatAirportLabel(
-                          option
-                        )}
-                      </button>
-                    )
-                  )}
-                </div>
-              ) : null}
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.departureDate ||
-                  "Departure"}
-              </label>
-              <input
-                type="date"
-                value={
-                  departureDate
-                }
-                onChange={(
-                  event
-                ) =>
-                  setDepartureDate(
+                  }
+                  onKeyDown={(
                     event
-                      .target
-                      .value
-                  )
-                }
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-                required
-              />
-            </div>
+                  ) =>
+                    onKeyNav(
+                      event,
+                      true
+                    )
+                  }
+                  placeholder="City or airport"
+                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300"
+                  required
+                />
+                {fromOpen &&
+                fromSuggestions.length ? (
+                  <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                    {fromSuggestions.map(
+                      (
+                        option,
+                        index
+                      ) => (
+                        <button
+                          key={`${option.code}-${option.airport}`}
+                          type="button"
+                          onClick={() => {
+                            setFrom(
+                              formatAirportLabel(
+                                option
+                              )
+                            );
+                            setFromCode(
+                              option.code
+                            );
+                            setFromOpen(
+                              false
+                            );
+                          }}
+                          className={cn(
+                            "block w-full px-3 py-2 text-left text-sm transition-colors",
+                            fromHighlight ===
+                              index
+                              ? "bg-slate-100"
+                              : "hover:bg-slate-50"
+                          )}
+                        >
+                          {formatAirportLabel(
+                            option
+                          )}
+                        </button>
+                      )
+                    )}
+                  </div>
+                ) : null}
+              </div>
 
-            {tripType ===
-            "round-trip" ? (
+              <div className="flex items-end justify-center xl:px-1 xl:pb-1">
+                <button
+                  type="button"
+                  onClick={onSwapAirports}
+                  className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
+                  aria-label="Swap origin and destination"
+                >
+                  <ArrowRightLeft size={16} />
+                </button>
+              </div>
+
+              <div
+                ref={toWrapRef}
+                className="relative"
+              >
+                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+                  {t.destination ||
+                    "Destination"}
+                </label>
+                <input
+                  type="text"
+                  value={to}
+                  onChange={(
+                    event
+                  ) => {
+                    setTo(
+                      event.target
+                        .value
+                    );
+                    setToCode("");
+                    setToOpen(
+                      true
+                    );
+                    setToHighlight(
+                      0
+                    );
+                  }}
+                  onFocus={() =>
+                    setToOpen(true)
+                  }
+                  onKeyDown={(
+                    event
+                  ) =>
+                    onKeyNav(
+                      event,
+                      false
+                    )
+                  }
+                  placeholder="City or airport"
+                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300"
+                  required
+                />
+                {toOpen &&
+                toSuggestions.length ? (
+                  <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                    {toSuggestions.map(
+                      (
+                        option,
+                        index
+                      ) => (
+                        <button
+                          key={`${option.code}-${option.airport}`}
+                          type="button"
+                          onClick={() => {
+                            setTo(
+                              formatAirportLabel(
+                                option
+                              )
+                            );
+                            setToCode(
+                              option.code
+                            );
+                            setToOpen(
+                              false
+                            );
+                          }}
+                          className={cn(
+                            "block w-full px-3 py-2 text-left text-sm transition-colors",
+                            toHighlight ===
+                              index
+                              ? "bg-slate-100"
+                              : "hover:bg-slate-50"
+                          )}
+                        >
+                          {formatAirportLabel(
+                            option
+                          )}
+                        </button>
+                      )
+                    )}
+                  </div>
+                ) : null}
+              </div>
+
               <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600">
-                  {t.returnDate ||
-                    "Return"}
+                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+                  {t.departureDate ||
+                    "Departure"}
                 </label>
                 <input
                   type="date"
                   value={
-                    returnDate
+                    departureDate
                   }
                   onChange={(
                     event
                   ) =>
-                    setReturnDate(
+                    setDepartureDate(
                       event
                         .target
                         .value
                     )
                   }
-                  className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors hover:border-slate-300"
                   required
                 />
               </div>
-            ) : null}
+
+              {tripType ===
+              "round-trip" ? (
+                <div>
+                  <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+                    {t.returnDate ||
+                      "Return"}
+                  </label>
+                  <input
+                    type="date"
+                    value={
+                      returnDate
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setReturnDate(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors hover:border-slate-300"
+                    required
+                  />
+                </div>
+              ) : null}
+
+              <div className="xl:ml-2">
+                <Button
+                  type="submit"
+                  disabled={
+                    isFlightSearchDisabled
+                  }
+                  className="h-12 w-full rounded-xl px-6 text-sm font-bold shadow-md"
+                >
+                  {t.search ||
+                    "Search"}
+                </Button>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.travelers ||
-                  "Travelers"}
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={9}
-                value={
-                  travelers
-                }
-                onChange={(
-                  event
-                ) =>
-                  setTravelers(
-                    String(
-                      Math.min(
-                        9,
-                        Math.max(
-                          1,
-                          Number(
-                            event
-                              .target
-                              .value ||
-                              1
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {t.travelers ||
+                "Travelers"} &middot; {t.cabinClass || "Cabin class"}
+            </p>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-600">
+                  {t.travelers ||
+                    "Travelers"}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={9}
+                  value={
+                    travelers
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setTravelers(
+                      String(
+                        Math.min(
+                          9,
+                          Math.max(
+                            1,
+                            Number(
+                              event
+                                .target
+                                .value ||
+                                1
+                            )
                           )
                         )
                       )
                     )
-                  )
-                }
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-                required
-              />
-            </div>
+                  }
+                  className="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition-colors hover:border-slate-300"
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.cabinClass ||
-                  "Cabin class"}
-              </label>
-              <select
-                value={
-                  cabinClass
-                }
-                onChange={(
-                  event
-                ) =>
-                  setCabinClass(
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-600">
+                  {t.cabinClass ||
+                    "Cabin class"}
+                </label>
+                <select
+                  value={
+                    cabinClass
+                  }
+                  onChange={(
                     event
-                      .target
-                      .value
-                  )
-                }
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-              >
-                <option value="economy">
-                  Economy
-                </option>
-                <option value="premium-economy">
-                  Premium
-                  economy
-                </option>
-                <option value="business">
-                  Business
-                </option>
-                <option value="first">
-                  First
-                </option>
-              </select>
-            </div>
-
-            <div className="flex items-end">
-              <Button
-                type="submit"
-                disabled={
-                  isFlightSearchDisabled
-                }
-                className="h-11 w-full"
-              >
-                {t.search ||
-                  "Search"}
-              </Button>
+                  ) =>
+                    setCabinClass(
+                      event
+                        .target
+                        .value
+                    )
+                  }
+                  className="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition-colors hover:border-slate-300"
+                >
+                  <option value="economy">
+                    Economy
+                  </option>
+                  <option value="premium-economy">
+                    Premium
+                    economy
+                  </option>
+                  <option value="business">
+                    Business
+                  </option>
+                  <option value="first">
+                    First
+                  </option>
+                </select>
+              </div>
             </div>
           </div>
         </form>
@@ -792,170 +821,172 @@ export function SearchTabs({
           onSubmit={
             onHotelSubmit
           }
-          className={cn(
-            "space-y-4",
-            compactHero
-              ? "rounded-2xl border border-slate-200 p-4"
-              : ""
-          )}
+          className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/55 p-3 sm:p-4"
         >
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
-            <div className="lg:col-span-2">
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.destination ||
-                  "Destination"}
-              </label>
-              <input
-                type="text"
-                value={
-                  destination
-                }
-                onChange={(
-                  event
-                ) =>
-                  setDestination(
+          <div className="rounded-2xl border border-slate-200 bg-white p-2 md:p-3">
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_auto] xl:items-end xl:gap-0">
+              <div className="xl:pr-2">
+                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+                  {t.destination ||
+                    "Destination"}
+                </label>
+                <input
+                  type="text"
+                  value={
+                    destination
+                  }
+                  onChange={(
                     event
-                      .target
-                      .value
-                  )
-                }
-                placeholder="City or hotel"
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-                required
-              />
-            </div>
+                  ) =>
+                    setDestination(
+                      event
+                        .target
+                        .value
+                    )
+                  }
+                  placeholder="City or hotel"
+                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300"
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.checkIn ||
-                  "Check-in"}
-              </label>
-              <input
-                type="date"
-                value={checkIn}
-                onChange={(
-                  event
-                ) =>
-                  setCheckIn(
+              <div>
+                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+                  {t.checkIn ||
+                    "Check-in"}
+                </label>
+                <input
+                  type="date"
+                  value={checkIn}
+                  onChange={(
                     event
-                      .target
-                      .value
-                  )
-                }
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-                required
-              />
-            </div>
+                  ) =>
+                    setCheckIn(
+                      event
+                        .target
+                        .value
+                    )
+                  }
+                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors hover:border-slate-300"
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.checkOut ||
-                  "Check-out"}
-              </label>
-              <input
-                type="date"
-                value={checkOut}
-                min={
-                  checkIn ||
-                  undefined
-                }
-                onChange={(
-                  event
-                ) =>
-                  setCheckOut(
+              <div>
+                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+                  {t.checkOut ||
+                    "Check-out"}
+                </label>
+                <input
+                  type="date"
+                  value={checkOut}
+                  min={
+                    checkIn ||
+                    undefined
+                  }
+                  onChange={(
                     event
-                      .target
-                      .value
-                  )
-                }
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-                required
-              />
+                  ) =>
+                    setCheckOut(
+                      event
+                        .target
+                        .value
+                    )
+                  }
+                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors hover:border-slate-300"
+                  required
+                />
+              </div>
+
+              <div className="xl:ml-2">
+                <Button
+                  type="submit"
+                  disabled={
+                    isHotelSearchDisabled
+                  }
+                  className="h-12 w-full rounded-xl px-6 text-sm font-bold shadow-md"
+                >
+                  {t.search ||
+                    "Search"}
+                </Button>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.guests ||
-                  "Guests"}
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={12}
-                value={guests}
-                onChange={(
-                  event
-                ) =>
-                  setGuests(
-                    String(
-                      Math.min(
-                        12,
-                        Math.max(
-                          1,
-                          Number(
-                            event
-                              .target
-                              .value ||
-                              1
+          <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              {t.guests || "Guests"} &middot; {t.rooms || "Rooms"}
+            </p>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-600">
+                  {t.guests ||
+                    "Guests"}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={guests}
+                  onChange={(
+                    event
+                  ) =>
+                    setGuests(
+                      String(
+                        Math.min(
+                          12,
+                          Math.max(
+                            1,
+                            Number(
+                              event
+                                .target
+                                .value ||
+                                1
+                            )
                           )
                         )
                       )
                     )
-                  )
-                }
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-                required
-              />
-            </div>
+                  }
+                  className="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition-colors hover:border-slate-300"
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-600">
-                {t.rooms ||
-                  "Rooms"}
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={6}
-                value={rooms}
-                onChange={(
-                  event
-                ) =>
-                  setRooms(
-                    String(
-                      Math.min(
-                        6,
-                        Math.max(
-                          1,
-                          Number(
-                            event
-                              .target
-                              .value ||
-                              1
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-600">
+                  {t.rooms ||
+                    "Rooms"}
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={6}
+                  value={rooms}
+                  onChange={(
+                    event
+                  ) =>
+                    setRooms(
+                      String(
+                        Math.min(
+                          6,
+                          Math.max(
+                            1,
+                            Number(
+                              event
+                                .target
+                                .value ||
+                                1
+                            )
                           )
                         )
                       )
                     )
-                  )
-                }
-                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
-                required
-              />
-            </div>
-
-            <div className="flex items-end">
-              <Button
-                type="submit"
-                disabled={
-                  isHotelSearchDisabled
-                }
-                className="h-11 w-full"
-              >
-                {t.search ||
-                  "Search"}
-              </Button>
+                  }
+                  className="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition-colors hover:border-slate-300"
+                  required
+                />
+              </div>
             </div>
           </div>
         </form>
