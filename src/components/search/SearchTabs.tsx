@@ -6,7 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
-  type KeyboardEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 
 import { useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRightLeft,
   BedDouble,
+  Calendar,
   Plane,
 } from "lucide-react";
 
@@ -55,6 +56,8 @@ export function SearchTabs({
 
   const toWrapRef =
     useRef<HTMLDivElement>(null);
+  const dateWrapRef =
+    useRef<HTMLDivElement>(null);
 
   const [tab, setTab] =
     useState<TabMode>("flights");
@@ -79,6 +82,10 @@ export function SearchTabs({
 
   const [toOpen, setToOpen] =
     useState(false);
+  const [
+    flightDatesOpen,
+    setFlightDatesOpen,
+  ] = useState(false);
 
   const [
     fromHighlight,
@@ -179,19 +186,118 @@ export function SearchTabs({
       ) {
         setToOpen(false);
       }
+      if (
+        !dateWrapRef.current?.contains(
+          event.target as Node
+        )
+      ) {
+        setFlightDatesOpen(
+          false
+        );
+      }
+    };
+    const onEscape = (
+      event: KeyboardEvent
+    ) => {
+      if (event.key === "Escape") {
+        setFlightDatesOpen(
+          false
+        );
+      }
     };
 
     document.addEventListener(
       "mousedown",
       onPointerDown
     );
+    document.addEventListener(
+      "keydown",
+      onEscape
+    );
 
     return () =>
-      document.removeEventListener(
-        "mousedown",
-        onPointerDown
-      );
+      {
+        document.removeEventListener(
+          "mousedown",
+          onPointerDown
+        );
+        document.removeEventListener(
+          "keydown",
+          onEscape
+        );
+      };
   }, []);
+
+  const formatShortDate = (
+    isoDate: string
+  ) => {
+    if (!isoDate) {
+      return "";
+    }
+
+    const [year, month, day] =
+      isoDate.split("-");
+
+    if (
+      !year ||
+      !month ||
+      !day
+    ) {
+      return "";
+    }
+
+    const parsedDate = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day)
+    );
+
+    if (
+      Number.isNaN(
+        parsedDate.getTime()
+      )
+    ) {
+      return "";
+    }
+
+    return new Intl.DateTimeFormat(
+      "en-US",
+      {
+        month: "short",
+        day: "numeric",
+      }
+    ).format(parsedDate);
+  };
+
+  const dateSummary = useMemo(
+    () => {
+      const departureSummary =
+        formatShortDate(
+          departureDate
+        );
+      const returnSummary =
+        formatShortDate(returnDate);
+
+      if (!departureSummary) {
+        return "Travel dates";
+      }
+
+      if (
+        tripType ===
+          "round-trip" &&
+        returnSummary
+      ) {
+        return `${departureSummary} — ${returnSummary}`;
+      }
+
+      return departureSummary;
+    },
+    [
+      departureDate,
+      returnDate,
+      tripType,
+    ]
+  );
 
   const tripTypeLabel = (
     mode: TripType
@@ -217,7 +323,7 @@ export function SearchTabs({
   };
 
   const onKeyNav = (
-    event: KeyboardEvent<HTMLInputElement>,
+    event: ReactKeyboardEvent<HTMLInputElement>,
     isFrom: boolean
   ) => {
     const list = isFrom
@@ -638,44 +744,130 @@ export function SearchTabs({
               </div>
               </div>
 
-              <div className="grid min-h-[54px] grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-2 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
-                <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                    {t.departureDate ||
-                      "Departure"}
-                  </label>
-                  <input
-                    type="date"
-                    value={
-                      departureDate
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      setDepartureDate(
-                        event
-                          .target
-                          .value
-                      )
-                    }
-                    className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
-                    required
+              <div
+                ref={dateWrapRef}
+                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+              >
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  {t.departureDate ||
+                    "Travel dates"}
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFlightDatesOpen(
+                      (
+                        prev
+                      ) => !prev
+                    )
+                  }
+                  aria-expanded={
+                    flightDatesOpen
+                  }
+                  aria-haspopup="dialog"
+                  aria-label="Choose travel dates"
+                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                >
+                  <Calendar
+                    size={16}
+                    className="shrink-0 text-slate-500"
                   />
-                </div>
-                <span className="hidden items-center text-slate-300 sm:flex">
-                  —
-                </span>
-                <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.returnDate || "Return"}</label>
-                  <input
-                    type="date"
-                    value={returnDate}
-                    onChange={(event) => setReturnDate(event.target.value)}
-                    disabled={tripType !== "round-trip"}
-                    required={tripType === "round-trip"}
-                    className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors disabled:cursor-not-allowed disabled:text-slate-400"
-                  />
-                </div>
+                  <span className="truncate">
+                    {dateSummary}
+                  </span>
+                </button>
+
+                {flightDatesOpen ? (
+                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,560px)] sm:p-5">
+                    <p className="mb-4 text-base font-semibold text-slate-900">
+                      Choose travel dates
+                    </p>
+                    <div
+                      className={cn(
+                        "grid gap-4",
+                        tripType ===
+                          "round-trip"
+                          ? "sm:grid-cols-2"
+                          : "grid-cols-1"
+                      )}
+                    >
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold text-slate-700">
+                          {t.departureDate ||
+                            "Departure"}
+                        </label>
+                        <input
+                          type="date"
+                          value={
+                            departureDate
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            setDepartureDate(
+                              event
+                                .target
+                                .value
+                            )
+                          }
+                          className="focus-ring h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none transition-colors"
+                          required
+                        />
+                      </div>
+                      {tripType ===
+                      "round-trip" ? (
+                        <div>
+                          <label className="mb-2 block text-sm font-semibold text-slate-700">
+                            {t.returnDate ||
+                              "Return"}
+                          </label>
+                          <input
+                            type="date"
+                            value={
+                              returnDate
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              setReturnDate(
+                                event
+                                  .target
+                                  .value
+                              )
+                            }
+                            className="focus-ring h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none transition-colors"
+                            required
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDepartureDate(
+                            ""
+                          );
+                          setReturnDate("");
+                        }}
+                        className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Clear
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFlightDatesOpen(
+                            false
+                          )
+                        }
+                        className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="grid min-h-[54px] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
