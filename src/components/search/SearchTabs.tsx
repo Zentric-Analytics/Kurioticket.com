@@ -43,6 +43,7 @@ type SearchTabsProps = {
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
   fallback?: boolean;
+  source?: string;
 };
 
 type GeoStatus = "idle" | "loading" | "granted" | "denied" | "unavailable";
@@ -128,6 +129,7 @@ export function SearchTabs({
   const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
   const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geoMessage, setGeoMessage] = useState("");
+  const [countryHint, setCountryHint] = useState("");
   const GEO_RADIUS_KM = 120;
 
   const [
@@ -189,48 +191,20 @@ export function SearchTabs({
     [compactHero]
   );
 
-  const fromFallbackSuggestions =
-    useMemo(() => {
-      const query = from.trim();
-      if (!query) {
-        return airports.slice(0, 7);
-      }
-      return airports
-        .filter((a) =>
-          labelAirport(a).includes(
-            query.toLowerCase()
-          )
-        )
-        .slice(0, 7);
-    }, [from]);
+  const fromFallbackSuggestions = useMemo(() => airports.slice(0, 7), []);
 
-  const toFallbackSuggestions =
-    useMemo(() => {
-      const query = to.trim();
-      if (!query) {
-        return airports.slice(0, 7);
-      }
-      return airports
-        .filter((a) =>
-          labelAirport(a).includes(
-            query.toLowerCase()
-          )
-        )
-        .slice(0, 7);
-    }, [to]);
-  const fromSuggestions =
-    fromLiveSuggestions.length
-      ? fromLiveSuggestions
-      : fromFallbackSuggestions;
-  const toSuggestions =
-    toLiveSuggestions.length
-      ? toLiveSuggestions
-      : toFallbackSuggestions;
+  const toFallbackSuggestions = useMemo(() => airports.slice(0, 7), []);
 
-  const buildPlacesUrl = (query: string, context: "origin" | "destination") => {
+  const fromSuggestions = fromLiveSuggestions.length ? fromLiveSuggestions : fromFallbackSuggestions;
+  const toSuggestions = toLiveSuggestions.length ? toLiveSuggestions : toFallbackSuggestions;
+
+  const buildPlacesUrl = (query: string, context: "origin" | "destination", includeDefault = false) => {
     const params = new URLSearchParams();
     if (query.length >= 2) params.set("q", query);
+    if (includeDefault) params.set("default", "true");
     params.set("context", context);
+    if (countryHint) params.set("countryCode", countryHint);
+    if (typeof navigator !== "undefined" && navigator.language) params.set("locale", navigator.language);
 
     if (geoCoords && (context === "origin" || context === "destination")) {
       params.set("lat", geoCoords.lat.toFixed(2));
@@ -240,6 +214,16 @@ export function SearchTabs({
 
     return `/api/flights/places?${params.toString()}`;
   };
+
+
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    const language = navigator.language || "";
+    const parts = language.split("-");
+    if (parts.length > 1 && /^[A-Za-z]{2}$/.test(parts[1])) {
+      setCountryHint(parts[1].toUpperCase());
+    }
+  }, []);
 
   const requestCurrentLocation = () => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -272,8 +256,8 @@ export function SearchTabs({
 
   useEffect(() => {
     const query = from.trim();
-    const shouldFetchNearby = query.length === 0 && geoStatus === "granted";
-    if (query.length < 2 && !shouldFetchNearby) {
+    const shouldFetchDefault = query.length === 0;
+    if (query.length < 2 && !shouldFetchDefault) {
       setFromLoading(false);
       setFromLiveSuggestions([]);
       return;
@@ -288,7 +272,7 @@ export function SearchTabs({
           try {
             const response =
               await fetch(
-                buildPlacesUrl(query, "origin"),
+                buildPlacesUrl(query, "origin", query.length === 0),
                 {
                   signal:
                     controller.signal,
@@ -336,11 +320,12 @@ export function SearchTabs({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [from, geoStatus, geoCoords]);
+  }, [from, geoStatus, geoCoords, countryHint]);
 
   useEffect(() => {
     const query = to.trim();
-    if (query.length < 2) {
+    const shouldFetchDefault = query.length === 0;
+    if (query.length < 2 && !shouldFetchDefault) {
       setToLoading(false);
       setToLiveSuggestions([]);
       return;
@@ -355,7 +340,7 @@ export function SearchTabs({
           try {
             const response =
               await fetch(
-                buildPlacesUrl(query, "destination"),
+                buildPlacesUrl(query, "destination", query.length === 0),
                 {
                   signal:
                     controller.signal,
@@ -403,7 +388,7 @@ export function SearchTabs({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [to, geoCoords]);
+  }, [to, geoCoords, countryHint]);
 
   useEffect(() => {
     const onPointerDown = (
@@ -1012,8 +997,8 @@ export function SearchTabs({
                 />
                 {fromOpen ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {from.trim().length === 0 && geoStatus === "granted" ? (
-                      <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Nearby airports</p>
+                    {from.trim().length === 0 ? (
+                      <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{geoStatus === "granted" ? "Airports near you" : "Recommended airports"}</p>
                     ) : null}
                     {from.trim().length === 0 && geoStatus !== "granted" ? (
                       <button
@@ -1134,6 +1119,7 @@ export function SearchTabs({
                 />
                 {toOpen ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                    {to.trim().length === 0 ? <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Popular destinations</p> : null}
                     {toLoading ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
@@ -1181,7 +1167,7 @@ export function SearchTabs({
                       )
                     ) : (
                       <div className="px-3 py-2 text-sm text-slate-500">
-                        No matching airports or cities
+                        {to.trim().length === 0 ? "Start typing to search airports and cities" : "No matching airports or cities"}
                       </div>
                     )}
                   </div>
