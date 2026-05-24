@@ -125,7 +125,7 @@ export default function Home() {
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
 
-          <div className="page-shell relative pb-5 pt-28 sm:pb-6 sm:pt-32 lg:pt-36">
+          <div className="page-shell relative pb-5 pt-24 sm:pb-6 sm:pt-28 lg:pt-32">
             <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
               <div className="space-y-2.5 pt-1">
                 <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
