@@ -87,7 +87,6 @@ export default function Home() {
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const assurances = [t("homeAssuranceBestPrice"), t("homeAssuranceCompare"), t("homeAssuranceSecure"), t("homeAssuranceSupport")];
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -124,10 +123,6 @@ export default function Home() {
           <div className="page-shell relative pb-8 pt-6 sm:pb-10 sm:pt-8 lg:pt-10">
             <div className="grid min-h-[390px] content-start gap-4 pb-5 sm:min-h-[420px] sm:gap-5 sm:pb-6 lg:min-h-[450px] lg:max-w-[1000px]">
               <div className="space-y-3 pt-2">
-                <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/85 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
-                  {t("homeHeroBadge")}
-                </p>
-
                 <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
                   {t("homeHeroTitle")}
                 </h1>
@@ -136,16 +131,6 @@ export default function Home() {
                   {t("homeHeroSubtitle")}
                 </p>
 
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {assurances.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-[#d9ccff] bg-white/90 px-3 py-1 text-xs font-bold text-[#5b21d6]"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
               </div>
 
               <div className="relative z-10 mt-2 w-full max-w-[1080px]">
