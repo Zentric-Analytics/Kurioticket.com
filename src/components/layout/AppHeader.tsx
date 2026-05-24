@@ -14,13 +14,18 @@ import {
 import Link from "next/link";
 
 import {
+  Bed,
   Bell,
   Check,
   ChevronDown,
+  Compass,
   LogOut,
+  MapPin,
   Menu,
+  Plane,
   Search,
   Sparkles,
+  Tag,
   UserCircle,
   X,
 } from "lucide-react";
@@ -157,22 +162,27 @@ export function AppHeader() {
       {
         href: "/flights/results",
         label: t.flights,
+        icon: Plane,
       },
       {
         href: "/hotels/results",
         label: t.hotels,
+        icon: Bed,
       },
       {
         href: "/deals",
         label: t.deals,
+        icon: Tag,
       },
       {
         href: "/destinations",
         label: t.destinations,
+        icon: MapPin,
       },
       {
         href: "/explore",
         label: t.explore,
+        icon: Compass,
       },
 
       ...(isSignedIn
@@ -316,15 +326,25 @@ export function AppHeader() {
             </div>
 
             <nav className="flex items-center gap-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-indigo-50 hover:bg-white/10 hover:text-white"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-indigo-50 hover:bg-white/10 hover:text-white"
+                  >
+                    {Icon ? (
+                      <Icon
+                        size={15}
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
@@ -479,11 +499,21 @@ export function AppHeader() {
                 </span>
                 <ChevronDown size={14} className="text-slate-500" />
               </button>
-              {navItems.map((item) => (
-                <Link key={item.href} href={item.href} className="rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
-                  {item.label}
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <Link key={item.href} href={item.href} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                    {Icon ? (
+                      <Icon
+                        size={16}
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
               {isSignedIn ? (
                 <button
                   type="button"
