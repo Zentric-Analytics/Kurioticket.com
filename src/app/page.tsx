@@ -143,14 +143,14 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell pb-8 pt-1">
-          <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
-            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.32)] sm:p-5">
-              <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
-                <BadgeCheck size={22} />
+        <section className="page-shell bg-transparent pb-8 pt-1">
+          <div className="grid gap-5 bg-transparent sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-7">
+            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
+              <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-[#5b21d6] sm:h-16 sm:w-16">
+                <BadgeCheck size={30} strokeWidth={2.2} />
               </span>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesMillionsTitle")}
                 </h2>
@@ -161,12 +161,12 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.32)] sm:p-5">
-              <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
-                <Ticket size={22} />
+            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
+              <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-[#5b21d6] sm:h-16 sm:w-16">
+                <Ticket size={30} strokeWidth={2.2} />
               </span>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesFlexibleTitle")}
                 </h2>
@@ -177,12 +177,12 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.32)] sm:p-5">
-              <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
-                <ShieldCheck size={22} />
+            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
+              <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-[#5b21d6] sm:h-16 sm:w-16">
+                <ShieldCheck size={30} strokeWidth={2.2} />
               </span>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesSecureTitle")}
                 </h2>
@@ -193,12 +193,12 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.32)] sm:p-5">
-              <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
-                <WalletCards size={22} />
+            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
+              <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-[#5b21d6] sm:h-16 sm:w-16">
+                <WalletCards size={30} strokeWidth={2.2} />
               </span>
 
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesDealsTitle")}
                 </h2>
