@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getDefaultAirports } from "@/data/airports";
+import { getDefaultAirports, type AirportOption } from "@/data/airports";
 import { resolveCountryCode } from "@/lib/geo/context";
 import { searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 
@@ -8,6 +8,41 @@ const MIN_QUERY_LENGTH = 2;
 const MAX_QUERY_LENGTH = 80;
 const SAFE_QUERY = /^[\p{L}\p{N}\s'.,\-()]+$/u;
 const MAX_RADIUS_KM = 150;
+const COUNTRY_NAME_BY_CODE: Record<string, string> = {
+  US: "United States",
+  NG: "Nigeria",
+  GB: "United Kingdom",
+  CA: "Canada",
+  AE: "United Arab Emirates",
+  FR: "France",
+  DE: "Germany",
+  NL: "Netherlands",
+  ES: "Spain",
+  IT: "Italy",
+};
+
+
+const CONFIDENT_RECOMMENDATION_THRESHOLD = 0.7;
+
+type RecommendedOrigin = {
+  code: string;
+  city: string;
+  airport: string;
+  country?: string;
+  lat?: number;
+  lon?: number;
+  confidence: number;
+};
+
+const toRecommendedOrigin = (airport: AirportOption, confidence: number): RecommendedOrigin => ({
+  code: airport.code,
+  city: airport.city,
+  airport: airport.airport,
+  country: airport.country,
+  lat: airport.lat,
+  lon: airport.lon,
+  confidence,
+});
 
 type SearchContext = "origin" | "destination";
 
@@ -33,6 +68,7 @@ export async function GET(request: Request) {
   const rawRadius = toBoundedNumber(searchParams.get("radius"), 1, MAX_RADIUS_KM);
   const radiusKm = rawRadius ? Math.min(rawRadius, MAX_RADIUS_KM) : undefined;
   const isDefault = searchParams.get("default") === "true";
+  const defaultOriginRequested = searchParams.get("defaultOrigin") === "true";
 
   const countryCode = resolveCountryCode({
     explicitCountryCode: searchParams.get("countryCode"),
@@ -43,6 +79,29 @@ export async function GET(request: Request) {
     ],
     locale,
   });
+
+  if (defaultOriginRequested && context === "origin" && query.length === 0) {
+    const ranked = getDefaultAirports({ context: "origin", countryCode, limit: 2 });
+    const topMatch = ranked[0];
+
+    if (!topMatch || !countryCode) {
+      return NextResponse.json({ recommendedOrigin: null });
+    }
+
+    const secondMatch = ranked[1];
+    const expectedCountryName = countryCode ? COUNTRY_NAME_BY_CODE[countryCode] : undefined;
+    const topCountryMatch = Boolean(expectedCountryName && topMatch.country === expectedCountryName);
+    const confidence = topCountryMatch && (!secondMatch || secondMatch.country !== topMatch.country) ? 0.85 : 0.75;
+
+    if (confidence < CONFIDENT_RECOMMENDATION_THRESHOLD) {
+      return NextResponse.json({ recommendedOrigin: null });
+    }
+
+    return NextResponse.json({
+      recommendedOrigin: toRecommendedOrigin(topMatch, confidence),
+      source: "coarse-context",
+    });
+  }
 
   const isQueryValid =
     query.length >= MIN_QUERY_LENGTH && query.length <= MAX_QUERY_LENGTH && SAFE_QUERY.test(query);
