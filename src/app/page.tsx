@@ -6,13 +6,18 @@ import { useMemo, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
+  BellRing,
   ChevronRight,
   CircleDollarSign,
+  Compass,
+  Filter,
   Heart,
   Hotel,
+  Network,
   Plane,
   ShieldCheck,
   Sparkles,
+  SlidersHorizontal,
   Ticket,
   WalletCards,
 } from "lucide-react";
@@ -146,8 +151,12 @@ export default function Home() {
         <section className="page-shell bg-transparent pb-8 pt-1">
           <div className="grid gap-5 bg-transparent sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-7">
             <article className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
-              <span className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-[#5b21d6] sm:h-20 sm:w-20">
-                <BadgeCheck size={30} strokeWidth={2.2} />
+              <span className="relative inline-flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-violet-100 via-indigo-50 to-fuchsia-100 text-[#5b21d6] shadow-[0_10px_26px_-16px_rgba(79,70,229,0.7)] ring-1 ring-violet-200/70 sm:h-[5.2rem] sm:w-[5.2rem]">
+                <span className="absolute left-2 top-2 h-3 w-3 rounded-full bg-white/80" />
+                <span className="absolute -bottom-1.5 -right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-violet-200 bg-white text-indigo-500 shadow-sm">
+                  <Compass size={14} strokeWidth={2.4} />
+                </span>
+                <Network size={32} strokeWidth={2.2} />
               </span>
 
               <div className="space-y-2.5">
@@ -162,8 +171,12 @@ export default function Home() {
             </article>
 
             <article className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
-              <span className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-[#5b21d6] sm:h-20 sm:w-20">
-                <Ticket size={30} strokeWidth={2.2} />
+              <span className="relative inline-flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-indigo-100 via-violet-50 to-sky-100 text-indigo-600 shadow-[0_10px_26px_-16px_rgba(99,102,241,0.72)] ring-1 ring-indigo-200/80 sm:h-[5.2rem] sm:w-[5.2rem]">
+                <span className="absolute right-2 top-2 h-3 w-3 rounded-full bg-white/80" />
+                <span className="absolute -bottom-1.5 -right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-indigo-200 bg-white text-violet-500 shadow-sm">
+                  <SlidersHorizontal size={14} strokeWidth={2.4} />
+                </span>
+                <Filter size={32} strokeWidth={2.3} />
               </span>
 
               <div className="space-y-2.5">
@@ -178,8 +191,12 @@ export default function Home() {
             </article>
 
             <article className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
-              <span className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-[#5b21d6] sm:h-20 sm:w-20">
-                <ShieldCheck size={30} strokeWidth={2.2} />
+              <span className="relative inline-flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-100 text-teal-700 shadow-[0_10px_26px_-16px_rgba(20,184,166,0.6)] ring-1 ring-emerald-200/80 sm:h-[5.2rem] sm:w-[5.2rem]">
+                <span className="absolute left-2 top-2 h-3 w-3 rounded-full bg-white/80" />
+                <span className="absolute -bottom-1.5 -right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200 bg-white text-emerald-500 shadow-sm">
+                  <BadgeCheck size={14} strokeWidth={2.5} />
+                </span>
+                <ShieldCheck size={32} strokeWidth={2.3} />
               </span>
 
               <div className="space-y-2.5">
@@ -194,8 +211,12 @@ export default function Home() {
             </article>
 
             <article className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
-              <span className="inline-flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-[#5b21d6] sm:h-20 sm:w-20">
-                <WalletCards size={30} strokeWidth={2.2} />
+              <span className="relative inline-flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-amber-100 via-orange-50 to-rose-100 text-orange-600 shadow-[0_10px_26px_-16px_rgba(249,115,22,0.62)] ring-1 ring-amber-200/80 sm:h-[5.2rem] sm:w-[5.2rem]">
+                <span className="absolute right-2 top-2 h-3 w-3 rounded-full bg-white/80" />
+                <span className="absolute -bottom-1.5 -right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-orange-200 bg-white text-rose-500 shadow-sm">
+                  <BellRing size={14} strokeWidth={2.4} />
+                </span>
+                <CircleDollarSign size={32} strokeWidth={2.3} />
               </span>
 
               <div className="space-y-2.5">
