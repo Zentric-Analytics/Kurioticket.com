@@ -8,6 +8,7 @@ import {
   ArrowRight,
   BadgeCheck,
   BellRing,
+  ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   Compass,
@@ -92,13 +93,15 @@ export default function Home() {
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const destinationsRailRef = useRef<HTMLDivElement>(null);
 
-  const scrollDestinationsRail = () => {
+  const scrollDestinationsRail = (direction: "left" | "right") => {
     const rail = destinationsRailRef.current;
 
     if (!rail) return;
 
+    const amount = Math.round(rail.clientWidth * 0.85);
+
     rail.scrollBy({
-      left: Math.round(rail.clientWidth * 0.85),
+      left: direction === "left" ? -amount : amount,
       behavior: "smooth",
     });
   };
@@ -181,8 +184,17 @@ export default function Home() {
           <div className="relative mt-6">
             <button
               type="button"
+              aria-label="Previous destinations"
+              onClick={() => scrollDestinationsRail("left")}
+              className="focus-ring absolute -left-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+            >
+              <ChevronLeft size={18} />
+            </button>
+
+            <button
+              type="button"
               aria-label={t("homeNextDestinations")}
-              onClick={scrollDestinationsRail}
+              onClick={() => scrollDestinationsRail("right")}
               className="focus-ring absolute -right-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
             >
               <ChevronRight size={18} />
