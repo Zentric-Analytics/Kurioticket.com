@@ -17,7 +17,7 @@ export default function GuidesPage() {
   return (
     <>
       <AppHeader />
-      <main className="flex-1 bg-gradient-to-b from-indigo-50 via-white to-violet-50/40 py-10">
+      <main className="flex-1 bg-gradient-to-b from-indigo-50 via-white to-violet-50/40 pt-24 pb-10 sm:pt-28 lg:pt-28">
         <section className="page-shell">
         <h1 className="text-4xl font-extrabold tracking-tight text-indigo-950">Travel Intelligence Guides</h1>
         <p className="mt-3 max-w-2xl text-slate-600">Content foundation for route, airport, destination, cheap route, hotel, and travel intelligence articles.</p>

@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 py-8">
+      <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
         {!session?.user ? (
           <Card className="p-6">
             <h1 className="text-2xl font-bold text-navy">Your travel dashboard</h1>

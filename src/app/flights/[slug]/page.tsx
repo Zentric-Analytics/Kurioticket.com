@@ -19,7 +19,7 @@ export default async function FlightRouteLandingPage({ params }: { params: Promi
       <AppHeader />
       <main className="flex-1">
         <section className="border-b border-border bg-white">
-          <div className="page-shell py-8">
+          <div className="page-shell pt-24 pb-8 sm:pt-28 lg:pt-28">
             <p className="text-sm font-semibold text-teal-dark">Future route intelligence page</p>
             <h1 className="mt-2 text-3xl font-bold text-navy">{cheapRouteTitle(slug)}</h1>
             <p className="mt-3 max-w-2xl text-muted">
