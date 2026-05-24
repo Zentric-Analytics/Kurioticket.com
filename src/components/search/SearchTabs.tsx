@@ -456,10 +456,10 @@ export function SearchTabs({
           className="space-y-1.5"
         >
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_48px_minmax(0,1.15fr)_minmax(0,1.35fr)_minmax(0,1.15fr)_112px] lg:gap-0">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1.25fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div
                 ref={fromWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:pr-8"
               >
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.origin ||
@@ -541,16 +541,13 @@ export function SearchTabs({
                     )}
                   </div>
                 ) : null}
-              </div>
-
-              <div className="flex min-h-[54px] items-center justify-center rounded-xl border border-slate-200 bg-white lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
+                  className="focus-ring absolute right-1.5 top-1/2 z-10 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900 lg:right-0 lg:translate-x-1/2"
                   aria-label="Swap origin and destination"
                 >
-                  <ArrowRightLeft size={16} />
+                  <ArrowRightLeft size={14} />
                 </button>
               </div>
 
@@ -637,8 +634,8 @@ export function SearchTabs({
                 ) : null}
               </div>
 
-              <div className="grid min-h-[54px] grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-2 sm:divide-x sm:divide-slate-200 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
-                <div className="sm:pr-2">
+              <div className="grid min-h-[54px] grid-cols-1 gap-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-2 sm:divide-x sm:divide-slate-200 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
+                <div className="sm:pr-2.5">
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.departureDate ||
                       "Departure"}
@@ -661,7 +658,7 @@ export function SearchTabs({
                     required
                   />
                 </div>
-                <div className="sm:pl-2">
+                <div className="sm:pl-2.5">
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.returnDate || "Return"}</label>
                   <input
                     type="date"
@@ -674,8 +671,8 @@ export function SearchTabs({
                 </div>
               </div>
 
-              <div className="grid min-h-[54px] grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
-                <div>
+              <div className="grid min-h-[54px] grid-cols-2 gap-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 divide-x divide-slate-200 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
+                <div className="pr-2.5">
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.travelers || "Travelers"}</label>
                   <input
                     type="number"
@@ -708,7 +705,7 @@ export function SearchTabs({
                     required
                   />
                 </div>
-                <div>
+                <div className="pl-2.5">
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.cabinClass ||
                       "Cabin class"}
