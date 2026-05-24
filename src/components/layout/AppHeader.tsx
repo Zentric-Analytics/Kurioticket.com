@@ -12,6 +12,7 @@ import {
   useSession,
 } from "next-auth/react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import {
   Bed,
@@ -60,6 +61,8 @@ export function AppHeader() {
     t,
     locales,
   } = useLocale();
+
+  const pathname = usePathname();
 
   const languageRef =
     useRef<HTMLDivElement | null>(
@@ -200,6 +203,42 @@ export function AppHeader() {
     ],
     [isSignedIn, t]
   );
+
+  const isNavItemActive = (
+    href: string
+  ) => {
+    if (href.startsWith("/flights")) {
+      return pathname.startsWith(
+        "/flights"
+      );
+    }
+
+    if (href.startsWith("/hotels")) {
+      return pathname.startsWith(
+        "/hotels"
+      );
+    }
+
+    if (href === "/deals") {
+      return pathname.startsWith(
+        "/deals"
+      );
+    }
+
+    if (href === "/destinations") {
+      return pathname.startsWith(
+        "/destinations"
+      );
+    }
+
+    if (href === "/explore") {
+      return pathname.startsWith(
+        "/explore"
+      );
+    }
+
+    return pathname === href;
+  };
 
   const mobilePrimaryNavItems =
     useMemo(
@@ -502,7 +541,7 @@ export function AppHeader() {
           ) : null}
         </div>
 
-        <nav className="border-t border-white/10 bg-white/5 md:hidden">
+        <nav className="bg-white/5 md:hidden">
           <div className="page-shell overflow-x-auto py-2">
             <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
               {mobilePrimaryNavItems.map(
@@ -510,11 +549,20 @@ export function AppHeader() {
                   const Icon =
                     item.icon;
 
+                  const active =
+                    isNavItemActive(
+                      item.href
+                    );
+
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold text-indigo-50 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900 ${
+                        active
+                          ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm"
+                          : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
+                      }`}
                     >
                       {Icon ? (
                         <Icon
