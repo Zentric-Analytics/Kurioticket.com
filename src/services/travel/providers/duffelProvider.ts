@@ -143,6 +143,13 @@ const toNumber = (value: unknown) => {
   return undefined;
 };
 
+const normalizeSuggestionText = (value: string) =>
+  value
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .toLowerCase();
+
 const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearchContext) => {
   const withIndex = places.map((place, index) => ({ place, index }));
 
@@ -202,7 +209,8 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
       7000,
     );
 
-    const seen = new Set<string>();
+    const seenCodes = new Set<string>();
+    const seenNames = new Set<string>();
     const results: DuffelPlaceSuggestion[] = [];
 
     for (const item of response.data || []) {
@@ -212,9 +220,12 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
 
       if (!code || !city || !airport) continue;
 
-      const key = `${code}|${airport}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
+      if (seenCodes.has(code)) continue;
+      const nameKey = `${normalizeSuggestionText(city)}|${normalizeSuggestionText(airport)}`;
+      if (seenNames.has(nameKey)) continue;
+
+      seenCodes.add(code);
+      seenNames.add(nameKey);
 
       results.push({
         code,
