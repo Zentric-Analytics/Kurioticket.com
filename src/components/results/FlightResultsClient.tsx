@@ -332,7 +332,7 @@ export function FlightResultsClient() {
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[#f6f8fb] py-6 lg:py-8">
+      <main className="flex-1 bg-[#f6f8fb] pt-24 pb-8 sm:pt-28 lg:pt-28">
         <section className="page-shell">
           <div className="relative overflow-hidden rounded-3xl bg-[#0d2a66]">
             <div className="relative min-h-[600px] sm:min-h-[620px] lg:min-h-[500px]">
@@ -715,7 +715,7 @@ export function FlightResultsClient() {
   }
 
   return (
-    <main className="flex-1 bg-[#f6f8fb]">
+    <main className="flex-1 bg-[#f6f8fb] pt-24 pb-8 sm:pt-28 lg:pt-28">
       <div className="sticky top-20 z-30 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur">
         <div className="page-shell flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
           <div>

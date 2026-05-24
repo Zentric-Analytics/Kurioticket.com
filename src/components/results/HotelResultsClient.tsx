@@ -79,7 +79,7 @@ export function HotelResultsClient() {
   const filtered = results.filter((hotel) => hotel.totalPrice <= maxPrice && hotel.rating >= minRating);
 
   return (
-    <main className="flex-1">
+    <main className="flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
       <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
         <div className="page-shell flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
           <div>
