@@ -21,6 +21,7 @@ import {
   Menu,
   Search,
   Sparkles,
+  UserCircle,
   X,
 } from "lucide-react";
 
@@ -330,21 +331,39 @@ export function AppHeader() {
             </nav>
           </div>
 
-          <button
-            type="button"
-            className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-700 md:hidden"
-            onClick={() =>
-              setOpen(
-                (value) => !value
-              )
-            }
-          >
-            {open ? (
-              <X size={18} />
-            ) : (
-              <Menu size={18} />
-            )}
-          </button>
+          <div className="flex items-center gap-2 md:hidden">
+            <Link
+              href={
+                isSignedIn
+                  ? "/dashboard"
+                  : "/auth/signin"
+              }
+              aria-label={
+                isSignedIn
+                  ? "Open dashboard"
+                  : "Sign in"
+              }
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-700"
+            >
+              <UserCircle size={18} />
+            </Link>
+
+            <button
+              type="button"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-700"
+              onClick={() =>
+                setOpen(
+                  (value) => !value
+                )
+              }
+            >
+              {open ? (
+                <X size={18} />
+              ) : (
+                <Menu size={18} />
+              )}
+            </button>
+          </div>
 
           {languageOpen ? (
             <>
