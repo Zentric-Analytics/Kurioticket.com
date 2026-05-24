@@ -254,10 +254,10 @@ export function AppHeader() {
               <Sparkles size={24} />
             </span>
 
-            Curioticket
+            <span className="leading-none">Curioticket</span>
           </Link>
 
-          <div className="hidden flex-1 flex-col justify-center gap-2 md:flex">
+          <div className="hidden flex-1 flex-col gap-3 md:flex">
             <div className="flex items-center justify-end gap-3">
               <CountryCurrencySelector />
 
@@ -318,7 +318,7 @@ export function AppHeader() {
               )}
             </div>
 
-            <nav className="flex items-center justify-end gap-2">
+            <nav className="flex items-center gap-2">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
