@@ -133,7 +133,7 @@ export default function Home() {
 
               </div>
 
-              <div className="relative z-10 mt-0.5 w-full max-w-[1240px]">
+              <div className="relative z-10 mt-0.5 w-full max-w-[1280px]">
                 <SearchTabs
                   t={t as unknown as Record<string, string>}
                   compactHero
