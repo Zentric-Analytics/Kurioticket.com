@@ -106,6 +106,17 @@ export function SearchTabs({
     returnDate,
     setReturnDate,
   ] = useState("");
+  const [
+    visibleMonthDate,
+    setVisibleMonthDate,
+  ] = useState(() => {
+    const now = new Date();
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    );
+  });
 
   const [
     travelers,
@@ -298,6 +309,136 @@ export function SearchTabs({
       tripType,
     ]
   );
+
+  const weekdays = [
+    "Sun",
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+  ];
+
+  const parseIsoDate = (
+    value: string
+  ) => {
+    if (!value) return null;
+    const [year, month, day] =
+      value.split("-");
+    if (
+      !year ||
+      !month ||
+      !day
+    ) {
+      return null;
+    }
+    const parsed = new Date(
+      Number(year),
+      Number(month) - 1,
+      Number(day)
+    );
+    return Number.isNaN(
+      parsed.getTime()
+    )
+      ? null
+      : parsed;
+  };
+
+  const toIsoDate = (
+    date: Date
+  ) => {
+    const year =
+      date.getFullYear();
+    const month = String(
+      date.getMonth() + 1
+    ).padStart(2, "0");
+    const day = String(
+      date.getDate()
+    ).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  const addMonths = (
+    date: Date,
+    offset: number
+  ) =>
+    new Date(
+      date.getFullYear(),
+      date.getMonth() + offset,
+      1
+    );
+
+  const buildMonthCells = (
+    monthDate: Date
+  ) => {
+    const firstDay =
+      new Date(
+        monthDate.getFullYear(),
+        monthDate.getMonth(),
+        1
+      );
+    const startOffset =
+      firstDay.getDay();
+    const startDate = new Date(
+      monthDate.getFullYear(),
+      monthDate.getMonth(),
+      1 - startOffset
+    );
+    return Array.from(
+      { length: 42 },
+      (_, index) =>
+        new Date(
+          startDate.getFullYear(),
+          startDate.getMonth(),
+          startDate.getDate() +
+            index
+        )
+    );
+  };
+
+  const departureParsed =
+    parseIsoDate(
+      departureDate
+    );
+  const returnParsed =
+    parseIsoDate(returnDate);
+
+  const onSelectDate = (
+    date: Date
+  ) => {
+    const selectedIso =
+      toIsoDate(date);
+
+    if (tripType === "one-way") {
+      setDepartureDate(
+        selectedIso
+      );
+      return;
+    }
+
+    if (
+      !departureDate ||
+      (departureDate &&
+        returnDate)
+    ) {
+      setDepartureDate(
+        selectedIso
+      );
+      setReturnDate("");
+      return;
+    }
+
+    if (selectedIso < departureDate) {
+      setDepartureDate(
+        selectedIso
+      );
+      setReturnDate("");
+      return;
+    }
+
+    setReturnDate(selectedIso);
+  };
 
   const tripTypeLabel = (
     mode: TripType
@@ -778,68 +919,156 @@ export function SearchTabs({
                 </button>
 
                 {flightDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,560px)] sm:p-5">
+                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,740px)] sm:p-5">
                     <p className="mb-4 text-base font-semibold text-slate-900">
                       Choose travel dates
                     </p>
-                    <div
-                      className={cn(
-                        "grid gap-4",
-                        tripType ===
-                          "round-trip"
-                          ? "sm:grid-cols-2"
-                          : "grid-cols-1"
-                      )}
-                    >
-                      <div>
-                        <label className="mb-2 block text-sm font-semibold text-slate-700">
-                          {t.departureDate ||
-                            "Departure"}
-                        </label>
-                        <input
-                          type="date"
-                          value={
-                            departureDate
-                          }
-                          onChange={(
-                            event
-                          ) =>
-                            setDepartureDate(
-                              event
-                                .target
-                                .value
-                            )
-                          }
-                          className="focus-ring h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none transition-colors"
-                          required
-                        />
-                      </div>
-                      {tripType ===
-                      "round-trip" ? (
-                        <div>
-                          <label className="mb-2 block text-sm font-semibold text-slate-700">
-                            {t.returnDate ||
-                              "Return"}
-                          </label>
-                          <input
-                            type="date"
-                            value={
-                              returnDate
-                            }
-                            onChange={(
-                              event
-                            ) =>
-                              setReturnDate(
-                                event
-                                  .target
-                                  .value
+                    <div className="mb-4 flex items-center justify-between">
+                      <button
+                        type="button"
+                        aria-label="Previous month"
+                        onClick={() =>
+                          setVisibleMonthDate(
+                            (prev) =>
+                              addMonths(
+                                prev,
+                                -1
                               )
-                            }
-                            className="focus-ring h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-950 outline-none transition-colors"
-                            required
-                          />
-                        </div>
-                      ) : null}
+                          )
+                        }
+                        className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Prev
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Next month"
+                        onClick={() =>
+                          setVisibleMonthDate(
+                            (prev) =>
+                              addMonths(
+                                prev,
+                                1
+                              )
+                          )
+                        }
+                        className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Next
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {[0, 1].map(
+                        (monthOffset) => {
+                          const monthDate =
+                            addMonths(
+                              visibleMonthDate,
+                              monthOffset
+                            );
+                          const cells =
+                            buildMonthCells(
+                              monthDate
+                            );
+                          return (
+                            <div
+                              key={monthOffset}
+                            >
+                              <p className="mb-2 text-center text-sm font-semibold text-slate-800">
+                                {monthDate.toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month:
+                                      "long",
+                                    year: "numeric",
+                                  }
+                                )}
+                              </p>
+                              <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                                {weekdays.map(
+                                  (
+                                    weekday
+                                  ) => (
+                                    <span
+                                      key={
+                                        weekday
+                                      }
+                                    >
+                                      {
+                                        weekday
+                                      }
+                                    </span>
+                                  )
+                                )}
+                              </div>
+                              <div className="grid grid-cols-7 gap-1">
+                                {cells.map(
+                                  (
+                                    day
+                                  ) => {
+                                    const iso =
+                                      toIsoDate(
+                                        day
+                                      );
+                                    const inCurrentMonth =
+                                      day.getMonth() ===
+                                      monthDate.getMonth();
+                                    const isDeparture =
+                                      iso ===
+                                      departureDate;
+                                    const isReturn =
+                                      iso ===
+                                      returnDate;
+                                    const isInRange =
+                                      !!(
+                                        departureParsed &&
+                                        returnParsed &&
+                                        day >
+                                          departureParsed &&
+                                        day <
+                                          returnParsed
+                                      );
+                                    return (
+                                      <button
+                                        key={
+                                          iso
+                                        }
+                                        type="button"
+                                        aria-label={`Select ${day.toLocaleDateString(
+                                          "en-US",
+                                          {
+                                            month:
+                                              "long",
+                                            day: "numeric",
+                                            year: "numeric",
+                                          }
+                                        )}`}
+                                        onClick={() =>
+                                          onSelectDate(
+                                            day
+                                          )
+                                        }
+                                        className={cn(
+                                          "focus-ring flex h-10 items-center justify-center rounded-full text-sm transition-colors",
+                                          inCurrentMonth
+                                            ? "text-slate-900 hover:bg-indigo-50"
+                                            : "text-slate-300",
+                                          isInRange &&
+                                            "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
+                                          (isDeparture ||
+                                            isReturn) &&
+                                            "bg-indigo-700 text-white hover:bg-indigo-700"
+                                        )}
+                                      >
+                                        {day.getDate()}
+                                      </button>
+                                    );
+                                  }
+                                )}
+                              </div>
+                            </div>
+                          );
+                        }
+                      )}
                     </div>
                     <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
                       <button
