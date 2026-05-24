@@ -130,10 +130,10 @@ export function SearchTabs({
   const wrapper = useMemo(
     () =>
       cn(
-        "rounded-3xl border border-slate-200/80 bg-white/95 backdrop-blur-sm",
+        "rounded-2xl border border-slate-200 bg-white/95 shadow-[0_18px_45px_rgba(15,23,42,0.10)] backdrop-blur-sm",
         compactHero
           ? "p-2 sm:p-2.5"
-          : "p-2.5 sm:p-3"
+          : "p-2.5"
       ),
     [compactHero]
   );
@@ -412,14 +412,14 @@ export function SearchTabs({
 
   return (
     <section className={wrapper}>
-      <div className="mb-2 inline-flex rounded-2xl border border-slate-200 bg-slate-100/90 p-1">
+      <div className="mb-2 inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1">
         <button
           type="button"
           onClick={() =>
             setTab("flights")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors",
+            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
             tab === "flights"
               ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800"
@@ -436,7 +436,7 @@ export function SearchTabs({
             setTab("hotels")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors",
+            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
             tab === "hotels"
               ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800"
@@ -455,7 +455,7 @@ export function SearchTabs({
           }
           className="space-y-2"
         >
-          <div className="flex flex-wrap items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1.5">
             {(
               [
                 "round-trip",
@@ -471,7 +471,7 @@ export function SearchTabs({
                   )
                 }
                 className={cn(
-                  "focus-ring rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition-colors sm:text-xs",
+                  "focus-ring rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
                   tripType ===
                     mode
                     ? "border-navy bg-navy text-white"
@@ -485,13 +485,13 @@ export function SearchTabs({
             ))}
           </div>
 
-          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white">
-            <div className="grid grid-cols-1 gap-2 p-2 sm:grid-cols-2 xl:grid-cols-[1.2fr_auto_1.2fr_1.2fr_1fr_auto] xl:items-stretch xl:gap-0 xl:p-0">
+          <div className="overflow-visible">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.12fr)_auto_minmax(0,1.12fr)_minmax(0,0.92fr)_minmax(0,0.92fr)_minmax(0,1.05fr)_auto] lg:items-stretch lg:gap-2">
               <div
                 ref={fromWrapRef}
-                className="relative rounded-xl border border-slate-200 px-3 py-2 xl:rounded-none xl:border-0 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]"
+                className="relative min-h-[66px] rounded-xl border border-slate-200 bg-white px-3 py-2"
               >
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.origin ||
                     "Origin"}
                 </label>
@@ -528,7 +528,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or airport"
-                  className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400"
+                  className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
                 {fromOpen &&
@@ -573,11 +573,11 @@ export function SearchTabs({
                 ) : null}
               </div>
 
-              <div className="flex items-center justify-center xl:px-1">
+              <div className="flex items-center justify-center">
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
+                  className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900 lg:h-full lg:min-h-[66px]"
                   aria-label="Swap origin and destination"
                 >
                   <ArrowRightLeft size={16} />
@@ -586,9 +586,9 @@ export function SearchTabs({
 
               <div
                 ref={toWrapRef}
-                className="relative rounded-xl border border-slate-200 px-3 py-2 xl:rounded-none xl:border-0 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]"
+                className="relative min-h-[66px] rounded-xl border border-slate-200 bg-white px-3 py-2"
               >
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.destination ||
                     "Destination"}
                 </label>
@@ -622,7 +622,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or airport"
-                  className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400"
+                  className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
                 {toOpen &&
@@ -667,9 +667,9 @@ export function SearchTabs({
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-1 gap-2 rounded-xl border border-slate-200 px-3 py-2 md:grid-cols-2 xl:rounded-none xl:border-0 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
+              <div className="min-h-[66px] rounded-xl border border-slate-200 bg-white px-3 py-2">
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.departureDate ||
                       "Departure"}
                   </label>
@@ -687,44 +687,29 @@ export function SearchTabs({
                           .value
                       )
                     }
-                    className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors"
+                    className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
                     required
                   />
                 </div>
-                {tripType ===
-                "round-trip" ? (
-                  <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                      {t.returnDate ||
-                        "Return"}
-                    </label>
-                    <input
-                      type="date"
-                      value={
-                        returnDate
-                      }
-                      onChange={(
-                        event
-                      ) =>
-                        setReturnDate(
-                          event
-                            .target
-                            .value
-                        )
-                      }
-                      className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors"
-                      required
-                    />
-                  </div>
-                ) : null}
               </div>
 
-              <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 px-3 py-2 xl:rounded-none xl:border-0 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
+              <div className="min-h-[66px] rounded-xl border border-slate-200 bg-white px-3 py-2">
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                    {t.travelers ||
-                      "Travelers"}
-                  </label>
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.returnDate || "Return"}</label>
+                  <input
+                    type="date"
+                    value={returnDate}
+                    onChange={(event) => setReturnDate(event.target.value)}
+                    disabled={tripType !== "round-trip"}
+                    required={tripType === "round-trip"}
+                    className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors disabled:cursor-not-allowed disabled:text-slate-400"
+                  />
+                </div>
+              </div>
+
+              <div className="grid min-h-[66px] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <div>
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.travelers || "Travelers"}</label>
                   <input
                     type="number"
                     min={1}
@@ -752,12 +737,12 @@ export function SearchTabs({
                         )
                       )
                     }
-                    className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold outline-none transition-colors"
+                    className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm outline-none transition-colors"
                     required
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.cabinClass ||
                       "Cabin class"}
                   </label>
@@ -774,7 +759,7 @@ export function SearchTabs({
                           .value
                       )
                     }
-                    className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold outline-none transition-colors"
+                    className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm outline-none transition-colors"
                   >
                     <option value="economy">
                       Economy
@@ -793,13 +778,13 @@ export function SearchTabs({
                 </div>
               </div>
 
-              <div className="xl:min-w-[160px] xl:self-end">
+              <div className="sm:col-span-2 lg:col-span-1">
                 <Button
                   type="submit"
                   disabled={
                     isFlightSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl bg-navy px-6 text-sm font-bold text-white shadow-md shadow-navy/30"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-6 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[66px]"
                 >
                   {t.search ||
                     "Search"}
@@ -815,10 +800,10 @@ export function SearchTabs({
           }
           className="space-y-2"
         >
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-            <div className="grid grid-cols-1 gap-2 p-2 sm:grid-cols-2 xl:grid-cols-[1.45fr_1.25fr_1fr_auto] xl:items-stretch xl:gap-0 xl:p-0">
-              <div className="rounded-xl border border-slate-200 px-3 py-2 xl:rounded-none xl:border-0 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
-                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+          <div className="overflow-hidden">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.1fr)_auto] lg:items-stretch">
+              <div className="min-h-[66px] rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.destination ||
                     "Destination"}
                 </label>
@@ -837,13 +822,13 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or hotel"
-                  className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400"
+                  className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 gap-2 rounded-xl border border-slate-200 px-3 py-2 md:grid-cols-2 xl:rounded-none xl:border-0 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
+              <div className="min-h-[66px] rounded-xl border border-slate-200 bg-white px-3 py-2">
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.checkIn ||
                       "Check-in"}
                   </label>
@@ -859,12 +844,14 @@ export function SearchTabs({
                           .value
                       )
                     }
-                    className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors"
+                    className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
                     required
                   />
                 </div>
+              </div>
+              <div className="min-h-[66px] rounded-xl border border-slate-200 bg-white px-3 py-2">
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.checkOut ||
                       "Check-out"}
                   </label>
@@ -884,14 +871,14 @@ export function SearchTabs({
                           .value
                       )
                     }
-                    className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors"
+                    className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
                     required
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 px-3 py-2 xl:rounded-none xl:border-0 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
+              <div className="grid min-h-[66px] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.guests ||
                       "Guests"}
                   </label>
@@ -920,12 +907,12 @@ export function SearchTabs({
                         )
                       )
                     }
-                    className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold outline-none transition-colors"
+                    className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm outline-none transition-colors"
                     required
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.rooms ||
                       "Rooms"}
                   </label>
@@ -954,18 +941,18 @@ export function SearchTabs({
                         )
                       )
                     }
-                    className="focus-ring h-11 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold outline-none transition-colors"
+                    className="focus-ring h-9 w-full rounded-md border-0 bg-transparent px-0 text-sm outline-none transition-colors"
                     required
                   />
                 </div>
               </div>
-              <div className="xl:min-w-[160px] xl:self-end">
+              <div className="sm:col-span-2 lg:col-span-1">
                 <Button
                   type="submit"
                   disabled={
                     isHotelSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl bg-navy px-6 text-sm font-bold text-white shadow-md shadow-navy/30"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-6 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[66px]"
                 >
                   {t.search ||
                     "Search"}

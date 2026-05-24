@@ -120,9 +120,9 @@ export default function Home() {
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
 
-          <div className="page-shell relative pb-6 pt-6 sm:pb-8 sm:pt-8 lg:pt-10">
-            <div className="grid content-start gap-4 pb-4 sm:gap-5 sm:pb-5 lg:max-w-[1000px]">
-              <div className="space-y-3 pt-2">
+          <div className="page-shell relative pb-5 pt-5 sm:pb-6 sm:pt-6 lg:pt-8">
+            <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1000px]">
+              <div className="space-y-2.5 pt-1">
                 <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
                   {t("homeHeroTitle")}
                 </h1>
@@ -133,7 +133,7 @@ export default function Home() {
 
               </div>
 
-              <div className="relative z-10 mt-1 w-full max-w-[1080px]">
+              <div className="relative z-10 mt-0.5 w-full max-w-[1080px]">
                 <SearchTabs
                   t={t as unknown as Record<string, string>}
                   compactHero
