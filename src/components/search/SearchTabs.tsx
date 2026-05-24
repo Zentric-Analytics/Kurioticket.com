@@ -76,6 +76,24 @@ const dedupeSuggestions = (suggestions: AirportOption[]) => {
   return deduped;
 };
 
+const clampNumberInput = (
+  value: string,
+  min: number,
+  max: number
+) => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return String(min);
+  return String(
+    Math.min(
+      max,
+      Math.max(
+        min,
+        parsed
+      )
+    )
+  );
+};
+
 export function SearchTabs({
   t,
   compactHero = false,
@@ -833,6 +851,15 @@ export function SearchTabs({
     ) {
       return;
     }
+    const normalizedTravelers =
+      clampNumberInput(
+        travelers,
+        1,
+        9
+      );
+    setTravelers(
+      normalizedTravelers
+    );
 
     const params =
       new URLSearchParams({
@@ -848,7 +875,8 @@ export function SearchTabs({
           toCode ||
           to.trim(),
         departureDate,
-        travelers,
+        travelers:
+          normalizedTravelers,
         cabinClass,
       });
 
@@ -884,6 +912,20 @@ export function SearchTabs({
     ) {
       return;
     }
+    const normalizedGuests =
+      clampNumberInput(
+        guests,
+        1,
+        12
+      );
+    const normalizedRooms =
+      clampNumberInput(
+        rooms,
+        1,
+        6
+      );
+    setGuests(normalizedGuests);
+    setRooms(normalizedRooms);
 
     const params =
       new URLSearchParams({
@@ -891,24 +933,9 @@ export function SearchTabs({
           destination.trim(),
         checkIn,
         checkOut,
-        guests: String(
-          Math.min(
-            12,
-            Math.max(
-              1,
-              Number(guests || 1)
-            )
-          )
-        ),
-        rooms: String(
-          Math.min(
-            6,
-            Math.max(
-              1,
-              Number(rooms || 1)
-            )
-          )
-        ),
+        guests:
+          normalizedGuests,
+        rooms: normalizedRooms,
       });
 
     router.push(
@@ -1415,19 +1442,17 @@ export function SearchTabs({
                       event
                     ) =>
                       setTravelers(
-                        String(
-                          Math.min(
-                            9,
-                            Math.max(
-                              1,
-                              Number(
-                                event
-                                  .target
-                                  .value ||
-                                  1
-                              )
-                            )
-                          )
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    onBlur={() =>
+                      setTravelers(
+                        clampNumberInput(
+                          travelers,
+                          1,
+                          9
                         )
                       )
                     }
@@ -1669,19 +1694,17 @@ export function SearchTabs({
                       event
                     ) =>
                       setGuests(
-                        String(
-                          Math.min(
-                            12,
-                            Math.max(
-                              1,
-                              Number(
-                                event
-                                  .target
-                                  .value ||
-                                  1
-                              )
-                            )
-                          )
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    onBlur={() =>
+                      setGuests(
+                        clampNumberInput(
+                          guests,
+                          1,
+                          12
                         )
                       )
                     }
@@ -1703,19 +1726,17 @@ export function SearchTabs({
                       event
                     ) =>
                       setRooms(
-                        String(
-                          Math.min(
-                            6,
-                            Math.max(
-                              1,
-                              Number(
-                                event
-                                  .target
-                                  .value ||
-                                  1
-                              )
-                            )
-                          )
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    onBlur={() =>
+                      setRooms(
+                        clampNumberInput(
+                          rooms,
+                          1,
+                          6
                         )
                       )
                     }
