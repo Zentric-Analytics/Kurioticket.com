@@ -11,6 +11,7 @@ import { FlightCard } from "@/components/results/FlightCard";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useRegion } from "@/components/region/RegionProvider";
+import { airports, type AirportOption } from "@/data/airports";
 
 const loadingMessages = [
   "Searching airlines...",
@@ -28,29 +29,7 @@ const sortModes: Array<{ label: string; value: SortMode }> = [
   { label: "Fewest Stops", value: "stops" },
 ];
 
-type AirportOption = {
-  city: string;
-  airport: string;
-  code: string;
-  country: string;
-};
-
 type CabinClassValue = "economy" | "premium-economy" | "business" | "first";
-
-const airportOptions: AirportOption[] = [
-  { city: "Lagos", airport: "Murtala Muhammed International Airport", code: "LOS", country: "Nigeria" },
-  { city: "Abuja", airport: "Nnamdi Azikiwe International Airport", code: "ABV", country: "Nigeria" },
-  { city: "London", airport: "Heathrow Airport", code: "LHR", country: "United Kingdom" },
-  { city: "London", airport: "Gatwick Airport", code: "LGW", country: "United Kingdom" },
-  { city: "Dubai", airport: "Dubai International Airport", code: "DXB", country: "United Arab Emirates" },
-  { city: "Doha", airport: "Hamad International Airport", code: "DOH", country: "Qatar" },
-  { city: "Paris", airport: "Charles de Gaulle Airport", code: "CDG", country: "France" },
-  { city: "New York", airport: "John F. Kennedy International Airport", code: "JFK", country: "United States" },
-  { city: "Istanbul", airport: "Istanbul Airport", code: "IST", country: "Türkiye" },
-  { city: "Nairobi", airport: "Jomo Kenyatta International Airport", code: "NBO", country: "Kenya" },
-  { city: "Johannesburg", airport: "O.R. Tambo International Airport", code: "JNB", country: "South Africa" },
-  { city: "Toronto", airport: "Toronto Pearson International Airport", code: "YYZ", country: "Canada" },
-];
 
 const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
   { label: "Economy", value: "economy" },
@@ -83,6 +62,8 @@ export function FlightResultsClient() {
   const [tripTypeInput, setTripTypeInput] = useState(params.get("tripType") || "round-trip");
   const [originInput, setOriginInput] = useState(params.get("origin") || "");
   const [destinationInput, setDestinationInput] = useState(params.get("destination") || "");
+  const [originCode, setOriginCode] = useState(params.get("origin") || "");
+  const [destinationCode, setDestinationCode] = useState(params.get("destination") || "");
   const [departureDateInput, setDepartureDateInput] = useState(params.get("departureDate") || "");
   const [returnDateInput, setReturnDateInput] = useState(params.get("returnDate") || "");
   const [adultCount, setAdultCount] = useState(() => {
@@ -410,8 +391,8 @@ export function FlightResultsClient() {
                     const formData = new FormData(event.currentTarget);
                     const nextParams = new URLSearchParams({
                       tripType: tripTypeInput,
-                      origin: originInput.trim() || String(formData.get("origin") || ""),
-                      destination: destinationInput.trim() || String(formData.get("destination") || ""),
+                      origin: originCode || originInput.trim() || String(formData.get("origin") || ""),
+                      destination: destinationCode || destinationInput.trim() || String(formData.get("destination") || ""),
                       departureDate: departureDateInput || String(formData.get("departureDate") || ""),
                       returnDate: returnDateInput || String(formData.get("returnDate") || ""),
                       travelers: String(adultCount + childCount),
@@ -445,6 +426,7 @@ export function FlightResultsClient() {
                         }}
                         onChange={(event) => {
                           setOriginInput(event.target.value);
+                          setOriginCode("");
                           setActiveSuggest("origin");
                         }}
                         placeholder="From"
@@ -459,6 +441,7 @@ export function FlightResultsClient() {
                           suggestions={originSuggestions}
                           onSelect={(value) => {
                             setOriginInput(value);
+                            setOriginCode(value);
                             setActiveSuggest(null);
                             setDropdownPosition(null);
                           }}
@@ -472,8 +455,11 @@ export function FlightResultsClient() {
                         aria-label="Swap origin and destination"
                         onClick={() => {
                           const currentOrigin = originInput;
+                          const currentOriginCode = originCode;
                           setOriginInput(destinationInput);
+                          setOriginCode(destinationCode);
                           setDestinationInput(currentOrigin);
+                          setDestinationCode(currentOriginCode);
                         }}
                         className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
                       >
@@ -499,6 +485,7 @@ export function FlightResultsClient() {
                         }}
                         onChange={(event) => {
                           setDestinationInput(event.target.value);
+                          setDestinationCode("");
                           setActiveSuggest("destination");
                         }}
                         placeholder="To"
@@ -513,6 +500,7 @@ export function FlightResultsClient() {
                           suggestions={destinationSuggestions}
                           onSelect={(value) => {
                             setDestinationInput(value);
+                            setDestinationCode(value);
                             setActiveSuggest(null);
                             setDropdownPosition(null);
                           }}
@@ -839,11 +827,11 @@ export function FlightResultsClient() {
 function filterAirportOptions(query: string) {
   const normalized = query.trim().toLowerCase();
 
-  if (!normalized) return airportOptions.slice(0, 8);
+  if (!normalized) return airports.slice(0, 8);
 
-  return airportOptions
+  return airports
     .filter((item) => {
-      const haystack = `${item.city} ${item.airport} ${item.code} ${item.country}`.toLowerCase();
+      const haystack = `${item.city} ${item.airport} ${item.code} ${item.country || ""}`.toLowerCase();
       return haystack.includes(normalized);
     })
     .slice(0, 8);

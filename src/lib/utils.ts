@@ -34,7 +34,24 @@ export function minutesToDuration(minutes: number) {
 }
 
 export function sanitizeAirportCode(value: string) {
-  return value.trim().slice(0, 3).toUpperCase();
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  if (/^[A-Za-z]{3}$/.test(trimmed)) {
+    return trimmed.toUpperCase();
+  }
+
+  const parenMatch = trimmed.match(/\(([A-Za-z]{3})\)/);
+  if (parenMatch) {
+    return parenMatch[1].toUpperCase();
+  }
+
+  const standaloneMatch = trimmed.match(/\b([A-Z]{3})\b/);
+  if (standaloneMatch) {
+    return standaloneMatch[1];
+  }
+
+  return trimmed.slice(0, 3).toUpperCase();
 }
 
 export function normalizeSlug(value: string) {
