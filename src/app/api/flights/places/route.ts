@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { airports, getDefaultAirports, type AirportOption } from "@/data/airports";
-import { resolveCountryCode } from "@/lib/geo/context";
+import { localeToCountryCode, normalizeCountryCode } from "@/lib/geo/context";
+import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 
 const MIN_QUERY_LENGTH = 2;
@@ -80,15 +81,20 @@ export async function GET(request: Request) {
   const resolvedLat = typeof lat === "number" ? lat : headerLat;
   const resolvedLng = typeof lng === "number" ? lng : headerLng;
 
-  const countryCode = resolveCountryCode({
-    explicitCountryCode: searchParams.get("countryCode"),
-    headerCountryCodes: [
-      request.headers.get("cf-ipcountry"),
-      request.headers.get("x-vercel-ip-country"),
-      request.headers.get("x-country"),
-    ],
-    locale,
-  });
+  const explicitCountryCode = normalizeCountryCode(searchParams.get("countryCode"));
+  const headerCountryCode = [
+    request.headers.get("cf-ipcountry"),
+    request.headers.get("x-vercel-ip-country"),
+    request.headers.get("x-country"),
+  ]
+    .map((value) => normalizeCountryCode(value))
+    .find(Boolean);
+  const visitorIp = extractVisitorIp(request.headers);
+  const ipinfoCountryContext = !explicitCountryCode && !headerCountryCode && visitorIp
+    ? await resolveIpinfoLiteCountryContext(visitorIp)
+    : null;
+  const localeCountryCode = localeToCountryCode(locale);
+  const countryCode = explicitCountryCode || headerCountryCode || ipinfoCountryContext?.countryCode || localeCountryCode;
 
   if (defaultOriginRequested && context === "origin" && query.length === 0) {
     let recommended: AirportOption | undefined;
