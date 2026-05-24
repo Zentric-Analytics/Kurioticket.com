@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { FlightCard } from "@/components/results/FlightCard";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { cn, formatCurrency } from "@/lib/utils";
+import { useRegion } from "@/components/region/RegionProvider";
 
 const loadingMessages = [
   "Searching airlines...",
@@ -68,6 +69,8 @@ const exploreCountries = [
 export function FlightResultsClient() {
   const params = useSearchParams();
   const router = useRouter();
+  const { selectedOption } = useRegion();
+  const selectedCurrency = selectedOption.currency;
 
   const [sort, setSort] = useState<SortMode>((params.get("sort") as SortMode) || "cheapest");
   const [results, setResults] = useState<PublicFlightResult[]>([]);
@@ -126,9 +129,10 @@ export function FlightResultsClient() {
         travelers: Number(params.get("travelers") || 1),
         cabinClass: params.get("cabinClass") || "economy",
         sort,
+        currency: selectedCurrency,
       };
     },
-    [params, sort],
+    [params, sort, selectedCurrency],
   );
 
   useEffect(() => {
@@ -769,7 +773,7 @@ export function FlightResultsClient() {
 
       <div className="page-shell grid gap-6 py-6 lg:grid-cols-[300px_1fr]">
         <aside className="hidden lg:block">
-          <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} />
+          <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} currency={selectedCurrency} />
         </aside>
 
         <section className="min-w-0 space-y-5">
@@ -826,7 +830,7 @@ export function FlightResultsClient() {
           </Button>
         </div>
 
-        <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} />
+        <Filters maxPrice={maxPrice} setMaxPrice={setMaxPrice} maxStops={maxStops} setMaxStops={setMaxStops} currency={selectedCurrency} />
       </aside>
     </main>
   );
@@ -1246,11 +1250,13 @@ function Filters({
   setMaxPrice,
   maxStops,
   setMaxStops,
+  currency,
 }: {
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   maxStops: number;
   setMaxStops: (value: number) => void;
+  currency: string;
 }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -1265,7 +1271,7 @@ function Filters({
       <div className="mt-6 grid gap-6">
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
-            Price up to <span className="font-mono text-navy">{formatCurrency(maxPrice)}</span>
+            Price up to <span className="font-mono text-navy">{formatCurrency(maxPrice, currency)}</span>
           </span>
           <input className="w-full accent-teal" type="range" min={100} max={2000} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
         </label>

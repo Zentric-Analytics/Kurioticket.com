@@ -24,7 +24,7 @@ export function searchAmadeusFlights(search: FlightSearchParams): Promise<Provid
       departureDate: search.departureDate,
       adults: String(search.travelers),
       travelClass: travelClassMap[search.cabinClass],
-      currencyCode: "USD",
+      currencyCode: search.currency || "USD",
       max: "25",
     });
 
