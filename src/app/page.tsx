@@ -150,16 +150,27 @@ export default function Home() {
 
         <section className="page-shell bg-transparent pb-8 pt-1">
           <div className="grid gap-5 bg-transparent sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-7">
-            <article className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
-              <span className="relative inline-flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-violet-100 via-indigo-50 to-fuchsia-100 text-[#5b21d6] shadow-[0_10px_26px_-16px_rgba(79,70,229,0.7)] ring-1 ring-violet-200/70 sm:h-[5.2rem] sm:w-[5.2rem]">
-                <span className="absolute left-2 top-2 h-3 w-3 rounded-full bg-white/80" />
-                <span className="absolute -bottom-1.5 -right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-violet-200 bg-white text-indigo-500 shadow-sm">
-                  <Compass size={14} strokeWidth={2.4} />
+            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
+              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-violet-100/95 via-indigo-100/75 to-fuchsia-100/80 ring-1 ring-violet-200/80">
+                <span className="absolute left-3 top-3 h-16 w-16 rounded-full bg-white/55 blur-[2px]" />
+                <span className="absolute right-4 top-3 h-11 w-11 rounded-full border border-white/70 bg-white/35 shadow-[0_10px_18px_-14px_rgba(79,70,229,0.9)]" />
+                <span className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-300/55 bg-white/40 shadow-[0_15px_24px_-20px_rgba(79,70,229,0.95)]" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600">
+                  <Network size={34} strokeWidth={2.2} />
                 </span>
-                <Network size={32} strokeWidth={2.2} />
-              </span>
+                <span className="absolute left-[22%] bottom-5 text-violet-600">
+                  <Ticket size={17} strokeWidth={2.3} />
+                </span>
+                <span className="absolute right-[22%] bottom-5 text-indigo-700">
+                  <Compass size={17} strokeWidth={2.3} />
+                </span>
+                <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/85 px-2 py-1 text-[11px] font-semibold text-indigo-600">
+                  <Sparkles size={12} strokeWidth={2.3} />
+                  +
+                </span>
+              </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2.5 pt-0.5">
                 <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesMillionsTitle")}
                 </h2>
@@ -170,16 +181,25 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
-              <span className="relative inline-flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-indigo-100 via-violet-50 to-sky-100 text-indigo-600 shadow-[0_10px_26px_-16px_rgba(99,102,241,0.72)] ring-1 ring-indigo-200/80 sm:h-[5.2rem] sm:w-[5.2rem]">
-                <span className="absolute right-2 top-2 h-3 w-3 rounded-full bg-white/80" />
-                <span className="absolute -bottom-1.5 -right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-indigo-200 bg-white text-violet-500 shadow-sm">
-                  <SlidersHorizontal size={14} strokeWidth={2.4} />
+            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
+              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-100/95 via-violet-100/70 to-sky-100/80 ring-1 ring-indigo-200/80">
+                <span className="absolute left-3 top-4 h-10 w-20 rounded-xl border border-white/70 bg-white/45" />
+                <span className="absolute left-6 top-7 text-indigo-600">
+                  <Filter size={16} strokeWidth={2.25} />
                 </span>
-                <Filter size={32} strokeWidth={2.3} />
-              </span>
+                <span className="absolute left-1/2 top-1/2 h-[4.4rem] w-[4.4rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-indigo-300/60 bg-white/65 shadow-[0_16px_28px_-20px_rgba(79,70,229,0.95)]" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-700">
+                  <SlidersHorizontal size={30} strokeWidth={2.2} />
+                </span>
+                <span className="absolute bottom-4 right-5 text-violet-600">
+                  <Compass size={18} strokeWidth={2.25} />
+                </span>
+                <span className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-indigo-200/80 bg-white/85 text-indigo-600">
+                  <Sparkles size={11} strokeWidth={2.3} />
+                </span>
+              </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2.5 pt-0.5">
                 <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesFlexibleTitle")}
                 </h2>
@@ -190,16 +210,23 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
-              <span className="relative inline-flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-emerald-100 via-teal-50 to-cyan-100 text-teal-700 shadow-[0_10px_26px_-16px_rgba(20,184,166,0.6)] ring-1 ring-emerald-200/80 sm:h-[5.2rem] sm:w-[5.2rem]">
-                <span className="absolute left-2 top-2 h-3 w-3 rounded-full bg-white/80" />
-                <span className="absolute -bottom-1.5 -right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200 bg-white text-emerald-500 shadow-sm">
-                  <BadgeCheck size={14} strokeWidth={2.5} />
+            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
+              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-100/95 via-teal-50/80 to-cyan-100/85 ring-1 ring-emerald-200/80">
+                <span className="absolute left-4 top-3 h-12 w-12 rounded-2xl border border-white/70 bg-white/50" />
+                <span className="absolute right-5 top-4 h-9 w-9 rounded-full border border-emerald-200/70 bg-white/65" />
+                <span className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-300/60 bg-white/50 shadow-[0_16px_28px_-20px_rgba(13,148,136,0.95)]" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-teal-700">
+                  <ShieldCheck size={34} strokeWidth={2.15} />
                 </span>
-                <ShieldCheck size={32} strokeWidth={2.3} />
-              </span>
+                <span className="absolute bottom-4 left-6 text-emerald-600">
+                  <BadgeCheck size={18} strokeWidth={2.25} />
+                </span>
+                <span className="absolute bottom-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/70 bg-white/85 text-teal-700">
+                  <Sparkles size={11} strokeWidth={2.3} />
+                </span>
+              </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2.5 pt-0.5">
                 <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesSecureTitle")}
                 </h2>
@@ -210,16 +237,22 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="flex flex-col items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:gap-5 sm:p-6">
-              <span className="relative inline-flex h-[4.6rem] w-[4.6rem] shrink-0 items-center justify-center rounded-[1.35rem] bg-gradient-to-br from-amber-100 via-orange-50 to-rose-100 text-orange-600 shadow-[0_10px_26px_-16px_rgba(249,115,22,0.62)] ring-1 ring-amber-200/80 sm:h-[5.2rem] sm:w-[5.2rem]">
-                <span className="absolute right-2 top-2 h-3 w-3 rounded-full bg-white/80" />
-                <span className="absolute -bottom-1.5 -right-1.5 inline-flex h-7 w-7 items-center justify-center rounded-full border border-orange-200 bg-white text-rose-500 shadow-sm">
-                  <BellRing size={14} strokeWidth={2.4} />
+            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
+              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-amber-100/95 via-orange-100/75 to-rose-100/80 ring-1 ring-orange-200/80">
+                <span className="absolute left-4 top-4 h-10 w-10 rounded-full border border-white/70 bg-white/55 shadow-[0_14px_22px_-20px_rgba(249,115,22,1)]" />
+                <span className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-orange-200/80 bg-white/85 text-orange-600">
+                  <BellRing size={12} strokeWidth={2.3} />
                 </span>
-                <CircleDollarSign size={32} strokeWidth={2.3} />
-              </span>
+                <span className="absolute left-1/2 top-1/2 h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-orange-300/60 bg-white/60 shadow-[0_16px_28px_-20px_rgba(249,115,22,0.95)]" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-orange-600">
+                  <CircleDollarSign size={32} strokeWidth={2.2} />
+                </span>
+                <span className="absolute bottom-4 right-6 text-rose-500">
+                  <Sparkles size={17} strokeWidth={2.2} />
+                </span>
+              </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2.5 pt-0.5">
                 <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesDealsTitle")}
                 </h2>
