@@ -26,7 +26,7 @@ export default function SignupPage() {
     <>
       <AppHeader />
 
-      <main className="page-shell flex flex-1 items-center py-10">
+      <main className="page-shell flex flex-1 items-center pt-24 pb-10 sm:pt-28 lg:pt-28">
         <SignupForm googleEnabled={googleEnabled} />
       </main>
 
