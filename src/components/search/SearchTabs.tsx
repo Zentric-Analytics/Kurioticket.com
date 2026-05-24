@@ -391,6 +391,54 @@ export function SearchTabs({
     );
   };
 
+  const isHotelSearchDisabled =
+    !destination.trim() ||
+    !checkIn ||
+    !checkOut ||
+    checkOut <= checkIn;
+
+  const onHotelSubmit = (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (
+      isHotelSearchDisabled
+    ) {
+      return;
+    }
+
+    const params =
+      new URLSearchParams({
+        destination:
+          destination.trim(),
+        checkIn,
+        checkOut,
+        guests: String(
+          Math.min(
+            12,
+            Math.max(
+              1,
+              Number(guests || 1)
+            )
+          )
+        ),
+        rooms: String(
+          Math.min(
+            6,
+            Math.max(
+              1,
+              Number(rooms || 1)
+            )
+          )
+        ),
+      });
+
+    router.push(
+      `/hotels/results?${params.toString()}`
+    );
+  };
+
   return (
     <section className={wrapper}>
       <div className="mb-3 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
@@ -773,7 +821,179 @@ export function SearchTabs({
             </div>
           </div>
         </form>
-      ) : null}
+      ) : (
+        <form
+          onSubmit={
+            onHotelSubmit
+          }
+          className={cn(
+            "space-y-4",
+            compactHero
+              ? "rounded-2xl border border-slate-200 p-4"
+              : ""
+          )}
+        >
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div className="lg:col-span-2">
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.destination ||
+                  "Destination"}
+              </label>
+              <input
+                type="text"
+                value={
+                  destination
+                }
+                onChange={(
+                  event
+                ) =>
+                  setDestination(
+                    event
+                      .target
+                      .value
+                  )
+                }
+                placeholder="City or hotel"
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.checkIn ||
+                  "Check-in"}
+              </label>
+              <input
+                type="date"
+                value={checkIn}
+                onChange={(
+                  event
+                ) =>
+                  setCheckIn(
+                    event
+                      .target
+                      .value
+                  )
+                }
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.checkOut ||
+                  "Check-out"}
+              </label>
+              <input
+                type="date"
+                value={checkOut}
+                min={
+                  checkIn ||
+                  undefined
+                }
+                onChange={(
+                  event
+                ) =>
+                  setCheckOut(
+                    event
+                      .target
+                      .value
+                  )
+                }
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.guests ||
+                  "Guests"}
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={12}
+                value={guests}
+                onChange={(
+                  event
+                ) =>
+                  setGuests(
+                    String(
+                      Math.min(
+                        12,
+                        Math.max(
+                          1,
+                          Number(
+                            event
+                              .target
+                              .value ||
+                              1
+                          )
+                        )
+                      )
+                    )
+                  )
+                }
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.rooms ||
+                  "Rooms"}
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={6}
+                value={rooms}
+                onChange={(
+                  event
+                ) =>
+                  setRooms(
+                    String(
+                      Math.min(
+                        6,
+                        Math.max(
+                          1,
+                          Number(
+                            event
+                              .target
+                              .value ||
+                              1
+                          )
+                        )
+                      )
+                    )
+                  )
+                }
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                required
+              />
+            </div>
+
+            <div className="flex items-end">
+              <Button
+                type="submit"
+                disabled={
+                  isHotelSearchDisabled
+                }
+                className="h-11 w-full"
+              >
+                {t.search ||
+                  "Search"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      )}
     </section>
   );
 }
