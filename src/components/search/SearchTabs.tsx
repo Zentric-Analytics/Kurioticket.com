@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  type FormEvent,
   useMemo,
   useRef,
   useState,
@@ -341,6 +342,55 @@ export function SearchTabs({
     }
   };
 
+  const isFlightSearchDisabled =
+    !from.trim() ||
+    !to.trim() ||
+    !departureDate ||
+    (tripType ===
+      "round-trip" &&
+      !returnDate);
+
+  const onFlightSubmit = (
+    event: FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+
+    if (
+      isFlightSearchDisabled
+    ) {
+      return;
+    }
+
+    const params =
+      new URLSearchParams({
+        tripType:
+          tripType ===
+          "one-way"
+            ? "one-way"
+            : "round-trip",
+        origin: from.trim(),
+        destination: to.trim(),
+        departureDate,
+        travelers,
+        cabinClass,
+      });
+
+    if (
+      tripType ===
+        "round-trip" &&
+      returnDate
+    ) {
+      params.set(
+        "returnDate",
+        returnDate
+      );
+    }
+
+    router.push(
+      `/flights/results?${params.toString()}`
+    );
+  };
+
   return (
     <section className={wrapper}>
       <div className="mb-3 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1">
@@ -378,6 +428,352 @@ export function SearchTabs({
             "Hotels"}
         </button>
       </div>
+
+      {tab === "flights" ? (
+        <form
+          onSubmit={
+            onFlightSubmit
+          }
+          className={cn(
+            "space-y-4",
+            compactHero
+              ? "rounded-2xl border border-slate-200 p-4"
+              : ""
+          )}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {(
+              [
+                "round-trip",
+                "one-way",
+              ] as const
+            ).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() =>
+                  setTripType(
+                    mode
+                  )
+                }
+                className={cn(
+                  "focus-ring rounded-full border px-3 py-1.5 text-sm font-semibold",
+                  tripType ===
+                    mode
+                    ? "border-navy bg-navy text-white"
+                    : "border-slate-300 text-slate-700"
+                )}
+              >
+                {tripTypeLabel(
+                  mode
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <div
+              ref={fromWrapRef}
+              className="relative"
+            >
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.origin ||
+                  "Origin"}
+              </label>
+              <input
+                type="text"
+                value={from}
+                onChange={(
+                  event
+                ) => {
+                  setFrom(
+                    event
+                      .target
+                      .value
+                  );
+                  setFromOpen(
+                    true
+                  );
+                  setFromHighlight(
+                    0
+                  );
+                }}
+                onFocus={() =>
+                  setFromOpen(
+                    true
+                  )
+                }
+                onKeyDown={(
+                  event
+                ) =>
+                  onKeyNav(
+                    event,
+                    true
+                  )
+                }
+                placeholder="City or airport"
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                required
+              />
+              {fromOpen &&
+              fromSuggestions.length ? (
+                <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                  {fromSuggestions.map(
+                    (
+                      option,
+                      index
+                    ) => (
+                      <button
+                        key={`${option.code}-${option.airport}`}
+                        type="button"
+                        onClick={() => {
+                          setFrom(
+                            formatAirport(
+                              option
+                            )
+                          );
+                          setFromOpen(
+                            false
+                          );
+                        }}
+                        className={cn(
+                          "block w-full px-3 py-2 text-left text-sm",
+                          fromHighlight ===
+                            index
+                            ? "bg-slate-100"
+                            : "hover:bg-slate-50"
+                        )}
+                      >
+                        {formatAirport(
+                          option
+                        )}
+                      </button>
+                    )
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            <div
+              ref={toWrapRef}
+              className="relative"
+            >
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.destination ||
+                  "Destination"}
+              </label>
+              <input
+                type="text"
+                value={to}
+                onChange={(
+                  event
+                ) => {
+                  setTo(
+                    event.target
+                      .value
+                  );
+                  setToOpen(
+                    true
+                  );
+                  setToHighlight(
+                    0
+                  );
+                }}
+                onFocus={() =>
+                  setToOpen(true)
+                }
+                onKeyDown={(
+                  event
+                ) =>
+                  onKeyNav(
+                    event,
+                    false
+                  )
+                }
+                placeholder="City or airport"
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                required
+              />
+              {toOpen &&
+              toSuggestions.length ? (
+                <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+                  {toSuggestions.map(
+                    (
+                      option,
+                      index
+                    ) => (
+                      <button
+                        key={`${option.code}-${option.airport}`}
+                        type="button"
+                        onClick={() => {
+                          setTo(
+                            formatAirport(
+                              option
+                            )
+                          );
+                          setToOpen(
+                            false
+                          );
+                        }}
+                        className={cn(
+                          "block w-full px-3 py-2 text-left text-sm",
+                          toHighlight ===
+                            index
+                            ? "bg-slate-100"
+                            : "hover:bg-slate-50"
+                        )}
+                      >
+                        {formatAirport(
+                          option
+                        )}
+                      </button>
+                    )
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.departureDate ||
+                  "Departure"}
+              </label>
+              <input
+                type="date"
+                value={
+                  departureDate
+                }
+                onChange={(
+                  event
+                ) =>
+                  setDepartureDate(
+                    event
+                      .target
+                      .value
+                  )
+                }
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                required
+              />
+            </div>
+
+            {tripType ===
+            "round-trip" ? (
+              <div>
+                <label className="mb-1 block text-xs font-semibold text-slate-600">
+                  {t.returnDate ||
+                    "Return"}
+                </label>
+                <input
+                  type="date"
+                  value={
+                    returnDate
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setReturnDate(
+                      event
+                        .target
+                        .value
+                    )
+                  }
+                  className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                  required
+                />
+              </div>
+            ) : null}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.travelers ||
+                  "Travelers"}
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={9}
+                value={
+                  travelers
+                }
+                onChange={(
+                  event
+                ) =>
+                  setTravelers(
+                    String(
+                      Math.min(
+                        9,
+                        Math.max(
+                          1,
+                          Number(
+                            event
+                              .target
+                              .value ||
+                              1
+                          )
+                        )
+                      )
+                    )
+                  )
+                }
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-slate-600">
+                {t.cabinClass ||
+                  "Cabin class"}
+              </label>
+              <select
+                value={
+                  cabinClass
+                }
+                onChange={(
+                  event
+                ) =>
+                  setCabinClass(
+                    event
+                      .target
+                      .value
+                  )
+                }
+                className="focus-ring h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none"
+              >
+                <option value="economy">
+                  Economy
+                </option>
+                <option value="premium-economy">
+                  Premium
+                  economy
+                </option>
+                <option value="business">
+                  Business
+                </option>
+                <option value="first">
+                  First
+                </option>
+              </select>
+            </div>
+
+            <div className="flex items-end">
+              <Button
+                type="submit"
+                disabled={
+                  isFlightSearchDisabled
+                }
+                className="h-11 w-full"
+              >
+                {t.search ||
+                  "Search"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      ) : null}
     </section>
   );
 }
