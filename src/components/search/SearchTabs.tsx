@@ -919,11 +919,11 @@ export function SearchTabs({
                 </button>
 
                 {flightDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,740px)] sm:p-5">
-                    <p className="mb-4 text-base font-semibold text-slate-900">
+                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
+                    <p className="mb-3 text-base font-semibold text-slate-900">
                       Choose travel dates
                     </p>
-                    <div className="mb-4 flex items-center justify-between">
+                    <div className="mb-3 flex items-center justify-between">
                       <button
                         type="button"
                         aria-label="Previous month"
@@ -957,7 +957,7 @@ export function SearchTabs({
                         Next
                       </button>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
                       {[0, 1].map(
                         (monthOffset) => {
                           const monthDate =
@@ -973,7 +973,7 @@ export function SearchTabs({
                             <div
                               key={monthOffset}
                             >
-                              <p className="mb-2 text-center text-sm font-semibold text-slate-800">
+                              <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
                                 {monthDate.toLocaleDateString(
                                   "en-US",
                                   {
@@ -983,7 +983,7 @@ export function SearchTabs({
                                   }
                                 )}
                               </p>
-                              <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
                                 {weekdays.map(
                                   (
                                     weekday
@@ -1048,7 +1048,7 @@ export function SearchTabs({
                                           )
                                         }
                                         className={cn(
-                                          "focus-ring flex h-10 items-center justify-center rounded-full text-sm transition-colors",
+                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors",
                                           inCurrentMonth
                                             ? "text-slate-900 hover:bg-indigo-50"
                                             : "text-slate-300",
@@ -1070,7 +1070,7 @@ export function SearchTabs({
                         }
                       )}
                     </div>
-                    <div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
+                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
                       <button
                         type="button"
                         onClick={() => {
