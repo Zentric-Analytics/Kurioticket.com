@@ -405,35 +405,6 @@ export function AppHeader() {
             </button>
           </div>
 
-          <nav className="md:hidden border-t border-white/10 bg-white/5">
-            <div className="page-shell overflow-x-auto py-2">
-              <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
-                {mobilePrimaryNavItems.map(
-                  (item) => {
-                    const Icon =
-                      item.icon;
-
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold text-indigo-50 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
-                      >
-                        {Icon ? (
-                          <Icon
-                            size={15}
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  }
-                )}
-              </div>
-            </div>
-          </nav>
-
           {languageOpen ? (
             <>
               <div
@@ -530,6 +501,35 @@ export function AppHeader() {
             </>
           ) : null}
         </div>
+
+        <nav className="border-t border-white/10 bg-white/5 md:hidden">
+          <div className="page-shell overflow-x-auto py-2">
+            <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
+              {mobilePrimaryNavItems.map(
+                (item) => {
+                  const Icon =
+                    item.icon;
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold text-indigo-50 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
+                    >
+                      {Icon ? (
+                        <Icon
+                          size={15}
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                }
+              )}
+            </div>
+          </div>
+        </nav>
 
         {open ? (
           <div className="border-t border-slate-200 bg-white md:hidden">
