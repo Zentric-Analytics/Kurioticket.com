@@ -86,7 +86,7 @@ export default function Home() {
       return;
     }
 
-    setNewsletterMessage("Thanks! We’ll keep you posted with travel deals.");
+    setNewsletterMessage(t("homeNewsletterThanks"));
     setNewsletterEmail("");
   };
 
@@ -99,7 +99,7 @@ export default function Home() {
           <div className="absolute inset-0">
             <Image
               src={heroImage}
-              alt="Luxury tropical resort by calm water"
+              alt={t("homeHeroImageAlt")}
               fill
               priority
               sizes="100vw"
@@ -238,7 +238,7 @@ export default function Home() {
           <div className="relative mt-6">
             <button
               type="button"
-              aria-label="Next destinations"
+              aria-label={t("homeNextDestinations")}
               className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow sm:flex"
             >
               <ChevronRight size={18} />
@@ -246,7 +246,7 @@ export default function Home() {
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
               {destinations.map((destination) => (
-                <DestinationCard key={destination.city} {...destination} />
+                <DestinationCard key={destination.city} fromLabel={t("fromPrice")} saveLabelTemplate={t("homeSaveDestination")} {...destination} />
               ))}
             </div>
           </div>
@@ -306,7 +306,7 @@ export default function Home() {
                   t("homeNewsletterPlaceholder")
                 }
                 className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
-                aria-label="Email address"
+                aria-label={t("homeEmailAddress")}
                 required
               />
 
@@ -337,11 +337,15 @@ function DestinationCard({
   country,
   amountUsd,
   image,
+  fromLabel,
+  saveLabelTemplate,
 }: {
   city: string;
   country: string;
   amountUsd: number;
   image: string;
+  fromLabel: string;
+  saveLabelTemplate: string;
 }) {
   return (
     <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
@@ -359,7 +363,7 @@ function DestinationCard({
         <button
           type="button"
           className="focus-ring absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur"
-          aria-label={`Save ${city}`}
+          aria-label={saveLabelTemplate.replace("{{city}}", city)}
         >
           <Heart size={17} />
         </button>
@@ -371,7 +375,7 @@ function DestinationCard({
       </div>
 
       <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
-        From <span className="text-lg font-black text-[#6d28d9]"><PriceText amountUsd={amountUsd} /></span>
+        {fromLabel} <span className="text-lg font-black text-[#6d28d9]"><PriceText amountUsd={amountUsd} /></span>
       </div>
     </article>
   );
