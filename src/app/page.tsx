@@ -144,8 +144,8 @@ export default function Home() {
         </section>
 
         <section className="page-shell pb-8 pt-1">
-          <div className="grid gap-4 rounded-3xl border border-[#e4ddff] bg-gradient-to-b from-[#f8f5ff] to-[#f3f0ff] p-4 shadow-[0_16px_42px_-26px_rgba(76,29,149,0.45)] sm:grid-cols-2 sm:gap-5 sm:p-5 lg:grid-cols-4 lg:gap-6 lg:p-6">
-            <article className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-white/95 p-4 shadow-[0_14px_30px_-24px_rgba(91,33,214,0.55)] sm:p-5">
+          <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4 lg:gap-6">
+            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.32)] sm:p-5">
               <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
                 <BadgeCheck size={22} />
               </span>
@@ -161,7 +161,7 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-white/95 p-4 shadow-[0_14px_30px_-24px_rgba(91,33,214,0.55)] sm:p-5">
+            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.32)] sm:p-5">
               <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
                 <Ticket size={22} />
               </span>
@@ -177,7 +177,7 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-white/95 p-4 shadow-[0_14px_30px_-24px_rgba(91,33,214,0.55)] sm:p-5">
+            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.32)] sm:p-5">
               <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
                 <ShieldCheck size={22} />
               </span>
@@ -193,7 +193,7 @@ export default function Home() {
               </div>
             </article>
 
-            <article className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-white/95 p-4 shadow-[0_14px_30px_-24px_rgba(91,33,214,0.55)] sm:p-5">
+            <article className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.32)] sm:p-5">
               <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
                 <WalletCards size={22} />
               </span>
