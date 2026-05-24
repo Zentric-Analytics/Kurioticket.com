@@ -248,7 +248,7 @@ export function AppHeader() {
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
           <Link
             href="/"
-            className="flex items-center gap-3 text-2xl font-extrabold text-white"
+            className="flex items-center gap-3 text-xl font-bold text-white"
           >
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6d28d9] text-white">
               <Sparkles size={24} />
