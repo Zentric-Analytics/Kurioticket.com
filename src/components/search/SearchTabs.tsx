@@ -456,10 +456,11 @@ export function SearchTabs({
           className="space-y-1.5"
         >
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1.25fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
+              <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200">
               <div
                 ref={fromWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:pr-8"
+                className="relative min-h-[54px] px-0 py-0 pr-2"
               >
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.origin ||
@@ -541,10 +542,12 @@ export function SearchTabs({
                     )}
                   </div>
                 ) : null}
+              </div>
+              <div className="flex items-center justify-center">
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring absolute right-1.5 top-1/2 z-10 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900 lg:right-0 lg:translate-x-1/2"
+                  className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-transparent bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
                   aria-label="Swap origin and destination"
                 >
                   <ArrowRightLeft size={14} />
@@ -553,7 +556,7 @@ export function SearchTabs({
 
               <div
                 ref={toWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] px-0 py-0 pl-2"
               >
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.destination ||
@@ -633,9 +636,10 @@ export function SearchTabs({
                   </div>
                 ) : null}
               </div>
+              </div>
 
-              <div className="grid min-h-[54px] grid-cols-1 gap-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-2 sm:divide-x sm:divide-slate-200 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
-                <div className="sm:pr-2.5">
+              <div className="grid min-h-[54px] grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-2 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
+                <div>
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.departureDate ||
                       "Departure"}
@@ -658,7 +662,10 @@ export function SearchTabs({
                     required
                   />
                 </div>
-                <div className="sm:pl-2.5">
+                <span className="hidden items-center text-slate-300 sm:flex">
+                  —
+                </span>
+                <div>
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.returnDate || "Return"}</label>
                   <input
                     type="date"
@@ -671,8 +678,8 @@ export function SearchTabs({
                 </div>
               </div>
 
-              <div className="grid min-h-[54px] grid-cols-2 gap-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 divide-x divide-slate-200 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
-                <div className="pr-2.5">
+              <div className="grid min-h-[54px] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
+                <div>
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.travelers || "Travelers"}</label>
                   <input
                     type="number"
@@ -705,7 +712,7 @@ export function SearchTabs({
                     required
                   />
                 </div>
-                <div className="pl-2.5">
+                <div>
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.cabinClass ||
                       "Cabin class"}
@@ -820,8 +827,8 @@ export function SearchTabs({
                   required
                 />
               </div>
-              <div className="grid min-h-[54px] grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-2 sm:divide-x sm:divide-slate-200 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
-                <div className="sm:pr-2">
+              <div className="grid min-h-[54px] grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-2 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
+                <div>
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.checkIn ||
                       "Check-in"}
@@ -842,7 +849,10 @@ export function SearchTabs({
                     required
                   />
                 </div>
-                <div className="sm:pl-2">
+                <span className="hidden items-center text-slate-300 sm:flex">
+                  —
+                </span>
+                <div>
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.checkOut ||
                       "Check-out"}
@@ -868,7 +878,7 @@ export function SearchTabs({
                   />
                 </div>
               </div>
-              <div className="grid min-h-[54px] grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
+              <div className="grid min-h-[54px] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
                 <div>
                   <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                     {t.guests ||
