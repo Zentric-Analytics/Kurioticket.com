@@ -33,36 +33,46 @@ const heroImage =
 
 const destinations = [
   {
-    city: "Dubai",
-    country: "UAE",
+    id: "dubai",
+    cityKey: "homeDestinationDubaiCity",
+    countryKey: "homeDestinationDubaiCountry",
+    altKey: "homeDestinationDubaiAlt",
     amountUsd: 420,
     image:
       "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=700&q=80",
   },
   {
-    city: "London",
-    country: "United Kingdom",
+    id: "london",
+    cityKey: "homeDestinationLondonCity",
+    countryKey: "homeDestinationLondonCountry",
+    altKey: "homeDestinationLondonAlt",
     amountUsd: 380,
     image:
       "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=700&q=80",
   },
   {
-    city: "Paris",
-    country: "France",
+    id: "paris",
+    cityKey: "homeDestinationParisCity",
+    countryKey: "homeDestinationParisCountry",
+    altKey: "homeDestinationParisAlt",
     amountUsd: 410,
     image:
       "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=700&q=80",
   },
   {
-    city: "Bali",
-    country: "Indonesia",
+    id: "bali",
+    cityKey: "homeDestinationBaliCity",
+    countryKey: "homeDestinationBaliCountry",
+    altKey: "homeDestinationBaliAlt",
     amountUsd: 370,
     image:
       "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=700&q=80",
   },
   {
-    city: "New York",
-    country: "USA",
+    id: "new-york",
+    cityKey: "homeDestinationNewYorkCity",
+    countryKey: "homeDestinationNewYorkCountry",
+    altKey: "homeDestinationNewYorkAlt",
     amountUsd: 390,
     image:
       "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=700&q=80",
@@ -246,7 +256,16 @@ export default function Home() {
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
               {destinations.map((destination) => (
-                <DestinationCard key={destination.city} fromLabel={t("fromPrice")} saveLabelTemplate={t("homeSaveDestination")} {...destination} />
+                <DestinationCard
+                  key={destination.id}
+                  city={t(destination.cityKey)}
+                  country={t(destination.countryKey)}
+                  imageAlt={t(destination.altKey)}
+                  fromLabel={t("fromPrice")}
+                  saveLabelTemplate={t("homeSaveDestination")}
+                  amountUsd={destination.amountUsd}
+                  image={destination.image}
+                />
               ))}
             </div>
           </div>
@@ -335,6 +354,7 @@ export default function Home() {
 function DestinationCard({
   city,
   country,
+  imageAlt,
   amountUsd,
   image,
   fromLabel,
@@ -342,6 +362,7 @@ function DestinationCard({
 }: {
   city: string;
   country: string;
+  imageAlt: string;
   amountUsd: number;
   image: string;
   fromLabel: string;
@@ -352,7 +373,7 @@ function DestinationCard({
       <div className="relative h-44">
         <Image
           src={image}
-          alt={`${city}, ${country}`}
+          alt={imageAlt}
           fill
           sizes="(min-width: 1024px) 20vw, (min-width: 640px) 50vw, 100vw"
           className="object-cover"
