@@ -244,11 +244,11 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/90 shadow-[0_8px_30px_rgba(15,23,42,0.06)] backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-gradient-to-r from-indigo-950 via-indigo-900 to-violet-900 text-white shadow-[0_10px_30px_rgba(30,27,75,0.28)]">
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
           <Link
             href="/"
-            className="flex items-center gap-3 text-2xl font-extrabold text-slate-950"
+            className="flex items-center gap-3 text-2xl font-extrabold text-white"
           >
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6d28d9] text-white">
               <Sparkles size={24} />
@@ -274,7 +274,7 @@ export function AppHeader() {
                         !value
                     )
                   }
-                  className="h-12 gap-2 rounded-full border border-slate-200 bg-white px-4 shadow-sm"
+                  className="h-12 gap-2 rounded-full border border-white/30 bg-white/95 px-4 shadow-sm"
                 >
                   {renderFlag(
                     selectedLanguage?.countryCode,
@@ -294,13 +294,13 @@ export function AppHeader() {
 
               {isSignedIn ? (
                 <>
-                  <LinkButton href="/dashboard/alerts" variant="ghost" className="h-12 rounded-full px-4">
+                  <LinkButton href="/dashboard/alerts" variant="ghost" className="h-12 rounded-full px-4 text-indigo-50 hover:bg-white/10 hover:text-white">
                     <Bell size={16} />
                   </LinkButton>
                   <button
                     type="button"
                     onClick={() => signOut({ callbackUrl: "/" })}
-                    className="inline-flex h-12 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm"
+                    className="inline-flex h-12 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 text-sm font-semibold text-indigo-50 shadow-sm hover:bg-white/15 hover:text-white"
                   >
                     <LogOut size={15} />
                     {t.logout}
@@ -308,7 +308,7 @@ export function AppHeader() {
                 </>
               ) : (
                 <>
-                  <Link href="/auth/signin" className="inline-flex h-12 items-center rounded-full px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                  <Link href="/auth/signin" className="inline-flex h-12 items-center rounded-full px-4 text-sm font-semibold text-indigo-50 hover:bg-white/10 hover:text-white">
                     {t.login}
                   </Link>
                   <Link href="/auth/signup" className="inline-flex h-12 items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-700">
@@ -323,7 +323,7 @@ export function AppHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-indigo-50 hover:bg-white/10 hover:text-white"
                 >
                   {item.label}
                 </Link>
@@ -343,14 +343,14 @@ export function AppHeader() {
                   ? "Open dashboard"
                   : "Sign in"
               }
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-700"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white hover:bg-white/15"
             >
               <UserCircle size={18} />
             </Link>
 
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-700"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white hover:bg-white/15"
               onClick={() =>
                 setOpen(
                   (value) => !value
