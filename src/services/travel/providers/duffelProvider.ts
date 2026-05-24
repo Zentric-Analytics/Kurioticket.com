@@ -2,6 +2,7 @@ import type { FlightSearchParams, NormalizedFlightResult, ProviderResult } from 
 import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
 import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
+import { distanceKm } from "@/lib/geo/distance";
 
 export type DuffelPlaceSuggestion = {
   code: string;
@@ -10,6 +11,15 @@ export type DuffelPlaceSuggestion = {
   country?: string;
   duffelPlaceId?: string;
   type?: "airport" | "city" | string;
+  latitude?: number;
+  longitude?: number;
+};
+
+export type PlaceSearchContext = {
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  context?: "origin" | "destination";
 };
 
 const cabinClassMap: Record<FlightSearchParams["cabinClass"], string> = {
@@ -57,7 +67,6 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
             slices,
             passengers,
             cabin_class: cabinClassMap[search.cabinClass],
-            // Do not send selected currency to Duffel offer request until verified for this endpoint; preserve returned total_currency.
           },
         }),
       },
@@ -118,10 +127,62 @@ type DuffelPlaceApiResponse = {
     city?: { name?: string };
     name?: string;
     country_name?: string;
+    latitude?: number | string;
+    longitude?: number | string;
   }>;
 };
 
-export async function searchDuffelPlaces(query: string): Promise<ProviderResult<DuffelPlaceSuggestion>> {
+const toNumber = (value: unknown) => {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
+const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearchContext) => {
+  if (!searchContext?.lat || !searchContext?.lng || !searchContext.context) {
+    return places;
+  }
+
+  const withIndex = places.map((place, index) => ({ place, index }));
+
+  const distanceFor = (place: DuffelPlaceSuggestion) => {
+    if (typeof place.latitude !== "number" || typeof place.longitude !== "number") {
+      return Number.POSITIVE_INFINITY;
+    }
+
+    return distanceKm(searchContext.lat!, searchContext.lng!, place.latitude, place.longitude);
+  };
+
+  const destinationBoost = searchContext.context === "destination" ? 0.12 : 1;
+
+  return withIndex
+    .sort((a, b) => {
+      const aDistance = distanceFor(a.place);
+      const bDistance = distanceFor(b.place);
+
+      if (searchContext.context === "origin") {
+        if (aDistance !== bDistance) {
+          return aDistance - bDistance;
+        }
+      }
+
+      if (searchContext.context === "destination") {
+        const aScore = Number.isFinite(aDistance) ? aDistance * destinationBoost : Number.POSITIVE_INFINITY;
+        const bScore = Number.isFinite(bDistance) ? bDistance * destinationBoost : Number.POSITIVE_INFINITY;
+        if (aScore !== bScore) {
+          return aScore - bScore;
+        }
+      }
+
+      return a.index - b.index;
+    })
+    .map((item) => item.place);
+};
+
+export async function searchDuffelPlaces(query: string, searchContext?: PlaceSearchContext): Promise<ProviderResult<DuffelPlaceSuggestion>> {
   const apiKey = process.env.DUFFEL_API_KEY;
   if (!apiKey) {
     return skippedProvider("DuffelPlaces", "Missing DUFFEL_API_KEY.");
@@ -148,14 +209,10 @@ export async function searchDuffelPlaces(query: string): Promise<ProviderResult<
       const city = (item.city_name || item.city?.name || item.name || "").trim();
       const airport = (item.name || city || code).trim();
 
-      if (!code || !city || !airport) {
-        continue;
-      }
+      if (!code || !city || !airport) continue;
 
       const key = `${code}|${airport}`;
-      if (seen.has(key)) {
-        continue;
-      }
+      if (seen.has(key)) continue;
       seen.add(key);
 
       results.push({
@@ -165,9 +222,11 @@ export async function searchDuffelPlaces(query: string): Promise<ProviderResult<
         country: item.country_name?.trim() || undefined,
         duffelPlaceId: item.id?.trim() || undefined,
         type: item.type === "city" ? "city" : item.type === "airport" ? "airport" : item.type,
+        latitude: toNumber(item.latitude),
+        longitude: toNumber(item.longitude),
       });
     }
 
-    return results.slice(0, 8);
+    return rankPlaces(results, searchContext).slice(0, 8);
   });
 }
