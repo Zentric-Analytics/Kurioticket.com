@@ -18,6 +18,11 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
+import {
+  airports,
+  formatAirportLabel,
+  type AirportOption,
+} from "@/data/airports";
 
 type TabMode =
   | "flights"
@@ -32,70 +37,6 @@ type SearchTabsProps = {
   t: Record<string, string>;
   compactHero?: boolean;
 };
-
-type AirportOption = {
-  city: string;
-  airport: string;
-  code: string;
-  lat: number;
-  lon: number;
-};
-
-const AIRPORTS: AirportOption[] = [
-  {
-    city: "Lagos",
-    airport: "Murtala Muhammed",
-    code: "LOS",
-    lat: 6.5774,
-    lon: 3.3212,
-  },
-  {
-    city: "Abuja",
-    airport: "Nnamdi Azikiwe",
-    code: "ABV",
-    lat: 9.0068,
-    lon: 7.2632,
-  },
-  {
-    city: "London",
-    airport: "Heathrow",
-    code: "LHR",
-    lat: 51.47,
-    lon: -0.4543,
-  },
-  {
-    city: "Dubai",
-    airport: "Dubai International",
-    code: "DXB",
-    lat: 25.2532,
-    lon: 55.3657,
-  },
-  {
-    city: "Toronto",
-    airport: "Pearson",
-    code: "YYZ",
-    lat: 43.6777,
-    lon: -79.6248,
-  },
-  {
-    city: "New York",
-    airport: "John F. Kennedy",
-    code: "JFK",
-    lat: 40.6413,
-    lon: -73.7781,
-  },
-  {
-    city: "Paris",
-    airport: "Charles de Gaulle",
-    code: "CDG",
-    lat: 49.0097,
-    lon: 2.5479,
-  },
-];
-
-const formatAirport = (
-  item: AirportOption
-) => `${item.city} (${item.code})`;
 
 const labelAirport = (
   item: AirportOption
@@ -124,8 +65,12 @@ export function SearchTabs({
 
   const [from, setFrom] =
     useState("");
+  const [fromCode, setFromCode] =
+    useState("");
 
   const [to, setTo] =
+    useState("");
+  const [toCode, setToCode] =
     useState("");
 
   const [fromOpen, setFromOpen] =
@@ -195,7 +140,7 @@ export function SearchTabs({
   const fromSuggestions =
     useMemo(
       () =>
-        AIRPORTS.filter((a) =>
+        airports.filter((a) =>
           labelAirport(a).includes(
             from.toLowerCase()
           )
@@ -206,7 +151,7 @@ export function SearchTabs({
   const toSuggestions =
     useMemo(
       () =>
-        AIRPORTS.filter((a) =>
+        airports.filter((a) =>
           labelAirport(a).includes(
             to.toLowerCase()
           )
@@ -329,10 +274,19 @@ export function SearchTabs({
       event.preventDefault();
 
       setValue(
-        formatAirport(
+        formatAirportLabel(
           list[active]
         )
       );
+      if (isFrom) {
+        setFromCode(
+          list[active].code
+        );
+      } else {
+        setToCode(
+          list[active].code
+        );
+      }
 
       setOpen(false);
     }
@@ -368,8 +322,12 @@ export function SearchTabs({
           "one-way"
             ? "one-way"
             : "round-trip",
-        origin: from.trim(),
-        destination: to.trim(),
+        origin:
+          fromCode ||
+          from.trim(),
+        destination:
+          toCode ||
+          to.trim(),
         departureDate,
         travelers,
         cabinClass,
@@ -539,6 +497,7 @@ export function SearchTabs({
                       .target
                       .value
                   );
+                  setFromCode("");
                   setFromOpen(
                     true
                   );
@@ -576,9 +535,12 @@ export function SearchTabs({
                         type="button"
                         onClick={() => {
                           setFrom(
-                            formatAirport(
+                            formatAirportLabel(
                               option
                             )
+                          );
+                          setFromCode(
+                            option.code
                           );
                           setFromOpen(
                             false
@@ -592,7 +554,7 @@ export function SearchTabs({
                             : "hover:bg-slate-50"
                         )}
                       >
-                        {formatAirport(
+                        {formatAirportLabel(
                           option
                         )}
                       </button>
@@ -620,6 +582,7 @@ export function SearchTabs({
                     event.target
                       .value
                   );
+                  setToCode("");
                   setToOpen(
                     true
                   );
@@ -655,9 +618,12 @@ export function SearchTabs({
                         type="button"
                         onClick={() => {
                           setTo(
-                            formatAirport(
+                            formatAirportLabel(
                               option
                             )
+                          );
+                          setToCode(
+                            option.code
                           );
                           setToOpen(
                             false
@@ -671,7 +637,7 @@ export function SearchTabs({
                             : "hover:bg-slate-50"
                         )}
                       >
-                        {formatAirport(
+                        {formatAirportLabel(
                           option
                         )}
                       </button>
