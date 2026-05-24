@@ -16,7 +16,7 @@ export default async function PremiumDashboardPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 py-8">
+      <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold text-teal-dark">Intelligent Travel Optimization Membership</p>

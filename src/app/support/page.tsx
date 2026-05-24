@@ -13,7 +13,7 @@ export default function SupportPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 py-8">
+      <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
         <div className="max-w-3xl">
           <p className="text-sm font-semibold text-teal-dark">Intelligent Travel Assistance</p>
           <h1 className="mt-1 text-3xl font-bold text-navy">Support Center</h1>

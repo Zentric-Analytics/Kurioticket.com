@@ -17,7 +17,7 @@ export default async function HotelDestinationPage({ params }: { params: Promise
   return (
     <>
       <AppHeader />
-      <main className="flex-1 bg-gradient-to-b from-indigo-50 via-white to-violet-50/40 py-10">
+      <main className="flex-1 bg-gradient-to-b from-indigo-50 via-white to-violet-50/40 pt-24 pb-10 sm:pt-28 lg:pt-28">
         <section className="page-shell">
         <p className="text-sm font-semibold text-violet-700">Future hotel destination page</p>
         <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-indigo-950">{titleize(slug)} hotels</h1>

@@ -42,7 +42,7 @@ export default function ExplorePage() {
     <>
       <AppHeader />
 
-      <main className="page-shell py-10">
+      <main className="page-shell pt-24 pb-10 sm:pt-28 lg:pt-28">
         <h1 className="text-3xl font-black text-slate-950">
           {c.title}
         </h1>

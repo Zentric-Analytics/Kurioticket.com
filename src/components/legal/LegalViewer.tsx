@@ -7,7 +7,7 @@ import { legalDeveloperNote } from "@/data/legalDocuments";
 
 export function LegalViewer({ document }: { document: LegalDocument }) {
   return (
-    <main className="page-shell flex-1 py-8">
+    <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
       <div className="legal-paper rounded-lg border p-4 shadow-sm md:p-8">
         <div className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-start md:justify-between">
           <div>
