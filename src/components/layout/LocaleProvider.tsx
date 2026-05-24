@@ -11,6 +11,7 @@ import {
 import {
   getTranslations,
   localeOptions,
+  publicLocaleOptions,
   type LocaleCode,
 } from "@/lib/i18n";
 
@@ -24,7 +25,7 @@ type LocaleContextValue = {
   locale: LocaleCode;
   setLocale: (locale: LocaleCode) => void;
   t: ReturnType<typeof getTranslations>;
-  locales: typeof localeOptions;
+  locales: typeof publicLocaleOptions;
 };
 
 const LocaleContext =
@@ -62,12 +63,10 @@ export function LocaleProvider({
 }) {
   const [locale, setLocaleState] =
     useState<LocaleCode>(() => {
-      const savedLocale =
+    const savedLocale =
         getStoredLocale();
 
-      return isSupportedLocale(
-        savedLocale
-      )
+      return isSupportedLocale(savedLocale) && isPublicLocale(savedLocale)
         ? savedLocale
         : DEFAULT_LOCALE;
     });
@@ -77,6 +76,12 @@ export function LocaleProvider({
   ) => {
     const normalized =
       normalizeLanguage(nextLocale) as LocaleCode;
+
+    if (!isPublicLocale(normalized)) {
+      setLocaleState(DEFAULT_LOCALE);
+      setStoredLocale(DEFAULT_LOCALE);
+      return;
+    }
 
     setLocaleState(normalized);
     setStoredLocale(normalized);
@@ -114,7 +119,7 @@ export function LocaleProvider({
         locale,
         setLocale,
         t: getTranslations(locale),
-        locales: localeOptions,
+        locales: publicLocaleOptions,
       }),
       [locale]
     );
@@ -139,4 +144,16 @@ export function useLocale() {
   }
 
   return context;
+}
+
+function isPublicLocale(
+  value: string | null | undefined
+): value is LocaleCode {
+  return Boolean(
+    value &&
+      publicLocaleOptions.some(
+        (option) =>
+          option.code === value
+      )
+  );
 }

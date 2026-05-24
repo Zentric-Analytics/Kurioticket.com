@@ -53,6 +53,7 @@ export const dictionaries: Record<string, TranslationDictionary> = {
 
 export type LocaleCode = keyof typeof dictionaries;
 export const localeOptions = supportedLocales.map((locale) => ({ ...locale }));
+export const publicLocaleOptions = localeOptions.filter((locale) => locale.translationStatus === "ready");
 const fallbackLocale: LocaleCode = "en-us";
 const localeAliases: Record<string, string> = { en: "en-us", fr: "fr-fr", es: "es-es", ar: "ar-sa", pt: "pt-pt", zh: "zh-cn" };
 export function getTranslations(locale?: string | null): TranslationDictionary {
