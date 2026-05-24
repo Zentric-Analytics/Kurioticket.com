@@ -333,7 +333,7 @@ export function AppHeader() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-indigo-50 hover:bg-white/10 hover:text-white"
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold text-indigo-50 hover:bg-white/10 hover:text-white"
                   >
                     {Icon ? (
                       <Icon
@@ -503,7 +503,7 @@ export function AppHeader() {
                 const Icon = item.icon;
 
                 return (
-                  <Link key={item.href} href={item.href} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                  <Link key={item.href} href={item.href} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[15px] font-semibold text-slate-700 hover:bg-slate-100">
                     {Icon ? (
                       <Icon
                         size={16}
