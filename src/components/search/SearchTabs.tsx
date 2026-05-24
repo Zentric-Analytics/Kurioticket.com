@@ -40,6 +40,10 @@ type SearchTabsProps = {
   compactHero?: boolean;
 };
 
+type PlacesApiResponse = {
+  suggestions?: AirportOption[];
+};
+
 const labelAirport = (
   item: AirportOption
 ) =>
@@ -100,6 +104,24 @@ export function SearchTabs({
     toHighlight,
     setToHighlight,
   ] = useState(0);
+  const [
+    fromLiveSuggestions,
+    setFromLiveSuggestions,
+  ] = useState<AirportOption[]>(
+    []
+  );
+  const [
+    toLiveSuggestions,
+    setToLiveSuggestions,
+  ] = useState<AirportOption[]>(
+    []
+  );
+  const [
+    fromLoading,
+    setFromLoading,
+  ] = useState(false);
+  const [toLoading, setToLoading] =
+    useState(false);
 
   const [
     departureDate,
@@ -160,27 +182,177 @@ export function SearchTabs({
     [compactHero]
   );
 
-  const fromSuggestions =
-    useMemo(
-      () =>
-        airports.filter((a) =>
+  const fromFallbackSuggestions =
+    useMemo(() => {
+      const query = from.trim();
+      if (!query) {
+        return airports.slice(0, 7);
+      }
+      return airports
+        .filter((a) =>
           labelAirport(a).includes(
-            from.toLowerCase()
+            query.toLowerCase()
           )
-        ).slice(0, 7),
-      [from]
-    );
+        )
+        .slice(0, 7);
+    }, [from]);
 
-  const toSuggestions =
-    useMemo(
-      () =>
-        airports.filter((a) =>
+  const toFallbackSuggestions =
+    useMemo(() => {
+      const query = to.trim();
+      if (!query) {
+        return airports.slice(0, 7);
+      }
+      return airports
+        .filter((a) =>
           labelAirport(a).includes(
-            to.toLowerCase()
+            query.toLowerCase()
           )
-        ).slice(0, 7),
-      [to]
-    );
+        )
+        .slice(0, 7);
+    }, [to]);
+  const fromSuggestions =
+    fromLiveSuggestions.length
+      ? fromLiveSuggestions
+      : fromFallbackSuggestions;
+  const toSuggestions =
+    toLiveSuggestions.length
+      ? toLiveSuggestions
+      : toFallbackSuggestions;
+
+  useEffect(() => {
+    const query = from.trim();
+    if (query.length < 2) {
+      setFromLoading(false);
+      setFromLiveSuggestions([]);
+      return;
+    }
+
+    const controller =
+      new AbortController();
+    const timeoutId =
+      window.setTimeout(
+        async () => {
+          setFromLoading(true);
+          try {
+            const response =
+              await fetch(
+                `/api/flights/places?q=${encodeURIComponent(query)}`,
+                {
+                  signal:
+                    controller.signal,
+                  cache: "no-store",
+                }
+              );
+            if (!response.ok) {
+              throw new Error(
+                "Failed to load suggestions"
+              );
+            }
+            const payload =
+              (await response.json()) as PlacesApiResponse;
+            const suggestions = Array.isArray(
+              payload.suggestions
+            )
+              ? payload.suggestions
+                  .filter(
+                    (item) =>
+                      !!item?.code &&
+                      !!item?.city &&
+                      !!item?.airport
+                  )
+                  .slice(0, 7)
+              : [];
+            setFromLiveSuggestions(
+              suggestions
+            );
+          } catch {
+            if (!controller.signal.aborted) {
+              setFromLiveSuggestions(
+                []
+              );
+            }
+          } finally {
+            if (!controller.signal.aborted) {
+              setFromLoading(false);
+            }
+          }
+        },
+        300
+      );
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [from]);
+
+  useEffect(() => {
+    const query = to.trim();
+    if (query.length < 2) {
+      setToLoading(false);
+      setToLiveSuggestions([]);
+      return;
+    }
+
+    const controller =
+      new AbortController();
+    const timeoutId =
+      window.setTimeout(
+        async () => {
+          setToLoading(true);
+          try {
+            const response =
+              await fetch(
+                `/api/flights/places?q=${encodeURIComponent(query)}`,
+                {
+                  signal:
+                    controller.signal,
+                  cache: "no-store",
+                }
+              );
+            if (!response.ok) {
+              throw new Error(
+                "Failed to load suggestions"
+              );
+            }
+            const payload =
+              (await response.json()) as PlacesApiResponse;
+            const suggestions = Array.isArray(
+              payload.suggestions
+            )
+              ? payload.suggestions
+                  .filter(
+                    (item) =>
+                      !!item?.code &&
+                      !!item?.city &&
+                      !!item?.airport
+                  )
+                  .slice(0, 7)
+              : [];
+            setToLiveSuggestions(
+              suggestions
+            );
+          } catch {
+            if (!controller.signal.aborted) {
+              setToLiveSuggestions(
+                []
+              );
+            }
+          } finally {
+            if (!controller.signal.aborted) {
+              setToLoading(false);
+            }
+          }
+        },
+        300
+      );
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [to]);
 
   useEffect(() => {
     const onPointerDown = (
@@ -761,10 +933,13 @@ export function SearchTabs({
                   className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
-                {fromOpen &&
-                fromSuggestions.length ? (
+                {fromOpen ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {fromSuggestions.map(
+                    {fromLoading ? (
+                      <div className="px-3 py-2 text-sm text-slate-500">
+                        Searching airports and cities…
+                      </div>
+                    ) : fromSuggestions.length ? fromSuggestions.map(
                       (
                         option,
                         index
@@ -786,18 +961,29 @@ export function SearchTabs({
                             );
                           }}
                           className={cn(
-                            "block w-full px-3 py-2 text-left text-sm transition-colors",
+                            "block w-full px-3 py-2 text-left transition-colors",
                             fromHighlight ===
                               index
                               ? "bg-slate-100"
                               : "hover:bg-slate-50"
                           )}
                         >
-                          {formatAirportLabel(
-                            option
-                          )}
+                          <p className="text-sm font-medium text-slate-900">
+                            {option.city} (
+                            {option.code})
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {option.airport}
+                            {option.country
+                              ? ` · ${option.country}`
+                              : ""}
+                          </p>
                         </button>
                       )
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-slate-500">
+                        No matching airports or cities
+                      </div>
                     )}
                   </div>
                 ) : null}
@@ -854,10 +1040,13 @@ export function SearchTabs({
                   className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
-                {toOpen &&
-                toSuggestions.length ? (
+                {toOpen ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {toSuggestions.map(
+                    {toLoading ? (
+                      <div className="px-3 py-2 text-sm text-slate-500">
+                        Searching airports and cities…
+                      </div>
+                    ) : toSuggestions.length ? toSuggestions.map(
                       (
                         option,
                         index
@@ -879,18 +1068,29 @@ export function SearchTabs({
                             );
                           }}
                           className={cn(
-                            "block w-full px-3 py-2 text-left text-sm transition-colors",
+                            "block w-full px-3 py-2 text-left transition-colors",
                             toHighlight ===
                               index
                               ? "bg-slate-100"
                               : "hover:bg-slate-50"
                           )}
                         >
-                          {formatAirportLabel(
-                            option
-                          )}
+                          <p className="text-sm font-medium text-slate-900">
+                            {option.city} (
+                            {option.code})
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {option.airport}
+                            {option.country
+                              ? ` · ${option.country}`
+                              : ""}
+                          </p>
                         </button>
                       )
+                    ) : (
+                      <div className="px-3 py-2 text-sm text-slate-500">
+                        No matching airports or cities
+                      </div>
                     )}
                   </div>
                 ) : null}
