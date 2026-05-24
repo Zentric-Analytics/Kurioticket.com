@@ -274,16 +274,13 @@ export function AppHeader() {
                         !value
                     )
                   }
+                  aria-label={`Change language, current language ${selectedLanguage?.label}`}
                   className="h-12 gap-2 rounded-full border border-white/30 bg-white/95 px-4 shadow-sm"
                 >
                   {renderFlag(
                     selectedLanguage?.countryCode,
                     selectedLanguage?.fallbackText
                   )}
-
-                  <span className="text-sm font-semibold text-slate-700">
-                    {selectedLanguage?.label}
-                  </span>
 
                   <ChevronDown
                     size={14}
@@ -473,7 +470,13 @@ export function AppHeader() {
                 onClick={() => setLanguageOpen(true)}
                 className="inline-flex h-11 items-center justify-between rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-900"
               >
-                <span>{selectedLanguage.label}</span>
+                <span className="inline-flex items-center gap-2">
+                  {renderFlag(
+                    selectedLanguage?.countryCode,
+                    selectedLanguage?.fallbackText
+                  )}
+                  <span>{selectedLanguage.label}</span>
+                </span>
                 <ChevronDown size={14} className="text-slate-500" />
               </button>
               {navItems.map((item) => (
