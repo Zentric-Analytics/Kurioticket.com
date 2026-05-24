@@ -11,6 +11,7 @@ export type FlightSearchParams = {
   travelers: number;
   cabinClass: CabinClass;
   sort?: SortMode;
+  currency?: string;
 };
 
 export type HotelSearchParams = {

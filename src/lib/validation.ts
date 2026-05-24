@@ -17,6 +17,7 @@ export const flightSearchSchema = z
       .enum(["economy", "premium-economy", "business", "first"])
       .default("economy"),
     sort: z.enum(["cheapest", "best", "fastest", "stops"]).optional(),
+    currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).catch("USD").default("USD"),
   })
   .refine((data) => data.tripType !== "round-trip" || Boolean(data.returnDate), {
     message: "Choose a return date for round trips.",

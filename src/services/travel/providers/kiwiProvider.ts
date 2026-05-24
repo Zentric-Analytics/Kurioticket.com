@@ -15,7 +15,7 @@ export function searchKiwiFlights(search: FlightSearchParams): Promise<ProviderR
       date_from: formatKiwiDate(search.departureDate),
       date_to: formatKiwiDate(search.departureDate),
       adults: String(search.travelers),
-      curr: "USD",
+      curr: search.currency || "USD",
       limit: "25",
       sort: "price",
     });
