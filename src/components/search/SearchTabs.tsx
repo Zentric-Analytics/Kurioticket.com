@@ -543,6 +543,28 @@ export function SearchTabs({
     return `${year}-${month}-${day}`;
   };
 
+  const startOfLocalDay = (
+    date: Date
+  ) =>
+    new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
+
+  const todayLocal =
+    startOfLocalDay(
+      new Date()
+    );
+
+  const isBeforeToday = (
+    date: Date
+  ) =>
+    startOfLocalDay(
+      date
+    ).getTime() <
+    todayLocal.getTime();
+
   const addMonths = (
     date: Date,
     offset: number
@@ -591,6 +613,10 @@ export function SearchTabs({
   const onSelectDate = (
     date: Date
   ) => {
+    if (isBeforeToday(date)) {
+      return;
+    }
+
     const selectedIso =
       toIsoDate(date);
 
@@ -1230,10 +1256,15 @@ export function SearchTabs({
                                     const isReturn =
                                       iso ===
                                       returnDate;
+                                    const isPastDate =
+                                      isBeforeToday(
+                                        day
+                                      );
                                     const isInRange =
                                       !!(
                                         departureParsed &&
                                         returnParsed &&
+                                        !isPastDate &&
                                         day >
                                           departureParsed &&
                                         day <
@@ -1259,11 +1290,16 @@ export function SearchTabs({
                                             day
                                           )
                                         }
+                                        disabled={
+                                          isPastDate
+                                        }
                                         className={cn(
-                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors",
-                                          inCurrentMonth
-                                            ? "text-slate-900 hover:bg-indigo-50"
-                                            : "text-slate-300",
+                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
+                                          isPastDate
+                                            ? "text-slate-300 hover:bg-transparent"
+                                            : inCurrentMonth
+                                              ? "text-slate-900 hover:bg-indigo-50"
+                                              : "text-slate-300 hover:bg-indigo-50",
                                           isInRange &&
                                             "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
                                           (isDeparture ||
