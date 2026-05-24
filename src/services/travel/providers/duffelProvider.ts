@@ -48,8 +48,7 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
             slices,
             passengers,
             cabin_class: cabinClassMap[search.cabinClass],
-            // Duffel supports requesting a currency, but offers may still return provider-native currency.
-            currency: search.currency || "USD",
+            // Do not send selected currency to Duffel offer request until verified for this endpoint; preserve returned total_currency.
           },
         }),
       },
