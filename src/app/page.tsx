@@ -161,6 +161,53 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="page-shell py-5">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-2xl font-black tracking-normal text-slate-950">
+              {t("homePopularDestinations")}
+            </h2>
+
+            <LinkButton
+              href="/hotels/tokyo"
+              variant="ghost"
+              size="sm"
+              className="hidden text-[#6d28d9] sm:inline-flex"
+            >
+              {t("homeViewAllDestinations")}
+              <ArrowRight size={16} />
+            </LinkButton>
+          </div>
+
+          <div className="relative mt-6">
+            <button
+              type="button"
+              aria-label={t("homeNextDestinations")}
+              onClick={scrollDestinationsRail}
+              className="focus-ring absolute -right-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+            >
+              <ChevronRight size={18} />
+            </button>
+
+            <div
+              ref={destinationsRailRef}
+              className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {destinations.map((destination) => (
+                <DestinationCard
+                  key={destination.id}
+                  city={t(destination.cityKey)}
+                  country={t(destination.countryKey)}
+                  imageAlt={t(destination.altKey)}
+                  fromLabel={t("fromPrice")}
+                  saveLabelTemplate={t("homeSaveDestination")}
+                  amountUsd={destination.amountUsd}
+                  image={destination.image}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="page-shell bg-transparent pb-8 pt-1">
           <div className="grid gap-5 bg-transparent sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-7">
             <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
@@ -275,53 +322,6 @@ export default function Home() {
                 </p>
               </div>
             </article>
-          </div>
-        </section>
-
-        <section className="page-shell py-5">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-black tracking-normal text-slate-950">
-              {t("homePopularDestinations")}
-            </h2>
-
-            <LinkButton
-              href="/hotels/tokyo"
-              variant="ghost"
-              size="sm"
-              className="hidden text-[#6d28d9] sm:inline-flex"
-            >
-              {t("homeViewAllDestinations")}
-              <ArrowRight size={16} />
-            </LinkButton>
-          </div>
-
-          <div className="relative mt-6">
-            <button
-              type="button"
-              aria-label={t("homeNextDestinations")}
-              onClick={scrollDestinationsRail}
-              className="focus-ring absolute -right-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
-            >
-              <ChevronRight size={18} />
-            </button>
-
-            <div
-              ref={destinationsRailRef}
-              className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {destinations.map((destination) => (
-                <DestinationCard
-                  key={destination.id}
-                  city={t(destination.cityKey)}
-                  country={t(destination.countryKey)}
-                  imageAlt={t(destination.altKey)}
-                  fromLabel={t("fromPrice")}
-                  saveLabelTemplate={t("homeSaveDestination")}
-                  amountUsd={destination.amountUsd}
-                  image={destination.image}
-                />
-              ))}
-            </div>
           </div>
         </section>
 
