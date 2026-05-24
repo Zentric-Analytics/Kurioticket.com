@@ -1,8 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
@@ -44,7 +45,7 @@ const destinations = [
     altKey: "homeDestinationDubaiAlt",
     amountUsd: 420,
     image:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1400&q=90",
   },
   {
     id: "london",
@@ -53,7 +54,7 @@ const destinations = [
     altKey: "homeDestinationLondonAlt",
     amountUsd: 380,
     image:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1400&q=90",
   },
   {
     id: "paris",
@@ -62,7 +63,7 @@ const destinations = [
     altKey: "homeDestinationParisAlt",
     amountUsd: 410,
     image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=90",
   },
   {
     id: "bali",
@@ -71,7 +72,7 @@ const destinations = [
     altKey: "homeDestinationBaliAlt",
     amountUsd: 370,
     image:
-      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1400&q=90",
   },
   {
     id: "new-york",
@@ -80,7 +81,7 @@ const destinations = [
     altKey: "homeDestinationNewYorkAlt",
     amountUsd: 390,
     image:
-      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1400&q=90",
   },
 ];
 
@@ -89,6 +90,18 @@ export default function Home() {
   const { selectedOption } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
+  const destinationsRailRef = useRef<HTMLDivElement>(null);
+
+  const scrollDestinationsRail = () => {
+    const rail = destinationsRailRef.current;
+
+    if (!rail) return;
+
+    rail.scrollBy({
+      left: Math.round(rail.clientWidth * 0.85),
+      behavior: "smooth",
+    });
+  };
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
@@ -286,12 +299,16 @@ export default function Home() {
             <button
               type="button"
               aria-label={t("homeNextDestinations")}
-              className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow sm:flex"
+              onClick={scrollDestinationsRail}
+              className="focus-ring absolute -right-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
             >
               <ChevronRight size={18} />
             </button>
 
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+            <div
+              ref={destinationsRailRef}
+              className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {destinations.map((destination) => (
                 <DestinationCard
                   key={destination.id}
@@ -406,35 +423,41 @@ function DestinationCard({
   saveLabelTemplate: string;
 }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative h-44">
-        <Image
-          src={image}
-          alt={imageAlt}
-          fill
-          sizes="(min-width: 1024px) 20vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover"
-        />
+    <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
+      <Link
+        href={`/hotels/results?destination=${encodeURIComponent(city)}`}
+        className="focus-ring block"
+      >
+        <div className="relative h-56 sm:h-64">
+          <Image
+            src={image}
+            alt={imageAlt}
+            fill
+            sizes="(min-width: 1280px) 22rem, (min-width: 640px) 22rem, 18.5rem"
+            className="object-cover transition duration-500 group-hover:scale-105"
+          />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-900/5" />
 
-        <button
-          type="button"
-          className="focus-ring absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur"
-          aria-label={saveLabelTemplate.replace("{{city}}", city)}
-        >
-          <Heart size={17} />
-        </button>
+          <button
+            type="button"
+            className="focus-ring absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30"
+            aria-label={saveLabelTemplate.replace("{{city}}", city)}
+            onClick={(event) => event.preventDefault()}
+          >
+            <Heart size={17} />
+          </button>
 
-        <div className="absolute bottom-3 left-3 text-white">
-          <h3 className="text-xl font-black">{city}</h3>
-          <p className="text-sm font-semibold">{country}</p>
+          <div className="absolute bottom-4 left-4 text-white">
+            <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">{city}</h3>
+            <p className="text-sm font-semibold text-white/95">{country}</p>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
-        {fromLabel} <span className="text-lg font-black text-[#6d28d9]"><PriceText amountUsd={amountUsd} /></span>
-      </div>
+        <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
+          {fromLabel} <span className="text-xl font-black text-[#6d28d9]"><PriceText amountUsd={amountUsd} /></span>
+        </div>
+      </Link>
     </article>
   );
 }
