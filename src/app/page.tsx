@@ -143,67 +143,67 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell pb-6">
-          <div className="grid gap-3 rounded-2xl border border-[#ece8ff] bg-[#f7f5ff] p-4 sm:grid-cols-2 lg:grid-cols-4">
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <BadgeCheck size={16} />
+        <section className="page-shell pb-8 pt-1">
+          <div className="grid gap-4 rounded-3xl border border-[#e4ddff] bg-gradient-to-b from-[#f8f5ff] to-[#f3f0ff] p-4 shadow-[0_16px_42px_-26px_rgba(76,29,149,0.45)] sm:grid-cols-2 sm:gap-5 sm:p-5 lg:grid-cols-4 lg:gap-6 lg:p-6">
+            <article className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-white/95 p-4 shadow-[0_14px_30px_-24px_rgba(91,33,214,0.55)] sm:p-5">
+              <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
+                <BadgeCheck size={22} />
               </span>
 
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
+              <div className="space-y-1.5">
+                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesMillionsTitle")}
                 </h2>
 
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
                   {t("homeFeaturesMillionsBody")}
                 </p>
               </div>
             </article>
 
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <Ticket size={16} />
+            <article className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-white/95 p-4 shadow-[0_14px_30px_-24px_rgba(91,33,214,0.55)] sm:p-5">
+              <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
+                <Ticket size={22} />
               </span>
 
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
+              <div className="space-y-1.5">
+                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesFlexibleTitle")}
                 </h2>
 
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
                   {t("homeFeaturesFlexibleBody")}
                 </p>
               </div>
             </article>
 
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <ShieldCheck size={16} />
+            <article className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-white/95 p-4 shadow-[0_14px_30px_-24px_rgba(91,33,214,0.55)] sm:p-5">
+              <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
+                <ShieldCheck size={22} />
               </span>
 
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
+              <div className="space-y-1.5">
+                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesSecureTitle")}
                 </h2>
 
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
                   {t("homeFeaturesSecureBody")}
                 </p>
               </div>
             </article>
 
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <WalletCards size={16} />
+            <article className="flex items-start gap-4 rounded-2xl border border-violet-100 bg-white/95 p-4 shadow-[0_14px_30px_-24px_rgba(91,33,214,0.55)] sm:p-5">
+              <span className="mt-1 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-100 text-[#5b21d6] sm:h-12 sm:w-12">
+                <WalletCards size={22} />
               </span>
 
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
+              <div className="space-y-1.5">
+                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
                   {t("homeFeaturesDealsTitle")}
                 </h2>
 
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
                   {t("homeFeaturesDealsBody")}
                 </p>
               </div>
