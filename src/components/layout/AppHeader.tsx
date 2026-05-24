@@ -244,7 +244,7 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-white/10 bg-gradient-to-r from-indigo-950 via-indigo-900 to-violet-900 text-white shadow-[0_10px_30px_rgba(30,27,75,0.28)]">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-gradient-to-r from-indigo-950 via-indigo-900 to-violet-900 text-white shadow-[0_10px_30px_rgba(30,27,75,0.28)]">
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
           <Link
             href="/"
@@ -498,6 +498,8 @@ export function AppHeader() {
           </div>
         ) : null}
       </header>
+
+      <div aria-hidden="true" className="h-[104px] shrink-0" />
     </>
   );
 }
