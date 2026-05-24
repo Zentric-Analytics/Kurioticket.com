@@ -133,7 +133,7 @@ export function SearchTabs({
         "rounded-3xl border border-slate-200/80 bg-white/95 shadow-[0_20px_50px_-35px_rgba(15,23,42,0.65)] backdrop-blur-sm",
         compactHero
           ? "p-2"
-          : "p-3 sm:p-4"
+          : "p-2.5 sm:p-3"
       ),
     [compactHero]
   );
@@ -412,14 +412,14 @@ export function SearchTabs({
 
   return (
     <section className={wrapper}>
-      <div className="mb-4 inline-flex rounded-2xl border border-slate-200 bg-slate-100/90 p-1">
+      <div className="mb-3 inline-flex rounded-2xl border border-slate-200 bg-slate-100/90 p-1">
         <button
           type="button"
           onClick={() =>
             setTab("flights")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-colors",
+            "focus-ring inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors",
             tab === "flights"
               ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800"
@@ -436,7 +436,7 @@ export function SearchTabs({
             setTab("hotels")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-colors",
+            "focus-ring inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-colors",
             tab === "hotels"
               ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800"
@@ -453,11 +453,9 @@ export function SearchTabs({
           onSubmit={
             onFlightSubmit
           }
-          className={cn(
-            "space-y-4 rounded-2xl border border-slate-200 bg-slate-50/55 p-3 sm:p-4"
-          )}
+          className="space-y-2.5"
         >
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
             {(
               [
                 "round-trip",
@@ -473,7 +471,7 @@ export function SearchTabs({
                   )
                 }
                 className={cn(
-                  "focus-ring rounded-full border px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors sm:text-sm",
+                  "focus-ring rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition-colors sm:text-xs",
                   tripType ===
                     mode
                     ? "border-navy bg-navy text-white"
@@ -487,13 +485,13 @@ export function SearchTabs({
             ))}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-2 md:p-3">
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1.2fr_auto_1.2fr_1fr_1fr_auto] xl:items-end xl:gap-0">
+          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white">
+            <div className="grid grid-cols-1 gap-1 p-2 md:grid-cols-2 md:gap-2 xl:grid-cols-[1.2fr_auto_1.2fr_1.15fr_1fr_auto] xl:items-stretch xl:gap-0 xl:p-0">
               <div
                 ref={fromWrapRef}
-                className="relative"
+                className="relative rounded-xl border border-slate-200 px-2 py-1.5 xl:rounded-none xl:border-0 xl:px-3 xl:py-2 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]"
               >
-                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   {t.origin ||
                     "Origin"}
                 </label>
@@ -530,12 +528,12 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or airport"
-                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400"
                   required
                 />
                 {fromOpen &&
                 fromSuggestions.length ? (
-                  <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                  <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {fromSuggestions.map(
                       (
                         option,
@@ -575,11 +573,11 @@ export function SearchTabs({
                 ) : null}
               </div>
 
-              <div className="flex items-end justify-center xl:px-1 xl:pb-1">
+              <div className="flex items-center justify-center xl:px-1">
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
+                  className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
                   aria-label="Swap origin and destination"
                 >
                   <ArrowRightLeft size={16} />
@@ -588,9 +586,9 @@ export function SearchTabs({
 
               <div
                 ref={toWrapRef}
-                className="relative"
+                className="relative rounded-xl border border-slate-200 px-2 py-1.5 xl:rounded-none xl:border-0 xl:px-3 xl:py-2 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]"
               >
-                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   {t.destination ||
                     "Destination"}
                 </label>
@@ -624,12 +622,12 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or airport"
-                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400"
                   required
                 />
                 {toOpen &&
                 toSuggestions.length ? (
-                  <div className="absolute z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+                  <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {toSuggestions.map(
                       (
                         option,
@@ -669,149 +667,143 @@ export function SearchTabs({
                 ) : null}
               </div>
 
-              <div>
-                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
-                  {t.departureDate ||
-                    "Departure"}
-                </label>
-                <input
-                  type="date"
-                  value={
-                    departureDate
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setDepartureDate(
-                      event
-                        .target
-                        .value
-                    )
-                  }
-                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors hover:border-slate-300"
-                  required
-                />
-              </div>
-
-              {tripType ===
-              "round-trip" ? (
+              <div className="grid grid-cols-1 gap-1 rounded-xl border border-slate-200 px-2 py-1.5 md:grid-cols-2 xl:rounded-none xl:border-0 xl:px-3 xl:py-2 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
                 <div>
-                  <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
-                    {t.returnDate ||
-                      "Return"}
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {t.departureDate ||
+                      "Departure"}
                   </label>
                   <input
                     type="date"
                     value={
-                      returnDate
+                      departureDate
                     }
                     onChange={(
                       event
                     ) =>
-                      setReturnDate(
+                      setDepartureDate(
                         event
                           .target
                           .value
                       )
                     }
-                    className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors hover:border-slate-300"
+                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors"
                     required
                   />
                 </div>
-              ) : null}
+                {tripType ===
+                "round-trip" ? (
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      {t.returnDate ||
+                        "Return"}
+                    </label>
+                    <input
+                      type="date"
+                      value={
+                        returnDate
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setReturnDate(
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                      className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors"
+                      required
+                    />
+                  </div>
+                ) : null}
+              </div>
 
-              <div className="xl:ml-2">
+              <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 px-2 py-1.5 xl:rounded-none xl:border-0 xl:px-3 xl:py-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {t.travelers ||
+                      "Travelers"}
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={9}
+                    value={
+                      travelers
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setTravelers(
+                        String(
+                          Math.min(
+                            9,
+                            Math.max(
+                              1,
+                              Number(
+                                event
+                                  .target
+                                  .value ||
+                                  1
+                              )
+                            )
+                          )
+                        )
+                      )
+                    }
+                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold outline-none transition-colors"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {t.cabinClass ||
+                      "Cabin class"}
+                  </label>
+                  <select
+                    value={
+                      cabinClass
+                    }
+                    onChange={(
+                      event
+                    ) =>
+                      setCabinClass(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold outline-none transition-colors"
+                  >
+                    <option value="economy">
+                      Economy
+                    </option>
+                    <option value="premium-economy">
+                      Premium
+                      economy
+                    </option>
+                    <option value="business">
+                      Business
+                    </option>
+                    <option value="first">
+                      First
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="xl:min-w-[150px]">
                 <Button
                   type="submit"
                   disabled={
                     isFlightSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl px-6 text-sm font-bold shadow-md"
+                  className="h-11 w-full rounded-xl bg-navy px-6 text-sm font-bold text-white shadow-md shadow-navy/30"
                 >
                   {t.search ||
                     "Search"}
                 </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {t.travelers ||
-                "Travelers"} &middot; {t.cabinClass || "Cabin class"}
-            </p>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600">
-                  {t.travelers ||
-                    "Travelers"}
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={9}
-                  value={
-                    travelers
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setTravelers(
-                      String(
-                        Math.min(
-                          9,
-                          Math.max(
-                            1,
-                            Number(
-                              event
-                                .target
-                                .value ||
-                                1
-                            )
-                          )
-                        )
-                      )
-                    )
-                  }
-                  className="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition-colors hover:border-slate-300"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600">
-                  {t.cabinClass ||
-                    "Cabin class"}
-                </label>
-                <select
-                  value={
-                    cabinClass
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setCabinClass(
-                      event
-                        .target
-                        .value
-                    )
-                  }
-                  className="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition-colors hover:border-slate-300"
-                >
-                  <option value="economy">
-                    Economy
-                  </option>
-                  <option value="premium-economy">
-                    Premium
-                    economy
-                  </option>
-                  <option value="business">
-                    Business
-                  </option>
-                  <option value="first">
-                    First
-                  </option>
-                </select>
               </div>
             </div>
           </div>
@@ -821,12 +813,12 @@ export function SearchTabs({
           onSubmit={
             onHotelSubmit
           }
-          className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/55 p-3 sm:p-4"
+          className="space-y-2.5"
         >
-          <div className="rounded-2xl border border-slate-200 bg-white p-2 md:p-3">
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_auto] xl:items-end xl:gap-0">
-              <div className="xl:pr-2">
-                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="grid grid-cols-1 gap-1 p-2 md:grid-cols-2 md:gap-2 xl:grid-cols-[1.45fr_1.25fr_1fr_auto] xl:items-stretch xl:gap-0 xl:p-0">
+              <div className="rounded-xl border border-slate-200 px-2 py-1.5 xl:rounded-none xl:border-0 xl:px-3 xl:py-2 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
+                <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   {t.destination ||
                     "Destination"}
                 </label>
@@ -845,147 +837,139 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or hotel"
-                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 hover:border-slate-300"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors placeholder:font-normal placeholder:text-slate-400"
                   required
                 />
               </div>
-
-              <div>
-                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
-                  {t.checkIn ||
-                    "Check-in"}
-                </label>
-                <input
-                  type="date"
-                  value={checkIn}
-                  onChange={(
-                    event
-                  ) =>
-                    setCheckIn(
+              <div className="grid grid-cols-1 gap-1 rounded-xl border border-slate-200 px-2 py-1.5 md:grid-cols-2 xl:rounded-none xl:border-0 xl:px-3 xl:py-2 xl:pr-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {t.checkIn ||
+                      "Check-in"}
+                  </label>
+                  <input
+                    type="date"
+                    value={checkIn}
+                    onChange={(
                       event
-                        .target
-                        .value
-                    )
-                  }
-                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors hover:border-slate-300"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block px-2 text-xs font-semibold text-slate-600">
-                  {t.checkOut ||
-                    "Check-out"}
-                </label>
-                <input
-                  type="date"
-                  value={checkOut}
-                  min={
-                    checkIn ||
-                    undefined
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setCheckOut(
+                    ) =>
+                      setCheckIn(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {t.checkOut ||
+                      "Check-out"}
+                  </label>
+                  <input
+                    type="date"
+                    value={checkOut}
+                    min={
+                      checkIn ||
+                      undefined
+                    }
+                    onChange={(
                       event
-                        .target
-                        .value
-                    )
-                  }
-                  className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition-colors hover:border-slate-300"
-                  required
-                />
+                    ) =>
+                      setCheckOut(
+                        event
+                          .target
+                          .value
+                      )
+                    }
+                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold text-slate-900 outline-none transition-colors"
+                    required
+                  />
+                </div>
               </div>
-
-              <div className="xl:ml-2">
+              <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-200 px-2 py-1.5 xl:rounded-none xl:border-0 xl:px-3 xl:py-2 xl:[border-right-width:1px] xl:[border-right-color:rgb(226_232_240)]">
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {t.guests ||
+                      "Guests"}
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={12}
+                    value={guests}
+                    onChange={(
+                      event
+                    ) =>
+                      setGuests(
+                        String(
+                          Math.min(
+                            12,
+                            Math.max(
+                              1,
+                              Number(
+                                event
+                                  .target
+                                  .value ||
+                                  1
+                              )
+                            )
+                          )
+                        )
+                      )
+                    }
+                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold outline-none transition-colors"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {t.rooms ||
+                      "Rooms"}
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={6}
+                    value={rooms}
+                    onChange={(
+                      event
+                    ) =>
+                      setRooms(
+                        String(
+                          Math.min(
+                            6,
+                            Math.max(
+                              1,
+                              Number(
+                                event
+                                  .target
+                                  .value ||
+                                  1
+                              )
+                            )
+                          )
+                        )
+                      )
+                    }
+                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm font-semibold outline-none transition-colors"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="xl:min-w-[150px]">
                 <Button
                   type="submit"
                   disabled={
                     isHotelSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl px-6 text-sm font-bold shadow-md"
+                  className="h-11 w-full rounded-xl bg-navy px-6 text-sm font-bold text-white shadow-md shadow-navy/30"
                 >
                   {t.search ||
                     "Search"}
                 </Button>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-3 sm:p-4">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              {t.guests || "Guests"} &middot; {t.rooms || "Rooms"}
-            </p>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600">
-                  {t.guests ||
-                    "Guests"}
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={guests}
-                  onChange={(
-                    event
-                  ) =>
-                    setGuests(
-                      String(
-                        Math.min(
-                          12,
-                          Math.max(
-                            1,
-                            Number(
-                              event
-                                .target
-                                .value ||
-                                1
-                            )
-                          )
-                        )
-                      )
-                    )
-                  }
-                  className="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition-colors hover:border-slate-300"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-slate-600">
-                  {t.rooms ||
-                    "Rooms"}
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={6}
-                  value={rooms}
-                  onChange={(
-                    event
-                  ) =>
-                    setRooms(
-                      String(
-                        Math.min(
-                          6,
-                          Math.max(
-                            1,
-                            Number(
-                              event
-                                .target
-                                .value ||
-                                1
-                            )
-                          )
-                        )
-                      )
-                    )
-                  }
-                  className="focus-ring h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm outline-none transition-colors hover:border-slate-300"
-                  required
-                />
               </div>
             </div>
           </div>
