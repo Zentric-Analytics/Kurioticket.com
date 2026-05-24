@@ -21,7 +21,6 @@ import {
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
-  airports,
   formatAirportLabel,
   type AirportOption,
 } from "@/data/airports";
@@ -45,13 +44,6 @@ type PlacesApiResponse = {
   fallback?: boolean;
   source?: string;
 };
-
-type GeoStatus = "idle" | "loading" | "granted" | "denied" | "unavailable";
-
-const labelAirport = (
-  item: AirportOption
-) =>
-  `${item.city} ${item.airport} ${item.code}`.toLowerCase();
 
 export function SearchTabs({
   t,
@@ -83,6 +75,8 @@ export function SearchTabs({
     useState("");
   const [fromCode, setFromCode] =
     useState("");
+  const [hasUserEditedOrigin, setHasUserEditedOrigin] = useState(false);
+  const [originPrefillAttempted, setOriginPrefillAttempted] = useState(false);
 
   const [to, setTo] =
     useState("");
@@ -126,11 +120,7 @@ export function SearchTabs({
   ] = useState(false);
   const [toLoading, setToLoading] =
     useState(false);
-  const [geoStatus, setGeoStatus] = useState<GeoStatus>("idle");
-  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [geoMessage, setGeoMessage] = useState("");
   const [countryHint, setCountryHint] = useState("");
-  const GEO_RADIUS_KM = 120;
 
   const [
     departureDate,
@@ -191,26 +181,16 @@ export function SearchTabs({
     [compactHero]
   );
 
-  const fromFallbackSuggestions = useMemo(() => airports.slice(0, 7), []);
+  const fromSuggestions = fromLiveSuggestions;
+  const toSuggestions = toLiveSuggestions;
 
-  const toFallbackSuggestions = useMemo(() => airports.slice(0, 7), []);
-
-  const fromSuggestions = fromLiveSuggestions.length ? fromLiveSuggestions : fromFallbackSuggestions;
-  const toSuggestions = toLiveSuggestions.length ? toLiveSuggestions : toFallbackSuggestions;
-
-  const buildPlacesUrl = (query: string, context: "origin" | "destination", includeDefault = false) => {
+  const buildPlacesUrl = (query: string, context: "origin" | "destination") => {
     const params = new URLSearchParams();
     if (query.length >= 2) params.set("q", query);
-    if (includeDefault) params.set("default", "true");
     params.set("context", context);
     if (countryHint) params.set("countryCode", countryHint);
     if (typeof navigator !== "undefined" && navigator.language) params.set("locale", navigator.language);
 
-    if (geoCoords && (context === "origin" || context === "destination")) {
-      params.set("lat", geoCoords.lat.toFixed(2));
-      params.set("lng", geoCoords.lng.toFixed(2));
-      params.set("radius", String(GEO_RADIUS_KM));
-    }
 
     return `/api/flights/places?${params.toString()}`;
   };
@@ -225,39 +205,10 @@ export function SearchTabs({
     }
   }, []);
 
-  const requestCurrentLocation = () => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setGeoStatus("unavailable");
-      setGeoMessage("Location unavailable. You can still search by typing.");
-      return;
-    }
-
-    setGeoStatus("loading");
-    setGeoMessage("");
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const roundedLat = Number(position.coords.latitude.toFixed(2));
-        const roundedLng = Number(position.coords.longitude.toFixed(2));
-        setGeoCoords({ lat: roundedLat, lng: roundedLng });
-        setGeoStatus("granted");
-      },
-      (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          setGeoStatus("denied");
-          setGeoMessage("Location permission denied. Search is still available.");
-          return;
-        }
-        setGeoStatus("unavailable");
-        setGeoMessage("Could not access location. Search is still available.");
-      },
-      { timeout: 7000, maximumAge: 300000, enableHighAccuracy: false }
-    );
-  };
 
   useEffect(() => {
     const query = from.trim();
-    const shouldFetchDefault = query.length === 0;
-    if (query.length < 2 && !shouldFetchDefault) {
+    if (query.length < 2) {
       setFromLoading(false);
       setFromLiveSuggestions([]);
       return;
@@ -272,7 +223,7 @@ export function SearchTabs({
           try {
             const response =
               await fetch(
-                buildPlacesUrl(query, "origin", query.length === 0),
+                buildPlacesUrl(query, "origin"),
                 {
                   signal:
                     controller.signal,
@@ -320,12 +271,11 @@ export function SearchTabs({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [from, geoStatus, geoCoords, countryHint]);
+  }, [from, countryHint]);
 
   useEffect(() => {
     const query = to.trim();
-    const shouldFetchDefault = query.length === 0;
-    if (query.length < 2 && !shouldFetchDefault) {
+    if (query.length < 2) {
       setToLoading(false);
       setToLiveSuggestions([]);
       return;
@@ -340,7 +290,7 @@ export function SearchTabs({
           try {
             const response =
               await fetch(
-                buildPlacesUrl(query, "destination", query.length === 0),
+                buildPlacesUrl(query, "destination"),
                 {
                   signal:
                     controller.signal,
@@ -388,7 +338,38 @@ export function SearchTabs({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [to, geoCoords, countryHint]);
+  }, [to, countryHint]);
+
+  useEffect(() => {
+    if (originPrefillAttempted || hasUserEditedOrigin || from.trim()) return;
+
+    const controller = new AbortController();
+
+    const loadRecommendedOrigin = async () => {
+      try {
+        const response = await fetch(buildPlacesUrl("", "origin") + "&defaultOrigin=true", {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const payload = (await response.json()) as { recommendedOrigin?: AirportOption | null };
+        if (payload.recommendedOrigin && !hasUserEditedOrigin && !from.trim()) {
+          setFrom(formatAirportLabel(payload.recommendedOrigin));
+          setFromCode(payload.recommendedOrigin.code);
+        }
+      } catch {
+        // no-op
+      } finally {
+        if (!controller.signal.aborted) {
+          setOriginPrefillAttempted(true);
+        }
+      }
+    };
+
+    void loadRecommendedOrigin();
+
+    return () => controller.abort();
+  }, [originPrefillAttempted, hasUserEditedOrigin, from, countryHint]);
 
   useEffect(() => {
     const onPointerDown = (
@@ -965,6 +946,7 @@ export function SearchTabs({
                   onChange={(
                     event
                   ) => {
+                    setHasUserEditedOrigin(true);
                     setFrom(
                       event
                         .target
@@ -991,28 +973,15 @@ export function SearchTabs({
                       true
                     )
                   }
-                  placeholder="City or airport"
+                  placeholder="From?"
                   className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
                 {fromOpen ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {from.trim().length === 0 ? (
-                      <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">{geoStatus === "granted" ? "Airports near you" : "Recommended airports"}</p>
-                    ) : null}
-                    {from.trim().length === 0 && geoStatus !== "granted" ? (
-                      <button
-                        type="button"
-                        onClick={requestCurrentLocation}
-                        className="block w-full px-3 py-2 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
-                      >
-                        {geoStatus === "loading" ? "Getting your location…" : "Find airports near me"}
-                      </button>
-                    ) : null}
-                    {geoMessage ? (
-                      <p className="px-3 py-1 text-xs text-slate-500">{geoMessage}</p>
-                    ) : null}
-                    {fromLoading ? (
+                      <div className="px-3 py-2 text-sm text-slate-500">Start typing a city or airport</div>
+                    ) : fromLoading ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
                       </div>
@@ -1113,14 +1082,15 @@ export function SearchTabs({
                       false
                     )
                   }
-                  placeholder="City or airport"
+                  placeholder="To?"
                   className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
                 {toOpen ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {to.trim().length === 0 ? <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500">Popular destinations</p> : null}
-                    {toLoading ? (
+                    {to.trim().length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-slate-500">Start typing a city or airport</div>
+                    ) : toLoading ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
                       </div>
@@ -1167,7 +1137,7 @@ export function SearchTabs({
                       )
                     ) : (
                       <div className="px-3 py-2 text-sm text-slate-500">
-                        {to.trim().length === 0 ? "Start typing to search airports and cities" : "No matching airports or cities"}
+                        No matching airports or cities
                       </div>
                     )}
                   </div>
