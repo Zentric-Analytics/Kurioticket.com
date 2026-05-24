@@ -45,6 +45,37 @@ type PlacesApiResponse = {
   source?: string;
 };
 
+type RecommendedOrigin = AirportOption & {
+  confidence?: number;
+};
+
+const normalizeSuggestionText = (value: string) =>
+  value
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .toLowerCase();
+
+const dedupeSuggestions = (suggestions: AirportOption[]) => {
+  const seenCodes = new Set<string>();
+  const seenNames = new Set<string>();
+  const deduped: AirportOption[] = [];
+
+  for (const suggestion of suggestions) {
+    const codeKey = suggestion.code.trim().toUpperCase();
+    if (!codeKey || seenCodes.has(codeKey)) continue;
+
+    const nameKey = `${normalizeSuggestionText(suggestion.city)}|${normalizeSuggestionText(suggestion.airport)}`;
+    if (seenNames.has(nameKey)) continue;
+
+    seenCodes.add(codeKey);
+    seenNames.add(nameKey);
+    deduped.push(suggestion);
+  }
+
+  return deduped;
+};
+
 export function SearchTabs({
   t,
   compactHero = false,
@@ -240,7 +271,7 @@ export function SearchTabs({
             const suggestions = Array.isArray(
               payload.suggestions
             )
-              ? payload.suggestions
+              ? dedupeSuggestions(payload.suggestions)
                   .filter(
                     (item) =>
                       !!item?.code &&
@@ -307,7 +338,7 @@ export function SearchTabs({
             const suggestions = Array.isArray(
               payload.suggestions
             )
-              ? payload.suggestions
+              ? dedupeSuggestions(payload.suggestions)
                   .filter(
                     (item) =>
                       !!item?.code &&
@@ -352,10 +383,11 @@ export function SearchTabs({
           cache: "no-store",
         });
         if (!response.ok) return;
-        const payload = (await response.json()) as { recommendedOrigin?: AirportOption | null };
-        if (payload.recommendedOrigin && !hasUserEditedOrigin && !from.trim()) {
-          setFrom(formatAirportLabel(payload.recommendedOrigin));
-          setFromCode(payload.recommendedOrigin.code);
+        const payload = (await response.json()) as { recommendedOrigin?: RecommendedOrigin | null };
+        const recommended = payload.recommendedOrigin;
+        if (recommended && (recommended.confidence ?? 0) >= 0.7 && !hasUserEditedOrigin && !from.trim()) {
+          setFrom(formatAirportLabel(recommended));
+          setFromCode(recommended.code);
         }
       } catch {
         // no-op

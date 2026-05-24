@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getDefaultAirports, type AirportOption } from "@/data/airports";
+import { airports, getDefaultAirports, type AirportOption } from "@/data/airports";
 import { resolveCountryCode } from "@/lib/geo/context";
 import { searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 
@@ -8,20 +8,6 @@ const MIN_QUERY_LENGTH = 2;
 const MAX_QUERY_LENGTH = 80;
 const SAFE_QUERY = /^[\p{L}\p{N}\s'.,\-()]+$/u;
 const MAX_RADIUS_KM = 150;
-const COUNTRY_NAME_BY_CODE: Record<string, string> = {
-  US: "United States",
-  NG: "Nigeria",
-  GB: "United Kingdom",
-  CA: "Canada",
-  AE: "United Arab Emirates",
-  FR: "France",
-  DE: "Germany",
-  NL: "Netherlands",
-  ES: "Spain",
-  IT: "Italy",
-};
-
-
 const CONFIDENT_RECOMMENDATION_THRESHOLD = 0.7;
 
 type RecommendedOrigin = {
@@ -58,6 +44,13 @@ const normalizeContext = (value: string | null): SearchContext => {
   return "origin";
 };
 
+const normalizeName = (value: string) =>
+  value
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .toLowerCase();
+
 export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const query = (searchParams.get("q") || "").trim();
@@ -69,6 +62,23 @@ export async function GET(request: Request) {
   const radiusKm = rawRadius ? Math.min(rawRadius, MAX_RADIUS_KM) : undefined;
   const isDefault = searchParams.get("default") === "true";
   const defaultOriginRequested = searchParams.get("defaultOrigin") === "true";
+  const headerCity =
+    request.headers.get("x-vercel-ip-city") ||
+    request.headers.get("cf-ipcity") ||
+    request.headers.get("x-city");
+  const normalizedHeaderCity = headerCity ? normalizeName(headerCity) : "";
+  const headerLat = toBoundedNumber(
+    request.headers.get("x-vercel-ip-latitude") || request.headers.get("cf-iplatitude"),
+    -90,
+    90,
+  );
+  const headerLng = toBoundedNumber(
+    request.headers.get("x-vercel-ip-longitude") || request.headers.get("cf-iplongitude"),
+    -180,
+    180,
+  );
+  const resolvedLat = typeof lat === "number" ? lat : headerLat;
+  const resolvedLng = typeof lng === "number" ? lng : headerLng;
 
   const countryCode = resolveCountryCode({
     explicitCountryCode: searchParams.get("countryCode"),
@@ -81,25 +91,32 @@ export async function GET(request: Request) {
   });
 
   if (defaultOriginRequested && context === "origin" && query.length === 0) {
-    const ranked = getDefaultAirports({ context: "origin", countryCode, limit: 2 });
-    const topMatch = ranked[0];
+    let recommended: AirportOption | undefined;
+    let confidence = 0;
+    let source: "latlng" | "city" | undefined;
 
-    if (!topMatch || !countryCode) {
-      return NextResponse.json({ recommendedOrigin: null });
+    if (typeof resolvedLat === "number" && typeof resolvedLng === "number") {
+      recommended = getDefaultAirports({
+        context: "origin",
+        lat: resolvedLat,
+        lon: resolvedLng,
+        limit: 1,
+      })[0];
+      confidence = recommended ? 0.92 : 0;
+      source = recommended ? "latlng" : undefined;
+    } else if (normalizedHeaderCity) {
+      recommended = airports.find((airport) => normalizeName(airport.city) === normalizedHeaderCity);
+      confidence = recommended ? 0.85 : 0;
+      source = recommended ? "city" : undefined;
     }
 
-    const secondMatch = ranked[1];
-    const expectedCountryName = countryCode ? COUNTRY_NAME_BY_CODE[countryCode] : undefined;
-    const topCountryMatch = Boolean(expectedCountryName && topMatch.country === expectedCountryName);
-    const confidence = topCountryMatch && (!secondMatch || secondMatch.country !== topMatch.country) ? 0.85 : 0.75;
-
-    if (confidence < CONFIDENT_RECOMMENDATION_THRESHOLD) {
+    if (!recommended || confidence < CONFIDENT_RECOMMENDATION_THRESHOLD) {
       return NextResponse.json({ recommendedOrigin: null });
     }
 
     return NextResponse.json({
-      recommendedOrigin: toRecommendedOrigin(topMatch, confidence),
-      source: "coarse-context",
+      recommendedOrigin: toRecommendedOrigin(recommended, confidence),
+      source,
     });
   }
 
