@@ -56,4 +56,9 @@ export const translations: TranslationDictionary = {
   homeNewsletterBody: "Get curated flight and hotel updates delivered weekly.",
   homeNewsletterPlaceholder: "Enter your email",
   homeSubscribe: "Subscribe",
+  homeNewsletterThanks: "Thanks! We’ll keep you posted with travel deals.",
+  homeHeroImageAlt: "Luxury tropical resort by calm water",
+  homeNextDestinations: "Next destinations",
+  homeEmailAddress: "Email address",
+  homeSaveDestination: "Save {{city}}",
 };
