@@ -21,17 +21,14 @@ import {
   Sparkles,
   SlidersHorizontal,
   Ticket,
-  WalletCards,
 } from "lucide-react";
 
+import { PriceText } from "@/components/currency/PriceText";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
-import { useLocale } from "@/components/layout/LocaleProvider";
-import { useRegion } from "@/components/region/RegionProvider";
-import { PriceText } from "@/components/currency/PriceText";
-
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 
@@ -88,7 +85,6 @@ const destinations = [
 
 export default function Home() {
   const { locale } = useLocale();
-  const { selectedOption } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const destinationsRailRef = useRef<HTMLDivElement>(null);
@@ -151,7 +147,6 @@ export default function Home() {
                 <p className="max-w-xl text-base font-semibold leading-7 text-slate-700 sm:text-lg sm:leading-8">
                   {t("homeHeroSubtitle")}
                 </p>
-
               </div>
 
               <div className="relative z-10 mt-0.5 w-full max-w-[1280px]">
@@ -230,10 +225,10 @@ export default function Home() {
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600">
                   <Network size={34} strokeWidth={2.2} />
                 </span>
-                <span className="absolute left-[22%] bottom-5 text-violet-600">
+                <span className="absolute bottom-5 left-[22%] text-violet-600">
                   <Ticket size={17} strokeWidth={2.3} />
                 </span>
-                <span className="absolute right-[22%] bottom-5 text-indigo-700">
+                <span className="absolute bottom-5 right-[22%] text-indigo-700">
                   <Compass size={17} strokeWidth={2.3} />
                 </span>
                 <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/85 px-2 py-1 text-[11px] font-semibold text-indigo-600">
@@ -341,9 +336,7 @@ export default function Home() {
           <PromoPanel
             tone="violet"
             title={t("homePromoFlightsTitle")}
-            body={
-              t("homePromoFlightsBody")
-            }
+            body={t("homePromoFlightsBody")}
             cta={t("homePromoFlightsCta")}
             href="/deals"
             icon={<Plane size={74} />}
@@ -352,9 +345,7 @@ export default function Home() {
           <PromoPanel
             tone="amber"
             title={t("homePromoHotelsTitle")}
-            body={
-              t("homePromoHotelsBody")
-            }
+            body={t("homePromoHotelsBody")}
             cta={t("homePromoHotelsCta")}
             href="/hotels/results"
             icon={<Hotel size={74} />}
@@ -387,9 +378,7 @@ export default function Home() {
                 type="email"
                 value={newsletterEmail}
                 onChange={(event) => setNewsletterEmail(event.target.value)}
-                placeholder={
-                  t("homeNewsletterPlaceholder")
-                }
+                placeholder={t("homeNewsletterPlaceholder")}
                 className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
                 aria-label={t("homeEmailAddress")}
                 required
@@ -461,13 +450,18 @@ function DestinationCard({
           </button>
 
           <div className="absolute bottom-4 left-4 text-white">
-            <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">{city}</h3>
+            <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">
+              {city}
+            </h3>
             <p className="text-sm font-semibold text-white/95">{country}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
-          {fromLabel} <span className="text-xl font-black text-[#6d28d9]"><PriceText amountUsd={amountUsd} /></span>
+          {fromLabel}
+          <span className="text-xl font-black text-[#6d28d9]">
+            <PriceText amountUsd={amountUsd} />
+          </span>
         </div>
       </Link>
     </article>

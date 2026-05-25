@@ -39,21 +39,13 @@ import {
 } from "@/components/ui/Button";
 
 export function AppHeader() {
-  const { data: session } =
-    useSession();
+  const { data: session } = useSession();
 
-  const isSignedIn = Boolean(
-    session?.user
-  );
+  const isSignedIn = Boolean(session?.user);
 
-  const [open, setOpen] =
-    useState(false);
-
-  const [languageOpen, setLanguageOpen] =
-    useState(false);
-
-  const [languageQuery, setLanguageQuery] =
-    useState("");
+  const [open, setOpen] = useState(false);
+  const [languageOpen, setLanguageOpen] = useState(false);
+  const [languageQuery, setLanguageQuery] = useState("");
 
   const {
     locale,
@@ -64,101 +56,59 @@ export function AppHeader() {
 
   const pathname = usePathname();
 
-  const languageRef =
-    useRef<HTMLDivElement | null>(
-      null
-    );
-  const languageMenuRef =
-    useRef<HTMLElement | null>(
-      null
-    );
+  const languageRef = useRef<HTMLDivElement | null>(null);
+  const languageMenuRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    const onClickOutside = (
-      event: MouseEvent
-    ) => {
+    const onClickOutside = (event: MouseEvent) => {
       if (!languageRef.current) {
         return;
       }
 
       if (
-        !languageRef.current.contains(
-          event.target as Node
-        ) &&
-        !languageMenuRef.current?.contains(
-          event.target as Node
-        )
+        !languageRef.current.contains(event.target as Node) &&
+        !languageMenuRef.current?.contains(event.target as Node)
       ) {
         setLanguageOpen(false);
       }
     };
 
-    const onKeyDown = (
-      event: KeyboardEvent
-    ) => {
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setLanguageOpen(false);
         setOpen(false);
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      onClickOutside
-    );
-
-    document.addEventListener(
-      "keydown",
-      onKeyDown
-    );
+    document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        onClickOutside
-      );
-
-      document.removeEventListener(
-        "keydown",
-        onKeyDown
-      );
+      document.removeEventListener("mousedown", onClickOutside);
+      document.removeEventListener("keydown", onKeyDown);
     };
   }, []);
 
-  const selectedLanguage =
-    useMemo(
-      () =>
-        locales.find(
-          (option) =>
-            option.code === locale
-        ) ?? locales[0],
-      [locale, locales]
-    );
+  const selectedLanguage = useMemo(
+    () =>
+      locales.find((option) => option.code === locale) ?? locales[0],
+    [locale, locales]
+  );
 
-  const filteredLanguages =
-    useMemo(() => {
-      const query =
-        languageQuery
-          .trim()
-          .toLowerCase();
+  const filteredLanguages = useMemo(() => {
+    const query = languageQuery.trim().toLowerCase();
 
-      if (!query) {
-        return locales;
-      }
+    if (!query) {
+      return locales;
+    }
 
-      return locales.filter(
-        (option) => {
-          return (
-            option.label
-              .toLowerCase()
-              .includes(query) ||
-            option.code
-              .toLowerCase()
-              .includes(query)
-          );
-        }
+    return locales.filter((option) => {
+      return (
+        option.label.toLowerCase().includes(query) ||
+        option.code.toLowerCase().includes(query)
       );
-    }, [languageQuery, locales]);
+    });
+  }, [languageQuery, locales]);
 
   const navItems = useMemo(
     () => [
@@ -187,16 +137,17 @@ export function AppHeader() {
         label: t.explore,
         icon: Compass,
       },
-
       ...(isSignedIn
         ? [
             {
               href: "/pricing",
               label: t.premium,
+              icon: undefined,
             },
             {
               href: "/dashboard",
               label: t.dashboard,
+              icon: undefined,
             },
           ]
         : []),
@@ -204,93 +155,62 @@ export function AppHeader() {
     [isSignedIn, t]
   );
 
-  const isNavItemActive = (
-    href: string
-  ) => {
+  const isNavItemActive = (href: string) => {
     if (href.startsWith("/flights")) {
-      return pathname.startsWith(
-        "/flights"
-      );
+      return pathname.startsWith("/flights");
     }
 
     if (href.startsWith("/hotels")) {
-      return pathname.startsWith(
-        "/hotels"
-      );
+      return pathname.startsWith("/hotels");
     }
 
     if (href === "/deals") {
-      return pathname.startsWith(
-        "/deals"
-      );
+      return pathname.startsWith("/deals");
     }
 
     if (href === "/destinations") {
-      return pathname.startsWith(
-        "/destinations"
-      );
+      return pathname.startsWith("/destinations");
     }
 
     if (href === "/explore") {
-      return pathname.startsWith(
-        "/explore"
-      );
+      return pathname.startsWith("/explore");
     }
 
     return pathname === href;
   };
 
-  const mobilePrimaryNavItems =
-    useMemo(
-      () => {
-        const mobilePrimaryHrefs =
-          new Set([
-            "/flights/results",
-            "/hotels/results",
-            "/deals",
-            "/destinations",
-            "/explore",
-          ]);
+  const mobilePrimaryNavItems = useMemo(() => {
+    const mobilePrimaryHrefs = new Set([
+      "/flights/results",
+      "/hotels/results",
+      "/deals",
+      "/destinations",
+      "/explore",
+    ]);
 
-        return navItems.filter(
-          (item) =>
-            Boolean(item.icon) &&
-            mobilePrimaryHrefs.has(
-              item.href
-            )
-        );
-      },
-      [navItems]
+    return navItems.filter(
+      (item) => Boolean(item.icon) && mobilePrimaryHrefs.has(item.href)
     );
+  }, [navItems]);
 
   const renderFlag = (
-    countryCode:
-      | string
-      | undefined,
-    fallbackText:
-      | string
-      | undefined
+    countryCode: string | undefined,
+    fallbackText: string | undefined
   ) => (
     <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
       {countryCode ? (
         <img
           src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
-          alt={
-            fallbackText ??
-            "Flag"
-          }
+          alt={fallbackText ?? "Flag"}
           className="h-full w-full object-cover"
           onError={(event) => {
-            event.currentTarget.style.display =
-              "none";
+            event.currentTarget.style.display = "none";
 
-            const fallback =
-              event.currentTarget
-                .nextElementSibling as HTMLElement | null;
+            const fallback = event.currentTarget
+              .nextElementSibling as HTMLElement | null;
 
             if (fallback) {
-              fallback.style.display =
-                "inline-flex";
+              fallback.style.display = "inline-flex";
             }
           }}
         />
@@ -302,16 +222,10 @@ export function AppHeader() {
     </span>
   );
 
-  const handleLanguageSelect = (
-    code:
-      (typeof locales)[number]["code"]
-  ) => {
+  const handleLanguageSelect = (code: (typeof locales)[number]["code"]) => {
     setLocale(code);
-
     setLanguageOpen(false);
-
     setLanguageQuery("");
-
   };
 
   return (
@@ -333,19 +247,11 @@ export function AppHeader() {
             <div className="flex items-center justify-end gap-3">
               <CountryCurrencySelector />
 
-              <div
-                className="relative"
-                ref={languageRef}
-              >
+              <div className="relative" ref={languageRef}>
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    setLanguageOpen(
-                      (value) =>
-                        !value
-                    )
-                  }
+                  onClick={() => setLanguageOpen((value) => !value)}
                   aria-label={`Change language, current language ${selectedLanguage?.label}`}
                   className="h-12 gap-2 rounded-full border border-white/30 bg-white/95 px-4 shadow-sm"
                 >
@@ -354,18 +260,20 @@ export function AppHeader() {
                     selectedLanguage?.fallbackText
                   )}
 
-                  <ChevronDown
-                    size={14}
-                    className="text-slate-600"
-                  />
+                  <ChevronDown size={14} className="text-slate-600" />
                 </Button>
               </div>
 
               {isSignedIn ? (
                 <>
-                  <LinkButton href="/dashboard/alerts" variant="ghost" className="h-12 rounded-full px-4 text-indigo-50 hover:bg-white/10 hover:text-white">
+                  <LinkButton
+                    href="/dashboard/alerts"
+                    variant="ghost"
+                    className="h-12 rounded-full px-4 text-indigo-50 hover:bg-white/10 hover:text-white"
+                  >
                     <Bell size={16} />
                   </LinkButton>
+
                   <button
                     type="button"
                     onClick={() => signOut({ callbackUrl: "/" })}
@@ -377,10 +285,17 @@ export function AppHeader() {
                 </>
               ) : (
                 <>
-                  <Link href="/auth/signin" className="inline-flex h-12 items-center rounded-full px-4 text-sm font-semibold text-indigo-50 hover:bg-white/10 hover:text-white">
+                  <Link
+                    href="/auth/signin"
+                    className="inline-flex h-12 items-center rounded-full px-4 text-sm font-semibold text-indigo-50 hover:bg-white/10 hover:text-white"
+                  >
                     {t.login}
                   </Link>
-                  <Link href="/auth/signup" className="inline-flex h-12 items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-700">
+
+                  <Link
+                    href="/auth/signup"
+                    className="inline-flex h-12 items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-700"
+                  >
                     {t.signUp}
                   </Link>
                 </>
@@ -397,12 +312,7 @@ export function AppHeader() {
                     href={item.href}
                     className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold text-indigo-50 hover:bg-white/10 hover:text-white"
                   >
-                    {Icon ? (
-                      <Icon
-                        size={15}
-                        aria-hidden="true"
-                      />
-                    ) : null}
+                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -412,16 +322,8 @@ export function AppHeader() {
 
           <div className="flex items-center gap-2 md:hidden">
             <Link
-              href={
-                isSignedIn
-                  ? "/dashboard"
-                  : "/auth/signin"
-              }
-              aria-label={
-                isSignedIn
-                  ? "Open dashboard"
-                  : "Sign in"
-              }
+              href={isSignedIn ? "/dashboard" : "/auth/signin"}
+              aria-label={isSignedIn ? "Open dashboard" : "Sign in"}
               className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white hover:bg-white/15"
             >
               <UserCircle size={18} />
@@ -430,17 +332,9 @@ export function AppHeader() {
             <button
               type="button"
               className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white hover:bg-white/15"
-              onClick={() =>
-                setOpen(
-                  (value) => !value
-                )
-              }
+              onClick={() => setOpen((value) => !value)}
             >
-              {open ? (
-                <X size={18} />
-              ) : (
-                <Menu size={18} />
-              )}
+              {open ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
 
@@ -448,9 +342,7 @@ export function AppHeader() {
             <>
               <div
                 className="fixed inset-0 z-40 bg-slate-900/45"
-                onClick={() =>
-                  setLanguageOpen(false)
-                }
+                onClick={() => setLanguageOpen(false)}
               />
 
               <section
@@ -463,78 +355,49 @@ export function AppHeader() {
                 </h2>
 
                 <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
-                  <Search
-                    size={16}
-                    className="text-slate-500"
-                  />
+                  <Search size={16} className="text-slate-500" />
 
                   <input
                     value={languageQuery}
-                    onChange={(event) =>
-                      setLanguageQuery(
-                        event.target.value
-                      )
-                    }
-                    placeholder={
-                      t.searchLanguage
-                    }
+                    onChange={(event) => setLanguageQuery(event.target.value)}
+                    placeholder={t.searchLanguage}
                     className="w-full border-0 bg-transparent text-sm outline-none"
                   />
                 </div>
 
                 <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {filteredLanguages.map(
-                    (option) => {
-                      const active =
-                        option.code ===
-                        locale;
+                  {filteredLanguages.map((option) => {
+                    const active = option.code === locale;
 
-                      return (
-                        <button
-                          key={
-                            option.code
-                          }
-                          type="button"
-                          role="menuitemradio"
-                          aria-checked={active}
-                          onClick={() =>
-                            handleLanguageSelect(
-                              option.code
-                            )
-                          }
-                          className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors ${
-                            active
-                              ? "border-violet-300 bg-violet-50"
-                              : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
-                          }`}
-                        >
-                          <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                            {renderFlag(
-                              option.countryCode,
-                              option.fallbackText
-                            )}
+                    return (
+                      <button
+                        key={option.code}
+                        type="button"
+                        role="menuitemradio"
+                        aria-checked={active}
+                        onClick={() => handleLanguageSelect(option.code)}
+                        className={`flex items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors ${
+                          active
+                            ? "border-violet-300 bg-violet-50"
+                            : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+                        }`}
+                      >
+                        <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                          {renderFlag(option.countryCode, option.fallbackText)}
 
-                            <span>
-                              {option.label}
-                            </span>
-                          </span>
+                          <span>{option.label}</span>
+                        </span>
 
-                          <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-                            <span>
-                              {option.code}
-                            </span>
+                        <span className="inline-flex items-center gap-2 text-xs text-slate-500">
+                          <span>{option.code}</span>
 
-                            {active ? (
-                              <Check
-                                size={16}
-                                className="text-violet-600"
-                              />
-                            ) : null}
-                          </span>
-                        </button>
-                      );
-                    }
-                  )}
+                          {active ? (
+                            <Check size={16} className="text-violet-600" />
+                          ) : null}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </section>
             </>
@@ -544,37 +407,25 @@ export function AppHeader() {
         <nav className="bg-white/5 md:hidden">
           <div className="page-shell overflow-x-auto py-2">
             <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
-              {mobilePrimaryNavItems.map(
-                (item) => {
-                  const Icon =
-                    item.icon;
+              {mobilePrimaryNavItems.map((item) => {
+                const Icon = item.icon;
+                const active = isNavItemActive(item.href);
 
-                  const active =
-                    isNavItemActive(
-                      item.href
-                    );
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900 ${
-                        active
-                          ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm"
-                          : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
-                      }`}
-                    >
-                      {Icon ? (
-                        <Icon
-                          size={15}
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                }
-              )}
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900 ${
+                      active
+                        ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm"
+                        : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </nav>
@@ -585,6 +436,7 @@ export function AppHeader() {
               <div className="pb-2">
                 <CountryCurrencySelector />
               </div>
+
               <button
                 type="button"
                 onClick={() => setLanguageOpen(true)}
@@ -597,23 +449,25 @@ export function AppHeader() {
                   )}
                   <span>{selectedLanguage.label}</span>
                 </span>
+
                 <ChevronDown size={14} className="text-slate-500" />
               </button>
+
               {navItems.map((item) => {
                 const Icon = item.icon;
 
                 return (
-                  <Link key={item.href} href={item.href} className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[15px] font-semibold text-slate-700 hover:bg-slate-100">
-                    {Icon ? (
-                      <Icon
-                        size={16}
-                        aria-hidden="true"
-                      />
-                    ) : null}
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-[15px] font-semibold text-slate-700 hover:bg-slate-100"
+                  >
+                    {Icon ? <Icon size={16} aria-hidden="true" /> : null}
                     <span>{item.label}</span>
                   </Link>
                 );
               })}
+
               {isSignedIn ? (
                 <button
                   type="button"
