@@ -121,6 +121,8 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const travelersWrapRef =
     useRef<HTMLDivElement>(null);
+  const hotelGuestsRoomsWrapRef =
+    useRef<HTMLDivElement>(null);
 
   const [tab, setTab] =
     useState<TabMode>("flights");
@@ -258,6 +260,8 @@ export function SearchTabs({
 
   const [rooms, setRooms] =
     useState("1");
+  const [hotelGuestsRoomsOpen, setHotelGuestsRoomsOpen] =
+    useState(false);
 
   const wrapper = useMemo(
     () =>
@@ -599,6 +603,13 @@ export function SearchTabs({
           );
         }
       }
+      if (
+        !hotelGuestsRoomsWrapRef.current?.contains(
+          event.target as Node
+        )
+      ) {
+        setHotelGuestsRoomsOpen(false);
+      }
     };
     const onEscape = (
       event: KeyboardEvent
@@ -612,6 +623,7 @@ export function SearchTabs({
         if (travelersMenuOpen) {
           cancelTravelersDraft();
         }
+        setHotelGuestsRoomsOpen(false);
       }
     };
 
@@ -636,6 +648,8 @@ export function SearchTabs({
         );
       };
   }, [travelersMenuOpen, adultCount, childCount, infantCount, cabinClass]);
+
+  const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? "guest" : "guests"}, ${rooms} ${Number(rooms) === 1 ? "room" : "rooms"}`;
 
   const formatShortDate = (
     isoDate: string
@@ -2127,71 +2141,60 @@ export function SearchTabs({
                   </div>
                 ) : null}
               </div>
-              <div className="grid min-h-[54px] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
-                <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                    {t.guests ||
-                      "Guests"}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={12}
-                    value={guests}
-                    onChange={(
-                      event
-                    ) =>
-                      setGuests(
-                        event
-                          .target
-                          .value
-                      )
-                    }
-                    onBlur={() =>
-                      setGuests(
-                        clampNumberInput(
-                          guests,
-                          1,
-                          12
-                        )
-                      )
-                    }
-                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm outline-none transition-colors"
-                    required
+              <div
+                ref={hotelGuestsRoomsWrapRef}
+                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+              >
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  {t.guests ||
+                    "Guests"}
+                </label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setHotelGuestsRoomsOpen(
+                      (prev) => !prev
+                    )
+                  }
+                  aria-expanded={
+                    hotelGuestsRoomsOpen
+                  }
+                  aria-haspopup="dialog"
+                  aria-label="Choose guests and rooms"
+                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                >
+                  <span className="truncate">
+                    {hotelGuestsRoomsSummary}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      "shrink-0 text-slate-500 transition-transform",
+                      hotelGuestsRoomsOpen && "rotate-180"
+                    )}
                   />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                    {t.rooms ||
-                      "Rooms"}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={6}
-                    value={rooms}
-                    onChange={(
-                      event
-                    ) =>
-                      setRooms(
-                        event
-                          .target
-                          .value
-                      )
-                    }
-                    onBlur={() =>
-                      setRooms(
-                        clampNumberInput(
-                          rooms,
-                          1,
-                          6
-                        )
-                      )
-                    }
-                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm outline-none transition-colors"
-                    required
-                  />
-                </div>
+                </button>
+                {hotelGuestsRoomsOpen ? (
+                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,380px)]">
+                    <div className="space-y-3">
+                      {[{ key: "guests", label: t.guests || "Guests", value: Number(guests), min: 1, max: 12 }, { key: "rooms", label: t.rooms || "Rooms", value: Number(rooms), min: 1, max: 6 }].map((row, index) => {
+                        const canDecrement = row.value > row.min;
+                        const canIncrement = row.value < row.max;
+
+                        return (
+                          <div key={row.key} className={cn("flex items-center justify-between", index === 1 && "border-t border-slate-200 pt-3") }>
+                            <span className="text-sm font-semibold text-slate-900">{row.label}</span>
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => { if (!canDecrement) return; if (row.key === "guests") setGuests(String(Math.max(1, row.value - 1))); if (row.key === "rooms") setRooms(String(Math.max(1, row.value - 1))); }} disabled={!canDecrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-4 w-4" /></button>
+                              <span className="min-w-6 text-center text-sm font-semibold text-slate-900">{row.value}</span>
+                              <button type="button" onClick={() => { if (!canIncrement) return; if (row.key === "guests") setGuests(String(Math.min(12, row.value + 1))); if (row.key === "rooms") setRooms(String(Math.min(6, row.value + 1))); }} disabled={!canIncrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-4 w-4" /></button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
               </div>
               <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px]">
                 <Button
@@ -2199,7 +2202,7 @@ export function SearchTabs({
                   disabled={
                     isHotelSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-[54px]"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-[54px] lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
                 >
                   {t.search ||
                     "Search"}
