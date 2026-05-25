@@ -1594,27 +1594,33 @@ export function SearchTabs({
                   />
                 </button>
                 {travelersMenuOpen ? (
-                  <div className="absolute left-0 right-0 top-full z-40 mt-2 w-full min-w-[260px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/15 lg:left-auto lg:right-0 lg:w-[320px]">
+                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[calc(100vw-2rem)] max-w-[680px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/15 sm:w-[calc(100vw-3rem)] sm:p-5 lg:left-auto lg:right-0 lg:w-[640px] lg:translate-x-0">
                     <p className="text-base font-semibold text-slate-900">
                       Travelers
                     </p>
-                    <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 p-3">
-                      <span className="text-sm font-medium text-slate-700">Travelers</span>
+                    <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 p-3.5">
+                      <span>
+                        <span className="block text-sm font-semibold text-slate-900">
+                          Adults
+                        </span>
+                        <span className="block text-xs text-slate-500">
+                          18+
+                        </span>
+                      </span>
                       <div className="flex items-center gap-2">
                         <button type="button" onClick={() => setTravelers(String(Math.max(1, travelerCount - 1)))} disabled={travelerCount <= 1} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-4 w-4" /></button>
                         <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{travelerCount}</span>
                         <button type="button" onClick={() => setTravelers(String(Math.min(9, travelerCount + 1)))} disabled={travelerCount >= 9} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-4 w-4" /></button>
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <p className="mb-2 text-sm font-medium text-slate-700">Cabin class</p>
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="mt-4 border-t border-slate-200 pt-4">
+                      <p className="mb-2 text-sm font-semibold text-slate-900">Cabin class</p>
+                      <div className="flex flex-wrap gap-2">
                         {[["economy", "Economy"],["premium-economy", "Premium Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
-                          <button key={value} type="button" onClick={() => setCabinClass(value)} className={cn("focus-ring rounded-lg border px-3 py-2 text-sm font-medium", cabinClass === value ? "border-indigo-700 bg-indigo-50 text-indigo-900" : "border-slate-200 text-slate-700 hover:bg-slate-50")}>{label}</button>
+                          <button key={value} type="button" onClick={() => setCabinClass(value)} className={cn("focus-ring rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", cabinClass === value ? "border-indigo-700 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
                         ))}
                       </div>
                     </div>
-                    <button type="button" onClick={() => setTravelersMenuOpen(false)} className="focus-ring mt-4 w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Done</button>
                   </div>
                 ) : null}
               </div>
@@ -1624,7 +1630,7 @@ export function SearchTabs({
                   disabled={
                     isFlightSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:rounded-none lg:rounded-r-xl"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-[54px] lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
                 >
                   {t.search ||
                     "Search"}
