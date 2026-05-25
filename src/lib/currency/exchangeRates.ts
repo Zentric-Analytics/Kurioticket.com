@@ -10,6 +10,20 @@ export const exchangeRatesFromUsd: Record<string, number> = {
 };
 
 export function convertCurrency(amountUsd: number, targetCurrency: string) {
-  const rate = exchangeRatesFromUsd[targetCurrency] ?? 1;
+  const normalizedCurrency = targetCurrency.toUpperCase();
+  const rate = normalizedCurrency === "USD"
+    ? 1
+    : exchangeRatesFromUsd[normalizedCurrency];
+  if (rate === undefined) {
+    return amountUsd;
+  }
   return amountUsd * rate;
+}
+
+export function resolveDisplayCurrency(targetCurrency: string) {
+  const normalizedCurrency = targetCurrency.toUpperCase();
+  if (normalizedCurrency === "USD" || exchangeRatesFromUsd[normalizedCurrency] !== undefined) {
+    return normalizedCurrency;
+  }
+  return "USD";
 }
