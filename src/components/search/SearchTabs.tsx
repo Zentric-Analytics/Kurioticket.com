@@ -97,20 +97,6 @@ const clampNumberInput = (
   );
 };
 
-const formatHotelDateDisplay = (value: string) => {
-  if (!value) return "";
-  const parsed = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return new Intl.DateTimeFormat(
-    "en-US",
-    {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }
-  ).format(parsed);
-};
-
 export function SearchTabs({
   t,
   compactHero = false,
@@ -123,6 +109,8 @@ export function SearchTabs({
   const toWrapRef =
     useRef<HTMLDivElement>(null);
   const dateWrapRef =
+    useRef<HTMLDivElement>(null);
+  const hotelDateWrapRef =
     useRef<HTMLDivElement>(null);
   const tripTypeWrapRef =
     useRef<HTMLDivElement>(null);
@@ -163,6 +151,10 @@ export function SearchTabs({
   const [
     flightDatesOpen,
     setFlightDatesOpen,
+  ] = useState(false);
+  const [
+    hotelDatesOpen,
+    setHotelDatesOpen,
   ] = useState(false);
 
   const [
@@ -206,6 +198,17 @@ export function SearchTabs({
   const [
     visibleMonthDate,
     setVisibleMonthDate,
+  ] = useState(() => {
+    const now = new Date();
+    return new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      1
+    );
+  });
+  const [
+    hotelVisibleMonthDate,
+    setHotelVisibleMonthDate,
   ] = useState(() => {
     const now = new Date();
     return new Date(
@@ -472,6 +475,13 @@ export function SearchTabs({
         );
       }
       if (
+        !hotelDateWrapRef.current?.contains(
+          event.target as Node
+        )
+      ) {
+        setHotelDatesOpen(false);
+      }
+      if (
         !tripTypeWrapRef.current?.contains(
           event.target as Node
         )
@@ -495,6 +505,7 @@ export function SearchTabs({
         setFlightDatesOpen(
           false
         );
+        setHotelDatesOpen(false);
         setTripTypeOpen(false);
         setTravelersMenuOpen(
           false
@@ -1007,6 +1018,59 @@ export function SearchTabs({
     router.push(
       `/hotels/results?${params.toString()}`
     );
+  };
+
+  const hotelDateSummary = useMemo(
+    () => {
+      const checkInSummary =
+        formatShortDate(checkIn);
+      const checkOutSummary =
+        formatShortDate(checkOut);
+
+      if (!checkInSummary) {
+        return "Check-in — Check-out";
+      }
+
+      if (checkOutSummary) {
+        return `${checkInSummary} — ${checkOutSummary}`;
+      }
+
+      return checkInSummary;
+    },
+    [checkIn, checkOut]
+  );
+
+  const checkInParsed =
+    parseIsoDate(checkIn);
+  const checkOutParsed =
+    parseIsoDate(checkOut);
+
+  const onSelectHotelDate = (
+    date: Date
+  ) => {
+    if (isBeforeToday(date)) {
+      return;
+    }
+
+    const selectedIso =
+      toIsoDate(date);
+
+    if (
+      !checkIn ||
+      (checkIn && checkOut)
+    ) {
+      setCheckIn(selectedIso);
+      setCheckOut("");
+      return;
+    }
+
+    if (selectedIso <= checkIn) {
+      setCheckIn(selectedIso);
+      setCheckOut("");
+      return;
+    }
+
+    setCheckOut(selectedIso);
   };
 
   return (
@@ -1698,87 +1762,99 @@ export function SearchTabs({
                   required
                 />
               </div>
-              <div className="min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
+              <div
+                ref={hotelDateWrapRef}
+                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+              >
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.departureDate ||
                     "Travel dates"}
                 </label>
-                <div className="flex h-8 items-center gap-2 text-sm text-slate-950">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setHotelDatesOpen(
+                      (prev) => !prev
+                    )
+                  }
+                  aria-expanded={
+                    hotelDatesOpen
+                  }
+                  aria-haspopup="dialog"
+                  aria-label="Choose hotel travel dates"
+                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                >
                   <Calendar
                     size={16}
                     className="shrink-0 text-slate-500"
                     aria-hidden="true"
                   />
-                  <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
-                    <label htmlFor="hotel-check-in" className="sr-only">
-                      {t.checkIn ||
-                        "Check-in"}
-                    </label>
-                    <div className="focus-within:ring-ring/45 relative h-8 min-w-0 rounded-md transition focus-within:ring-2">
-                      <span className={cn("pointer-events-none flex h-full items-center truncate text-sm font-medium", checkIn ? "text-slate-950" : "text-slate-400")}>
-                        {checkIn
-                          ? formatHotelDateDisplay(
-                              checkIn
-                            )
-                          : (t.checkIn ||
-                            "Check-in")}
-                      </span>
-                      <input
-                        id="hotel-check-in"
-                        type="date"
-                        value={checkIn}
-                        onChange={(
-                          event
-                        ) =>
-                          setCheckIn(
-                            event
-                              .target
-                              .value
-                          )
-                        }
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        required
-                      />
+                  <span className={cn("truncate", checkIn ? "text-slate-950" : "text-slate-400")}>
+                    {checkIn
+                      ? hotelDateSummary
+                      : `${t.checkIn || "Check-in"} — ${t.checkOut || "Check-out"}`}
+                  </span>
+                </button>
+                {hotelDatesOpen ? (
+                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
+                    <p className="mb-3 text-base font-semibold text-slate-900">
+                      Choose stay dates
+                    </p>
+                    <div className="mb-3 flex items-center justify-between">
+                      <button type="button" aria-label="Previous month" onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, -1))} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">Prev</button>
+                      <button type="button" aria-label="Next month" onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, 1))} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">Next</button>
                     </div>
-                    <span className="text-slate-300">
-                      —
-                    </span>
-                    <label htmlFor="hotel-check-out" className="sr-only">
-                      {t.checkOut ||
-                        "Check-out"}
-                    </label>
-                    <div className="focus-within:ring-ring/45 relative h-8 min-w-0 rounded-md transition focus-within:ring-2">
-                      <span className={cn("pointer-events-none flex h-full items-center truncate text-sm font-medium", checkOut ? "text-slate-950" : "text-slate-400")}>
-                        {checkOut
-                          ? formatHotelDateDisplay(
-                              checkOut
-                            )
-                          : (t.checkOut ||
-                            "Check-out")}
-                      </span>
-                      <input
-                        id="hotel-check-out"
-                        type="date"
-                        value={checkOut}
-                        min={
-                          checkIn ||
-                          undefined
-                        }
-                        onChange={(
-                          event
-                        ) =>
-                          setCheckOut(
-                            event
-                              .target
-                              .value
-                          )
-                        }
-                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                        required
-                      />
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                      {[0, 1].map((monthOffset) => {
+                        const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
+                        const cells = buildMonthCells(monthDate);
+                        return (
+                          <div key={monthOffset}>
+                            <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
+                              {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                            </p>
+                            <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                              {weekdays.map((weekday) => (
+                                <span key={weekday}>{weekday}</span>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-1">
+                              {cells.map((day) => {
+                                const iso = toIsoDate(day);
+                                const inCurrentMonth = day.getMonth() === monthDate.getMonth();
+                                const isCheckIn = iso === checkIn;
+                                const isCheckOut = iso === checkOut;
+                                const isPastDate = isBeforeToday(day);
+                                const isInRange = !!(checkInParsed && checkOutParsed && !isPastDate && day > checkInParsed && day < checkOutParsed);
+                                return (
+                                  <button
+                                    key={iso}
+                                    type="button"
+                                    aria-label={`Select ${day.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
+                                    onClick={() => onSelectHotelDate(day)}
+                                    disabled={isPastDate}
+                                    className={cn(
+                                      "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
+                                      isPastDate ? "text-slate-300 hover:bg-transparent" : inCurrentMonth ? "text-slate-900 hover:bg-indigo-50" : "text-slate-300 hover:bg-indigo-50",
+                                      isInRange && "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
+                                      (isCheckIn || isCheckOut) && "bg-indigo-700 text-white hover:bg-indigo-700"
+                                    )}
+                                  >
+                                    {day.getDate()}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
+                      <button type="button" onClick={() => { setCheckIn(""); setCheckOut(""); }} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">Clear</button>
+                      <button type="button" onClick={() => setHotelDatesOpen(false)} className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800">Done</button>
                     </div>
                   </div>
-                </div>
+                ) : null}
               </div>
               <div className="grid min-h-[54px] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
                 <div>
