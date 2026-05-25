@@ -1827,6 +1827,10 @@ export function SearchTabs({
                 ref={travelersWrapRef}
                 className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  {t.travelers ||
+                    "Travelers"}
+                </label>
                 <button
                   type="button"
                   aria-expanded={
@@ -1840,18 +1844,12 @@ export function SearchTabs({
                     }
                     openTravelersMenu();
                   }}
-                  className="focus-ring flex h-full w-full items-center justify-between gap-2 text-left"
+                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
                 >
-                  <span>
-                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                      {t.travelers ||
-                        "Travelers"}
-                    </span>
-                    <span className="block text-sm font-medium text-slate-900">
+                  <span className="block text-sm font-medium text-slate-900">
                       {
                         travelerSummary
                       }
-                    </span>
                   </span>
                   <ChevronDown
                     className={cn(
