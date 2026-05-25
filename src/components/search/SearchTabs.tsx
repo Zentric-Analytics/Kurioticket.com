@@ -1860,7 +1860,7 @@ export function SearchTabs({
                   />
                 </button>
                 {travelersMenuOpen ? (
-                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[370px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-lg shadow-slate-900/10 sm:w-[calc(100vw-2.5rem)] sm:p-3 lg:left-auto lg:right-0 lg:w-[350px] lg:translate-x-0">
+                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[min(92vw,320px)] max-w-[330px] max-h-[70vh] overflow-y-auto -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-lg shadow-slate-900/10 sm:p-3 lg:left-auto lg:right-0 lg:w-[350px] lg:max-h-none lg:translate-x-0 lg:overflow-visible">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-slate-900">
                         Travelers
@@ -1880,7 +1880,7 @@ export function SearchTabs({
                           (row.key !== "infants" || draftInfantCount < draftAdultCount);
 
                         return (
-                          <div key={row.key} className="flex items-center justify-between py-2.5 first:pt-1 last:pb-1">
+                          <div key={row.key} className="flex items-center justify-between py-2 first:pt-1 last:pb-1">
                             <span>
                               <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
                               <span className="block text-xs text-slate-500">{row.subtitle}</span>
@@ -1904,7 +1904,7 @@ export function SearchTabs({
                         ))}
                       </div>
                     </div>
-                    <div className="mt-2.5 flex items-center justify-end gap-2 border-t border-slate-200 pt-2.5">
+                    <div className="mt-2 flex items-center justify-end gap-2 border-t border-slate-200 pt-2">
                       <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
                     </div>
                   </div>
