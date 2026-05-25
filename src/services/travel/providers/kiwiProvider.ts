@@ -3,19 +3,30 @@ import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
 import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
 
+const KIWI_SUPPORTED_CURRENCIES = new Set(["USD", "EUR", "GBP"]);
+
+function getKiwiRequestCurrency(selectedCurrency?: string) {
+  const normalized = selectedCurrency?.toUpperCase();
+  return normalized && KIWI_SUPPORTED_CURRENCIES.has(normalized) ? normalized : "USD";
+}
+
 export function searchKiwiFlights(search: FlightSearchParams): Promise<ProviderResult<NormalizedFlightResult>> {
   if (!process.env.KIWI_API_KEY) {
     return Promise.resolve(skippedProvider("Kiwi", "Missing KIWI_API_KEY."));
   }
 
   return runProvider("Kiwi", async () => {
+    const totalTravelers = Number.isFinite(search.travelers)
+      ? search.travelers
+      : search.adults + search.children + search.infants;
+    const normalizedTravelers = Math.max(1, Math.floor(totalTravelers));
     const params = new URLSearchParams({
       fly_from: sanitizeAirportCode(search.origin),
       fly_to: sanitizeAirportCode(search.destination),
       date_from: formatKiwiDate(search.departureDate),
       date_to: formatKiwiDate(search.departureDate),
-      adults: String(search.travelers),
-      curr: "USD",
+      adults: String(normalizedTravelers),
+      curr: getKiwiRequestCurrency(search.currency),
       limit: "25",
       sort: "price",
     });

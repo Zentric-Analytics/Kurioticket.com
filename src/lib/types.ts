@@ -8,9 +8,13 @@ export type FlightSearchParams = {
   destination: string;
   departureDate: string;
   returnDate?: string;
+  adults: number;
+  children: number;
+  infants: number;
   travelers: number;
   cabinClass: CabinClass;
   sort?: SortMode;
+  currency?: string;
 };
 
 export type HotelSearchParams = {

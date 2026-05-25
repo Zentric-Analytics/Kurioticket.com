@@ -79,12 +79,12 @@ export function HotelResultsClient() {
   const filtered = results.filter((hotel) => hotel.totalPrice <= maxPrice && hotel.rating >= minRating);
 
   return (
-    <main className="flex-1">
+    <main className="flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
       <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
         <div className="page-shell flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-semibold text-muted">{body.destination}</p>
-            <h1 className="text-xl font-bold text-navy md:text-2xl">
+            <h1 className="text-xl font-bold text-indigo-950 md:text-2xl">
               {body.checkIn} to {body.checkOut}
             </h1>
           </div>
@@ -107,7 +107,7 @@ export function HotelResultsClient() {
           ) : null}
           {loading ? (
             <div className="space-y-4">
-              <div className="rounded-md border border-border bg-white p-4 text-sm font-semibold text-teal-dark">
+              <div className="rounded-md border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-semibold text-violet-700">
                 {messages[messageIndex]}
               </div>
               <HotelSkeleton />
@@ -129,15 +129,15 @@ export function HotelResultsClient() {
         </section>
       </div>
 
-      <div className={cn("fixed inset-0 z-50 bg-navy/40 lg:hidden", filtersOpen ? "block" : "hidden")} onClick={() => setFiltersOpen(false)} />
+      <div className={cn("fixed inset-0 z-50 bg-indigo-950/45 lg:hidden", filtersOpen ? "block" : "hidden")} onClick={() => setFiltersOpen(false)} />
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-lg bg-white p-4 shadow-xl transition-transform lg:hidden",
+          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-3xl bg-white p-5 shadow-2xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-bold text-navy">Filters</h2>
+          <h2 className="text-base font-bold text-indigo-950">Filters</h2>
           <Button variant="ghost" className="h-10 w-10 px-0" aria-label="Close filters" onClick={() => setFiltersOpen(false)}>
             <X size={20} />
           </Button>
@@ -160,32 +160,32 @@ function HotelFilters({
   setMinRating: (value: number) => void;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-white p-4 shadow-sm">
-      <h2 className="text-base font-bold text-navy">Filters</h2>
+    <div className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
+      <h2 className="text-base font-bold text-indigo-950">Filters</h2>
       <div className="mt-5 grid gap-5">
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
-            Total up to <span className="font-mono text-navy">{formatCurrency(maxPrice)}</span>
+            Total up to <span className="font-mono text-indigo-950">{formatCurrency(maxPrice)}</span>
           </span>
-          <input className="w-full accent-teal" type="range" min={100} max={3000} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
+          <input className="w-full accent-violet-600" type="range" min={100} max={3000} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
         </label>
         <label className="block">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
-            Rating from <span className="font-mono text-navy">{minRating}+</span>
+            Rating from <span className="font-mono text-indigo-950">{minRating}+</span>
           </span>
-          <input className="w-full accent-teal" type="range" min={1} max={5} step={0.5} value={minRating} onChange={(event) => setMinRating(Number(event.target.value))} />
+          <input className="w-full accent-violet-600" type="range" min={1} max={5} step={0.5} value={minRating} onChange={(event) => setMinRating(Number(event.target.value))} />
         </label>
         <div className="grid gap-2 text-sm text-muted">
           <label className="flex items-center gap-2">
-            <input type="checkbox" className="accent-teal" defaultChecked />
+            <input type="checkbox" className="accent-violet-600" defaultChecked />
             Late arrival friendly
           </label>
           <label className="flex items-center gap-2">
-            <input type="checkbox" className="accent-teal" />
+            <input type="checkbox" className="accent-violet-600" />
             Airport convenience
           </label>
           <label className="flex items-center gap-2">
-            <input type="checkbox" className="accent-teal" />
+            <input type="checkbox" className="accent-violet-600" />
             Flexible cancellation
           </label>
         </div>
@@ -196,7 +196,7 @@ function HotelFilters({
 
 function HotelSkeleton() {
   return (
-    <div className="rounded-lg border border-border bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
       <div className="grid gap-4 md:grid-cols-[240px_1fr]">
         <Skeleton className="aspect-[16/10] md:aspect-auto" />
         <div className="space-y-3">

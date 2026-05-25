@@ -94,14 +94,13 @@ export function verificationCodeEmail(input: { code: string; name?: string | nul
   `;
 }
 
-export function passwordResetEmail(input: { code: string; name?: string | null; expiresInMinutes: number; resetUrl: string }) {
+export function passwordResetEmail(input: { name?: string | null; expiresInMinutes: number; resetUrl: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h1 style="font-size:22px">Your Curioticket password reset code</h1>
-      <p>${input.name ? `Hi ${input.name},` : "Hi,"} use this code to reset your Curioticket password:</p>
-      <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${input.code}</p>
-      <p>This code expires in ${input.expiresInMinutes} minutes.</p>
+      <h1 style="font-size:22px">Reset your Curioticket password</h1>
+      <p>${input.name ? `Hi ${input.name},` : "Hi,"} click the link below to reset your password.</p>
       <p><a href="${input.resetUrl}" style="color:#0f766e">Reset your password</a></p>
+      <p>This link expires in ${input.expiresInMinutes} minutes.</p>
       <p>If you did not request a Curioticket password reset, you can ignore this email.</p>
     </div>
   `;

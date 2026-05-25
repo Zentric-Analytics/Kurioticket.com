@@ -10,7 +10,7 @@ export default function SettingsPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 py-8">
+      <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
         <h1 className="text-3xl font-bold text-navy">Account Settings</h1>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <Card className="p-5">

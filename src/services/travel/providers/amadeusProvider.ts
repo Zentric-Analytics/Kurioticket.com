@@ -11,6 +11,14 @@ const travelClassMap: Record<FlightSearchParams["cabinClass"], string> = {
   first: "FIRST",
 };
 
+
+const AMADEUS_SUPPORTED_CURRENCIES = new Set(["USD", "EUR", "GBP"]);
+
+function getAmadeusRequestCurrency(selectedCurrency?: string) {
+  const normalized = selectedCurrency?.toUpperCase();
+  return normalized && AMADEUS_SUPPORTED_CURRENCIES.has(normalized) ? normalized : "USD";
+}
+
 export function searchAmadeusFlights(search: FlightSearchParams): Promise<ProviderResult<NormalizedFlightResult>> {
   if (!process.env.AMADEUS_CLIENT_ID || !process.env.AMADEUS_CLIENT_SECRET) {
     return Promise.resolve(skippedProvider("Amadeus", "Missing AMADEUS_CLIENT_ID or AMADEUS_CLIENT_SECRET."));
@@ -18,13 +26,17 @@ export function searchAmadeusFlights(search: FlightSearchParams): Promise<Provid
 
   return runProvider("Amadeus", async () => {
     const token = await getAmadeusAccessToken();
+    const totalTravelers = Number.isFinite(search.travelers)
+      ? search.travelers
+      : search.adults + search.children + search.infants;
+    const normalizedTravelers = Math.max(1, Math.floor(totalTravelers));
     const params = new URLSearchParams({
       originLocationCode: sanitizeAirportCode(search.origin),
       destinationLocationCode: sanitizeAirportCode(search.destination),
       departureDate: search.departureDate,
-      adults: String(search.travelers),
+      adults: String(normalizedTravelers),
       travelClass: travelClassMap[search.cabinClass],
-      currencyCode: "USD",
+      currencyCode: getAmadeusRequestCurrency(search.currency),
       max: "25",
     });
 

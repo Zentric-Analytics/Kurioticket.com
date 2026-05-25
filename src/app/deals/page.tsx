@@ -1,37 +1,90 @@
+"use client";
+
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
-import { Card } from "@/components/ui/Card";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRegion } from "@/components/region/RegionProvider";
 import { LinkButton } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { formatCurrency } from "@/lib/currency/formatCurrency";
 
-const deals = [
-  ["Houston to Tokyo", "$711", "Watch alternate airports and spring shoulder dates."],
-  ["New York to London", "$394", "Strong fare bands often appear midweek."],
-  ["Chicago to Cancun", "$246", "Good value for flexible long weekends."],
-  ["Los Angeles to Mexico City", "$218", "Short-haul fare drops with early mornings."],
+const deals: Array<[string, number]> = [
+  ["Houston to Tokyo", 711],
+  ["New York to London", 394],
+  ["Chicago to Cancun", 246],
+  ["Los Angeles to Mexico City", 218],
 ];
 
-export const metadata = {
-  title: "Deals",
+const copy = {
+  en: {
+    title: "Best Deals",
+    subtitle:
+      "Featured deal controls are ready for curation and provider-backed deal feeds.",
+    cta: "Search route",
+  },
+
+  fr: {
+    title: "Meilleures offres",
+    subtitle:
+      "Les offres en vedette sont prêtes pour la curation et les flux partenaires.",
+    cta: "Rechercher l'itinéraire",
+  },
 };
 
 export default function DealsPage() {
+  const { locale } = useLocale();
+  const { selectedOption } = useRegion();
+
+  const lang = locale.startsWith("fr")
+    ? "fr"
+    : "en";
+
+  const c = copy[lang];
+
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 py-8">
-        <h1 className="text-3xl font-bold text-navy">Best Deals</h1>
-        <p className="mt-2 max-w-2xl text-muted">Featured deal controls are ready for admin curation and future provider-backed deal feeds.</p>
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {deals.map(([route, price, note]) => (
-            <Card key={route} className="p-5">
-              <p className="text-sm font-semibold text-muted">{route}</p>
-              <div className="mt-2 text-3xl font-bold text-navy">{price}</div>
-              <p className="mt-2 text-sm text-muted">{note}</p>
-              <LinkButton href="/flights/results" variant="secondary" className="mt-4">Search route</LinkButton>
-            </Card>
-          ))}
-        </div>
+
+      <main className="flex-1 bg-gradient-to-b from-indigo-50 via-white to-violet-50/40 pt-24 pb-10 sm:pt-28 lg:pt-28">
+        <section className="page-shell">
+          <h1 className="text-4xl font-extrabold tracking-tight text-indigo-950">
+            {c.title}
+          </h1>
+
+          <p className="mt-3 max-w-2xl text-slate-600">
+            {c.subtitle}
+          </p>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {deals.map(([route, amount]) => (
+              <Card
+                key={route}
+                className="border-indigo-100 p-6"
+              >
+                <p className="text-sm font-semibold text-slate-500">
+                  {route}
+                </p>
+
+                <div className="mt-2 text-3xl font-extrabold text-indigo-950">
+                  {formatCurrency(
+                    amount,
+                    selectedOption.currency
+                  )}
+                </div>
+
+                <LinkButton
+                  href="/flights/results"
+                  variant="secondary"
+                  className="mt-4 border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+                >
+                  {c.cta}
+                </LinkButton>
+              </Card>
+            ))}
+          </div>
+        </section>
       </main>
+
       <Footer />
     </>
   );

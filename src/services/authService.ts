@@ -1,4 +1,4 @@
-import { createHash, randomInt } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { promises as dns } from "node:dns";
 import bcrypt from "bcryptjs";
 
@@ -226,7 +226,7 @@ function withTimeout<T>(
   ]);
 }
 
-export async function sendPasswordResetCode(emailInput: string) {
+export async function sendPasswordResetLink(emailInput: string) {
   const email = emailInput.toLowerCase().trim();
   logAuthEvent("forgot-password-requested", { email });
 
@@ -239,27 +239,26 @@ export async function sendPasswordResetCode(emailInput: string) {
     return false;
   }
 
-  const code = randomInt(100000, 1000000).toString();
-  const token = hashPasswordResetCode(email, code);
+  const rawToken = randomBytes(32).toString("base64url");
+  const tokenHash = hashPasswordResetToken(rawToken);
   const identifier = getPasswordResetIdentifier(email);
   const expires = new Date(Date.now() + passwordResetTtlMinutes * 60 * 1000);
 
   await getPrisma().verificationToken.deleteMany({ where: { identifier } });
   await getPrisma().verificationToken.create({
-    data: { identifier, token, expires },
+    data: { identifier, token: tokenHash, expires },
   });
 
   try {
     await sendTransactionalEmail({
       to: email,
-      subject: "Curioticket password reset code",
+      subject: "Reset your Curioticket password",
       html: passwordResetEmail({
-        code,
         name: user.name,
         expiresInMinutes: passwordResetTtlMinutes,
-        resetUrl: `${getBaseUrl()}/auth/reset-password?email=${encodeURIComponent(email)}`,
+        resetUrl: `${getBaseUrl()}/auth/reset-password?token=${encodeURIComponent(rawToken)}`,
       }),
-      idempotencyKey: `password-reset-${email}-${token.slice(0, 16)}`,
+      idempotencyKey: `password-reset-${email}-${tokenHash.slice(0, 16)}`,
       requireConfigured: true,
     });
   } catch (error) {
@@ -277,7 +276,7 @@ export async function sendPasswordResetCode(emailInput: string) {
   return true;
 }
 
-export async function resetPasswordWithCode(input: { email: string; code: string; password: string }) {
+export async function resetPasswordWithToken(input: { token: string; password: string; confirmPassword: string }) {
   const parsed = resetPasswordSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -285,35 +284,33 @@ export async function resetPasswordWithCode(input: { email: string; code: string
     return false;
   }
 
-  const { email, code, password } = parsed.data;
-  const identifier = getPasswordResetIdentifier(email);
-  const token = hashPasswordResetCode(email, code);
-  const verificationToken = await getPrisma().verificationToken.findUnique({
-    where: {
-      identifier_token: { identifier, token },
-    },
-  });
+  const { token, password } = parsed.data;
+  const tokenHash = hashPasswordResetToken(token);
+  const verificationToken = await getPrisma().verificationToken.findUnique({ where: { token: tokenHash } });
 
   if (!verificationToken || verificationToken.expires <= new Date()) {
-    logAuthEvent("password-reset-failed", {
-      email,
-      reason: verificationToken ? "expired" : "not-found",
-    });
+    logAuthEvent("password-reset-failed", { reason: verificationToken ? "expired" : "not-found" });
 
     if (verificationToken) {
-      await getPrisma().verificationToken.deleteMany({ where: { identifier, token } });
+      await getPrisma().verificationToken.deleteMany({ where: { token: tokenHash } });
     }
 
     return false;
   }
 
+  const identifier = verificationToken.identifier;
+  if (!identifier.startsWith("password-reset:")) {
+    return false;
+  }
+
+  const email = identifier.slice("password-reset:".length);
   const passwordHash = await bcrypt.hash(password, 12);
   const updateResult = await getPrisma().user.updateMany({
     where: { email, status: "ACTIVE" },
     data: { passwordHash },
   });
 
-  await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+  await getPrisma().verificationToken.deleteMany({ where: { token: tokenHash } });
 
   if (updateResult.count < 1) {
     logAuthEvent("password-reset-failed", { email, reason: "user-not-found" });
@@ -328,6 +325,6 @@ function getPasswordResetIdentifier(email: string) {
   return `password-reset:${email}`;
 }
 
-function hashPasswordResetCode(email: string, code: string) {
-  return createHash("sha256").update(`${email.toLowerCase().trim()}:${code}`).digest("hex");
+function hashPasswordResetToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
 }

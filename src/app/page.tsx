@@ -1,358 +1,109 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   BadgeCheck,
+  BellRing,
+  ChevronLeft,
   ChevronRight,
   CircleDollarSign,
+  Compass,
+  Filter,
   Heart,
   Hotel,
+  Network,
   Plane,
   ShieldCheck,
   Sparkles,
+  SlidersHorizontal,
   Ticket,
-  WalletCards,
 } from "lucide-react";
 
+import { PriceText } from "@/components/currency/PriceText";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
-import {
-  LANGUAGE_CHANGE_EVENT,
-  getDefaultLanguage,
-  getLanguageFromStorage,
-  getUiTranslations,
-  type LanguageCode,
-} from "@/lib/language";
-
-const i18n = {
-  en: {
-    heroTitle: "Find Cheap Flights Fast",
-    heroSubtitle:
-      "Search hundreds of airlines and travel sites to find the best deals for your next trip.",
-    assurances: [
-      "Best Prices Guaranteed",
-      "Easy Provider Comparison",
-      "Secure Payments",
-      "24/7 Customer Support",
-    ],
-    flights: "Flights",
-    hotels: "Hotels",
-    searchFlights: "Search Flights",
-    searchHotels: "Search Hotels",
-    from: "From",
-    to: "To",
-    departure: "Departure",
-    return: "Return",
-    destination: "Destination",
-    checkIn: "Check-in",
-    checkOut: "Check-out",
-    guests: "Guests",
-    rooms: "Rooms",
-    cityAirport: "City or airport",
-    cityHotelArea: "City or hotel area",
-    selectDate: "Select date",
-    notNeeded: "Not needed",
-    travelersClass: "Travelers & Class",
-    oneTraveler: "1 Traveler",
-    twoTravelers: "2 Travelers",
-    threeTravelers: "3 Travelers",
-    fourTravelers: "4 Travelers",
-    economy: "Economy",
-    premiumEconomy: "Premium economy",
-    business: "Business",
-    first: "First",
-    adults: "Adults",
-    room: "Room",
-    searchHotelsInstead: "Search hotels instead",
-    heroBadge: "Trusted travel search platform",
-    featuresMillionsTitle: "Millions of Choices",
-    featuresMillionsBody: "Compare flights and hotels from a wide network of trusted providers in one place.",
-    featuresFlexibleTitle: "Flexible Search",
-    featuresFlexibleBody: "Filter by stopovers, budgets, travel class, and timings to match how you like to travel.",
-    featuresSecureTitle: "Secure Experience",
-    featuresSecureBody: "Your trip planning stays protected with reliable partners and secure booking handoff.",
-    featuresDealsTitle: "Real-Time Deals",
-    featuresDealsBody: "Catch fare drops and exclusive promotions before they disappear.",
-    popularDestinations: "Popular destinations",
-    viewAllDestinations: "View all destinations",
-    promoFlightsTitle: "Flight deals from top airlines",
-    promoFlightsBody: "Discover limited-time fares and compare options instantly.",
-    promoFlightsCta: "Explore flight deals",
-    promoHotelsTitle: "Hotel savings worldwide",
-    promoHotelsBody: "Browse stays from boutique hotels to global chains with price transparency.",
-    promoHotelsCta: "Explore hotel deals",
-    newsletterTitle: "Stay ahead of every travel deal",
-    newsletterBody: "Get curated flight and hotel updates delivered weekly.",
-    newsletterPlaceholder: "Enter your email",
-    subscribe: "Subscribe",
-  },
-  fr: {
-    heroTitle: "Trouvez des vols pas chers rapidement",
-    heroSubtitle:
-      "Recherchez des centaines de compagnies aériennes et de sites de voyage pour trouver les meilleures offres.",
-    assurances: [
-      "Meilleurs prix garantis",
-      "Comparaison facile",
-      "Paiements sécurisés",
-      "Assistance 24h/24",
-    ],
-    flights: "Vols",
-    hotels: "Hôtels",
-    searchFlights: "Rechercher des vols",
-    searchHotels: "Rechercher des hôtels",
-    from: "Départ",
-    to: "Arrivée",
-    departure: "Départ",
-    return: "Retour",
-    destination: "Destination",
-    checkIn: "Arrivée",
-    checkOut: "Départ",
-    guests: "Voyageurs",
-    rooms: "Chambres",
-    cityAirport: "Ville ou aéroport",
-    cityHotelArea: "Ville ou zone hôtelière",
-    selectDate: "Choisir une date",
-    notNeeded: "Non requis",
-    travelersClass: "Voyageurs et classe",
-    oneTraveler: "1 voyageur",
-    twoTravelers: "2 voyageurs",
-    threeTravelers: "3 voyageurs",
-    fourTravelers: "4 voyageurs",
-    economy: "Économie",
-    premiumEconomy: "Éco premium",
-    business: "Affaires",
-    first: "Première",
-    adults: "Adultes",
-    room: "Chambre",
-    searchHotelsInstead: "Rechercher des hôtels",
-    heroBadge: "Plateforme de recherche voyage fiable",
-    featuresMillionsTitle: "Des millions d’options",
-    featuresMillionsBody: "Comparez vols et hôtels de partenaires fiables au même endroit.",
-    featuresFlexibleTitle: "Recherche flexible",
-    featuresFlexibleBody: "Filtrez par escales, budget, classe et horaires selon vos besoins.",
-    featuresSecureTitle: "Expérience sécurisée",
-    featuresSecureBody: "Votre planification reste protégée avec des partenaires de confiance.",
-    featuresDealsTitle: "Offres en temps réel",
-    featuresDealsBody: "Repérez les baisses de prix et promotions exclusives avant tout le monde.",
-    popularDestinations: "Destinations populaires",
-    viewAllDestinations: "Voir toutes les destinations",
-    promoFlightsTitle: "Offres vols des meilleures compagnies",
-    promoFlightsBody: "Découvrez des tarifs limités et comparez rapidement.",
-    promoFlightsCta: "Voir les offres vols",
-    promoHotelsTitle: "Économies hôtels dans le monde",
-    promoHotelsBody: "Parcourez des hébergements variés avec des prix transparents.",
-    promoHotelsCta: "Voir les offres hôtels",
-    newsletterTitle: "Recevez les meilleures offres voyage",
-    newsletterBody: "Des alertes vols et hôtels sélectionnées chaque semaine.",
-    newsletterPlaceholder: "Entrez votre e-mail",
-    subscribe: "S’abonner",
-  },
-  es: {
-    heroTitle: "Encuentra vuelos baratos rápido",
-    heroSubtitle:
-      "Busca en cientos de aerolíneas y sitios de viaje para encontrar las mejores ofertas.",
-    assurances: [
-      "Mejores precios garantizados",
-      "Comparación fácil",
-      "Pagos seguros",
-      "Soporte 24/7",
-    ],
-    flights: "Vuelos",
-    hotels: "Hoteles",
-    searchFlights: "Buscar vuelos",
-    searchHotels: "Buscar hoteles",
-    from: "Desde",
-    to: "Hacia",
-    departure: "Salida",
-    return: "Regreso",
-    destination: "Destino",
-    checkIn: "Entrada",
-    checkOut: "Salida",
-    guests: "Huéspedes",
-    rooms: "Habitaciones",
-    cityAirport: "Ciudad o aeropuerto",
-    cityHotelArea: "Ciudad o zona hotelera",
-    selectDate: "Selecciona fecha",
-    notNeeded: "No necesario",
-    travelersClass: "Viajeros y clase",
-    oneTraveler: "1 viajero",
-    twoTravelers: "2 viajeros",
-    threeTravelers: "3 viajeros",
-    fourTravelers: "4 viajeros",
-    economy: "Económica",
-    premiumEconomy: "Económica premium",
-    business: "Business",
-    first: "Primera",
-    adults: "Adultos",
-    room: "Habitación",
-    searchHotelsInstead: "Buscar hoteles",
-    heroBadge: "Plataforma confiable de búsqueda de viajes",
-    featuresMillionsTitle: "Millones de opciones",
-    featuresMillionsBody: "Compara vuelos y hoteles de proveedores confiables en un solo lugar.",
-    featuresFlexibleTitle: "Búsqueda flexible",
-    featuresFlexibleBody: "Filtra por escalas, presupuesto, clase y horarios para viajar a tu manera.",
-    featuresSecureTitle: "Experiencia segura",
-    featuresSecureBody: "Tu planificación está protegida con socios fiables y reservas seguras.",
-    featuresDealsTitle: "Ofertas en tiempo real",
-    featuresDealsBody: "Aprovecha bajadas de tarifas y promociones exclusivas antes de que terminen.",
-    popularDestinations: "Destinos populares",
-    viewAllDestinations: "Ver todos los destinos",
-    promoFlightsTitle: "Ofertas de vuelos de aerolíneas top",
-    promoFlightsBody: "Descubre tarifas por tiempo limitado y compara en segundos.",
-    promoFlightsCta: "Ver ofertas de vuelos",
-    promoHotelsTitle: "Ahorros en hoteles en todo el mundo",
-    promoHotelsBody: "Explora alojamientos con transparencia de precios.",
-    promoHotelsCta: "Ver ofertas de hoteles",
-    newsletterTitle: "Recibe las mejores ofertas de viaje",
-    newsletterBody: "Novedades semanales de vuelos y hoteles en tu correo.",
-    newsletterPlaceholder: "Ingresa tu correo",
-    subscribe: "Suscribirme",
-  },
-  ar: {
-    heroTitle: "اعثر على رحلات رخيصة بسرعة",
-    heroSubtitle:
-      "ابحث بين مئات شركات الطيران ومواقع السفر للعثور على أفضل العروض.",
-    assurances: [
-      "أفضل الأسعار مضمونة",
-      "مقارنة سهلة",
-      "مدفوعات آمنة",
-      "دعم 24/7",
-    ],
-    flights: "رحلات",
-    hotels: "فنادق",
-    searchFlights: "ابحث عن رحلات",
-    searchHotels: "ابحث عن فنادق",
-    from: "من",
-    to: "إلى",
-    departure: "المغادرة",
-    return: "العودة",
-    destination: "الوجهة",
-    checkIn: "تسجيل الوصول",
-    checkOut: "تسجيل المغادرة",
-    guests: "الضيوف",
-    rooms: "الغرف",
-    cityAirport: "مدينة أو مطار",
-    cityHotelArea: "مدينة أو منطقة فندقية",
-    selectDate: "اختر التاريخ",
-    notNeeded: "غير مطلوب",
-    travelersClass: "المسافرون والدرجة",
-    oneTraveler: "مسافر 1",
-    twoTravelers: "مسافران",
-    threeTravelers: "3 مسافرين",
-    fourTravelers: "4 مسافرين",
-    economy: "اقتصادية",
-    premiumEconomy: "اقتصادية ممتازة",
-    business: "رجال الأعمال",
-    first: "الأولى",
-    adults: "بالغون",
-    room: "غرفة",
-    searchHotelsInstead: "ابحث عن فنادق",
-    heroBadge: "منصة موثوقة للبحث عن السفر",
-    featuresMillionsTitle: "ملايين الخيارات",
-    featuresMillionsBody: "قارن الرحلات والفنادق من مزودي خدمات موثوقين في مكان واحد.",
-    featuresFlexibleTitle: "بحث مرن",
-    featuresFlexibleBody: "فلتر حسب التوقفات والميزانية والدرجة والمواعيد كما يناسبك.",
-    featuresSecureTitle: "تجربة آمنة",
-    featuresSecureBody: "تخطيط رحلتك محمي مع شركاء موثوقين وتحويل حجز آمن.",
-    featuresDealsTitle: "عروض فورية",
-    featuresDealsBody: "اغتنم انخفاض الأسعار والعروض الحصرية قبل انتهائها.",
-    popularDestinations: "وجهات شائعة",
-    viewAllDestinations: "عرض كل الوجهات",
-    promoFlightsTitle: "عروض رحلات من أفضل شركات الطيران",
-    promoFlightsBody: "اكتشف أسعارًا محدودة الوقت وقارن بسرعة.",
-    promoFlightsCta: "استكشف عروض الرحلات",
-    promoHotelsTitle: "توفير على الفنادق حول العالم",
-    promoHotelsBody: "تصفح أماكن إقامة متنوعة مع شفافية في الأسعار.",
-    promoHotelsCta: "استكشف عروض الفنادق",
-    newsletterTitle: "ابقَ على اطلاع بكل عروض السفر",
-    newsletterBody: "تحديثات مختارة للرحلات والفنادق أسبوعيًا.",
-    newsletterPlaceholder: "أدخل بريدك الإلكتروني",
-    subscribe: "اشترك",
-  },
-} as const;
-
-function getI18nLanguageKey(language: LanguageCode): keyof typeof i18n {
-  const baseLanguage = String(language).split("-")[0];
-
-  return baseLanguage in i18n
-    ? (baseLanguage as keyof typeof i18n)
-    : "en";
-}
+import { getTranslations } from "@/lib/i18n";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
 
 const destinations = [
   {
-    city: "Dubai",
-    country: "UAE",
-    price: "$420",
+    id: "dubai",
+    cityKey: "homeDestinationDubaiCity",
+    countryKey: "homeDestinationDubaiCountry",
+    altKey: "homeDestinationDubaiAlt",
+    amountUsd: 420,
     image:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1400&q=90",
   },
   {
-    city: "London",
-    country: "United Kingdom",
-    price: "$380",
+    id: "london",
+    cityKey: "homeDestinationLondonCity",
+    countryKey: "homeDestinationLondonCountry",
+    altKey: "homeDestinationLondonAlt",
+    amountUsd: 380,
     image:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1400&q=90",
   },
   {
-    city: "Paris",
-    country: "France",
-    price: "$410",
+    id: "paris",
+    cityKey: "homeDestinationParisCity",
+    countryKey: "homeDestinationParisCountry",
+    altKey: "homeDestinationParisAlt",
+    amountUsd: 410,
     image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=90",
   },
   {
-    city: "Bali",
-    country: "Indonesia",
-    price: "$370",
+    id: "bali",
+    cityKey: "homeDestinationBaliCity",
+    countryKey: "homeDestinationBaliCountry",
+    altKey: "homeDestinationBaliAlt",
+    amountUsd: 370,
     image:
-      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1400&q=90",
   },
   {
-    city: "New York",
-    country: "USA",
-    price: "$390",
+    id: "new-york",
+    cityKey: "homeDestinationNewYorkCity",
+    countryKey: "homeDestinationNewYorkCountry",
+    altKey: "homeDestinationNewYorkAlt",
+    amountUsd: 390,
     image:
-      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=700&q=80",
+      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1400&q=90",
   },
 ];
 
 export default function Home() {
-  const [language, setLanguage] = useState<LanguageCode>(getDefaultLanguage());
+  const { locale } = useLocale();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
+  const destinationsRailRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const sync = () => {
-      setLanguage(getLanguageFromStorage());
-    };
+  const scrollDestinationsRail = (direction: "left" | "right") => {
+    const rail = destinationsRailRef.current;
 
-    sync();
+    if (!rail) return;
 
-    window.addEventListener(LANGUAGE_CHANGE_EVENT, sync as EventListener);
+    const amount = Math.round(rail.clientWidth * 0.85);
 
-    return () => {
-      window.removeEventListener(LANGUAGE_CHANGE_EVENT, sync as EventListener);
-    };
-  }, []);
+    rail.scrollBy({
+      left: direction === "left" ? -amount : amount,
+      behavior: "smooth",
+    });
+  };
 
-  const t = useMemo(() => {
-    const pageT = i18n[getI18nLanguageKey(language)];
-    const sharedT = getUiTranslations(language);
-
-    return {
-      ...sharedT,
-      ...pageT,
-    };
-  }, [language]);
+  const dictionary = useMemo(() => getTranslations(locale), [locale]);
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -361,7 +112,7 @@ export default function Home() {
       return;
     }
 
-    setNewsletterMessage("Thanks! We’ll keep you posted with travel deals.");
+    setNewsletterMessage(t("homeNewsletterThanks"));
     setNewsletterEmail("");
   };
 
@@ -374,7 +125,7 @@ export default function Home() {
           <div className="absolute inset-0">
             <Image
               src={heroImage}
-              alt="Luxury tropical resort by calm water"
+              alt={t("homeHeroImageAlt")}
               fill
               priority
               sizes="100vw"
@@ -386,117 +137,32 @@ export default function Home() {
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
 
-          <div className="page-shell relative pb-8 pt-6 sm:pb-10 sm:pt-8 lg:pt-10">
-            <div className="grid min-h-[390px] content-start gap-4 pb-5 sm:min-h-[420px] sm:gap-5 sm:pb-6 lg:min-h-[450px] lg:max-w-[1000px]">
-              <div className="space-y-3 pt-2">
-                <p className="inline-flex rounded-full border border-[#d9ccff] bg-white/85 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-[#5b21d6] backdrop-blur">
-                  {t.heroBadge || "Trusted travel search platform"}
-                </p>
-
+          <div className="page-shell relative pb-5 pt-24 sm:pb-6 sm:pt-28 lg:pt-32">
+            <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
+              <div className="space-y-2.5 pt-1">
                 <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-                  {t.heroTitle}
+                  {t("homeHeroTitle")}
                 </h1>
 
                 <p className="max-w-xl text-base font-semibold leading-7 text-slate-700 sm:text-lg sm:leading-8">
-                  {t.heroSubtitle}
+                  {t("homeHeroSubtitle")}
                 </p>
-
-                <div className="flex flex-wrap gap-2 pt-1">
-                  {t.assurances.map((item) => (
-                    <span
-                      key={item}
-                      className="rounded-full border border-[#d9ccff] bg-white/90 px-3 py-1 text-xs font-bold text-[#5b21d6]"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
               </div>
 
-              <div className="relative z-10 mt-2 w-full max-w-[1080px]">
-                <div className="rounded-2xl border border-white/85 bg-white/95 p-2 shadow-[0_24px_65px_-35px_rgba(15,23,42,0.45)] backdrop-blur-sm sm:rounded-3xl sm:p-3">
-                  <SearchTabs
-                    t={t as unknown as Record<string, string>}
-                    compactHero
-                  />
-                </div>
+              <div className="relative z-10 mt-0.5 w-full max-w-[1280px]">
+                <SearchTabs
+                  t={t as unknown as Record<string, string>}
+                  compactHero
+                />
               </div>
             </div>
-          </div>
-        </section>
-
-        <section className="page-shell pb-6">
-          <div className="grid gap-3 rounded-2xl border border-[#ece8ff] bg-[#f7f5ff] p-4 sm:grid-cols-2 lg:grid-cols-4">
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <BadgeCheck size={16} />
-              </span>
-
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresMillionsTitle || "Millions of Choices"}
-                </h2>
-
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresMillionsBody || "Flights and hotels worldwide"}
-                </p>
-              </div>
-            </article>
-
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <Ticket size={16} />
-              </span>
-
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresFlexibleTitle || "Flexible Options"}
-                </h2>
-
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresFlexibleBody || "Choose what fits your trip"}
-                </p>
-              </div>
-            </article>
-
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <ShieldCheck size={16} />
-              </span>
-
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresSecureTitle || "Secure Payments"}
-                </h2>
-
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresSecureBody || "100% safe and secure"}
-                </p>
-              </div>
-            </article>
-
-            <article className="flex items-start gap-3 rounded-xl bg-white/70 p-3">
-              <span className="mt-0.5 rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <WalletCards size={16} />
-              </span>
-
-              <div>
-                <h2 className="text-sm font-extrabold text-slate-900">
-                  {t.featuresDealsTitle || "Great Deals"}
-                </h2>
-
-                <p className="mt-0.5 text-xs font-semibold text-slate-600">
-                  {t.featuresDealsBody || "Compare more before you buy"}
-                </p>
-              </div>
-            </article>
           </div>
         </section>
 
         <section className="page-shell py-5">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-black tracking-normal text-slate-950">
-              {t.popularDestinations || "Popular Destinations"}
+              {t("homePopularDestinations")}
             </h2>
 
             <LinkButton
@@ -505,7 +171,7 @@ export default function Home() {
               size="sm"
               className="hidden text-[#6d28d9] sm:inline-flex"
             >
-              {t.viewAllDestinations || "View all destinations"}
+              {t("homeViewAllDestinations")}
               <ArrowRight size={16} />
             </LinkButton>
           </div>
@@ -513,41 +179,174 @@ export default function Home() {
           <div className="relative mt-6">
             <button
               type="button"
-              aria-label="Next destinations"
-              className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow sm:flex"
+              aria-label="Previous destinations"
+              onClick={() => scrollDestinationsRail("left")}
+              className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+            >
+              <ChevronLeft size={18} />
+            </button>
+
+            <button
+              type="button"
+              aria-label={t("homeNextDestinations")}
+              onClick={() => scrollDestinationsRail("right")}
+              className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
             >
               <ChevronRight size={18} />
             </button>
 
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+            <div
+              ref={destinationsRailRef}
+              className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
               {destinations.map((destination) => (
-                <DestinationCard key={destination.city} {...destination} />
+                <DestinationCard
+                  key={destination.id}
+                  city={t(destination.cityKey)}
+                  country={t(destination.countryKey)}
+                  imageAlt={t(destination.altKey)}
+                  fromLabel={t("fromPrice")}
+                  saveLabelTemplate={t("homeSaveDestination")}
+                  amountUsd={destination.amountUsd}
+                  image={destination.image}
+                />
               ))}
             </div>
+          </div>
+        </section>
+
+        <section className="page-shell bg-transparent pb-8 pt-1">
+          <div className="grid gap-5 bg-transparent sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-7">
+            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
+              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-violet-100/95 via-indigo-100/75 to-fuchsia-100/80 ring-1 ring-violet-200/80">
+                <span className="absolute left-3 top-3 h-16 w-16 rounded-full bg-white/55 blur-[2px]" />
+                <span className="absolute right-4 top-3 h-11 w-11 rounded-full border border-white/70 bg-white/35 shadow-[0_10px_18px_-14px_rgba(79,70,229,0.9)]" />
+                <span className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-300/55 bg-white/40 shadow-[0_15px_24px_-20px_rgba(79,70,229,0.95)]" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600">
+                  <Network size={34} strokeWidth={2.2} />
+                </span>
+                <span className="absolute bottom-5 left-[22%] text-violet-600">
+                  <Ticket size={17} strokeWidth={2.3} />
+                </span>
+                <span className="absolute bottom-5 right-[22%] text-indigo-700">
+                  <Compass size={17} strokeWidth={2.3} />
+                </span>
+                <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/85 px-2 py-1 text-[11px] font-semibold text-indigo-600">
+                  <Sparkles size={12} strokeWidth={2.3} />
+                  +
+                </span>
+              </div>
+
+              <div className="space-y-2.5 pt-0.5">
+                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
+                  {t("homeFeaturesMillionsTitle")}
+                </h2>
+
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
+                  {t("homeFeaturesMillionsBody")}
+                </p>
+              </div>
+            </article>
+
+            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
+              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-100/95 via-violet-100/70 to-sky-100/80 ring-1 ring-indigo-200/80">
+                <span className="absolute left-3 top-4 h-10 w-20 rounded-xl border border-white/70 bg-white/45" />
+                <span className="absolute left-6 top-7 text-indigo-600">
+                  <Filter size={16} strokeWidth={2.25} />
+                </span>
+                <span className="absolute left-1/2 top-1/2 h-[4.4rem] w-[4.4rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-indigo-300/60 bg-white/65 shadow-[0_16px_28px_-20px_rgba(79,70,229,0.95)]" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-700">
+                  <SlidersHorizontal size={30} strokeWidth={2.2} />
+                </span>
+                <span className="absolute bottom-4 right-5 text-violet-600">
+                  <Compass size={18} strokeWidth={2.25} />
+                </span>
+                <span className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-indigo-200/80 bg-white/85 text-indigo-600">
+                  <Sparkles size={11} strokeWidth={2.3} />
+                </span>
+              </div>
+
+              <div className="space-y-2.5 pt-0.5">
+                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
+                  {t("homeFeaturesFlexibleTitle")}
+                </h2>
+
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
+                  {t("homeFeaturesFlexibleBody")}
+                </p>
+              </div>
+            </article>
+
+            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
+              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-100/95 via-teal-50/80 to-cyan-100/85 ring-1 ring-emerald-200/80">
+                <span className="absolute left-4 top-3 h-12 w-12 rounded-2xl border border-white/70 bg-white/50" />
+                <span className="absolute right-5 top-4 h-9 w-9 rounded-full border border-emerald-200/70 bg-white/65" />
+                <span className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-300/60 bg-white/50 shadow-[0_16px_28px_-20px_rgba(13,148,136,0.95)]" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-teal-700">
+                  <ShieldCheck size={34} strokeWidth={2.15} />
+                </span>
+                <span className="absolute bottom-4 left-6 text-emerald-600">
+                  <BadgeCheck size={18} strokeWidth={2.25} />
+                </span>
+                <span className="absolute bottom-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/70 bg-white/85 text-teal-700">
+                  <Sparkles size={11} strokeWidth={2.3} />
+                </span>
+              </div>
+
+              <div className="space-y-2.5 pt-0.5">
+                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
+                  {t("homeFeaturesSecureTitle")}
+                </h2>
+
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
+                  {t("homeFeaturesSecureBody")}
+                </p>
+              </div>
+            </article>
+
+            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
+              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-amber-100/95 via-orange-100/75 to-rose-100/80 ring-1 ring-orange-200/80">
+                <span className="absolute left-4 top-4 h-10 w-10 rounded-full border border-white/70 bg-white/55 shadow-[0_14px_22px_-20px_rgba(249,115,22,1)]" />
+                <span className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-orange-200/80 bg-white/85 text-orange-600">
+                  <BellRing size={12} strokeWidth={2.3} />
+                </span>
+                <span className="absolute left-1/2 top-1/2 h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-orange-300/60 bg-white/60 shadow-[0_16px_28px_-20px_rgba(249,115,22,0.95)]" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-orange-600">
+                  <CircleDollarSign size={32} strokeWidth={2.2} />
+                </span>
+                <span className="absolute bottom-4 right-6 text-rose-500">
+                  <Sparkles size={17} strokeWidth={2.2} />
+                </span>
+              </div>
+
+              <div className="space-y-2.5 pt-0.5">
+                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
+                  {t("homeFeaturesDealsTitle")}
+                </h2>
+
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
+                  {t("homeFeaturesDealsBody")}
+                </p>
+              </div>
+            </article>
           </div>
         </section>
 
         <section className="page-shell grid gap-5 py-9 lg:grid-cols-2">
           <PromoPanel
             tone="violet"
-            title={t.promoFlightsTitle || "Amazing flight deals just for you"}
-            body={
-              t.promoFlightsBody ||
-              "Unlock exclusive offers on domestic and international flights."
-            }
-            cta={t.promoFlightsCta || "Explore Flight Deals"}
+            title={t("homePromoFlightsTitle")}
+            body={t("homePromoFlightsBody")}
+            cta={t("homePromoFlightsCta")}
             href="/deals"
             icon={<Plane size={74} />}
           />
 
           <PromoPanel
             tone="amber"
-            title={t.promoHotelsTitle || "Find your perfect hotel stay"}
-            body={
-              t.promoHotelsBody ||
-              "From budget to luxury, find hotels that suit your style and budget."
-            }
-            cta={t.promoHotelsCta || "Explore Hotel Deals"}
+            title={t("homePromoHotelsTitle")}
+            body={t("homePromoHotelsBody")}
+            cta={t("homePromoHotelsCta")}
             href="/hotels/results"
             icon={<Hotel size={74} />}
           />
@@ -562,13 +361,11 @@ export default function Home() {
 
               <div>
                 <h2 className="text-lg font-black text-slate-950">
-                  {t.newsletterTitle ||
-                    "Get the best travel deals in your inbox"}
+                  {t("homeNewsletterTitle")}
                 </h2>
 
                 <p className="mt-1 text-sm font-semibold text-slate-600">
-                  {t.newsletterBody ||
-                    "Subscribe to our newsletter and never miss a deal."}
+                  {t("homeNewsletterBody")}
                 </p>
               </div>
             </div>
@@ -581,11 +378,9 @@ export default function Home() {
                 type="email"
                 value={newsletterEmail}
                 onChange={(event) => setNewsletterEmail(event.target.value)}
-                placeholder={
-                  t.newsletterPlaceholder || "Enter your email address"
-                }
+                placeholder={t("homeNewsletterPlaceholder")}
                 className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
-                aria-label="Email address"
+                aria-label={t("homeEmailAddress")}
                 required
               />
 
@@ -593,7 +388,7 @@ export default function Home() {
                 type="submit"
                 className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
               >
-                {t.subscribe || "Subscribe"}
+                {t("homeSubscribe")}
               </button>
             </form>
 
@@ -614,47 +409,61 @@ export default function Home() {
 function DestinationCard({
   city,
   country,
-  price,
+  imageAlt,
+  amountUsd,
   image,
+  fromLabel,
+  saveLabelTemplate,
 }: {
   city: string;
   country: string;
-  price: string;
+  imageAlt: string;
+  amountUsd: number;
   image: string;
+  fromLabel: string;
+  saveLabelTemplate: string;
 }) {
   return (
-    <article className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="relative h-44">
-        <Image
-          src={image}
-          alt={`${city}, ${country}`}
-          fill
-          sizes="(min-width: 1024px) 20vw, (min-width: 640px) 50vw, 100vw"
-          className="object-cover"
-        />
+    <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
+      <Link
+        href={`/hotels/results?destination=${encodeURIComponent(city)}`}
+        className="focus-ring block"
+      >
+        <div className="relative h-56 sm:h-64">
+          <Image
+            src={image}
+            alt={imageAlt}
+            fill
+            sizes="(min-width: 1280px) 22rem, (min-width: 640px) 22rem, 18.5rem"
+            className="object-cover transition duration-500 group-hover:scale-105"
+          />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-900/5" />
 
-        <button
-          type="button"
-          className="focus-ring absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur"
-          aria-label={`Save ${city}`}
-        >
-          <Heart size={17} />
-        </button>
+          <button
+            type="button"
+            className="focus-ring absolute right-3 top-3 z-0 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30"
+            aria-label={saveLabelTemplate.replace("{{city}}", city)}
+            onClick={(event) => event.preventDefault()}
+          >
+            <Heart size={17} />
+          </button>
 
-        <div className="absolute bottom-3 left-3 text-white">
-          <h3 className="text-xl font-black">{city}</h3>
-          <p className="text-sm font-semibold">{country}</p>
+          <div className="absolute bottom-4 left-4 text-white">
+            <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">
+              {city}
+            </h3>
+            <p className="text-sm font-semibold text-white/95">{country}</p>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
-        From{" "}
-        <span className="text-lg font-black text-[#6d28d9]">
-          {price}
-        </span>
-      </div>
+        <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
+          {fromLabel}
+          <span className="text-xl font-black text-[#6d28d9]">
+            <PriceText amountUsd={amountUsd} />
+          </span>
+        </div>
+      </Link>
     </article>
   );
 }

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { forgotPasswordSchema } from "@/lib/validation";
-import { sendPasswordResetCode } from "@/services/authService";
+import { sendPasswordResetLink } from "@/services/authService";
 
 export const runtime = "nodejs";
 
 const genericResponse = {
   ok: true,
-  message: "If an account exists for that email, a password reset code has been sent.",
+  message: "If an account exists, we sent password reset instructions.",
 };
 
 export async function POST(request: Request) {
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await sendPasswordResetCode(parsed.data.email);
+    await sendPasswordResetLink(parsed.data.email);
   } catch {
     return NextResponse.json(genericResponse);
   }

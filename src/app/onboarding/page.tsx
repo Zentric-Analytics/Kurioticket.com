@@ -12,7 +12,7 @@ export default function OnboardingPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 py-8">
+      <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
         <Card className="mx-auto max-w-3xl p-5">
           <p className="text-sm font-semibold text-teal-dark">Optional smart onboarding</p>
           <h1 className="mt-1 text-3xl font-bold text-navy">Tune your travel preferences</h1>

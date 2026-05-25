@@ -3,16 +3,16 @@ import { cookies, headers } from "next/headers";
 import "./globals.css";
 
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { LocaleProvider } from "@/components/layout/LocaleProvider";
 import { RegionProvider } from "@/components/region/RegionProvider";
+import { RouteProgressProvider } from "@/components/layout/RouteProgress";
 
-import {
-  REGION_COOKIE_KEY,
-  type RegionMode,
-} from "@/config/regionConfig";
+import { REGION_COOKIE_KEY } from "@/config/regionConfig";
 
 import {
   countryToRegion,
   normalizeRegion,
+  type RegionMode,
 } from "@/lib/region/detectRegion";
 
 
@@ -51,7 +51,7 @@ export default async function RootLayout({
     cookieRegion ||
     headerRegion ||
     ipRegion ||
-    "GLOBAL"
+    "US"
   ) as RegionMode;
 
   return (
@@ -64,9 +64,11 @@ export default async function RootLayout({
         className="flex min-h-full flex-col"
       >
         <AuthProvider>
-          <RegionProvider initialMode={initialRegion}>
-            {children}
-          </RegionProvider>
+          <LocaleProvider>
+            <RegionProvider initialMode={initialRegion}>
+              <RouteProgressProvider>{children}</RouteProgressProvider>
+            </RegionProvider>
+          </LocaleProvider>
         </AuthProvider>
       </body>
     </html>
