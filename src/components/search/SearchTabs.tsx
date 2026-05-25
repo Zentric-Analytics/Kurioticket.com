@@ -1672,55 +1672,66 @@ export function SearchTabs({
                   required
                 />
               </div>
-              <div className="grid min-h-[54px] grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-2 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
-                <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                    {t.checkIn ||
-                      "Check-in"}
-                  </label>
-                  <input
-                    type="date"
-                    value={checkIn}
-                    onChange={(
-                      event
-                    ) =>
-                      setCheckIn(
-                        event
-                          .target
-                          .value
-                      )
-                    }
-                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
-                    required
+              <div className="min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  {t.departureDate ||
+                    "Travel dates"}
+                </label>
+                <div className="flex h-8 items-center gap-2 text-sm text-slate-950">
+                  <Calendar
+                    size={16}
+                    className="shrink-0 text-slate-500"
+                    aria-hidden="true"
                   />
-                </div>
-                <span className="hidden items-center text-slate-300 sm:flex">
-                  —
-                </span>
-                <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                    {t.checkOut ||
-                      "Check-out"}
-                  </label>
-                  <input
-                    type="date"
-                    value={checkOut}
-                    min={
-                      checkIn ||
-                      undefined
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      setCheckOut(
+                  <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+                    <label htmlFor="hotel-check-in" className="sr-only">
+                      {t.checkIn ||
+                        "Check-in"}
+                    </label>
+                    <input
+                      id="hotel-check-in"
+                      type="date"
+                      value={checkIn}
+                      onChange={(
                         event
-                          .target
-                          .value
-                      )
-                    }
-                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
-                    required
-                  />
+                      ) =>
+                        setCheckIn(
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                      className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
+                      required
+                    />
+                    <span className="text-slate-300">
+                      —
+                    </span>
+                    <label htmlFor="hotel-check-out" className="sr-only">
+                      {t.checkOut ||
+                        "Check-out"}
+                    </label>
+                    <input
+                      id="hotel-check-out"
+                      type="date"
+                      value={checkOut}
+                      min={
+                        checkIn ||
+                        undefined
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setCheckOut(
+                          event
+                            .target
+                            .value
+                        )
+                      }
+                      className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
+                      required
+                    />
+                  </div>
                 </div>
               </div>
               <div className="grid min-h-[54px] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
