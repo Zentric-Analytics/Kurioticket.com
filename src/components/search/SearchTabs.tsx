@@ -1904,13 +1904,13 @@ export function SearchTabs({
                   </div>
                 ) : null}
               </div>
-              <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px]">
+              <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
                 <Button
                   type="submit"
                   disabled={
                     isFlightSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-[54px] lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
                 >
                   {t.search ||
                     "Search"}
@@ -2349,13 +2349,13 @@ export function SearchTabs({
                   </div>
                 ) : null}
               </div>
-              <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px]">
+              <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
                 <Button
                   type="submit"
                   disabled={
                     isHotelSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-[54px] lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
                 >
                   {t.search ||
                     "Search"}
