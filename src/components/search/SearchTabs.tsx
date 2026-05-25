@@ -556,7 +556,7 @@ export function SearchTabs({
         )
       ) {
         if (travelersMenuOpen) {
-          cancelTravelersDraft();
+          applyTravelersDraft();
         }
       }
     };
@@ -1765,7 +1765,7 @@ export function SearchTabs({
                             <div className="flex items-center gap-1">
                               <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
                               <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{row.count}</span>
-                              <button type="button" onClick={() => { if (row.key === "adults") setDraftAdultCount(Math.min(9, draftAdultCount + 1)); if (row.key === "children") setDraftChildCount(Math.min(9, draftChildCount + 1)); if (row.key === "infants") setDraftInfantCount(Math.min(draftAdultCount, draftInfantCount + 1)); }} disabled={!canIncrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
+                              <button type="button" onClick={() => { if (row.key === "adults") { if (draftTravelerCount >= 9) return; setDraftAdultCount((current) => Math.min(9, current + 1)); return; } if (row.key === "children") { if (draftTravelerCount >= 9) return; setDraftChildCount((current) => Math.min(9, current + 1)); return; } if (row.key === "infants") { if (draftTravelerCount >= 9 || draftInfantCount >= draftAdultCount) return; setDraftInfantCount((current) => Math.min(draftAdultCount, current + 1)); } }} disabled={!canIncrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
                             </div>
                           </div>
                         );
