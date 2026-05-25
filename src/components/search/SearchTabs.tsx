@@ -2213,8 +2213,8 @@ export function SearchTabs({
                   />
                 </button>
                 {hotelGuestsRoomsOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,380px)]">
-                    <div className="space-y-4">
+                  <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 w-[calc(100vw-24px)] max-w-[330px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
+                    <div className="space-y-3">
                       {[
                         {
                           key: "adults",
@@ -2278,12 +2278,12 @@ export function SearchTabs({
                         return (
                           <div
                             key={row.key}
-                            className="flex items-center justify-between gap-3"
+                            className="flex items-center justify-between gap-2.5"
                           >
                             <span className="text-sm font-semibold text-slate-900">
                               {row.label}
                             </span>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5">
                               <button
                                 type="button"
                                 onClick={row.onDecrement}
@@ -2307,13 +2307,13 @@ export function SearchTabs({
                           </div>
                         );
                       })}
-                      <div className="border-t border-slate-200 pt-4">
+                      <div className="border-t border-slate-200 pt-3">
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-slate-900">
                               Pet-friendly
                             </p>
-                            <p className="text-xs text-slate-500">
+                            <p className="pr-2 text-xs text-slate-500">
                               Only show stays that allow pets
                             </p>
                           </div>
