@@ -1562,7 +1562,7 @@ export function SearchTabs({
                 </button>
 
                 {flightDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
+                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[120] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
                     <p className="mb-3 text-base font-semibold text-slate-900">
                       Choose travel dates
                     </p>
@@ -1931,7 +1931,7 @@ export function SearchTabs({
                   </span>
                 </button>
                 {hotelDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
+                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[120] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
                     <p className="mb-3 text-base font-semibold text-slate-900">
                       Choose travel dates
                     </p>
