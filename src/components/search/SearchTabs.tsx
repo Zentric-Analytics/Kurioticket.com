@@ -1838,9 +1838,7 @@ export function SearchTabs({
                 <button
                   type="button"
                   onClick={() =>
-                    setHotelDatesOpen(
-                      (prev) => !prev
-                    )
+                    setHotelDatesOpen(true)
                   }
                   aria-expanded={
                     hotelDatesOpen
@@ -1863,7 +1861,7 @@ export function SearchTabs({
                 {hotelDatesOpen ? (
                   <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
                     <p className="mb-3 text-base font-semibold text-slate-900">
-                      Choose stay dates
+                      Choose travel dates
                     </p>
                     <div className="mb-3 flex items-center justify-between">
                       <button type="button" aria-label="Previous month" onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, -1))} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">Prev</button>
