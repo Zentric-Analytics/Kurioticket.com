@@ -281,6 +281,16 @@ export function SearchTabs({
 
   const fromSuggestions = fromLiveSuggestions;
   const toSuggestions = toLiveSuggestions;
+  const fromQuery = from.trim();
+  const toQuery = to.trim();
+  const shouldShowFromSuggestionsPanel =
+    fromOpen &&
+    fromQuery.length >= 2 &&
+    (fromLoading || fromSuggestions.length > 0 || !fromLoading);
+  const shouldShowToSuggestionsPanel =
+    toOpen &&
+    toQuery.length >= 2 &&
+    (toLoading || toSuggestions.length > 0 || !toLoading);
   const normalizePassengerDraft = (
     adults: number,
     children: number,
@@ -1416,9 +1426,9 @@ export function SearchTabs({
                   className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
-                {fromOpen ? (
+                {shouldShowFromSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {from.trim().length === 0 ? null : fromLoading ? (
+                    {fromLoading ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
                       </div>
@@ -1523,11 +1533,9 @@ export function SearchTabs({
                   className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
-                {toOpen ? (
+                {shouldShowToSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {to.trim().length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-slate-500">Start typing a city or airport</div>
-                    ) : toLoading ? (
+                    {toLoading ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
                       </div>
