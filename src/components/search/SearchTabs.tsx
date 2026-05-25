@@ -1592,7 +1592,7 @@ export function SearchTabs({
 
               <div
                 ref={dateWrapRef}
-                className="relative min-h-[54px] w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
                 <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                   {t.departureDate ||
@@ -1825,7 +1825,7 @@ export function SearchTabs({
 
               <div
                 ref={travelersWrapRef}
-                className="relative min-h-[54px] w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
                 <button
                   type="button"
@@ -1840,14 +1840,14 @@ export function SearchTabs({
                     }
                     openTravelersMenu();
                   }}
-                  className="focus-ring flex h-full w-full min-w-0 items-center justify-between gap-2 text-left"
+                  className="focus-ring flex h-full w-full items-center justify-between gap-2 text-left"
                 >
-                  <span className="block w-full min-w-0">
+                  <span>
                     <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
                       {t.travelers ||
                         "Travelers"}
                     </span>
-                    <span className="block truncate text-sm font-medium text-slate-900">
+                    <span className="block text-sm font-medium text-slate-900">
                       {
                         travelerSummary
                       }
