@@ -270,11 +270,13 @@ export function SearchTabs({
     () =>
       cn(
         "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+        (flightDatesOpen || hotelDatesOpen) &&
+          "relative z-[200]",
         compactHero
           ? "p-1.5 sm:p-2"
           : "p-2"
       ),
-    [compactHero]
+    [compactHero, flightDatesOpen, hotelDatesOpen]
   );
 
   const fromSuggestions = fromLiveSuggestions;
@@ -1614,7 +1616,7 @@ export function SearchTabs({
                 </button>
 
                 {flightDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[120] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
+                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
                     <p className="mb-3 text-base font-semibold text-slate-900">
                       Choose travel dates
                     </p>
@@ -1983,7 +1985,7 @@ export function SearchTabs({
                   </span>
                 </button>
                 {hotelDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[120] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
+                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
                     <p className="mb-3 text-base font-semibold text-slate-900">
                       Choose travel dates
                     </p>
