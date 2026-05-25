@@ -221,11 +221,15 @@ export function SearchTabs({
   const [adultCount, setAdultCount] = useState(1);
   const [childCount, setChildCount] = useState(0);
   const [infantCount, setInfantCount] = useState(0);
+  const [draftAdultCount, setDraftAdultCount] = useState(1);
+  const [draftChildCount, setDraftChildCount] = useState(0);
+  const [draftInfantCount, setDraftInfantCount] = useState(0);
 
   const [
     cabinClass,
     setCabinClass,
   ] = useState("economy");
+  const [draftCabinClass, setDraftCabinClass] = useState("economy");
 
   const [
     destination,
@@ -257,6 +261,59 @@ export function SearchTabs({
 
   const fromSuggestions = fromLiveSuggestions;
   const toSuggestions = toLiveSuggestions;
+  const normalizePassengerDraft = (
+    adults: number,
+    children: number,
+    infants: number
+  ) => {
+    const normalizedAdults = Math.max(1, Math.min(9, adults));
+    const normalizedChildren = Math.max(
+      0,
+      Math.min(9 - normalizedAdults, children)
+    );
+    const normalizedInfants = Math.max(
+      0,
+      Math.min(
+        normalizedAdults,
+        Math.min(9 - normalizedAdults - normalizedChildren, infants)
+      )
+    );
+
+    return {
+      adults: normalizedAdults,
+      children: normalizedChildren,
+      infants: normalizedInfants,
+    };
+  };
+
+  const openTravelersMenu = () => {
+    setDraftAdultCount(adultCount);
+    setDraftChildCount(childCount);
+    setDraftInfantCount(infantCount);
+    setDraftCabinClass(cabinClass);
+    setTravelersMenuOpen(true);
+  };
+
+  const cancelTravelersDraft = () => {
+    setDraftAdultCount(adultCount);
+    setDraftChildCount(childCount);
+    setDraftInfantCount(infantCount);
+    setDraftCabinClass(cabinClass);
+    setTravelersMenuOpen(false);
+  };
+
+  const applyTravelersDraft = () => {
+    const normalized = normalizePassengerDraft(
+      draftAdultCount,
+      draftChildCount,
+      draftInfantCount
+    );
+    setAdultCount(normalized.adults);
+    setChildCount(normalized.children);
+    setInfantCount(normalized.infants);
+    setCabinClass(draftCabinClass);
+    setTravelersMenuOpen(false);
+  };
 
   const buildPlacesUrl = (query: string, context: "origin" | "destination") => {
     const params = new URLSearchParams();
@@ -493,9 +550,9 @@ export function SearchTabs({
           event.target as Node
         )
       ) {
-        setTravelersMenuOpen(
-          false
-        );
+        if (travelersMenuOpen) {
+          cancelTravelersDraft();
+        }
       }
     };
     const onEscape = (
@@ -507,9 +564,9 @@ export function SearchTabs({
         );
         setHotelDatesOpen(false);
         setTripTypeOpen(false);
-        setTravelersMenuOpen(
-          false
-        );
+        if (travelersMenuOpen) {
+          cancelTravelersDraft();
+        }
       }
     };
 
@@ -533,7 +590,7 @@ export function SearchTabs({
           onEscape
         );
       };
-  }, []);
+  }, [travelersMenuOpen, adultCount, childCount, infantCount, cabinClass]);
 
   const formatShortDate = (
     isoDate: string
@@ -1647,12 +1704,13 @@ export function SearchTabs({
                     travelersMenuOpen
                   }
                   aria-haspopup="dialog"
-                  onClick={() =>
-                    setTravelersMenuOpen(
-                      (open) =>
-                        !open
-                    )
-                  }
+                  onClick={() => {
+                    if (travelersMenuOpen) {
+                      cancelTravelersDraft();
+                      return;
+                    }
+                    openTravelersMenu();
+                  }}
                   className="focus-ring flex h-full w-full items-center justify-between gap-2 text-left"
                 >
                   <span>
@@ -1675,41 +1733,48 @@ export function SearchTabs({
                   />
                 </button>
                 {travelersMenuOpen ? (
-                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[560px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 sm:w-[calc(100vw-2.5rem)] sm:p-4 lg:left-auto lg:right-0 lg:w-[480px] lg:translate-x-0">
-                    <p className="text-base font-semibold text-slate-900">
+                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[440px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10 sm:w-[calc(100vw-2.5rem)] sm:p-3.5 lg:left-auto lg:right-0 lg:w-[410px] lg:translate-x-0">
+                    <p className="text-sm font-semibold text-slate-900">
                       Travelers
                     </p>
-                    <div className="mt-3 space-y-2.5">
+                    <div className="mt-2 divide-y divide-slate-200">
                       {[
-                        { key: "adults", label: "Adults", subtitle: "18+", count: adultCount, min: 1 },
-                        { key: "children", label: "Children", subtitle: "2–11", count: childCount, min: 0 },
-                        { key: "infants", label: "Infants on lap", subtitle: "Under 2", count: infantCount, min: 0 },
+                        { key: "adults", label: "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
+                        { key: "children", label: "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
+                        { key: "infants", label: "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
                       ].map((row) => {
+                        const draftTravelerCount = draftAdultCount + draftChildCount + draftInfantCount;
                         const canDecrement = row.count > row.min;
-                        const canIncrement = travelerCount < 9 && (row.key !== "infants" || infantCount < adultCount);
+                        const canIncrement =
+                          draftTravelerCount < 9 &&
+                          (row.key !== "infants" || draftInfantCount < draftAdultCount);
 
                         return (
-                          <div key={row.key} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2.5">
+                          <div key={row.key} className="flex items-center justify-between py-3 first:pt-1 last:pb-1">
                             <span>
                               <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
                               <span className="block text-xs text-slate-500">{row.subtitle}</span>
                             </span>
-                            <div className="flex items-center gap-2">
-                              <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, adultCount - 1); setAdultCount(nextAdults); setInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setChildCount(Math.max(0, childCount - 1)); if (row.key === "infants") setInfantCount(Math.max(0, infantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-4 w-4" /></button>
+                            <div className="flex items-center gap-1.5">
+                              <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
                               <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{row.count}</span>
-                              <button type="button" onClick={() => { if (row.key === "adults") setAdultCount(Math.min(9, adultCount + 1)); if (row.key === "children") setChildCount(Math.min(9, childCount + 1)); if (row.key === "infants") setInfantCount(Math.min(adultCount, infantCount + 1)); }} disabled={!canIncrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-4 w-4" /></button>
+                              <button type="button" onClick={() => { if (row.key === "adults") setDraftAdultCount(Math.min(9, draftAdultCount + 1)); if (row.key === "children") setDraftChildCount(Math.min(9, draftChildCount + 1)); if (row.key === "infants") setDraftInfantCount(Math.min(draftAdultCount, draftInfantCount + 1)); }} disabled={!canIncrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                    <div className="mt-3 border-t border-slate-200 pt-3">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Cabin class</p>
-                      <div className="grid grid-cols-2 gap-2">
+                    <div className="mt-2.5 border-t border-slate-200 pt-2.5">
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Cabin Class</p>
+                      <div className="grid grid-cols-2 gap-1.5">
                         {[["economy", "Economy"],["premium-economy", "Premium Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
-                          <button key={value} type="button" onClick={() => setCabinClass(value)} className={cn("focus-ring rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors text-left", cabinClass === value ? "border-indigo-500 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
+                          <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-colors text-left leading-tight", draftCabinClass === value ? "border-indigo-500 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
                         ))}
                       </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
+                      <button type="button" onClick={cancelTravelersDraft} className="focus-ring rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50">Cancel</button>
+                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
                     </div>
                   </div>
                 ) : null}
