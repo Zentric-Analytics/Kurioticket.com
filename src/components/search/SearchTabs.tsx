@@ -281,6 +281,16 @@ export function SearchTabs({
 
   const fromSuggestions = fromLiveSuggestions;
   const toSuggestions = toLiveSuggestions;
+  const fromQuery = from.trim();
+  const toQuery = to.trim();
+  const shouldShowFromSuggestionsPanel =
+    fromOpen &&
+    fromQuery.length >= 2 &&
+    (fromLoading || fromSuggestions.length > 0 || !fromLoading);
+  const shouldShowToSuggestionsPanel =
+    toOpen &&
+    toQuery.length >= 2 &&
+    (toLoading || toSuggestions.length > 0 || !toLoading);
   const normalizePassengerDraft = (
     adults: number,
     children: number,
@@ -1416,9 +1426,9 @@ export function SearchTabs({
                   className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
-                {fromOpen ? (
+                {shouldShowFromSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {from.trim().length === 0 ? null : fromLoading ? (
+                    {fromLoading ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
                       </div>
@@ -1523,11 +1533,9 @@ export function SearchTabs({
                   className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
                   required
                 />
-                {toOpen ? (
+                {shouldShowToSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {to.trim().length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-slate-500">Start typing a city or airport</div>
-                    ) : toLoading ? (
+                    {toLoading ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
                       </div>
@@ -1819,6 +1827,10 @@ export function SearchTabs({
                 ref={travelersWrapRef}
                 className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
+                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                  {t.travelers ||
+                    "Travelers"}
+                </label>
                 <button
                   type="button"
                   aria-expanded={
@@ -1832,18 +1844,12 @@ export function SearchTabs({
                     }
                     openTravelersMenu();
                   }}
-                  className="focus-ring flex h-full w-full items-center justify-between gap-2 text-left"
+                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
                 >
-                  <span>
-                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                      {t.travelers ||
-                        "Travelers"}
-                    </span>
-                    <span className="block text-sm font-medium text-slate-900">
+                  <span className="block text-sm font-medium text-slate-900">
                       {
                         travelerSummary
                       }
-                    </span>
                   </span>
                   <ChevronDown
                     className={cn(
@@ -1854,7 +1860,7 @@ export function SearchTabs({
                   />
                 </button>
                 {travelersMenuOpen ? (
-                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[370px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-lg shadow-slate-900/10 sm:w-[calc(100vw-2.5rem)] sm:p-3 lg:left-auto lg:right-0 lg:w-[350px] lg:translate-x-0">
+                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[min(92vw,320px)] max-w-[330px] max-h-[70vh] overflow-y-auto -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-lg shadow-slate-900/10 sm:p-3 lg:left-auto lg:right-0 lg:w-[350px] lg:max-h-none lg:translate-x-0 lg:overflow-visible">
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-slate-900">
                         Travelers
@@ -1874,7 +1880,7 @@ export function SearchTabs({
                           (row.key !== "infants" || draftInfantCount < draftAdultCount);
 
                         return (
-                          <div key={row.key} className="flex items-center justify-between py-2.5 first:pt-1 last:pb-1">
+                          <div key={row.key} className="flex items-center justify-between py-2 first:pt-1 last:pb-1">
                             <span>
                               <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
                               <span className="block text-xs text-slate-500">{row.subtitle}</span>
@@ -1898,7 +1904,7 @@ export function SearchTabs({
                         ))}
                       </div>
                     </div>
-                    <div className="mt-2.5 flex items-center justify-end gap-2 border-t border-slate-200 pt-2.5">
+                    <div className="mt-2 flex items-center justify-end gap-2 border-t border-slate-200 pt-2">
                       <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
                     </div>
                   </div>

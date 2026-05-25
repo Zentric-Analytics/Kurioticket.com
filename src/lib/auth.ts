@@ -281,6 +281,15 @@ if (isGoogleAuthConfigured()) {
       clientSecret:
         getGoogleClientSecret(),
 
+      authorization: {
+        params: {
+          prompt:
+            "select_account",
+          response_type:
+            "code",
+        },
+      },
+
       allowDangerousEmailAccountLinking:
         true,
     })
@@ -304,6 +313,12 @@ export const authOptions: NextAuthOptions =
 
     session: {
       strategy: "jwt",
+      maxAge: 8 * 60 * 60,
+      updateAge: 60 * 60,
+    },
+
+    jwt: {
+      maxAge: 8 * 60 * 60,
     },
 
     pages: {

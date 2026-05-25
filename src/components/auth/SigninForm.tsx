@@ -155,6 +155,8 @@ export function SigninForm({
             signIn("google", {
               callbackUrl:
                 callbackUrl || "/",
+              prompt:
+                "select_account",
             })
           }
         >
