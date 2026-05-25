@@ -54,7 +54,11 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
       });
     }
 
-    const passengers = Array.from({ length: search.travelers }, () => ({ type: "adult" as const }));
+    const passengers = [
+      ...Array.from({ length: search.adults }, () => ({ type: "adult" as const })),
+      ...Array.from({ length: search.children }, () => ({ type: "child" as const })),
+      ...Array.from({ length: search.infants }, () => ({ type: "infant_without_seat" as const })),
+    ];
     const data = await fetchJson<{ data?: { offers?: unknown[] } }>(
       "https://api.duffel.com/air/offer_requests?return_offers=true",
       {

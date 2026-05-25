@@ -201,10 +201,9 @@ export function SearchTabs({
     );
   });
 
-  const [
-    travelers,
-    setTravelers,
-  ] = useState("1");
+  const [adultCount, setAdultCount] = useState(1);
+  const [childCount, setChildCount] = useState(0);
+  const [infantCount, setInfantCount] = useState(0);
 
   const [
     cabinClass,
@@ -761,15 +760,7 @@ export function SearchTabs({
     );
   };
 
-  const travelerCount =
-    Number.parseInt(
-      clampNumberInput(
-        travelers,
-        1,
-        9
-      ),
-      10
-    );
+  const travelerCount = adultCount + childCount + infantCount;
 
   const cabinClassLabel =
     cabinClass ===
@@ -783,11 +774,22 @@ export function SearchTabs({
           ? "First"
           : "Economy";
 
-  const travelerSummary = `${travelerCount} ${
-    travelerCount === 1
-      ? "adult"
-      : "travelers"
-  }, ${cabinClassLabel}`;
+  const travelerSummary = useMemo(() => {
+    const parts: string[] = [];
+
+    if (adultCount > 0) {
+      parts.push(`${adultCount} ${adultCount === 1 ? "adult" : "adults"}`);
+    }
+    if (childCount > 0) {
+      parts.push(`${childCount} ${childCount === 1 ? "child" : "children"}`);
+    }
+    if (infantCount > 0) {
+      parts.push(`${infantCount} ${infantCount === 1 ? "infant" : "infants"}`);
+    }
+
+    const baseSummary = parts.length > 0 ? parts.join(", ") : `${travelerCount} travelers`;
+    return `${baseSummary}, ${cabinClassLabel}`;
+  }, [adultCount, childCount, infantCount, travelerCount, cabinClassLabel]);
 
   const onKeyNav = (
     event: ReactKeyboardEvent<HTMLInputElement>,
@@ -900,15 +902,13 @@ export function SearchTabs({
     ) {
       return;
     }
-    const normalizedTravelers =
-      clampNumberInput(
-        travelers,
-        1,
-        9
-      );
-    setTravelers(
-      normalizedTravelers
-    );
+    const normalizedAdults = Math.max(1, Math.min(9, adultCount));
+    const normalizedChildren = Math.max(0, Math.min(9 - normalizedAdults, childCount));
+    const normalizedInfants = Math.max(0, Math.min(normalizedAdults, Math.min(9 - normalizedAdults - normalizedChildren, infantCount)));
+    const normalizedTravelers = String(normalizedAdults + normalizedChildren + normalizedInfants);
+    setAdultCount(normalizedAdults);
+    setChildCount(normalizedChildren);
+    setInfantCount(normalizedInfants);
 
     const params =
       new URLSearchParams({
@@ -924,6 +924,9 @@ export function SearchTabs({
           toCode ||
           to.trim(),
         departureDate,
+        adults: String(normalizedAdults),
+        children: String(normalizedChildren),
+        infants: String(normalizedInfants),
         travelers:
           normalizedTravelers,
         cabinClass,
@@ -1594,30 +1597,39 @@ export function SearchTabs({
                   />
                 </button>
                 {travelersMenuOpen ? (
-                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[calc(100vw-2rem)] max-w-[680px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/15 sm:w-[calc(100vw-3rem)] sm:p-5 lg:left-auto lg:right-0 lg:w-[640px] lg:translate-x-0">
+                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[560px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 sm:w-[calc(100vw-2.5rem)] sm:p-4 lg:left-auto lg:right-0 lg:w-[480px] lg:translate-x-0">
                     <p className="text-base font-semibold text-slate-900">
                       Travelers
                     </p>
-                    <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 p-3.5">
-                      <span>
-                        <span className="block text-sm font-semibold text-slate-900">
-                          Adults
-                        </span>
-                        <span className="block text-xs text-slate-500">
-                          18+
-                        </span>
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button type="button" onClick={() => setTravelers(String(Math.max(1, travelerCount - 1)))} disabled={travelerCount <= 1} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-4 w-4" /></button>
-                        <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{travelerCount}</span>
-                        <button type="button" onClick={() => setTravelers(String(Math.min(9, travelerCount + 1)))} disabled={travelerCount >= 9} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-4 w-4" /></button>
-                      </div>
+                    <div className="mt-3 space-y-2.5">
+                      {[
+                        { key: "adults", label: "Adults", subtitle: "18+", count: adultCount, min: 1 },
+                        { key: "children", label: "Children", subtitle: "2–11", count: childCount, min: 0 },
+                        { key: "infants", label: "Infants on lap", subtitle: "Under 2", count: infantCount, min: 0 },
+                      ].map((row) => {
+                        const canDecrement = row.count > row.min;
+                        const canIncrement = travelerCount < 9 && (row.key !== "infants" || infantCount < adultCount);
+
+                        return (
+                          <div key={row.key} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2.5">
+                            <span>
+                              <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
+                              <span className="block text-xs text-slate-500">{row.subtitle}</span>
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, adultCount - 1); setAdultCount(nextAdults); setInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setChildCount(Math.max(0, childCount - 1)); if (row.key === "infants") setInfantCount(Math.max(0, infantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-4 w-4" /></button>
+                              <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{row.count}</span>
+                              <button type="button" onClick={() => { if (row.key === "adults") setAdultCount(Math.min(9, adultCount + 1)); if (row.key === "children") setChildCount(Math.min(9, childCount + 1)); if (row.key === "infants") setInfantCount(Math.min(adultCount, infantCount + 1)); }} disabled={!canIncrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-4 w-4" /></button>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div className="mt-4 border-t border-slate-200 pt-4">
-                      <p className="mb-2 text-sm font-semibold text-slate-900">Cabin class</p>
-                      <div className="flex flex-wrap gap-2">
+                    <div className="mt-3 border-t border-slate-200 pt-3">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600">Cabin class</p>
+                      <div className="grid grid-cols-2 gap-2">
                         {[["economy", "Economy"],["premium-economy", "Premium Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
-                          <button key={value} type="button" onClick={() => setCabinClass(value)} className={cn("focus-ring rounded-full border px-3 py-1.5 text-sm font-medium transition-colors", cabinClass === value ? "border-indigo-700 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
+                          <button key={value} type="button" onClick={() => setCabinClass(value)} className={cn("focus-ring rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors text-left", cabinClass === value ? "border-indigo-500 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
                         ))}
                       </div>
                     </div>

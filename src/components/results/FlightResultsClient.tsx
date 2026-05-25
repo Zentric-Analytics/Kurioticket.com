@@ -67,11 +67,19 @@ export function FlightResultsClient() {
   const [departureDateInput, setDepartureDateInput] = useState(params.get("departureDate") || "");
   const [returnDateInput, setReturnDateInput] = useState(params.get("returnDate") || "");
   const [adultCount, setAdultCount] = useState(() => {
-    const value = Number(params.get("travelers") || 1);
+    const adultsParam = params.get("adults");
+    const travelersParam = params.get("travelers");
+    const value = Number(adultsParam ?? travelersParam ?? 1);
     return Number.isFinite(value) ? Math.max(1, value) : 1;
   });
-  const [childCount, setChildCount] = useState(0);
-  const [infantCount, setInfantCount] = useState(0);
+  const [childCount, setChildCount] = useState(() => {
+    const value = Number(params.get("children") || 0);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
+  });
+  const [infantCount, setInfantCount] = useState(() => {
+    const value = Number(params.get("infants") || 0);
+    return Number.isFinite(value) ? Math.max(0, value) : 0;
+  });
   const [cabinClassInput, setCabinClassInput] = useState<CabinClassValue>((params.get("cabinClass") as CabinClassValue) || "economy");
   const [activeSuggest, setActiveSuggest] = useState<"origin" | "destination" | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number; width: number } | null>(null);
@@ -101,13 +109,25 @@ export function FlightResultsClient() {
 
       if (!hasSearch) return null;
 
+      const adultsParam = Number(params.get("adults"));
+      const childrenParam = Number(params.get("children"));
+      const infantsParam = Number(params.get("infants"));
+      const legacyTravelers = Number(params.get("travelers") || 1);
+      const adults = Number.isFinite(adultsParam) ? Math.max(1, adultsParam) : Math.max(1, legacyTravelers);
+      const children = Number.isFinite(childrenParam) ? Math.max(0, childrenParam) : 0;
+      const infants = Number.isFinite(infantsParam) ? Math.max(0, infantsParam) : 0;
+      const travelers = adults + children + infants;
+
       return {
         tripType,
         origin,
         destination,
         departureDate,
         returnDate,
-        travelers: Number(params.get("travelers") || 1),
+        adults,
+        children,
+        infants,
+        travelers,
         cabinClass: params.get("cabinClass") || "economy",
         sort,
         currency: selectedCurrency,
@@ -395,7 +415,10 @@ export function FlightResultsClient() {
                       destination: destinationCode || destinationInput.trim() || String(formData.get("destination") || ""),
                       departureDate: departureDateInput || String(formData.get("departureDate") || ""),
                       returnDate: returnDateInput || String(formData.get("returnDate") || ""),
-                      travelers: String(adultCount + childCount),
+                      adults: String(adultCount),
+                      children: String(childCount),
+                      infants: String(infantCount),
+                      travelers: String(adultCount + childCount + infantCount),
                       cabinClass: cabinClassInput,
                     });
 
@@ -404,7 +427,10 @@ export function FlightResultsClient() {
                 >
                   <input type="hidden" name="departureDate" value={departureDateInput} />
                   <input type="hidden" name="returnDate" value={returnDateInput} />
-                  <input type="hidden" name="travelers" value={String(adultCount + childCount)} />
+                  <input type="hidden" name="adults" value={String(adultCount)} />
+                  <input type="hidden" name="children" value={String(childCount)} />
+                  <input type="hidden" name="infants" value={String(infantCount)} />
+                  <input type="hidden" name="travelers" value={String(adultCount + childCount + infantCount)} />
                   <input type="hidden" name="cabinClass" value={cabinClassInput} />
 
                   <div className="grid grid-cols-1 gap-2 overflow-hidden lg:grid-cols-[auto_auto_auto_auto_auto_auto_auto] lg:items-center">

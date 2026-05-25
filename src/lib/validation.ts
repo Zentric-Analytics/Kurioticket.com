@@ -13,15 +13,38 @@ export const flightSearchSchema = z
     departureDate: futureDate,
     returnDate: z.string().optional(),
     travelers: z.coerce.number().int().min(1).max(9).default(1),
+    adults: z.coerce.number().int().min(1).max(9).optional(),
+    children: z.coerce.number().int().min(0).max(8).optional(),
+    infants: z.coerce.number().int().min(0).max(8).optional(),
     cabinClass: z
       .enum(["economy", "premium-economy", "business", "first"])
       .default("economy"),
     sort: z.enum(["cheapest", "best", "fastest", "stops"]).optional(),
     currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).catch("USD").default("USD"),
   })
+  .transform((data) => {
+    const adults = data.adults ?? data.travelers;
+    const children = data.children ?? 0;
+    const infants = data.infants ?? 0;
+    return {
+      ...data,
+      adults,
+      children,
+      infants,
+      travelers: adults + children + infants,
+    };
+  })
   .refine((data) => data.tripType !== "round-trip" || Boolean(data.returnDate), {
     message: "Choose a return date for round trips.",
     path: ["returnDate"],
+  })
+  .refine((data) => data.infants <= data.adults, {
+    message: "Infants on lap cannot exceed adults.",
+    path: ["infants"],
+  })
+  .refine((data) => data.travelers <= 9, {
+    message: "A maximum of 9 travelers is supported.",
+    path: ["travelers"],
   });
 
 export const hotelSearchSchema = z
