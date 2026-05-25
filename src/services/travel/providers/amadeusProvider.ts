@@ -30,7 +30,7 @@ export function searchAmadeusFlights(search: FlightSearchParams): Promise<Provid
       originLocationCode: sanitizeAirportCode(search.origin),
       destinationLocationCode: sanitizeAirportCode(search.destination),
       departureDate: search.departureDate,
-      adults: String(search.travelers),
+      adults: String(search.adults),
       travelClass: travelClassMap[search.cabinClass],
       currencyCode: getAmadeusRequestCurrency(search.currency),
       max: "25",

@@ -21,7 +21,7 @@ export function searchKiwiFlights(search: FlightSearchParams): Promise<ProviderR
       fly_to: sanitizeAirportCode(search.destination),
       date_from: formatKiwiDate(search.departureDate),
       date_to: formatKiwiDate(search.departureDate),
-      adults: String(search.travelers),
+      adults: String(search.adults),
       curr: getKiwiRequestCurrency(search.currency),
       limit: "25",
       sort: "price",
