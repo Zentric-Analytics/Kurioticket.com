@@ -186,7 +186,7 @@ export default function Home() {
               type="button"
               aria-label="Previous destinations"
               onClick={() => scrollDestinationsRail("left")}
-              className="focus-ring absolute -left-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+              className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
             >
               <ChevronLeft size={18} />
             </button>
@@ -195,7 +195,7 @@ export default function Home() {
               type="button"
               aria-label={t("homeNextDestinations")}
               onClick={() => scrollDestinationsRail("right")}
-              className="focus-ring absolute -right-2 top-1/2 z-20 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+              className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
             >
               <ChevronRight size={18} />
             </button>
@@ -453,7 +453,7 @@ function DestinationCard({
 
           <button
             type="button"
-            className="focus-ring absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30"
+            className="focus-ring absolute right-3 top-3 z-0 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30"
             aria-label={saveLabelTemplate.replace("{{city}}", city)}
             onClick={(event) => event.preventDefault()}
           >
