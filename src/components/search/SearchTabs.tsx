@@ -97,6 +97,11 @@ const clampNumberInput = (
   );
 };
 
+const normalizeCabinClass = (value: string) =>
+  value === "business" || value === "first"
+    ? value
+    : "economy";
+
 export function SearchTabs({
   t,
   compactHero = false,
@@ -290,7 +295,7 @@ export function SearchTabs({
     setDraftAdultCount(adultCount);
     setDraftChildCount(childCount);
     setDraftInfantCount(infantCount);
-    setDraftCabinClass(cabinClass);
+    setDraftCabinClass(normalizeCabinClass(cabinClass));
     setTravelersMenuOpen(true);
   };
 
@@ -298,7 +303,7 @@ export function SearchTabs({
     setDraftAdultCount(adultCount);
     setDraftChildCount(childCount);
     setDraftInfantCount(infantCount);
-    setDraftCabinClass(cabinClass);
+    setDraftCabinClass(normalizeCabinClass(cabinClass));
     setTravelersMenuOpen(false);
   };
 
@@ -311,7 +316,7 @@ export function SearchTabs({
     setAdultCount(normalized.adults);
     setChildCount(normalized.children);
     setInfantCount(normalized.infants);
-    setCabinClass(draftCabinClass);
+    setCabinClass(normalizeCabinClass(draftCabinClass));
     setTravelersMenuOpen(false);
   };
 
@@ -844,17 +849,16 @@ export function SearchTabs({
 
   const travelerCount = adultCount + childCount + infantCount;
 
+  const normalizedCabinClass =
+    normalizeCabinClass(cabinClass);
   const cabinClassLabel =
-    cabinClass ===
-    "premium-economy"
-      ? "Premium Economy"
-      : cabinClass ===
-          "business"
-        ? "Business"
-        : cabinClass ===
-            "first"
-          ? "First"
-          : "Economy";
+    normalizedCabinClass ===
+    "business"
+      ? "Business"
+      : normalizedCabinClass ===
+          "first"
+        ? "First"
+        : "Economy";
 
   const travelerSummary = useMemo(() => {
     const parts: string[] = [];
@@ -1765,15 +1769,17 @@ export function SearchTabs({
                       })}
                     </div>
                     <div className="mt-2.5 border-t border-slate-200 pt-2.5">
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-600">Cabin Class</p>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {[["economy", "Economy"],["premium-economy", "Premium Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
-                          <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-colors text-left leading-tight", draftCabinClass === value ? "border-indigo-500 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Cabin Class</p>
+                        <button type="button" onClick={cancelTravelersDraft} aria-label="Close passenger selector" className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 text-sm leading-none text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">×</button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[["economy", "Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
+                          <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-md border px-2 py-1 text-[10px] font-medium transition-colors text-center leading-tight sm:text-[11px]", draftCabinClass === value ? "border-indigo-400 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
                         ))}
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
-                      <button type="button" onClick={cancelTravelersDraft} className="focus-ring rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50">Cancel</button>
                       <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
                     </div>
                   </div>
