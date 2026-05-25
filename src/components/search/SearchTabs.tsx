@@ -97,6 +97,20 @@ const clampNumberInput = (
   );
 };
 
+const formatHotelDateDisplay = (value: string) => {
+  if (!value) return "";
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat(
+    "en-US",
+    {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }
+  ).format(parsed);
+};
+
 export function SearchTabs({
   t,
   compactHero = false,
@@ -1688,22 +1702,32 @@ export function SearchTabs({
                       {t.checkIn ||
                         "Check-in"}
                     </label>
-                    <input
-                      id="hotel-check-in"
-                      type="date"
-                      value={checkIn}
-                      onChange={(
-                        event
-                      ) =>
-                        setCheckIn(
+                    <div className="focus-within:ring-ring/45 relative h-8 min-w-0 rounded-md transition focus-within:ring-2">
+                      <span className={cn("pointer-events-none flex h-full items-center truncate text-sm font-medium", checkIn ? "text-slate-950" : "text-slate-400")}>
+                        {checkIn
+                          ? formatHotelDateDisplay(
+                              checkIn
+                            )
+                          : (t.checkIn ||
+                            "Check-in")}
+                      </span>
+                      <input
+                        id="hotel-check-in"
+                        type="date"
+                        value={checkIn}
+                        onChange={(
                           event
-                            .target
-                            .value
-                        )
-                      }
-                      className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
-                      required
-                    />
+                        ) =>
+                          setCheckIn(
+                            event
+                              .target
+                              .value
+                          )
+                        }
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        required
+                      />
+                    </div>
                     <span className="text-slate-300">
                       —
                     </span>
@@ -1711,26 +1735,36 @@ export function SearchTabs({
                       {t.checkOut ||
                         "Check-out"}
                     </label>
-                    <input
-                      id="hotel-check-out"
-                      type="date"
-                      value={checkOut}
-                      min={
-                        checkIn ||
-                        undefined
-                      }
-                      onChange={(
-                        event
-                      ) =>
-                        setCheckOut(
+                    <div className="focus-within:ring-ring/45 relative h-8 min-w-0 rounded-md transition focus-within:ring-2">
+                      <span className={cn("pointer-events-none flex h-full items-center truncate text-sm font-medium", checkOut ? "text-slate-950" : "text-slate-400")}>
+                        {checkOut
+                          ? formatHotelDateDisplay(
+                              checkOut
+                            )
+                          : (t.checkOut ||
+                            "Check-out")}
+                      </span>
+                      <input
+                        id="hotel-check-out"
+                        type="date"
+                        value={checkOut}
+                        min={
+                          checkIn ||
+                          undefined
+                        }
+                        onChange={(
                           event
-                            .target
-                            .value
-                        )
-                      }
-                      className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors"
-                      required
-                    />
+                        ) =>
+                          setCheckOut(
+                            event
+                              .target
+                              .value
+                          )
+                        }
+                        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
