@@ -15,7 +15,10 @@ import {
   ArrowRightLeft,
   BedDouble,
   Calendar,
+  ChevronDown,
+  Minus,
   Plane,
+  Plus,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -109,6 +112,8 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const tripTypeWrapRef =
     useRef<HTMLDivElement>(null);
+  const travelersWrapRef =
+    useRef<HTMLDivElement>(null);
 
   const [tab, setTab] =
     useState<TabMode>("flights");
@@ -119,6 +124,10 @@ export function SearchTabs({
     );
   const [tripTypeOpen, setTripTypeOpen] =
     useState(false);
+  const [
+    travelersMenuOpen,
+    setTravelersMenuOpen,
+  ] = useState(false);
 
   const [from, setFrom] =
     useState("");
@@ -456,6 +465,15 @@ export function SearchTabs({
       ) {
         setTripTypeOpen(false);
       }
+      if (
+        !travelersWrapRef.current?.contains(
+          event.target as Node
+        )
+      ) {
+        setTravelersMenuOpen(
+          false
+        );
+      }
     };
     const onEscape = (
       event: KeyboardEvent
@@ -465,6 +483,9 @@ export function SearchTabs({
           false
         );
         setTripTypeOpen(false);
+        setTravelersMenuOpen(
+          false
+        );
       }
     };
 
@@ -740,6 +761,34 @@ export function SearchTabs({
     );
   };
 
+  const travelerCount =
+    Number.parseInt(
+      clampNumberInput(
+        travelers,
+        1,
+        9
+      ),
+      10
+    );
+
+  const cabinClassLabel =
+    cabinClass ===
+    "premium-economy"
+      ? "Premium Economy"
+      : cabinClass ===
+          "business"
+        ? "Business"
+        : cabinClass ===
+            "first"
+          ? "First"
+          : "Economy";
+
+  const travelerSummary = `${travelerCount} ${
+    travelerCount === 1
+      ? "adult"
+      : "travelers"
+  }, ${cabinClassLabel}`;
+
   const onKeyNav = (
     event: ReactKeyboardEvent<HTMLInputElement>,
     isFrom: boolean
@@ -986,8 +1035,89 @@ export function SearchTabs({
           onSubmit={
             onFlightSubmit
           }
-          className="space-y-1.5"
+          className="space-y-2"
         >
+          <div className="px-1">
+            <div
+              ref={tripTypeWrapRef}
+              className="relative inline-flex"
+            >
+              <button
+                type="button"
+                aria-expanded={
+                  tripTypeOpen
+                }
+                aria-haspopup="listbox"
+                onClick={() =>
+                  setTripTypeOpen(
+                    (
+                      prevOpen
+                    ) =>
+                      !prevOpen
+                  )
+                }
+                className="focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-950"
+              >
+                {tripTypeLabel(
+                  tripType
+                )}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "h-4 w-4 text-slate-500 transition-transform",
+                    tripTypeOpen &&
+                      "rotate-180"
+                  )}
+                />
+              </button>
+
+              {tripTypeOpen && (
+                <div
+                  role="listbox"
+                  className="absolute left-0 top-full z-30 mt-1 min-w-[210px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                >
+                  {(
+                    [
+                      "round-trip",
+                      "one-way",
+                    ] as const
+                  ).map((mode) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => {
+                        setTripType(
+                          mode
+                        );
+                        setTripTypeOpen(
+                          false
+                        );
+                      }}
+                      className={cn(
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                        tripType ===
+                          mode
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      )}
+                    >
+                      {tripTypeLabel(
+                        mode
+                      )}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled
+                    className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-400"
+                  >
+                    Multi-city —
+                    Coming soon
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200">
@@ -1428,170 +1558,80 @@ export function SearchTabs({
                 ) : null}
               </div>
 
-              <div className="grid min-h-[54px] grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200">
-                <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">{t.travelers || "Travelers"}</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={9}
-                    value={
-                      travelers
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      setTravelers(
-                        event
-                          .target
-                          .value
-                      )
-                    }
-                    onBlur={() =>
-                      setTravelers(
-                        clampNumberInput(
-                          travelers,
-                          1,
-                          9
-                        )
-                      )
-                    }
-                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm outline-none transition-colors"
-                    required
+              <div
+                ref={travelersWrapRef}
+                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+              >
+                <button
+                  type="button"
+                  aria-expanded={
+                    travelersMenuOpen
+                  }
+                  aria-haspopup="dialog"
+                  onClick={() =>
+                    setTravelersMenuOpen(
+                      (open) =>
+                        !open
+                    )
+                  }
+                  className="focus-ring flex h-full w-full items-center justify-between gap-2 text-left"
+                >
+                  <span>
+                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                      {t.travelers ||
+                        "Travelers"}
+                    </span>
+                    <span className="block text-sm font-medium text-slate-900">
+                      {
+                        travelerSummary
+                      }
+                    </span>
+                  </span>
+                  <ChevronDown
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                      travelersMenuOpen &&
+                        "rotate-180"
+                    )}
                   />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                    {t.cabinClass ||
-                      "Cabin class"}
-                  </label>
-                  <select
-                    value={
-                      cabinClass
-                    }
-                    onChange={(
-                      event
-                    ) =>
-                      setCabinClass(
-                        event
-                          .target
-                          .value
-                      )
-                    }
-                    className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm outline-none transition-colors"
-                  >
-                    <option value="economy">
-                      Economy
-                    </option>
-                    <option value="premium-economy">
-                      Premium
-                      economy
-                    </option>
-                    <option value="business">
-                      Business
-                    </option>
-                    <option value="first">
-                      First
-                    </option>
-                  </select>
-                </div>
+                </button>
+                {travelersMenuOpen ? (
+                  <div className="absolute left-0 right-0 top-full z-40 mt-2 w-full min-w-[260px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/15 lg:left-auto lg:right-0 lg:w-[320px]">
+                    <p className="text-base font-semibold text-slate-900">
+                      Travelers
+                    </p>
+                    <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 p-3">
+                      <span className="text-sm font-medium text-slate-700">Travelers</span>
+                      <div className="flex items-center gap-2">
+                        <button type="button" onClick={() => setTravelers(String(Math.max(1, travelerCount - 1)))} disabled={travelerCount <= 1} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-4 w-4" /></button>
+                        <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{travelerCount}</span>
+                        <button type="button" onClick={() => setTravelers(String(Math.min(9, travelerCount + 1)))} disabled={travelerCount >= 9} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-4 w-4" /></button>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <p className="mb-2 text-sm font-medium text-slate-700">Cabin class</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[["economy", "Economy"],["premium-economy", "Premium Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
+                          <button key={value} type="button" onClick={() => setCabinClass(value)} className={cn("focus-ring rounded-lg border px-3 py-2 text-sm font-medium", cabinClass === value ? "border-indigo-700 bg-indigo-50 text-indigo-900" : "border-slate-200 text-slate-700 hover:bg-slate-50")}>{label}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => setTravelersMenuOpen(false)} className="focus-ring mt-4 w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">Done</button>
+                  </div>
+                ) : null}
               </div>
-
               <div className="sm:col-span-2 lg:col-span-1">
                 <Button
                   type="submit"
                   disabled={
                     isFlightSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-[54px]"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-[54px] lg:rounded-none lg:rounded-r-xl"
                 >
                   {t.search ||
                     "Search"}
                 </Button>
               </div>
-            </div>
-          </div>
-          <div className="pt-0.5 lg:px-1">
-            <div
-              ref={tripTypeWrapRef}
-              className="relative inline-flex"
-            >
-              <button
-                type="button"
-                aria-expanded={
-                  tripTypeOpen
-                }
-                aria-haspopup="listbox"
-                onClick={() =>
-                  setTripTypeOpen(
-                    (
-                      prevOpen
-                    ) =>
-                      !prevOpen
-                  )
-                }
-                className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-900"
-              >
-                {tripTypeLabel(
-                  tripType
-                )}
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "text-[10px] leading-none text-slate-500 transition-transform",
-                    tripTypeOpen &&
-                      "rotate-180"
-                  )}
-                >
-                  ▾
-                </span>
-              </button>
-
-              {tripTypeOpen && (
-                <div
-                  role="listbox"
-                  className="absolute left-0 top-full z-30 mt-1 min-w-[190px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
-                >
-                  {(
-                    [
-                      "round-trip",
-                      "one-way",
-                    ] as const
-                  ).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => {
-                        setTripType(
-                          mode
-                        );
-                        setTripTypeOpen(
-                          false
-                        );
-                      }}
-                      className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-xs font-medium transition-colors",
-                        tripType ===
-                          mode
-                          ? "bg-slate-900 text-white"
-                          : "text-slate-700 hover:bg-slate-100"
-                      )}
-                    >
-                      {tripTypeLabel(
-                        mode
-                      )}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    disabled
-                    className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-xs font-medium text-slate-400"
-                  >
-                    Multi-city —
-                    Coming soon
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         </form>
