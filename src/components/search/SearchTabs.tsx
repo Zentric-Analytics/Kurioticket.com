@@ -257,9 +257,12 @@ export function SearchTabs({
 
   const [guests, setGuests] =
     useState("1");
+  const [hotelAdultCount, setHotelAdultCount] = useState(1);
+  const [hotelChildCount, setHotelChildCount] = useState(0);
 
   const [rooms, setRooms] =
     useState("1");
+  const [hotelPetFriendly, setHotelPetFriendly] = useState(false);
   const [hotelGuestsRoomsOpen, setHotelGuestsRoomsOpen] =
     useState(false);
 
@@ -650,6 +653,41 @@ export function SearchTabs({
   }, [travelersMenuOpen, adultCount, childCount, infantCount, cabinClass]);
 
   const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? "guest" : "guests"}, ${rooms} ${Number(rooms) === 1 ? "room" : "rooms"}`;
+
+  useEffect(() => {
+    const normalizedAdults = Math.max(1, Math.min(12, hotelAdultCount));
+    const maxChildrenAllowed = Math.max(0, 12 - normalizedAdults);
+    const normalizedChildren = Math.max(0, Math.min(maxChildrenAllowed, hotelChildCount));
+    const totalGuests = normalizedAdults + normalizedChildren;
+
+    if (normalizedAdults !== hotelAdultCount) {
+      setHotelAdultCount(normalizedAdults);
+      return;
+    }
+
+    if (normalizedChildren !== hotelChildCount) {
+      setHotelChildCount(normalizedChildren);
+      return;
+    }
+
+    const nextGuests = String(totalGuests);
+    if (guests !== nextGuests) {
+      setGuests(nextGuests);
+    }
+  }, [hotelAdultCount, hotelChildCount, guests]);
+
+  useEffect(() => {
+    const normalizedTotalGuests = Number(clampNumberInput(guests, 1, 12));
+    const currentTotal = hotelAdultCount + hotelChildCount;
+    if (normalizedTotalGuests === currentTotal) {
+      return;
+    }
+
+    const nextAdults = Math.max(1, Math.min(hotelAdultCount, normalizedTotalGuests));
+    const nextChildren = Math.max(0, normalizedTotalGuests - nextAdults);
+    setHotelAdultCount(nextAdults);
+    setHotelChildCount(nextChildren);
+  }, [guests, hotelAdultCount, hotelChildCount]);
 
   const formatShortDate = (
     isoDate: string
@@ -2176,22 +2214,135 @@ export function SearchTabs({
                 </button>
                 {hotelGuestsRoomsOpen ? (
                   <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,380px)]">
-                    <div className="space-y-3">
-                      {[{ key: "guests", label: t.guests || "Guests", value: Number(guests), min: 1, max: 12 }, { key: "rooms", label: t.rooms || "Rooms", value: Number(rooms), min: 1, max: 6 }].map((row, index) => {
+                    <div className="space-y-4">
+                      {[
+                        {
+                          key: "adults",
+                          label: "Adults",
+                          value: hotelAdultCount,
+                          min: 1,
+                          max: 12 - hotelChildCount,
+                          onDecrement: () =>
+                            setHotelAdultCount((prev) =>
+                              Math.max(1, prev - 1)
+                            ),
+                          onIncrement: () =>
+                            setHotelAdultCount((prev) =>
+                              Math.min(12 - hotelChildCount, prev + 1)
+                            ),
+                        },
+                        {
+                          key: "children",
+                          label: "Children",
+                          value: hotelChildCount,
+                          min: 0,
+                          max: 12 - hotelAdultCount,
+                          onDecrement: () =>
+                            setHotelChildCount((prev) =>
+                              Math.max(0, prev - 1)
+                            ),
+                          onIncrement: () =>
+                            setHotelChildCount((prev) =>
+                              Math.min(12 - hotelAdultCount, prev + 1)
+                            ),
+                        },
+                        {
+                          key: "rooms",
+                          label: "Rooms",
+                          value: Number(rooms),
+                          min: 1,
+                          max: 6,
+                          onDecrement: () =>
+                            setRooms((prev) =>
+                              String(
+                                Math.max(
+                                  1,
+                                  Number(prev) - 1
+                                )
+                              )
+                            ),
+                          onIncrement: () =>
+                            setRooms((prev) =>
+                              String(
+                                Math.min(
+                                  6,
+                                  Number(prev) + 1
+                                )
+                              )
+                            ),
+                        },
+                      ].map((row) => {
                         const canDecrement = row.value > row.min;
                         const canIncrement = row.value < row.max;
 
                         return (
-                          <div key={row.key} className={cn("flex items-center justify-between", index === 1 && "border-t border-slate-200 pt-3") }>
-                            <span className="text-sm font-semibold text-slate-900">{row.label}</span>
+                          <div
+                            key={row.key}
+                            className="flex items-center justify-between gap-3"
+                          >
+                            <span className="text-sm font-semibold text-slate-900">
+                              {row.label}
+                            </span>
                             <div className="flex items-center gap-2">
-                              <button type="button" onClick={() => { if (!canDecrement) return; if (row.key === "guests") setGuests(String(Math.max(1, row.value - 1))); if (row.key === "rooms") setRooms(String(Math.max(1, row.value - 1))); }} disabled={!canDecrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-4 w-4" /></button>
-                              <span className="min-w-6 text-center text-sm font-semibold text-slate-900">{row.value}</span>
-                              <button type="button" onClick={() => { if (!canIncrement) return; if (row.key === "guests") setGuests(String(Math.min(12, row.value + 1))); if (row.key === "rooms") setRooms(String(Math.min(6, row.value + 1))); }} disabled={!canIncrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-4 w-4" /></button>
+                              <button
+                                type="button"
+                                onClick={row.onDecrement}
+                                disabled={!canDecrement}
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                              <span className="min-w-6 text-center text-sm font-semibold text-slate-900">
+                                {row.value}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={row.onIncrement}
+                                disabled={!canIncrement}
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
                             </div>
                           </div>
                         );
                       })}
+                      <div className="border-t border-slate-200 pt-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              Pet-friendly
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              Only show stays that allow pets
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={hotelPetFriendly}
+                            aria-label="Toggle pet-friendly stays"
+                            onClick={() =>
+                              setHotelPetFriendly((prev) => !prev)
+                            }
+                            className={cn(
+                              "focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors",
+                              hotelPetFriendly
+                                ? "border-indigo-600 bg-indigo-600"
+                                : "border-slate-300 bg-slate-200"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform",
+                                hotelPetFriendly
+                                  ? "translate-x-5"
+                                  : "translate-x-0.5"
+                              )}
+                            />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : null}
