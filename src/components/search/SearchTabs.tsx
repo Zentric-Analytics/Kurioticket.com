@@ -1737,11 +1737,14 @@ export function SearchTabs({
                   />
                 </button>
                 {travelersMenuOpen ? (
-                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[440px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl shadow-slate-900/10 sm:w-[calc(100vw-2.5rem)] sm:p-3.5 lg:left-auto lg:right-0 lg:w-[410px] lg:translate-x-0">
-                    <p className="text-sm font-semibold text-slate-900">
-                      Travelers
-                    </p>
-                    <div className="mt-2 divide-y divide-slate-200">
+                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[calc(100vw-1.5rem)] max-w-[370px] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-lg shadow-slate-900/10 sm:w-[calc(100vw-2.5rem)] sm:p-3 lg:left-auto lg:right-0 lg:w-[350px] lg:translate-x-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-900">
+                        Travelers
+                      </p>
+                      <button type="button" onClick={cancelTravelersDraft} aria-label="Close passenger selector" className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 text-sm leading-none text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">×</button>
+                    </div>
+                    <div className="mt-1.5 divide-y divide-slate-200">
                       {[
                         { key: "adults", label: "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
                         { key: "children", label: "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
@@ -1754,12 +1757,12 @@ export function SearchTabs({
                           (row.key !== "infants" || draftInfantCount < draftAdultCount);
 
                         return (
-                          <div key={row.key} className="flex items-center justify-between py-3 first:pt-1 last:pb-1">
+                          <div key={row.key} className="flex items-center justify-between py-2.5 first:pt-1 last:pb-1">
                             <span>
                               <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
                               <span className="block text-xs text-slate-500">{row.subtitle}</span>
                             </span>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1">
                               <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
                               <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{row.count}</span>
                               <button type="button" onClick={() => { if (row.key === "adults") setDraftAdultCount(Math.min(9, draftAdultCount + 1)); if (row.key === "children") setDraftChildCount(Math.min(9, draftChildCount + 1)); if (row.key === "infants") setDraftInfantCount(Math.min(draftAdultCount, draftInfantCount + 1)); }} disabled={!canIncrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
@@ -1768,18 +1771,17 @@ export function SearchTabs({
                         );
                       })}
                     </div>
-                    <div className="mt-2.5 border-t border-slate-200 pt-2.5">
-                      <div className="mb-2 flex items-center justify-between">
+                    <div className="mt-2 border-t border-slate-200 pt-2">
+                      <div className="mb-1.5 flex items-center justify-between">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Cabin Class</p>
-                        <button type="button" onClick={cancelTravelersDraft} aria-label="Close passenger selector" className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 text-sm leading-none text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">×</button>
                       </div>
-                      <div className="grid grid-cols-3 gap-1.5">
+                      <div className="grid grid-cols-3 gap-1">
                         {[["economy", "Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
                           <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-md border px-2 py-1 text-[10px] font-medium transition-colors text-center leading-tight sm:text-[11px]", draftCabinClass === value ? "border-indigo-400 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
                         ))}
                       </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
+                    <div className="mt-2.5 flex items-center justify-end gap-2 border-t border-slate-200 pt-2.5">
                       <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
                     </div>
                   </div>
