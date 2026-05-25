@@ -789,6 +789,11 @@ export function SearchTabs({
       1
     );
 
+  type MonthCell = {
+    date: Date;
+    isCurrentMonth: boolean;
+  };
+
   const buildMonthCells = (
     monthDate: Date
   ) => {
@@ -807,13 +812,22 @@ export function SearchTabs({
     );
     return Array.from(
       { length: 42 },
-      (_, index) =>
-        new Date(
-          startDate.getFullYear(),
-          startDate.getMonth(),
-          startDate.getDate() +
-            index
-        )
+      (_, index) => {
+        const date =
+          new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate() +
+              index
+          );
+
+        return {
+          date,
+          isCurrentMonth:
+            date.getMonth() ===
+            monthDate.getMonth(),
+        } satisfies MonthCell;
+      }
     );
   };
 
@@ -1632,15 +1646,14 @@ export function SearchTabs({
                               <div className="grid grid-cols-7 gap-1">
                                 {cells.map(
                                   (
-                                    day
+                                    cell
                                   ) => {
+                                    const day =
+                                      cell.date;
                                     const iso =
                                       toIsoDate(
                                         day
                                       );
-                                    const inCurrentMonth =
-                                      day.getMonth() ===
-                                      monthDate.getMonth();
                                     const isDeparture =
                                       iso ===
                                       departureDate;
@@ -1661,6 +1674,18 @@ export function SearchTabs({
                                         day <
                                           returnParsed
                                       );
+                                    if (
+                                      !cell.isCurrentMonth
+                                    ) {
+                                      return (
+                                        <span
+                                          key={`placeholder-${iso}`}
+                                          aria-hidden="true"
+                                          className="h-8 w-8 justify-self-center"
+                                        />
+                                      );
+                                    }
+
                                     return (
                                       <button
                                         key={
@@ -1688,9 +1713,7 @@ export function SearchTabs({
                                           "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
                                           isPastDate
                                             ? "text-slate-300 hover:bg-transparent"
-                                            : inCurrentMonth
-                                              ? "text-slate-900 hover:bg-indigo-50"
-                                              : "text-slate-300 hover:bg-indigo-50",
+                                            : "text-slate-900 hover:bg-indigo-50",
                                           isInRange &&
                                             "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
                                           (isDeparture ||
@@ -1992,15 +2015,14 @@ export function SearchTabs({
                               <div className="grid grid-cols-7 gap-1">
                                 {cells.map(
                                   (
-                                    day
+                                    cell
                                   ) => {
+                                    const day =
+                                      cell.date;
                                     const iso =
                                       toIsoDate(
                                         day
                                       );
-                                    const inCurrentMonth =
-                                      day.getMonth() ===
-                                      monthDate.getMonth();
                                     const isCheckIn =
                                       iso ===
                                       checkIn;
@@ -2021,6 +2043,18 @@ export function SearchTabs({
                                         day <
                                           checkOutParsed
                                       );
+                                    if (
+                                      !cell.isCurrentMonth
+                                    ) {
+                                      return (
+                                        <span
+                                          key={`placeholder-${iso}`}
+                                          aria-hidden="true"
+                                          className="h-8 w-8 justify-self-center"
+                                        />
+                                      );
+                                    }
+
                                     return (
                                       <button
                                         key={
@@ -2048,9 +2082,7 @@ export function SearchTabs({
                                           "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
                                           isPastDate
                                             ? "text-slate-300 hover:bg-transparent"
-                                            : inCurrentMonth
-                                              ? "text-slate-900 hover:bg-indigo-50"
-                                              : "text-slate-300 hover:bg-indigo-50",
+                                            : "text-slate-900 hover:bg-indigo-50",
                                           isInRange &&
                                             "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
                                           (isCheckIn ||
