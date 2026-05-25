@@ -1856,18 +1856,15 @@ export function SearchTabs({
                     hotelDatesOpen
                   }
                   aria-haspopup="dialog"
-                  aria-label="Choose hotel travel dates"
+                  aria-label="Choose travel dates"
                   className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
                 >
                   <Calendar
                     size={16}
                     className="shrink-0 text-slate-500"
-                    aria-hidden="true"
                   />
-                  <span className={cn("truncate", checkIn ? "text-slate-950" : "text-slate-400")}>
-                    {checkIn
-                      ? hotelDateSummary
-                      : `${t.checkIn || "Check-in"} — ${t.checkOut || "Check-out"}`}
+                  <span className="truncate">
+                    {hotelDateSummary}
                   </span>
                 </button>
                 {hotelDatesOpen ? (
@@ -1876,57 +1873,184 @@ export function SearchTabs({
                       Choose travel dates
                     </p>
                     <div className="mb-3 flex items-center justify-between">
-                      <button type="button" aria-label="Previous month" onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, -1))} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">Prev</button>
-                      <button type="button" aria-label="Next month" onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, 1))} className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">Next</button>
+                      <button
+                        type="button"
+                        aria-label="Previous month"
+                        onClick={() =>
+                          setHotelVisibleMonthDate(
+                            (prev) =>
+                              addMonths(
+                                prev,
+                                -1
+                              )
+                          )
+                        }
+                        className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Prev
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Next month"
+                        onClick={() =>
+                          setHotelVisibleMonthDate(
+                            (prev) =>
+                              addMonths(
+                                prev,
+                                1
+                              )
+                          )
+                        }
+                        className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Next
+                      </button>
                     </div>
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                      {[0, 1].map((monthOffset) => {
-                        const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
-                        const cells = buildMonthCells(monthDate);
-                        return (
-                          <div key={monthOffset}>
-                            <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                              {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-                            </p>
-                            <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
-                              {weekdays.map((weekday) => (
-                                <span key={weekday}>{weekday}</span>
-                              ))}
+                      {[0, 1].map(
+                        (monthOffset) => {
+                          const monthDate =
+                            addMonths(
+                              hotelVisibleMonthDate,
+                              monthOffset
+                            );
+                          const cells =
+                            buildMonthCells(
+                              monthDate
+                            );
+                          return (
+                            <div
+                              key={monthOffset}
+                            >
+                              <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
+                                {monthDate.toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month:
+                                      "long",
+                                    year: "numeric",
+                                  }
+                                )}
+                              </p>
+                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                                {weekdays.map(
+                                  (
+                                    weekday
+                                  ) => (
+                                    <span
+                                      key={
+                                        weekday
+                                      }
+                                    >
+                                      {
+                                        weekday
+                                      }
+                                    </span>
+                                  )
+                                )}
+                              </div>
+                              <div className="grid grid-cols-7 gap-1">
+                                {cells.map(
+                                  (
+                                    day
+                                  ) => {
+                                    const iso =
+                                      toIsoDate(
+                                        day
+                                      );
+                                    const inCurrentMonth =
+                                      day.getMonth() ===
+                                      monthDate.getMonth();
+                                    const isCheckIn =
+                                      iso ===
+                                      checkIn;
+                                    const isCheckOut =
+                                      iso ===
+                                      checkOut;
+                                    const isPastDate =
+                                      isBeforeToday(
+                                        day
+                                      );
+                                    const isInRange =
+                                      !!(
+                                        checkInParsed &&
+                                        checkOutParsed &&
+                                        !isPastDate &&
+                                        day >
+                                          checkInParsed &&
+                                        day <
+                                          checkOutParsed
+                                      );
+                                    return (
+                                      <button
+                                        key={
+                                          iso
+                                        }
+                                        type="button"
+                                        aria-label={`Select ${day.toLocaleDateString(
+                                          "en-US",
+                                          {
+                                            month:
+                                              "long",
+                                            day: "numeric",
+                                            year: "numeric",
+                                          }
+                                        )}`}
+                                        onClick={() =>
+                                          onSelectHotelDate(
+                                            day
+                                          )
+                                        }
+                                        disabled={
+                                          isPastDate
+                                        }
+                                        className={cn(
+                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
+                                          isPastDate
+                                            ? "text-slate-300 hover:bg-transparent"
+                                            : inCurrentMonth
+                                              ? "text-slate-900 hover:bg-indigo-50"
+                                              : "text-slate-300 hover:bg-indigo-50",
+                                          isInRange &&
+                                            "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
+                                          (isCheckIn ||
+                                            isCheckOut) &&
+                                            "bg-indigo-700 text-white hover:bg-indigo-700"
+                                        )}
+                                      >
+                                        {day.getDate()}
+                                      </button>
+                                    );
+                                  }
+                                )}
+                              </div>
                             </div>
-                            <div className="grid grid-cols-7 gap-1">
-                              {cells.map((day) => {
-                                const iso = toIsoDate(day);
-                                const inCurrentMonth = day.getMonth() === monthDate.getMonth();
-                                const isCheckIn = iso === checkIn;
-                                const isCheckOut = iso === checkOut;
-                                const isPastDate = isBeforeToday(day);
-                                const isInRange = !!(checkInParsed && checkOutParsed && !isPastDate && day > checkInParsed && day < checkOutParsed);
-                                return (
-                                  <button
-                                    key={iso}
-                                    type="button"
-                                    aria-label={`Select ${day.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`}
-                                    onClick={() => onSelectHotelDate(day)}
-                                    disabled={isPastDate}
-                                    className={cn(
-                                      "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
-                                      isPastDate ? "text-slate-300 hover:bg-transparent" : inCurrentMonth ? "text-slate-900 hover:bg-indigo-50" : "text-slate-300 hover:bg-indigo-50",
-                                      isInRange && "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
-                                      (isCheckIn || isCheckOut) && "bg-indigo-700 text-white hover:bg-indigo-700"
-                                    )}
-                                  >
-                                    {day.getDate()}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        }
+                      )}
                     </div>
                     <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
-                      <button type="button" onClick={() => { setCheckIn(""); setCheckOut(""); }} className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50">Clear</button>
-                      <button type="button" onClick={() => setHotelDatesOpen(false)} className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800">Done</button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCheckIn("");
+                          setCheckOut("");
+                        }}
+                        className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                      >
+                        Clear
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setHotelDatesOpen(
+                            false
+                          )
+                        }
+                        className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                      >
+                        Done
+                      </button>
                     </div>
                   </div>
                 ) : null}
