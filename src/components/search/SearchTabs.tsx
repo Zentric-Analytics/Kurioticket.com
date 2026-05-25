@@ -1168,9 +1168,7 @@ export function SearchTabs({
                 />
                 {fromOpen ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {from.trim().length === 0 ? (
-                      <div className="px-3 py-2 text-sm text-slate-500">Start typing a city or airport</div>
-                    ) : fromLoading ? (
+                    {from.trim().length === 0 ? null : fromLoading ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
                       </div>
