@@ -235,6 +235,12 @@ export function SearchTabs({
     setCabinClass,
   ] = useState("economy");
   const [draftCabinClass, setDraftCabinClass] = useState("economy");
+  const travelersDraftRef = useRef({
+    adults: 1,
+    children: 0,
+    infants: 0,
+    cabinClass: "economy",
+  });
 
   const [
     destination,
@@ -307,17 +313,31 @@ export function SearchTabs({
     setTravelersMenuOpen(false);
   };
 
-  const applyTravelersDraft = () => {
+  const applyTravelersFromValues = (
+    nextAdults: number,
+    nextChildren: number,
+    nextInfants: number,
+    nextCabinClass: string
+  ) => {
     const normalized = normalizePassengerDraft(
-      draftAdultCount,
-      draftChildCount,
-      draftInfantCount
+      nextAdults,
+      nextChildren,
+      nextInfants
     );
     setAdultCount(normalized.adults);
     setChildCount(normalized.children);
     setInfantCount(normalized.infants);
-    setCabinClass(normalizeCabinClass(draftCabinClass));
+    setCabinClass(normalizeCabinClass(nextCabinClass));
     setTravelersMenuOpen(false);
+  };
+
+  const applyTravelersDraft = () => {
+    applyTravelersFromValues(
+      draftAdultCount,
+      draftChildCount,
+      draftInfantCount,
+      draftCabinClass
+    );
   };
 
   const buildPlacesUrl = (query: string, context: "origin" | "destination") => {
@@ -509,6 +529,20 @@ export function SearchTabs({
   }, [originPrefillAttempted, hasUserEditedOrigin, from, countryHint]);
 
   useEffect(() => {
+    travelersDraftRef.current = {
+      adults: draftAdultCount,
+      children: draftChildCount,
+      infants: draftInfantCount,
+      cabinClass: draftCabinClass,
+    };
+  }, [
+    draftAdultCount,
+    draftChildCount,
+    draftInfantCount,
+    draftCabinClass,
+  ]);
+
+  useEffect(() => {
     const onPointerDown = (
       event: MouseEvent
     ) => {
@@ -556,7 +590,13 @@ export function SearchTabs({
         )
       ) {
         if (travelersMenuOpen) {
-          applyTravelersDraft();
+          const latestDraft = travelersDraftRef.current;
+          applyTravelersFromValues(
+            latestDraft.adults,
+            latestDraft.children,
+            latestDraft.infants,
+            latestDraft.cabinClass
+          );
         }
       }
     };
