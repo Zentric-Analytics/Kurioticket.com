@@ -281,6 +281,15 @@ if (isGoogleAuthConfigured()) {
       clientSecret:
         getGoogleClientSecret(),
 
+      authorization: {
+        params: {
+          prompt:
+            "select_account",
+          response_type:
+            "code",
+        },
+      },
+
       allowDangerousEmailAccountLinking:
         true,
     })
