@@ -16,12 +16,16 @@ export function searchKiwiFlights(search: FlightSearchParams): Promise<ProviderR
   }
 
   return runProvider("Kiwi", async () => {
+    const totalTravelers = Number.isFinite(search.travelers)
+      ? search.travelers
+      : search.adults + search.children + search.infants;
+    const normalizedTravelers = Math.max(1, Math.floor(totalTravelers));
     const params = new URLSearchParams({
       fly_from: sanitizeAirportCode(search.origin),
       fly_to: sanitizeAirportCode(search.destination),
       date_from: formatKiwiDate(search.departureDate),
       date_to: formatKiwiDate(search.departureDate),
-      adults: String(search.adults),
+      adults: String(normalizedTravelers),
       curr: getKiwiRequestCurrency(search.currency),
       limit: "25",
       sort: "price",

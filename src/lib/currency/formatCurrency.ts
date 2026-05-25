@@ -1,4 +1,7 @@
-import { convertCurrency } from "@/lib/currency/exchangeRates";
+import {
+  convertCurrency,
+  resolveDisplayCurrency,
+} from "@/lib/currency/exchangeRates";
 
 export function formatCurrency(
   amount: number,
@@ -16,8 +19,9 @@ export function formatCurrencyFromUsd(
   amountUsd: number,
   currency: string
 ) {
+  const displayCurrency = resolveDisplayCurrency(currency);
   return formatCurrency(
-    convertCurrency(amountUsd, currency),
-    currency
+    convertCurrency(amountUsd, displayCurrency),
+    displayCurrency
   );
 }

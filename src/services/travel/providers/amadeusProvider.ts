@@ -26,11 +26,15 @@ export function searchAmadeusFlights(search: FlightSearchParams): Promise<Provid
 
   return runProvider("Amadeus", async () => {
     const token = await getAmadeusAccessToken();
+    const totalTravelers = Number.isFinite(search.travelers)
+      ? search.travelers
+      : search.adults + search.children + search.infants;
+    const normalizedTravelers = Math.max(1, Math.floor(totalTravelers));
     const params = new URLSearchParams({
       originLocationCode: sanitizeAirportCode(search.origin),
       destinationLocationCode: sanitizeAirportCode(search.destination),
       departureDate: search.departureDate,
-      adults: String(search.adults),
+      adults: String(normalizedTravelers),
       travelClass: travelClassMap[search.cabinClass],
       currencyCode: getAmadeusRequestCurrency(search.currency),
       max: "25",
