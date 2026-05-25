@@ -1837,31 +1837,37 @@ export function SearchTabs({
                 ref={hotelDateWrapRef}
                 className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
-                  {t.departureDate ||
-                    "Travel dates"}
-                </label>
                 <button
                   type="button"
                   onClick={() =>
-                    setHotelDatesOpen(true)
+                    setHotelDatesOpen(
+                      (
+                        prev
+                      ) => !prev
+                    )
                   }
                   aria-expanded={
                     hotelDatesOpen
                   }
                   aria-haspopup="dialog"
                   aria-label="Choose hotel travel dates"
-                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                  className="focus-ring flex h-full w-full flex-col items-start rounded-md border-0 bg-transparent px-0 py-0 text-left outline-none transition-colors"
                 >
-                  <Calendar
-                    size={16}
-                    className="shrink-0 text-slate-500"
-                    aria-hidden="true"
-                  />
-                  <span className={cn("truncate", checkIn ? "text-slate-950" : "text-slate-400")}>
-                    {checkIn
-                      ? hotelDateSummary
-                      : `${t.checkIn || "Check-in"} — ${t.checkOut || "Check-out"}`}
+                  <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    {t.departureDate ||
+                      "Travel dates"}
+                  </span>
+                  <span className="flex h-8 w-full items-center gap-2 text-sm text-slate-950">
+                    <Calendar
+                      size={16}
+                      className="shrink-0 text-slate-500"
+                      aria-hidden="true"
+                    />
+                    <span className={cn("truncate", checkIn ? "text-slate-950" : "text-slate-400")}>
+                      {checkIn
+                        ? hotelDateSummary
+                        : `${t.checkIn || "Check-in"} — ${t.checkOut || "Check-out"}`}
+                    </span>
                   </span>
                 </button>
                 {hotelDatesOpen ? (
