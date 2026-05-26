@@ -532,25 +532,25 @@ export default function Home() {
         <section className="page-shell pb-12">
           <div className="w-full max-w-[820px]">
             <div className="rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:p-3.5">
-              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
-                <div className="flex items-start gap-2.5 lg:min-w-0 lg:flex-1">
-                  <span className="rounded-full bg-slate-100 p-1.25 text-slate-600 sm:p-1.5">
-                    <Mail size={14} className="sm:size-4" />
+              <div className="flex flex-row items-center gap-2 sm:gap-2.5 lg:justify-between lg:gap-4">
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2.5 lg:min-w-0">
+                  <span className="shrink-0 rounded-full bg-slate-100 p-1 text-slate-600 sm:p-1.5">
+                    <Mail size={12} className="sm:size-4" />
                   </span>
 
-                  <div className="max-w-[42ch] space-y-0.5 lg:max-w-[30ch]">
-                    <h2 className="text-[13px] font-black leading-tight text-slate-950 sm:text-[15px]">
+                  <div className="min-w-0 max-w-[24ch] space-y-0 lg:max-w-[30ch]">
+                    <h2 className="truncate text-[11px] font-black leading-tight text-slate-950 sm:text-[15px]">
                       {t("homeNewsletterTitle")}
                     </h2>
 
-                    <p className="text-[11px] font-semibold leading-4 text-slate-600 sm:text-[13px] sm:leading-5">
+                    <p className="hidden truncate text-[10px] font-semibold leading-4 text-slate-600 min-[420px]:block sm:text-[13px] sm:leading-5">
                       {t("homeNewsletterBody")}
                     </p>
                   </div>
                 </div>
 
                 <form
-                  className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 lg:min-w-0 lg:flex-1 lg:flex-nowrap lg:justify-end"
+                  className="flex min-w-0 shrink-0 basis-[56%] items-center gap-1.5 sm:basis-auto sm:gap-2 lg:min-w-0 lg:flex-1 lg:flex-nowrap lg:justify-end"
                   onSubmit={handleNewsletterSubmit}
                 >
                   <input
@@ -558,14 +558,14 @@ export default function Home() {
                     value={newsletterEmail}
                     onChange={(event) => setNewsletterEmail(event.target.value)}
                     placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-10 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 sm:h-11 sm:flex-1 lg:max-w-[320px] lg:flex-none"
+                    className="focus-ring h-9 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 sm:h-11 sm:px-3.5 sm:text-sm lg:max-w-[320px] lg:flex-none"
                     aria-label={t("homeEmailAddress")}
                     required
                   />
 
                   <button
                     type="submit"
-                    className="focus-ring h-10 shrink-0 rounded-lg bg-slate-900 px-4 text-sm font-extrabold text-white transition hover:bg-slate-800 sm:h-11 sm:px-5"
+                    className="focus-ring h-9 shrink-0 rounded-lg bg-slate-900 px-2.5 text-[11px] font-extrabold text-white transition hover:bg-slate-800 sm:h-11 sm:px-5 sm:text-sm"
                   >
                     {t("homeSubscribe")}
                   </button>
