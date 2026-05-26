@@ -88,7 +88,7 @@ const destinations = [
 
 export default function Home() {
   const { locale } = useLocale();
-  const { mode: regionCode, selectedOption } = useRegion();
+  const { mode: regionCode } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const destinationsRailRef = useRef<HTMLDivElement>(null);
@@ -109,9 +109,6 @@ export default function Home() {
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const discoveryItems = useMemo(() => getHomeDiscoveryByRegion(regionCode), [regionCode]);
-  const discoveryTitle = selectedOption?.country
-    ? `Where to next from ${selectedOption.country}`
-    : "Where to next near you";
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -223,23 +220,23 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell py-5 sm:py-6">
-          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_26px_-20px_rgba(15,23,42,0.34)] sm:space-y-5 sm:p-5">
+        <section className="page-shell bg-transparent py-5 sm:py-6">
+          <div className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
               <h2 className="text-2xl font-black tracking-normal text-slate-950">
-                {discoveryTitle}
+                Find your next great flight
               </h2>
               <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
-                Compact route ideas matched to your region for fast trip discovery.
+                Compare smart route ideas, flexible fares, and destinations picked for your region.
               </p>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-3">
               {discoveryItems.map((item) => {
                 return (
                   <Link
                     key={item.id}
                     href={buildDiscoveryLink(item)}
-                    className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-2.5 transition duration-300 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)] sm:p-3"
+                    className="group flex items-center gap-3 rounded-xl border border-slate-200/85 bg-white/95 p-2.5 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)] sm:p-3"
                   >
                     <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-lg sm:h-[4.5rem] sm:w-24">
                       <Image
