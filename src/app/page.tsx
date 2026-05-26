@@ -239,12 +239,10 @@ export default function Home() {
                     className="group flex items-center gap-3 rounded-xl border border-slate-200/85 bg-white/95 p-2.5 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)] sm:p-3"
                   >
                     <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-lg sm:h-[4.5rem] sm:w-24">
-                      <Image
-                        src={item.image}
-                        alt={item.imageAlt}
-                        fill
-                        sizes="(min-width: 1280px) 7rem, (min-width: 640px) 6.5rem, 5rem"
-                        className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                      <DiscoveryCardImage
+                        image={item.image}
+                        imageAlt={item.imageAlt}
+                        destinationCode={item.destinationCode}
                       />
                     </div>
 
@@ -535,6 +533,38 @@ export default function Home() {
 
       <Footer />
     </>
+  );
+}
+
+function DiscoveryCardImage({
+  image,
+  imageAlt,
+  destinationCode,
+}: {
+  image: string;
+  imageAlt: string;
+  destinationCode: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const hasImage = Boolean(image?.trim());
+
+  if (!hasImage || hasError) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 text-xs font-bold tracking-[0.08em] text-slate-600">
+        {destinationCode}
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={image}
+      alt={imageAlt}
+      fill
+      sizes="(min-width: 1280px) 7rem, (min-width: 640px) 6.5rem, 5rem"
+      className="object-cover transition duration-500 group-hover:scale-[1.03]"
+      onError={() => setHasError(true)}
+    />
   );
 }
 
