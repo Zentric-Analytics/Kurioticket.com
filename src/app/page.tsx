@@ -26,6 +26,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
+import { RecentSearches } from "@/components/search/RecentSearches";
 import { LinkButton } from "@/components/ui/Button";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
@@ -189,6 +190,11 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        <section className="page-shell py-4 sm:py-5">
+          <RecentSearches />
+        </section>
+
 
         <section className="page-shell py-5">
           <div className="flex items-center justify-between gap-4">
