@@ -13,9 +13,6 @@ import {
   Heart,
   Hotel,
   Plane,
-  SearchCheck,
-  BadgeDollarSign,
-  ShieldCheck,
   Sparkles,
   Mail,
 } from "lucide-react";
@@ -82,6 +79,90 @@ const destinations = [
       "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1400&q=90",
   },
 ];
+
+function CompareOffersIllustration() {
+  return (
+    <svg viewBox="0 0 128 128" className="h-full w-full" role="img" aria-hidden="true">
+      <defs>
+        <linearGradient id="compareCardA" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#EEF2FF" />
+          <stop offset="100%" stopColor="#DBEAFE" />
+        </linearGradient>
+        <linearGradient id="compareCardB" x1="20%" y1="10%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#E0E7FF" />
+          <stop offset="100%" stopColor="#C7D2FE" />
+        </linearGradient>
+        <linearGradient id="compareCardC" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#EDE9FE" />
+          <stop offset="100%" stopColor="#DDD6FE" />
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="64" r="48" fill="#F8FAFF" />
+      <rect x="20" y="34" width="64" height="44" rx="10" fill="url(#compareCardA)" stroke="#BFDBFE" />
+      <rect x="34" y="26" width="64" height="46" rx="10" fill="url(#compareCardB)" stroke="#A5B4FC" />
+      <rect x="46" y="40" width="62" height="46" rx="10" fill="url(#compareCardC)" stroke="#C4B5FD" />
+      <rect x="42" y="36" width="34" height="6" rx="3" fill="#4F46E5" opacity="0.24" />
+      <rect x="42" y="46" width="44" height="5" rx="2.5" fill="#6366F1" opacity="0.3" />
+      <rect x="42" y="55" width="32" height="5" rx="2.5" fill="#6366F1" opacity="0.24" />
+      <circle cx="58" cy="88" r="7" fill="#DBEAFE" />
+      <path d="M55 88h6m-3-3v6" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="73" cy="90" r="7" fill="#EDE9FE" />
+      <rect x="69.5" y="86.5" width="7" height="7" rx="1.5" fill="#6D28D9" opacity="0.85" />
+      <path d="m75.5 65 3 3.5 6.5-7" stroke="#1D4ED8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="84" cy="64" r="12" fill="#EFF6FF" stroke="#60A5FA" strokeWidth="2" />
+      <circle cx="84" cy="64" r="8" fill="#2563EB" opacity="0.12" />
+    </svg>
+  );
+}
+
+function TransparentPricingIllustration() {
+  return (
+    <svg viewBox="0 0 128 128" className="h-full w-full" role="img" aria-hidden="true">
+      <defs>
+        <linearGradient id="receiptPanel" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#EEF2FF" />
+          <stop offset="100%" stopColor="#E0E7FF" />
+        </linearGradient>
+        <linearGradient id="priceBadge" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#2563EB" />
+          <stop offset="100%" stopColor="#6D28D9" />
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="64" r="48" fill="#F8FAFF" />
+      <rect x="30" y="24" width="58" height="80" rx="12" fill="url(#receiptPanel)" stroke="#A5B4FC" />
+      <rect x="40" y="37" width="34" height="6" rx="3" fill="#4F46E5" opacity="0.26" />
+      <rect x="40" y="50" width="38" height="4.5" rx="2.25" fill="#6366F1" opacity="0.28" />
+      <rect x="40" y="60" width="30" height="4.5" rx="2.25" fill="#6366F1" opacity="0.22" />
+      <rect x="40" y="70" width="34" height="4.5" rx="2.25" fill="#6366F1" opacity="0.2" />
+      <rect x="74" y="58" width="34" height="22" rx="11" fill="url(#priceBadge)" />
+      <text x="91" y="73" textAnchor="middle" fontSize="11" fontWeight="700" fill="#fff">
+        $428
+      </text>
+      <circle cx="84" cy="92" r="11" fill="#DBEAFE" stroke="#60A5FA" />
+      <path d="m79 92 3.3 3.3 6.2-7" stroke="#1D4ED8" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SecureHandoffIllustration() {
+  return (
+    <svg viewBox="0 0 128 128" className="h-full w-full" role="img" aria-hidden="true">
+      <defs>
+        <linearGradient id="shieldFill" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#2563EB" />
+          <stop offset="100%" stopColor="#6D28D9" />
+        </linearGradient>
+      </defs>
+      <circle cx="64" cy="64" r="48" fill="#F8FAFF" />
+      <path d="M64 26c8 7 18 9 28 9v22c0 20-13 32-28 39-15-7-28-19-28-39V35c10 0 20-2 28-9Z" fill="url(#shieldFill)" />
+      <path d="m54 60 9 9 14-16" stroke="#E0E7FF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M86 90c13-1 21-9 24-22" stroke="#6366F1" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="m106 66 5 2-2 5" stroke="#6366F1" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <circle cx="112" cy="64" r="7" fill="#DBEAFE" />
+      <circle cx="112" cy="64" r="3" fill="#2563EB" />
+    </svg>
+  );
+}
 
 export default function Home() {
   const { locale } = useLocale();
@@ -318,49 +399,49 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell bg-transparent py-4 sm:py-5">
-          <div className="space-y-3">
-            <div className="max-w-3xl space-y-1.5">
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
+        <section className="page-shell py-10 sm:py-12 lg:py-16">
+          <div className="mx-auto max-w-6xl">
+            <div className="mx-auto max-w-3xl space-y-3 text-center">
+              <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
                 {t("homeTrustTitle")}
               </h2>
-              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+              <p className="mx-auto max-w-2xl text-sm font-medium leading-7 text-slate-600 sm:text-base">
                 {t("homeTrustSubtitle")}
               </p>
             </div>
 
-            <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6">
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
-                  <SearchCheck size={20} strokeWidth={2} />
+            <div className="mt-10 grid gap-8 md:grid-cols-3 md:gap-6 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 lg:gap-10">
+              <article className="relative flex flex-col items-center text-center md:px-6">
+                <div className="mb-5 h-28 w-28 sm:h-32 sm:w-32">
+                  <CompareOffersIllustration />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustCompareTitle")}</h3>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                  <h3 className="text-lg font-bold leading-7 text-slate-900">{t("homeTrustCompareTitle")}</h3>
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-700">
                     {t("homeTrustCompareBody")}
                   </p>
                 </div>
               </article>
 
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
-                  <BadgeDollarSign size={20} strokeWidth={2} />
+              <article className="relative flex flex-col items-center text-center md:px-6">
+                <div className="mb-5 h-28 w-28 sm:h-32 sm:w-32">
+                  <TransparentPricingIllustration />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustPricingTitle")}</h3>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                  <h3 className="text-lg font-bold leading-7 text-slate-900">{t("homeTrustPricingTitle")}</h3>
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-700">
                     {t("homeTrustPricingBody")}
                   </p>
                 </div>
               </article>
 
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                  <ShieldCheck size={20} strokeWidth={2} />
+              <article className="relative flex flex-col items-center text-center md:px-6">
+                <div className="mb-5 h-28 w-28 sm:h-32 sm:w-32">
+                  <SecureHandoffIllustration />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustHandoffTitle")}</h3>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                  <h3 className="text-lg font-bold leading-7 text-slate-900">{t("homeTrustHandoffTitle")}</h3>
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-700">
                     {t("homeTrustHandoffBody")}
                   </p>
                 </div>
