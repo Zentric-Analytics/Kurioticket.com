@@ -331,9 +331,9 @@ export default function Home() {
                       <Link
                         key={item.id}
                         href={buildDiscoveryLink(item)}
-                        className="group flex min-h-[80px] min-w-0 items-center gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_26px_-22px_rgba(15,23,42,0.62)]"
+                        className="group flex min-w-0 flex-col rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_26px_-22px_rgba(15,23,42,0.62)]"
                       >
-                        <div className="relative h-[56px] w-[68px] shrink-0 overflow-hidden rounded-lg">
+                        <div className="relative h-[98px] w-full shrink-0 overflow-hidden rounded-lg">
                           <DiscoveryCardImage
                             image={item.image}
                             imageAlt={item.imageAlt}
@@ -341,14 +341,14 @@ export default function Home() {
                           />
                         </div>
 
-                        <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="min-w-0 flex-1 space-y-1.5 pt-2">
                           <div className="flex items-start justify-between gap-2">
                             <p className="line-clamp-2 break-words text-sm font-extrabold leading-5 text-slate-900">
                               {item.title}
                             </p>
                             <p className="shrink-0 text-sm font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
                           </div>
-                          <p className="line-clamp-2 text-xs font-medium leading-5 text-slate-700">
+                          <p className="line-clamp-3 text-xs font-medium leading-5 text-slate-700">
                             {item.originCode} → {item.destinationCode} · {item.routeNote}
                           </p>
                           <p className="text-xs font-semibold uppercase tracking-[0.07em] text-slate-500">
