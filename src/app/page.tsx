@@ -84,85 +84,79 @@ const destinations = [
 ];
 
 const topFlightCategories = [
-  "Popular routes",
-  "Cities",
-  "Countries",
-  "Regions",
-  "Airports",
+  "Weekend escapes",
+  "Beach trips",
+  "Food & culture",
+  "Quick getaways",
+  "Warm weather",
 ] as const;
 
 const topFlightRoutes = [
   {
-    id: "houston-new-york",
-    fromCity: "Houston",
-    toCity: "New York",
+    id: "weekend-mexico-city",
+    title: "Weekend in Mexico City",
+    vibe: "Street tacos, leafy parks, and design-forward stays.",
+    routeContext: "From Houston (IAH) to Mexico City (MEX)",
     origin: "IAH",
-    destination: "JFK",
+    destination: "MEX",
+    priceFrom: 189,
     image:
-      "https://images.unsplash.com/photo-1496588152823-e45c2e33d9d3?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=1000&q=85",
   },
   {
-    id: "houston-los-angeles",
-    fromCity: "Houston",
-    toCity: "Los Angeles",
-    origin: "IAH",
-    destination: "LAX",
+    id: "beach-san-juan",
+    title: "Beach reset in San Juan",
+    vibe: "Golden-hour swims, colorful streets, and ocean breezes.",
+    routeContext: "From Miami (MIA) to San Juan (SJU)",
+    origin: "MIA",
+    destination: "SJU",
+    priceFrom: 214,
     image:
-      "https://images.unsplash.com/photo-1468436139062-f60a71c5c892?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1000&q=85",
   },
   {
-    id: "houston-las-vegas",
-    fromCity: "Houston",
-    toCity: "Las Vegas",
-    origin: "IAH",
-    destination: "LAS",
+    id: "culture-montreal",
+    title: "Culture break in Montreal",
+    vibe: "Cafés, galleries, and old-town charm in every block.",
+    routeContext: "From Chicago (ORD) to Montreal (YUL)",
+    origin: "ORD",
+    destination: "YUL",
+    priceFrom: 242,
     image:
-      "https://images.unsplash.com/photo-1487730116645-74489c95b41b?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1000&q=85",
   },
   {
-    id: "houston-miami",
-    fromCity: "Houston",
-    toCity: "Miami",
-    origin: "IAH",
-    destination: "MIA",
+    id: "desert-phoenix",
+    title: "Desert nights in Phoenix",
+    vibe: "Sunset trails, rooftop evenings, and warm desert air.",
+    routeContext: "From Seattle (SEA) to Phoenix (PHX)",
+    origin: "SEA",
+    destination: "PHX",
+    priceFrom: 168,
     image:
-      "https://images.unsplash.com/photo-1535498730771-e735b998cd64?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=1000&q=85",
   },
   {
-    id: "houston-orlando",
-    fromCity: "Houston",
-    toCity: "Orlando",
-    origin: "IAH",
-    destination: "MCO",
+    id: "music-nashville",
+    title: "Music & food in Nashville",
+    vibe: "Live sets, late-night bites, and neighborhood energy.",
+    routeContext: "From New York (JFK) to Nashville (BNA)",
+    origin: "JFK",
+    destination: "BNA",
+    priceFrom: 156,
     image:
-      "https://images.unsplash.com/photo-1597466765990-64ad1c35dafc?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1000&q=85",
   },
   {
-    id: "houston-chicago",
-    fromCity: "Houston",
-    toCity: "Chicago",
-    origin: "IAH",
-    destination: "ORD",
+    id: "art-seattle",
+    title: "Art & coffee in Seattle",
+    vibe: "Waterfront walks, indie galleries, and espresso culture.",
+    routeContext: "From Los Angeles (LAX) to Seattle (SEA)",
+    origin: "LAX",
+    destination: "SEA",
+    priceFrom: 173,
     image:
-      "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    id: "houston-dallas",
-    fromCity: "Houston",
-    toCity: "Dallas",
-    origin: "IAH",
-    destination: "DFW",
-    image:
-      "https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=800&q=85",
-  },
-  {
-    id: "houston-atlanta",
-    fromCity: "Houston",
-    toCity: "Atlanta",
-    origin: "IAH",
-    destination: "ATL",
-    image:
-      "https://images.unsplash.com/photo-1575909812264-6902b55846ad?auto=format&fit=crop&w=800&q=85",
+      "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=1000&q=85",
   },
 ];
 
@@ -307,11 +301,10 @@ export default function Home() {
           <div className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:p-6">
             <div className="space-y-2">
               <h2 className="text-2xl font-black tracking-normal text-slate-950">
-                Top flights from United States
+                Where to next from United States
               </h2>
               <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
-                Explore destinations you can reach from United States and start
-                making new plans.
+                Flexible trip ideas, smart travel inspiration, and region-based picks for curious travelers.
               </p>
             </div>
 
@@ -335,7 +328,7 @@ export default function Home() {
               })}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {topFlightRoutes.map((route) => {
                 const href = {
                   pathname: "/flights/results",
@@ -356,25 +349,36 @@ export default function Home() {
                   <Link
                     key={route.id}
                     href={href}
-                    className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-slate-300 hover:bg-slate-50"
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_30px_-22px_rgba(15,23,42,0.45)]"
                   >
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                    <div className="relative h-44 w-full overflow-hidden">
                       <Image
                         src={route.image}
-                        alt={`${route.toCity} skyline`}
+                        alt={route.title}
                         fill
-                        sizes="56px"
-                        className="object-cover transition duration-300 group-hover:scale-105"
+                        sizes="(min-width: 1280px) 28vw, (min-width: 640px) 45vw, 100vw"
+                        className="object-cover transition duration-500 group-hover:scale-105"
                       />
                     </div>
 
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-slate-900">
-                        {route.fromCity} → {route.toCity}
-                      </p>
-                      <p className="text-xs font-medium text-slate-500">
-                        {route.origin} to {route.destination}
-                      </p>
+                    <div className="space-y-3 p-4 sm:p-5">
+                      <div className="space-y-1.5">
+                        <p className="text-base font-bold leading-tight text-slate-900">
+                          {route.title}
+                        </p>
+                        <p className="text-sm font-medium leading-6 text-slate-600">
+                          {route.vibe}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                          {route.routeContext}
+                        </p>
+                        <p className="shrink-0 text-sm font-bold text-slate-900">
+                          From ${route.priceFrom}
+                        </p>
+                      </div>
                     </div>
                   </Link>
                 );
