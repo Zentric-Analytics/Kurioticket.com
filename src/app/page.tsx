@@ -399,7 +399,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell py-10 sm:py-12 lg:py-16">
+        <section className="page-shell py-6 sm:py-8 lg:py-10">
           <div className="mx-auto max-w-6xl">
             <div className="mx-auto max-w-3xl space-y-3 text-center">
               <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
@@ -410,9 +410,9 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="mt-10 grid gap-8 md:grid-cols-3 md:gap-6 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 lg:gap-10">
+            <div className="mt-8 grid gap-6 md:grid-cols-3 md:gap-5 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 lg:gap-6">
               <article className="relative flex flex-col items-center text-center md:px-6">
-                <div className="mb-5 h-28 w-28 sm:h-32 sm:w-32">
+                <div className="mb-4 h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24">
                   <CompareOffersIllustration />
                 </div>
                 <div>
@@ -424,7 +424,7 @@ export default function Home() {
               </article>
 
               <article className="relative flex flex-col items-center text-center md:px-6">
-                <div className="mb-5 h-28 w-28 sm:h-32 sm:w-32">
+                <div className="mb-4 h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24">
                   <TransparentPricingIllustration />
                 </div>
                 <div>
@@ -436,7 +436,7 @@ export default function Home() {
               </article>
 
               <article className="relative flex flex-col items-center text-center md:px-6">
-                <div className="mb-5 h-28 w-28 sm:h-32 sm:w-32">
+                <div className="mb-4 h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24">
                   <SecureHandoffIllustration />
                 </div>
                 <div>
