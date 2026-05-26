@@ -224,7 +224,7 @@ export default function Home() {
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
               <h2 className="text-2xl font-black tracking-normal text-slate-950">
-                Find your next great flight
+                Discover your next adventure here
               </h2>
               <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
                 Compare smart route ideas, flexible fares, and destinations picked for your region.
