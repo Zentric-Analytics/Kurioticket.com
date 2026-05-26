@@ -409,54 +409,6 @@ export default function Home() {
           />
         </section>
 
-        <section className="page-shell pb-12">
-          <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
-            <div className="flex items-start gap-4">
-              <span className="rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <Ticket size={18} />
-              </span>
-
-              <div>
-                <h2 className="text-lg font-black text-slate-950">
-                  {t("homeNewsletterTitle")}
-                </h2>
-
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  {t("homeNewsletterBody")}
-                </p>
-              </div>
-            </div>
-
-            <form
-              className="flex flex-col gap-3 sm:flex-row"
-              onSubmit={handleNewsletterSubmit}
-            >
-              <input
-                type="email"
-                value={newsletterEmail}
-                onChange={(event) => setNewsletterEmail(event.target.value)}
-                placeholder={t("homeNewsletterPlaceholder")}
-                className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
-                aria-label={t("homeEmailAddress")}
-                required
-              />
-
-              <button
-                type="submit"
-                className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
-              >
-                {t("homeSubscribe")}
-              </button>
-            </form>
-
-            {newsletterMessage ? (
-              <p className="text-sm font-semibold text-[#4c1d95]">
-                {newsletterMessage}
-              </p>
-            ) : null}
-          </div>
-        </section>
-
         <section className="page-shell pb-12 pt-2 sm:pt-3">
           <div className="max-w-3xl space-y-2">
             <h2 className="text-2xl font-black tracking-normal text-slate-950">
@@ -530,6 +482,56 @@ export default function Home() {
                   </p>
                 </details>
               ))}
+          </div>
+        </section>
+
+        <section className="page-shell pb-12">
+          <div className="mx-auto w-full max-w-5xl">
+            <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
+              <div className="flex items-start gap-4">
+                <span className="rounded-full bg-violet-100 p-2 text-[#5b21d6]">
+                  <Ticket size={18} />
+                </span>
+
+                <div>
+                  <h2 className="text-lg font-black text-slate-950">
+                    {t("homeNewsletterTitle")}
+                  </h2>
+
+                  <p className="mt-1 text-sm font-semibold text-slate-600">
+                    {t("homeNewsletterBody")}
+                  </p>
+                </div>
+              </div>
+
+              <form
+                className="flex flex-col gap-3 sm:flex-row"
+                onSubmit={handleNewsletterSubmit}
+              >
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(event) => setNewsletterEmail(event.target.value)}
+                  placeholder={t("homeNewsletterPlaceholder")}
+                  className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
+                  aria-label={t("homeEmailAddress")}
+                  required
+                />
+
+                <button
+                  type="submit"
+                  className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
+                >
+                  {t("homeSubscribe")}
+                </button>
+              </form>
+
+              {newsletterMessage ? (
+                <p className="text-sm font-semibold text-[#4c1d95]">
+                  {newsletterMessage}
+                </p>
+              ) : null}
+            </div>
           </div>
         </section>
       </main>
