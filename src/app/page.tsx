@@ -321,43 +321,49 @@ export default function Home() {
         <section className="page-shell bg-transparent py-4 sm:py-5">
           <div className="space-y-3">
             <div className="max-w-3xl space-y-1.5">
-              <h2 className="text-lg font-black tracking-tight text-slate-950 sm:text-xl">
+              <h2 className="text-xl font-black tracking-tight text-slate-950">
                 {t("homeTrustTitle")}
               </h2>
-              <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
+              <p className="text-[15px] font-medium leading-6 text-slate-600">
                 {t("homeTrustSubtitle")}
               </p>
             </div>
 
-            <div className="grid gap-2.5 sm:gap-3 md:grid-cols-3">
-              <article className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5">
-                <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
-                  <SearchCheck size={19} strokeWidth={2} />
+            <div className="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white/95 p-3.5 md:grid md:grid-cols-3 md:gap-3 md:divide-y-0 md:rounded-none md:border-0 md:bg-transparent md:p-0">
+              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:rounded-xl md:border md:border-slate-200 md:bg-white/90 md:px-3 md:py-2.5">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                  <SearchCheck size={20} strokeWidth={2} />
                 </div>
-                <h3 className="text-sm font-bold text-slate-900">{t("homeTrustCompareTitle")}</h3>
-                <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm sm:leading-6">
-                  {t("homeTrustCompareBody")}
-                </p>
+                <div>
+                  <h3 className="text-[15px] font-extrabold leading-5 text-slate-900">{t("homeTrustCompareTitle")}</h3>
+                  <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
+                    {t("homeTrustCompareBody")}
+                  </p>
+                </div>
               </article>
 
-              <article className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5">
-                <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
-                  <BadgeDollarSign size={19} strokeWidth={2} />
+              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:rounded-xl md:border md:border-slate-200 md:bg-white/90 md:px-3 md:py-2.5">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
+                  <BadgeDollarSign size={20} strokeWidth={2} />
                 </div>
-                <h3 className="text-sm font-bold text-slate-900">{t("homeTrustPricingTitle")}</h3>
-                <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm sm:leading-6">
-                  {t("homeTrustPricingBody")}
-                </p>
+                <div>
+                  <h3 className="text-[15px] font-extrabold leading-5 text-slate-900">{t("homeTrustPricingTitle")}</h3>
+                  <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
+                    {t("homeTrustPricingBody")}
+                  </p>
+                </div>
               </article>
 
-              <article className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5">
-                <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                  <ShieldCheck size={19} strokeWidth={2} />
+              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:rounded-xl md:border md:border-slate-200 md:bg-white/90 md:px-3 md:py-2.5">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <ShieldCheck size={20} strokeWidth={2} />
                 </div>
-                <h3 className="text-sm font-bold text-slate-900">{t("homeTrustHandoffTitle")}</h3>
-                <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm sm:leading-6">
-                  {t("homeTrustHandoffBody")}
-                </p>
+                <div>
+                  <h3 className="text-[15px] font-extrabold leading-5 text-slate-900">{t("homeTrustHandoffTitle")}</h3>
+                  <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
+                    {t("homeTrustHandoffBody")}
+                  </p>
+                </div>
               </article>
             </div>
           </div>
