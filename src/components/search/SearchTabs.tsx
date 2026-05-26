@@ -24,6 +24,12 @@ import {
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
+  buildFlightRecentSearch,
+  buildHotelRecentSearch,
+  upsertRecentSearch,
+} from "@/lib/recent-searches";
+import { RecentSearches } from "@/components/search/RecentSearches";
+import {
   formatAirportLabel,
   type AirportOption,
 } from "@/data/airports";
@@ -1147,9 +1153,28 @@ export function SearchTabs({
       );
     }
 
-    router.push(
-      `/flights/results?${params.toString()}`
-    );
+    const href = `/flights/results?${params.toString()}`;
+
+    try {
+      upsertRecentSearch(
+        buildFlightRecentSearch({
+          tripType: (params.get("tripType") as "round-trip" | "one-way") ?? "round-trip",
+          origin: params.get("origin") ?? "",
+          destination: params.get("destination") ?? "",
+          departureDate: params.get("departureDate") ?? "",
+          returnDate: params.get("returnDate") ?? undefined,
+          adults: Number(params.get("adults") ?? "1"),
+          children: Number(params.get("children") ?? "0"),
+          infants: Number(params.get("infants") ?? "0"),
+          travelers: Number(params.get("travelers") ?? "1"),
+          cabinClass: params.get("cabinClass") ?? "economy",
+        })
+      );
+    } catch {
+      // best effort only
+    }
+
+    router.push(href);
   };
 
   const isHotelSearchDisabled =
@@ -1194,9 +1219,23 @@ export function SearchTabs({
         rooms: normalizedRooms,
       });
 
-    router.push(
-      `/hotels/results?${params.toString()}`
-    );
+    const href = `/hotels/results?${params.toString()}`;
+
+    try {
+      upsertRecentSearch(
+        buildHotelRecentSearch({
+          destination: params.get("destination") ?? "",
+          checkIn: params.get("checkIn") ?? "",
+          checkOut: params.get("checkOut") ?? "",
+          guests: Number(params.get("guests") ?? "1"),
+          rooms: Number(params.get("rooms") ?? "1"),
+        })
+      );
+    } catch {
+      // best effort only
+    }
+
+    router.push(href);
   };
 
   const hotelDateSummary = useMemo(
@@ -2371,6 +2410,8 @@ export function SearchTabs({
           </div>
         </form>
       )}
+
+      <RecentSearches />
     </section>
   );
 }
