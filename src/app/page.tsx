@@ -550,8 +550,14 @@ function DiscoveryCardImage({
 
   if (!hasImage || hasError) {
     return (
-      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-200 via-slate-100 to-slate-300 text-xs font-bold tracking-[0.08em] text-slate-600">
-        {destinationCode}
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-violet-200 via-fuchsia-100 to-cyan-100 text-slate-700">
+        <Compass size={14} className="opacity-80" aria-hidden />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
+          Destination
+        </span>
+        <span className="text-[11px] font-black tracking-[0.12em] text-slate-800">
+          {destinationCode}
+        </span>
       </div>
     );
   }
