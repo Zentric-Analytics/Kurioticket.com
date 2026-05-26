@@ -113,8 +113,8 @@ export default function Home() {
   const mobileDiscoveryGroups = useMemo(() => {
     const groups = [];
 
-    for (let index = 0; index < discoveryItems.length; index += 4) {
-      groups.push(discoveryItems.slice(index, index + 4));
+    for (let index = 0; index < discoveryItems.length; index += 6) {
+      groups.push(discoveryItems.slice(index, index + 6));
     }
 
     return groups;
@@ -240,9 +240,15 @@ export default function Home() {
                 Compare smart route ideas, flexible fares, and destinations picked for your region.
               </p>
             </div>
+            <div className="flex items-center justify-end sm:hidden">
+              <div className="pointer-events-none mb-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
+                Swipe for more
+                <ChevronRight size={13} className="text-slate-500" />
+              </div>
+            </div>
             <div className="-mx-1.5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1.5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
               {mobileDiscoveryGroups.map((group, groupIndex) => (
-                <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-2 gap-2.5">
+                <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-3 gap-2.5">
                   {group.map((item) => {
                     return (
                       <Link
