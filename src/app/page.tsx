@@ -14,9 +14,9 @@ import {
   Compass,
   Filter,
   Heart,
-  Hotel,
+  Building2,
   Network,
-  Plane,
+  PlaneTakeoff,
   ShieldCheck,
   Sparkles,
   SlidersHorizontal,
@@ -392,7 +392,7 @@ export default function Home() {
             body={t("homePromoFlightsBody")}
             cta={t("homePromoFlightsCta")}
             href="/deals"
-            icon={<Plane size={74} />}
+            icon={<PlaneTakeoff size={60} />}
           />
 
           <PromoPanel
@@ -401,7 +401,7 @@ export default function Home() {
             body={t("homePromoHotelsBody")}
             cta={t("homePromoHotelsCta")}
             href="/hotels/results"
-            icon={<Hotel size={74} />}
+            icon={<Building2 size={60} />}
           />
         </section>
 
