@@ -539,12 +539,12 @@ export default function Home() {
           <div className="w-full max-w-[820px]">
             <div className="rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:p-3.5">
               <div className="flex flex-row items-center gap-2 sm:gap-2.5 lg:gap-3.5">
-                <div className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2.5 lg:basis-[34%] lg:max-w-[31ch]">
+                <div className="flex min-w-0 shrink basis-[34%] items-center gap-1.5 sm:gap-2.5 lg:basis-[34%] lg:max-w-[31ch]">
                   <span className="shrink-0 rounded-full bg-slate-100 p-1 text-slate-600 sm:p-1.5">
                     <Mail size={12} className="sm:size-4" />
                   </span>
 
-                  <div className="min-w-0 max-w-[21ch] space-y-0 lg:max-w-[24ch]">
+                  <div className="min-w-0 max-w-[17ch] space-y-0 lg:max-w-[24ch]">
                     <h2 className="truncate text-[11px] font-black leading-tight text-slate-950 sm:text-[15px]">
                       {t("homeNewsletterTitle")}
                     </h2>
@@ -556,7 +556,7 @@ export default function Home() {
                 </div>
 
                 <form
-                  className="flex min-w-0 flex-1 basis-[60%] items-center gap-1.5 sm:basis-auto sm:gap-2 lg:basis-[66%] lg:flex-nowrap lg:justify-end"
+                  className="flex min-w-0 flex-1 basis-[66%] flex-row items-center gap-1.5 sm:basis-auto sm:gap-2 lg:basis-[66%] lg:flex-nowrap lg:justify-end"
                   onSubmit={handleNewsletterSubmit}
                 >
                   <input
@@ -571,7 +571,7 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    className="focus-ring h-9 shrink-0 rounded-lg bg-slate-900 px-2.5 text-[11px] font-extrabold text-white transition hover:bg-slate-800 sm:h-11 sm:px-5 sm:text-sm"
+                    className="focus-ring h-9 w-auto shrink-0 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 text-[11px] font-extrabold text-white transition hover:bg-slate-800 sm:h-11 sm:px-5 sm:text-sm"
                   >
                     {t("homeSubscribe")}
                   </button>
