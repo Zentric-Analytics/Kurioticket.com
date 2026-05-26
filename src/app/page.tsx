@@ -483,26 +483,26 @@ export default function Home() {
         </section>
 
         <section className="page-shell pb-12">
-          <div className="w-full max-w-[740px]">
-            <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
+          <div className="w-full max-w-[560px]">
+            <div className="grid gap-4 rounded-xl bg-[#f3eafe] p-4 sm:p-5 md:grid-cols-1">
               <div className="flex items-start gap-4">
                 <span className="rounded-full bg-violet-100 p-2 text-[#5b21d6]">
                   <Ticket size={18} />
                 </span>
 
-                <div>
-                  <h2 className="text-lg font-black text-slate-950">
+                <div className="max-w-[34ch]">
+                  <h2 className="text-base font-black leading-snug text-slate-950 sm:text-lg">
                     {t("homeNewsletterTitle")}
                   </h2>
 
-                  <p className="mt-1 text-sm font-semibold text-slate-600">
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
                     {t("homeNewsletterBody")}
                   </p>
                 </div>
               </div>
 
               <form
-                className="flex flex-col gap-3 sm:flex-row"
+                className="flex flex-col gap-2.5 sm:flex-row"
                 onSubmit={handleNewsletterSubmit}
               >
                 <input
@@ -517,7 +517,7 @@ export default function Home() {
 
                 <button
                   type="submit"
-                  className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
+                  className="focus-ring h-11 rounded-md bg-[#5b21d6] px-6 text-sm font-extrabold text-white transition hover:bg-[#4c1d95] sm:h-12"
                 >
                   {t("homeSubscribe")}
                 </button>
