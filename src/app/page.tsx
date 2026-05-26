@@ -2,8 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import {
   ArrowRight,
   ChevronLeft,
@@ -89,8 +91,11 @@ const destinations = [
 export default function Home() {
   const { locale } = useLocale();
   const { mode: regionCode } = useRegion();
+  const router = useRouter();
+  const { status: sessionStatus } = useSession();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
+  const [savedDiscoveryCardIds, setSavedDiscoveryCardIds] = useState<string[]>([]);
   const destinationsRailRef = useRef<HTMLDivElement>(null);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
@@ -128,6 +133,22 @@ export default function Home() {
 
     setNewsletterMessage(t("homeNewsletterThanks"));
     setNewsletterEmail("");
+  };
+
+  const handleDiscoveryHeartToggle = (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (sessionStatus !== "authenticated") {
+      router.push("/auth/signin?callbackUrl=%2F");
+      return;
+    }
+
+    setSavedDiscoveryCardIds((current) =>
+      current.includes(itemId)
+        ? current.filter((id) => id !== itemId)
+        : [...current, itemId],
+    );
   };
 
   return (
@@ -250,34 +271,22 @@ export default function Home() {
                 <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-2 gap-2.5">
                   {group.map((item) => {
                     return (
-                      <Link
+                      <DiscoverySuggestionCard
                         key={item.id}
                         href={buildDiscoveryLink(item)}
-                        className="group flex min-w-0 flex-col rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_26px_-22px_rgba(15,23,42,0.62)]"
-                      >
-                        <div className="relative h-[98px] w-full shrink-0 overflow-hidden rounded-lg">
-                          <DiscoveryCardImage
-                            image={item.image}
-                            imageAlt={item.imageAlt}
-                            destinationCode={item.destinationCode}
-                          />
-                        </div>
-
-                        <div className="min-w-0 flex-1 space-y-1.5 pt-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="line-clamp-2 break-words text-sm font-extrabold leading-5 text-slate-900">
-                              {item.title}
-                            </p>
-                            <p className="shrink-0 text-sm font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
-                          </div>
-                          <p className="line-clamp-3 text-xs font-medium leading-5 text-slate-700">
-                            {item.originCode} → {item.destinationCode} · {item.routeNote}
-                          </p>
-                          <p className="text-xs font-semibold uppercase tracking-[0.07em] text-slate-500">
-                            One way · Economy · 1 traveler
-                          </p>
-                        </div>
-                      </Link>
+                        itemId={item.id}
+                        image={item.image}
+                        imageAlt={item.imageAlt}
+                        destinationCode={item.destinationCode}
+                        title={item.title}
+                        originCode={item.originCode}
+                        destinationCodeLabel={item.destinationCode}
+                        routeNote={item.routeNote}
+                        priceFromUsd={item.priceFromUsd}
+                        compact
+                        isSaved={savedDiscoveryCardIds.includes(item.id)}
+                        onHeartToggle={handleDiscoveryHeartToggle}
+                      />
                     );
                   })}
                 </div>
@@ -287,34 +296,21 @@ export default function Home() {
             <div className="hidden grid-cols-3 gap-3 sm:grid md:grid-cols-4 lg:grid-cols-4">
               {discoveryItems.map((item) => {
                 return (
-                  <Link
+                  <DiscoverySuggestionCard
                     key={item.id}
                     href={buildDiscoveryLink(item)}
-                    className="group flex min-w-0 flex-col rounded-xl border border-slate-200/90 bg-white p-3 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_28px_-22px_rgba(15,23,42,0.62)]"
-                  >
-                    <div className="relative h-[136px] w-full shrink-0 overflow-hidden rounded-lg md:h-[128px] lg:h-[136px]">
-                      <DiscoveryCardImage
-                        image={item.image}
-                        imageAlt={item.imageAlt}
-                        destinationCode={item.destinationCode}
-                      />
-                    </div>
-
-                    <div className="min-w-0 flex-1 space-y-1.5 pt-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="line-clamp-2 break-words text-sm font-bold leading-5 text-slate-900 md:text-[0.95rem]">
-                          {item.title}
-                        </p>
-                        <p className="shrink-0 text-sm font-bold leading-tight text-slate-900 md:text-[0.95rem]">${item.priceFromUsd}</p>
-                      </div>
-                      <p className="line-clamp-2 text-xs font-medium leading-5 text-slate-700 md:text-sm md:leading-5">
-                        {item.originCode} → {item.destinationCode} · {item.routeNote}
-                      </p>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 md:text-xs">
-                        One way · Economy · 1 traveler
-                      </p>
-                    </div>
-                  </Link>
+                    itemId={item.id}
+                    image={item.image}
+                    imageAlt={item.imageAlt}
+                    destinationCode={item.destinationCode}
+                    title={item.title}
+                    originCode={item.originCode}
+                    destinationCodeLabel={item.destinationCode}
+                    routeNote={item.routeNote}
+                    priceFromUsd={item.priceFromUsd}
+                    isSaved={savedDiscoveryCardIds.includes(item.id)}
+                    onHeartToggle={handleDiscoveryHeartToggle}
+                  />
                 );
               })}
             </div>
@@ -561,6 +557,83 @@ function DiscoveryCardImage({
       className="object-cover transition duration-500 group-hover:scale-[1.03]"
       onError={() => setHasError(true)}
     />
+  );
+}
+
+function DiscoverySuggestionCard({
+  href,
+  itemId,
+  image,
+  imageAlt,
+  destinationCode,
+  title,
+  originCode,
+  destinationCodeLabel,
+  routeNote,
+  priceFromUsd,
+  compact,
+  isSaved,
+  onHeartToggle,
+}: {
+  href: ComponentProps<typeof Link>["href"];
+  itemId: string;
+  image: string;
+  imageAlt: string;
+  destinationCode: string;
+  title: string;
+  originCode: string;
+  destinationCodeLabel: string;
+  routeNote: string;
+  priceFromUsd: number;
+  compact?: boolean;
+  isSaved: boolean;
+  onHeartToggle: (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => void;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`group relative flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white ${compact ? "p-2.5" : "p-3"} shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5`}
+    >
+      <button
+        type="button"
+        onClick={(event) => onHeartToggle(event, itemId)}
+        aria-label={isSaved ? "Remove from saved routes" : "Save route"}
+        aria-pressed={isSaved}
+        className={`focus-ring absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
+      >
+        <Heart size={15} className={isSaved ? "fill-current" : ""} />
+      </button>
+
+      <div className={`relative w-full shrink-0 overflow-hidden rounded-lg ${compact ? "h-[98px]" : "h-[136px] md:h-[128px] lg:h-[136px]"}`}>
+        <DiscoveryCardImage
+          image={image}
+          imageAlt={imageAlt}
+          destinationCode={destinationCode}
+        />
+      </div>
+
+      <div className={`min-w-0 flex-1 ${compact ? "space-y-1.5 pt-2" : "space-y-2 pt-2.5"}`}>
+        <p className={`line-clamp-2 break-words text-slate-900 ${compact ? "text-sm font-extrabold leading-5 pr-10" : "text-sm font-bold leading-5 md:text-[0.95rem] pr-10"}`}>
+          {title}
+        </p>
+        <p className={`line-clamp-2 text-slate-700 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}>
+          {originCode} → {destinationCodeLabel} · {routeNote}
+        </p>
+        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+          <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
+            Trending
+          </span>
+          <p className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}>
+            One way · Economy · 1 traveler
+          </p>
+        </div>
+      </div>
+
+      <div className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">From</p>
+        <p className={`text-slate-950 ${compact ? "text-xl font-black leading-tight" : "text-[1.4rem] font-black leading-tight"}`}>${priceFromUsd}</p>
+      </div>
+    </Link>
   );
 }
 
