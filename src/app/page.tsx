@@ -329,8 +329,8 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white/95 p-3.5 md:grid md:grid-cols-3 md:gap-3 md:divide-y-0 md:rounded-none md:border-0 md:bg-transparent md:p-0">
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:rounded-xl md:border md:border-slate-200 md:bg-white/90 md:px-3 md:py-2.5">
+            <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-3 md:divide-y-0">
+              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:rounded-xl md:border md:border-slate-200 md:bg-white/70 md:px-3 md:py-3">
                 <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
                   <SearchCheck size={20} strokeWidth={2} />
                 </div>
@@ -342,7 +342,7 @@ export default function Home() {
                 </div>
               </article>
 
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:rounded-xl md:border md:border-slate-200 md:bg-white/90 md:px-3 md:py-2.5">
+              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:rounded-xl md:border md:border-slate-200 md:bg-white/70 md:px-3 md:py-3">
                 <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
                   <BadgeDollarSign size={20} strokeWidth={2} />
                 </div>
@@ -354,7 +354,7 @@ export default function Home() {
                 </div>
               </article>
 
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:rounded-xl md:border md:border-slate-200 md:bg-white/90 md:px-3 md:py-2.5">
+              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:rounded-xl md:border md:border-slate-200 md:bg-white/70 md:px-3 md:py-3">
                 <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
                   <ShieldCheck size={20} strokeWidth={2} />
                 </div>
