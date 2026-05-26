@@ -538,13 +538,13 @@ export default function Home() {
         <section className="page-shell pb-6 sm:pb-8">
           <div className="w-full max-w-[820px]">
             <div className="rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:p-3.5">
-              <div className="flex flex-row items-center gap-2 sm:gap-2.5 lg:gap-3.5">
-                <div className="flex min-w-0 shrink basis-[34%] items-center gap-1.5 sm:gap-2.5 lg:basis-[34%] lg:max-w-[31ch]">
+              <div className="flex flex-row items-center gap-1.5 sm:gap-2.5 lg:gap-3.5">
+                <div className="flex shrink-0 items-center gap-1.5 sm:min-w-0 sm:basis-[34%] sm:gap-2.5 lg:basis-[34%] lg:max-w-[31ch]">
                   <span className="shrink-0 rounded-full bg-slate-100 p-1 text-slate-600 sm:p-1.5">
                     <Mail size={12} className="sm:size-4" />
                   </span>
 
-                  <div className="min-w-0 max-w-[17ch] space-y-0 lg:max-w-[24ch]">
+                  <div className="hidden min-w-0 max-w-[17ch] space-y-0 sm:block lg:max-w-[24ch]">
                     <h2 className="truncate text-[11px] font-black leading-tight text-slate-950 sm:text-[15px]">
                       {t("homeNewsletterTitle")}
                     </h2>
@@ -556,7 +556,7 @@ export default function Home() {
                 </div>
 
                 <form
-                  className="flex min-w-0 flex-1 basis-[66%] flex-row items-center gap-1.5 sm:basis-auto sm:gap-2 lg:basis-[66%] lg:flex-nowrap lg:justify-end"
+                  className="flex min-w-0 flex-1 flex-row items-center gap-1.5 sm:basis-auto sm:gap-2 lg:basis-[66%] lg:flex-nowrap lg:justify-end"
                   onSubmit={handleNewsletterSubmit}
                 >
                   <input
