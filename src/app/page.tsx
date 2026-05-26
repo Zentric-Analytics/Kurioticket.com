@@ -299,10 +299,10 @@ export default function Home() {
 
                     <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="line-clamp-2 text-base font-extrabold leading-6 text-slate-900">
+                        <p className="line-clamp-2 text-base font-semibold leading-6 text-slate-800">
                           {item.title}
                         </p>
-                        <p className="shrink-0 text-base font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
+                        <p className="shrink-0 text-base font-semibold leading-tight text-slate-800">${item.priceFromUsd}</p>
                       </div>
                       <p className="line-clamp-2 text-sm font-medium leading-6 text-slate-700">
                         {item.originCode} → {item.destinationCode} · {item.routeNote}
