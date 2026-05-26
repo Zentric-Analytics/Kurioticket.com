@@ -110,6 +110,15 @@ export default function Home() {
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const discoveryItems = useMemo(() => getHomeDiscoveryByRegion(regionCode), [regionCode]);
+  const mobileDiscoveryGroups = useMemo(() => {
+    const groups = [];
+
+    for (let index = 0; index < discoveryItems.length; index += 4) {
+      groups.push(discoveryItems.slice(index, index + 4));
+    }
+
+    return groups;
+  }, [discoveryItems]);
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -231,15 +240,54 @@ export default function Home() {
                 Compare smart route ideas, flexible fares, and destinations picked for your region.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-4">
+            <div className="-mx-1.5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1.5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
+              {mobileDiscoveryGroups.map((group, groupIndex) => (
+                <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-2 gap-2.5">
+                  {group.map((item) => {
+                    return (
+                      <Link
+                        key={item.id}
+                        href={buildDiscoveryLink(item)}
+                        className="group flex min-w-0 items-center gap-2 rounded-xl border border-slate-200/85 bg-white/95 p-2 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)]"
+                      >
+                        <div className="relative h-14 w-16 shrink-0 overflow-hidden rounded-lg">
+                          <DiscoveryCardImage
+                            image={item.image}
+                            imageAlt={item.imageAlt}
+                            destinationCode={item.destinationCode}
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="truncate text-[13px] font-bold leading-tight text-slate-900">
+                              {item.title}
+                            </p>
+                            <p className="shrink-0 text-xs font-bold text-slate-900">${item.priceFromUsd}</p>
+                          </div>
+                          <p className="line-clamp-2 text-[11px] font-medium leading-4 text-slate-600">
+                            {item.originCode} → {item.destinationCode} · {item.routeNote}
+                          </p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.07em] text-slate-500">
+                            One way · Economy · 1 traveler
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden grid-cols-3 gap-3 sm:grid md:grid-cols-4 lg:grid-cols-4">
               {discoveryItems.map((item) => {
                 return (
                   <Link
                     key={item.id}
                     href={buildDiscoveryLink(item)}
-                    className="group flex min-w-0 items-center gap-2 rounded-xl border border-slate-200/85 bg-white/95 p-2 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)] sm:gap-2.5 sm:p-2.5"
+                    className="group flex min-w-0 items-center gap-2.5 rounded-xl border border-slate-200/85 bg-white/95 p-2.5 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)]"
                   >
-                    <div className="relative h-14 w-16 shrink-0 overflow-hidden rounded-lg sm:h-16 sm:w-20">
+                    <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-lg">
                       <DiscoveryCardImage
                         image={item.image}
                         imageAlt={item.imageAlt}
@@ -249,15 +297,15 @@ export default function Home() {
 
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="truncate text-[13px] font-bold leading-tight text-slate-900 sm:text-sm">
+                        <p className="truncate text-sm font-bold leading-tight text-slate-900">
                           {item.title}
                         </p>
-                        <p className="shrink-0 text-xs font-bold text-slate-900 sm:text-sm">${item.priceFromUsd}</p>
+                        <p className="shrink-0 text-sm font-bold text-slate-900">${item.priceFromUsd}</p>
                       </div>
-                      <p className="line-clamp-2 text-[11px] font-medium leading-4 text-slate-600 sm:text-xs">
+                      <p className="line-clamp-2 text-xs font-medium leading-4 text-slate-600">
                         {item.originCode} → {item.destinationCode} · {item.routeNote}
                       </p>
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.07em] text-slate-500 sm:text-[11px]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.07em] text-slate-500">
                         One way · Economy · 1 traveler
                       </p>
                     </div>
