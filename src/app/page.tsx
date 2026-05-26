@@ -457,18 +457,17 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell pb-12">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.2)] sm:p-6">
-            <div className="max-w-3xl space-y-2">
-              <h2 className="text-2xl font-black tracking-normal text-slate-950">
-                Frequently asked questions
-              </h2>
-              <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
-                Learn how Curioticket helps you compare flights, hotels, and travel options before booking with trusted providers.
-              </p>
-            </div>
+        <section className="page-shell pb-12 pt-2 sm:pt-3">
+          <div className="max-w-3xl space-y-2">
+            <h2 className="text-2xl font-black tracking-normal text-slate-950">
+              Frequently asked questions
+            </h2>
+            <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
+              Learn how Curioticket helps you compare flights, hotels, and travel options before booking with trusted providers.
+            </p>
+          </div>
 
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <div className="mt-5 grid gap-x-8 gap-y-1 md:grid-cols-2">
               {[
                 {
                   question: "How does Curioticket find flight and hotel options?",
@@ -515,17 +514,22 @@ export default function Home() {
               ].map((item) => (
                 <details
                   key={item.question}
-                  className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 open:border-violet-200 open:bg-violet-50/40"
+                  className="group border-b border-slate-200 py-4"
                 >
-                  <summary className="cursor-pointer list-none pr-6 text-sm font-bold leading-6 text-slate-900 marker:hidden">
-                    {item.question}
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-bold leading-6 text-slate-900 marker:hidden">
+                    <span>{item.question}</span>
+                    <span
+                      aria-hidden="true"
+                      className="mt-0.5 text-base leading-none text-slate-500 transition-transform duration-200 group-open:rotate-45"
+                    >
+                      +
+                    </span>
                   </summary>
                   <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
                     {item.answer}
                   </p>
                 </details>
               ))}
-            </div>
           </div>
         </section>
       </main>
