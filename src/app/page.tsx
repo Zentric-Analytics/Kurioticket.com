@@ -482,48 +482,50 @@ export default function Home() {
         </section>
 
         <section className="page-shell pb-12">
-          <div className="w-full max-w-[640px]">
-            <div className="grid gap-2 rounded-lg border border-slate-200/80 bg-violet-50/70 p-2.5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3 sm:p-3.5">
-              <div className="flex items-start gap-2">
-                <span className="rounded-full bg-slate-100 p-1.25 text-slate-600 sm:p-1.5">
-                  <Mail size={14} className="sm:size-4" />
-                </span>
+          <div className="w-full max-w-[820px]">
+            <div className="rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:p-3.5">
+              <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between md:gap-4">
+                <div className="flex items-start gap-2.5">
+                  <span className="rounded-full bg-slate-100 p-1.25 text-slate-600 sm:p-1.5">
+                    <Mail size={14} className="sm:size-4" />
+                  </span>
 
-                <div className="max-w-[34ch] space-y-0.5">
-                  <h2 className="text-[13px] font-black leading-tight text-slate-950 sm:text-[15px]">
-                    {t("homeNewsletterTitle")}
-                  </h2>
+                  <div className="max-w-[42ch] space-y-0.5">
+                    <h2 className="text-[13px] font-black leading-tight text-slate-950 sm:text-[15px]">
+                      {t("homeNewsletterTitle")}
+                    </h2>
 
-                  <p className="text-[11px] font-semibold leading-4 text-slate-600 sm:text-[13px] sm:leading-5">
-                    {t("homeNewsletterBody")}
-                  </p>
+                    <p className="text-[11px] font-semibold leading-4 text-slate-600 sm:text-[13px] sm:leading-5">
+                      {t("homeNewsletterBody")}
+                    </p>
+                  </div>
                 </div>
+
+                <form
+                  className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 md:w-auto md:min-w-[410px] md:flex-nowrap md:justify-end"
+                  onSubmit={handleNewsletterSubmit}
+                >
+                  <input
+                    type="email"
+                    value={newsletterEmail}
+                    onChange={(event) => setNewsletterEmail(event.target.value)}
+                    placeholder={t("homeNewsletterPlaceholder")}
+                    className="focus-ring h-10 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 sm:h-11 sm:flex-1 md:w-[300px] md:flex-none"
+                    aria-label={t("homeEmailAddress")}
+                    required
+                  />
+
+                  <button
+                    type="submit"
+                    className="focus-ring h-10 shrink-0 rounded-lg bg-slate-900 px-4 text-sm font-extrabold text-white transition hover:bg-slate-800 sm:h-11 sm:px-5"
+                  >
+                    {t("homeSubscribe")}
+                  </button>
+                </form>
               </div>
 
-              <form
-                className="flex flex-col gap-1.5 sm:min-w-[300px] sm:flex-row sm:items-center sm:gap-2"
-                onSubmit={handleNewsletterSubmit}
-              >
-                <input
-                  type="email"
-                  value={newsletterEmail}
-                  onChange={(event) => setNewsletterEmail(event.target.value)}
-                  placeholder={t("homeNewsletterPlaceholder")}
-                  className="focus-ring h-9 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-3 text-[13px] font-semibold text-slate-950 placeholder:text-slate-400 sm:h-10 sm:text-sm"
-                  aria-label={t("homeEmailAddress")}
-                  required
-                />
-
-                <button
-                  type="submit"
-                  className="focus-ring h-9 rounded-md bg-slate-900 px-4 text-[13px] font-extrabold text-white transition hover:bg-slate-800 sm:h-10 sm:px-5 sm:text-sm"
-                >
-                  {t("homeSubscribe")}
-                </button>
-              </form>
-
               {newsletterMessage ? (
-                <p className="text-xs font-semibold text-slate-700 sm:text-sm">
+                <p className="mt-2 text-xs font-semibold text-slate-700 sm:text-sm">
                   {newsletterMessage}
                 </p>
               ) : null}
