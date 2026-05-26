@@ -3,12 +3,7 @@
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
-import { useLocale } from "@/components/layout/LocaleProvider";
-import { legalDocuments } from "@/data/legalDocuments";
-
 export function Footer() {
-  const { t } = useLocale();
-
   const { data: session } =
     useSession();
 
@@ -16,87 +11,199 @@ export function Footer() {
     session?.user
   );
 
+  const currentYear =
+    new Date().getFullYear();
+
+  const footerSections = [
+    {
+      heading: "Support",
+      links: [
+        {
+          label: "Customer support",
+          href: "/support",
+        },
+        {
+          label: "Contact us",
+          href: "/support",
+        },
+        {
+          label: "Help Center",
+          href: "#",
+        },
+        {
+          label: "Manage your trips",
+          href: "#",
+        },
+      ],
+    },
+    {
+      heading: "Discover",
+      links: [
+        {
+          label: "Flights",
+          href: "/flights/results",
+        },
+        {
+          label: "Hotels",
+          href: "/hotels/results",
+        },
+        {
+          label: "Deals",
+          href: "/deals",
+        },
+        {
+          label: "Destinations",
+          href: "/destinations",
+        },
+        {
+          label: "Explore",
+          href: "/explore",
+        },
+        ...(isSignedIn
+          ? [
+              {
+                label: "Dashboard",
+                href: "/dashboard",
+              },
+            ]
+          : []),
+      ],
+    },
+    {
+      heading: "Terms and settings",
+      links: [
+        {
+          label: "Privacy Policy",
+          href: "/legal/privacy-policy",
+        },
+        {
+          label: "Terms of Service",
+          href: "/legal/terms-of-service",
+        },
+        {
+          label: "Cookie Policy",
+          href: "/legal/cookie-policy",
+        },
+        {
+          label: "Legal Center",
+          href: "/legal",
+        },
+        {
+          label: "Accessibility",
+          href: "#",
+        },
+        {
+          label: "Security",
+          href: "#",
+        },
+      ],
+    },
+    {
+      heading: "Partners",
+      links: [
+        {
+          label: "Partner with us",
+          href: "#",
+        },
+        {
+          label: "List your property",
+          href: "#",
+        },
+        {
+          label: "Affiliate program",
+          href: "#",
+        },
+        {
+          label: "Advertise with us",
+          href: "#",
+        },
+      ],
+    },
+    {
+      heading: "About Curioticket",
+      links: [
+        {
+          label: "About us",
+          href: "#",
+        },
+        {
+          label: "How Curioticket works",
+          href: "#",
+        },
+        {
+          label: "Careers",
+          href: "#",
+        },
+        {
+          label: "Press",
+          href: "#",
+        },
+        {
+          label: "Sustainability",
+          href: "#",
+        },
+      ],
+    },
+  ];
+
   return (
-    <footer className="border-t border-indigo-800/40 bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-900 text-white">
-      <div className="page-shell grid gap-8 py-10 md:grid-cols-[1.2fr_1fr_1fr]">
-        <div>
-          <div className="text-lg font-bold">
-            Curioticket
-          </div>
+    <footer className="border-t border-slate-200 bg-white text-slate-700">
+      <div className="page-shell py-10 md:py-12">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+          {footerSections.map(
+            (section) => (
+              <div key={section.heading}>
+                <h2 className="text-sm font-semibold text-slate-900">
+                  {section.heading}
+                </h2>
 
-          <p className="mt-3 max-w-md text-sm leading-6 text-indigo-100/90">
-            {t.footerAbout}
-          </p>
-
-          <p className="mt-4 text-xs leading-5 text-indigo-200/70">
-            {t.footerMeta}
-          </p>
+                <div className="mt-3 grid gap-2 text-sm text-slate-600">
+                  {section.links.map(
+                    (link) => (
+                      <Link
+                        key={`${section.heading}-${link.label}`}
+                        href={link.href}
+                        className="transition-colors hover:text-indigo-600"
+                      >
+                        {link.label}
+                      </Link>
+                    )
+                  )}
+                </div>
+              </div>
+            )
+          )}
         </div>
 
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-indigo-100/85">
-            {t.platform}
-          </h2>
+        <div className="mt-10 border-t border-slate-200 pt-5">
+          <div className="flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="font-semibold text-slate-900">
+                Curioticket
+              </p>
 
-          <div className="mt-3 grid gap-2 text-sm text-indigo-100/90">
-            <Link href="/flights/results">
-              {t.flights}
-            </Link>
+              <p className="mt-1 text-xs text-slate-500">
+                Search flights, hotels, and travel deals with confidence.
+              </p>
+            </div>
 
-            <Link href="/hotels/results">
-              {t.hotels}
-            </Link>
+            <div className="flex flex-wrap items-center gap-4 text-xs">
+              <p>
+                © {currentYear} Curioticket. All rights reserved.
+              </p>
 
-            <Link href="/deals">
-              {t.deals}
-            </Link>
-
-            <Link href="/destinations">
-              {t.destinations}
-            </Link>
-
-            <Link href="/explore">
-              {t.explore}
-            </Link>
-
-            {isSignedIn ? (
-              <Link href="/pricing">
-                {t.premium}
+              <Link href="/legal/privacy-policy" className="transition-colors hover:text-indigo-600">
+                Privacy
               </Link>
-            ) : null}
 
-            <Link href="/support">
-              {t.support}
-            </Link>
-
-            {isSignedIn ? (
-              <Link href="/dashboard">
-                {t.dashboard}
+              <Link href="/legal/terms-of-service" className="transition-colors hover:text-indigo-600">
+                Terms
               </Link>
-            ) : null}
-          </div>
-        </div>
 
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-indigo-100/85">
-            {t.legal}
-          </h2>
-
-          <div className="mt-3 grid gap-2 text-sm text-indigo-100/90">
-            <Link href="/legal">
-              {t.legalCenter}
-            </Link>
-
-            {legalDocuments
-              .slice(0, 5)
-              .map((document) => (
-                <Link
-                  key={document.slug}
-                  href={`/legal/${document.slug}`}
-                >
-                  {document.title}
-                </Link>
-              ))}
+              <Link href="/legal/cookie-policy" className="transition-colors hover:text-indigo-600">
+                Cookies
+              </Link>
+            </div>
           </div>
         </div>
       </div>
