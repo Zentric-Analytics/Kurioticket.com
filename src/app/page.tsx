@@ -231,13 +231,13 @@ export default function Home() {
                 Compare smart route ideas, flexible fares, and destinations picked for your region.
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
               {discoveryItems.map((item) => {
                 return (
                   <Link
                     key={item.id}
                     href={buildDiscoveryLink(item)}
-                    className="group flex items-center gap-3 rounded-xl border border-slate-200/85 bg-white/95 p-2.5 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)] sm:p-3"
+                    className="group flex min-w-[16rem] snap-start items-center gap-3 rounded-xl border border-slate-200/85 bg-white/95 p-2.5 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)] sm:min-w-0 sm:p-3"
                   >
                     <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-lg sm:h-[4.5rem] sm:w-24">
                       <DiscoveryCardImage
