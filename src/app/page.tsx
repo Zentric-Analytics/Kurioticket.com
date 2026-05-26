@@ -248,7 +248,7 @@ export default function Home() {
             </div>
             <div className="-mx-1.5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1.5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
               {mobileDiscoveryGroups.map((group, groupIndex) => (
-                <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-3 gap-2.5">
+                <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-2 gap-2.5">
                   {group.map((item) => {
                     return (
                       <Link
