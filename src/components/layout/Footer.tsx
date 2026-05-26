@@ -146,10 +146,13 @@ export function Footer() {
     },
   ];
 
+  const [aboutSection, ...linkSections] =
+    footerSections;
+
   return (
     <footer className="border-t border-slate-200 bg-white text-slate-700">
       <div className="page-shell py-10 md:py-12">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="hidden gap-8 lg:grid lg:grid-cols-5">
           {footerSections.map(
             (section) => (
               <div key={section.heading}>
@@ -173,6 +176,54 @@ export function Footer() {
               </div>
             )
           )}
+        </div>
+
+        <div className="space-y-7 lg:hidden">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">
+              {aboutSection.heading}
+            </h2>
+
+            <div className="mt-3 grid gap-2 text-sm text-slate-600">
+              {aboutSection.links.map(
+                (link) => (
+                  <Link
+                    key={`${aboutSection.heading}-${link.label}`}
+                    href={link.href}
+                    className="transition-colors hover:text-indigo-600"
+                  >
+                    {link.label}
+                  </Link>
+                )
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-6 gap-y-7 border-t border-slate-200 pt-6">
+            {linkSections.map(
+              (section) => (
+                <div key={section.heading} className="min-w-0">
+                  <h2 className="text-sm font-semibold text-slate-900">
+                    {section.heading}
+                  </h2>
+
+                  <div className="mt-3 grid gap-2 text-sm text-slate-600">
+                    {section.links.map(
+                      (link) => (
+                        <Link
+                          key={`${section.heading}-${link.label}`}
+                          href={link.href}
+                          className="break-words transition-colors hover:text-indigo-600"
+                        >
+                          {link.label}
+                        </Link>
+                      )
+                    )}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
         </div>
 
         <div className="mt-10 border-t border-slate-200 pt-5">
