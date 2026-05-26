@@ -571,6 +571,78 @@ export default function Home() {
             ) : null}
           </div>
         </section>
+
+        <section className="page-shell pb-12">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.2)] sm:p-6">
+            <div className="max-w-3xl space-y-2">
+              <h2 className="text-2xl font-black tracking-normal text-slate-950">
+                Frequently asked questions
+              </h2>
+              <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
+                Learn how Curioticket helps you compare flights, hotels, and travel options before booking with trusted providers.
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {[
+                {
+                  question: "How does Curioticket find flight and hotel options?",
+                  answer:
+                    "Curioticket searches live offers from travel providers and brings options together in one place so you can compare prices, routes, stays, and details before choosing.",
+                },
+                {
+                  question:
+                    "Does Curioticket sell tickets or hotel rooms directly?",
+                  answer:
+                    "Curioticket helps you compare travel options. When you choose an offer, you are sent to the selected provider to review details and complete the booking on that provider’s site.",
+                },
+                {
+                  question: "Why can prices change after I click an offer?",
+                  answer:
+                    "Prices and availability can change in real time because airlines, hotels, and travel providers update inventory frequently. Always review the final price on the provider’s checkout page before booking.",
+                },
+                {
+                  question:
+                    "Can I compare multiple providers for the same trip?",
+                  answer:
+                    "Yes. Curioticket is designed to help you compare options side by side so you can evaluate price, timing, route details, hotel details, and overall value.",
+                },
+                {
+                  question: "How do I complete my booking securely?",
+                  answer:
+                    "Booking and payment are completed on the provider’s checkout flow. You should always review the provider’s terms, cancellation policy, and final price before confirming.",
+                },
+                {
+                  question: "Can I set currency and language preferences?",
+                  answer:
+                    "Yes. Curioticket supports language and region preferences so the experience can feel more relevant based on how you prefer to search and compare travel options.",
+                },
+                {
+                  question: "Are search results live or cached?",
+                  answer:
+                    "Curioticket uses provider search results that can refresh as availability and prices change. This helps show current options, but final availability is confirmed by the provider.",
+                },
+                {
+                  question: "Where do I manage changes or cancellations?",
+                  answer:
+                    "Trip changes, cancellations, refunds, and booking support are usually handled by the provider where the booking was completed. Use the confirmation details from that provider for service requests.",
+                },
+              ].map((item) => (
+                <details
+                  key={item.question}
+                  className="group rounded-xl border border-slate-200 bg-white p-4 transition hover:border-slate-300 open:border-violet-200 open:bg-violet-50/40"
+                >
+                  <summary className="cursor-pointer list-none pr-6 text-sm font-bold leading-6 text-slate-900 marker:hidden">
+                    {item.question}
+                  </summary>
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
+                    {item.answer}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
 
       <Footer />
