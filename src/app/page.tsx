@@ -244,7 +244,7 @@ export default function Home() {
                     <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-lg sm:h-[4.5rem] sm:w-24">
                       <Image
                         src={item.image}
-                        alt={`${item.destinationCity} route preview`}
+                        alt={item.imageAlt}
                         fill
                         sizes="(min-width: 1280px) 7rem, (min-width: 640px) 6.5rem, 5rem"
                         className="object-cover transition duration-500 group-hover:scale-[1.03]"
@@ -254,12 +254,12 @@ export default function Home() {
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-start justify-between gap-3">
                         <p className="truncate text-[15px] font-bold leading-tight text-slate-900 sm:text-base">
-                          {item.originCity} ({item.originCode}) → {item.destinationCity} ({item.destinationCode})
+                          {item.title}
                         </p>
                         <p className="shrink-0 text-sm font-bold text-slate-900">${item.priceFromUsd}</p>
                       </div>
                       <p className="line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:text-[13px]">
-                        {item.routeNote}
+                        {item.originCode} → {item.destinationCode} · {item.routeNote}
                       </p>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         One way · Economy · 1 traveler
