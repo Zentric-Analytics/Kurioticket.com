@@ -535,16 +535,16 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell pb-12">
+        <section className="page-shell pb-6 sm:pb-8">
           <div className="w-full max-w-[820px]">
             <div className="rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:p-3.5">
-              <div className="flex flex-row items-center gap-2 sm:gap-2.5 lg:justify-between lg:gap-4">
-                <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2.5 lg:min-w-0">
+              <div className="flex flex-row items-center gap-2 sm:gap-2.5 lg:gap-3.5">
+                <div className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2.5 lg:basis-[34%] lg:max-w-[31ch]">
                   <span className="shrink-0 rounded-full bg-slate-100 p-1 text-slate-600 sm:p-1.5">
                     <Mail size={12} className="sm:size-4" />
                   </span>
 
-                  <div className="min-w-0 max-w-[24ch] space-y-0 lg:max-w-[30ch]">
+                  <div className="min-w-0 max-w-[21ch] space-y-0 lg:max-w-[24ch]">
                     <h2 className="truncate text-[11px] font-black leading-tight text-slate-950 sm:text-[15px]">
                       {t("homeNewsletterTitle")}
                     </h2>
@@ -556,7 +556,7 @@ export default function Home() {
                 </div>
 
                 <form
-                  className="flex min-w-0 shrink-0 basis-[56%] items-center gap-1.5 sm:basis-auto sm:gap-2 lg:min-w-0 lg:flex-1 lg:flex-nowrap lg:justify-end"
+                  className="flex min-w-0 flex-1 basis-[60%] items-center gap-1.5 sm:basis-auto sm:gap-2 lg:basis-[66%] lg:flex-nowrap lg:justify-end"
                   onSubmit={handleNewsletterSubmit}
                 >
                   <input
@@ -564,7 +564,7 @@ export default function Home() {
                     value={newsletterEmail}
                     onChange={(event) => setNewsletterEmail(event.target.value)}
                     placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-9 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 sm:h-11 sm:px-3.5 sm:text-sm lg:max-w-[320px] lg:flex-none"
+                    className="focus-ring h-9 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 sm:h-11 sm:min-w-[12rem] sm:px-3.5 sm:text-sm lg:min-w-[20rem] lg:max-w-[30rem]"
                     aria-label={t("homeEmailAddress")}
                     required
                   />
