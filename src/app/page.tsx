@@ -3,9 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ChevronLeft,
@@ -33,6 +31,7 @@ import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { readSavedTripIds, toggleSavedTripId, writeSavedTripIds } from "@/lib/saved-trips-local";
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
@@ -91,11 +90,9 @@ const destinations = [
 export default function Home() {
   const { locale } = useLocale();
   const { mode: regionCode } = useRegion();
-  const router = useRouter();
-  const { status: sessionStatus } = useSession();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
-  const [savedDiscoveryCardIds, setSavedDiscoveryCardIds] = useState<string[]>([]);
+  const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
   const destinationsRailRef = useRef<HTMLDivElement>(null);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
@@ -135,20 +132,19 @@ export default function Home() {
     setNewsletterEmail("");
   };
 
-  const handleDiscoveryHeartToggle = (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => {
+  useEffect(() => {
+    setSavedTripIds(readSavedTripIds());
+  }, []);
+
+  const handleSavedTripToggle = (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => {
     event.preventDefault();
     event.stopPropagation();
 
-    if (sessionStatus !== "authenticated") {
-      router.push("/auth/signin?callbackUrl=%2F");
-      return;
-    }
-
-    setSavedDiscoveryCardIds((current) =>
-      current.includes(itemId)
-        ? current.filter((id) => id !== itemId)
-        : [...current, itemId],
-    );
+    setSavedTripIds((current) => {
+      const next = toggleSavedTripId(current, itemId);
+      writeSavedTripIds(next);
+      return next;
+    });
   };
 
   return (
@@ -244,6 +240,9 @@ export default function Home() {
                   saveLabelTemplate={t("homeSaveDestination")}
                   amountUsd={destination.amountUsd}
                   image={destination.image}
+                  destinationId={destination.id}
+                  isSaved={savedTripIds.includes(destination.id)}
+                  onHeartToggle={handleSavedTripToggle}
                 />
               ))}
             </div>
@@ -284,8 +283,8 @@ export default function Home() {
                         routeNote={item.routeNote}
                         priceFromUsd={item.priceFromUsd}
                         compact
-                        isSaved={savedDiscoveryCardIds.includes(item.id)}
-                        onHeartToggle={handleDiscoveryHeartToggle}
+                        isSaved={savedTripIds.includes(item.id)}
+                        onHeartToggle={handleSavedTripToggle}
                       />
                     );
                   })}
@@ -308,8 +307,8 @@ export default function Home() {
                     destinationCodeLabel={item.destinationCode}
                     routeNote={item.routeNote}
                     priceFromUsd={item.priceFromUsd}
-                    isSaved={savedDiscoveryCardIds.includes(item.id)}
-                    onHeartToggle={handleDiscoveryHeartToggle}
+                    isSaved={savedTripIds.includes(item.id)}
+                    onHeartToggle={handleSavedTripToggle}
                   />
                 );
               })}
@@ -645,6 +644,9 @@ function DestinationCard({
   image,
   fromLabel,
   saveLabelTemplate,
+  destinationId,
+  isSaved,
+  onHeartToggle,
 }: {
   city: string;
   country: string;
@@ -653,6 +655,9 @@ function DestinationCard({
   image: string;
   fromLabel: string;
   saveLabelTemplate: string;
+  destinationId: string;
+  isSaved: boolean;
+  onHeartToggle: (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => void;
 }) {
   return (
     <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
@@ -673,11 +678,16 @@ function DestinationCard({
 
           <button
             type="button"
-            className="focus-ring absolute right-3 top-3 z-0 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30"
+            className={`focus-ring absolute right-3 top-3 z-0 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition duration-200 ${
+              isSaved
+                ? "border-rose-200/90 bg-rose-500/90 text-white shadow-sm shadow-rose-900/20 hover:bg-rose-500"
+                : "border-white/30 bg-white/20 text-white hover:bg-white/30"
+            }`}
             aria-label={saveLabelTemplate.replace("{{city}}", city)}
-            onClick={(event) => event.preventDefault()}
+            aria-pressed={isSaved}
+            onClick={(event) => onHeartToggle(event, destinationId)}
           >
-            <Heart size={17} />
+            <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
 
           <div className="absolute bottom-4 left-4 text-white">
