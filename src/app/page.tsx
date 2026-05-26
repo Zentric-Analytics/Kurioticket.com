@@ -481,8 +481,8 @@ export default function Home() {
         </section>
 
         <section className="page-shell pb-12">
-          <div className="w-full max-w-[560px]">
-            <div className="grid gap-2.5 rounded-xl bg-[#f3eafe] p-3 sm:p-3.5">
+          <div className="w-full max-w-[640px]">
+            <div className="grid gap-2.5 rounded-xl bg-[#f3eafe] p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3 sm:p-3.5">
               <div className="flex items-start gap-2.5">
                 <span className="rounded-full bg-violet-100 p-1.5 text-[#5b21d6]">
                   <Ticket size={16} />
@@ -500,7 +500,7 @@ export default function Home() {
               </div>
 
               <form
-                className="flex flex-col gap-2 sm:flex-row"
+                className="flex flex-col gap-2 sm:min-w-[300px] sm:flex-row sm:items-center"
                 onSubmit={handleNewsletterSubmit}
               >
                 <input
