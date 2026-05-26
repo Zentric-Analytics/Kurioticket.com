@@ -742,7 +742,7 @@ function PromoPanel({
           href={href}
           variant="primary"
           size="md"
-          className={`mt-5 ${
+          className={`mt-5 font-semibold ${
             isViolet
               ? "bg-[#5b21d6] hover:bg-[#4c1d95]"
               : "bg-[#2563eb] hover:bg-[#1d4ed8]"
