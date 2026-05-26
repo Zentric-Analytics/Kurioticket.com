@@ -482,25 +482,25 @@ export default function Home() {
 
         <section className="page-shell pb-12">
           <div className="w-full max-w-[560px]">
-            <div className="grid gap-4 rounded-xl bg-[#f3eafe] p-4 sm:p-5 md:grid-cols-1">
-              <div className="flex items-start gap-4">
-                <span className="rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                  <Ticket size={18} />
+            <div className="grid gap-2.5 rounded-xl bg-[#f3eafe] p-3 sm:p-3.5">
+              <div className="flex items-start gap-2.5">
+                <span className="rounded-full bg-violet-100 p-1.5 text-[#5b21d6]">
+                  <Ticket size={16} />
                 </span>
 
-                <div className="max-w-[34ch]">
-                  <h2 className="text-base font-black leading-snug text-slate-950 sm:text-lg">
+                <div className="max-w-[34ch] space-y-0.5">
+                  <h2 className="text-sm font-black leading-tight text-slate-950 sm:text-[15px]">
                     {t("homeNewsletterTitle")}
                   </h2>
 
-                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
+                  <p className="text-xs font-semibold leading-5 text-slate-600 sm:text-[13px]">
                     {t("homeNewsletterBody")}
                   </p>
                 </div>
               </div>
 
               <form
-                className="flex flex-col gap-2.5 sm:flex-row"
+                className="flex flex-col gap-2 sm:flex-row"
                 onSubmit={handleNewsletterSubmit}
               >
                 <input
@@ -508,14 +508,14 @@ export default function Home() {
                   value={newsletterEmail}
                   onChange={(event) => setNewsletterEmail(event.target.value)}
                   placeholder={t("homeNewsletterPlaceholder")}
-                  className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
+                  className="focus-ring h-10 min-w-0 flex-1 rounded-md border border-white bg-white px-3 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
                   aria-label={t("homeEmailAddress")}
                   required
                 />
 
                 <button
                   type="submit"
-                  className="focus-ring h-11 rounded-md bg-[#5b21d6] px-6 text-sm font-extrabold text-white transition hover:bg-[#4c1d95] sm:h-12"
+                  className="focus-ring h-10 rounded-md bg-[#5b21d6] px-5 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
                 >
                   {t("homeSubscribe")}
                 </button>
