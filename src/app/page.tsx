@@ -484,13 +484,13 @@ export default function Home() {
         <section className="page-shell pb-12">
           <div className="w-full max-w-[820px]">
             <div className="rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:p-3.5">
-              <div className="flex flex-col gap-2.5 md:flex-row md:items-center md:justify-between md:gap-4">
-                <div className="flex items-start gap-2.5">
+              <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between lg:gap-4">
+                <div className="flex items-start gap-2.5 lg:min-w-0 lg:flex-1">
                   <span className="rounded-full bg-slate-100 p-1.25 text-slate-600 sm:p-1.5">
                     <Mail size={14} className="sm:size-4" />
                   </span>
 
-                  <div className="max-w-[42ch] space-y-0.5">
+                  <div className="max-w-[42ch] space-y-0.5 lg:max-w-[30ch]">
                     <h2 className="text-[13px] font-black leading-tight text-slate-950 sm:text-[15px]">
                       {t("homeNewsletterTitle")}
                     </h2>
@@ -502,7 +502,7 @@ export default function Home() {
                 </div>
 
                 <form
-                  className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 md:w-auto md:min-w-[410px] md:flex-nowrap md:justify-end"
+                  className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-2 lg:min-w-0 lg:flex-1 lg:flex-nowrap lg:justify-end"
                   onSubmit={handleNewsletterSubmit}
                 >
                   <input
@@ -510,7 +510,7 @@ export default function Home() {
                     value={newsletterEmail}
                     onChange={(event) => setNewsletterEmail(event.target.value)}
                     placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-10 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 sm:h-11 sm:flex-1 md:w-[300px] md:flex-none"
+                    className="focus-ring h-10 min-w-0 w-full rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 sm:h-11 sm:flex-1 lg:max-w-[320px] lg:flex-none"
                     aria-label={t("homeEmailAddress")}
                     required
                   />
