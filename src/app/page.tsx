@@ -250,9 +250,9 @@ export default function Home() {
                       <Link
                         key={item.id}
                         href={buildDiscoveryLink(item)}
-                        className="group flex min-w-0 items-center gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_26px_-22px_rgba(15,23,42,0.62)]"
+                        className="group flex min-h-[88px] min-w-0 items-center gap-3 rounded-xl border border-slate-200/90 bg-white p-3 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_26px_-22px_rgba(15,23,42,0.62)]"
                       >
-                        <div className="relative h-[60px] w-[72px] shrink-0 overflow-hidden rounded-lg">
+                        <div className="relative h-[64px] w-[78px] shrink-0 overflow-hidden rounded-lg">
                           <DiscoveryCardImage
                             image={item.image}
                             imageAlt={item.imageAlt}
@@ -260,17 +260,17 @@ export default function Home() {
                           />
                         </div>
 
-                        <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="min-w-0 flex-1 space-y-2">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="line-clamp-2 text-[14px] font-extrabold leading-[1.2] text-slate-900">
+                            <p className="line-clamp-2 text-[15px] font-extrabold leading-[1.2] text-slate-900">
                               {item.title}
                             </p>
-                            <p className="shrink-0 text-[13px] font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
+                            <p className="shrink-0 text-[14px] font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
                           </div>
-                          <p className="line-clamp-2 text-[12px] font-medium leading-[1.35] text-slate-700">
+                          <p className="line-clamp-2 text-[13px] font-medium leading-[1.35] text-slate-700">
                             {item.originCode} → {item.destinationCode} · {item.routeNote}
                           </p>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                             One way · Economy · 1 traveler
                           </p>
                         </div>
@@ -287,9 +287,9 @@ export default function Home() {
                   <Link
                     key={item.id}
                     href={buildDiscoveryLink(item)}
-                    className="group flex min-w-0 items-center gap-3 rounded-xl border border-slate-200/90 bg-white p-3 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_28px_-22px_rgba(15,23,42,0.62)]"
+                    className="group flex min-w-0 items-center gap-3.5 rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_28px_-22px_rgba(15,23,42,0.62)]"
                   >
-                    <div className="relative h-[70px] w-[88px] shrink-0 overflow-hidden rounded-lg">
+                    <div className="relative h-[72px] w-[92px] shrink-0 overflow-hidden rounded-lg">
                       <DiscoveryCardImage
                         image={item.image}
                         imageAlt={item.imageAlt}
@@ -297,17 +297,17 @@ export default function Home() {
                       />
                     </div>
 
-                    <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="line-clamp-2 text-[15px] font-extrabold leading-[1.22] text-slate-900">
+                        <p className="line-clamp-2 text-[16px] font-extrabold leading-[1.22] text-slate-900">
                           {item.title}
                         </p>
-                        <p className="shrink-0 text-[15px] font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
+                        <p className="shrink-0 text-[16px] font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
                       </div>
-                      <p className="line-clamp-2 text-[13px] font-medium leading-[1.35] text-slate-700">
+                      <p className="line-clamp-2 text-[14px] font-medium leading-[1.35] text-slate-700">
                         {item.originCode} → {item.destinationCode} · {item.routeNote}
                       </p>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         One way · Economy · 1 traveler
                       </p>
                     </div>
