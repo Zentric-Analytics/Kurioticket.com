@@ -13,8 +13,8 @@ import {
   Heart,
   Hotel,
   Plane,
-  GitCompareArrows,
-  ReceiptText,
+  SearchCheck,
+  BadgeDollarSign,
   ShieldCheck,
   Sparkles,
   Mail,
@@ -331,8 +331,8 @@ export default function Home() {
 
             <div className="grid gap-2.5 sm:gap-3 md:grid-cols-3">
               <article className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5">
-                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
-                  <GitCompareArrows size={18} strokeWidth={2.15} />
+                <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                  <SearchCheck size={19} strokeWidth={2} />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">{t("homeTrustCompareTitle")}</h3>
                 <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm sm:leading-6">
@@ -341,8 +341,8 @@ export default function Home() {
               </article>
 
               <article className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5">
-                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
-                  <ReceiptText size={18} strokeWidth={2.15} />
+                <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
+                  <BadgeDollarSign size={19} strokeWidth={2} />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">{t("homeTrustPricingTitle")}</h3>
                 <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm sm:leading-6">
@@ -351,8 +351,8 @@ export default function Home() {
               </article>
 
               <article className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5">
-                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                  <ShieldCheck size={18} strokeWidth={2.15} />
+                <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <ShieldCheck size={19} strokeWidth={2} />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">{t("homeTrustHandoffTitle")}</h3>
                 <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm sm:leading-6">
