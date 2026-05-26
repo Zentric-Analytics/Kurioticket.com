@@ -465,7 +465,7 @@ export default function Home() {
               <div className="flex flex-row items-center gap-1.5 sm:gap-2.5 lg:gap-3.5">
                 <div className="flex shrink-0 items-center gap-1.5 sm:min-w-0 sm:basis-[34%] sm:gap-2.5 lg:basis-[34%] lg:max-w-[31ch]">
                   <span className="shrink-0 rounded-full bg-slate-100 p-1 text-slate-600 sm:p-1.5">
-                    <Mail size={12} className="sm:size-4" />
+                    <Mail size={20} className="sm:size-4" />
                   </span>
 
                   <div className="hidden min-w-0 max-w-[17ch] space-y-0 sm:block lg:max-w-[24ch]">
