@@ -87,6 +87,22 @@ export const upsertRecentSearch = (entry: RecentSearchEntry, max = 5): RecentSea
   return deduped;
 };
 
+export const removeRecentSearch = (id: string): RecentSearchEntry[] => {
+  const nextEntries = readRecentSearches().filter((entry) => entry.id !== id);
+  writeRecentSearches(nextEntries);
+  return nextEntries;
+};
+
+export const clearRecentSearches = (): void => {
+  if (typeof window === "undefined") return;
+
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore write failures in Phase 1
+  }
+};
+
 export const buildFlightRecentSearch = (params: RecentFlightParams): RecentSearchEntry => {
   const id = buildId("flight", params);
   const label = `${params.origin} → ${params.destination}`;
