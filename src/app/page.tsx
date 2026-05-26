@@ -26,9 +26,12 @@ import {
 import { PriceText } from "@/components/currency/PriceText";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRegion } from "@/components/region/RegionProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
+import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
+import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 
@@ -83,85 +86,9 @@ const destinations = [
   },
 ];
 
-const topFlightCategories = [
-  "Weekend escapes",
-  "Beach trips",
-  "Food & culture",
-  "Quick getaways",
-  "Warm weather",
-] as const;
-
-const topFlightRoutes = [
-  {
-    id: "weekend-mexico-city",
-    title: "Weekend in Mexico City",
-    vibe: "Street tacos, leafy parks, and design-forward stays.",
-    routeContext: "From Houston (IAH) to Mexico City (MEX)",
-    origin: "IAH",
-    destination: "MEX",
-    priceFrom: 189,
-    image:
-      "https://images.unsplash.com/photo-1518105779142-d975f22f1b0a?auto=format&fit=crop&w=1000&q=85",
-  },
-  {
-    id: "beach-san-juan",
-    title: "Beach reset in San Juan",
-    vibe: "Golden-hour swims, colorful streets, and ocean breezes.",
-    routeContext: "From Miami (MIA) to San Juan (SJU)",
-    origin: "MIA",
-    destination: "SJU",
-    priceFrom: 214,
-    image:
-      "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1000&q=85",
-  },
-  {
-    id: "culture-montreal",
-    title: "Culture break in Montreal",
-    vibe: "Cafés, galleries, and old-town charm in every block.",
-    routeContext: "From Chicago (ORD) to Montreal (YUL)",
-    origin: "ORD",
-    destination: "YUL",
-    priceFrom: 242,
-    image:
-      "https://images.unsplash.com/photo-1519178614-68673b201f36?auto=format&fit=crop&w=1000&q=85",
-  },
-  {
-    id: "desert-phoenix",
-    title: "Desert nights in Phoenix",
-    vibe: "Sunset trails, rooftop evenings, and warm desert air.",
-    routeContext: "From Seattle (SEA) to Phoenix (PHX)",
-    origin: "SEA",
-    destination: "PHX",
-    priceFrom: 168,
-    image:
-      "https://images.unsplash.com/photo-1449158743715-0a90ebb6d2d8?auto=format&fit=crop&w=1000&q=85",
-  },
-  {
-    id: "music-nashville",
-    title: "Music & food in Nashville",
-    vibe: "Live sets, late-night bites, and neighborhood energy.",
-    routeContext: "From New York (JFK) to Nashville (BNA)",
-    origin: "JFK",
-    destination: "BNA",
-    priceFrom: 156,
-    image:
-      "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1000&q=85",
-  },
-  {
-    id: "art-seattle",
-    title: "Art & coffee in Seattle",
-    vibe: "Waterfront walks, indie galleries, and espresso culture.",
-    routeContext: "From Los Angeles (LAX) to Seattle (SEA)",
-    origin: "LAX",
-    destination: "SEA",
-    priceFrom: 173,
-    image:
-      "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=1000&q=85",
-  },
-];
-
 export default function Home() {
   const { locale } = useLocale();
+  const { mode: regionCode, selectedOption } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const destinationsRailRef = useRef<HTMLDivElement>(null);
@@ -181,11 +108,10 @@ export default function Home() {
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const topFlightsDepartureDate = useMemo(() => {
-    const date = new Date();
-    date.setDate(date.getDate() + 30);
-    return date.toISOString().slice(0, 10);
-  }, []);
+  const discoveryItems = useMemo(() => getHomeDiscoveryByRegion(regionCode), [regionCode]);
+  const discoveryTitle = selectedOption?.country
+    ? `Where to next from ${selectedOption.country}`
+    : "Where to next near you";
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -297,88 +223,47 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell py-6">
-          <div className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:p-6">
+        <section className="page-shell py-5 sm:py-6">
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_26px_-20px_rgba(15,23,42,0.34)] sm:space-y-5 sm:p-5">
             <div className="space-y-2">
               <h2 className="text-2xl font-black tracking-normal text-slate-950">
-                Where to next from United States
+                {discoveryTitle}
               </h2>
               <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
-                Flexible trip ideas, smart travel inspiration, and region-based picks for curious travelers.
+                Compact route ideas matched to your region for fast trip discovery.
               </p>
             </div>
-
-            <div className="flex flex-wrap gap-2.5">
-              {topFlightCategories.map((category, index) => {
-                const isActive = index === 0;
-                return (
-                  <button
-                    key={category}
-                    type="button"
-                    aria-pressed={isActive}
-                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                      isActive
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900"
-                    }`}
-                  >
-                    {category}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {topFlightRoutes.map((route) => {
-                const href = {
-                  pathname: "/flights/results",
-                  query: {
-                    tripType: "one-way",
-                    origin: route.origin,
-                    destination: route.destination,
-                    departureDate: topFlightsDepartureDate,
-                    adults: "1",
-                    children: "0",
-                    infants: "0",
-                    travelers: "1",
-                    cabinClass: "economy",
-                  },
-                };
-
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {discoveryItems.map((item) => {
                 return (
                   <Link
-                    key={route.id}
-                    href={href}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_30px_-22px_rgba(15,23,42,0.45)]"
+                    key={item.id}
+                    href={buildDiscoveryLink(item)}
+                    className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-2.5 transition duration-300 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)] sm:p-3"
                   >
-                    <div className="relative h-44 w-full overflow-hidden">
+                    <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-lg sm:h-[4.5rem] sm:w-24">
                       <Image
-                        src={route.image}
-                        alt={route.title}
+                        src={item.image}
+                        alt={`${item.destinationCity} route preview`}
                         fill
-                        sizes="(min-width: 1280px) 28vw, (min-width: 640px) 45vw, 100vw"
-                        className="object-cover transition duration-500 group-hover:scale-105"
+                        sizes="(min-width: 1280px) 7rem, (min-width: 640px) 6.5rem, 5rem"
+                        className="object-cover transition duration-500 group-hover:scale-[1.03]"
                       />
                     </div>
 
-                    <div className="space-y-3 p-4 sm:p-5">
-                      <div className="space-y-1.5">
-                        <p className="text-base font-bold leading-tight text-slate-900">
-                          {route.title}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="truncate text-[15px] font-bold leading-tight text-slate-900 sm:text-base">
+                          {item.originCity} ({item.originCode}) → {item.destinationCity} ({item.destinationCode})
                         </p>
-                        <p className="text-sm font-medium leading-6 text-slate-600">
-                          {route.vibe}
-                        </p>
+                        <p className="shrink-0 text-sm font-bold text-slate-900">${item.priceFromUsd}</p>
                       </div>
-
-                      <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-                          {route.routeContext}
-                        </p>
-                        <p className="shrink-0 text-sm font-bold text-slate-900">
-                          From ${route.priceFrom}
-                        </p>
-                      </div>
+                      <p className="line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:text-[13px]">
+                        {item.routeNote}
+                      </p>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        One way · Economy · 1 traveler
+                      </p>
                     </div>
                   </Link>
                 );
