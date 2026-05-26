@@ -392,7 +392,7 @@ export default function Home() {
             body={t("homePromoFlightsBody")}
             cta={t("homePromoFlightsCta")}
             href="/deals"
-            icon={<PlaneTakeoff size={60} />}
+            icon={<PlaneTakeoff size={40} strokeWidth={2.4} />}
           />
 
           <PromoPanel
@@ -401,7 +401,7 @@ export default function Home() {
             body={t("homePromoHotelsBody")}
             cta={t("homePromoHotelsCta")}
             href="/hotels/results"
-            icon={<Building2 size={60} />}
+            icon={<Building2 size={40} strokeWidth={2.35} />}
           />
         </section>
 
@@ -686,19 +686,16 @@ function PromoPanel({
         </LinkButton>
       </div>
 
-      <div
-        className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isViolet ? "bg-white/55 text-[#6d28d9]" : "bg-white/70 text-[#2563eb]"
-        }`}
-      >
-        <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />
-
-        <CircleDollarSign
-          className="absolute right-7 top-7 opacity-40"
-          size={26}
-        />
-
-        {icon}
+      <div className="absolute bottom-5 right-6 flex h-24 w-24 items-center justify-center sm:h-24 sm:w-24">
+        <div
+          className={`inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-white/90 shadow-[0_16px_28px_-22px_rgba(15,23,42,0.8)] ring-1 ${
+            isViolet
+              ? "text-[#5b21d6] ring-white/80"
+              : "text-[#1d4ed8] ring-white/75"
+          }`}
+        >
+          {icon}
+        </div>
       </div>
     </article>
   );
