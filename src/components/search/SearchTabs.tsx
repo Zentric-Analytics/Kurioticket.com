@@ -1261,7 +1261,7 @@ export function SearchTabs({
             setTab("flights")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
+            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
             tab === "flights"
               ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800"
@@ -1278,7 +1278,7 @@ export function SearchTabs({
             setTab("hotels")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
+            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
             tab === "hotels"
               ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800"
@@ -1369,7 +1369,7 @@ export function SearchTabs({
                   <button
                     type="button"
                     disabled
-                    className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-400"
+                    className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-500"
                   >
                     Multi-city —
                     Coming soon
@@ -1385,7 +1385,7 @@ export function SearchTabs({
                 ref={fromWrapRef}
                 className="relative min-h-[54px] px-0 py-0 pr-2"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.origin ||
                     "Origin"}
                 </label>
@@ -1423,7 +1423,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="From?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-500"
                   required
                 />
                 {shouldShowFromSuggestionsPanel ? (
@@ -1465,7 +1465,7 @@ export function SearchTabs({
                             {option.city} (
                             {option.code})
                           </p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs leading-5 text-slate-600">
                             {option.airport}
                             {option.country
                               ? ` · ${option.country}`
@@ -1496,7 +1496,7 @@ export function SearchTabs({
                 ref={toWrapRef}
                 className="relative min-h-[54px] px-0 py-0 pl-2"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
                     "Destination"}
                 </label>
@@ -1530,7 +1530,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="To?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-500"
                   required
                 />
                 {shouldShowToSuggestionsPanel ? (
@@ -1572,7 +1572,7 @@ export function SearchTabs({
                             {option.city} (
                             {option.code})
                           </p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs leading-5 text-slate-600">
                             {option.airport}
                             {option.country
                               ? ` · ${option.country}`
@@ -1594,7 +1594,7 @@ export function SearchTabs({
                 ref={dateWrapRef}
                 className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
                     "Travel dates"}
                 </label>
@@ -1688,7 +1688,7 @@ export function SearchTabs({
                                   }
                                 )}
                               </p>
-                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
                                 {weekdays.map(
                                   (
                                     weekday
@@ -1827,7 +1827,7 @@ export function SearchTabs({
                 ref={travelersWrapRef}
                 className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.travelers ||
                     "Travelers"}
                 </label>
@@ -1883,7 +1883,7 @@ export function SearchTabs({
                           <div key={row.key} className="flex items-center justify-between py-2 first:pt-1 last:pb-1">
                             <span>
                               <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
-                              <span className="block text-xs text-slate-500">{row.subtitle}</span>
+                              <span className="block text-xs leading-5 text-slate-600">{row.subtitle}</span>
                             </span>
                             <div className="flex items-center gap-1">
                               <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
@@ -1896,16 +1896,16 @@ export function SearchTabs({
                     </div>
                     <div className="mt-2 border-t border-slate-200 pt-2">
                       <div className="mb-1.5 flex items-center justify-between">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Cabin Class</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</p>
                       </div>
                       <div className="grid grid-cols-3 gap-1">
                         {[["economy", "Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
-                          <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-md border px-2 py-1 text-[10px] font-medium transition-colors text-center leading-tight sm:text-[11px]", draftCabinClass === value ? "border-indigo-400 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
+                          <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-md border px-2 py-1 text-xs font-medium leading-4 transition-colors text-center sm:text-xs", draftCabinClass === value ? "border-indigo-400 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
                         ))}
                       </div>
                     </div>
                     <div className="mt-2 flex items-center justify-end gap-2 border-t border-slate-200 pt-2">
-                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
+                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
                     </div>
                   </div>
                 ) : null}
@@ -1935,7 +1935,7 @@ export function SearchTabs({
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px] lg:gap-0">
               <div className="min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200">
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
                     "Destination"}
                 </label>
@@ -1954,7 +1954,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or hotel"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-500"
                   required
                 />
               </div>
@@ -1962,7 +1962,7 @@ export function SearchTabs({
                 ref={hotelDateWrapRef}
                 className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
                     "Travel dates"}
                 </label>
@@ -2055,7 +2055,7 @@ export function SearchTabs({
                                   }
                                 )}
                               </p>
-                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
                                 {weekdays.map(
                                   (
                                     weekday
@@ -2191,7 +2191,7 @@ export function SearchTabs({
                 ref={hotelGuestsRoomsWrapRef}
                 className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.guests ||
                     "Guests"}
                 </label>
@@ -2321,7 +2321,7 @@ export function SearchTabs({
                             <p className="text-sm font-semibold text-slate-900">
                               Pet-friendly
                             </p>
-                            <p className="pr-2 text-xs text-slate-500">
+                            <p className="pr-2 text-xs leading-5 text-slate-600">
                               Only show stays that allow pets
                             </p>
                           </div>
