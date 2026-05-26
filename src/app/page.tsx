@@ -172,7 +172,7 @@ export default function Home() {
 
         <section className="page-shell py-5">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-black tracking-normal text-slate-950">
+            <h2 className="text-2xl font-bold tracking-normal text-slate-900">
               {t("homePopularDestinations")}
             </h2>
 
@@ -229,10 +229,10 @@ export default function Home() {
         <section className="page-shell bg-transparent py-5 sm:py-6">
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
-              <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-[1.75rem]">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
                 Discover your next adventure here
               </h2>
-              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+              <p className="text-sm font-normal leading-6 text-slate-600 sm:text-base">
                 Compare smart route ideas, flexible fares, and destinations picked for your region.
               </p>
             </div>
@@ -616,7 +616,7 @@ function DestinationCard({
           <span className="text-sm font-semibold text-slate-600">
             {fromLabel}
           </span>
-          <span className="text-xl font-black text-slate-900">
+          <span className="text-xl font-semibold text-slate-800">
             <PriceText amountUsd={amountUsd} />
           </span>
         </div>
