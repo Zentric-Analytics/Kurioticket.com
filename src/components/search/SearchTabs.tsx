@@ -1292,7 +1292,8 @@ export function SearchTabs({
   };
 
   return (
-    <section className={wrapper}>
+    <>
+      <section className={wrapper}>
       <div className="mb-2 inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1">
         <button
           type="button"
@@ -2410,8 +2411,9 @@ export function SearchTabs({
           </div>
         </form>
       )}
+      </section>
 
       <RecentSearches />
-    </section>
+    </>
   );
 }
