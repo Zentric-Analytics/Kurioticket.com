@@ -483,7 +483,7 @@ export default function Home() {
 
         <section className="page-shell pb-12">
           <div className="w-full max-w-[640px]">
-            <div className="grid gap-2.5 rounded-lg border border-slate-200/80 bg-transparent p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3 sm:p-3.5">
+            <div className="grid gap-2.5 rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-3 sm:p-3.5">
               <div className="flex items-start gap-2.5">
                 <span className="rounded-full bg-slate-100 p-1.5 text-slate-600">
                   <Mail size={16} />
