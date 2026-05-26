@@ -229,15 +229,15 @@ export default function Home() {
         <section className="page-shell bg-transparent py-5 sm:py-6">
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
-              <h2 className="text-2xl font-black tracking-normal text-slate-950">
+              <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-[1.75rem]">
                 Discover your next adventure here
               </h2>
-              <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
+              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
                 Compare smart route ideas, flexible fares, and destinations picked for your region.
               </p>
             </div>
             <div className="flex items-center justify-end sm:hidden">
-              <div className="pointer-events-none mb-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">
+              <div className="pointer-events-none mb-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
                 Swipe for more
                 <ChevronRight size={13} className="text-slate-500" />
               </div>
@@ -262,15 +262,15 @@ export default function Home() {
 
                         <div className="min-w-0 flex-1 space-y-1.5">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="line-clamp-2 break-words text-[14px] font-extrabold leading-[1.2] text-slate-900">
+                            <p className="line-clamp-2 break-words text-sm font-extrabold leading-5 text-slate-900">
                               {item.title}
                             </p>
-                            <p className="shrink-0 text-[13px] font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
+                            <p className="shrink-0 text-sm font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
                           </div>
-                          <p className="line-clamp-2 text-[12px] font-medium leading-[1.3] text-slate-700">
+                          <p className="line-clamp-2 text-xs font-medium leading-5 text-slate-700">
                             {item.originCode} → {item.destinationCode} · {item.routeNote}
                           </p>
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.07em] text-slate-500">
+                          <p className="text-xs font-semibold uppercase tracking-[0.07em] text-slate-500">
                             One way · Economy · 1 traveler
                           </p>
                         </div>
@@ -299,15 +299,15 @@ export default function Home() {
 
                     <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="line-clamp-2 text-[16px] font-extrabold leading-[1.22] text-slate-900">
+                        <p className="line-clamp-2 text-base font-extrabold leading-6 text-slate-900">
                           {item.title}
                         </p>
-                        <p className="shrink-0 text-[16px] font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
+                        <p className="shrink-0 text-base font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
                       </div>
-                      <p className="line-clamp-2 text-[14px] font-medium leading-[1.35] text-slate-700">
+                      <p className="line-clamp-2 text-sm font-medium leading-6 text-slate-700">
                         {item.originCode} → {item.destinationCode} · {item.routeNote}
                       </p>
-                      <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                         One way · Economy · 1 traveler
                       </p>
                     </div>
@@ -321,10 +321,10 @@ export default function Home() {
         <section className="page-shell bg-transparent py-4 sm:py-5">
           <div className="space-y-3">
             <div className="max-w-3xl space-y-1.5">
-              <h2 className="text-xl font-black tracking-tight text-slate-950">
+              <h2 className="text-2xl font-black tracking-tight text-slate-950">
                 {t("homeTrustTitle")}
               </h2>
-              <p className="text-[15px] font-medium leading-6 text-slate-600">
+              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
                 {t("homeTrustSubtitle")}
               </p>
             </div>
@@ -335,8 +335,8 @@ export default function Home() {
                   <SearchCheck size={20} strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-extrabold leading-5 text-slate-900">{t("homeTrustCompareTitle")}</h3>
-                  <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
+                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustCompareTitle")}</h3>
+                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
                     {t("homeTrustCompareBody")}
                   </p>
                 </div>
@@ -347,8 +347,8 @@ export default function Home() {
                   <BadgeDollarSign size={20} strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-extrabold leading-5 text-slate-900">{t("homeTrustPricingTitle")}</h3>
-                  <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
+                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustPricingTitle")}</h3>
+                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
                     {t("homeTrustPricingBody")}
                   </p>
                 </div>
@@ -359,8 +359,8 @@ export default function Home() {
                   <ShieldCheck size={20} strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-[15px] font-extrabold leading-5 text-slate-900">{t("homeTrustHandoffTitle")}</h3>
-                  <p className="mt-1 text-[14px] font-medium leading-6 text-slate-600">
+                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustHandoffTitle")}</h3>
+                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
                     {t("homeTrustHandoffBody")}
                   </p>
                 </div>
@@ -394,7 +394,7 @@ export default function Home() {
             <h2 className="text-2xl font-black tracking-normal text-slate-950">
               Frequently asked questions
             </h2>
-            <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
+            <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
               Learn how Curioticket helps you compare flights, hotels, and travel options before booking with trusted providers.
             </p>
           </div>
@@ -448,7 +448,7 @@ export default function Home() {
                   key={item.question}
                   className="group border-b border-slate-200 py-4"
                 >
-                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-bold leading-6 text-slate-900 marker:hidden">
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-slate-900 marker:hidden sm:text-base">
                     <span>{item.question}</span>
                     <span
                       aria-hidden="true"
@@ -457,7 +457,7 @@ export default function Home() {
                       +
                     </span>
                   </summary>
-                  <p className="mt-2 text-sm font-medium leading-6 text-slate-600">
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-700 sm:text-base">
                     {item.answer}
                   </p>
                 </details>
@@ -475,11 +475,11 @@ export default function Home() {
                   </span>
 
                   <div className="hidden min-w-0 max-w-[17ch] space-y-0 sm:block lg:max-w-[24ch]">
-                    <h2 className="truncate text-[11px] font-black leading-tight text-slate-950 sm:text-[15px]">
+                    <h2 className="truncate text-xs font-black leading-tight text-slate-950 sm:text-sm">
                       {t("homeNewsletterTitle")}
                     </h2>
 
-                    <p className="hidden truncate text-[10px] font-semibold leading-4 text-slate-600 min-[420px]:block sm:text-[13px] sm:leading-5">
+                    <p className="hidden truncate text-xs font-semibold leading-5 text-slate-700 min-[420px]:block sm:text-sm">
                       {t("homeNewsletterBody")}
                     </p>
                   </div>
@@ -501,7 +501,7 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    className="focus-ring h-9 w-auto shrink-0 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 text-[11px] font-extrabold text-white transition hover:bg-slate-800 sm:h-11 sm:px-5 sm:text-sm"
+                    className="focus-ring h-9 w-auto shrink-0 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 text-xs font-extrabold text-white transition hover:bg-slate-800 sm:h-11 sm:px-5 sm:text-sm"
                   >
                     {t("homeSubscribe")}
                   </button>
