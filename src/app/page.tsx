@@ -242,17 +242,17 @@ export default function Home() {
                 <ChevronRight size={13} className="text-slate-500" />
               </div>
             </div>
-            <div className="-mx-1.5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1.5 pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
+            <div className="-mx-1.5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1.5 pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
               {mobileDiscoveryGroups.map((group, groupIndex) => (
-                <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-2 gap-3">
+                <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-2 gap-2.5">
                   {group.map((item) => {
                     return (
                       <Link
                         key={item.id}
                         href={buildDiscoveryLink(item)}
-                        className="group flex min-h-[88px] min-w-0 items-center gap-3 rounded-xl border border-slate-200/90 bg-white p-3 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_26px_-22px_rgba(15,23,42,0.62)]"
+                        className="group flex min-h-[80px] min-w-0 items-center gap-2.5 rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-[0_14px_24px_-20px_rgba(15,23,42,0.38)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_26px_-22px_rgba(15,23,42,0.62)]"
                       >
-                        <div className="relative h-[64px] w-[78px] shrink-0 overflow-hidden rounded-lg">
+                        <div className="relative h-[56px] w-[68px] shrink-0 overflow-hidden rounded-lg">
                           <DiscoveryCardImage
                             image={item.image}
                             imageAlt={item.imageAlt}
@@ -260,17 +260,17 @@ export default function Home() {
                           />
                         </div>
 
-                        <div className="min-w-0 flex-1 space-y-2">
+                        <div className="min-w-0 flex-1 space-y-1.5">
                           <div className="flex items-start justify-between gap-2">
-                            <p className="line-clamp-2 text-[15px] font-extrabold leading-[1.2] text-slate-900">
+                            <p className="line-clamp-2 break-words text-[14px] font-extrabold leading-[1.2] text-slate-900">
                               {item.title}
                             </p>
-                            <p className="shrink-0 text-[14px] font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
+                            <p className="shrink-0 text-[13px] font-extrabold leading-tight text-slate-900">${item.priceFromUsd}</p>
                           </div>
-                          <p className="line-clamp-2 text-[13px] font-medium leading-[1.35] text-slate-700">
+                          <p className="line-clamp-2 text-[12px] font-medium leading-[1.3] text-slate-700">
                             {item.originCode} → {item.destinationCode} · {item.routeNote}
                           </p>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.07em] text-slate-500">
                             One way · Economy · 1 traveler
                           </p>
                         </div>
