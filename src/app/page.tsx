@@ -457,9 +457,11 @@ function DestinationCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
-          {fromLabel}
-          <span className="text-xl font-black text-[#6d28d9]">
+        <div className="flex items-center gap-2 p-4">
+          <span className="text-sm font-semibold text-slate-600">
+            {fromLabel}
+          </span>
+          <span className="text-xl font-black text-slate-900">
             <PriceText amountUsd={amountUsd} />
           </span>
         </div>
