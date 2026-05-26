@@ -28,7 +28,6 @@ import {
   buildHotelRecentSearch,
   upsertRecentSearch,
 } from "@/lib/recent-searches";
-import { RecentSearches } from "@/components/search/RecentSearches";
 import {
   formatAirportLabel,
   type AirportOption,
@@ -2412,8 +2411,6 @@ export function SearchTabs({
         </form>
       )}
       </section>
-
-      <RecentSearches />
     </>
   );
 }
