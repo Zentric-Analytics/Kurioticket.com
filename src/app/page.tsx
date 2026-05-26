@@ -83,6 +83,89 @@ const destinations = [
   },
 ];
 
+const topFlightCategories = [
+  "Popular routes",
+  "Cities",
+  "Countries",
+  "Regions",
+  "Airports",
+] as const;
+
+const topFlightRoutes = [
+  {
+    id: "houston-new-york",
+    fromCity: "Houston",
+    toCity: "New York",
+    origin: "IAH",
+    destination: "JFK",
+    image:
+      "https://images.unsplash.com/photo-1496588152823-e45c2e33d9d3?auto=format&fit=crop&w=800&q=85",
+  },
+  {
+    id: "houston-los-angeles",
+    fromCity: "Houston",
+    toCity: "Los Angeles",
+    origin: "IAH",
+    destination: "LAX",
+    image:
+      "https://images.unsplash.com/photo-1468436139062-f60a71c5c892?auto=format&fit=crop&w=800&q=85",
+  },
+  {
+    id: "houston-las-vegas",
+    fromCity: "Houston",
+    toCity: "Las Vegas",
+    origin: "IAH",
+    destination: "LAS",
+    image:
+      "https://images.unsplash.com/photo-1487730116645-74489c95b41b?auto=format&fit=crop&w=800&q=85",
+  },
+  {
+    id: "houston-miami",
+    fromCity: "Houston",
+    toCity: "Miami",
+    origin: "IAH",
+    destination: "MIA",
+    image:
+      "https://images.unsplash.com/photo-1535498730771-e735b998cd64?auto=format&fit=crop&w=800&q=85",
+  },
+  {
+    id: "houston-orlando",
+    fromCity: "Houston",
+    toCity: "Orlando",
+    origin: "IAH",
+    destination: "MCO",
+    image:
+      "https://images.unsplash.com/photo-1597466765990-64ad1c35dafc?auto=format&fit=crop&w=800&q=85",
+  },
+  {
+    id: "houston-chicago",
+    fromCity: "Houston",
+    toCity: "Chicago",
+    origin: "IAH",
+    destination: "ORD",
+    image:
+      "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=800&q=85",
+  },
+  {
+    id: "houston-dallas",
+    fromCity: "Houston",
+    toCity: "Dallas",
+    origin: "IAH",
+    destination: "DFW",
+    image:
+      "https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=800&q=85",
+  },
+  {
+    id: "houston-atlanta",
+    fromCity: "Houston",
+    toCity: "Atlanta",
+    origin: "IAH",
+    destination: "ATL",
+    image:
+      "https://images.unsplash.com/photo-1575909812264-6902b55846ad?auto=format&fit=crop&w=800&q=85",
+  },
+];
+
 export default function Home() {
   const { locale } = useLocale();
   const [newsletterEmail, setNewsletterEmail] = useState("");
@@ -104,6 +187,11 @@ export default function Home() {
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const topFlightsDepartureDate = useMemo(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 30);
+    return date.toISOString().slice(0, 10);
+  }, []);
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -211,6 +299,86 @@ export default function Home() {
                   image={destination.image}
                 />
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="page-shell py-6">
+          <div className="space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:p-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-black tracking-normal text-slate-950">
+                Top flights from United States
+              </h2>
+              <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
+                Explore destinations you can reach from United States and start
+                making new plans.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2.5">
+              {topFlightCategories.map((category, index) => {
+                const isActive = index === 0;
+                return (
+                  <button
+                    key={category}
+                    type="button"
+                    aria-pressed={isActive}
+                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                      isActive
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:text-slate-900"
+                    }`}
+                  >
+                    {category}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {topFlightRoutes.map((route) => {
+                const href = {
+                  pathname: "/flights/results",
+                  query: {
+                    tripType: "one-way",
+                    origin: route.origin,
+                    destination: route.destination,
+                    departureDate: topFlightsDepartureDate,
+                    adults: "1",
+                    children: "0",
+                    infants: "0",
+                    travelers: "1",
+                    cabinClass: "economy",
+                  },
+                };
+
+                return (
+                  <Link
+                    key={route.id}
+                    href={href}
+                    className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition hover:border-slate-300 hover:bg-slate-50"
+                  >
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg">
+                      <Image
+                        src={route.image}
+                        alt={`${route.toCity} skyline`}
+                        fill
+                        sizes="56px"
+                        className="object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {route.fromCity} → {route.toCity}
+                      </p>
+                      <p className="text-xs font-medium text-slate-500">
+                        {route.origin} to {route.destination}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>
