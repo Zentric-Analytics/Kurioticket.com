@@ -6,21 +6,17 @@ import type { ReactNode } from "react";
 import { useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
-  BadgeCheck,
-  BellRing,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   Compass,
-  Filter,
   Heart,
   Hotel,
-  Network,
   Plane,
+  GitCompareArrows,
+  ReceiptText,
   ShieldCheck,
   Sparkles,
-  SlidersHorizontal,
-  Ticket,
   Mail,
 } from "lucide-react";
 
@@ -322,120 +318,48 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell bg-transparent pb-8 pt-1">
-          <div className="grid gap-5 bg-transparent sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-7">
-            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
-              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-violet-100/95 via-indigo-100/75 to-fuchsia-100/80 ring-1 ring-violet-200/80">
-                <span className="absolute left-3 top-3 h-16 w-16 rounded-full bg-white/55 blur-[2px]" />
-                <span className="absolute right-4 top-3 h-11 w-11 rounded-full border border-white/70 bg-white/35 shadow-[0_10px_18px_-14px_rgba(79,70,229,0.9)]" />
-                <span className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-300/55 bg-white/40 shadow-[0_15px_24px_-20px_rgba(79,70,229,0.95)]" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600">
-                  <Network size={34} strokeWidth={2.2} />
-                </span>
-                <span className="absolute bottom-5 left-[22%] text-violet-600">
-                  <Ticket size={17} strokeWidth={2.3} />
-                </span>
-                <span className="absolute bottom-5 right-[22%] text-indigo-700">
-                  <Compass size={17} strokeWidth={2.3} />
-                </span>
-                <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/85 px-2 py-1 text-[11px] font-semibold text-indigo-600">
-                  <Sparkles size={12} strokeWidth={2.3} />
-                  +
-                </span>
-              </div>
+        <section className="page-shell bg-transparent py-4 sm:py-5">
+          <div className="space-y-3">
+            <div className="max-w-3xl space-y-1.5">
+              <h2 className="text-lg font-black tracking-tight text-slate-950 sm:text-xl">
+                {t("homeTrustTitle")}
+              </h2>
+              <p className="text-sm font-medium leading-6 text-slate-600 sm:text-[15px]">
+                {t("homeTrustSubtitle")}
+              </p>
+            </div>
 
-              <div className="space-y-2.5 pt-0.5">
-                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
-                  {t("homeFeaturesMillionsTitle")}
-                </h2>
-
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
-                  {t("homeFeaturesMillionsBody")}
+            <div className="grid gap-2.5 sm:gap-3 md:grid-cols-3">
+              <article className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5">
+                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                  <GitCompareArrows size={18} strokeWidth={2.15} />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">{t("homeTrustCompareTitle")}</h3>
+                <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                  {t("homeTrustCompareBody")}
                 </p>
-              </div>
-            </article>
+              </article>
 
-            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
-              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-100/95 via-violet-100/70 to-sky-100/80 ring-1 ring-indigo-200/80">
-                <span className="absolute left-3 top-4 h-10 w-20 rounded-xl border border-white/70 bg-white/45" />
-                <span className="absolute left-6 top-7 text-indigo-600">
-                  <Filter size={16} strokeWidth={2.25} />
-                </span>
-                <span className="absolute left-1/2 top-1/2 h-[4.4rem] w-[4.4rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-indigo-300/60 bg-white/65 shadow-[0_16px_28px_-20px_rgba(79,70,229,0.95)]" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-700">
-                  <SlidersHorizontal size={30} strokeWidth={2.2} />
-                </span>
-                <span className="absolute bottom-4 right-5 text-violet-600">
-                  <Compass size={18} strokeWidth={2.25} />
-                </span>
-                <span className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-indigo-200/80 bg-white/85 text-indigo-600">
-                  <Sparkles size={11} strokeWidth={2.3} />
-                </span>
-              </div>
-
-              <div className="space-y-2.5 pt-0.5">
-                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
-                  {t("homeFeaturesFlexibleTitle")}
-                </h2>
-
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
-                  {t("homeFeaturesFlexibleBody")}
+              <article className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5">
+                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
+                  <ReceiptText size={18} strokeWidth={2.15} />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">{t("homeTrustPricingTitle")}</h3>
+                <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                  {t("homeTrustPricingBody")}
                 </p>
-              </div>
-            </article>
+              </article>
 
-            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
-              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-100/95 via-teal-50/80 to-cyan-100/85 ring-1 ring-emerald-200/80">
-                <span className="absolute left-4 top-3 h-12 w-12 rounded-2xl border border-white/70 bg-white/50" />
-                <span className="absolute right-5 top-4 h-9 w-9 rounded-full border border-emerald-200/70 bg-white/65" />
-                <span className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-300/60 bg-white/50 shadow-[0_16px_28px_-20px_rgba(13,148,136,0.95)]" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-teal-700">
-                  <ShieldCheck size={34} strokeWidth={2.15} />
-                </span>
-                <span className="absolute bottom-4 left-6 text-emerald-600">
-                  <BadgeCheck size={18} strokeWidth={2.25} />
-                </span>
-                <span className="absolute bottom-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/70 bg-white/85 text-teal-700">
-                  <Sparkles size={11} strokeWidth={2.3} />
-                </span>
-              </div>
-
-              <div className="space-y-2.5 pt-0.5">
-                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
-                  {t("homeFeaturesSecureTitle")}
-                </h2>
-
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
-                  {t("homeFeaturesSecureBody")}
+              <article className="rounded-xl border border-slate-200 bg-white/90 px-3 py-2.5">
+                <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <ShieldCheck size={18} strokeWidth={2.15} />
+                </div>
+                <h3 className="text-sm font-bold text-slate-900">{t("homeTrustHandoffTitle")}</h3>
+                <p className="mt-1 text-[13px] font-medium leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                  {t("homeTrustHandoffBody")}
                 </p>
-              </div>
-            </article>
-
-            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
-              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-amber-100/95 via-orange-100/75 to-rose-100/80 ring-1 ring-orange-200/80">
-                <span className="absolute left-4 top-4 h-10 w-10 rounded-full border border-white/70 bg-white/55 shadow-[0_14px_22px_-20px_rgba(249,115,22,1)]" />
-                <span className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-orange-200/80 bg-white/85 text-orange-600">
-                  <BellRing size={12} strokeWidth={2.3} />
-                </span>
-                <span className="absolute left-1/2 top-1/2 h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-orange-300/60 bg-white/60 shadow-[0_16px_28px_-20px_rgba(249,115,22,0.95)]" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-orange-600">
-                  <CircleDollarSign size={32} strokeWidth={2.2} />
-                </span>
-                <span className="absolute bottom-4 right-6 text-rose-500">
-                  <Sparkles size={17} strokeWidth={2.2} />
-                </span>
-              </div>
-
-              <div className="space-y-2.5 pt-0.5">
-                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
-                  {t("homeFeaturesDealsTitle")}
-                </h2>
-
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
-                  {t("homeFeaturesDealsBody")}
-                </p>
-              </div>
-            </article>
+              </article>
+            </div>
           </div>
         </section>
 
