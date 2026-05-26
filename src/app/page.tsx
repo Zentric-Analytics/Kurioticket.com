@@ -231,15 +231,15 @@ export default function Home() {
                 Compare smart route ideas, flexible fares, and destinations picked for your region.
               </p>
             </div>
-            <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-4">
               {discoveryItems.map((item) => {
                 return (
                   <Link
                     key={item.id}
                     href={buildDiscoveryLink(item)}
-                    className="group flex min-w-[16rem] snap-start items-center gap-3 rounded-xl border border-slate-200/85 bg-white/95 p-2.5 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)] sm:min-w-0 sm:p-3"
+                    className="group flex min-w-0 items-center gap-2 rounded-xl border border-slate-200/85 bg-white/95 p-2 shadow-[0_12px_20px_-18px_rgba(15,23,42,0.35)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_24px_-20px_rgba(15,23,42,0.6)] sm:gap-2.5 sm:p-2.5"
                   >
-                    <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-lg sm:h-[4.5rem] sm:w-24">
+                    <div className="relative h-14 w-16 shrink-0 overflow-hidden rounded-lg sm:h-16 sm:w-20">
                       <DiscoveryCardImage
                         image={item.image}
                         imageAlt={item.imageAlt}
@@ -248,16 +248,16 @@ export default function Home() {
                     </div>
 
                     <div className="min-w-0 flex-1 space-y-1">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="truncate text-[15px] font-bold leading-tight text-slate-900 sm:text-base">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="truncate text-[13px] font-bold leading-tight text-slate-900 sm:text-sm">
                           {item.title}
                         </p>
-                        <p className="shrink-0 text-sm font-bold text-slate-900">${item.priceFromUsd}</p>
+                        <p className="shrink-0 text-xs font-bold text-slate-900 sm:text-sm">${item.priceFromUsd}</p>
                       </div>
-                      <p className="line-clamp-2 text-xs font-medium leading-5 text-slate-600 sm:text-[13px]">
+                      <p className="line-clamp-2 text-[11px] font-medium leading-4 text-slate-600 sm:text-xs">
                         {item.originCode} → {item.destinationCode} · {item.routeNote}
                       </p>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.07em] text-slate-500 sm:text-[11px]">
                         One way · Economy · 1 traveler
                       </p>
                     </div>
