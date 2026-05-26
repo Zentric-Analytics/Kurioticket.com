@@ -486,7 +486,7 @@ export default function Home() {
         </section>
 
         <section className="page-shell pb-12">
-          <div className="mx-auto w-full max-w-5xl">
+          <div className="w-full max-w-[740px]">
             <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
               <div className="flex items-start gap-4">
                 <span className="rounded-full bg-violet-100 p-2 text-[#5b21d6]">
