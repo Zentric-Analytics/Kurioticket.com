@@ -658,7 +658,7 @@ function PromoPanel({
   return (
     <article
       className={`relative min-h-56 overflow-hidden rounded-xl p-8 ${
-        isViolet ? "bg-[#f1e8ff]" : "bg-[#fff3e3]"
+        isViolet ? "bg-[#f1e8ff]" : "bg-[#eaf2ff]"
       }`}
     >
       <div className="relative z-10 max-w-xs">
@@ -677,7 +677,7 @@ function PromoPanel({
           className={`mt-5 ${
             isViolet
               ? "bg-[#5b21d6] hover:bg-[#4c1d95]"
-              : "bg-[#e87817] hover:bg-[#c75f0b]"
+              : "bg-[#2563eb] hover:bg-[#1d4ed8]"
           }`}
         >
           {cta}
@@ -687,7 +687,7 @@ function PromoPanel({
 
       <div
         className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isViolet ? "bg-white/55 text-[#6d28d9]" : "bg-white/70 text-[#e87817]"
+          isViolet ? "bg-white/55 text-[#6d28d9]" : "bg-white/70 text-[#2563eb]"
         }`}
       >
         <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />
