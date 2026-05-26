@@ -391,7 +391,7 @@ export default function Home() {
 
         <section className="page-shell pb-12 pt-2 sm:pt-3">
           <div className="max-w-3xl space-y-2">
-            <h2 className="text-2xl font-black tracking-normal text-slate-950">
+            <h2 className="text-2xl font-bold tracking-normal text-slate-900">
               Frequently asked questions
             </h2>
             <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
@@ -649,7 +649,7 @@ function PromoPanel({
       }`}
     >
       <div className="relative z-10 max-w-xs">
-        <h2 className="text-2xl font-black leading-tight text-slate-950">
+        <h2 className="text-2xl font-bold leading-tight text-slate-900">
           {title}
         </h2>
 
