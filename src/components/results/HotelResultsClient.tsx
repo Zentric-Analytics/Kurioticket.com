@@ -99,6 +99,11 @@ export function HotelResultsClient() {
     })
       .then(async (response) => {
         const data = await response.json();
+        if (data.warningCategory === "no_live_hotel_provider") {
+          throw new Error(
+            "Live hotel search is temporarily unavailable. We could not connect to a live hotel provider for this search. Please try again later.",
+          );
+        }
         if (!response.ok) throw new Error(data.error || "Unable to search hotels.");
         return data as { results: PublicHotelResult[]; warnings?: string[] };
       })
