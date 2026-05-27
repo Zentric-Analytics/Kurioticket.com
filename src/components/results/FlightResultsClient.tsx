@@ -558,30 +558,8 @@ export function FlightResultsClient() {
                     value={cabinClassInput}
                   />
 
-                  <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
-                    <select
-                      id="tripType"
-                      name="tripType"
-                      value={tripTypeInput}
-                      onChange={(event) => {
-                        const nextTripType = event.target.value;
-                        setTripTypeInput(nextTripType);
-                        if (nextTripType !== "round-trip") {
-                          setReturnDateInput("");
-                          if (activeDatePicker === "return") {
-                            setActiveDatePicker(null);
-                            setDatePickerPosition(null);
-                          }
-                        }
-                      }}
-                      className="h-9 rounded-md border border-slate-200 bg-white px-3 pr-8 text-xs font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 appearance-none"
-                    >
-                      <option value="round-trip">Round-trip</option>
-                      <option value="one-way">One-way</option>
-                    </select>
-                  </div>
                   <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-                    <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
+                  <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
                     <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                     <div className="relative min-h-[54px] px-0 py-0 pr-2" ref={originWrapRef}>
                       <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600" htmlFor="origin">
@@ -738,6 +716,34 @@ export function FlightResultsClient() {
                     >
                       Search
                     </Button>
+                  </div>
+                </div>
+                <div className="mt-2 flex items-center">
+                  <div className="relative inline-flex items-center">
+                    <select
+                      id="tripType"
+                      name="tripType"
+                      value={tripTypeInput}
+                      onChange={(event) => {
+                        const nextTripType = event.target.value;
+                        setTripTypeInput(nextTripType);
+                        if (nextTripType !== "round-trip") {
+                          setReturnDateInput("");
+                          if (activeDatePicker === "return") {
+                            setActiveDatePicker(null);
+                            setDatePickerPosition(null);
+                          }
+                        }
+                      }}
+                      className="appearance-none border-0 bg-transparent py-0 pl-0 pr-5 text-sm font-medium text-slate-700 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-0"
+                    >
+                      <option value="round-trip">Round-trip</option>
+                      <option value="one-way">One-way</option>
+                    </select>
+                    <ChevronDown
+                      size={14}
+                      className="pointer-events-none absolute right-0 text-slate-500"
+                    />
                   </div>
                 </div>
             </form>
