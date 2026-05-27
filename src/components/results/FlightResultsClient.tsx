@@ -483,57 +483,39 @@ export function FlightResultsClient() {
     return (
       <main className="flex-1 bg-[#f6f8fb] pb-8 pt-24 sm:pt-28 lg:pt-28">
         <section className="page-shell">
-          <div className="relative overflow-hidden rounded-3xl bg-[#0d2a66]">
-            <div className="relative min-h-[600px] sm:min-h-[620px] lg:min-h-[500px]">
-              <Image
-                src="https://images.pexels.com/photos/615060/pexels-photo-615060.jpeg?cs=srgb&dl=pexels-christine-renard-198055-615060.jpg&fm=jpg"
-                alt="Airplane wing over a river canyon landscape"
-                fill
-                sizes="100vw"
-                className="object-cover object-center"
-                priority
-              />
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)] sm:p-5 lg:p-6">
+            <div className="inline-flex rounded-xl bg-white p-1.5">
+              <label className="sr-only" htmlFor="tripType">
+                Trip type
+              </label>
+              <select
+                id="tripType"
+                name="tripType"
+                value={tripTypeInput}
+                onChange={(event) => {
+                  const nextTripType = event.target.value;
+                  setTripTypeInput(nextTripType);
 
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0b1e4a]/90 via-[#0c2f77]/75 to-[#2f1f7a]/55" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0b1e4a]/75 via-[#0b1e4a]/20 to-transparent" />
+                  if (nextTripType !== "round-trip") {
+                    setReturnDateInput("");
 
-              <div className="relative z-10 p-5 sm:p-7 lg:p-8 lg:pb-36">
-                <h1 className="mt-0 max-w-4xl text-4xl font-black leading-tight tracking-tight text-white sm:text-5xl lg:max-w-3xl lg:text-6xl">
-                  Find hundreds of cheap flights with just one search!
-                </h1>
+                    if (activeDatePicker === "return") {
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                    }
+                  }
+                }}
+                className="h-12 rounded-xl border border-slate-300 bg-white px-3 pr-9 text-[16px] font-bold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm appearance-none"
+              >
+                <option value="round-trip">Round-trip</option>
+                <option value="one-way">One-way</option>
+              </select>
+            </div>
 
-                <div className="mt-9 inline-flex rounded-xl bg-white p-1.5 shadow-[0_8px_20px_rgba(15,23,42,0.24)]">
-                  <label className="sr-only" htmlFor="tripType">
-                    Trip type
-                  </label>
-                  <select
-                    id="tripType"
-                    name="tripType"
-                    value={tripTypeInput}
-                    onChange={(event) => {
-                      const nextTripType = event.target.value;
-                      setTripTypeInput(nextTripType);
-
-                      if (nextTripType !== "round-trip") {
-                        setReturnDateInput("");
-
-                        if (activeDatePicker === "return") {
-                          setActiveDatePicker(null);
-                          setDatePickerPosition(null);
-                        }
-                      }
-                    }}
-                    className="h-12 rounded-xl border border-slate-300 bg-white px-3 pr-9 text-[16px] font-bold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm appearance-none"
-                  >
-                    <option value="round-trip">Round-trip</option>
-                    <option value="one-way">One-way</option>
-                  </select>
-                </div>
-
-                <form
-                  className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)] lg:absolute lg:bottom-8 lg:left-8 lg:right-8 lg:mt-0 lg:w-auto"
-                  onSubmit={(event) => {
-                    event.preventDefault();
+            <form
+              className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)]"
+              onSubmit={(event) => {
+                event.preventDefault();
 
                     if (
                       !departureDateInput ||
@@ -567,8 +549,8 @@ export function FlightResultsClient() {
                     });
 
                     router.push(`/flights/results?${nextParams.toString()}`);
-                  }}
-                >
+              }}
+            >
                   <input
                     type="hidden"
                     name="departureDate"
@@ -765,7 +747,7 @@ export function FlightResultsClient() {
                       Search
                     </Button>
                   </div>
-                </form>
+            </form>
 
                 {activeDatePicker && datePickerPosition ? (
                   <DatePickerPopover
@@ -854,8 +836,6 @@ export function FlightResultsClient() {
                     onCabinClassChange={setCabinClassInput}
                   />
                 ) : null}
-              </div>
-            </div>
           </div>
 
           <div className="mt-8 space-y-8">
