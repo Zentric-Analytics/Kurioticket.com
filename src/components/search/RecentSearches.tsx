@@ -127,11 +127,11 @@ export function RecentSearches() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-6xl">
-      <div className="mb-2.5 flex items-start justify-between gap-3 md:mb-3">
+    <section className="mx-auto w-full max-w-6xl px-1">
+      <div className="mb-2 flex items-start justify-between gap-3 md:mb-2.5">
         <div>
-          <h2 className="text-sm font-semibold text-slate-900">Recent searches</h2>
-          <p className="text-xs text-slate-600 md:text-sm">Pick up where you left off.</p>
+          <h2 className="text-sm font-semibold leading-tight text-slate-900 md:text-[0.95rem]">Recent searches</h2>
+          <p className="text-xs leading-tight text-slate-600 md:text-[0.8rem]">Pick up where you left off.</p>
         </div>
         <button
           type="button"
@@ -142,14 +142,14 @@ export function RecentSearches() {
         </button>
       </div>
 
-      <div className="flex snap-x gap-2.5 overflow-x-auto pb-1.5 md:grid md:grid-cols-3 md:gap-2.5 md:overflow-visible xl:grid-cols-4">
+      <div className="grid auto-cols-[minmax(182px,1fr)] grid-flow-col gap-2 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:grid-flow-row md:grid-cols-3 md:overflow-visible lg:grid-cols-4">
         {entries.map((entry) => (
           <Link
             key={entry.id}
             href={entry.href}
-            className="focus-ring group relative flex min-h-[150px] min-w-[190px] snap-start flex-col overflow-hidden rounded-xl border border-slate-200 bg-slate-50 transition-colors hover:border-slate-300 hover:bg-white md:min-h-[156px] md:min-w-0"
+            className="focus-ring group relative flex h-full min-h-[142px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors hover:border-slate-300"
           >
-            <img src={resolveCardImage(entry)} alt={entry.label} className="h-16 w-full object-cover md:h-[4.25rem]" loading="lazy" />
+            <img src={resolveCardImage(entry)} alt={entry.label} className="h-14 w-full object-cover md:h-[3.85rem]" loading="lazy" />
             <button
               type="button"
               aria-label="Remove recent search"
@@ -162,11 +162,11 @@ export function RecentSearches() {
             >
               <X className="h-3.5 w-3.5" />
             </button>
-            <div className="flex flex-1 flex-col space-y-1 p-2.5">
+            <div className="flex flex-1 flex-col gap-1 p-2.5">
               <span className="inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-600">
                 {entry.type === "flight" ? "Flight" : "Hotel"}
               </span>
-              <p className="line-clamp-1 text-sm font-semibold text-slate-900">{entry.label}</p>
+              <p className="line-clamp-1 text-[0.92rem] font-semibold leading-tight text-slate-900">{entry.label}</p>
               <p className="line-clamp-2 text-xs text-slate-600">{entry.subtitle}</p>
             </div>
           </Link>
