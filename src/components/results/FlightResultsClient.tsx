@@ -5,9 +5,13 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+  ArrowRightLeft,
   BadgeCheck,
+  Calendar,
+  ChevronDown,
+  Minus,
   Plane,
-  Repeat2,
+  Plus,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
@@ -484,7 +488,7 @@ export function FlightResultsClient() {
       <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-24 sm:pt-28 lg:pt-28">
         <section className="page-shell">
             <form
-              className="mx-auto mt-0 w-full max-w-5xl space-y-1"
+              className="mx-auto mt-0 w-full max-w-5xl space-y-1.5"
               onSubmit={(event) => {
                 event.preventDefault();
 
@@ -554,11 +558,34 @@ export function FlightResultsClient() {
                     value={cabinClassInput}
                   />
 
-                  <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-0.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-                    <div className="grid grid-cols-1 gap-1 lg:grid-cols-[minmax(0,1.45fr)_auto_minmax(0,1.45fr)_minmax(0,1.05fr)_minmax(0,0.95fr)_116px] lg:items-stretch lg:gap-0">
-                    <div className="relative" ref={originWrapRef}>
-                      <label className="sr-only" htmlFor="origin">
-                        From
+                  <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
+                    <select
+                      id="tripType"
+                      name="tripType"
+                      value={tripTypeInput}
+                      onChange={(event) => {
+                        const nextTripType = event.target.value;
+                        setTripTypeInput(nextTripType);
+                        if (nextTripType !== "round-trip") {
+                          setReturnDateInput("");
+                          if (activeDatePicker === "return") {
+                            setActiveDatePicker(null);
+                            setDatePickerPosition(null);
+                          }
+                        }
+                      }}
+                      className="h-9 rounded-md border border-slate-200 bg-white px-3 pr-8 text-xs font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 appearance-none"
+                    >
+                      <option value="round-trip">Round-trip</option>
+                      <option value="one-way">One-way</option>
+                    </select>
+                  </div>
+                  <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+                    <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
+                    <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                    <div className="relative min-h-[54px] px-0 py-0 pr-2" ref={originWrapRef}>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600" htmlFor="origin">
+                        Origin
                       </label>
                       <input
                         id="origin"
@@ -577,9 +604,9 @@ export function FlightResultsClient() {
                           setOriginCode("");
                           setActiveSuggest("origin");
                         }}
-                        placeholder="From"
+                        placeholder="From?"
                         autoComplete="off"
-                        className="h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-1 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-visible:border-slate-200 lg:focus-visible:ring-0 md:text-sm"
+                        className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                       />
 
                       {activeSuggest === "origin" && dropdownPosition ? (
@@ -597,7 +624,7 @@ export function FlightResultsClient() {
                       ) : null}
                     </div>
 
-                    <div className="flex items-center justify-center py-0.5 lg:py-0 lg:px-1.5">
+                    <div className="flex items-center justify-center">
                       <button
                         type="button"
                         aria-label="Swap origin and destination"
@@ -610,15 +637,15 @@ export function FlightResultsClient() {
                           setDestinationInput(currentOrigin);
                           setDestinationCode(currentOriginCode);
                         }}
-                        className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                        className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                       >
-                        <Repeat2 size={18} />
+                        <ArrowRightLeft size={14} />
                       </button>
                     </div>
 
-                    <div className="relative" ref={destinationWrapRef}>
-                      <label className="sr-only" htmlFor="destination">
-                        To
+                    <div className="relative min-h-[54px] px-0 py-0 pl-2" ref={destinationWrapRef}>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600" htmlFor="destination">
+                        Destination
                       </label>
                       <input
                         id="destination"
@@ -637,9 +664,9 @@ export function FlightResultsClient() {
                           setDestinationCode("");
                           setActiveSuggest("destination");
                         }}
-                        placeholder="To"
+                        placeholder="To?"
                         autoComplete="off"
-                        className="h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-1 text-[15px] font-semibold text-slate-900 placeholder:text-slate-400 transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-visible:border-slate-200 lg:focus-visible:ring-0 md:text-sm"
+                        className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                       />
 
                       {activeSuggest === "destination" && dropdownPosition ? (
@@ -656,33 +683,31 @@ export function FlightResultsClient() {
                         />
                       ) : null}
                     </div>
+                    </div>
 
-                    <div className="relative" ref={departureWrapRef}>
+                    <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0" ref={departureWrapRef}>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
+                        Travel dates
+                      </label>
                       <button
                         type="button"
                         aria-label="Travel dates"
                         onClick={() => setActiveDatePicker("departure")}
-                        className="h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-left text-[15px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-visible:border-slate-200 lg:focus-visible:ring-0 md:text-sm"
+                        className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                       >
-                        <span className="block text-[10px] font-bold uppercase tracking-[0.07em] text-slate-500">
-                          Travel dates
-                        </span>
-                        <span className="block truncate">
+                        <Calendar size={16} className="shrink-0 text-slate-500" />
+                        <span className="truncate">
                           {departureDateInput
                             ? tripTypeInput === "round-trip" && returnDateInput
                               ? `${formatDateLabel(departureDateInput)} — ${formatDateLabel(returnDateInput)}`
                               : formatDateLabel(departureDateInput)
                             : "Travel dates"}
                         </span>
-                        {tripTypeInput === "round-trip" && !returnDateInput ? (
-                          <span className="block text-[11px] font-medium text-slate-400">
-                            Add return
-                          </span>
-                        ) : null}
                       </button>
                     </div>
 
-                    <div className="relative" ref={travelerCabinWrapRef}>
+                    <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0" ref={travelerCabinWrapRef}>
+                      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">Travelers</label>
                       <button
                         type="button"
                         aria-label="Travelers and cabin class"
@@ -695,56 +720,27 @@ export function FlightResultsClient() {
                             return next;
                           });
                         }}
-                        className="h-11 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-left text-[15px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-none lg:border-0 lg:hover:border-slate-200 lg:focus-visible:border-slate-200 lg:focus-visible:ring-0 md:text-sm"
+                        className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                       >
-                        {buildTravelerCabinSummary(
+                        <span className="block text-sm font-medium text-slate-900">{buildTravelerCabinSummary(
                           adultCount,
                           childCount,
                           infantCount,
                           cabinClassInput
-                        )}
+                        )}</span>
+                        <ChevronDown className={cn("h-4 w-4 shrink-0 text-slate-500 transition-transform", travelerPopoverOpen && "rotate-180")} />
                       </button>
                     </div>
 
                     <Button
                       type="submit"
-                      className="h-11 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 transition hover:from-indigo-900 hover:to-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 lg:h-full lg:min-h-[50px] lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
+                      className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
                     >
                       Search
                     </Button>
                   </div>
                 </div>
             </form>
-
-            <div className="mx-auto mt-2 w-full max-w-5xl">
-              <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
-                <label className="sr-only" htmlFor="tripType">
-                  Trip type
-                </label>
-                <select
-                  id="tripType"
-                  name="tripType"
-                  value={tripTypeInput}
-                  onChange={(event) => {
-                    const nextTripType = event.target.value;
-                    setTripTypeInput(nextTripType);
-
-                    if (nextTripType !== "round-trip") {
-                      setReturnDateInput("");
-
-                      if (activeDatePicker === "return") {
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                      }
-                    }
-                  }}
-                  className="h-9 rounded-md border border-slate-200 bg-white px-3 pr-8 text-xs font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 appearance-none"
-                >
-                  <option value="round-trip">Round-trip</option>
-                  <option value="one-way">One-way</option>
-                </select>
-              </div>
-            </div>
 
                 {activeDatePicker && datePickerPosition ? (
                   <DatePickerPopover
@@ -1404,7 +1400,7 @@ function DatePickerPopover({
         width: position.width,
         zIndex: 9999,
       }}
-      className="w-full max-w-[min(420px,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xl ring-1 ring-black/5 sm:p-4"
+      className="w-full max-w-[min(620px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:p-4"
     >
       <div className="mb-3 flex items-center justify-between">
         <button
@@ -1431,7 +1427,7 @@ function DatePickerPopover({
         <div className="hidden md:block">{renderMonth(rightMonth)}</div>
       </div>
 
-      <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
         <button
           type="button"
           className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm"
@@ -1445,7 +1441,7 @@ function DatePickerPopover({
           className="min-h-11 rounded-xl bg-[#0a66c2] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#085aa9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-1"
           onClick={onToday}
         >
-          Today
+          Done
         </button>
       </div>
     </div>
@@ -1485,10 +1481,10 @@ function TravelerCabinPopover({
         width: position.width,
         zIndex: 9999,
       }}
-      className="w-full max-w-[min(420px,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xl ring-1 ring-black/5 sm:p-4"
+      className="w-full max-w-[min(350px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-900/10"
     >
       <div>
-        <h3 className="text-base font-black text-slate-950">Travelers</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Travelers</h3>
 
         <div className="mt-3 divide-y divide-slate-100">
           <CounterRow
@@ -1520,10 +1516,9 @@ function TravelerCabinPopover({
         </div>
       </div>
 
-      <div className="mt-4 border-t border-slate-100 pt-4">
-        <h3 className="text-base font-black text-slate-950">Cabin Class</h3>
-
-        <div className="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+      <div className="mt-2 border-t border-slate-200 pt-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</h3>
+        <div className="mt-2 grid grid-cols-3 gap-1">
           {cabinClassOptions.map((option) => {
             const selected = option.value === cabinClass;
 
@@ -1534,10 +1529,10 @@ function TravelerCabinPopover({
                 aria-pressed={selected}
                 onClick={() => onCabinClassChange(option.value)}
                 className={cn(
-                  "min-h-9 rounded-lg border px-3 py-2 text-left text-xs font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm",
+                  "focus-ring rounded-md border px-2 py-1 text-xs font-medium leading-4 transition-colors text-center",
                   selected
-                    ? "border-[#0a66c2] bg-blue-50 text-[#0a66c2]"
-                    : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
+                    ? "border-indigo-400 bg-indigo-50 text-indigo-900"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
                 )}
               >
                 {option.label}
@@ -1575,18 +1570,18 @@ function CounterRow({
         <p className="text-xs font-semibold text-slate-500">{description}</p>
       </div>
 
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           aria-label={`Decrease ${label}`}
           disabled={decrementDisabled}
           onClick={() => onChange(value - 1)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+          className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          −
+          <Minus className="h-3.5 w-3.5" />
         </button>
 
-        <span className="w-6 text-center text-sm font-black text-slate-950">
+        <span className="min-w-7 text-center text-sm font-semibold text-slate-900">
           {value}
         </span>
 
@@ -1595,9 +1590,9 @@ function CounterRow({
           aria-label={`Increase ${label}`}
           disabled={incrementDisabled}
           onClick={() => onChange(value + 1)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+          className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          +
+          <Plus className="h-3.5 w-3.5" />
         </button>
       </div>
     </div>
@@ -1625,7 +1620,7 @@ function SuggestionList({
         width: position.width,
         zIndex: 9999,
       }}
-      className="max-h-[280px] w-full max-w-[min(420px,calc(100vw-2rem))] overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl ring-1 ring-black/5"
+      className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl"
     >
       {suggestions.length ? (
         suggestions.map((item) => (
@@ -1634,30 +1629,10 @@ function SuggestionList({
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(airportInputValue(item))}
-            className="block w-full rounded-md border-b border-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 last:border-b-0"
+            className="block w-full px-3 py-2 text-left transition-colors hover:bg-slate-50"
           >
-            <span className="flex items-center gap-3">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
-                <Plane size={16} />
-              </span>
-
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-bold text-slate-950 sm:text-sm">
-                  {item.city}, {item.country}
-                </span>
-                <span className="block truncate text-xs font-medium text-slate-500">
-                  {item.airport}
-                </span>
-              </span>
-
-              <span className="shrink-0 text-xs font-bold uppercase tracking-wide text-slate-500">
-                {item.code}
-              </span>
-              <span
-                className="h-5 w-5 shrink-0 rounded border border-slate-300 bg-white"
-                aria-hidden="true"
-              />
-            </span>
+            <p className="text-sm font-medium text-slate-900">{item.city} ({item.code})</p>
+            <p className="text-xs leading-5 text-slate-600">{item.airport}{item.country ? ` · ${item.country}` : ""}</p>
           </button>
         ))
       ) : (
