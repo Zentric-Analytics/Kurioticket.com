@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ExternalLink, Heart, Search, Sparkles, Trash2, X } from "lucide-react";
+import { ArrowRight, ExternalLink, Heart, Search, Trash2, X } from "lucide-react";
 
 import {
   clearRecentSearches,
@@ -180,33 +180,6 @@ export function SavedTripsAndRecentSearches() {
   return (
     <div className="page-shell">
       <div className="space-y-8 pb-2 md:space-y-10">
-        <section className="relative overflow-hidden rounded-[2rem] border border-violet-100/80 bg-[linear-gradient(135deg,rgba(238,242,255,0.95)_0%,rgba(251,244,255,0.94)_42%,rgba(255,255,255,0.96)_100%)] p-6 shadow-[0_30px_65px_-50px_rgba(15,23,42,0.55)] md:p-10">
-          <div className="absolute -right-12 -top-16 h-44 w-44 rounded-full bg-violet-200/45 blur-3xl" aria-hidden />
-          <div className="absolute -bottom-20 left-0 h-44 w-44 rounded-full bg-cyan-100/60 blur-3xl" aria-hidden />
-
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/85 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-violet-700">
-              <Sparkles className="h-3.5 w-3.5" />
-              Travel shortlist
-            </div>
-
-            <h1 className="mt-4 max-w-3xl text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl md:text-[2.8rem] md:leading-[1.05]">
-              Saved trips & recent searches, always ready for your next getaway.
-            </h1>
-
-            <p className="mt-3 max-w-2xl text-sm font-medium leading-7 text-slate-700 sm:text-base">
-              Keep your best ideas in one beautiful place. Revisit destinations, compare options faster, and continue planning without starting over.
-            </p>
-
-            <div className="mt-5 inline-flex items-start gap-2.5 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-3 text-sm text-slate-600 shadow-sm">
-              <Heart className="mt-0.5 h-4 w-4 shrink-0 fill-rose-500 text-rose-500" />
-              <p>
-                Saved items are stored <span className="font-semibold text-slate-900">on this device</span> for both signed-in and guest browsing sessions.
-              </p>
-            </div>
-          </div>
-        </section>
-
         <section className="space-y-4 md:space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
