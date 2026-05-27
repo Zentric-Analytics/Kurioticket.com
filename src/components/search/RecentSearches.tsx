@@ -11,31 +11,99 @@ import {
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
 
-const CITY_IMAGE_MAP: Record<string, string> = {
-  "new york": "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80",
-  london: "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=1200&q=80",
-  paris: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80",
-  dubai: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80",
-  tokyo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80",
-  lagos: "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1200&q=80",
-  abuja: "https://images.unsplash.com/photo-1489493585363-d69421e0edd3?auto=format&fit=crop&w=1200&q=80",
-  houston: "https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=1200&q=80",
-  miami: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
-  "las vegas": "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=80",
-  "san francisco": "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1200&q=80",
-  seattle: "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=1200&q=80",
-};
+const DESTINATION_IMAGE_MAP: Array<{ keys: string[]; image: string }> = [
+  { keys: ["new york", "nyc", "jfk", "lga", "ewr"], image: "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["los angeles", "lax"], image: "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["las vegas", "las"], image: "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["miami", "mia"], image: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["orlando", "mco"], image: "https://images.unsplash.com/photo-1597466599360-3b9775841aec?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["chicago", "ord", "mdw"], image: "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["houston", "iah", "hou"], image: "https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["san francisco", "sfo"], image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["seattle", "sea"], image: "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["dallas", "dfw", "dal"], image: "https://images.unsplash.com/photo-1511854140801-50d01698950b?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["atlanta", "atl"], image: "https://images.unsplash.com/photo-1575916687840-f4f9f8f8f43d?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["boston", "bos"], image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["washington", "iad", "dca"], image: "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["denver", "den"], image: "https://images.unsplash.com/photo-1546156929-a4c0ac411f47?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["phoenix", "phx"], image: "https://images.unsplash.com/photo-1597262975002-c5c3b14bbd62?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["nashville", "bna"], image: "https://images.unsplash.com/photo-1588493000894-5f2f4a94f2cf?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["portland", "pdx"], image: "https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["honolulu", "hnl"], image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["london", "lhr", "gatwick", "lgw", "united kingdom", "uk"], image: "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["paris", "cdg", "france"], image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["dubai", "dxb", "united arab emirates", "uae"], image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["tokyo", "hnd", "nrt", "japan"], image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["lagos", "los", "nigeria"], image: "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["abuja", "abv"], image: "https://images.unsplash.com/photo-1489493585363-d69421e0edd3?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["toronto", "yyz", "canada"], image: "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["vancouver", "yvr"], image: "https://images.unsplash.com/photo-1578922746465-3a80a228f223?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["cancun", "cun", "mexico"], image: "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["mexico city", "mex"], image: "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["madrid", "mad", "spain"], image: "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["barcelona", "bcn"], image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["rome", "fco", "italy"], image: "https://images.unsplash.com/photo-1525874684015-58379d421a52?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["amsterdam", "ams", "netherlands"], image: "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["berlin", "ber", "germany"], image: "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["frankfurt", "fra"], image: "https://images.unsplash.com/photo-1570148624566-b48c95b4b69d?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["istanbul", "ist", "turkey"], image: "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["doha", "doh", "qatar"], image: "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["singapore", "sin"], image: "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["bangkok", "bkk", "thailand"], image: "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["accra", "acc", "ghana"], image: "https://images.unsplash.com/photo-1553901753-215db3446770?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["nairobi", "nbo", "kenya"], image: "https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["johannesburg", "jnb", "south africa"], image: "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["cape town", "cpt"], image: "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["cairo", "cai", "egypt"], image: "https://images.unsplash.com/photo-1539650116574-75c0c6d73f56?auto=format&fit=crop&w=1200&q=80" },
+  { keys: ["casablanca", "cmn", "morocco"], image: "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80" },
+];
 
-const GENERIC_FLIGHT_IMAGE =
-  "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80";
+const GENERIC_FLIGHT_IMAGES = [
+  "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1517479149777-5f3b1511d5ad?auto=format&fit=crop&w=1200&q=80",
+  "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?auto=format&fit=crop&w=1200&q=80",
+];
 const GENERIC_HOTEL_IMAGE =
   "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80";
 
+const normalizeText = (value: string | undefined) =>
+  (value || "").toLowerCase().trim().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ");
+
+const resolveMappedImage = (candidates: string[]): string | null => {
+  for (const candidate of candidates) {
+    const normalizedCandidate = normalizeText(candidate);
+    if (!normalizedCandidate) continue;
+    const match = DESTINATION_IMAGE_MAP.find(({ keys }) =>
+      keys.some((key) => normalizedCandidate.includes(normalizeText(key)))
+    );
+    if (match) return match.image;
+  }
+  return null;
+};
+
+const pickGenericFlightImage = (id: string) => {
+  let hash = 0;
+  for (let index = 0; index < id.length; index += 1) {
+    hash = (hash * 31 + id.charCodeAt(index)) >>> 0;
+  }
+  return GENERIC_FLIGHT_IMAGES[hash % GENERIC_FLIGHT_IMAGES.length];
+};
+
 const resolveCardImage = (entry: RecentSearchEntry): string => {
-  const searchText = `${entry.label} ${entry.subtitle}`.toLowerCase();
-  const mapped = Object.entries(CITY_IMAGE_MAP).find(([city]) => searchText.includes(city));
-  if (mapped) return mapped[1];
-  return entry.type === "flight" ? GENERIC_FLIGHT_IMAGE : GENERIC_HOTEL_IMAGE;
+  const baseCandidates = [entry.label, entry.subtitle];
+  if (entry.type === "flight") {
+    const flightParams = entry.params as { destination?: string; origin?: string };
+    const destinationMatch = resolveMappedImage([flightParams.destination || "", ...baseCandidates]);
+    if (destinationMatch) return destinationMatch;
+    const originFallback = resolveMappedImage([flightParams.origin || ""]);
+    if (originFallback) return originFallback;
+    return pickGenericFlightImage(entry.id);
+  }
+
+  const hotelParams = entry.params as { destination?: string };
+  const hotelMatch = resolveMappedImage([hotelParams.destination || "", ...baseCandidates]);
+  if (hotelMatch) return hotelMatch;
+  return GENERIC_HOTEL_IMAGE;
 };
 
 export function RecentSearches() {
