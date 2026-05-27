@@ -13,7 +13,7 @@ export function searchHotelProvider(search: HotelSearchParams): Promise<Provider
     return searchGenericHotelPartner(search);
   }
 
-  return Promise.resolve(skippedProvider("Hotel Provider", "Missing hotel provider credentials."));
+  return Promise.resolve(skippedProvider("Hotel Provider", "no_live_hotel_provider"));
 }
 
 function searchAmadeusHotels(search: HotelSearchParams): Promise<ProviderResult<NormalizedHotelResult>> {

@@ -38,8 +38,10 @@ export function isProductionRuntime() {
 }
 
 export function canUseDevelopmentFallbacks() {
+  // Strictly local development only: never allow fallback/mock data in staging,
+  // preview, or production runtimes.
   return (
-    !isProductionRuntime() &&
+    process.env.NODE_ENV === "development" &&
     process.env.ENABLE_DEVELOPMENT_FALLBACKS ===
       "true"
   );
