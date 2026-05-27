@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { X } from "lucide-react";
+import { Heart, X } from "lucide-react";
 
 import {
   clearRecentSearches,
@@ -65,6 +65,7 @@ const GENERIC_FLIGHT_IMAGES = [
 ];
 const GENERIC_HOTEL_IMAGE =
   "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80";
+const SAVED_RECENT_SEARCHES_KEY = "curioticket_saved_recent_searches_v1";
 
 const normalizeText = (value: string | undefined) =>
   (value || "").toLowerCase().trim().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ");
@@ -108,18 +109,64 @@ const resolveCardImage = (entry: RecentSearchEntry): string => {
 
 export function RecentSearches() {
   const [entries, setEntries] = useState<RecentSearchEntry[]>([]);
+  const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setEntries(readRecentSearches());
+    try {
+      const rawSavedIds = window.localStorage.getItem(SAVED_RECENT_SEARCHES_KEY);
+      if (!rawSavedIds) return;
+      const parsedSavedIds = JSON.parse(rawSavedIds);
+      if (!Array.isArray(parsedSavedIds)) return;
+      setSavedIds(new Set(parsedSavedIds.filter((value): value is string => typeof value === "string")));
+    } catch {
+      setSavedIds(new Set());
+    }
   }, []);
+
+  const persistSavedIds = (nextSavedIds: Set<string>) => {
+    try {
+      window.localStorage.setItem(SAVED_RECENT_SEARCHES_KEY, JSON.stringify(Array.from(nextSavedIds)));
+    } catch {
+      // no-op: local storage unavailable
+    }
+  };
 
   const handleRemove = (id: string) => {
     setEntries(removeRecentSearch(id));
+    setSavedIds((previousSavedIds) => {
+      if (!previousSavedIds.has(id)) return previousSavedIds;
+      const nextSavedIds = new Set(previousSavedIds);
+      nextSavedIds.delete(id);
+      persistSavedIds(nextSavedIds);
+      return nextSavedIds;
+    });
   };
 
   const handleClearAll = () => {
+    const removedIds = new Set(entries.map((entry) => entry.id));
     clearRecentSearches();
     setEntries([]);
+    setSavedIds((previousSavedIds) => {
+      if (!previousSavedIds.size) return previousSavedIds;
+      const nextSavedIds = new Set(previousSavedIds);
+      removedIds.forEach((id) => nextSavedIds.delete(id));
+      persistSavedIds(nextSavedIds);
+      return nextSavedIds;
+    });
+  };
+
+  const handleToggleSaved = (id: string) => {
+    setSavedIds((previousSavedIds) => {
+      const nextSavedIds = new Set(previousSavedIds);
+      if (nextSavedIds.has(id)) {
+        nextSavedIds.delete(id);
+      } else {
+        nextSavedIds.add(id);
+      }
+      persistSavedIds(nextSavedIds);
+      return nextSavedIds;
+    });
   };
 
   if (!entries.length) {
@@ -128,7 +175,7 @@ export function RecentSearches() {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-1">
-      <div className="mb-2 flex items-start justify-between gap-3 md:mb-2.5">
+      <div className="mb-2.5 flex items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold leading-tight text-slate-900 md:text-[0.95rem]">Recent searches</h2>
           <p className="text-xs leading-tight text-slate-600 md:text-[0.8rem]">Pick up where you left off.</p>
@@ -142,34 +189,53 @@ export function RecentSearches() {
         </button>
       </div>
 
-      <div className="grid auto-cols-[minmax(182px,1fr)] grid-flow-col gap-2 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:grid-flow-row md:grid-cols-3 md:overflow-visible lg:grid-cols-4">
+      <div className="grid auto-cols-[220px] grid-flow-col gap-3 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:grid-flow-row md:grid-cols-3 md:auto-cols-auto md:overflow-visible lg:grid-cols-4">
         {entries.map((entry) => (
-          <Link
-            key={entry.id}
-            href={entry.href}
-            className="focus-ring group relative flex h-full min-h-[142px] min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white transition-colors hover:border-slate-300"
-          >
-            <img src={resolveCardImage(entry)} alt={entry.label} className="h-14 w-full object-cover md:h-[3.85rem]" loading="lazy" />
-            <button
-              type="button"
-              aria-label="Remove recent search"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                handleRemove(entry.id);
-              }}
-              className="focus-ring absolute right-2 top-2 rounded-full border border-slate-200 bg-white/95 p-1.5 text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
+          <article key={entry.id} className="h-full min-w-0">
+            <Link
+              href={entry.href}
+              className="focus-ring group relative flex h-full min-h-[172px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
             >
-              <X className="h-3.5 w-3.5" />
-            </button>
-            <div className="flex flex-1 flex-col gap-1 p-2.5">
-              <span className="inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-slate-600">
-                {entry.type === "flight" ? "Flight" : "Hotel"}
-              </span>
-              <p className="line-clamp-1 text-[0.92rem] font-semibold leading-tight text-slate-900">{entry.label}</p>
-              <p className="line-clamp-2 text-xs text-slate-600">{entry.subtitle}</p>
-            </div>
-          </Link>
+              <img src={resolveCardImage(entry)} alt={entry.label} className="h-[74px] w-full object-cover" loading="lazy" />
+              <div className="absolute right-2 top-2 flex items-center gap-1.5">
+                <button
+                  type="button"
+                  aria-label={savedIds.has(entry.id) ? "Unsave recent search" : "Save recent search"}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleToggleSaved(entry.id);
+                  }}
+                  className={`focus-ring rounded-full border p-1.5 transition-colors ${
+                    savedIds.has(entry.id)
+                      ? "border-rose-300 bg-rose-50 text-rose-600 hover:bg-rose-100"
+                      : "border-slate-200 bg-white/95 text-slate-600 hover:bg-white hover:text-slate-900"
+                  }`}
+                >
+                  <Heart className={`h-3.5 w-3.5 ${savedIds.has(entry.id) ? "fill-current" : ""}`} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Remove recent search"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleRemove(entry.id);
+                  }}
+                  className="focus-ring rounded-full border border-slate-200 bg-white/95 p-1.5 text-slate-600 transition-colors hover:bg-white hover:text-slate-900"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="flex flex-1 flex-col gap-1.5 p-3">
+                <span className="inline-flex w-fit rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                  {entry.type === "flight" ? "Flight" : "Hotel"}
+                </span>
+                <p className="line-clamp-1 text-[0.92rem] font-semibold leading-tight text-slate-900">{entry.label}</p>
+                <p className="line-clamp-2 text-xs leading-relaxed text-slate-600">{entry.subtitle}</p>
+              </div>
+            </Link>
+          </article>
         ))}
       </div>
     </section>
