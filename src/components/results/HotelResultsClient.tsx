@@ -133,72 +133,86 @@ export function HotelResultsClient() {
     <main className="flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
       <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
         <div className="page-shell py-3">
-          <form className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-end" onSubmit={handleSearchSubmit}>
-            <label className="grid gap-1 md:col-span-4">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted">Destination</span>
-              <input
-                type="text"
-                value={destination}
-                onChange={(event) => setDestination(event.target.value)}
-                placeholder="Where are you staying?"
-                className="h-12 rounded-xl border border-slate-300 bg-white px-3 text-[16px] text-slate-900 placeholder:text-slate-400 hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
-              />
-            </label>
-            <label className="grid gap-1 md:col-span-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted">Check-in</span>
-              <input
-                type="date"
-                value={checkIn}
-                onChange={(event) => setCheckIn(event.target.value)}
-                className="h-12 rounded-xl border border-slate-300 bg-white px-3 text-[16px] text-slate-900 hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
-              />
-            </label>
-            <label className="grid gap-1 md:col-span-2">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted">Check-out</span>
-              <input
-                type="date"
-                value={checkOut}
-                onChange={(event) => setCheckOut(event.target.value)}
-                className="h-12 rounded-xl border border-slate-300 bg-white px-3 text-[16px] text-slate-900 hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
-              />
-            </label>
-            <label className="grid gap-1 md:col-span-1">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted">Guests</span>
-              <input
-                type="number"
-                min={1}
-                max={12}
-                value={guests}
-                onChange={(event) => setGuests(event.target.value)}
-                className="h-12 rounded-xl border border-slate-300 bg-white px-3 text-[16px] text-slate-900 hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
-              />
-            </label>
-            <label className="grid gap-1 md:col-span-1">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted">Rooms</span>
-              <input
-                type="number"
-                min={1}
-                max={6}
-                value={rooms}
-                onChange={(event) => setRooms(event.target.value)}
-                className="h-12 rounded-xl border border-slate-300 bg-white px-3 text-[16px] text-slate-900 hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
-              />
-            </label>
-            <div className="md:col-span-2">
-              <button
-                type="submit"
-                className="h-12 w-full rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:h-11"
-              >
-                Search hotels
-              </button>
+          <form className="mx-auto w-full max-w-5xl" onSubmit={handleSearchSubmit}>
+            <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+              <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]">
+                <label className="grid min-h-[54px] gap-1 rounded-xl px-3 py-2 lg:rounded-l-xl lg:border-r lg:border-slate-200">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">Destination</span>
+                  <input
+                    type="text"
+                    value={destination}
+                    onChange={(event) => setDestination(event.target.value)}
+                    placeholder="Where are you staying?"
+                    className="h-6 w-full bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                  />
+                </label>
+                <div className="grid min-h-[54px] gap-1 rounded-xl px-3 py-2 lg:border-r lg:border-slate-200">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">Dates</span>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <label className="min-w-0">
+                      <span className="sr-only">Check-in</span>
+                      <input
+                        type="date"
+                        value={checkIn}
+                        onChange={(event) => setCheckIn(event.target.value)}
+                        className="h-6 w-full min-w-0 bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      />
+                    </label>
+                    <label className="min-w-0">
+                      <span className="sr-only">Check-out</span>
+                      <input
+                        type="date"
+                        value={checkOut}
+                        onChange={(event) => setCheckOut(event.target.value)}
+                        className="h-6 w-full min-w-0 bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="grid min-h-[54px] gap-1 rounded-xl px-3 py-2 lg:border-r lg:border-slate-200">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">Guests / Rooms</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="min-w-0">
+                      <span className="sr-only">Guests</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={guests}
+                        onChange={(event) => setGuests(event.target.value)}
+                        className="h-6 w-full min-w-0 bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      />
+                    </label>
+                    <label className="min-w-0">
+                      <span className="sr-only">Rooms</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={6}
+                        value={rooms}
+                        onChange={(event) => setRooms(event.target.value)}
+                        className="h-6 w-full min-w-0 bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="rounded-xl lg:rounded-r-xl">
+                  <button
+                    type="submit"
+                    className="min-h-[54px] w-full rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-r-xl"
+                  >
+                    Search hotels
+                  </button>
+                </div>
+              </div>
             </div>
             {formError ? (
-              <p className="md:col-span-12 text-sm font-medium text-danger" role="alert">
+              <p className="mt-2 text-center text-sm font-medium text-danger" role="alert">
                 {formError}
               </p>
             ) : null}
           </form>
-          <Button variant="secondary" className="w-fit md:hidden" onClick={() => setFiltersOpen(true)}>
+          <Button variant="secondary" className="mt-3 w-fit md:hidden" onClick={() => setFiltersOpen(true)}>
             <SlidersHorizontal size={17} />
             Filters
           </Button>
