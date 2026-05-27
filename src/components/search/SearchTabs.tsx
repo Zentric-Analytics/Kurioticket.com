@@ -1419,7 +1419,7 @@ export function SearchTabs({
           </div>
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
-              <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200">
+              <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
               <div
                 ref={fromWrapRef}
                 className="relative min-h-[54px] px-0 py-0 pr-2"
@@ -1462,7 +1462,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="From?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-500"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
                 {shouldShowFromSuggestionsPanel ? (
@@ -1524,7 +1524,7 @@ export function SearchTabs({
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-transparent bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
+                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                   aria-label="Swap origin and destination"
                 >
                   <ArrowRightLeft size={14} />
@@ -1569,7 +1569,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="To?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-500"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
                 {shouldShowToSuggestionsPanel ? (
@@ -1631,7 +1631,7 @@ export function SearchTabs({
 
               <div
                 ref={dateWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
@@ -1651,7 +1651,7 @@ export function SearchTabs({
                   }
                   aria-haspopup="dialog"
                   aria-label="Choose travel dates"
-                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <Calendar
                     size={16}
@@ -1864,7 +1864,7 @@ export function SearchTabs({
 
               <div
                 ref={travelersWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.travelers ||
@@ -1883,7 +1883,7 @@ export function SearchTabs({
                     }
                     openTravelersMenu();
                   }}
-                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <span className="block text-sm font-medium text-slate-900">
                       {
@@ -1973,7 +1973,7 @@ export function SearchTabs({
         >
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px] lg:gap-0">
-              <div className="min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200">
+              <div className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
                     "Destination"}
@@ -1993,13 +1993,13 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or hotel"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-500"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
               </div>
               <div
                 ref={hotelDateWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
@@ -2019,7 +2019,7 @@ export function SearchTabs({
                   }
                   aria-haspopup="dialog"
                   aria-label="Choose travel dates"
-                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <Calendar
                     size={16}
@@ -2228,7 +2228,7 @@ export function SearchTabs({
               </div>
               <div
                 ref={hotelGuestsRoomsWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.guests ||
@@ -2246,7 +2246,7 @@ export function SearchTabs({
                   }
                   aria-haspopup="dialog"
                   aria-label="Choose guests and rooms"
-                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <span className="truncate">
                     {hotelGuestsRoomsSummary}
