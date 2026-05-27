@@ -483,37 +483,6 @@ export function FlightResultsClient() {
     return (
       <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-24 sm:pt-28 lg:pt-28">
         <section className="page-shell">
-          <div className="mx-auto w-full max-w-5xl">
-            <div className="mb-1.5 flex justify-start">
-              <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
-              <label className="sr-only" htmlFor="tripType">
-                Trip type
-              </label>
-              <select
-                id="tripType"
-                name="tripType"
-                value={tripTypeInput}
-                onChange={(event) => {
-                  const nextTripType = event.target.value;
-                  setTripTypeInput(nextTripType);
-
-                  if (nextTripType !== "round-trip") {
-                    setReturnDateInput("");
-
-                    if (activeDatePicker === "return") {
-                      setActiveDatePicker(null);
-                      setDatePickerPosition(null);
-                    }
-                  }
-                }}
-                className="h-10 rounded-md border border-slate-200 bg-white px-3 pr-9 text-sm font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 appearance-none"
-              >
-                <option value="round-trip">Round-trip</option>
-                <option value="one-way">One-way</option>
-              </select>
-            </div>
-          </div>
-
             <form
               className="mx-auto mt-0 w-full max-w-5xl space-y-1"
               onSubmit={(event) => {
@@ -747,6 +716,36 @@ export function FlightResultsClient() {
                 </div>
             </form>
 
+            <div className="mx-auto mt-2 w-full max-w-5xl">
+              <div className="inline-flex rounded-lg border border-slate-200 bg-white p-0.5 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
+                <label className="sr-only" htmlFor="tripType">
+                  Trip type
+                </label>
+                <select
+                  id="tripType"
+                  name="tripType"
+                  value={tripTypeInput}
+                  onChange={(event) => {
+                    const nextTripType = event.target.value;
+                    setTripTypeInput(nextTripType);
+
+                    if (nextTripType !== "round-trip") {
+                      setReturnDateInput("");
+
+                      if (activeDatePicker === "return") {
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
+                      }
+                    }
+                  }}
+                  className="h-9 rounded-md border border-slate-200 bg-white px-3 pr-8 text-xs font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 appearance-none"
+                >
+                  <option value="round-trip">Round-trip</option>
+                  <option value="one-way">One-way</option>
+                </select>
+              </div>
+            </div>
+
                 {activeDatePicker && datePickerPosition ? (
                   <DatePickerPopover
                     position={datePickerPosition}
@@ -834,8 +833,6 @@ export function FlightResultsClient() {
                     onCabinClassChange={setCabinClassInput}
                   />
                 ) : null}
-          </div>
-
           <div className="mt-8 space-y-8">
             <section className="rounded-2xl border border-slate-200 bg-white p-5">
               <h2 className="text-3xl font-black text-slate-900">
@@ -1181,7 +1178,7 @@ export function FlightResultsClient() {
           filtersOpen ? "translate-y-0" : "translate-y-full"
         )}
       >
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-bold text-navy">Filters</h2>
           <Button
             variant="ghost"
@@ -1374,7 +1371,7 @@ function DatePickerPopover({
               type="button"
               onClick={() => onSelect(date)}
               className={cn(
-                "h-11 rounded-lg text-sm font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500",
+                "h-9 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:h-10 sm:text-sm",
                 selectedDeparture || selectedReturn
                   ? "bg-[#0a66c2] text-white hover:bg-[#085aa9] focus:bg-[#085aa9]"
                   : "text-slate-800",
@@ -1407,13 +1404,13 @@ function DatePickerPopover({
         width: position.width,
         zIndex: 9999,
       }}
-      className="max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl ring-1 ring-black/5"
+      className="w-full max-w-[min(420px,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xl ring-1 ring-black/5 sm:p-4"
     >
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-3 flex items-center justify-between">
         <button
           type="button"
           aria-label="Previous month"
-          className="min-h-11 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
+          className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm"
           onClick={() => onMonthChange(addMonths(leftMonth, -1))}
         >
           Prev
@@ -1422,22 +1419,22 @@ function DatePickerPopover({
         <button
           type="button"
           aria-label="Next month"
-          className="min-h-11 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
+          className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm"
           onClick={() => onMonthChange(addMonths(leftMonth, 1))}
         >
           Next
         </button>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid gap-3 md:grid-cols-2">
         {renderMonth(leftMonth)}
-        {renderMonth(rightMonth)}
+        <div className="hidden md:block">{renderMonth(rightMonth)}</div>
       </div>
 
-      <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
+      <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
         <button
           type="button"
-          className="min-h-11 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
+          className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm"
           onClick={onClear}
         >
           Clear
@@ -1488,12 +1485,12 @@ function TravelerCabinPopover({
         width: position.width,
         zIndex: 9999,
       }}
-      className="max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl ring-1 ring-black/5"
+      className="w-full max-w-[min(420px,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xl ring-1 ring-black/5 sm:p-4"
     >
       <div>
         <h3 className="text-base font-black text-slate-950">Travelers</h3>
 
-        <div className="mt-4 divide-y divide-slate-100">
+        <div className="mt-3 divide-y divide-slate-100">
           <CounterRow
             label="Adults"
             description="18+"
@@ -1523,10 +1520,10 @@ function TravelerCabinPopover({
         </div>
       </div>
 
-      <div className="mt-5 border-t border-slate-100 pt-5">
+      <div className="mt-4 border-t border-slate-100 pt-4">
         <h3 className="text-base font-black text-slate-950">Cabin Class</h3>
 
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="mt-2.5 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {cabinClassOptions.map((option) => {
             const selected = option.value === cabinClass;
 
@@ -1537,7 +1534,7 @@ function TravelerCabinPopover({
                 aria-pressed={selected}
                 onClick={() => onCabinClassChange(option.value)}
                 className={cn(
-                  "min-h-11 rounded-xl border px-3 py-2.5 text-left text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500",
+                  "min-h-9 rounded-lg border px-3 py-2 text-left text-xs font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm",
                   selected
                     ? "border-[#0a66c2] bg-blue-50 text-[#0a66c2]"
                     : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
@@ -1572,19 +1569,19 @@ function CounterRow({
   const incrementDisabled = value >= max;
 
   return (
-    <div className="flex min-h-11 items-center justify-between gap-4 py-3">
+    <div className="flex min-h-10 items-center justify-between gap-3 py-2.5">
       <div>
         <p className="text-sm font-bold text-slate-950">{label}</p>
         <p className="text-xs font-semibold text-slate-500">{description}</p>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5">
         <button
           type="button"
           aria-label={`Decrease ${label}`}
           disabled={decrementDisabled}
           onClick={() => onChange(value - 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 text-lg font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
         >
           −
         </button>
@@ -1598,7 +1595,7 @@ function CounterRow({
           aria-label={`Increase ${label}`}
           disabled={incrementDisabled}
           onClick={() => onChange(value + 1)}
-          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 text-lg font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
         >
           +
         </button>
@@ -1628,7 +1625,7 @@ function SuggestionList({
         width: position.width,
         zIndex: 9999,
       }}
-      className="max-h-[320px] max-w-[calc(100vw-2rem)] overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl ring-1 ring-black/5"
+      className="max-h-[280px] w-full max-w-[min(420px,calc(100vw-2rem))] overflow-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-2xl ring-1 ring-black/5"
     >
       {suggestions.length ? (
         suggestions.map((item) => (
@@ -1637,15 +1634,15 @@ function SuggestionList({
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(airportInputValue(item))}
-            className="block w-full rounded-lg border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 last:border-b-0"
+            className="block w-full rounded-md border-b border-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 last:border-b-0"
           >
             <span className="flex items-center gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-500">
                 <Plane size={16} />
               </span>
 
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-bold text-slate-950">
+                <span className="block truncate text-[13px] font-bold text-slate-950 sm:text-sm">
                   {item.city}, {item.country}
                 </span>
                 <span className="block truncate text-xs font-medium text-slate-500">
