@@ -353,7 +353,7 @@ export function FlightResultsClient() {
       const wrap =
         target === "departure"
           ? departureWrapRef.current
-          : returnWrapRef.current;
+          : returnWrapRef.current ?? departureWrapRef.current;
       const trigger = wrap?.querySelector("button");
 
       if (!trigger) return;
@@ -483,8 +483,7 @@ export function FlightResultsClient() {
     return (
       <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-24 sm:pt-28 lg:pt-28">
         <section className="page-shell">
-          <div className="relative overflow-visible rounded-[26px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50 p-4 shadow-[0_18px_55px_-20px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 sm:p-5 lg:p-6">
-            <div className="pointer-events-none absolute inset-x-8 -top-px h-px bg-gradient-to-r from-transparent via-indigo-300/60 to-transparent" />
+          <div className="relative overflow-visible">
             <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50/90 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
               <label className="sr-only" htmlFor="tripType">
                 Trip type
@@ -514,7 +513,7 @@ export function FlightResultsClient() {
             </div>
 
             <form
-              className="mt-4 w-full rounded-2xl border border-slate-200/90 bg-white/95 p-2.5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 backdrop-blur-sm sm:p-3"
+              className="mt-4 w-full rounded-[24px] border border-slate-200/90 bg-white/95 p-2.5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 backdrop-blur-sm sm:p-3"
               onSubmit={(event) => {
                 event.preventDefault();
 
@@ -584,7 +583,7 @@ export function FlightResultsClient() {
                     value={cabinClassInput}
                   />
 
-                  <div className="grid grid-cols-1 gap-2 rounded-xl border border-slate-200/80 bg-slate-50/65 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:grid-cols-[minmax(0,1.05fr)_auto_minmax(0,1.05fr)_minmax(0,0.86fr)_minmax(0,0.86fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-0 lg:rounded-2xl lg:bg-white lg:p-0 lg:shadow-none">
+                  <div className="grid grid-cols-1 gap-2 rounded-xl border border-slate-200/80 bg-slate-50/65 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:grid-cols-[minmax(0,1.28fr)_auto_minmax(0,1.28fr)_minmax(0,1.12fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-0 lg:rounded-2xl lg:bg-white lg:p-0 lg:shadow-none">
                     <div className="relative" ref={originWrapRef}>
                       <label className="sr-only" htmlFor="origin">
                         From
@@ -689,31 +688,25 @@ export function FlightResultsClient() {
                     <div className="relative" ref={departureWrapRef}>
                       <button
                         type="button"
-                        aria-label="Departure date"
+                        aria-label="Travel dates"
                         onClick={() => setActiveDatePicker("departure")}
                         className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 lg:h-14 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
                       >
-                        {departureDateInput
-                          ? formatDateLabel(departureDateInput)
-                          : "Departure"}
-                      </button>
-                    </div>
-
-                    <div className="relative" ref={returnWrapRef}>
-                      <button
-                        type="button"
-                        aria-label="Return date"
-                        disabled={tripTypeInput !== "round-trip"}
-                        onClick={() => {
-                          if (tripTypeInput === "round-trip") {
-                            setActiveDatePicker("return");
-                          }
-                        }}
-                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 lg:h-14 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
-                      >
-                        {returnDateInput
-                          ? formatDateLabel(returnDateInput)
-                          : "Return"}
+                        <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
+                          Travel dates
+                        </span>
+                        <span className="block truncate">
+                          {departureDateInput
+                            ? tripTypeInput === "round-trip" && returnDateInput
+                              ? `${formatDateLabel(departureDateInput)} — ${formatDateLabel(returnDateInput)}`
+                              : formatDateLabel(departureDateInput)
+                            : "Travel dates"}
+                        </span>
+                        {tripTypeInput === "round-trip" && !returnDateInput ? (
+                          <span className="block text-xs font-medium text-slate-400">
+                            Add return
+                          </span>
+                        ) : null}
                       </button>
                     </div>
 
