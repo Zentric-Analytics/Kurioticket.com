@@ -558,6 +558,46 @@ export function FlightResultsClient() {
                     value={cabinClassInput}
                   />
 
+                  <div className="text-center">
+                    <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+                      Find millions of cheap flights, fast
+                    </h1>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Compare fares and lock in the best route in a few taps.
+                    </p>
+                  </div>
+
+                  <div className="mt-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setOriginInput("");
+                        setOriginCode("");
+                        setDestinationInput("");
+                        setDestinationCode("");
+                        setDepartureDateInput("");
+                        setReturnDateInput("");
+                        setAdultCount(1);
+                        setChildCount(0);
+                        setInfantCount(0);
+                        setCabinClassInput("economy");
+                        setTripTypeInput("round-trip");
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
+                        setTravelerPopoverOpen(false);
+                        setTravelerPopoverPosition(null);
+                      }}
+                      className="focus-ring inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                    >
+                      <X size={12} />
+                      Clear all
+                    </button>
+                  </div>
+
                   <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
                   <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
                     <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
@@ -586,6 +626,24 @@ export function FlightResultsClient() {
                         autoComplete="off"
                         className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                       />
+                      {originInput ? (
+                        <button
+                          type="button"
+                          aria-label="Clear origin"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setOriginInput("");
+                            setOriginCode("");
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }}
+                          className="focus-ring absolute right-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <X size={14} />
+                        </button>
+                      ) : null}
 
                       {activeSuggest === "origin" && dropdownPosition ? (
                         <SuggestionList
@@ -646,6 +704,24 @@ export function FlightResultsClient() {
                         autoComplete="off"
                         className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                       />
+                      {destinationInput ? (
+                        <button
+                          type="button"
+                          aria-label="Clear destination"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setDestinationInput("");
+                            setDestinationCode("");
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }}
+                          className="focus-ring absolute right-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <X size={14} />
+                        </button>
+                      ) : null}
 
                       {activeSuggest === "destination" && dropdownPosition ? (
                         <SuggestionList
@@ -682,6 +758,24 @@ export function FlightResultsClient() {
                             : "Travel dates"}
                         </span>
                       </button>
+                      {departureDateInput || returnDateInput ? (
+                        <button
+                          type="button"
+                          aria-label="Clear travel dates"
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setDepartureDateInput("");
+                            setReturnDateInput("");
+                            setActiveDatePicker(null);
+                            setDatePickerPosition(null);
+                          }}
+                          className="focus-ring absolute right-3 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <X size={14} />
+                        </button>
+                      ) : null}
                     </div>
 
                     <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0" ref={travelerCabinWrapRef}>
@@ -710,6 +804,35 @@ export function FlightResultsClient() {
                       </button>
                     </div>
 
+                    <div className="mt-1 flex items-center lg:hidden">
+                      <div className="relative inline-flex items-center">
+                        <select
+                          id="tripTypeMobile"
+                          name="tripTypeMobile"
+                          value={tripTypeInput}
+                          onChange={(event) => {
+                            const nextTripType = event.target.value;
+                            setTripTypeInput(nextTripType);
+                            if (nextTripType !== "round-trip") {
+                              setReturnDateInput("");
+                              if (activeDatePicker === "return") {
+                                setActiveDatePicker(null);
+                                setDatePickerPosition(null);
+                              }
+                            }
+                          }}
+                          className="appearance-none border-0 bg-transparent py-0 pl-0 pr-5 text-sm font-medium text-slate-700 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-0"
+                        >
+                          <option value="round-trip">Round-trip</option>
+                          <option value="one-way">One-way</option>
+                        </select>
+                        <ChevronDown
+                          size={14}
+                          className="pointer-events-none absolute right-0 text-slate-500"
+                        />
+                      </div>
+                    </div>
+
                     <Button
                       type="submit"
                       className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
@@ -718,7 +841,7 @@ export function FlightResultsClient() {
                     </Button>
                   </div>
                 </div>
-                <div className="mt-2 flex items-center">
+                <div className="mt-2 hidden items-center lg:flex">
                   <div className="relative inline-flex items-center">
                     <select
                       id="tripType"
