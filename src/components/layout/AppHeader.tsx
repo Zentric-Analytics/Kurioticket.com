@@ -136,7 +136,7 @@ export function AppHeader() {
         icon: Plane,
       },
       {
-        href: "/hotels",
+        href: "/hotels/results",
         label: t.hotels,
         icon: Bed,
       },
@@ -205,7 +205,7 @@ export function AppHeader() {
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
       "/flights/results",
-      "/hotels",
+      "/hotels/results",
       "/deals",
       "/destinations",
       "/explore",
@@ -329,13 +329,12 @@ export function AppHeader() {
             <nav className="flex items-center gap-2">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const active = isNavItemActive(item.href);
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900 ${active ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm" : "text-indigo-50 hover:bg-white/10 hover:text-white"}`}
+                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold text-indigo-50 hover:bg-white/10 hover:text-white"
                   >
                     {Icon ? <Icon size={15} aria-hidden="true" /> : null}
                     <span>{item.label}</span>
