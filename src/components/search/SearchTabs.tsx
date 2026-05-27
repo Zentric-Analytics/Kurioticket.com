@@ -123,7 +123,12 @@ const normalizeDestinationKey = (value: string) =>
 const findDiscoveryImageForFlight = (originCode: string, destinationCode: string) => {
   const origin = originCode.trim().toUpperCase();
   const destination = destinationCode.trim().toUpperCase();
-  return allDiscoveryRoutes.find((item) => item.originCode === origin && item.destinationCode === destination);
+  const byRoute = allDiscoveryRoutes.find(
+    (item) => item.originCode === origin && item.destinationCode === destination
+  );
+  if (byRoute) return byRoute;
+
+  return allDiscoveryRoutes.find((item) => item.destinationCode === destination);
 };
 
 const findDiscoveryImageForHotel = (destination: string) => {

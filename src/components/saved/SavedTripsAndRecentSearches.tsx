@@ -80,6 +80,40 @@ const normalizeDestinationKey = (value: string) =>
     .trim()
     .toLowerCase();
 
+const genericTravelFallback =
+  allDiscoveryItems.find((item) => normalizeDestinationKey(item.destinationCity) === "dubai") ??
+  allDiscoveryItems.find((item) => normalizeDestinationKey(item.destinationCity) === "london") ??
+  allDiscoveryItems.find((item) => Boolean(item.image));
+
+const findFlightDiscoveryImage = (entry: RecentSearchEntry) => {
+  const params = entry.params as { origin?: string; destination?: string };
+  const origin = params.origin?.trim().toUpperCase() ?? "";
+  const destination = params.destination?.trim().toUpperCase() ?? "";
+  const labelKey = normalizeDestinationKey(entry.label);
+
+  const byDestinationCode = allDiscoveryItems.find((item) => item.destinationCode === destination);
+  if (byDestinationCode) return byDestinationCode;
+
+  const byRoute = allDiscoveryItems.find((item) => item.originCode === origin && item.destinationCode === destination);
+  if (byRoute) return byRoute;
+
+  return allDiscoveryItems.find((item) => {
+    const destinationCity = normalizeDestinationKey(item.destinationCity);
+    const title = normalizeDestinationKey(item.title);
+    return labelKey.includes(destinationCity) || title.includes(labelKey);
+  });
+};
+
+const findHotelDiscoveryImage = (entry: RecentSearchEntry) => {
+  const params = entry.params as { destination?: string };
+  const destinationKey = normalizeDestinationKey(params.destination ?? entry.label);
+  return allDiscoveryItems.find((item) => {
+    const city = normalizeDestinationKey(item.destinationCity);
+    const title = normalizeDestinationKey(item.title);
+    return destinationKey === city || destinationKey.includes(city) || title.includes(destinationKey);
+  });
+};
+
 const resolveRecentSearchImage = (entry: RecentSearchEntry) => {
   if (entry.image) {
     return {
@@ -89,26 +123,24 @@ const resolveRecentSearchImage = (entry: RecentSearchEntry) => {
   }
 
   if (entry.type === "flight") {
-    const params = entry.params as { origin?: string; destination?: string };
-    const origin = params.origin?.trim().toUpperCase();
-    const destination = params.destination?.trim().toUpperCase();
-    const match = allDiscoveryItems.find((item) => item.originCode === origin && item.destinationCode === destination);
+    const match = findFlightDiscoveryImage(entry);
     if (match) {
       return { image: match.image, imageAlt: match.imageAlt };
     }
   }
 
   if (entry.type === "hotel") {
-    const params = entry.params as { destination?: string };
-    const destinationKey = normalizeDestinationKey(params.destination ?? entry.label);
-    const match = allDiscoveryItems.find((item) => {
-      const city = normalizeDestinationKey(item.destinationCity);
-      const title = normalizeDestinationKey(item.title);
-      return destinationKey === city || destinationKey.includes(city) || title.includes(destinationKey);
-    });
+    const match = findHotelDiscoveryImage(entry);
     if (match) {
       return { image: match.image, imageAlt: match.imageAlt };
     }
+  }
+
+  if (genericTravelFallback?.image) {
+    return {
+      image: genericTravelFallback.image,
+      imageAlt: genericTravelFallback.imageAlt ?? "Travel destination",
+    };
   }
 
   return null;
@@ -287,36 +319,36 @@ export function SavedTripsAndRecentSearches() {
               </Link>
             </div>
           ) : (
-            <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {recentSearches.map((entry) => {
                 const visual = resolveRecentSearchImage(entry);
                 return (
-                <article key={entry.id} className="group relative overflow-hidden rounded-3xl border border-slate-200/85 bg-white shadow-[0_26px_55px_-40px_rgba(15,23,42,0.7)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_28px_64px_-34px_rgba(15,23,42,0.72)]">
+                <article key={entry.id} className="group relative overflow-hidden rounded-3xl border border-slate-200/85 bg-white shadow-[0_18px_38px_-30px_rgba(15,23,42,0.62)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_24px_45px_-30px_rgba(15,23,42,0.68)]">
                   <button type="button" aria-label="Remove recent search" onClick={() => handleRemoveRecent(entry.id)} className="focus-ring absolute right-3 top-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900">
                     <X className="h-4 w-4" />
                   </button>
 
                   {visual?.image ? (
-                    <img src={visual.image} alt={visual.imageAlt} className="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.03]" loading="lazy" />
+                    <img src={visual.image} alt={visual.imageAlt} className="h-36 w-full object-cover transition duration-500 group-hover:scale-[1.02] sm:h-40" loading="lazy" />
                   ) : (
-                    <div className="flex h-48 w-full items-center justify-center bg-gradient-to-br from-violet-100 via-indigo-50 to-cyan-100 text-sm font-bold uppercase tracking-[0.14em] text-slate-600">
+                    <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-bold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
                       {entry.type === "flight" ? "Flight search" : "Hotel search"}
                     </div>
                   )}
 
-                  <div className="space-y-3 p-5">
-                    <span className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                  <div className="space-y-2.5 p-4">
+                    <span className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
                       {entry.type === "flight" ? "Flight" : "Hotel"}
                     </span>
 
-                    <h3 className="pr-12 text-xl font-black leading-tight tracking-tight text-slate-900">{entry.label}</h3>
-                    <p className="line-clamp-2 text-sm leading-6 text-slate-600">{entry.subtitle}</p>
+                    <h3 className="pr-12 text-lg font-black leading-tight tracking-tight text-slate-900">{entry.label}</h3>
+                    <p className="line-clamp-2 text-sm leading-5 text-slate-600">{entry.subtitle}</p>
                     <div className="flex flex-wrap items-center gap-2 pt-0.5">
                       <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-600">
                         Searched {formatDate(entry.createdAt)}
                       </span>
                     </div>
-                    <div className="mt-1 border-t border-slate-200/90 pt-3">
+                    <div className="mt-1 border-t border-slate-200/90 pt-2.5">
                       <Link href={entry.href} className="inline-flex min-h-11 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900">
                         Repeat search
                         <ExternalLink className="h-4 w-4" />
