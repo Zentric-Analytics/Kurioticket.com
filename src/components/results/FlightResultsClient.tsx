@@ -481,10 +481,11 @@ export function FlightResultsClient() {
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[#f6f8fb] pb-8 pt-24 sm:pt-28 lg:pt-28">
+      <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-24 sm:pt-28 lg:pt-28">
         <section className="page-shell">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.08)] sm:p-5 lg:p-6">
-            <div className="inline-flex rounded-xl bg-white p-1.5">
+          <div className="relative overflow-visible rounded-[26px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-slate-50 p-4 shadow-[0_18px_55px_-20px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 sm:p-5 lg:p-6">
+            <div className="pointer-events-none absolute inset-x-8 -top-px h-px bg-gradient-to-r from-transparent via-indigo-300/60 to-transparent" />
+            <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50/90 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
               <label className="sr-only" htmlFor="tripType">
                 Trip type
               </label>
@@ -505,7 +506,7 @@ export function FlightResultsClient() {
                     }
                   }
                 }}
-                className="h-12 rounded-xl border border-slate-300 bg-white px-3 pr-9 text-[16px] font-bold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm appearance-none"
+                className="h-12 rounded-lg border border-slate-200 bg-white px-3 pr-9 text-[16px] font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:h-11 md:text-sm appearance-none"
               >
                 <option value="round-trip">Round-trip</option>
                 <option value="one-way">One-way</option>
@@ -513,7 +514,7 @@ export function FlightResultsClient() {
             </div>
 
             <form
-              className="mt-4 w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_38px_rgba(15,23,42,0.20)]"
+              className="mt-4 w-full rounded-2xl border border-slate-200/90 bg-white/95 p-2.5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 backdrop-blur-sm sm:p-3"
               onSubmit={(event) => {
                 event.preventDefault();
 
@@ -583,7 +584,7 @@ export function FlightResultsClient() {
                     value={cabinClassInput}
                   />
 
-                  <div className="grid grid-cols-1 gap-2 overflow-hidden lg:grid-cols-[auto_auto_auto_auto_auto_auto_auto] lg:items-center">
+                  <div className="grid grid-cols-1 gap-2 rounded-xl border border-slate-200/80 bg-slate-50/65 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:grid-cols-[minmax(0,1.05fr)_auto_minmax(0,1.05fr)_minmax(0,0.86fr)_minmax(0,0.86fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-0 lg:rounded-2xl lg:bg-white lg:p-0 lg:shadow-none">
                     <div className="relative" ref={originWrapRef}>
                       <label className="sr-only" htmlFor="origin">
                         From
@@ -607,7 +608,7 @@ export function FlightResultsClient() {
                         }}
                         placeholder="From"
                         autoComplete="off"
-                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-[16px] font-semibold text-slate-900 placeholder:text-slate-400 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
+                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-900 shadow-sm placeholder:text-slate-400 transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 lg:h-14 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
                       />
 
                       {activeSuggest === "origin" && dropdownPosition ? (
@@ -625,7 +626,7 @@ export function FlightResultsClient() {
                       ) : null}
                     </div>
 
-                    <div className="flex items-center justify-center">
+                    <div className="flex items-center justify-center lg:px-2">
                       <button
                         type="button"
                         aria-label="Swap origin and destination"
@@ -638,7 +639,7 @@ export function FlightResultsClient() {
                           setDestinationInput(currentOrigin);
                           setDestinationCode(currentOriginCode);
                         }}
-                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 hover:text-slate-900"
+                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                       >
                         <Repeat2 size={18} />
                       </button>
@@ -667,7 +668,7 @@ export function FlightResultsClient() {
                         }}
                         placeholder="To"
                         autoComplete="off"
-                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-[16px] font-semibold text-slate-900 placeholder:text-slate-400 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
+                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-900 shadow-sm placeholder:text-slate-400 transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 lg:h-14 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
                       />
 
                       {activeSuggest === "destination" && dropdownPosition ? (
@@ -690,7 +691,7 @@ export function FlightResultsClient() {
                         type="button"
                         aria-label="Departure date"
                         onClick={() => setActiveDatePicker("departure")}
-                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
+                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 lg:h-14 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
                       >
                         {departureDateInput
                           ? formatDateLabel(departureDateInput)
@@ -708,7 +709,7 @@ export function FlightResultsClient() {
                             setActiveDatePicker("return");
                           }
                         }}
-                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 md:h-11 md:text-sm"
+                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 lg:h-14 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
                       >
                         {returnDateInput
                           ? formatDateLabel(returnDateInput)
@@ -729,7 +730,7 @@ export function FlightResultsClient() {
                             return next;
                           });
                         }}
-                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
+                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 lg:h-14 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
                       >
                         {buildTravelerCabinSummary(
                           adultCount,
@@ -742,7 +743,7 @@ export function FlightResultsClient() {
 
                     <Button
                       type="submit"
-                      className="h-11 w-full min-w-0 rounded-lg bg-[#0a66c2] px-5 font-bold text-white hover:bg-[#085aa9]"
+                      className="h-12 w-full min-w-0 rounded-lg bg-gradient-to-b from-[#1b75ea] to-[#0a5fcc] px-5 font-bold text-white shadow-[0_14px_24px_-16px_rgba(10,102,194,0.95)] transition hover:-translate-y-0.5 hover:from-[#2681f4] hover:to-[#0d63cf] hover:shadow-[0_18px_30px_-16px_rgba(10,102,194,0.95)] active:translate-y-0 active:shadow-[0_10px_18px_-14px_rgba(10,102,194,0.95)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-white lg:ml-2 lg:h-11"
                     >
                       Search
                     </Button>
