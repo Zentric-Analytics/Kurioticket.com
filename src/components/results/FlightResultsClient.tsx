@@ -483,8 +483,9 @@ export function FlightResultsClient() {
     return (
       <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-24 sm:pt-28 lg:pt-28">
         <section className="page-shell">
-          <div className="relative overflow-visible">
-            <div className="inline-flex rounded-xl border border-slate-200 bg-slate-50/90 p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]">
+          <div className="mx-auto w-full max-w-6xl">
+            <div className="mb-2 flex justify-center sm:mb-3 lg:justify-start">
+              <div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_24px_rgba(15,23,42,0.08)]">
               <label className="sr-only" htmlFor="tripType">
                 Trip type
               </label>
@@ -511,9 +512,10 @@ export function FlightResultsClient() {
                 <option value="one-way">One-way</option>
               </select>
             </div>
+          </div>
 
             <form
-              className="mt-4 w-full rounded-[24px] border border-slate-200/90 bg-white/95 p-2.5 shadow-[0_20px_50px_-24px_rgba(15,23,42,0.45)] ring-1 ring-slate-900/5 backdrop-blur-sm sm:p-3"
+              className="mx-auto mt-2 w-full max-w-6xl space-y-1.5"
               onSubmit={(event) => {
                 event.preventDefault();
 
@@ -583,7 +585,8 @@ export function FlightResultsClient() {
                     value={cabinClassInput}
                   />
 
-                  <div className="grid grid-cols-1 gap-2 rounded-xl border border-slate-200/80 bg-slate-50/65 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:grid-cols-[minmax(0,1.28fr)_auto_minmax(0,1.28fr)_minmax(0,1.12fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-0 lg:rounded-2xl lg:bg-white lg:p-0 lg:shadow-none">
+                  <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+                    <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-[minmax(0,1.55fr)_auto_minmax(0,1.55fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_128px] lg:items-stretch lg:gap-0">
                     <div className="relative" ref={originWrapRef}>
                       <label className="sr-only" htmlFor="origin">
                         From
@@ -607,7 +610,7 @@ export function FlightResultsClient() {
                         }}
                         placeholder="From"
                         autoComplete="off"
-                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-900 shadow-sm placeholder:text-slate-400 transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 lg:h-14 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
+                        className="min-h-[54px] h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-[16px] font-semibold text-slate-900 placeholder:text-slate-400 transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-visible:border-slate-200 lg:focus-visible:ring-0 md:text-sm"
                       />
 
                       {activeSuggest === "origin" && dropdownPosition ? (
@@ -625,7 +628,7 @@ export function FlightResultsClient() {
                       ) : null}
                     </div>
 
-                    <div className="flex items-center justify-center lg:px-2">
+                    <div className="flex items-center justify-center py-1 lg:py-0 lg:px-2">
                       <button
                         type="button"
                         aria-label="Swap origin and destination"
@@ -667,7 +670,7 @@ export function FlightResultsClient() {
                         }}
                         placeholder="To"
                         autoComplete="off"
-                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-900 shadow-sm placeholder:text-slate-400 transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 lg:h-14 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
+                        className="min-h-[54px] h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-[16px] font-semibold text-slate-900 placeholder:text-slate-400 transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-visible:border-slate-200 lg:focus-visible:ring-0 md:text-sm"
                       />
 
                       {activeSuggest === "destination" && dropdownPosition ? (
@@ -690,7 +693,7 @@ export function FlightResultsClient() {
                         type="button"
                         aria-label="Travel dates"
                         onClick={() => setActiveDatePicker("departure")}
-                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 lg:h-14 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
+                        className="min-h-[54px] h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-left text-[16px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-visible:border-slate-200 lg:focus-visible:ring-0 md:text-sm"
                       >
                         <span className="block text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500">
                           Travel dates
@@ -723,7 +726,7 @@ export function FlightResultsClient() {
                             return next;
                           });
                         }}
-                        className="h-12 w-full min-w-0 rounded-lg border border-slate-200 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/70 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/35 lg:h-14 lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:hover:bg-slate-50/70 md:text-sm"
+                        className="min-h-[54px] h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-left text-[16px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-none lg:border-0 lg:hover:border-slate-200 lg:focus-visible:border-slate-200 lg:focus-visible:ring-0 md:text-sm"
                       >
                         {buildTravelerCabinSummary(
                           adultCount,
@@ -736,11 +739,12 @@ export function FlightResultsClient() {
 
                     <Button
                       type="submit"
-                      className="h-12 w-full min-w-0 rounded-lg bg-gradient-to-b from-[#1b75ea] to-[#0a5fcc] px-5 font-bold text-white shadow-[0_14px_24px_-16px_rgba(10,102,194,0.95)] transition hover:-translate-y-0.5 hover:from-[#2681f4] hover:to-[#0d63cf] hover:shadow-[0_18px_30px_-16px_rgba(10,102,194,0.95)] active:translate-y-0 active:shadow-[0_10px_18px_-14px_rgba(10,102,194,0.95)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-white lg:ml-2 lg:h-11"
+                      className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 transition hover:from-indigo-900 hover:to-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/45 lg:h-full lg:min-h-[54px] lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
                     >
                       Search
                     </Button>
                   </div>
+                </div>
             </form>
 
                 {activeDatePicker && datePickerPosition ? (
