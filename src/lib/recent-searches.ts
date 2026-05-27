@@ -27,6 +27,8 @@ export type RecentSearchEntry = {
   createdAt: string;
   label: string;
   subtitle: string;
+  image?: string;
+  imageAlt?: string;
   href: string;
   params: RecentFlightParams | RecentHotelParams;
 };
@@ -64,7 +66,13 @@ export const readRecentSearches = (): RecentSearchEntry[] => {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter((entry): entry is RecentSearchEntry => Boolean(entry?.id && entry?.href && entry?.label));
+    return parsed
+      .filter((entry): entry is RecentSearchEntry => Boolean(entry?.id && entry?.href && entry?.label))
+      .map((entry) => ({
+        ...entry,
+        image: typeof entry.image === "string" ? entry.image : undefined,
+        imageAlt: typeof entry.imageAlt === "string" ? entry.imageAlt : undefined,
+      }));
   } catch {
     return [];
   }
@@ -103,7 +111,40 @@ export const clearRecentSearches = (): void => {
   }
 };
 
-export const buildFlightRecentSearch = (params: RecentFlightParams): RecentSearchEntry => {
+type SearchImageMeta = {
+  image?: string;
+  imageAlt?: string;
+};
+
+export const buildHotelRecentSearch = (params: RecentHotelParams, imageMeta?: SearchImageMeta): RecentSearchEntry => {
+  const id = buildId("hotel", params);
+  const label = params.destination;
+  const subtitle = `${formatIsoDate(params.checkIn) || params.checkIn} – ${formatIsoDate(params.checkOut) || params.checkOut} · ${params.guests} guest${params.guests === 1 ? "" : "s"} · ${params.rooms} room${params.rooms === 1 ? "" : "s"}`;
+  const query = new URLSearchParams({
+    destination: params.destination,
+    checkIn: params.checkIn,
+    checkOut: params.checkOut,
+    guests: String(params.guests),
+    rooms: String(params.rooms),
+  });
+
+  return {
+    id,
+    type: "hotel",
+    createdAt: new Date().toISOString(),
+    label,
+    subtitle,
+    image: imageMeta?.image,
+    imageAlt: imageMeta?.imageAlt,
+    href: `/hotels/results?${query.toString()}`,
+    params,
+  };
+};
+
+export const buildFlightRecentSearch = (
+  params: RecentFlightParams,
+  imageMeta?: SearchImageMeta
+): RecentSearchEntry => {
   const id = buildId("flight", params);
   const label = `${params.origin} → ${params.destination}`;
   const outbound = formatIsoDate(params.departureDate) || params.departureDate;
@@ -131,30 +172,9 @@ export const buildFlightRecentSearch = (params: RecentFlightParams): RecentSearc
     createdAt: new Date().toISOString(),
     label,
     subtitle,
+    image: imageMeta?.image,
+    imageAlt: imageMeta?.imageAlt,
     href: `/flights/results?${query.toString()}`,
-    params,
-  };
-};
-
-export const buildHotelRecentSearch = (params: RecentHotelParams): RecentSearchEntry => {
-  const id = buildId("hotel", params);
-  const label = params.destination;
-  const subtitle = `${formatIsoDate(params.checkIn) || params.checkIn} – ${formatIsoDate(params.checkOut) || params.checkOut} · ${params.guests} guest${params.guests === 1 ? "" : "s"} · ${params.rooms} room${params.rooms === 1 ? "" : "s"}`;
-  const query = new URLSearchParams({
-    destination: params.destination,
-    checkIn: params.checkIn,
-    checkOut: params.checkOut,
-    guests: String(params.guests),
-    rooms: String(params.rooms),
-  });
-
-  return {
-    id,
-    type: "hotel",
-    createdAt: new Date().toISOString(),
-    label,
-    subtitle,
-    href: `/hotels/results?${query.toString()}`,
     params,
   };
 };

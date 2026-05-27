@@ -32,6 +32,7 @@ import {
   formatAirportLabel,
   type AirportOption,
 } from "@/data/airports";
+import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDiscovery";
 
 type TabMode =
   | "flights"
@@ -106,6 +107,33 @@ const normalizeCabinClass = (value: string) =>
   value === "business" || value === "first"
     ? value
     : "economy";
+
+const allDiscoveryRoutes = [
+  ...Object.values(homeDiscoveryByRegion).flat(),
+  ...getHomeDiscoveryByRegion(),
+];
+
+const normalizeDestinationKey = (value: string) =>
+  value
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .toLowerCase();
+
+const findDiscoveryImageForFlight = (originCode: string, destinationCode: string) => {
+  const origin = originCode.trim().toUpperCase();
+  const destination = destinationCode.trim().toUpperCase();
+  return allDiscoveryRoutes.find((item) => item.originCode === origin && item.destinationCode === destination);
+};
+
+const findDiscoveryImageForHotel = (destination: string) => {
+  const destinationKey = normalizeDestinationKey(destination);
+  return allDiscoveryRoutes.find((item) => {
+    const city = normalizeDestinationKey(item.destinationCity);
+    const title = normalizeDestinationKey(item.title);
+    return destinationKey === city || destinationKey.includes(city) || title.includes(destinationKey);
+  });
+};
 
 export function SearchTabs({
   t,
@@ -1155,6 +1183,10 @@ export function SearchTabs({
     const href = `/flights/results?${params.toString()}`;
 
     try {
+      const matchedFlightImage = findDiscoveryImageForFlight(
+        params.get("origin") ?? "",
+        params.get("destination") ?? ""
+      );
       upsertRecentSearch(
         buildFlightRecentSearch({
           tripType: (params.get("tripType") as "round-trip" | "one-way") ?? "round-trip",
@@ -1167,7 +1199,7 @@ export function SearchTabs({
           infants: Number(params.get("infants") ?? "0"),
           travelers: Number(params.get("travelers") ?? "1"),
           cabinClass: params.get("cabinClass") ?? "economy",
-        })
+        }, matchedFlightImage ? { image: matchedFlightImage.image, imageAlt: matchedFlightImage.imageAlt } : undefined)
       );
     } catch {
       // best effort only
@@ -1221,6 +1253,7 @@ export function SearchTabs({
     const href = `/hotels/results?${params.toString()}`;
 
     try {
+      const matchedHotelImage = findDiscoveryImageForHotel(params.get("destination") ?? "");
       upsertRecentSearch(
         buildHotelRecentSearch({
           destination: params.get("destination") ?? "",
@@ -1228,7 +1261,7 @@ export function SearchTabs({
           checkOut: params.get("checkOut") ?? "",
           guests: Number(params.get("guests") ?? "1"),
           rooms: Number(params.get("rooms") ?? "1"),
-        })
+        }, matchedHotelImage ? { image: matchedHotelImage.image, imageAlt: matchedHotelImage.imageAlt } : undefined)
       );
     } catch {
       // best effort only
