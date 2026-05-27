@@ -19,6 +19,7 @@ import {
   Minus,
   Plane,
   Plus,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -1126,6 +1127,39 @@ export function SearchTabs({
     setToOpen(false);
   };
 
+  const onClearOrigin = () => {
+    setHasUserEditedOrigin(true);
+    setFrom("");
+    setFromCode("");
+    setFromOpen(false);
+  };
+  const onClearDestination = () => {
+    setTo("");
+    setToCode("");
+    setToOpen(false);
+  };
+  const onClearTravelDates = () => {
+    setDepartureDate("");
+    setReturnDate("");
+    setFlightDatesOpen(false);
+  };
+  const onResetFlightSearch = () => {
+    onClearOrigin();
+    onClearDestination();
+    onClearTravelDates();
+    setTripType("round-trip");
+    setAdultCount(1);
+    setChildCount(0);
+    setInfantCount(0);
+    setDraftAdultCount(1);
+    setDraftChildCount(0);
+    setDraftInfantCount(0);
+    setCabinClass("economy");
+    setDraftCabinClass("economy");
+    travelersDraftRef.current = { adults: 1, children: 0, infants: 0, cabinClass: "economy" };
+    setTravelersMenuOpen(false);
+  };
+
   const isFlightSearchDisabled =
     !from.trim() ||
     !to.trim() ||
@@ -1374,7 +1408,7 @@ export function SearchTabs({
           }
           className="space-y-2"
         >
-          <div className="px-1">
+          <div className="flex items-center justify-between gap-2 px-1">
             <div
               ref={tripTypeWrapRef}
               className="relative inline-flex"
@@ -1454,6 +1488,15 @@ export function SearchTabs({
                 </div>
               )}
             </div>
+            {(from.trim() || to.trim() || departureDate || returnDate || travelerCount !== 1 || cabinClass !== "economy" || tripType !== "round-trip") ? (
+              <button
+                type="button"
+                onClick={onResetFlightSearch}
+                className="focus-ring rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800"
+              >
+                Clear all
+              </button>
+            ) : null}
           </div>
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
@@ -1500,9 +1543,20 @@ export function SearchTabs({
                     )
                   }
                   placeholder="From?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
+                {from.trim() ? (
+                  <button
+                    type="button"
+                    onClick={onClearOrigin}
+                    onMouseDown={(event) => event.preventDefault()}
+                    aria-label="Clear origin"
+                    className="focus-ring absolute right-1 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                  >
+                    <X size={14} />
+                  </button>
+                ) : null}
                 {shouldShowFromSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {fromLoading ? (
@@ -1607,9 +1661,20 @@ export function SearchTabs({
                     )
                   }
                   placeholder="To?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
+                {to.trim() ? (
+                  <button
+                    type="button"
+                    onClick={onClearDestination}
+                    onMouseDown={(event) => event.preventDefault()}
+                    aria-label="Clear destination"
+                    className="focus-ring absolute right-1 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                  >
+                    <X size={14} />
+                  </button>
+                ) : null}
                 {shouldShowToSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {toLoading ? (
@@ -1689,7 +1754,7 @@ export function SearchTabs({
                   }
                   aria-haspopup="dialog"
                   aria-label="Choose travel dates"
-                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
+                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <Calendar
                     size={16}
@@ -1699,6 +1764,17 @@ export function SearchTabs({
                     {dateSummary}
                   </span>
                 </button>
+                {departureDate ? (
+                  <button
+                    type="button"
+                    onClick={onClearTravelDates}
+                    onMouseDown={(event) => event.preventDefault()}
+                    aria-label="Clear travel dates"
+                    className="focus-ring absolute right-2 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                  >
+                    <X size={14} />
+                  </button>
+                ) : null}
 
                 {flightDatesOpen ? (
                   <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
