@@ -136,7 +136,7 @@ export function AppHeader() {
         icon: Plane,
       },
       {
-        href: "/hotels/results",
+        href: "/hotels",
         label: t.hotels,
         icon: Bed,
       },
@@ -205,7 +205,7 @@ export function AppHeader() {
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
       "/flights/results",
-      "/hotels/results",
+      "/hotels",
       "/deals",
       "/destinations",
       "/explore",
