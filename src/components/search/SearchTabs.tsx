@@ -24,9 +24,15 @@ import {
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
+  buildFlightRecentSearch,
+  buildHotelRecentSearch,
+  upsertRecentSearch,
+} from "@/lib/recent-searches";
+import {
   formatAirportLabel,
   type AirportOption,
 } from "@/data/airports";
+import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDiscovery";
 
 type TabMode =
   | "flights"
@@ -101,6 +107,38 @@ const normalizeCabinClass = (value: string) =>
   value === "business" || value === "first"
     ? value
     : "economy";
+
+const allDiscoveryRoutes = [
+  ...Object.values(homeDiscoveryByRegion).flat(),
+  ...getHomeDiscoveryByRegion(),
+];
+
+const normalizeDestinationKey = (value: string) =>
+  value
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .toLowerCase();
+
+const findDiscoveryImageForFlight = (originCode: string, destinationCode: string) => {
+  const origin = originCode.trim().toUpperCase();
+  const destination = destinationCode.trim().toUpperCase();
+  const byRoute = allDiscoveryRoutes.find(
+    (item) => item.originCode === origin && item.destinationCode === destination
+  );
+  if (byRoute) return byRoute;
+
+  return allDiscoveryRoutes.find((item) => item.destinationCode === destination);
+};
+
+const findDiscoveryImageForHotel = (destination: string) => {
+  const destinationKey = normalizeDestinationKey(destination);
+  return allDiscoveryRoutes.find((item) => {
+    const city = normalizeDestinationKey(item.destinationCity);
+    const title = normalizeDestinationKey(item.title);
+    return destinationKey === city || destinationKey.includes(city) || title.includes(destinationKey);
+  });
+};
 
 export function SearchTabs({
   t,
@@ -1147,9 +1185,32 @@ export function SearchTabs({
       );
     }
 
-    router.push(
-      `/flights/results?${params.toString()}`
-    );
+    const href = `/flights/results?${params.toString()}`;
+
+    try {
+      const matchedFlightImage = findDiscoveryImageForFlight(
+        params.get("origin") ?? "",
+        params.get("destination") ?? ""
+      );
+      upsertRecentSearch(
+        buildFlightRecentSearch({
+          tripType: (params.get("tripType") as "round-trip" | "one-way") ?? "round-trip",
+          origin: params.get("origin") ?? "",
+          destination: params.get("destination") ?? "",
+          departureDate: params.get("departureDate") ?? "",
+          returnDate: params.get("returnDate") ?? undefined,
+          adults: Number(params.get("adults") ?? "1"),
+          children: Number(params.get("children") ?? "0"),
+          infants: Number(params.get("infants") ?? "0"),
+          travelers: Number(params.get("travelers") ?? "1"),
+          cabinClass: params.get("cabinClass") ?? "economy",
+        }, matchedFlightImage ? { image: matchedFlightImage.image, imageAlt: matchedFlightImage.imageAlt } : undefined)
+      );
+    } catch {
+      // best effort only
+    }
+
+    router.push(href);
   };
 
   const isHotelSearchDisabled =
@@ -1194,9 +1255,24 @@ export function SearchTabs({
         rooms: normalizedRooms,
       });
 
-    router.push(
-      `/hotels/results?${params.toString()}`
-    );
+    const href = `/hotels/results?${params.toString()}`;
+
+    try {
+      const matchedHotelImage = findDiscoveryImageForHotel(params.get("destination") ?? "");
+      upsertRecentSearch(
+        buildHotelRecentSearch({
+          destination: params.get("destination") ?? "",
+          checkIn: params.get("checkIn") ?? "",
+          checkOut: params.get("checkOut") ?? "",
+          guests: Number(params.get("guests") ?? "1"),
+          rooms: Number(params.get("rooms") ?? "1"),
+        }, matchedHotelImage ? { image: matchedHotelImage.image, imageAlt: matchedHotelImage.imageAlt } : undefined)
+      );
+    } catch {
+      // best effort only
+    }
+
+    router.push(href);
   };
 
   const hotelDateSummary = useMemo(
@@ -1253,7 +1329,8 @@ export function SearchTabs({
   };
 
   return (
-    <section className={wrapper}>
+    <>
+      <section className={wrapper}>
       <div className="mb-2 inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1">
         <button
           type="button"
@@ -1261,7 +1338,7 @@ export function SearchTabs({
             setTab("flights")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
+            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
             tab === "flights"
               ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800"
@@ -1278,7 +1355,7 @@ export function SearchTabs({
             setTab("hotels")
           }
           className={cn(
-            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors sm:text-sm",
+            "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
             tab === "hotels"
               ? "bg-white text-navy shadow-sm"
               : "text-slate-600 hover:text-slate-800"
@@ -1369,7 +1446,7 @@ export function SearchTabs({
                   <button
                     type="button"
                     disabled
-                    className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-400"
+                    className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-500"
                   >
                     Multi-city —
                     Coming soon
@@ -1380,12 +1457,12 @@ export function SearchTabs({
           </div>
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
-              <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200">
+              <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
               <div
                 ref={fromWrapRef}
                 className="relative min-h-[54px] px-0 py-0 pr-2"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.origin ||
                     "Origin"}
                 </label>
@@ -1423,7 +1500,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="From?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
                 {shouldShowFromSuggestionsPanel ? (
@@ -1465,7 +1542,7 @@ export function SearchTabs({
                             {option.city} (
                             {option.code})
                           </p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs leading-5 text-slate-600">
                             {option.airport}
                             {option.country
                               ? ` · ${option.country}`
@@ -1485,7 +1562,7 @@ export function SearchTabs({
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-transparent bg-slate-100 text-slate-600 transition-colors hover:bg-slate-200 hover:text-slate-900"
+                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                   aria-label="Swap origin and destination"
                 >
                   <ArrowRightLeft size={14} />
@@ -1496,7 +1573,7 @@ export function SearchTabs({
                 ref={toWrapRef}
                 className="relative min-h-[54px] px-0 py-0 pl-2"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
                     "Destination"}
                 </label>
@@ -1530,7 +1607,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="To?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
                 {shouldShowToSuggestionsPanel ? (
@@ -1572,7 +1649,7 @@ export function SearchTabs({
                             {option.city} (
                             {option.code})
                           </p>
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs leading-5 text-slate-600">
                             {option.airport}
                             {option.country
                               ? ` · ${option.country}`
@@ -1592,9 +1669,9 @@ export function SearchTabs({
 
               <div
                 ref={dateWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
                     "Travel dates"}
                 </label>
@@ -1612,7 +1689,7 @@ export function SearchTabs({
                   }
                   aria-haspopup="dialog"
                   aria-label="Choose travel dates"
-                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <Calendar
                     size={16}
@@ -1688,7 +1765,7 @@ export function SearchTabs({
                                   }
                                 )}
                               </p>
-                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
                                 {weekdays.map(
                                   (
                                     weekday
@@ -1825,9 +1902,9 @@ export function SearchTabs({
 
               <div
                 ref={travelersWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.travelers ||
                     "Travelers"}
                 </label>
@@ -1844,7 +1921,7 @@ export function SearchTabs({
                     }
                     openTravelersMenu();
                   }}
-                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <span className="block text-sm font-medium text-slate-900">
                       {
@@ -1883,7 +1960,7 @@ export function SearchTabs({
                           <div key={row.key} className="flex items-center justify-between py-2 first:pt-1 last:pb-1">
                             <span>
                               <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
-                              <span className="block text-xs text-slate-500">{row.subtitle}</span>
+                              <span className="block text-xs leading-5 text-slate-600">{row.subtitle}</span>
                             </span>
                             <div className="flex items-center gap-1">
                               <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
@@ -1896,16 +1973,16 @@ export function SearchTabs({
                     </div>
                     <div className="mt-2 border-t border-slate-200 pt-2">
                       <div className="mb-1.5 flex items-center justify-between">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">Cabin Class</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</p>
                       </div>
                       <div className="grid grid-cols-3 gap-1">
                         {[["economy", "Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
-                          <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-md border px-2 py-1 text-[10px] font-medium transition-colors text-center leading-tight sm:text-[11px]", draftCabinClass === value ? "border-indigo-400 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
+                          <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-md border px-2 py-1 text-xs font-medium leading-4 transition-colors text-center sm:text-xs", draftCabinClass === value ? "border-indigo-400 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
                         ))}
                       </div>
                     </div>
                     <div className="mt-2 flex items-center justify-end gap-2 border-t border-slate-200 pt-2">
-                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
+                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
                     </div>
                   </div>
                 ) : null}
@@ -1934,8 +2011,8 @@ export function SearchTabs({
         >
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px] lg:gap-0">
-              <div className="min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200">
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+              <div className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
                     "Destination"}
                 </label>
@@ -1954,15 +2031,15 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or hotel"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-sm text-slate-950 outline-none transition-colors placeholder:text-slate-400"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
               </div>
               <div
                 ref={hotelDateWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
                     "Travel dates"}
                 </label>
@@ -1980,7 +2057,7 @@ export function SearchTabs({
                   }
                   aria-haspopup="dialog"
                   aria-label="Choose travel dates"
-                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <Calendar
                     size={16}
@@ -2055,7 +2132,7 @@ export function SearchTabs({
                                   }
                                 )}
                               </p>
-                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
                                 {weekdays.map(
                                   (
                                     weekday
@@ -2189,9 +2266,9 @@ export function SearchTabs({
               </div>
               <div
                 ref={hotelGuestsRoomsWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-200 bg-white px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200"
+                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
               >
-                <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.guests ||
                     "Guests"}
                 </label>
@@ -2207,7 +2284,7 @@ export function SearchTabs({
                   }
                   aria-haspopup="dialog"
                   aria-label="Choose guests and rooms"
-                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-sm text-slate-950 outline-none transition-colors"
+                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <span className="truncate">
                     {hotelGuestsRoomsSummary}
@@ -2321,7 +2398,7 @@ export function SearchTabs({
                             <p className="text-sm font-semibold text-slate-900">
                               Pet-friendly
                             </p>
-                            <p className="pr-2 text-xs text-slate-500">
+                            <p className="pr-2 text-xs leading-5 text-slate-600">
                               Only show stays that allow pets
                             </p>
                           </div>
@@ -2371,6 +2448,7 @@ export function SearchTabs({
           </div>
         </form>
       )}
-    </section>
+      </section>
+    </>
   );
 }

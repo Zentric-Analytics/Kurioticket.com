@@ -2,35 +2,37 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { useMemo, useRef, useState } from "react";
+import type { ComponentProps, ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
-  BadgeCheck,
-  BellRing,
   ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   Compass,
-  Filter,
   Heart,
   Hotel,
-  Network,
   Plane,
-  ShieldCheck,
   Sparkles,
-  SlidersHorizontal,
-  Ticket,
+  Mail,
+  SearchCheck,
+  BadgeDollarSign,
+  ShieldCheck,
 } from "lucide-react";
 
 import { PriceText } from "@/components/currency/PriceText";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRegion } from "@/components/region/RegionProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
+import { RecentSearches } from "@/components/search/RecentSearches";
 import { LinkButton } from "@/components/ui/Button";
+import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
+import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { readSavedTripIds, toggleSavedTripId, writeSavedTripIds } from "@/lib/saved-trips-local";
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
@@ -83,10 +85,15 @@ const destinations = [
   },
 ];
 
+
+
+
 export default function Home() {
   const { locale } = useLocale();
+  const { mode: regionCode } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
+  const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
   const destinationsRailRef = useRef<HTMLDivElement>(null);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
@@ -104,6 +111,16 @@ export default function Home() {
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const discoveryItems = useMemo(() => getHomeDiscoveryByRegion(regionCode), [regionCode]);
+  const mobileDiscoveryGroups = useMemo(() => {
+    const groups = [];
+
+    for (let index = 0; index < discoveryItems.length; index += 6) {
+      groups.push(discoveryItems.slice(index, index + 6));
+    }
+
+    return groups;
+  }, [discoveryItems]);
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -114,6 +131,21 @@ export default function Home() {
 
     setNewsletterMessage(t("homeNewsletterThanks"));
     setNewsletterEmail("");
+  };
+
+  useEffect(() => {
+    setSavedTripIds(readSavedTripIds());
+  }, []);
+
+  const handleSavedTripToggle = (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setSavedTripIds((current) => {
+      const next = toggleSavedTripId(current, itemId);
+      writeSavedTripIds(next);
+      return next;
+    });
   };
 
   return (
@@ -159,9 +191,14 @@ export default function Home() {
           </div>
         </section>
 
+        <section className="page-shell py-4 sm:py-5">
+          <RecentSearches />
+        </section>
+
+
         <section className="page-shell py-5">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-black tracking-normal text-slate-950">
+            <h2 className="text-2xl font-bold tracking-normal text-slate-900">
               {t("homePopularDestinations")}
             </h2>
 
@@ -209,126 +246,130 @@ export default function Home() {
                   saveLabelTemplate={t("homeSaveDestination")}
                   amountUsd={destination.amountUsd}
                   image={destination.image}
+                  destinationId={destination.id}
+                  isSaved={savedTripIds.includes(destination.id)}
+                  onHeartToggle={handleSavedTripToggle}
                 />
               ))}
             </div>
           </div>
         </section>
 
-        <section className="page-shell bg-transparent pb-8 pt-1">
-          <div className="grid gap-5 bg-transparent sm:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-7">
-            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
-              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-violet-100/95 via-indigo-100/75 to-fuchsia-100/80 ring-1 ring-violet-200/80">
-                <span className="absolute left-3 top-3 h-16 w-16 rounded-full bg-white/55 blur-[2px]" />
-                <span className="absolute right-4 top-3 h-11 w-11 rounded-full border border-white/70 bg-white/35 shadow-[0_10px_18px_-14px_rgba(79,70,229,0.9)]" />
-                <span className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-violet-300/55 bg-white/40 shadow-[0_15px_24px_-20px_rgba(79,70,229,0.95)]" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-600">
-                  <Network size={34} strokeWidth={2.2} />
-                </span>
-                <span className="absolute bottom-5 left-[22%] text-violet-600">
-                  <Ticket size={17} strokeWidth={2.3} />
-                </span>
-                <span className="absolute bottom-5 right-[22%] text-indigo-700">
-                  <Compass size={17} strokeWidth={2.3} />
-                </span>
-                <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-violet-200/80 bg-white/85 px-2 py-1 text-[11px] font-semibold text-indigo-600">
-                  <Sparkles size={12} strokeWidth={2.3} />
-                  +
-                </span>
+        <section className="page-shell bg-transparent py-5 sm:py-6">
+          <div className="space-y-4 sm:space-y-5">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
+                Discover your next adventure here
+              </h2>
+              <p className="text-sm font-normal leading-6 text-slate-600 sm:text-base">
+                Compare smart route ideas, flexible fares, and destinations picked for your region.
+              </p>
+            </div>
+            <div className="flex items-center justify-end sm:hidden">
+              <div className="pointer-events-none mb-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
+                Swipe for more
+                <ChevronRight size={13} className="text-slate-500" />
               </div>
+            </div>
+            <div className="-mx-1.5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1.5 pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
+              {mobileDiscoveryGroups.map((group, groupIndex) => (
+                <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-2 gap-2.5">
+                  {group.map((item) => {
+                    return (
+                      <DiscoverySuggestionCard
+                        key={item.id}
+                        href={buildDiscoveryLink(item)}
+                        itemId={item.id}
+                        image={item.image}
+                        imageAlt={item.imageAlt}
+                        destinationCode={item.destinationCode}
+                        title={item.title}
+                        originCode={item.originCode}
+                        destinationCodeLabel={item.destinationCode}
+                        routeNote={item.routeNote}
+                        priceFromUsd={item.priceFromUsd}
+                        compact
+                        isSaved={savedTripIds.includes(item.id)}
+                        onHeartToggle={handleSavedTripToggle}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
 
-              <div className="space-y-2.5 pt-0.5">
-                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
-                  {t("homeFeaturesMillionsTitle")}
-                </h2>
+            <div className="hidden grid-cols-3 gap-3 sm:grid md:grid-cols-4 lg:grid-cols-4">
+              {discoveryItems.map((item) => {
+                return (
+                  <DiscoverySuggestionCard
+                    key={item.id}
+                    href={buildDiscoveryLink(item)}
+                    itemId={item.id}
+                    image={item.image}
+                    imageAlt={item.imageAlt}
+                    destinationCode={item.destinationCode}
+                    title={item.title}
+                    originCode={item.originCode}
+                    destinationCodeLabel={item.destinationCode}
+                    routeNote={item.routeNote}
+                    priceFromUsd={item.priceFromUsd}
+                    isSaved={savedTripIds.includes(item.id)}
+                    onHeartToggle={handleSavedTripToggle}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
-                  {t("homeFeaturesMillionsBody")}
-                </p>
-              </div>
-            </article>
+        <section className="page-shell bg-transparent py-4 sm:py-5">
+          <div className="space-y-3">
+            <div className="max-w-3xl space-y-1.5">
+              <h2 className="text-2xl font-black tracking-tight text-slate-950">
+                {t("homeTrustTitle")}
+              </h2>
+              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+                {t("homeTrustSubtitle")}
+              </p>
+            </div>
 
-            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
-              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-100/95 via-violet-100/70 to-sky-100/80 ring-1 ring-indigo-200/80">
-                <span className="absolute left-3 top-4 h-10 w-20 rounded-xl border border-white/70 bg-white/45" />
-                <span className="absolute left-6 top-7 text-indigo-600">
-                  <Filter size={16} strokeWidth={2.25} />
-                </span>
-                <span className="absolute left-1/2 top-1/2 h-[4.4rem] w-[4.4rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-indigo-300/60 bg-white/65 shadow-[0_16px_28px_-20px_rgba(79,70,229,0.95)]" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-indigo-700">
-                  <SlidersHorizontal size={30} strokeWidth={2.2} />
-                </span>
-                <span className="absolute bottom-4 right-5 text-violet-600">
-                  <Compass size={18} strokeWidth={2.25} />
-                </span>
-                <span className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-indigo-200/80 bg-white/85 text-indigo-600">
-                  <Sparkles size={11} strokeWidth={2.3} />
-                </span>
-              </div>
+            <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6">
+              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                  <SearchCheck size={20} strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustCompareTitle")}</h3>
+                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                    {t("homeTrustCompareBody")}
+                  </p>
+                </div>
+              </article>
 
-              <div className="space-y-2.5 pt-0.5">
-                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
-                  {t("homeFeaturesFlexibleTitle")}
-                </h2>
+              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
+                  <BadgeDollarSign size={20} strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustPricingTitle")}</h3>
+                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                    {t("homeTrustPricingBody")}
+                  </p>
+                </div>
+              </article>
 
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
-                  {t("homeFeaturesFlexibleBody")}
-                </p>
-              </div>
-            </article>
-
-            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
-              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-100/95 via-teal-50/80 to-cyan-100/85 ring-1 ring-emerald-200/80">
-                <span className="absolute left-4 top-3 h-12 w-12 rounded-2xl border border-white/70 bg-white/50" />
-                <span className="absolute right-5 top-4 h-9 w-9 rounded-full border border-emerald-200/70 bg-white/65" />
-                <span className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full border border-emerald-300/60 bg-white/50 shadow-[0_16px_28px_-20px_rgba(13,148,136,0.95)]" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-teal-700">
-                  <ShieldCheck size={34} strokeWidth={2.15} />
-                </span>
-                <span className="absolute bottom-4 left-6 text-emerald-600">
-                  <BadgeCheck size={18} strokeWidth={2.25} />
-                </span>
-                <span className="absolute bottom-3 right-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-emerald-200/70 bg-white/85 text-teal-700">
-                  <Sparkles size={11} strokeWidth={2.3} />
-                </span>
-              </div>
-
-              <div className="space-y-2.5 pt-0.5">
-                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
-                  {t("homeFeaturesSecureTitle")}
-                </h2>
-
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
-                  {t("homeFeaturesSecureBody")}
-                </p>
-              </div>
-            </article>
-
-            <article className="flex min-h-[17rem] flex-col items-start gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_18px_34px_-24px_rgba(15,23,42,0.34)] sm:min-h-[18rem] sm:p-6">
-              <div className="relative h-28 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-amber-100/95 via-orange-100/75 to-rose-100/80 ring-1 ring-orange-200/80">
-                <span className="absolute left-4 top-4 h-10 w-10 rounded-full border border-white/70 bg-white/55 shadow-[0_14px_22px_-20px_rgba(249,115,22,1)]" />
-                <span className="absolute right-3 top-3 inline-flex h-7 w-7 items-center justify-center rounded-full border border-orange-200/80 bg-white/85 text-orange-600">
-                  <BellRing size={12} strokeWidth={2.3} />
-                </span>
-                <span className="absolute left-1/2 top-1/2 h-[4.5rem] w-[4.5rem] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-orange-300/60 bg-white/60 shadow-[0_16px_28px_-20px_rgba(249,115,22,0.95)]" />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-orange-600">
-                  <CircleDollarSign size={32} strokeWidth={2.2} />
-                </span>
-                <span className="absolute bottom-4 right-6 text-rose-500">
-                  <Sparkles size={17} strokeWidth={2.2} />
-                </span>
-              </div>
-
-              <div className="space-y-2.5 pt-0.5">
-                <h2 className="text-base font-black leading-tight text-slate-900 sm:text-lg">
-                  {t("homeFeaturesDealsTitle")}
-                </h2>
-
-                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px]">
-                  {t("homeFeaturesDealsBody")}
-                </p>
-              </div>
-            </article>
+              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+                  <ShieldCheck size={20} strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustHandoffTitle")}</h3>
+                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                    {t("homeTrustHandoffBody")}
+                  </p>
+                </div>
+              </article>
+            </div>
           </div>
         </section>
 
@@ -352,57 +393,252 @@ export default function Home() {
           />
         </section>
 
-        <section className="page-shell pb-12">
-          <div className="grid gap-5 rounded-xl bg-[#f3eafe] p-5 md:grid-cols-[1fr_minmax(280px,520px)] md:items-center">
-            <div className="flex items-start gap-4">
-              <span className="rounded-full bg-violet-100 p-2 text-[#5b21d6]">
-                <Ticket size={18} />
-              </span>
+        <section className="page-shell pb-12 pt-2 sm:pt-3">
+          <div className="max-w-3xl space-y-2">
+            <h2 className="text-2xl font-semibold tracking-normal text-slate-800 sm:font-bold sm:text-slate-900">
+              Frequently asked questions
+            </h2>
+            <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+              Learn how Curioticket helps you compare flights, hotels, and travel options before booking with trusted providers.
+            </p>
+          </div>
 
-              <div>
-                <h2 className="text-lg font-black text-slate-950">
-                  {t("homeNewsletterTitle")}
-                </h2>
+          <div className="mt-5 grid gap-x-8 gap-y-1 md:grid-cols-2">
+              {[
+                {
+                  question: "How does Curioticket find flight and hotel options?",
+                  answer:
+                    "Curioticket searches live offers from travel providers and brings options together in one place so you can compare prices, routes, stays, and details before choosing.",
+                },
+                {
+                  question:
+                    "Does Curioticket sell tickets or hotel rooms directly?",
+                  answer:
+                    "Curioticket helps you compare travel options. When you choose an offer, you are sent to the selected provider to review details and complete the booking on that provider’s site.",
+                },
+                {
+                  question: "Why can prices change after I click an offer?",
+                  answer:
+                    "Prices and availability can change in real time because airlines, hotels, and travel providers update inventory frequently. Always review the final price on the provider’s checkout page before booking.",
+                },
+                {
+                  question:
+                    "Can I compare multiple providers for the same trip?",
+                  answer:
+                    "Yes. Curioticket is designed to help you compare options side by side so you can evaluate price, timing, route details, hotel details, and overall value.",
+                },
+                {
+                  question: "How do I complete my booking securely?",
+                  answer:
+                    "Booking and payment are completed on the provider’s checkout flow. You should always review the provider’s terms, cancellation policy, and final price before confirming.",
+                },
+                {
+                  question: "Can I set currency and language preferences?",
+                  answer:
+                    "Yes. Curioticket supports language and region preferences so the experience can feel more relevant based on how you prefer to search and compare travel options.",
+                },
+                {
+                  question: "Are search results live or cached?",
+                  answer:
+                    "Curioticket uses provider search results that can refresh as availability and prices change. This helps show current options, but final availability is confirmed by the provider.",
+                },
+                {
+                  question: "Where do I manage changes or cancellations?",
+                  answer:
+                    "Trip changes, cancellations, refunds, and booking support are usually handled by the provider where the booking was completed. Use the confirmation details from that provider for service requests.",
+                },
+              ].map((item) => (
+                <details
+                  key={item.question}
+                  className="group border-b border-slate-200 py-4"
+                >
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-slate-900 marker:hidden sm:text-base">
+                    <span>{item.question}</span>
+                    <span
+                      aria-hidden="true"
+                      className="mt-0.5 text-base leading-none text-slate-500 transition-transform duration-200 group-open:rotate-45"
+                    >
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-2 text-sm font-medium leading-6 text-slate-700 sm:text-base">
+                    {item.answer}
+                  </p>
+                </details>
+              ))}
+          </div>
+        </section>
 
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  {t("homeNewsletterBody")}
-                </p>
+        <section className="page-shell pb-6 sm:pb-8">
+          <div className="w-full max-w-[820px]">
+            <div className="rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:p-3.5">
+              <div className="flex flex-row items-center gap-1.5 sm:gap-2.5 lg:gap-3.5">
+                <div className="flex shrink-0 items-center gap-1.5 sm:min-w-0 sm:basis-[34%] sm:gap-2.5 lg:basis-[34%] lg:max-w-[31ch]">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 sm:h-10 sm:w-10">
+                    <Mail className="size-5 sm:size-[22px]" />
+                  </span>
+
+                  <div className="hidden min-w-0 max-w-[17ch] space-y-0 sm:block lg:max-w-[24ch]">
+                    <h2 className="truncate text-xs font-black leading-tight text-slate-950 sm:text-sm">
+                      {t("homeNewsletterTitle")}
+                    </h2>
+
+                    <p className="hidden truncate text-xs font-semibold leading-5 text-slate-700 min-[420px]:block sm:text-sm">
+                      {t("homeNewsletterBody")}
+                    </p>
+                  </div>
+                </div>
+
+                <form
+                  className="flex min-w-0 flex-1 flex-row items-center gap-1.5 sm:basis-auto sm:gap-2 lg:basis-[66%] lg:flex-nowrap lg:justify-end"
+                  onSubmit={handleNewsletterSubmit}
+                >
+                  <input
+                    type="email"
+                    value={newsletterEmail}
+                    onChange={(event) => setNewsletterEmail(event.target.value)}
+                    placeholder={t("homeNewsletterPlaceholder")}
+                    className="focus-ring h-9 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 sm:h-11 sm:min-w-[12rem] sm:px-3.5 sm:text-sm lg:min-w-[20rem] lg:max-w-[30rem]"
+                    aria-label={t("homeEmailAddress")}
+                    required
+                  />
+
+                  <button
+                    type="submit"
+                    className="focus-ring h-9 w-auto shrink-0 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 text-xs font-extrabold text-white transition hover:bg-slate-800 sm:h-11 sm:px-5 sm:text-sm"
+                  >
+                    {t("homeSubscribe")}
+                  </button>
+                </form>
               </div>
+
+              {newsletterMessage ? (
+                <p className="mt-2 text-xs font-semibold text-slate-700 sm:text-sm">
+                  {newsletterMessage}
+                </p>
+              ) : null}
             </div>
-
-            <form
-              className="flex flex-col gap-3 sm:flex-row"
-              onSubmit={handleNewsletterSubmit}
-            >
-              <input
-                type="email"
-                value={newsletterEmail}
-                onChange={(event) => setNewsletterEmail(event.target.value)}
-                placeholder={t("homeNewsletterPlaceholder")}
-                className="focus-ring h-12 min-w-0 flex-1 rounded-md border border-white bg-white px-4 text-sm font-semibold text-slate-950 placeholder:text-slate-400"
-                aria-label={t("homeEmailAddress")}
-                required
-              />
-
-              <button
-                type="submit"
-                className="focus-ring h-12 rounded-md bg-[#5b21d6] px-8 text-sm font-extrabold text-white transition hover:bg-[#4c1d95]"
-              >
-                {t("homeSubscribe")}
-              </button>
-            </form>
-
-            {newsletterMessage ? (
-              <p className="text-sm font-semibold text-[#4c1d95]">
-                {newsletterMessage}
-              </p>
-            ) : null}
           </div>
         </section>
       </main>
 
       <Footer />
     </>
+  );
+}
+
+function DiscoveryCardImage({
+  image,
+  imageAlt,
+  destinationCode,
+}: {
+  image: string;
+  imageAlt: string;
+  destinationCode: string;
+}) {
+  const [hasError, setHasError] = useState(false);
+  const hasImage = Boolean(image?.trim());
+
+  if (!hasImage || hasError) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-violet-200 via-fuchsia-100 to-cyan-100 text-slate-700">
+        <Compass size={14} className="opacity-80" aria-hidden />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
+          Destination
+        </span>
+        <span className="text-[11px] font-black tracking-[0.12em] text-slate-800">
+          {destinationCode}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={image}
+      alt={imageAlt}
+      fill
+      sizes="(min-width: 1280px) 7rem, (min-width: 640px) 6.5rem, 5rem"
+      className="object-cover transition duration-500 group-hover:scale-[1.03]"
+      onError={() => setHasError(true)}
+    />
+  );
+}
+
+function DiscoverySuggestionCard({
+  href,
+  itemId,
+  image,
+  imageAlt,
+  destinationCode,
+  title,
+  originCode,
+  destinationCodeLabel,
+  routeNote,
+  priceFromUsd,
+  compact,
+  isSaved,
+  onHeartToggle,
+}: {
+  href: ComponentProps<typeof Link>["href"];
+  itemId: string;
+  image: string;
+  imageAlt: string;
+  destinationCode: string;
+  title: string;
+  originCode: string;
+  destinationCodeLabel: string;
+  routeNote: string;
+  priceFromUsd: number;
+  compact?: boolean;
+  isSaved: boolean;
+  onHeartToggle: (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => void;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`group relative flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white ${compact ? "p-2.5" : "p-3"} shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5`}
+    >
+      <button
+        type="button"
+        onClick={(event) => onHeartToggle(event, itemId)}
+        aria-label={isSaved ? "Remove from saved routes" : "Save route"}
+        aria-pressed={isSaved}
+        className={`focus-ring absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
+      >
+        <Heart size={15} className={isSaved ? "fill-current" : ""} />
+      </button>
+
+      <div className={`relative w-full shrink-0 overflow-hidden rounded-lg ${compact ? "h-[98px]" : "h-[136px] md:h-[128px] lg:h-[136px]"}`}>
+        <DiscoveryCardImage
+          image={image}
+          imageAlt={imageAlt}
+          destinationCode={destinationCode}
+        />
+      </div>
+
+      <div className={`min-w-0 flex-1 ${compact ? "space-y-1.5 pt-2" : "space-y-2 pt-2.5"}`}>
+        <p className={`line-clamp-2 break-words text-slate-900 ${compact ? "text-sm font-extrabold leading-5 pr-10" : "text-sm font-bold leading-5 md:text-[0.95rem] pr-10"}`}>
+          {title}
+        </p>
+        <p className={`line-clamp-2 text-slate-700 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}>
+          {originCode} → {destinationCodeLabel} · {routeNote}
+        </p>
+        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+          <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
+            Trending
+          </span>
+          <p className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}>
+            One way · Economy · 1 traveler
+          </p>
+        </div>
+      </div>
+
+      <div className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">From</p>
+        <p className={`text-slate-950 ${compact ? "text-xl font-black leading-tight" : "text-[1.4rem] font-black leading-tight"}`}>${priceFromUsd}</p>
+      </div>
+    </Link>
   );
 }
 
@@ -414,6 +650,9 @@ function DestinationCard({
   image,
   fromLabel,
   saveLabelTemplate,
+  destinationId,
+  isSaved,
+  onHeartToggle,
 }: {
   city: string;
   country: string;
@@ -422,6 +661,9 @@ function DestinationCard({
   image: string;
   fromLabel: string;
   saveLabelTemplate: string;
+  destinationId: string;
+  isSaved: boolean;
+  onHeartToggle: (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => void;
 }) {
   return (
     <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
@@ -442,11 +684,16 @@ function DestinationCard({
 
           <button
             type="button"
-            className="focus-ring absolute right-3 top-3 z-0 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur transition hover:bg-white/30"
+            className={`focus-ring absolute right-3 top-3 z-0 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition duration-200 ${
+              isSaved
+                ? "border-rose-200/90 bg-rose-500/90 text-white shadow-sm shadow-rose-900/20 hover:bg-rose-500"
+                : "border-white/30 bg-white/20 text-white hover:bg-white/30"
+            }`}
             aria-label={saveLabelTemplate.replace("{{city}}", city)}
-            onClick={(event) => event.preventDefault()}
+            aria-pressed={isSaved}
+            onClick={(event) => onHeartToggle(event, destinationId)}
           >
-            <Heart size={17} />
+            <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
 
           <div className="absolute bottom-4 left-4 text-white">
@@ -457,9 +704,11 @@ function DestinationCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 p-4 text-sm font-bold text-slate-700">
-          {fromLabel}
-          <span className="text-xl font-black text-[#6d28d9]">
+        <div className="flex items-center gap-2 p-4">
+          <span className="text-sm font-semibold text-slate-600">
+            {fromLabel}
+          </span>
+          <span className="text-xl font-semibold text-slate-800">
             <PriceText amountUsd={amountUsd} />
           </span>
         </div>
@@ -488,11 +737,11 @@ function PromoPanel({
   return (
     <article
       className={`relative min-h-56 overflow-hidden rounded-xl p-8 ${
-        isViolet ? "bg-[#f1e8ff]" : "bg-[#fff3e3]"
+        isViolet ? "bg-[#f1e8ff]" : "bg-[#eaf2ff]"
       }`}
     >
       <div className="relative z-10 max-w-xs">
-        <h2 className="text-2xl font-black leading-tight text-slate-950">
+        <h2 className="text-2xl font-semibold leading-tight text-slate-800 sm:font-bold sm:text-slate-900">
           {title}
         </h2>
 
@@ -504,10 +753,10 @@ function PromoPanel({
           href={href}
           variant="primary"
           size="md"
-          className={`mt-5 ${
+          className={`mt-5 font-semibold ${
             isViolet
               ? "bg-[#5b21d6] hover:bg-[#4c1d95]"
-              : "bg-[#e87817] hover:bg-[#c75f0b]"
+              : "bg-[#2563eb] hover:bg-[#1d4ed8]"
           }`}
         >
           {cta}
@@ -517,7 +766,7 @@ function PromoPanel({
 
       <div
         className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isViolet ? "bg-white/55 text-[#6d28d9]" : "bg-white/70 text-[#e87817]"
+          isViolet ? "bg-white/55 text-[#6d28d9]" : "bg-white/70 text-[#2563eb]"
         }`}
       >
         <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />

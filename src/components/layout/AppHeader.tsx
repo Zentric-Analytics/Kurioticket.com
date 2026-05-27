@@ -38,6 +38,24 @@ import {
   LinkButton,
 } from "@/components/ui/Button";
 
+
+function SavedHeartIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 20.2C6.3 16.2 3 13.1 3 9.1C3 6.3 5.2 4 8.1 4C9.8 4 11.4 4.8 12.4 6.1C13.4 4.8 15 4 16.7 4C19.6 4 21.8 6.3 21.8 9.1C21.8 13.1 18.5 16.2 12.8 20.2L12.4 20.5L12 20.2Z" />
+      <path d="M15.7 7.4C16.8 7.4 17.7 8.3 17.7 9.4" className="opacity-70" />
+    </svg>
+  );
+}
 export function AppHeader() {
   const { data: session } = useSession();
 
@@ -137,6 +155,11 @@ export function AppHeader() {
         label: t.explore,
         icon: Compass,
       },
+      {
+        href: "/saved",
+        label: "Saved",
+        icon: SavedHeartIcon,
+      },
       ...(isSignedIn
         ? [
             {
@@ -186,6 +209,7 @@ export function AppHeader() {
       "/deals",
       "/destinations",
       "/explore",
+      "/saved",
     ]);
 
     return navItems.filter(
