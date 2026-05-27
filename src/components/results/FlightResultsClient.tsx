@@ -523,7 +523,7 @@ export function FlightResultsClient() {
                         }
                       }
                     }}
-                    className="focus-ring h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900"
+                    className="h-12 rounded-xl border border-slate-300 bg-white px-3 pr-9 text-[16px] font-bold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm appearance-none"
                   >
                     <option value="round-trip">Round-trip</option>
                     <option value="one-way">One-way</option>
@@ -625,7 +625,7 @@ export function FlightResultsClient() {
                         }}
                         placeholder="From"
                         autoComplete="off"
-                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
+                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-[16px] font-semibold text-slate-900 placeholder:text-slate-400 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
                       />
 
                       {activeSuggest === "origin" && dropdownPosition ? (
@@ -685,7 +685,7 @@ export function FlightResultsClient() {
                         }}
                         placeholder="To"
                         autoComplete="off"
-                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-900 placeholder:text-slate-400"
+                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-[16px] font-semibold text-slate-900 placeholder:text-slate-400 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
                       />
 
                       {activeSuggest === "destination" && dropdownPosition ? (
@@ -708,7 +708,7 @@ export function FlightResultsClient() {
                         type="button"
                         aria-label="Departure date"
                         onClick={() => setActiveDatePicker("departure")}
-                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900"
+                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
                       >
                         {departureDateInput
                           ? formatDateLabel(departureDateInput)
@@ -726,7 +726,7 @@ export function FlightResultsClient() {
                             setActiveDatePicker("return");
                           }
                         }}
-                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400 md:h-11 md:text-sm"
                       >
                         {returnDateInput
                           ? formatDateLabel(returnDateInput)
@@ -747,7 +747,7 @@ export function FlightResultsClient() {
                             return next;
                           });
                         }}
-                        className="focus-ring h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 text-left text-sm font-semibold text-slate-900"
+                        className="h-12 w-full min-w-0 rounded-xl border border-slate-300 bg-white px-3 text-left text-[16px] font-semibold text-slate-900 transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:h-11 md:text-sm"
                       >
                         {buildTravelerCabinSummary(
                           adultCount,
@@ -1092,10 +1092,10 @@ export function FlightResultsClient() {
               <button
                 key={mode.value}
                 className={cn(
-                  "focus-ring h-10 rounded-lg px-3 text-sm font-bold transition",
+                  "h-10 rounded-xl border px-3 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500",
                   sort === mode.value
-                    ? "bg-white text-navy shadow-sm ring-1 ring-slate-200"
-                    : "text-muted hover:bg-white/70 hover:text-navy"
+                    ? "border-slate-300 bg-white text-navy shadow-sm"
+                    : "border-slate-200 text-muted hover:bg-white/70 hover:text-navy"
                 )}
                 onClick={() => {
                   setLoading(true);
@@ -1109,7 +1109,7 @@ export function FlightResultsClient() {
 
             <Button
               variant="secondary"
-              className="border-slate-200 md:hidden"
+              className="h-12 rounded-xl border-slate-300 text-[16px] transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:hidden md:h-11 md:text-sm"
               onClick={() => setFiltersOpen(true)}
             >
               <SlidersHorizontal size={17} />
@@ -1396,7 +1396,7 @@ function DatePickerPopover({
               type="button"
               onClick={() => onSelect(date)}
               className={cn(
-                "h-9 rounded-md text-sm font-semibold transition hover:bg-slate-100 focus:bg-slate-100 focus:outline-none",
+                "h-11 rounded-lg text-sm font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500",
                 selectedDeparture || selectedReturn
                   ? "bg-[#0a66c2] text-white hover:bg-[#085aa9] focus:bg-[#085aa9]"
                   : "text-slate-800",
@@ -1435,7 +1435,7 @@ function DatePickerPopover({
         <button
           type="button"
           aria-label="Previous month"
-          className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          className="min-h-11 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
           onClick={() => onMonthChange(addMonths(leftMonth, -1))}
         >
           Prev
@@ -1444,7 +1444,7 @@ function DatePickerPopover({
         <button
           type="button"
           aria-label="Next month"
-          className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          className="min-h-11 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
           onClick={() => onMonthChange(addMonths(leftMonth, 1))}
         >
           Next
@@ -1459,7 +1459,7 @@ function DatePickerPopover({
       <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-4">
         <button
           type="button"
-          className="focus-ring rounded-md border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700"
+          className="min-h-11 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500"
           onClick={onClear}
         >
           Clear
@@ -1467,7 +1467,7 @@ function DatePickerPopover({
 
         <button
           type="button"
-          className="focus-ring rounded-md bg-[#0a66c2] px-3 py-1.5 text-sm font-bold text-white hover:bg-[#085aa9]"
+          className="min-h-11 rounded-xl bg-[#0a66c2] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#085aa9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-1"
           onClick={onToday}
         >
           Today
@@ -1559,7 +1559,7 @@ function TravelerCabinPopover({
                 aria-pressed={selected}
                 onClick={() => onCabinClassChange(option.value)}
                 className={cn(
-                  "focus-ring rounded-lg border px-3 py-2.5 text-left text-sm font-bold transition",
+                  "min-h-11 rounded-xl border px-3 py-2.5 text-left text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500",
                   selected
                     ? "border-[#0a66c2] bg-blue-50 text-[#0a66c2]"
                     : "border-slate-200 bg-white text-slate-800 hover:bg-slate-50"
@@ -1594,7 +1594,7 @@ function CounterRow({
   const incrementDisabled = value >= max;
 
   return (
-    <div className="flex items-center justify-between gap-4 py-3">
+    <div className="flex min-h-11 items-center justify-between gap-4 py-3">
       <div>
         <p className="text-sm font-bold text-slate-950">{label}</p>
         <p className="text-xs font-semibold text-slate-500">{description}</p>
@@ -1606,7 +1606,7 @@ function CounterRow({
           aria-label={`Decrease ${label}`}
           disabled={decrementDisabled}
           onClick={() => onChange(value - 1)}
-          className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 text-lg font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
         >
           −
         </button>
@@ -1620,7 +1620,7 @@ function CounterRow({
           aria-label={`Increase ${label}`}
           disabled={incrementDisabled}
           onClick={() => onChange(value + 1)}
-          className="focus-ring flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 text-lg font-bold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 text-lg font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
         >
           +
         </button>
@@ -1659,7 +1659,7 @@ function SuggestionList({
             type="button"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(airportInputValue(item))}
-            className="block w-full border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 focus:bg-slate-50 focus:outline-none last:border-b-0"
+            className="block w-full rounded-lg border-b border-slate-100 px-4 py-3 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 last:border-b-0"
           >
             <span className="flex items-center gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
@@ -1720,7 +1720,7 @@ function Filters({
       </div>
 
       <div className="mt-6 grid gap-6">
-        <label className="block">
+        <label className="block rounded-xl border border-slate-200 bg-slate-50 p-3">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
             Price up to{" "}
             <span className="font-mono text-navy">
@@ -1728,7 +1728,7 @@ function Filters({
             </span>
           </span>
           <input
-            className="w-full accent-teal"
+            className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none"
             type="range"
             min={100}
             max={2000}
@@ -1738,13 +1738,13 @@ function Filters({
           />
         </label>
 
-        <label className="block">
+        <label className="block rounded-xl border border-slate-200 bg-slate-50 p-3">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
             Stops up to{" "}
             <span className="font-mono text-navy">{maxStops}</span>
           </span>
           <input
-            className="w-full accent-teal"
+            className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none"
             type="range"
             min={0}
             max={3}
@@ -1754,19 +1754,19 @@ function Filters({
           />
         </label>
 
-        <div className="grid gap-3 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-muted">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" className="accent-teal" defaultChecked />
+        <div className="grid gap-1 rounded-xl border border-slate-200 bg-slate-50 p-2 text-sm font-semibold text-muted">
+          <label className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-slate-100">
+            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40" defaultChecked />
             Baggage included where available
           </label>
 
-          <label className="flex items-center gap-2">
-            <input type="checkbox" className="accent-teal" />
+          <label className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-slate-100">
+            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40" />
             Evening departures
           </label>
 
-          <label className="flex items-center gap-2">
-            <input type="checkbox" className="accent-teal" />
+          <label className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-slate-100">
+            <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40" />
             Low-risk connections
           </label>
         </div>
