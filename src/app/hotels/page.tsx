@@ -45,8 +45,10 @@ export default function HotelsSearchPage() {
     event.preventDefault();
 
     const trimmedDestination = destination.trim();
-    const guestCount = Number(guests);
-    const roomCount = Number(rooms);
+    const parsedGuests = Number.parseInt(guests, 10);
+    const parsedRooms = Number.parseInt(rooms, 10);
+    const normalizedGuests = Number.isNaN(parsedGuests) ? 1 : Math.max(1, Math.min(12, parsedGuests));
+    const normalizedRooms = Number.isNaN(parsedRooms) ? 1 : Math.max(1, Math.min(6, parsedRooms));
 
     if (!trimmedDestination) {
       setError("Please enter a destination.");
@@ -68,24 +70,16 @@ export default function HotelsSearchPage() {
       return;
     }
 
-    if (Number.isNaN(guestCount) || guestCount < 1 || guestCount > 12) {
-      setError("Guests must be between 1 and 12.");
-      return;
-    }
-
-    if (Number.isNaN(roomCount) || roomCount < 1 || roomCount > 6) {
-      setError("Rooms must be between 1 and 6.");
-      return;
-    }
-
     const params = new URLSearchParams({
       destination: trimmedDestination,
       checkIn,
       checkOut,
-      guests: String(guestCount),
-      rooms: String(roomCount),
+      guests: String(normalizedGuests),
+      rooms: String(normalizedRooms),
     });
 
+    setGuests(String(normalizedGuests));
+    setRooms(String(normalizedRooms));
     setError("");
     router.push(`/hotels/results?${params.toString()}`);
   };
