@@ -168,6 +168,17 @@ export function FlightResultsClient() {
     [destinationInput]
   );
 
+  const isFormDirty =
+    Boolean(originInput.trim()) ||
+    Boolean(destinationInput.trim()) ||
+    Boolean(departureDateInput) ||
+    Boolean(returnDateInput) ||
+    tripTypeInput !== "round-trip" ||
+    adultCount !== 1 ||
+    childCount !== 0 ||
+    infantCount !== 0 ||
+    cabinClassInput !== "economy";
+
   const body = useMemo(() => {
     const origin = params.get("origin")?.trim() || "";
     const destination = params.get("destination")?.trim() || "";
@@ -559,7 +570,7 @@ export function FlightResultsClient() {
                   />
 
                   <div className="text-center">
-                    <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.5rem]">
                       Find millions of cheap flights, fast
                     </h1>
                     <p className="mt-1 text-sm text-slate-600">
@@ -567,8 +578,9 @@ export function FlightResultsClient() {
                     </p>
                   </div>
 
-                  <div className="mt-1 flex justify-end">
-                    <button
+                  {isFormDirty ? (
+                    <div className="mt-1 flex justify-end">
+                      <button
                       type="button"
                       onClick={(event) => {
                         event.preventDefault();
@@ -593,10 +605,11 @@ export function FlightResultsClient() {
                       }}
                       className="focus-ring inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
                     >
-                      <X size={12} />
-                      Clear all
-                    </button>
-                  </div>
+                        <X size={12} />
+                        Clear all
+                      </button>
+                    </div>
+                  ) : null}
 
                   <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
                   <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
@@ -630,7 +643,10 @@ export function FlightResultsClient() {
                         <button
                           type="button"
                           aria-label="Clear origin"
-                          onMouseDown={(event) => event.preventDefault()}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -708,7 +724,10 @@ export function FlightResultsClient() {
                         <button
                           type="button"
                           aria-label="Clear destination"
-                          onMouseDown={(event) => event.preventDefault()}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -762,7 +781,10 @@ export function FlightResultsClient() {
                         <button
                           type="button"
                           aria-label="Clear travel dates"
-                          onMouseDown={(event) => event.preventDefault()}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
@@ -1756,7 +1778,10 @@ function SuggestionList({
           <button
             key={`${item.code}-${item.airport}`}
             type="button"
-            onMouseDown={(event) => event.preventDefault()}
+            onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
             onClick={() => onSelect(airportInputValue(item))}
             className="block w-full px-3 py-2 text-left transition-colors hover:bg-slate-50"
           >
