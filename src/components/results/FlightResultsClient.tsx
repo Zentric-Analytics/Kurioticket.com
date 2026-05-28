@@ -74,6 +74,10 @@ const exploreCountries = [
   },
 ];
 
+type PlacesApiResponse = {
+  suggestions?: AirportOption[];
+};
+
 export function FlightResultsClient() {
   const params = useSearchParams();
   const router = useRouter();
@@ -152,6 +156,9 @@ export function FlightResultsClient() {
     left: number;
     width: number;
   } | null>(null);
+  const [countryHint, setCountryHint] = useState("");
+  const [originSuggestions, setOriginSuggestions] = useState<AirportOption[]>([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<AirportOption[]>([]);
 
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
@@ -159,14 +166,98 @@ export function FlightResultsClient() {
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
 
-  const originSuggestions = useMemo(
+  const originFallbackSuggestions = useMemo(
     () => filterAirportOptions(originInput),
     [originInput]
   );
-  const destinationSuggestions = useMemo(
+  const destinationFallbackSuggestions = useMemo(
     () => filterAirportOptions(destinationInput),
     [destinationInput]
   );
+  const resolvedOriginSuggestions =
+    originSuggestions.length > 0 ? originSuggestions : originFallbackSuggestions;
+  const resolvedDestinationSuggestions =
+    destinationSuggestions.length > 0
+      ? destinationSuggestions
+      : destinationFallbackSuggestions;
+
+  useEffect(() => {
+    if (typeof navigator === "undefined") return;
+    const language = navigator.language || "";
+    const parts = language.split("-");
+    if (parts.length > 1 && /^[A-Za-z]{2}$/.test(parts[1])) {
+      setCountryHint(parts[1].toUpperCase());
+    }
+  }, []);
+
+  useEffect(() => {
+    const query = originInput.trim();
+    if (query.length < 2) {
+      setOriginSuggestions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const response = await fetch(buildPlacesUrl(query, "origin", countryHint), {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("Failed to load origin suggestions");
+        const payload = (await response.json()) as PlacesApiResponse;
+        const suggestions = Array.isArray(payload.suggestions)
+          ? dedupeSuggestions(payload.suggestions)
+              .filter((item) => !!item?.code && !!item?.city && !!item?.airport)
+              .slice(0, 7)
+          : [];
+        setOriginSuggestions(suggestions);
+      } catch {
+        if (!controller.signal.aborted) setOriginSuggestions([]);
+      }
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [originInput, countryHint]);
+
+  useEffect(() => {
+    const query = destinationInput.trim();
+    if (query.length < 2) {
+      setDestinationSuggestions([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const response = await fetch(
+          buildPlacesUrl(query, "destination", countryHint),
+          {
+            signal: controller.signal,
+            cache: "no-store",
+          }
+        );
+        if (!response.ok) throw new Error("Failed to load destination suggestions");
+        const payload = (await response.json()) as PlacesApiResponse;
+        const suggestions = Array.isArray(payload.suggestions)
+          ? dedupeSuggestions(payload.suggestions)
+              .filter((item) => !!item?.code && !!item?.city && !!item?.airport)
+              .slice(0, 7)
+          : [];
+        setDestinationSuggestions(suggestions);
+      } catch {
+        if (!controller.signal.aborted) setDestinationSuggestions([]);
+      }
+    }, 300);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [destinationInput, countryHint]);
 
   const isFormDirty =
     Boolean(originInput.trim()) ||
@@ -570,8 +661,8 @@ export function FlightResultsClient() {
                   />
 
                   <div className="text-center">
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.5rem]">
-                      Find millions of cheap flights, fast
+                    <h1 className="mx-auto max-w-[16ch] text-balance text-[2rem] font-black tracking-tight text-slate-900 sm:max-w-none sm:text-5xl lg:text-[3.25rem]">
+                      Find millions of cheap flights
                     </h1>
                     <p className="mt-1 text-sm text-slate-600">
                       Compare fares and lock in the best route in a few taps.
@@ -623,7 +714,9 @@ export function FlightResultsClient() {
                         name="origin"
                         required
                         value={originInput}
-                        onFocus={() => setActiveSuggest("origin")}
+                        onFocus={() => {
+                          if (originInput.trim().length >= 2) setActiveSuggest("origin");
+                        }}
                         onKeyDown={(event) => {
                           if (event.key === "Escape") {
                             setActiveSuggest(null);
@@ -633,7 +726,12 @@ export function FlightResultsClient() {
                         onChange={(event) => {
                           setOriginInput(event.target.value);
                           setOriginCode("");
-                          setActiveSuggest("origin");
+                          if (event.target.value.trim().length >= 2) {
+                            setActiveSuggest("origin");
+                          } else {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
                         }}
                         placeholder="From?"
                         autoComplete="off"
@@ -665,7 +763,7 @@ export function FlightResultsClient() {
                         <SuggestionList
                           id="flight-airport-suggestions"
                           position={dropdownPosition}
-                          suggestions={originSuggestions}
+                          suggestions={resolvedOriginSuggestions}
                           onSelect={(value) => {
                             setOriginInput(value);
                             setOriginCode(value);
@@ -704,7 +802,11 @@ export function FlightResultsClient() {
                         name="destination"
                         required
                         value={destinationInput}
-                        onFocus={() => setActiveSuggest("destination")}
+                        onFocus={() => {
+                          if (destinationInput.trim().length >= 2) {
+                            setActiveSuggest("destination");
+                          }
+                        }}
                         onKeyDown={(event) => {
                           if (event.key === "Escape") {
                             setActiveSuggest(null);
@@ -714,7 +816,12 @@ export function FlightResultsClient() {
                         onChange={(event) => {
                           setDestinationInput(event.target.value);
                           setDestinationCode("");
-                          setActiveSuggest("destination");
+                          if (event.target.value.trim().length >= 2) {
+                            setActiveSuggest("destination");
+                          } else {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
                         }}
                         placeholder="To?"
                         autoComplete="off"
@@ -746,7 +853,7 @@ export function FlightResultsClient() {
                         <SuggestionList
                           id="flight-airport-suggestions"
                           position={dropdownPosition}
-                          suggestions={destinationSuggestions}
+                          suggestions={resolvedDestinationSuggestions}
                           onSelect={(value) => {
                             setDestinationInput(value);
                             setDestinationCode(value);
@@ -1364,6 +1471,50 @@ function filterAirportOptions(query: string) {
     .slice(0, 8);
 }
 
+function buildPlacesUrl(
+  query: string,
+  context: "origin" | "destination",
+  countryHint: string
+) {
+  const params = new URLSearchParams();
+  if (query.length >= 2) params.set("q", query);
+  params.set("context", context);
+  if (countryHint) params.set("countryCode", countryHint);
+  if (typeof navigator !== "undefined" && navigator.language) {
+    params.set("locale", navigator.language);
+  }
+
+  return `/api/flights/places?${params.toString()}`;
+}
+
+function normalizeSuggestionText(value: string) {
+  return value
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .trim()
+    .toLowerCase();
+}
+
+function dedupeSuggestions(suggestions: AirportOption[]) {
+  const seenCodes = new Set<string>();
+  const seenNames = new Set<string>();
+  const deduped: AirportOption[] = [];
+
+  for (const suggestion of suggestions) {
+    const codeKey = suggestion.code.trim().toUpperCase();
+    if (!codeKey || seenCodes.has(codeKey)) continue;
+
+    const nameKey = `${normalizeSuggestionText(suggestion.city)}|${normalizeSuggestionText(suggestion.airport)}`;
+    if (seenNames.has(nameKey)) continue;
+
+    seenCodes.add(codeKey);
+    seenNames.add(nameKey);
+    deduped.push(suggestion);
+  }
+
+  return deduped;
+}
+
 function airportInputValue(item: AirportOption) {
   return item.code;
 }
@@ -1771,7 +1922,7 @@ function SuggestionList({
         width: position.width,
         zIndex: 9999,
       }}
-      className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl"
+      className="w-full max-h-[min(42dvh,270px)] overflow-auto rounded-xl border border-slate-200 bg-white py-0.5 shadow-xl md:max-h-[220px]"
     >
       {suggestions.length ? (
         suggestions.map((item) => (
@@ -1783,10 +1934,10 @@ function SuggestionList({
                             event.stopPropagation();
                           }}
             onClick={() => onSelect(airportInputValue(item))}
-            className="block w-full px-3 py-2 text-left transition-colors hover:bg-slate-50"
+            className="block w-full px-3 py-1.5 text-left transition-colors hover:bg-slate-50"
           >
-            <p className="text-sm font-medium text-slate-900">{item.city} ({item.code})</p>
-            <p className="text-xs leading-5 text-slate-600">{item.airport}{item.country ? ` · ${item.country}` : ""}</p>
+            <p className="text-[13px] font-medium text-slate-900">{item.city} ({item.code})</p>
+            <p className="text-[11px] leading-4 text-slate-600">{item.airport}{item.country ? ` · ${item.country}` : ""}</p>
           </button>
         ))
       ) : (
