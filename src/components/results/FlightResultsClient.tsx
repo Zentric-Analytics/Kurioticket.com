@@ -661,7 +661,7 @@ export function FlightResultsClient() {
                   />
 
                   <div className="text-center">
-                    <h1 className="mx-auto max-w-[16ch] text-balance text-[2rem] font-black tracking-tight text-slate-900 sm:max-w-none sm:text-5xl lg:text-[3.25rem]">
+                    <h1 className="mx-auto whitespace-nowrap text-[clamp(1.35rem,5.2vw,2.8rem)] font-semibold tracking-tight text-slate-900">
                       Find millions of cheap flights
                     </h1>
                     <p className="mt-1 text-sm text-slate-600">
@@ -933,7 +933,7 @@ export function FlightResultsClient() {
                       </button>
                     </div>
 
-                    <div className="mt-1 flex items-center lg:hidden">
+                    <div className="mt-2 flex items-center lg:hidden">
                       <div className="relative inline-flex items-center">
                         <select
                           id="tripTypeMobile"
@@ -950,7 +950,7 @@ export function FlightResultsClient() {
                               }
                             }
                           }}
-                          className="appearance-none border-0 bg-transparent py-0 pl-0 pr-5 text-sm font-medium text-slate-700 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-0"
+                          className="min-h-10 appearance-none border-0 bg-transparent py-1 pl-0 pr-6 text-base font-medium text-slate-700 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-0"
                         >
                           <option value="round-trip">Round-trip</option>
                           <option value="one-way">One-way</option>
@@ -970,7 +970,7 @@ export function FlightResultsClient() {
                     </Button>
                   </div>
                 </div>
-                <div className="mt-2 hidden items-center lg:flex">
+                <div className="mt-2 hidden items-center lg:flex lg:pl-1">
                   <div className="relative inline-flex items-center">
                     <select
                       id="tripType"
@@ -987,7 +987,7 @@ export function FlightResultsClient() {
                           }
                         }
                       }}
-                      className="appearance-none border-0 bg-transparent py-0 pl-0 pr-5 text-sm font-medium text-slate-700 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-0"
+                      className="min-h-10 appearance-none border-0 bg-transparent py-1 pl-0 pr-6 text-base font-medium text-slate-700 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-0"
                     >
                       <option value="round-trip">Round-trip</option>
                       <option value="one-way">One-way</option>
@@ -1009,6 +1009,8 @@ export function FlightResultsClient() {
                     activePicker={activeDatePicker}
                     onMonthChange={setCalendarMonth}
                     onSelect={(date) => {
+                      if (isBeforeToday(date)) return;
+
                       const value = formatDateValue(date);
 
                       if (activeDatePicker === "departure") {
@@ -1574,6 +1576,14 @@ function buildMonthDays(month: Date): Array<Date | null> {
   return cells;
 }
 
+
+function isBeforeToday(date: Date): boolean {
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  return date < startOfToday;
+}
+
 function isSameDateValue(date: Date, value: string): boolean {
   return Boolean(value) && formatDateValue(date) === value;
 }
@@ -1662,18 +1672,26 @@ function DatePickerPopover({
           const selectedDeparture = isSameDateValue(date, departureValue);
           const selectedReturn = isSameDateValue(date, returnValue);
           const isToday = isSameDateValue(date, formatDateValue(today));
+          const disabledPastDate = isBeforeToday(date);
 
           return (
             <button
               key={date.toISOString()}
               type="button"
-              onClick={() => onSelect(date)}
+              disabled={disabledPastDate}
+              aria-disabled={disabledPastDate}
+              onClick={() => {
+                if (disabledPastDate) return;
+                onSelect(date);
+              }}
               className={cn(
                 "h-9 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:h-10 sm:text-sm",
                 selectedDeparture || selectedReturn
                   ? "bg-[#0a66c2] text-white hover:bg-[#085aa9] focus:bg-[#085aa9]"
+                  : disabledPastDate
+                  ? "cursor-not-allowed text-slate-300 hover:bg-transparent"
                   : "text-slate-800",
-                isToday && !(selectedDeparture || selectedReturn)
+                isToday && !(selectedDeparture || selectedReturn) && !disabledPastDate
                   ? "ring-1 ring-slate-300"
                   : ""
               )}
