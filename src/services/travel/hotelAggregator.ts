@@ -52,6 +52,7 @@ export async function searchHotels(search: HotelSearchParams): Promise<Aggregate
 
 function sanitizeHotelWarning(error?: string) {
   if (error === "no_live_hotel_provider") return "no_live_hotel_provider";
+  if (error === "unsupported_destination") return "unsupported_destination";
   return "provider_unavailable";
 }
 

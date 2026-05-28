@@ -1,10 +1,15 @@
 import type { HotelSearchParams, NormalizedHotelResult, ProviderResult } from "@/lib/types";
 import { sanitizeAirportCode } from "@/lib/utils";
+import { searchHotelbedsHotels } from "@/services/travel/providers/hotelbedsProvider";
 import { normalizeHotelResult } from "@/services/travel/normalizeHotelResult";
 import { getAmadeusAccessToken } from "@/services/travel/providers/amadeusAuth";
 import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
 
 export function searchHotelProvider(search: HotelSearchParams): Promise<ProviderResult<NormalizedHotelResult>> {
+  if (process.env.HOTELBEDS_API_KEY && process.env.HOTELBEDS_SECRET) {
+    return searchHotelbedsHotels(search);
+  }
+
   if (process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET) {
     return searchAmadeusHotels(search);
   }

@@ -3,12 +3,13 @@ import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
 import { scoreHotel } from "@/services/travel/scoring";
 
 export function normalizeHotelResult(
-  provider: "Amadeus Hotels" | "Hotel Partner" | "Development Fallback",
+  provider: "Amadeus Hotels" | "Hotel Partner" | "Hotelbeds" | "Development Fallback",
   raw: unknown,
   search: HotelSearchParams,
 ): NormalizedHotelResult | null {
   if (provider === "Amadeus Hotels") return normalizeAmadeusHotel(raw, search);
   if (provider === "Hotel Partner") return normalizePartnerHotel(raw, search);
+  if (provider === "Hotelbeds") return normalizeHotelbedsHotel(raw, search);
   return normalizeFallbackHotel(raw, search);
 }
 
@@ -87,6 +88,55 @@ function normalizePartnerHotel(raw: unknown, search: HotelSearchParams): Normali
     bookingUrl: item.url || `https://www.google.com/travel/hotels/${encodeURIComponent(search.destination)}`,
     rawProviderReference: { provider: "hotel-partner", id: item.id },
   });
+}
+
+
+function normalizeHotelbedsHotel(raw: unknown, search: HotelSearchParams): NormalizedHotelResult | null {
+  const item = raw as {
+    code?: string | number;
+    name?: string;
+    categoryName?: string;
+    destinationName?: string;
+    coordinates?: { latitude?: number; longitude?: number };
+    minRate?: number;
+    maxRate?: number;
+    currency?: string;
+    rooms?: Array<{ name?: string; rates?: Array<{ net?: string | number; boardName?: string; rateComments?: string }> }>;
+  };
+
+  const name = item.name?.trim();
+  const room = item.rooms?.[0];
+  const rate = room?.rates?.[0];
+  const total = Number(rate?.net ?? item.minRate);
+
+  if (!name || !Number.isFinite(total) || total <= 0) return null;
+
+  return buildHotel({
+    provider: "Hotelbeds",
+    providerId: item.code ? String(item.code) : undefined,
+    name,
+    imageUrl: undefined,
+    rating: categoryToRating(item.categoryName),
+    location: item.destinationName || search.destination,
+    pricePerNight: nightlyPrice(total, search),
+    totalPrice: total,
+    currency: (item.currency || "USD").toUpperCase(),
+    amenities: rate?.boardName ? [rate.boardName] : [],
+    roomType: room?.name || "Room details unavailable",
+    cancellationInfo: rate?.rateComments || "Cancellation details provided during booking",
+    bookingUrl: `https://www.google.com/travel/hotels/${encodeURIComponent(search.destination)}`,
+    rawProviderReference: {
+      provider: "hotelbeds",
+      id: item.code,
+      coordinates: item.coordinates,
+    },
+  });
+}
+
+function categoryToRating(categoryName?: string) {
+  if (!categoryName) return 0;
+  const match = categoryName.match(/(\d+(?:\.\d+)?)/);
+  return match ? Number(match[1]) : 0;
 }
 
 function normalizeFallbackHotel(raw: unknown, search: HotelSearchParams): NormalizedHotelResult {
