@@ -109,12 +109,16 @@ export async function POST(request: Request) {
 function sanitizeProviderError(error?: string) {
   if (!error) return undefined;
   if (error === "no_live_hotel_provider") return "no_live_hotel_provider";
+  if (error === "unsupported_destination") return "unsupported_destination";
   return "provider_unavailable";
 }
 
 function deriveHotelWarningCategory(aggregate: Awaited<ReturnType<typeof searchHotels>>) {
   if (aggregate.providerStatuses.some((provider) => provider.error === "no_live_hotel_provider")) {
     return "no_live_hotel_provider";
+  }
+  if (aggregate.providerStatuses.some((provider) => provider.error === "unsupported_destination")) {
+    return "unsupported_destination";
   }
   if (aggregate.results.length > 0) return undefined;
   if (aggregate.providerStatuses.some((provider) => provider.status === "failed")) return "provider_unavailable";
