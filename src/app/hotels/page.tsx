@@ -87,29 +87,19 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 bg-gradient-to-b from-indigo-50/70 via-white to-white px-4 pb-16 pt-32 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl space-y-10 md:space-y-12">
-          <section className="relative overflow-hidden rounded-3xl border border-indigo-100/70 bg-gradient-to-br from-indigo-100/65 via-white to-violet-100/55 px-6 py-10 shadow-[0_20px_60px_-36px_rgba(79,70,229,0.55)] md:px-10 md:py-14">
-            <div className="pointer-events-none absolute -left-12 top-4 h-44 w-44 rounded-full bg-indigo-300/25 blur-3xl" />
-            <div className="pointer-events-none absolute right-0 top-10 h-40 w-40 rounded-full bg-violet-300/25 blur-3xl" />
-            <div className="relative mx-auto max-w-3xl space-y-3 text-center">
-              <h1 className="text-3xl font-semibold tracking-tight text-slate-900 md:text-5xl">Find stays for your trip</h1>
-              <p className="text-base text-slate-600 md:text-lg">
-                Search hotels by destination, dates, guests, and rooms, then compare available options on the results page.
-              </p>
-            </div>
-          </section>
-
-          <section className="mx-auto w-full max-w-5xl space-y-4">
+      <main className="page-shell flex-1 bg-gradient-to-b from-indigo-50/70 via-white to-white px-4 pb-16 pt-28 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl space-y-8 md:space-y-10">
+          <section className="mx-auto w-full max-w-6xl space-y-3">
+            <p className="px-1 text-sm font-medium text-slate-600">Find available stays</p>
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
                 <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]">
-                  <label className="rounded-xl border border-transparent bg-white px-3 py-2.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20">
+                  <label className="rounded-xl border border-transparent bg-white px-3 py-2.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:rounded-r-none lg:border-r lg:border-r-slate-200/80">
                     <span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Destination</span>
                     <input type="text" value={destination} onChange={(event) => setDestination(event.target.value)} placeholder="City, area, or hotel" className="mt-1 h-7 w-full border-none bg-transparent p-0 text-[16px] text-slate-900 placeholder:text-slate-400 focus:outline-none md:text-sm" required />
                   </label>
 
-                  <div className="rounded-xl border border-transparent bg-white px-3 py-2.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20">
+                  <div className="rounded-xl border border-transparent bg-white px-3 py-2.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:rounded-none lg:border-x lg:border-x-slate-200/80">
                     <span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Dates</span>
                     <div className="mt-1 grid grid-cols-2 gap-2">
                       <label className="min-w-0">
@@ -123,7 +113,7 @@ export default function HotelsSearchPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-transparent bg-white px-3 py-2.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20">
+                  <div className="rounded-xl border border-transparent bg-white px-3 py-2.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:rounded-l-none lg:border-l lg:border-l-slate-200/80">
                     <span className="block text-xs font-semibold uppercase tracking-wide text-slate-500">Guests / Rooms</span>
                     <div className="mt-1 grid grid-cols-2 gap-2">
                       <label className="min-w-0">
@@ -138,7 +128,7 @@ export default function HotelsSearchPage() {
                   </div>
 
                   <div className="sm:col-span-2 lg:col-span-1">
-                    <button type="submit" className="h-full min-h-12 w-full rounded-xl bg-indigo-600 px-3 text-sm font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40">
+                    <button type="submit" className="h-full min-h-12 w-full rounded-xl bg-indigo-600 px-3 text-sm font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-1 active:bg-indigo-700">
                       Find stays
                     </button>
                   </div>
