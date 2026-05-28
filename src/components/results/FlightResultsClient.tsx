@@ -661,10 +661,10 @@ export function FlightResultsClient() {
                   />
 
                   <div className="text-center">
-                    <h1 className="mx-auto whitespace-nowrap text-[clamp(1.35rem,5.2vw,2.8rem)] font-semibold tracking-tight text-slate-900">
+                    <h1 className="mx-auto text-balance text-[clamp(1.8rem,7vw,3rem)] font-semibold tracking-tight text-slate-900 sm:whitespace-nowrap">
                       Find millions of cheap flights
                     </h1>
-                    <p className="mt-1 text-sm text-slate-600">
+                    <p className="mx-auto mt-2 max-w-[38ch] text-[0.98rem] leading-relaxed text-slate-600 sm:text-base">
                       Compare fares and lock in the best route in a few taps.
                     </p>
                   </div>
@@ -964,13 +964,13 @@ export function FlightResultsClient() {
 
                     <Button
                       type="submit"
-                      className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
+                      className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 sm:mt-3 lg:mt-0 lg:h-auto lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
                     >
                       Search
                     </Button>
                   </div>
                 </div>
-                <div className="mt-2 hidden items-center lg:flex lg:pl-1">
+                <div className="mt-1 hidden items-center lg:flex lg:pl-1">
                   <div className="relative inline-flex items-center">
                     <select
                       id="tripType"
