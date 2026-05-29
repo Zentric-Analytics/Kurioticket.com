@@ -1137,27 +1137,6 @@ export function FlightResultsClient() {
                   />
                 ) : null}
           <div className="mt-8 space-y-8">
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-3xl font-black text-slate-900">
-                Explore Anywhere
-              </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Discover destinations and open routes around the world.
-              </p>
-              <div className="relative mt-4 h-56 overflow-hidden rounded-xl sm:h-64">
-                <Image
-                  src="https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1600&q=80"
-                  alt="Map overview"
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-slate-900/20" />
-                <Button className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#0a66c2] px-6">
-                  Open Map
-                </Button>
-              </div>
-            </section>
-
             <section>
               <h2 className="text-3xl font-black text-slate-900">
                 Explore by country
