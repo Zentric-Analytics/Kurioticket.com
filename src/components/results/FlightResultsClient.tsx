@@ -10,7 +10,6 @@ import {
   Calendar,
   ChevronDown,
   Minus,
-  Plane,
   Plus,
   ShieldCheck,
   SlidersHorizontal,
@@ -33,13 +32,6 @@ const loadingMessages = [
   "Finding cheaper options...",
   "Analyzing layover quality...",
   "Comparing baggage-inclusive fares...",
-];
-
-const sortModes: Array<{ label: string; value: SortMode }> = [
-  { label: "Cheapest", value: "cheapest" },
-  { label: "Best Value", value: "best" },
-  { label: "Fastest", value: "fastest" },
-  { label: "Fewest Stops", value: "stops" },
 ];
 
 type CabinClassValue = "economy" | "premium-economy" | "business" | "first";
@@ -84,7 +76,7 @@ export function FlightResultsClient() {
   const { selectedOption } = useRegion();
   const selectedCurrency = selectedOption.currency;
 
-  const [sort, setSort] = useState<SortMode>(
+  const [sort] = useState<SortMode>(
     (params.get("sort") as SortMode) || "cheapest"
   );
   const [results, setResults] = useState<PublicFlightResult[]>([]);
@@ -1299,57 +1291,6 @@ export function FlightResultsClient() {
 
   return (
     <main className="flex-1 bg-[#f6f8fb] pb-8 pt-24 sm:pt-28 lg:pt-28">
-      <div className="sticky top-20 z-30 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur">
-        <div className="page-shell flex flex-col gap-4 py-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="flex items-center gap-2 text-sm font-bold text-teal-dark">
-              <Plane size={16} />
-              {body.origin} to {body.destination}
-            </p>
-
-            <h1 className="mt-1 text-2xl font-black tracking-normal text-navy md:text-3xl">
-              {body.departureDate}{" "}
-              {body.tripType === "round-trip" ? `to ${body.returnDate}` : ""}
-            </h1>
-
-            <p className="mt-1 text-sm font-semibold text-muted">
-              {body.travelers} traveler{body.travelers === 1 ? "" : "s"} ·{" "}
-              {String(body.cabinClass).replace("-", " ")} · live provider search
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1">
-            {sortModes.map((mode) => (
-              <button
-                key={mode.value}
-                className={cn(
-                  "h-10 rounded-xl border px-3 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500",
-                  sort === mode.value
-                    ? "border-slate-300 bg-white text-navy shadow-sm"
-                    : "border-slate-200 text-muted hover:bg-white/70 hover:text-navy"
-                )}
-                onClick={() => {
-                  setLoading(true);
-                  setError("");
-                  setSort(mode.value);
-                }}
-              >
-                {mode.label}
-              </button>
-            ))}
-
-            <Button
-              variant="secondary"
-              className="h-12 rounded-xl border-slate-300 text-[16px] transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 md:hidden md:h-11 md:text-sm"
-              onClick={() => setFiltersOpen(true)}
-            >
-              <SlidersHorizontal size={17} />
-              Filters
-            </Button>
-          </div>
-        </div>
-      </div>
-
       <div className="page-shell grid gap-6 py-6 lg:grid-cols-[300px_1fr]">
         <aside className="hidden lg:block">
           <Filters
@@ -1395,14 +1336,19 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <>
-              <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
                   {filtered.length} option{filtered.length === 1 ? "" : "s"}{" "}
                   found
                 </p>
-                <p className="text-sm font-semibold text-muted">
-                  Sorted by {sortModes.find((mode) => mode.value === sort)?.label}
-                </p>
+                <Button
+                  variant="secondary"
+                  className="h-10 w-full rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:w-auto lg:hidden"
+                  onClick={() => setFiltersOpen(true)}
+                >
+                  <SlidersHorizontal size={17} />
+                  Filters
+                </Button>
               </div>
 
               {filtered.length ? (
