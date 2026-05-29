@@ -1139,10 +1139,10 @@ export function FlightResultsClient() {
           <div className="mt-8 space-y-8">
             <section>
               <h2 className="text-3xl font-black text-slate-900">
-                Explore by country
+                Flight ideas by region
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Discover trending destinations, just a flight away.
+                Browse popular places and route ideas before you search.
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {exploreCountries.map((country) => (
