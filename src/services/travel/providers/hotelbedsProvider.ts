@@ -1,4 +1,10 @@
 import { createHash } from "node:crypto";
+import {
+  assertProductionLiveProvider,
+  assertSandboxProviderAllowed,
+  getHotelbedsApiMode,
+  isProductionProviderMode,
+} from "@/lib/env";
 import type { HotelSearchParams, NormalizedHotelResult, ProviderResult } from "@/lib/types";
 import { normalizeHotelResult } from "@/services/travel/normalizeHotelResult";
 import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
@@ -48,9 +54,45 @@ const DESTINATION_CODES: Record<string, string> = {
   casablanca: "CAS",
 };
 
+function getHotelbedsProviderBlockReason(baseUrl: string) {
+  const apiMode = getHotelbedsApiMode();
+  const normalizedBaseUrl = baseUrl.trim().toLowerCase();
+  const usesTestBaseUrl = normalizedBaseUrl.includes("api.test.hotelbeds.com");
+
+  try {
+    assertProductionLiveProvider("Hotelbeds", apiMode);
+
+    if (apiMode === "test") {
+      assertSandboxProviderAllowed("Hotelbeds");
+    }
+  } catch {
+    return "provider_mode_not_allowed";
+  }
+
+  if (isProductionProviderMode() && usesTestBaseUrl) {
+    return "provider_mode_not_allowed";
+  }
+
+  if (!isProductionProviderMode() && usesTestBaseUrl) {
+    try {
+      assertSandboxProviderAllowed("Hotelbeds");
+    } catch {
+      return "provider_mode_not_allowed";
+    }
+  }
+
+  return undefined;
+}
+
 export function searchHotelbedsHotels(search: HotelSearchParams): Promise<ProviderResult<NormalizedHotelResult>> {
   if (!process.env.HOTELBEDS_API_KEY || !process.env.HOTELBEDS_SECRET) {
     return Promise.resolve(skippedProvider("Hotelbeds", "no_live_hotel_provider"));
+  }
+
+  const baseUrl = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
+  const blockReason = getHotelbedsProviderBlockReason(baseUrl);
+  if (blockReason) {
+    return Promise.resolve(skippedProvider("Hotelbeds", blockReason));
   }
 
   const destinationCode = DESTINATION_CODES[search.destination.trim().toLowerCase()];
@@ -61,7 +103,6 @@ export function searchHotelbedsHotels(search: HotelSearchParams): Promise<Provid
   return runProvider("Hotelbeds", async () => {
     const apiKey = process.env.HOTELBEDS_API_KEY as string;
     const secret = process.env.HOTELBEDS_SECRET as string;
-    const baseUrl = process.env.HOTELBEDS_BASE_URL || "https://api.test.hotelbeds.com";
 
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const signature = createHash("sha256").update(`${apiKey}${secret}${timestamp}`).digest("hex");
@@ -82,7 +123,7 @@ export function searchHotelbedsHotels(search: HotelSearchParams): Promise<Provid
     };
 
     const data = await fetchJson<HotelbedsAvailabilityResponse>(
-      `${baseUrl}/hotel-api/1.0/hotels` ,
+      `${baseUrl}/hotel-api/1.0/hotels`,
       {
         method: "POST",
         headers: {

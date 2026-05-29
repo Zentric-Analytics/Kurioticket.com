@@ -1,3 +1,9 @@
+import {
+  assertSandboxProviderAllowed,
+  getHotelProviderPrimary,
+  getKayakApiMode,
+  isProductionProviderMode,
+} from "@/lib/env";
 import type { HotelSearchParams, NormalizedHotelResult, ProviderResult } from "@/lib/types";
 import { sanitizeAirportCode } from "@/lib/utils";
 import { searchHotelbedsHotels } from "@/services/travel/providers/hotelbedsProvider";
@@ -6,19 +12,65 @@ import { getAmadeusAccessToken } from "@/services/travel/providers/amadeusAuth";
 import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
 
 export function searchHotelProvider(search: HotelSearchParams): Promise<ProviderResult<NormalizedHotelResult>> {
-  if (process.env.HOTELBEDS_API_KEY && process.env.HOTELBEDS_SECRET) {
+  const primaryProvider = getHotelProviderPrimary();
+
+  if (primaryProvider === "none") {
+    return Promise.resolve(skippedProvider("Hotel Provider", "no_live_hotel_provider"));
+  }
+
+  if (primaryProvider === "kayak_sandbox") {
+    return Promise.resolve(searchKayakSandboxPlaceholder());
+  }
+
+  if (primaryProvider === "hotelbeds") {
     return searchHotelbedsHotels(search);
   }
 
-  if (process.env.AMADEUS_CLIENT_ID && process.env.AMADEUS_CLIENT_SECRET) {
+  if (primaryProvider === "amadeus_hotels") {
+    if (isProductionProviderMode()) {
+      return Promise.resolve(skippedProvider("Amadeus Hotels", "no_live_hotel_provider"));
+    }
+
+    try {
+      assertSandboxProviderAllowed("Amadeus Hotels");
+    } catch {
+      return Promise.resolve(skippedProvider("Amadeus Hotels", "provider_mode_not_allowed"));
+    }
+
+    if (!process.env.AMADEUS_CLIENT_ID || !process.env.AMADEUS_CLIENT_SECRET) {
+      return Promise.resolve(skippedProvider("Amadeus Hotels", "no_live_hotel_provider"));
+    }
+
     return searchAmadeusHotels(search);
   }
 
-  if (process.env.HOTEL_API_KEY || process.env.TRAVELPAYOUTS_API_KEY) {
+  if (primaryProvider === "generic_partner") {
+    if (!process.env.HOTEL_API_KEY && !process.env.TRAVELPAYOUTS_API_KEY) {
+      return Promise.resolve(skippedProvider("Hotel Partner", "no_live_hotel_provider"));
+    }
+
     return searchGenericHotelPartner(search);
   }
 
   return Promise.resolve(skippedProvider("Hotel Provider", "no_live_hotel_provider"));
+}
+
+function searchKayakSandboxPlaceholder(): ProviderResult<NormalizedHotelResult> {
+  if (isProductionProviderMode()) {
+    return skippedProvider("KAYAK Sandbox", "provider_mode_not_allowed");
+  }
+
+  if (getKayakApiMode() !== "sandbox") {
+    return skippedProvider("KAYAK Sandbox", "provider_mode_not_allowed");
+  }
+
+  try {
+    assertSandboxProviderAllowed("KAYAK Sandbox");
+  } catch {
+    return skippedProvider("KAYAK Sandbox", "provider_mode_not_allowed");
+  }
+
+  return skippedProvider("KAYAK Sandbox", "provider_unavailable");
 }
 
 function searchAmadeusHotels(search: HotelSearchParams): Promise<ProviderResult<NormalizedHotelResult>> {
