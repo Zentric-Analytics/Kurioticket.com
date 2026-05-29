@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import type { ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -572,6 +572,61 @@ export function FlightResultsClient() {
       window.removeEventListener("scroll", handleViewportChange, true);
     };
   }, [travelerPopoverOpen]);
+
+  function handleCompactSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const nextOrigin = originCode || originInput.trim();
+    const nextDestination = destinationCode || destinationInput.trim();
+    const nextDepartureDate = departureDateInput.trim();
+    const nextReturnDate = returnDateInput.trim();
+
+    if (
+      !nextOrigin ||
+      !nextDestination ||
+      !nextDepartureDate ||
+      (tripTypeInput === "round-trip" && !nextReturnDate)
+    ) {
+      return;
+    }
+
+    const adults = Math.min(9, Math.max(1, adultCount));
+    const children = Math.min(9 - adults, Math.max(0, childCount));
+    const infants = Math.min(
+      adults,
+      9 - adults - children,
+      Math.max(0, infantCount)
+    );
+    const travelers = adults + children + infants;
+
+    if (
+      adults !== adultCount ||
+      children !== childCount ||
+      infants !== infantCount
+    ) {
+      setAdultCount(adults);
+      setChildCount(children);
+      setInfantCount(infants);
+    }
+
+    const nextParams = new URLSearchParams({
+      tripType: tripTypeInput,
+      origin: nextOrigin,
+      destination: nextDestination,
+      departureDate: nextDepartureDate,
+      adults: String(adults),
+      children: String(children),
+      infants: String(infants),
+      travelers: String(travelers),
+      cabinClass: cabinClassInput,
+    });
+
+    if (tripTypeInput === "round-trip" && nextReturnDate) {
+      nextParams.set("returnDate", nextReturnDate);
+    }
+
+    router.push(`/flights/results?${nextParams.toString()}`);
+  }
 
   const filtered = results.filter(
     (flight) => flight.price <= maxPrice && flight.stops <= maxStops
@@ -1292,6 +1347,350 @@ export function FlightResultsClient() {
   return (
     <main className="flex-1 bg-[#f6f8fb] pb-8 pt-24 sm:pt-28 lg:pt-28">
       <div className="page-shell grid gap-6 py-6 lg:grid-cols-[300px_1fr]">
+        <section className="lg:col-span-2">
+          <form
+            onSubmit={handleCompactSearchSubmit}
+            className="rounded-[1.35rem] border border-slate-200 bg-white p-3 shadow-[0_14px_36px_rgba(15,23,42,0.08)] sm:p-4"
+          >
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+              <div className="grid grid-cols-2 gap-1 rounded-full bg-slate-100 p-1 lg:w-[190px] lg:shrink-0">
+                {[
+                  { label: "Round-trip", value: "round-trip" },
+                  { label: "One-way", value: "one-way" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    aria-pressed={tripTypeInput === option.value}
+                    onClick={() => {
+                      setTripTypeInput(option.value);
+
+                      if (option.value !== "round-trip") {
+                        setReturnDateInput("");
+
+                        if (activeDatePicker === "return") {
+                          setActiveDatePicker(null);
+                          setDatePickerPosition(null);
+                        }
+                      }
+                    }}
+                    className={cn(
+                      "focus-ring h-9 rounded-full px-3 text-xs font-black transition",
+                      tripTypeInput === option.value
+                        ? "bg-white text-indigo-950 shadow-sm"
+                        : "text-slate-600 hover:text-slate-950"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1.15fr)_minmax(0,0.92fr)_minmax(0,0.92fr)_minmax(0,1.1fr)]">
+                <div
+                  ref={originWrapRef}
+                  className="relative rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15"
+                >
+                  <label
+                    className="block text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-500"
+                    htmlFor="results-origin"
+                  >
+                    From
+                  </label>
+                  <input
+                    id="results-origin"
+                    name="origin"
+                    required
+                    value={originInput}
+                    onFocus={() => {
+                      if (originInput.trim().length >= 2) setActiveSuggest("origin");
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }
+                    }}
+                    onChange={(event) => {
+                      setOriginInput(event.target.value);
+                      setOriginCode("");
+
+                      if (event.target.value.trim().length >= 2) {
+                        setActiveSuggest("origin");
+                      } else {
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }
+                    }}
+                    placeholder="City or airport"
+                    autoComplete="off"
+                    className="mt-0.5 h-7 w-full border-0 bg-transparent p-0 text-[16px] font-bold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
+                  />
+
+                  {activeSuggest === "origin" && dropdownPosition ? (
+                    <SuggestionList
+                      id="flight-airport-suggestions"
+                      position={dropdownPosition}
+                      suggestions={resolvedOriginSuggestions}
+                      onSelect={(value) => {
+                        setOriginInput(value);
+                        setOriginCode(value);
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }}
+                    />
+                  ) : null}
+                </div>
+
+                <div
+                  ref={destinationWrapRef}
+                  className="relative rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15"
+                >
+                  <label
+                    className="block text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-500"
+                    htmlFor="results-destination"
+                  >
+                    To
+                  </label>
+                  <input
+                    id="results-destination"
+                    name="destination"
+                    required
+                    value={destinationInput}
+                    onFocus={() => {
+                      if (destinationInput.trim().length >= 2) {
+                        setActiveSuggest("destination");
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }
+                    }}
+                    onChange={(event) => {
+                      setDestinationInput(event.target.value);
+                      setDestinationCode("");
+
+                      if (event.target.value.trim().length >= 2) {
+                        setActiveSuggest("destination");
+                      } else {
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }
+                    }}
+                    placeholder="City or airport"
+                    autoComplete="off"
+                    className="mt-0.5 h-7 w-full border-0 bg-transparent p-0 text-[16px] font-bold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
+                  />
+
+                  {activeSuggest === "destination" && dropdownPosition ? (
+                    <SuggestionList
+                      id="flight-airport-suggestions"
+                      position={dropdownPosition}
+                      suggestions={resolvedDestinationSuggestions}
+                      onSelect={(value) => {
+                        setDestinationInput(value);
+                        setDestinationCode(value);
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }}
+                    />
+                  ) : null}
+                </div>
+
+                <div ref={departureWrapRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveDatePicker("departure");
+                      setDatePickerPosition(null);
+                    }}
+                    className="focus-ring flex h-full min-h-[60px] w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-slate-300 hover:bg-white"
+                  >
+                    <Calendar className="h-4 w-4 shrink-0 text-indigo-700" />
+                    <span className="min-w-0">
+                      <span className="block text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-500">
+                        Depart
+                      </span>
+                      <span className="block truncate text-sm font-bold text-slate-950">
+                        {departureDateInput
+                          ? formatDateLabel(departureDateInput)
+                          : "Choose date"}
+                      </span>
+                    </span>
+                  </button>
+                </div>
+
+                {tripTypeInput === "round-trip" ? (
+                  <div ref={returnWrapRef}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveDatePicker("return");
+                        setDatePickerPosition(null);
+                      }}
+                      className="focus-ring flex h-full min-h-[60px] w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-slate-300 hover:bg-white"
+                    >
+                      <Calendar className="h-4 w-4 shrink-0 text-indigo-700" />
+                      <span className="min-w-0">
+                        <span className="block text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-500">
+                          Return
+                        </span>
+                        <span className="block truncate text-sm font-bold text-slate-950">
+                          {returnDateInput
+                            ? formatDateLabel(returnDateInput)
+                            : "Choose date"}
+                        </span>
+                      </span>
+                    </button>
+                  </div>
+                ) : null}
+
+                <div
+                  ref={travelerCabinWrapRef}
+                  className={cn(
+                    tripTypeInput !== "round-trip" ? "lg:col-span-2" : ""
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTravelerPopoverOpen(true);
+                      setTravelerPopoverPosition(null);
+                    }}
+                    className="focus-ring flex h-full min-h-[60px] w-full items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-slate-300 hover:bg-white"
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-[0.68rem] font-black uppercase tracking-[0.16em] text-slate-500">
+                        Travelers
+                      </span>
+                      <span className="block truncate text-sm font-bold text-slate-950">
+                        {buildTravelerCabinSummary(
+                          adultCount,
+                          childCount,
+                          infantCount,
+                          cabinClassInput
+                        )}
+                      </span>
+                    </span>
+                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                  </button>
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                className="h-12 w-full rounded-2xl bg-gradient-to-r from-indigo-950 to-violet-800 px-6 text-sm font-black text-white shadow-lg shadow-indigo-950/20 lg:h-[60px] lg:w-auto lg:min-w-[128px]"
+              >
+                Search
+              </Button>
+            </div>
+          </form>
+
+          {activeDatePicker && datePickerPosition ? (
+            <DatePickerPopover
+              position={datePickerPosition}
+              month={calendarMonth}
+              departureValue={departureDateInput}
+              returnValue={returnDateInput}
+              activePicker={activeDatePicker}
+              onMonthChange={setCalendarMonth}
+              onSelect={(date) => {
+                if (isBeforeToday(date)) return;
+
+                const value = formatDateValue(date);
+
+                if (activeDatePicker === "departure") {
+                  setDepartureDateInput(value);
+
+                  if (tripTypeInput === "round-trip") {
+                    setActiveDatePicker("return");
+                  } else {
+                    setActiveDatePicker(null);
+                    setDatePickerPosition(null);
+                  }
+
+                  return;
+                }
+
+                setReturnDateInput(value);
+                setActiveDatePicker(null);
+                setDatePickerPosition(null);
+              }}
+              onClear={() => {
+                if (activeDatePicker === "departure") {
+                  setDepartureDateInput("");
+                }
+
+                if (activeDatePicker === "return") {
+                  setReturnDateInput("");
+                }
+              }}
+              onToday={() => {
+                const today = new Date();
+                const value = formatDateValue(today);
+
+                if (activeDatePicker === "departure") {
+                  setDepartureDateInput(value);
+
+                  if (tripTypeInput === "round-trip") {
+                    setActiveDatePicker("return");
+                    return;
+                  }
+                } else {
+                  setReturnDateInput(value);
+                }
+
+                setActiveDatePicker(null);
+                setDatePickerPosition(null);
+              }}
+            />
+          ) : null}
+
+          {travelerPopoverOpen && travelerPopoverPosition ? (
+            <TravelerCabinPopover
+              position={travelerPopoverPosition}
+              adultCount={adultCount}
+              childCount={childCount}
+              infantCount={infantCount}
+              cabinClass={cabinClassInput}
+              onAdultChange={(nextValue) => {
+                const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+
+                setAdultCount(nextAdultCount);
+                setChildCount((current) =>
+                  Math.min(current, 9 - nextAdultCount)
+                );
+                setInfantCount((current) =>
+                  Math.min(current, nextAdultCount, 9 - nextAdultCount)
+                );
+              }}
+              onChildChange={(nextValue) => {
+                const nextChildCount = Math.min(
+                  9 - adultCount,
+                  Math.max(0, nextValue)
+                );
+
+                setChildCount(nextChildCount);
+                setInfantCount((current) =>
+                  Math.min(current, 9 - adultCount - nextChildCount)
+                );
+              }}
+              onInfantChange={(nextValue) => {
+                setInfantCount(
+                  Math.min(
+                    adultCount,
+                    9 - adultCount - childCount,
+                    Math.max(0, nextValue)
+                  )
+                );
+              }}
+              onCabinClassChange={setCabinClassInput}
+            />
+          ) : null}
+        </section>
+
         <aside className="hidden lg:block">
           <Filters
             maxPrice={maxPrice}
