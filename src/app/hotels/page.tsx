@@ -87,7 +87,7 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 bg-gradient-to-b from-indigo-50/70 via-white to-white px-4 pb-16 pt-28 sm:px-6 lg:px-8">
+      <main className="page-shell flex-1 bg-gradient-to-b from-indigo-50/70 via-white to-white px-4 pb-16 pt-8 sm:pt-10 sm:px-6 lg:px-8 lg:pt-12">
         <div className="mx-auto max-w-6xl space-y-8 md:space-y-10">
           <section className="mx-auto w-full max-w-6xl space-y-3">
             <p className="px-1 text-sm font-medium text-slate-600">Find available stays</p>

@@ -135,7 +135,7 @@ export function HotelResultsClient() {
   const filtered = results.filter((hotel) => hotel.totalPrice <= maxPrice && hotel.rating >= minRating);
 
   return (
-    <main className="flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
+    <main className="flex-1 pt-6 pb-8 sm:pt-8 lg:pt-8">
       <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
         <div className="page-shell py-3">
           <form className="mx-auto w-full max-w-5xl" onSubmit={handleSearchSubmit}>

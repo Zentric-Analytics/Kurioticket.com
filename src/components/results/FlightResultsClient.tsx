@@ -634,7 +634,7 @@ export function FlightResultsClient() {
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-24 sm:pt-28 lg:pt-28">
+      <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-6 sm:pt-8 lg:pt-8">
         <section className="page-shell">
             <form
               className="mx-auto mt-0 w-full max-w-5xl space-y-1.5"
@@ -1345,7 +1345,7 @@ export function FlightResultsClient() {
   }
 
   return (
-    <main className="flex-1 bg-[#f6f8fb] pb-8 pt-24 sm:pt-28 lg:pt-28">
+    <main className="flex-1 bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
       <div className="page-shell grid gap-6 py-6 lg:grid-cols-[300px_1fr]">
         <section className="lg:col-span-2">
           <form

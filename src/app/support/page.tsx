@@ -49,7 +49,7 @@ export default function SupportPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 pt-24 pb-10 sm:pt-28 lg:pt-28">
+      <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
         <section className="max-w-3xl">
           <p className="text-sm font-semibold text-teal-dark">Curioticket help desk</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">Customer support</h1>
