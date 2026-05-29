@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import type { FormEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -43,24 +44,38 @@ const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
   { label: "First", value: "first" },
 ];
 
+const DEFAULT_EXPLORE_ORIGIN = "JFK";
+
 const exploreCountries = [
   {
     name: "Spain",
+    destinationCode: "MAD",
+    linkLabel: "Search round-trip flights to Spain",
+    imageAlt: "Historic Spanish city rooftops and cathedral architecture",
     image:
       "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=700&q=80",
   },
   {
     name: "Italy",
+    destinationCode: "ROM",
+    linkLabel: "Search round-trip flights to Italy",
+    imageAlt: "Venice canal with colorful historic buildings in Italy",
     image:
       "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=700&q=80",
   },
   {
     name: "Japan",
+    destinationCode: "TYO",
+    linkLabel: "Search round-trip flights to Japan",
+    imageAlt: "Japanese pagoda surrounded by cherry blossoms",
     image:
       "https://images.unsplash.com/photo-1492571350019-22de08371fd3?auto=format&fit=crop&w=700&q=80",
   },
   {
     name: "Brazil",
+    destinationCode: "RIO",
+    linkLabel: "Search round-trip flights to Brazil",
+    imageAlt: "Rio de Janeiro coastline and mountains in Brazil",
     image:
       "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=700&q=80",
   },
@@ -1146,22 +1161,26 @@ export function FlightResultsClient() {
               </p>
               <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {exploreCountries.map((country) => (
-                  <article
+                  <Link
                     key={country.name}
-                    className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                    href={buildExploreFlightHref(country.destinationCode)}
+                    aria-label={country.linkLabel}
+                    className="group block overflow-hidden rounded-xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                   >
-                    <div className="relative h-36">
-                      <Image
-                        src={country.image}
-                        alt={country.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <p className="px-4 py-3 text-base font-bold text-slate-900">
-                      {country.name}
-                    </p>
-                  </article>
+                    <article>
+                      <div className="relative h-36 overflow-hidden">
+                        <Image
+                          src={country.image}
+                          alt={country.imageAlt}
+                          fill
+                          className="object-cover transition duration-300 group-hover:scale-105 group-focus-visible:scale-105"
+                        />
+                      </div>
+                      <p className="px-4 py-3 text-base font-bold text-slate-900">
+                        {country.name}
+                      </p>
+                    </article>
+                  </Link>
                 ))}
               </div>
             </section>
@@ -1843,6 +1862,33 @@ function dedupeSuggestions(suggestions: AirportOption[]) {
 
 function airportInputValue(item: AirportOption) {
   return item.code;
+}
+
+function buildExploreFlightHref(destinationCode: string) {
+  const today = new Date();
+  const departureDate = addDays(today, 30);
+  const returnDate = addDays(today, 37);
+  const params = new URLSearchParams({
+    tripType: "round-trip",
+    origin: DEFAULT_EXPLORE_ORIGIN,
+    destination: destinationCode,
+    departureDate: formatDateValue(departureDate),
+    returnDate: formatDateValue(returnDate),
+    adults: "1",
+    children: "0",
+    infants: "0",
+    travelers: "1",
+    cabinClass: "economy",
+  });
+
+  return `/flights/results?${params.toString()}`;
+}
+
+function addDays(date: Date, amount: number): Date {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + amount);
+
+  return nextDate;
 }
 
 function startOfMonth(date: Date): Date {
