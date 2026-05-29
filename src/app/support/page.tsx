@@ -1,14 +1,6 @@
-import type { ReactNode } from "react";
 import {
-  BellRing,
-  CheckCircle2,
   HelpCircle,
-  KeyRound,
   LifeBuoy,
-  ListChecks,
-  Route,
-  Search,
-  ShieldAlert,
 } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -19,59 +11,41 @@ export const metadata = {
   title: "Customer support",
 };
 
-const supportCards = [
+const supportFaqs = [
   {
-    icon: <KeyRound size={22} />,
-    title: "Account and sign-in help",
-    body: "Get help with account access, sign-in, sign-up, profile questions, and Curioticket Premium tools.",
+    question: "Account and sign-in help",
+    answer:
+      "Curioticket can help with account access, sign-in issues, sign-up issues, profile access, and account-related platform problems.",
   },
   {
-    icon: <Search size={22} />,
-    title: "Search and results help",
-    body: "Tell us about flight or hotel search issues, missing results, filters, website bugs, or confusing platform behavior.",
+    question: "Search and results help",
+    answer:
+      "Curioticket can help when flight or hotel search is not working, results are not loading, filters are confusing, or prices and providers are not displaying as expected.",
   },
   {
-    icon: <BellRing size={22} />,
-    title: "Saved trips and alerts",
-    body: "We can review saved trips, recent searches, price alerts, notifications, and other Curioticket planning features.",
+    question: "Saved trips and alerts",
+    answer:
+      "Curioticket can help with saved trips, recent searches, price alerts, notification issues, and account-linked travel tools.",
   },
   {
-    icon: <Route size={22} />,
-    title: "Booking/provider redirect help",
-    body: "If a redirect to an airline, hotel, or travel partner did not work as expected, share what happened and where you were sent.",
+    question: "Booking/provider redirect help",
+    answer:
+      "Curioticket can help if a redirect to a partner or provider fails, opens the wrong page, or does not preserve the selected trip or search details.",
   },
-];
-
-const curioticketCanHelp = [
-  "Account access, sign-in, and sign-up issues",
-  "Saved trips, recent searches, and price alerts",
-  "Flight or hotel search problems on Curioticket",
-  "Partner redirect issues before completing a booking",
-  "Curioticket Premium, tools, website bugs, and general platform questions",
-];
-
-const providerHandles = [
-  "Completed bookings made with an airline, hotel, or booking partner",
-  "External payment receipts, refunds, cancellations, and provider disputes",
-  "Flight or hotel changes, check-in, boarding, and travel documents",
-  "Fare rules, baggage rules, room policies, and provider-specific requirements",
-];
-
-const faqs = [
   {
     question: "Already booked with a provider?",
     answer:
-      "Contact the airline, hotel, or booking partner listed on your confirmation for changes, cancellations, receipts, refunds, and travel documents.",
+      "If your booking was completed with an airline, hotel, travel agency, or external provider, that provider is responsible for booking changes, refunds, cancellations, check-in, boarding, receipts, and travel documents.",
   },
   {
     question: "Can Curioticket change my booking?",
     answer:
-      "Curioticket cannot directly modify bookings completed outside our platform. We can help you understand where you were redirected and what details may help the provider locate your booking.",
+      "Curioticket can only help with bookings made directly through Curioticket if and when direct booking is supported. For bookings completed with external providers, contact that provider directly.",
   },
   {
     question: "Why was I sent to another provider?",
     answer:
-      "Curioticket helps you search and compare options, then may send you to a travel provider to review final terms and complete the booking.",
+      "Curioticket is a travel search and comparison platform, and some results redirect to trusted providers where you complete booking, payment, and provider-specific support.",
   },
 ];
 
@@ -83,30 +57,6 @@ export default function SupportPage() {
         <section className="max-w-3xl">
           <p className="text-sm font-semibold text-teal-dark">Curioticket help desk</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">Customer support</h1>
-          <p className="mt-4 text-base leading-7 text-muted">
-            Curioticket support helps with account access, search issues, saved trips, price alerts, partner redirects, Premium tools, and platform questions. For completed bookings made with external airlines, hotels, or travel providers, contact that provider directly for booking changes, refunds, cancellations, check-in, and travel documents.
-          </p>
-        </section>
-
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Quick support topics">
-          {supportCards.map((card) => (
-            <SupportCard key={card.title} icon={card.icon} title={card.title} body={card.body} />
-          ))}
-        </section>
-
-        <section className="mt-8 grid gap-5 lg:grid-cols-2">
-          <BoundaryCard
-            icon={<CheckCircle2 size={22} />}
-            title="What Curioticket can help with"
-            items={curioticketCanHelp}
-            tone="help"
-          />
-          <BoundaryCard
-            icon={<ShieldAlert size={22} />}
-            title="What your airline, hotel, or booking provider handles"
-            items={providerHandles}
-            tone="provider"
-          />
         </section>
 
         <section className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
@@ -125,14 +75,33 @@ export default function SupportPage() {
               </div>
             </Card>
 
-            <div className="grid gap-4 md:grid-cols-3">
-              {faqs.map((faq) => (
-                <Card key={faq.question} className="p-5">
-                  <h3 className="font-bold text-navy">{faq.question}</h3>
-                  <p className="mt-2 text-sm leading-6 text-muted">{faq.answer}</p>
-                </Card>
-              ))}
-            </div>
+            <section aria-labelledby="support-faq-heading">
+              <div className="max-w-3xl space-y-2">
+                <h2 id="support-faq-heading" className="text-2xl font-bold tracking-tight text-navy">
+                  Frequently asked questions
+                </h2>
+                <p className="text-sm leading-6 text-muted sm:text-base">
+                  Find the right support path for Curioticket account, search, saved-trip, alert, redirect, and provider booking questions.
+                </p>
+              </div>
+
+              <div className="mt-5 grid gap-x-8 gap-y-1">
+                {supportFaqs.map((item) => (
+                  <details key={item.question} className="group border-b border-border py-4">
+                    <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-navy marker:hidden sm:text-base">
+                      <span>{item.question}</span>
+                      <span
+                        aria-hidden="true"
+                        className="mt-0.5 text-base leading-none text-muted transition-transform duration-200 group-open:rotate-45"
+                      >
+                        +
+                      </span>
+                    </summary>
+                    <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{item.answer}</p>
+                  </details>
+                ))}
+              </div>
+            </section>
           </div>
 
           <section aria-labelledby="support-form-heading">
@@ -157,49 +126,5 @@ export default function SupportPage() {
       </main>
       <Footer />
     </>
-  );
-}
-
-function SupportCard({ icon, title, body }: { icon: ReactNode; title: string; body: string }) {
-  return (
-    <Card className="h-full p-5 transition hover:border-teal hover:shadow-md">
-      <div className="text-teal">{icon}</div>
-      <h2 className="mt-3 font-bold text-navy">{title}</h2>
-      <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
-    </Card>
-  );
-}
-
-function BoundaryCard({
-  icon,
-  title,
-  items,
-  tone,
-}: {
-  icon: ReactNode;
-  title: string;
-  items: string[];
-  tone: "help" | "provider";
-}) {
-  const iconClass = tone === "help" ? "bg-teal/10 text-teal" : "bg-amber-50 text-amber-700";
-  const bulletClass = tone === "help" ? "text-teal" : "text-amber-700";
-
-  return (
-    <Card className="p-5 sm:p-6">
-      <div className="flex items-start gap-3">
-        <div className={`rounded-full p-2 ${iconClass}`}>{icon}</div>
-        <div>
-          <h2 className="text-xl font-bold text-navy">{title}</h2>
-          <ul className="mt-4 grid gap-3 text-sm leading-6 text-muted">
-            {items.map((item) => (
-              <li key={item} className="flex gap-2">
-                <ListChecks size={17} className={`mt-1 shrink-0 ${bulletClass}`} />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </Card>
   );
 }
