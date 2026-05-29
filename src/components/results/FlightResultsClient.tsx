@@ -711,7 +711,7 @@ export function FlightResultsClient() {
                     <h1 className="mx-auto text-balance text-[clamp(1.8rem,7vw,3rem)] font-semibold tracking-tight text-slate-900 sm:whitespace-nowrap">
                       Find millions of cheap flights
                     </h1>
-                    <p className="mx-auto mt-2 max-w-[38ch] text-[0.98rem] leading-relaxed text-slate-600 sm:text-base">
+                    <p className="mx-auto mt-3 max-w-2xl text-balance text-center text-base leading-7 text-slate-700 whitespace-normal sm:text-lg sm:whitespace-nowrap">
                       Compare fares and lock in the best route in a few taps.
                     </p>
                   </div>
