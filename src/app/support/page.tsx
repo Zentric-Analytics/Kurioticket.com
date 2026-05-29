@@ -1,11 +1,7 @@
-import {
-  HelpCircle,
-  LifeBuoy,
-} from "lucide-react";
+import { HelpCircle } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SupportForm } from "@/components/support/SupportForm";
-import { Card } from "@/components/ui/Card";
 
 export const metadata = {
   title: "Customer support",
@@ -59,69 +55,45 @@ export default function SupportPage() {
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">Customer support</h1>
         </section>
 
-        <section className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-start">
-          <div className="grid gap-5">
-            <Card className="p-5 sm:p-6">
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-teal/10 p-2 text-teal">
-                  <HelpCircle size={22} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-navy">Before you contact us</h2>
-                  <p className="mt-2 text-sm leading-6 text-muted">
-                    Include the email on your Curioticket account, what you were trying to do, the route or hotel if relevant, and any provider page you were redirected to. Please do not send full payment card numbers or sensitive travel document numbers.
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            <section aria-labelledby="support-faq-heading">
-              <div className="max-w-3xl space-y-2">
-                <h2 id="support-faq-heading" className="text-2xl font-bold tracking-tight text-navy">
-                  Frequently asked questions
-                </h2>
-                <p className="text-sm leading-6 text-muted sm:text-base">
-                  Find the right support path for Curioticket account, search, saved-trip, alert, redirect, and provider booking questions.
-                </p>
-              </div>
-
-              <div className="mt-5 grid gap-x-8 gap-y-1">
-                {supportFaqs.map((item) => (
-                  <details key={item.question} className="group border-b border-border py-4">
-                    <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-navy marker:hidden sm:text-base">
-                      <span>{item.question}</span>
-                      <span
-                        aria-hidden="true"
-                        className="mt-0.5 text-base leading-none text-muted transition-transform duration-200 group-open:rotate-45"
-                      >
-                        +
-                      </span>
-                    </summary>
-                    <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{item.answer}</p>
-                  </details>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          <section aria-labelledby="support-form-heading">
-            <div className="mb-4 rounded-2xl border border-border bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
-              <div className="flex items-start gap-3">
-                <div className="rounded-full bg-navy/5 p-2 text-navy">
-                  <LifeBuoy size={22} />
-                </div>
-                <div>
-                  <h2 id="support-form-heading" className="text-xl font-bold text-navy">
-                    Contact customer support
-                  </h2>
-                  <p className="mt-2 text-sm leading-6 text-muted">
-                    Tell us what happened and our support team will review your request. If your question is about an external booking, include the provider name so we can point you in the right direction.
-                  </p>
-                </div>
-              </div>
+        <section className="mt-6 max-w-3xl">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 rounded-full bg-teal/10 p-2 text-teal">
+              <HelpCircle size={22} />
             </div>
-            <SupportForm />
-          </section>
+            <div>
+              <h2 className="text-xl font-bold text-navy">Before you contact us</h2>
+              <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
+                Include the email on your Curioticket account, what you were trying to do, the route or hotel if relevant, and any provider page you were redirected to. Please do not send full payment card numbers or sensitive travel document numbers.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section aria-label="Create a support ticket" className="mt-8 max-w-3xl">
+          <SupportForm />
+        </section>
+
+        <section aria-labelledby="support-faq-heading" className="mt-10 max-w-3xl">
+          <h2 id="support-faq-heading" className="text-2xl font-bold tracking-tight text-navy">
+            Frequently asked questions
+          </h2>
+
+          <div className="mt-5 grid gap-x-8 gap-y-1">
+            {supportFaqs.map((item) => (
+              <details key={item.question} className="group border-b border-border py-4">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-navy marker:hidden sm:text-base">
+                  <span>{item.question}</span>
+                  <span
+                    aria-hidden="true"
+                    className="mt-0.5 text-base leading-none text-muted transition-transform duration-200 group-open:rotate-45"
+                  >
+                    +
+                  </span>
+                </summary>
+                <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{item.answer}</p>
+              </details>
+            ))}
+          </div>
         </section>
       </main>
       <Footer />
