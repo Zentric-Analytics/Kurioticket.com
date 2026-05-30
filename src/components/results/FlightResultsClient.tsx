@@ -1292,50 +1292,6 @@ export function FlightResultsClient() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                <div>
-                  <h3 className="font-bold">Support</h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Manage your trips
-                    <br />
-                    Customer service help
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-bold">Discover</h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Seasonal deals
-                    <br />
-                    Travel articles
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-bold">Terms</h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Privacy notice
-                    <br />
-                    Terms of service
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-bold">Partners</h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Partner help
-                    <br />
-                    List your property
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-bold">About</h3>
-                  <p className="mt-2 text-sm text-slate-600">
-                    How we work
-                    <br />
-                    Sustainability
-                  </p>
-                </div>
-              </div>
-            </section>
           </div>
         </section>
       </main>
