@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +17,7 @@ const messages = [
 ];
 
 export function HotelResultsClient() {
+  const router = useRouter();
   const params = useSearchParams();
   const [results, setResults] = useState<PublicHotelResult[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
@@ -26,6 +27,12 @@ export function HotelResultsClient() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [maxPrice, setMaxPrice] = useState(1200);
   const [minRating, setMinRating] = useState(3);
+  const [destination, setDestination] = useState(() => params.get("destination") || "Tokyo");
+  const [checkIn, setCheckIn] = useState(() => params.get("checkIn") || nextDate(28));
+  const [checkOut, setCheckOut] = useState(() => params.get("checkOut") || nextDate(35));
+  const [guests, setGuests] = useState(() => params.get("guests") || "2");
+  const [rooms, setRooms] = useState(() => params.get("rooms") || "1");
+  const [formError, setFormError] = useState("");
 
   const body = useMemo(
     () => ({
@@ -39,6 +46,50 @@ export function HotelResultsClient() {
     [params],
   );
 
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const normalizedDestination = destination.trim();
+    const parsedGuests = Number.parseInt(guests, 10);
+    const parsedRooms = Number.parseInt(rooms, 10);
+
+    if (!normalizedDestination) {
+      setFormError("Destination is required.");
+      return;
+    }
+    if (!checkIn) {
+      setFormError("Check-in date is required.");
+      return;
+    }
+    if (!checkOut) {
+      setFormError("Check-out date is required.");
+      return;
+    }
+    if (new Date(checkOut) <= new Date(checkIn)) {
+      setFormError("Check-out must be after check-in.");
+      return;
+    }
+    if (!Number.isInteger(parsedGuests) || parsedGuests < 1 || parsedGuests > 12) {
+      setFormError("Guests must be between 1 and 12.");
+      return;
+    }
+    if (!Number.isInteger(parsedRooms) || parsedRooms < 1 || parsedRooms > 6) {
+      setFormError("Rooms must be between 1 and 6.");
+      return;
+    }
+
+    setFormError("");
+    const query = new URLSearchParams({
+      destination: normalizedDestination,
+      checkIn,
+      checkOut,
+      guests: String(parsedGuests),
+      rooms: String(parsedRooms),
+      sort: body.sort,
+    });
+    router.push(`/hotels/results?${query.toString()}`);
+  };
+
   useEffect(() => {
     let active = true;
     fetch("/api/hotels/search", {
@@ -48,6 +99,11 @@ export function HotelResultsClient() {
     })
       .then(async (response) => {
         const data = await response.json();
+        if (data.warningCategory === "no_live_hotel_provider") {
+          throw new Error(
+            "Live hotel search is temporarily unavailable. We could not connect to a live hotel provider for this search. Please try again later.",
+          );
+        }
         if (!response.ok) throw new Error(data.error || "Unable to search hotels.");
         return data as { results: PublicHotelResult[]; warnings?: string[] };
       })
@@ -79,16 +135,89 @@ export function HotelResultsClient() {
   const filtered = results.filter((hotel) => hotel.totalPrice <= maxPrice && hotel.rating >= minRating);
 
   return (
-    <main className="flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
+    <main className="flex-1 pt-6 pb-8 sm:pt-8 lg:pt-8">
       <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
-        <div className="page-shell flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-muted">{body.destination}</p>
-            <h1 className="text-xl font-bold text-indigo-950 md:text-2xl">
-              {body.checkIn} to {body.checkOut}
-            </h1>
-          </div>
-          <Button variant="secondary" className="w-fit md:hidden" onClick={() => setFiltersOpen(true)}>
+        <div className="page-shell py-3">
+          <form className="mx-auto w-full max-w-5xl" onSubmit={handleSearchSubmit}>
+            <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+              <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]">
+                <label className="grid min-h-[54px] gap-1 rounded-xl px-3 py-2 lg:rounded-l-xl lg:border-r lg:border-slate-200">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">Destination</span>
+                  <input
+                    type="text"
+                    value={destination}
+                    onChange={(event) => setDestination(event.target.value)}
+                    placeholder="Where are you staying?"
+                    className="h-6 w-full bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                  />
+                </label>
+                <div className="grid min-h-[54px] gap-1 rounded-xl px-3 py-2 lg:border-r lg:border-slate-200">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">Dates</span>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <label className="min-w-0">
+                      <span className="sr-only">Check-in</span>
+                      <input
+                        type="date"
+                        value={checkIn}
+                        onChange={(event) => setCheckIn(event.target.value)}
+                        className="h-6 w-full min-w-0 bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      />
+                    </label>
+                    <label className="min-w-0">
+                      <span className="sr-only">Check-out</span>
+                      <input
+                        type="date"
+                        value={checkOut}
+                        onChange={(event) => setCheckOut(event.target.value)}
+                        className="h-6 w-full min-w-0 bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="grid min-h-[54px] gap-1 rounded-xl px-3 py-2 lg:border-r lg:border-slate-200">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">Guests / Rooms</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="min-w-0">
+                      <span className="sr-only">Guests</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={guests}
+                        onChange={(event) => setGuests(event.target.value)}
+                        className="h-6 w-full min-w-0 bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      />
+                    </label>
+                    <label className="min-w-0">
+                      <span className="sr-only">Rooms</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={6}
+                        value={rooms}
+                        onChange={(event) => setRooms(event.target.value)}
+                        className="h-6 w-full min-w-0 bg-transparent text-[16px] text-slate-900 placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="rounded-xl lg:rounded-r-xl">
+                  <button
+                    type="submit"
+                    className="min-h-[54px] w-full rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-r-xl"
+                  >
+                    Search hotels
+                  </button>
+                </div>
+              </div>
+            </div>
+            {formError ? (
+              <p className="mt-2 text-center text-sm font-medium text-danger" role="alert">
+                {formError}
+              </p>
+            ) : null}
+          </form>
+          <Button variant="secondary" className="mt-3 w-fit md:hidden" onClick={() => setFiltersOpen(true)}>
             <SlidersHorizontal size={17} />
             Filters
           </Button>

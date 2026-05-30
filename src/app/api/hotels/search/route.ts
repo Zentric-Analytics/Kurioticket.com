@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error: aggregate.unavailableMessage,
+        warningCategory: deriveHotelWarningCategory(aggregate),
         providerStatuses: aggregate.providerStatuses.map(({ provider, status, latencyMs }) => ({
           provider,
           status,
@@ -96,10 +97,30 @@ export async function POST(request: Request) {
       provider,
       status,
       latencyMs,
-      error,
+      error: sanitizeProviderError(error),
     })),
     warnings: aggregate.warnings,
+    warningCategory: deriveHotelWarningCategory(aggregate),
     servedFromFallback: aggregate.servedFromFallback,
     latencyMs: aggregate.latencyMs,
   });
+}
+
+function sanitizeProviderError(error?: string) {
+  if (!error) return undefined;
+  if (error === "no_live_hotel_provider") return "no_live_hotel_provider";
+  if (error === "unsupported_destination") return "unsupported_destination";
+  return "provider_unavailable";
+}
+
+function deriveHotelWarningCategory(aggregate: Awaited<ReturnType<typeof searchHotels>>) {
+  if (aggregate.providerStatuses.some((provider) => provider.error === "no_live_hotel_provider")) {
+    return "no_live_hotel_provider";
+  }
+  if (aggregate.providerStatuses.some((provider) => provider.error === "unsupported_destination")) {
+    return "unsupported_destination";
+  }
+  if (aggregate.results.length > 0) return undefined;
+  if (aggregate.providerStatuses.some((provider) => provider.status === "failed")) return "provider_unavailable";
+  return "no_results";
 }

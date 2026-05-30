@@ -1,18 +1,13 @@
 import type { AggregatedResult, FlightSearchParams, NormalizedFlightResult, SortMode } from "@/lib/types";
-import { canUseDevelopmentFallbacks } from "@/lib/env";
+import { canUseDevelopmentFallbacks, getFlightProviderPrimary } from "@/lib/env";
 import { rememberFlights } from "@/lib/searchCache";
 import { fallbackFlights } from "@/services/travel/fallbackData";
-import { searchAmadeusFlights } from "@/services/travel/providers/amadeusProvider";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
-import { searchKiwiFlights } from "@/services/travel/providers/kiwiProvider";
+import { skippedProvider } from "@/services/travel/providerUtils";
 
 export async function searchFlights(search: FlightSearchParams): Promise<AggregatedResult<NormalizedFlightResult>> {
   const startedAt = Date.now();
-  const providers = await Promise.all([
-    searchDuffelFlights(search),
-    searchAmadeusFlights(search),
-    searchKiwiFlights(search),
-  ]);
+  const providers = await Promise.all([selectFlightProvider(search)]);
 
   const merged = providers.flatMap((provider) => provider.results);
   const deduped = assignBadges(sortFlights(dedupeFlights(merged), search.sort || "cheapest"));
@@ -54,6 +49,21 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
     servedFromFallback: true,
     latencyMs: Date.now() - startedAt,
   };
+}
+
+function selectFlightProvider(search: FlightSearchParams) {
+  const primaryProvider = getFlightProviderPrimary();
+
+  if (primaryProvider === "duffel") {
+    return searchDuffelFlights(search);
+  }
+
+  return Promise.resolve(
+    skippedProvider<NormalizedFlightResult>(
+      "Flight Provider",
+      "no_live_flight_provider",
+    ),
+  );
 }
 
 export function sortFlights(results: NormalizedFlightResult[], sort: SortMode) {

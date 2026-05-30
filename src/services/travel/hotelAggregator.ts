@@ -11,7 +11,7 @@ export async function searchHotels(search: HotelSearchParams): Promise<Aggregate
   const deduped = assignBadges(sortHotels(dedupeHotels(merged), search.sort || "cheapest"));
   const warnings = providers
     .filter((provider) => provider.status !== "success")
-    .map((provider) => `${provider.provider}: ${provider.error || "Unavailable"}`);
+    .map((provider) => sanitizeHotelWarning(provider.error));
 
   if (deduped.length > 0) {
     rememberHotels(deduped);
@@ -48,6 +48,12 @@ export async function searchHotels(search: HotelSearchParams): Promise<Aggregate
     servedFromFallback: true,
     latencyMs: Date.now() - startedAt,
   };
+}
+
+function sanitizeHotelWarning(error?: string) {
+  if (error === "no_live_hotel_provider") return "no_live_hotel_provider";
+  if (error === "unsupported_destination") return "unsupported_destination";
+  return "provider_unavailable";
 }
 
 function sortHotels(results: NormalizedHotelResult[], sort: NonNullable<HotelSearchParams["sort"]>) {

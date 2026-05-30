@@ -1,3 +1,9 @@
+import {
+  assertProductionLiveProvider,
+  assertSandboxProviderAllowed,
+  getDuffelApiMode,
+  isProductionProviderMode,
+} from "@/lib/env";
 import type { FlightSearchParams, NormalizedFlightResult, ProviderResult } from "@/lib/types";
 import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
@@ -24,6 +30,26 @@ export type PlaceSearchContext = {
   locale?: string;
 };
 
+function getDuffelProviderBlockReason(apiKey: string) {
+  const apiMode = getDuffelApiMode();
+
+  try {
+    assertProductionLiveProvider("Duffel", apiMode);
+
+    if (apiMode === "test") {
+      assertSandboxProviderAllowed("Duffel");
+    }
+  } catch {
+    return "provider_mode_not_allowed";
+  }
+
+  if (isProductionProviderMode() && apiKey.trim().startsWith("duffel_test_")) {
+    return "provider_mode_not_allowed";
+  }
+
+  return undefined;
+}
+
 const cabinClassMap: Record<FlightSearchParams["cabinClass"], string> = {
   economy: "economy",
   "premium-economy": "premium_economy",
@@ -35,6 +61,11 @@ export function searchDuffelFlights(search: FlightSearchParams): Promise<Provide
   const apiKey = process.env.DUFFEL_API_KEY;
   if (!apiKey) {
     return Promise.resolve(skippedProvider("Duffel", "Missing DUFFEL_API_KEY."));
+  }
+
+  const blockReason = getDuffelProviderBlockReason(apiKey);
+  if (blockReason) {
+    return Promise.resolve(skippedProvider("Duffel", blockReason));
   }
 
   return runProvider("Duffel", async () => {
@@ -95,6 +126,17 @@ export async function checkDuffelHealth() {
       connected: false,
       latencyMs: 0,
       lastError: "Missing DUFFEL_API_KEY.",
+      checkedAt,
+    };
+  }
+
+  const blockReason = getDuffelProviderBlockReason(apiKey);
+  if (blockReason) {
+    return {
+      configured: true,
+      connected: false,
+      latencyMs: 0,
+      lastError: blockReason,
       checkedAt,
     };
   }
@@ -198,6 +240,11 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
   const apiKey = process.env.DUFFEL_API_KEY;
   if (!apiKey) {
     return skippedProvider("DuffelPlaces", "Missing DUFFEL_API_KEY.");
+  }
+
+  const blockReason = getDuffelProviderBlockReason(apiKey);
+  if (blockReason) {
+    return skippedProvider("DuffelPlaces", blockReason);
   }
 
   return runProvider("DuffelPlaces", async () => {
