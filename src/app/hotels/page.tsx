@@ -3,7 +3,19 @@
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, Minus, Plus } from "lucide-react";
+import {
+  ArrowRight,
+  Building2,
+  Calendar,
+  CheckCircle2,
+  ChevronDown,
+  ClipboardCheck,
+  MapPin,
+  Minus,
+  Plus,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -147,6 +159,8 @@ export default function HotelsSearchPage() {
       "New York",
       "Dubai",
       "Singapore",
+      "Rome",
+      "Barcelona",
     ];
 
     return cities.map((city) => ({
@@ -608,67 +622,159 @@ export default function HotelsSearchPage() {
           </section>
 
           <section className="grid gap-3 md:grid-cols-3">
-            <article className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_10px_30px_-24px_rgba(15,23,42,0.5)]">
-              <p className="text-sm font-medium text-slate-800">
-                Compare provider offers
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                View hotel options from travel providers in one place.
-              </p>
-            </article>
-            <article className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_10px_30px_-24px_rgba(15,23,42,0.5)]">
-              <p className="text-sm font-medium text-slate-800">
-                Review stay details
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                Check dates, guests, rooms, and pricing context before
-                continuing.
-              </p>
-            </article>
-            <article className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_10px_30px_-24px_rgba(15,23,42,0.5)]">
-              <p className="text-sm font-medium text-slate-800">
-                Continue with the provider
-              </p>
-              <p className="mt-1 text-sm text-slate-600">
-                Choose an option, then complete booking with the provider.
-              </p>
-            </article>
+            {[
+              {
+                title: "Compare provider offers",
+                body: "View hotel options from travel providers in one place before you continue.",
+                icon: Building2,
+              },
+              {
+                title: "Review stay details",
+                body: "Check dates, guests, rooms, pricing context, and stay information before choosing.",
+                icon: ClipboardCheck,
+              },
+              {
+                title: "Continue with the provider",
+                body: "When you choose an option, continue with the provider to complete booking.",
+                icon: ArrowRight,
+              },
+            ].map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <article
+                  key={item.title}
+                  className="group rounded-2xl border border-white/70 bg-white/80 p-4 shadow-[0_18px_50px_-36px_rgba(15,23,42,0.65)] ring-1 ring-slate-200/70 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_22px_55px_-34px_rgba(15,23,42,0.75)]"
+                >
+                  <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100 transition group-hover:bg-indigo-100">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </div>
+                  <h2 className="text-sm font-semibold text-slate-950">
+                    {item.title}
+                  </h2>
+                  <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                    {item.body}
+                  </p>
+                </article>
+              );
+            })}
           </section>
 
-          <section className="space-y-3 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-[0_12px_36px_-28px_rgba(15,23,42,0.5)] md:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-base font-semibold text-slate-900 md:text-lg">
-                Popular city stays
-              </h2>
-              <p className="text-sm text-slate-500">
-                Quick start with common destinations
+          <section className="space-y-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-indigo-700">
+                  Start with a destination
+                </p>
+                <h2 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">
+                  Popular city stays
+                </h2>
+              </div>
+              <p className="max-w-md text-sm leading-6 text-slate-600">
+                Choose a city to open hotel results with sample future dates,
+                two guests, and one room.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2.5">
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
               {popularCityLinks.map((item) => (
                 <Link
                   key={item.city}
                   href={item.href}
-                  className="rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100"
+                  className="group rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-[0_16px_42px_-34px_rgba(15,23,42,0.75)] ring-1 ring-white/70 transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50/70 hover:shadow-[0_22px_52px_-36px_rgba(79,70,229,0.8)]"
                 >
-                  {item.city}
+                  <span className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-white group-hover:text-indigo-700">
+                    <MapPin className="h-4 w-4" aria-hidden="true" />
+                  </span>
+                  <span className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-950">
+                    {item.city}
+                    <ArrowRight
+                      className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-indigo-700"
+                      aria-hidden="true"
+                    />
+                  </span>
                 </Link>
               ))}
             </div>
           </section>
 
-          <section>
-            <ol className="grid gap-2 text-sm text-slate-600 md:grid-cols-3">
-              <li className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
-                1. Search your destination and dates
-              </li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
-                2. Compare available hotel options
-              </li>
-              <li className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2">
-                3. Continue with the provider to complete booking
-              </li>
+          <section className="grid gap-5 rounded-3xl border border-slate-200/80 bg-slate-950 p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] md:grid-cols-[0.9fr_1.4fr] md:p-6">
+            <div>
+              <p className="text-sm font-medium text-indigo-200">
+                How hotel search works
+              </p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight md:text-2xl">
+                Plan your stay with Curioticket
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-300">
+                Keep the important trip details in view as you move from search
+                to provider selection.
+              </p>
+            </div>
+            <ol className="grid gap-3 sm:grid-cols-3">
+              {[
+                {
+                  title: "Start with destination and dates",
+                  body: "Enter where and when you want to stay.",
+                  icon: Search,
+                },
+                {
+                  title: "Compare hotel options on the results page",
+                  body: "Review matching stays and trip details together.",
+                  icon: SlidersHorizontal,
+                },
+                {
+                  title: "Continue with the provider when you are ready",
+                  body: "Choose an option and finish booking with the provider.",
+                  icon: CheckCircle2,
+                },
+              ].map((item, index) => {
+                const Icon = item.icon;
+
+                return (
+                  <li
+                    key={item.title}
+                    className="rounded-2xl border border-white/10 bg-white/[0.06] p-4"
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-indigo-100">
+                        <Icon className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                        Step {index + 1}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-semibold leading-5 text-white">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-300">
+                      {item.body}
+                    </p>
+                  </li>
+                );
+              })}
             </ol>
+          </section>
+
+          <section className="grid gap-3 border-y border-slate-200/80 py-5 md:grid-cols-[0.75fr_1.25fr] md:items-center">
+            <div>
+              <p className="text-sm font-medium text-indigo-700">
+                Search smarter
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-slate-950">
+                Small checks can make results easier to review
+              </h2>
+            </div>
+            <ul className="grid gap-2 text-sm leading-6 text-slate-600 sm:grid-cols-3">
+              <li className="rounded-2xl bg-white/75 p-3 ring-1 ring-slate-200">
+                Adjust dates if your trip is flexible.
+              </li>
+              <li className="rounded-2xl bg-white/75 p-3 ring-1 ring-slate-200">
+                Review room and guest details before continuing.
+              </li>
+              <li className="rounded-2xl bg-white/75 p-3 ring-1 ring-slate-200">
+                Use filters on results to narrow your options.
+              </li>
+            </ul>
           </section>
         </div>
       </main>
