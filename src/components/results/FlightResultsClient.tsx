@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { FormEvent } from "react";
+import type { FormEvent, MouseEvent as ReactMouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
   Calendar,
   ChevronDown,
+  Heart,
   Minus,
   Plus,
   SlidersHorizontal,
@@ -20,7 +21,11 @@ import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useRegion } from "@/components/region/RegionProvider";
 import { airports, type AirportOption } from "@/data/airports";
-import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
+import {
+  getHomeDiscoveryByRegion,
+  homeDiscoveryByRegion,
+  type HomeDiscoveryItem,
+} from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import {
   clearRecentSearches,
@@ -28,6 +33,11 @@ import {
   removeRecentSearch,
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
+import {
+  readSavedTripIds,
+  toggleSavedTripId,
+  writeSavedTripIds,
+} from "@/lib/saved-trips-local";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -52,6 +62,15 @@ const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
 };
+
+const allDiscoveryItems = [
+  ...Object.values(homeDiscoveryByRegion).flat(),
+  ...getHomeDiscoveryByRegion(),
+];
+
+const discoveryById = new Map<string, HomeDiscoveryItem>(
+  allDiscoveryItems.map((item) => [item.id, item])
+);
 
 function RecentSearchCard({
   entry,
@@ -132,6 +151,62 @@ function RecentSearchCard({
         <X className="h-3.5 w-3.5" />
       </button>
     </article>
+  );
+}
+
+function SavedRouteCard({
+  item,
+  onHeartToggle,
+}: {
+  item: HomeDiscoveryItem;
+  onHeartToggle: (event: ReactMouseEvent<HTMLButtonElement>, itemId: string) => void;
+}) {
+  return (
+    <Link
+      href={buildDiscoveryLink(item)}
+      aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+      className="focus-ring group relative flex min-w-[250px] snap-start flex-col overflow-hidden rounded-[1.45rem] border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl sm:min-w-[280px] md:min-w-0"
+    >
+      <div className="relative h-32 overflow-hidden bg-slate-200">
+        <Image
+          src={item.image}
+          alt={item.imageAlt}
+          fill
+          sizes="(min-width: 1024px) 280px, (min-width: 640px) 280px, 250px"
+          className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent" />
+        <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[0.65rem] font-black tracking-[0.14em] text-slate-950 shadow-sm">
+          {item.originCode} → {item.destinationCode}
+        </span>
+      </div>
+
+      <button
+        type="button"
+        aria-label={`Remove ${item.title} from saved routes`}
+        aria-pressed="true"
+        onClick={(event) => onHeartToggle(event, item.id)}
+        className="focus-ring absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-950/15 backdrop-blur transition hover:bg-rose-600"
+      >
+        <Heart className="h-4 w-4 fill-current" />
+      </button>
+
+      <div className="flex flex-1 flex-col p-4">
+        <h3 className="line-clamp-1 pr-8 text-base font-black leading-tight text-slate-950">
+          {item.title}
+        </h3>
+        <p className="mt-1 text-sm font-semibold text-slate-500">
+          {item.originCity} to {item.destinationCity}
+        </p>
+        <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
+          {item.routeNote}
+        </p>
+        <span className="mt-4 inline-flex items-center justify-between rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white transition group-hover:bg-indigo-700 group-focus-visible:bg-indigo-700">
+          Explore route
+          <ArrowRightLeft size={14} />
+        </span>
+      </div>
+    </Link>
   );
 }
 
@@ -221,6 +296,7 @@ export function FlightResultsClient() {
   const [originSuggestions, setOriginSuggestions] = useState<AirportOption[]>([]);
   const [destinationSuggestions, setDestinationSuggestions] = useState<AirportOption[]>([]);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
+  const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
 
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
@@ -242,10 +318,17 @@ export function FlightResultsClient() {
     destinationSuggestions.length > 0
       ? destinationSuggestions
       : destinationFallbackSuggestions;
-
+  const savedRoutes = useMemo(
+    () =>
+      savedTripIds
+        .map((id) => discoveryById.get(id))
+        .filter((item): item is HomeDiscoveryItem => Boolean(item)),
+    [savedTripIds]
+  );
 
   useEffect(() => {
     setRecentSearches(readRecentSearches());
+    setSavedTripIds(readSavedTripIds());
   }, []);
 
   function handleRemoveRecentSearch(id: string) {
@@ -255,6 +338,20 @@ export function FlightResultsClient() {
   function handleClearRecentSearches() {
     clearRecentSearches();
     setRecentSearches([]);
+  }
+
+  function handleSavedRouteToggle(
+    event: ReactMouseEvent<HTMLButtonElement>,
+    itemId: string
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setSavedTripIds((current) => {
+      const next = toggleSavedTripId(current, itemId);
+      writeSavedTripIds(next);
+      return next;
+    });
   }
 
   useEffect(() => {
@@ -1256,6 +1353,38 @@ export function FlightResultsClient() {
               </div>
             </section>
           ) : null}
+
+          {savedRoutes.length > 0 ? (
+            <section className="mx-auto mt-7 w-full max-w-6xl overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:p-5">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-rose-600">
+                    Saved routes ❤️
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+                    Saved routes
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-slate-600 sm:text-base">
+                    Routes you saved on this device.
+                  </p>
+                </div>
+                <p className="max-w-xs text-sm leading-6 text-slate-500">
+                  Jump back into route ideas you already liked—no account required.
+                </p>
+              </div>
+
+              <div className="mt-4 flex snap-x gap-3 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] md:grid md:grid-cols-3 md:overflow-visible lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+                {savedRoutes.slice(0, 8).map((item) => (
+                  <SavedRouteCard
+                    key={item.id}
+                    item={item}
+                    onHeartToggle={handleSavedRouteToggle}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
           <div className="mt-8">
             <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
               <div className="relative p-4 sm:p-6 lg:p-7">
