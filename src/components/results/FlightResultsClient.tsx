@@ -20,6 +20,8 @@ import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useRegion } from "@/components/region/RegionProvider";
 import { airports, type AirportOption } from "@/data/airports";
+import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
+import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
 
@@ -41,43 +43,6 @@ const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
   { label: "First", value: "first" },
 ];
 
-const DEFAULT_EXPLORE_ORIGIN = "JFK";
-
-const exploreCountries = [
-  {
-    name: "Spain",
-    destinationCode: "MAD",
-    linkLabel: "Search round-trip flights to Spain",
-    imageAlt: "Historic Spanish city rooftops and cathedral architecture",
-    image:
-      "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    name: "Italy",
-    destinationCode: "ROM",
-    linkLabel: "Search round-trip flights to Italy",
-    imageAlt: "Venice canal with colorful historic buildings in Italy",
-    image:
-      "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    name: "Japan",
-    destinationCode: "TYO",
-    linkLabel: "Search round-trip flights to Japan",
-    imageAlt: "Japanese pagoda surrounded by cherry blossoms",
-    image:
-      "https://images.unsplash.com/photo-1492571350019-22de08371fd3?auto=format&fit=crop&w=700&q=80",
-  },
-  {
-    name: "Brazil",
-    destinationCode: "RIO",
-    linkLabel: "Search round-trip flights to Brazil",
-    imageAlt: "Rio de Janeiro coastline and mountains in Brazil",
-    image:
-      "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=700&q=80",
-  },
-];
-
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
 };
@@ -87,6 +52,10 @@ export function FlightResultsClient() {
   const router = useRouter();
   const { selectedOption } = useRegion();
   const selectedCurrency = selectedOption.currency;
+  const discoveryCards = useMemo(
+    () => getHomeDiscoveryByRegion(selectedOption.code).slice(0, 8),
+    [selectedOption.code]
+  );
 
   const [sort] = useState<SortMode>(
     (params.get("sort") as SortMode) || "cheapest"
@@ -1148,147 +1117,68 @@ export function FlightResultsClient() {
                     onCabinClassChange={setCabinClassInput}
                   />
                 ) : null}
-          <div className="mt-8 space-y-8">
-            <section>
-              <h2 className="text-3xl font-black text-slate-900">
-                Flight ideas by region
-              </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Browse popular places and route ideas before you search.
-              </p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {exploreCountries.map((country) => (
+          <div className="mt-8">
+            <section className="rounded-[2rem] border border-slate-200/80 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:p-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">
+                    Curioticket picks
+                  </p>
+                  <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                    Discover destinations
+                  </h2>
+                  <p className="mt-1 text-sm text-slate-600 sm:text-base">
+                    Explore curated flight ideas based on your region.
+                  </p>
+                </div>
+                <p className="max-w-sm text-sm leading-6 text-slate-500">
+                  These routes are planning prompts from Curioticket discovery,
+                  with searches opened using flexible future dates.
+                </p>
+              </div>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {discoveryCards.map((item) => (
                   <Link
-                    key={country.name}
-                    href={buildExploreFlightHref(country.destinationCode)}
-                    aria-label={country.linkLabel}
-                    className="group block overflow-hidden rounded-xl border border-slate-200 bg-white transition duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    key={item.id}
+                    href={buildDiscoveryLink(item)}
+                    aria-label={`Search ${item.originCode} to ${item.destinationCode}`}
+                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                   >
-                    <article>
-                      <div className="relative h-36 overflow-hidden">
+                    <article className="flex h-full flex-col">
+                      <div className="relative h-44 overflow-hidden bg-slate-200">
                         <Image
-                          src={country.image}
-                          alt={country.imageAlt}
+                          src={item.image}
+                          alt={item.imageAlt}
                           fill
-                          className="object-cover transition duration-300 group-hover:scale-105 group-focus-visible:scale-105"
+                          sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                         />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
+                        <div className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-xs font-black tracking-[0.16em] text-slate-950 shadow-sm">
+                          {item.originCode} → {item.destinationCode}
+                        </div>
                       </div>
-                      <p className="px-4 py-3 text-base font-bold text-slate-900">
-                        {country.name}
-                      </p>
+                      <div className="flex flex-1 flex-col p-4 text-white">
+                        <h3 className="text-lg font-black leading-tight">
+                          {item.title}
+                        </h3>
+                        <p className="mt-1 text-sm font-semibold text-slate-300">
+                          {item.originCity} to {item.destinationCity}
+                        </p>
+                        <p className="mt-3 flex-1 text-sm leading-6 text-slate-300">
+                          {item.routeNote}
+                        </p>
+                        <span className="mt-4 inline-flex items-center justify-between rounded-full bg-white px-4 py-2 text-sm font-black text-slate-950 transition group-hover:bg-indigo-50">
+                          Search this route
+                          <ArrowRightLeft size={15} className="text-indigo-600" />
+                        </span>
+                      </div>
                     </article>
                   </Link>
                 ))}
               </div>
             </section>
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-3xl font-black text-slate-900">
-                Popular flights near you
-              </h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {[
-                  "Houston → Mexico City",
-                  "Houston → San Salvador",
-                  "Houston → Cancún",
-                ].map((route) => (
-                  <div
-                    key={route}
-                    className="rounded-xl border border-slate-200 p-4 font-semibold text-slate-800"
-                  >
-                    {route}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-3xl font-black text-slate-900">
-                Top flights from United States
-              </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Explore destinations you can reach from United States.
-              </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {[
-                  "Houston → New York",
-                  "Houston → Las Vegas",
-                  "Houston → Orlando",
-                  "Houston → Los Angeles",
-                  "Houston → Miami",
-                  "Houston → Chicago",
-                  "Houston → Fort Lauderdale",
-                  "Houston → Atlanta",
-                  "Houston → Dallas",
-                ].map((route) => (
-                  <div
-                    key={route}
-                    className="rounded-xl border border-slate-200 p-4 font-semibold text-slate-800"
-                  >
-                    {route}
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <p className="font-black text-slate-900">
-                    Search a huge selection
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Easily compare flights and prices in one place.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-black text-slate-900">
-                    Pay no hidden fees
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Clear price breakdown from search to booking.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-black text-slate-900">
-                    Get more flexibility
-                  </p>
-                  <p className="text-sm text-slate-600">
-                    Flexible ticket options on select routes.
-                  </p>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-5">
-              <h2 className="text-3xl font-black text-slate-900">
-                Frequently asked questions
-              </h2>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                {[
-                  "How do I find cheap flights on Curioticket?",
-                  "Can I book one-way flights?",
-                  "How far in advance should I book?",
-                  "Do flights get cheaper closer to departure?",
-                  "What is a flexible ticket?",
-                  "Are there card fees when booking?",
-                ].map((question) => (
-                  <details
-                    key={question}
-                    className="rounded-lg border border-slate-200 p-3"
-                  >
-                    <summary className="cursor-pointer font-semibold text-slate-900">
-                      {question}
-                    </summary>
-                    <p className="mt-2 text-sm text-slate-600">
-                      Use flexible dates, compare airports, and watch fare
-                      trends to find better value.
-                    </p>
-                  </details>
-                ))}
-              </div>
-            </section>
-
           </div>
         </section>
       </main>
@@ -1797,26 +1687,6 @@ function dedupeSuggestions(suggestions: AirportOption[]) {
 
 function airportInputValue(item: AirportOption) {
   return item.code;
-}
-
-function buildExploreFlightHref(destinationCode: string) {
-  const today = new Date();
-  const departureDate = addDays(today, 30);
-  const returnDate = addDays(today, 37);
-  const params = new URLSearchParams({
-    tripType: "round-trip",
-    origin: DEFAULT_EXPLORE_ORIGIN,
-    destination: destinationCode,
-    departureDate: formatDateValue(departureDate),
-    returnDate: formatDateValue(returnDate),
-    adults: "1",
-    children: "0",
-    infants: "0",
-    travelers: "1",
-    cabinClass: "economy",
-  });
-
-  return `/flights/results?${params.toString()}`;
 }
 
 function addDays(date: Date, amount: number): Date {
