@@ -1,5 +1,6 @@
 import { nanoid } from "nanoid";
 import type { HotelSearchParams, NormalizedHotelResult } from "@/lib/types";
+import { normalizeHotelImageUrl } from "@/services/travel/hotelImages";
 import { scoreHotel } from "@/services/travel/scoring";
 
 export function normalizeHotelResult(
@@ -145,7 +146,7 @@ function normalizeFallbackHotel(raw: unknown, search: HotelSearchParams): Normal
     provider: "Development Fallback",
     providerId: item.id,
     name: item.name || "Harborline City Hotel",
-    imageUrl: item.imageUrl || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80",
+    imageUrl: item.imageUrl,
     rating: item.rating || 4.4,
     location: item.location || search.destination,
     pricePerNight: item.pricePerNight || 139,
@@ -186,7 +187,12 @@ function buildHotel(input: {
     id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,
     provider: input.provider,
     name: input.name,
-    imageUrl: input.imageUrl,
+    imageUrl: normalizeHotelImageUrl(input.imageUrl, {
+      destination: input.location,
+      location: input.location,
+      hotelName: input.name,
+      providerId: input.providerId,
+    }),
     rating: input.rating,
     location: input.location,
     distanceFromCenter: "Central or transit-friendly area",

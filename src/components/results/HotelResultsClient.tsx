@@ -326,8 +326,8 @@ function HotelFilters({
 function HotelSkeleton() {
   return (
     <div className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
-      <div className="grid gap-4 md:grid-cols-[240px_1fr]">
-        <Skeleton className="aspect-[16/10] md:aspect-auto" />
+      <div className="grid gap-4 md:grid-cols-[260px_1fr]">
+        <Skeleton className="aspect-[16/10] md:aspect-auto md:min-h-[236px]" />
         <div className="space-y-3">
           <Skeleton className="h-5 w-56" />
           <Skeleton className="h-4 w-40" />

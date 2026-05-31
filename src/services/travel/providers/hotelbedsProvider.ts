@@ -138,6 +138,11 @@ export function searchHotelbedsHotels(search: HotelSearchParams): Promise<Provid
     );
 
     return (data.hotels?.hotels || [])
+      // Hotelbeds availability responses used here do not include dependable
+      // property image content. Keep image enrichment centralized in
+      // normalizeHotelResult so missing images become generic premium fallbacks.
+      // A future low-risk enhancement can hydrate real property images from the
+      // Hotelbeds Content API before this normalization step.
       .map((hotel) => normalizeHotelResult("Hotelbeds", hotel, search))
       .filter(Boolean) as NormalizedHotelResult[];
   });
