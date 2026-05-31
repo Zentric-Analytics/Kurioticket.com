@@ -1257,65 +1257,158 @@ export function FlightResultsClient() {
             </section>
           ) : null}
           <div className="mt-8">
-            <section className="rounded-[2rem] border border-slate-200/80 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:p-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">
-                    Curioticket picks
-                  </p>
-                  <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
-                    Discover destinations
-                  </h2>
-                  <p className="mt-1 text-sm text-slate-600 sm:text-base">
-                    Explore curated flight ideas based on your region.
+            <section className="overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+              <div className="relative p-4 sm:p-6 lg:p-7">
+                <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-indigo-100/70 blur-3xl" />
+                <div className="relative flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">
+                      Curioticket picks
+                    </p>
+                    <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                      Discover destinations from your region
+                    </h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                      Explore curated routes and start your next trip with confidence.
+                    </p>
+                  </div>
+                  <p className="max-w-sm text-sm leading-6 text-slate-500">
+                    These routes are planning prompts from Curioticket discovery,
+                    with searches opened using flexible future dates.
                   </p>
                 </div>
-                <p className="max-w-sm text-sm leading-6 text-slate-500">
-                  These routes are planning prompts from Curioticket discovery,
-                  with searches opened using flexible future dates.
-                </p>
-              </div>
 
-              <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                {discoveryCards.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={buildDiscoveryLink(item)}
-                    aria-label={`Search ${item.originCode} to ${item.destinationCode}`}
-                    className="group overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-                  >
-                    <article className="flex h-full flex-col">
-                      <div className="relative h-44 overflow-hidden bg-slate-200">
+                <div className="relative mt-6 lg:hidden">
+                  <div className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                    {discoveryCards.slice(0, 7).map((item) => (
+                      <Link
+                        key={item.id}
+                        href={buildDiscoveryLink(item)}
+                        aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                        className="group min-w-[255px] snap-start overflow-hidden rounded-[1.6rem] border border-slate-200 bg-slate-950 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[300px]"
+                      >
+                        <article className="flex h-full flex-col">
+                          <div className="relative h-36 overflow-hidden bg-slate-200 sm:h-40">
+                            <Image
+                              src={item.image}
+                              alt={item.imageAlt}
+                              fill
+                              sizes="(min-width: 640px) 300px, 255px"
+                              className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent" />
+                            <div className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-[0.68rem] font-black tracking-[0.16em] text-slate-950 shadow-sm">
+                              {item.originCode} → {item.destinationCode}
+                            </div>
+                          </div>
+                          <div className="flex flex-1 flex-col p-4 text-white">
+                            <h3 className="text-lg font-black leading-tight">
+                              {item.title}
+                            </h3>
+                            <p className="mt-1 text-sm font-semibold text-slate-300">
+                              {item.originCity} to {item.destinationCity}
+                            </p>
+                            <p className="mt-3 line-clamp-2 flex-1 text-sm leading-6 text-slate-300">
+                              {item.routeNote}
+                            </p>
+                            <span className="mt-4 inline-flex items-center justify-between rounded-full bg-white px-4 py-2 text-sm font-black text-slate-950 transition group-hover:bg-indigo-50">
+                              Explore route
+                              <ArrowRightLeft size={15} className="text-indigo-600" />
+                            </span>
+                          </div>
+                        </article>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="relative mt-6 hidden gap-4 lg:grid lg:grid-cols-[minmax(0,1.08fr)_minmax(0,1fr)] xl:gap-5">
+                  {discoveryCards.slice(0, 1).map((item) => (
+                    <Link
+                      key={item.id}
+                      href={buildDiscoveryLink(item)}
+                      aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                      className="group min-h-[536px] overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-950 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    >
+                      <article className="relative flex h-full flex-col justify-end overflow-hidden p-6 text-white xl:p-7">
                         <Image
                           src={item.image}
                           alt={item.imageAlt}
                           fill
-                          sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
-                          className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                          priority={false}
+                          sizes="(min-width: 1280px) 520px, 50vw"
+                          className="object-cover transition duration-700 group-hover:scale-105 group-focus-visible:scale-105"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
-                        <div className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-xs font-black tracking-[0.16em] text-slate-950 shadow-sm">
-                          {item.originCode} → {item.destinationCode}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-slate-950/5" />
+                        <div className="relative">
+                          <span className="inline-flex rounded-full border border-white/20 bg-white/15 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-white shadow-sm backdrop-blur">
+                            Featured route
+                          </span>
+                          <h3 className="mt-4 max-w-md text-4xl font-black leading-[0.95] tracking-tight xl:text-5xl">
+                            {item.title}
+                          </h3>
+                          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm font-black uppercase tracking-[0.18em] text-white/90">
+                            <span className="rounded-full bg-white px-3 py-1 text-slate-950">
+                              {item.originCode} → {item.destinationCode}
+                            </span>
+                            <span className="text-white/75">
+                              {item.originCity} to {item.destinationCity}
+                            </span>
+                          </div>
+                          <p className="mt-5 max-w-lg text-base leading-7 text-white/82">
+                            {item.routeNote}
+                          </p>
+                          <span className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-black text-slate-950 shadow-lg shadow-slate-950/20 transition group-hover:bg-indigo-50">
+                            Explore route
+                            <ArrowRightLeft size={16} className="text-indigo-600" />
+                          </span>
                         </div>
-                      </div>
-                      <div className="flex flex-1 flex-col p-4 text-white">
-                        <h3 className="text-lg font-black leading-tight">
-                          {item.title}
-                        </h3>
-                        <p className="mt-1 text-sm font-semibold text-slate-300">
-                          {item.originCity} to {item.destinationCity}
-                        </p>
-                        <p className="mt-3 flex-1 text-sm leading-6 text-slate-300">
-                          {item.routeNote}
-                        </p>
-                        <span className="mt-4 inline-flex items-center justify-between rounded-full bg-white px-4 py-2 text-sm font-black text-slate-950 transition group-hover:bg-indigo-50">
-                          Search this route
-                          <ArrowRightLeft size={15} className="text-indigo-600" />
-                        </span>
-                      </div>
-                    </article>
-                  </Link>
-                ))}
+                      </article>
+                    </Link>
+                  ))}
+
+                  <div className="grid gap-3 xl:grid-cols-2">
+                    {discoveryCards.slice(1, 7).map((item) => (
+                      <Link
+                        key={item.id}
+                        href={buildDiscoveryLink(item)}
+                        aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                        className="group overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                      >
+                        <article className="grid h-full grid-cols-[128px_1fr] overflow-hidden xl:grid-cols-1">
+                          <div className="relative min-h-[156px] overflow-hidden bg-slate-200 xl:min-h-[118px]">
+                            <Image
+                              src={item.image}
+                              alt={item.imageAlt}
+                              fill
+                              sizes="(min-width: 1280px) 260px, 128px"
+                              className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
+                            <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[0.65rem] font-black tracking-[0.14em] text-slate-950 shadow-sm">
+                              {item.originCode} → {item.destinationCode}
+                            </span>
+                          </div>
+                          <div className="flex min-w-0 flex-col p-4">
+                            <h3 className="line-clamp-2 text-base font-black leading-tight text-slate-950">
+                              {item.title}
+                            </h3>
+                            <p className="mt-1 text-sm font-semibold text-slate-500">
+                              {item.originCity} to {item.destinationCity}
+                            </p>
+                            <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
+                              {item.routeNote}
+                            </p>
+                            <span className="mt-3 inline-flex items-center justify-between rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white transition group-hover:bg-indigo-700">
+                              Explore route
+                              <ArrowRightLeft size={14} />
+                            </span>
+                          </div>
+                        </article>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               </div>
             </section>
           </div>
