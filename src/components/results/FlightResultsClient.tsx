@@ -1744,7 +1744,7 @@ export function FlightResultsClient() {
 
   return (
     <main className="flex-1 bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
-      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[300px_1fr]">
+      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[260px_1fr]">
         <section className="lg:col-span-2">
           <form
             onSubmit={handleCompactSearchSubmit}
@@ -2713,7 +2713,7 @@ function Filters({
   currency: string;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-navy">Refine Results</h2>
@@ -2724,8 +2724,8 @@ function Filters({
         <SlidersHorizontal className="text-teal" size={21} />
       </div>
 
-      <div className="mt-6 grid gap-6">
-        <label className="block rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <div className="mt-4 grid gap-4">
+        <label className="block rounded-xl border border-slate-200 bg-slate-50 p-2.5">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
             Price up to{" "}
             <span className="font-mono text-navy">
@@ -2743,7 +2743,7 @@ function Filters({
           />
         </label>
 
-        <label className="block rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <label className="block rounded-xl border border-slate-200 bg-slate-50 p-2.5">
           <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
             Stops up to{" "}
             <span className="font-mono text-navy">{maxStops}</span>
@@ -2760,17 +2760,17 @@ function Filters({
         </label>
 
         <div className="grid gap-1 rounded-xl border border-slate-200 bg-slate-50 p-2 text-sm font-semibold text-muted">
-          <label className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-slate-100">
+          <label className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-slate-100">
             <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40" defaultChecked />
             Baggage included where available
           </label>
 
-          <label className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-slate-100">
+          <label className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-slate-100">
             <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40" />
             Evening departures
           </label>
 
-          <label className="flex items-center gap-3 rounded-lg px-2 py-2 transition hover:bg-slate-100">
+          <label className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition hover:bg-slate-100">
             <input type="checkbox" className="h-4 w-4 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40" />
             Low-risk connections
           </label>
