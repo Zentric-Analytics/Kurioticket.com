@@ -64,6 +64,44 @@ const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
   { label: "First", value: "first" },
 ];
 
+const flightFaqItems: Array<{ question: string; answer: string }> = [
+  {
+    question: "When is the best time to book a flight?",
+    answer:
+      "Flight prices can change based on route, season, demand, and availability. It is usually helpful to compare several dates, check nearby airports when possible, and review the full itinerary before choosing a fare.",
+  },
+  {
+    question: "What should I check before booking?",
+    answer:
+      "Review the departure and arrival times, total travel time, stopovers, baggage rules, seat selection options, cancellation terms, and ticket-change policy before completing your booking with the provider.",
+  },
+  {
+    question: "What is a flexible fare?",
+    answer:
+      "A flexible fare may allow changes or cancellations with fewer restrictions than a basic fare, but the exact rules depend on the airline or booking provider. Always review the fare conditions before purchase.",
+  },
+  {
+    question: "Are nonstop flights always better?",
+    answer:
+      "Not always. Nonstop flights can save time, while one-stop routes may offer different departure times, arrival windows, or fare options. Compare total travel time, layover length, and convenience before deciding.",
+  },
+  {
+    question: "How do baggage rules work?",
+    answer:
+      "Baggage allowance can vary by airline, route, cabin, fare type, and provider. Check whether carry-on, checked bags, and personal items are included before booking.",
+  },
+  {
+    question: "Can I change or cancel my ticket?",
+    answer:
+      "Change and cancellation options depend on the fare rules and provider policies. Some tickets may be non-refundable or include fees, so review the terms carefully before booking.",
+  },
+  {
+    question: "What should I know about international flights?",
+    answer:
+      "For international travel, review passport validity, visa requirements, transit rules, baggage policies, and arrival requirements for your destination before booking.",
+  },
+];
+
 const decisionSupportCards: Array<{
   title: string;
   copy: string;
@@ -307,6 +345,58 @@ function FlightDecisionSupportSection() {
               );
             })}
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FlightBookingFaqSection() {
+  return (
+    <section
+      aria-labelledby="flight-booking-faq-heading"
+      className="mt-8 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.08)]"
+    >
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.25fr)]">
+        <div className="relative overflow-hidden bg-slate-950 p-6 text-white sm:p-8 lg:p-10">
+          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
+          <div className="absolute -bottom-24 right-8 h-64 w-64 rounded-full bg-sky-400/15 blur-3xl" />
+          <div className="relative">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-indigo-100">
+              <ShieldCheck className="h-4 w-4" />
+              Flight guide
+            </span>
+            <h2
+              id="flight-booking-faq-heading"
+              className="mt-5 max-w-lg text-3xl font-black leading-[1.02] tracking-tight sm:text-4xl"
+            >
+              Flight booking questions, answered
+            </h2>
+            <p className="mt-4 max-w-lg text-base leading-7 text-slate-300">
+              Helpful guidance for comparing fares, understanding flexibility,
+              and reviewing details before you complete your booking with a
+              provider.
+            </p>
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-200 p-3 sm:p-4 lg:p-5">
+          {flightFaqItems.map((item) => (
+            <details
+              key={item.question}
+              className="group rounded-2xl px-4 py-3 transition-colors open:bg-slate-50 sm:px-5"
+            >
+              <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl py-2 text-left text-base font-black text-slate-950 marker:hidden [&::-webkit-details-marker]:hidden">
+                <span>{item.question}</span>
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 transition group-open:rotate-180 group-open:bg-indigo-700 group-open:text-white">
+                  <ChevronDown className="h-4 w-4" />
+                </span>
+              </summary>
+              <p className="pb-3 pr-0 text-sm leading-6 text-slate-600 sm:pr-12">
+                {item.answer}
+              </p>
+            </details>
+          ))}
         </div>
       </div>
     </section>
@@ -1645,6 +1735,7 @@ export function FlightResultsClient() {
             </section>
 
             <FlightDecisionSupportSection />
+            <FlightBookingFaqSection />
           </div>
         </section>
       </main>
