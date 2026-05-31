@@ -1304,7 +1304,7 @@ export function FlightResultsClient() {
         <section className="lg:col-span-2">
           <form
             onSubmit={handleCompactSearchSubmit}
-            className="rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2.5"
+            className="mx-auto w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2.5"
           >
             <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch">
               <div className="grid grid-cols-2 gap-0.5 rounded-xl bg-slate-100 p-0.5 lg:w-[172px] lg:shrink-0">
