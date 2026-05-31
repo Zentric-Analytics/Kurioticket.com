@@ -16,23 +16,19 @@ export function Footer() {
 
   const footerSections = [
     {
-      heading: "Support",
+      heading: "Contact Us",
       links: [
         {
           label: "Customer support",
           href: "/support",
         },
         {
-          label: "Contact us",
-          href: "/support",
+          label: "Service Guarantee",
+          href: "/service-guarantee",
         },
         {
-          label: "Help Center",
-          href: "#",
-        },
-        {
-          label: "Manage your trips",
-          href: "#",
+          label: "More Service Info",
+          href: "/more-service-info",
         },
       ],
     },
