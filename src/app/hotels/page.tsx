@@ -161,6 +161,30 @@ export default function HotelsSearchPage() {
     }));
   }, []);
 
+  const handleToggleDates = () => {
+    setDatesOpen((prev) => {
+      const nextOpen = !prev;
+
+      if (nextOpen) {
+        setGuestsRoomsOpen(false);
+      }
+
+      return nextOpen;
+    });
+  };
+
+  const handleToggleGuestsRooms = () => {
+    setGuestsRoomsOpen((prev) => {
+      const nextOpen = !prev;
+
+      if (nextOpen) {
+        setDatesOpen(false);
+      }
+
+      return nextOpen;
+    });
+  };
+
   const handleSelectHotelDate = (date: Date) => {
     if (isBeforeToday(date)) {
       return;
@@ -268,7 +292,7 @@ export default function HotelsSearchPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setDatesOpen((prev) => !prev)}
+                      onClick={handleToggleDates}
                       aria-expanded={datesOpen}
                       aria-haspopup="dialog"
                       aria-label="Choose travel dates"
@@ -422,7 +446,7 @@ export default function HotelsSearchPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => setGuestsRoomsOpen((prev) => !prev)}
+                      onClick={handleToggleGuestsRooms}
                       aria-expanded={guestsRoomsOpen}
                       aria-haspopup="dialog"
                       aria-label="Choose guests and rooms"
