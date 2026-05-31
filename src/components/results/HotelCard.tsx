@@ -24,9 +24,15 @@ export function HotelCard({ hotel }: { hotel: PublicHotelResult }) {
   return (
     <Card className="overflow-hidden">
       <div className="grid md:grid-cols-[260px_1fr]">
-        <div className="relative aspect-[16/10] bg-surface-muted md:aspect-auto">
+        <div className="relative aspect-[16/10] bg-surface-muted md:aspect-auto md:min-h-[236px]">
           {hotel.imageUrl ? (
-            <Image src={hotel.imageUrl} alt="" fill className="object-cover" sizes="(min-width: 768px) 260px, 100vw" />
+            <Image
+              src={hotel.imageUrl}
+              alt={`${hotel.name} stay option${hotel.location ? ` near ${hotel.location}` : ""}`}
+              fill
+              className="object-cover"
+              sizes="(min-width: 768px) 260px, 100vw"
+            />
           ) : (
             <div className="flex h-full items-center justify-center text-teal">
               <Building2 size={36} />

@@ -54,6 +54,8 @@ export function fallbackFlights(search: FlightSearchParams): NormalizedFlightRes
   ].filter(Boolean) as NormalizedFlightResult[];
 }
 
+// Hotel fallback imagery uses curated Unsplash Source License URLs as generic
+// travel metasearch placeholders, not property-specific hotel photos.
 export function fallbackHotels(search: HotelSearchParams): NormalizedHotelResult[] {
   return [
     normalizeHotelResult(
@@ -65,6 +67,7 @@ export function fallbackHotels(search: HotelSearchParams): NormalizedHotelResult
         location: `${search.destination} transit district`,
         pricePerNight: 139,
         totalPrice: 139 * nights(search),
+        imageUrl: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1000&q=85",
         amenities: ["Free Wi-Fi", "Late check-in", "Airport transit access", "Breakfast available"],
       },
       search,
@@ -78,6 +81,7 @@ export function fallbackHotels(search: HotelSearchParams): NormalizedHotelResult
         location: `${search.destination} central stay area`,
         pricePerNight: 178,
         totalPrice: 178 * nights(search),
+        imageUrl: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1000&q=85",
         amenities: ["Flexible cancellation", "Quiet rooms", "Workspace", "24-hour desk"],
       },
       search,
@@ -91,6 +95,7 @@ export function fallbackHotels(search: HotelSearchParams): NormalizedHotelResult
         location: `${search.destination} rail and airport link`,
         pricePerNight: 112,
         totalPrice: 112 * nights(search),
+        imageUrl: "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1000&q=85",
         amenities: ["Airport shuttle", "Late check-in", "Free Wi-Fi"],
       },
       search,
