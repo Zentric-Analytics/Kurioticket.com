@@ -2522,7 +2522,7 @@ function Filters({
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-black text-navy">Refine Results</h2>
+          <h2 className="text-lg font-extrabold text-navy">Refine Results</h2>
           <p className="mt-1 text-xs font-semibold text-muted">
             Keep the shortlist calm and decision-ready.
           </p>
