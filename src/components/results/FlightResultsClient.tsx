@@ -2,19 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { FormEvent, ReactNode } from "react";
+import type { FormEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
-  BadgeCheck,
   Calendar,
   ChevronDown,
   Minus,
   Plus,
-  ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
   X,
 } from "lucide-react";
 
@@ -1656,24 +1653,6 @@ export function FlightResultsClient() {
         </aside>
 
         <section className="min-w-0 space-y-5">
-          <div className="grid gap-3 md:grid-cols-3">
-            <InsightCard
-              icon={<BadgeCheck size={18} />}
-              label="Cheapest-first"
-              value="Default ranking"
-            />
-            <InsightCard
-              icon={<ShieldCheck size={18} />}
-              label="Confidence scoring"
-              value="Value, risk, comfort"
-            />
-            <InsightCard
-              icon={<Sparkles size={18} />}
-              label="Premium signals"
-              value="Calm decision support"
-            />
-          </div>
-
           {loading ? (
             <div className="space-y-4">
               <div className="rounded-xl border border-teal/20 bg-white p-5 text-sm font-bold text-teal-dark shadow-sm">
@@ -2369,30 +2348,6 @@ function Filters({
             Low-risk connections
           </label>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function InsightCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value?: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal/10 text-teal">
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-black text-navy">{label}</p>
-        {value ? (
-          <p className="truncate text-xs font-semibold text-muted">{value}</p>
-        ) : null}
       </div>
     </div>
   );
