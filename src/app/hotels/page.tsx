@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -85,6 +86,72 @@ const buildMonthCells = (monthDate: Date): MonthCell[] => {
 
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+type HotelDestinationCard = {
+  title: string;
+  subtitle: string;
+  destinationQuery: string;
+  image: string;
+  imageAlt: string;
+  linkLabel: string;
+};
+
+const hotelDestinationCards: HotelDestinationCard[] = [
+  {
+    title: "Japan",
+    subtitle: "Tokyo stays",
+    destinationQuery: "Tokyo",
+    image:
+      "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Tokyo skyline with dense high-rise buildings in daylight",
+    linkLabel: "Search hotels in Tokyo, Japan",
+  },
+  {
+    title: "United Kingdom",
+    subtitle: "London stays",
+    destinationQuery: "London",
+    image:
+      "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Tower Bridge and the River Thames in London under a blue sky",
+    linkLabel: "Search hotels in London, United Kingdom",
+  },
+  {
+    title: "France",
+    subtitle: "Paris stays",
+    destinationQuery: "Paris",
+    image:
+      "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Eiffel Tower and the Seine River in Paris at golden hour",
+    linkLabel: "Search hotels in Paris, France",
+  },
+  {
+    title: "United States",
+    subtitle: "New York stays",
+    destinationQuery: "New York",
+    image:
+      "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "New York City skyline with One World Trade Center and waterfront",
+    linkLabel: "Search hotels in New York, United States",
+  },
+  {
+    title: "Italy",
+    subtitle: "Rome stays",
+    destinationQuery: "Rome",
+    image:
+      "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "The Colosseum in Rome beneath a clear blue sky",
+    linkLabel: "Search hotels in Rome, Italy",
+  },
+  {
+    title: "United Arab Emirates",
+    subtitle: "Dubai stays",
+    destinationQuery: "Dubai",
+    image:
+      "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Dubai skyline with the Burj Khalifa rising above skyscrapers",
+    linkLabel: "Search hotels in Dubai, United Arab Emirates",
+  },
+];
+
 const formatShortDate = (value: string) => {
   if (!value) return "";
 
@@ -167,6 +234,23 @@ export default function HotelsSearchPage() {
       city,
       href: `/hotels/results?${new URLSearchParams({
         destination: city,
+        checkIn: defaultCheckIn,
+        checkOut: defaultCheckOut,
+        guests: "2",
+        rooms: "1",
+      }).toString()}`,
+    }));
+  }, []);
+
+  const hotelDestinationLinks = useMemo(() => {
+    const baseDate = new Date();
+    const defaultCheckIn = addDays(baseDate, 21);
+    const defaultCheckOut = addDays(baseDate, 24);
+
+    return hotelDestinationCards.map((card) => ({
+      ...card,
+      href: `/hotels/results?${new URLSearchParams({
+        destination: card.destinationQuery,
         checkIn: defaultCheckIn,
         checkOut: defaultCheckOut,
         guests: "2",
@@ -619,6 +703,53 @@ export default function HotelsSearchPage() {
                 </p>
               ) : null}
             </form>
+          </section>
+
+          <section className="space-y-4">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-indigo-700">
+                  Stay ideas
+                </p>
+                <h2 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">
+                  Explore hotel stays by destination
+                </h2>
+              </div>
+              <p className="max-w-md text-sm leading-6 text-slate-600">
+                Choose a destination to open hotel results with sample future
+                dates, two guests, and one room.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {hotelDestinationLinks.map((card) => (
+                <Link
+                  key={card.title}
+                  href={card.href}
+                  aria-label={card.linkLabel}
+                  className="group relative h-36 overflow-hidden rounded-3xl bg-slate-900 shadow-[0_20px_55px_-34px_rgba(15,23,42,0.9)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_26px_65px_-36px_rgba(79,70,229,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:h-40 lg:h-44"
+                >
+                  <Image
+                    src={card.image}
+                    alt={card.imageAlt}
+                    fill
+                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+                    className="object-cover transition duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-slate-950/5" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+                    <p className="text-base font-semibold leading-5 drop-shadow-sm">
+                      {card.title}
+                    </p>
+                    <div className="mt-1 flex items-center justify-between gap-2 text-xs font-medium text-white/85">
+                      <span>{card.subtitle}</span>
+                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/25 transition group-hover:translate-x-0.5 group-hover:bg-white/25">
+                        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </section>
 
           <section className="grid gap-3 md:grid-cols-3">
