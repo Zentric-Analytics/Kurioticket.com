@@ -7,13 +7,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
+  BookmarkCheck,
   Calendar,
   ChevronDown,
+  Clock3,
   Heart,
+  Luggage,
   Minus,
   Plus,
+  ShieldCheck,
   SlidersHorizontal,
   X,
+  type LucideIcon,
 } from "lucide-react";
 
 import { FlightCard } from "@/components/results/FlightCard";
@@ -57,6 +62,37 @@ const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
   { label: "Premium Economy", value: "premium-economy" },
   { label: "Business", value: "business" },
   { label: "First", value: "first" },
+];
+
+const decisionSupportCards: Array<{
+  title: string;
+  copy: string;
+  icon: LucideIcon;
+}> = [
+  {
+    title: "Compare route options",
+    copy:
+      "Look across airports, departure times, and stop patterns before choosing the itinerary that fits your trip.",
+    icon: ArrowRightLeft,
+  },
+  {
+    title: "Review timing and stopovers",
+    copy:
+      "Balance total travel time, layover length, and arrival windows so the lowest fare is not the only factor.",
+    icon: Clock3,
+  },
+  {
+    title: "Save routes for later",
+    copy:
+      "Keep promising routes on this device and return to them when you are ready to continue planning.",
+    icon: BookmarkCheck,
+  },
+  {
+    title: "Check fare details",
+    copy:
+      "Before booking, review baggage rules, flexibility, seat selection, and ticket-change terms with the provider.",
+    icon: Luggage,
+  },
 ];
 
 type PlacesApiResponse = {
@@ -209,6 +245,71 @@ function SavedRouteCard({
         <Heart className="h-4 w-4 fill-current" />
       </button>
     </article>
+  );
+}
+
+function FlightDecisionSupportSection() {
+  return (
+    <section className="mt-8 overflow-hidden rounded-[2rem] border border-indigo-100 bg-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.16)]">
+      <div className="relative p-5 sm:p-6 lg:p-8">
+        <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
+        <div className="absolute -bottom-24 left-10 h-60 w-60 rounded-full bg-sky-400/15 blur-3xl" />
+
+        <div className="relative grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)] lg:items-stretch">
+          <div className="flex min-h-[360px] flex-col justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-5 text-white shadow-inner shadow-white/5 backdrop-blur sm:p-6">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-indigo-100">
+                <ShieldCheck className="h-4 w-4" />
+                Booking checklist
+              </span>
+              <h2 className="mt-5 max-w-xl text-3xl font-black leading-[0.98] tracking-tight sm:text-4xl lg:text-5xl">
+                Plan your flight with more confidence
+              </h2>
+              <p className="mt-4 max-w-lg text-base leading-7 text-slate-300">
+                Compare route choices, review timing and stopovers, and save
+                routes you may want to revisit before you book.
+              </p>
+            </div>
+
+            <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.07] p-4">
+              <p className="text-sm font-bold leading-6 text-slate-200">
+                Use Curioticket to narrow the routes that fit your trip, then
+                confirm baggage, fare rules, seat options, and flexibility with
+                the booking provider before checkout.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {decisionSupportCards.map((card, index) => {
+              const Icon = card.icon;
+
+              return (
+                <article
+                  key={card.title}
+                  className="group rounded-[1.35rem] border border-white/10 bg-white p-5 shadow-[0_14px_35px_rgba(15,23,42,0.12)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(15,23,42,0.18)]"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100 transition group-hover:bg-indigo-700 group-hover:text-white">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[0.65rem] font-black tracking-[0.18em] text-slate-500">
+                      0{index + 1}
+                    </span>
+                  </div>
+                  <h3 className="mt-5 text-lg font-black tracking-tight text-slate-950">
+                    {card.title}
+                  </h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {card.copy}
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1542,6 +1643,8 @@ export function FlightResultsClient() {
                 </div>
               </div>
             </section>
+
+            <FlightDecisionSupportSection />
           </div>
         </section>
       </main>
