@@ -162,24 +162,42 @@ function SavedRouteCard({
   onHeartToggle: (event: ReactMouseEvent<HTMLButtonElement>, itemId: string) => void;
 }) {
   return (
-    <Link
-      href={buildDiscoveryLink(item)}
-      aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-      className="focus-ring group relative flex min-w-[250px] snap-start flex-col overflow-hidden rounded-[1.45rem] border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl sm:min-w-[280px] md:min-w-0"
-    >
-      <div className="relative h-32 overflow-hidden bg-slate-200">
-        <Image
-          src={item.image}
-          alt={item.imageAlt}
-          fill
-          sizes="(min-width: 1024px) 280px, (min-width: 640px) 280px, 250px"
-          className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent" />
-        <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[0.65rem] font-black tracking-[0.14em] text-slate-950 shadow-sm">
-          {item.originCode} → {item.destinationCode}
-        </span>
-      </div>
+    <article className="group relative min-w-[250px] snap-start overflow-hidden rounded-[1.45rem] border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl sm:min-w-[280px] md:min-w-0">
+      <Link
+        href={buildDiscoveryLink(item)}
+        aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+        className="focus-ring flex h-full flex-col"
+      >
+        <div className="relative h-32 overflow-hidden bg-slate-200">
+          <Image
+            src={item.image}
+            alt={item.imageAlt}
+            fill
+            sizes="(min-width: 1024px) 280px, (min-width: 640px) 280px, 250px"
+            className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent" />
+          <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[0.65rem] font-black tracking-[0.14em] text-slate-950 shadow-sm">
+            {item.originCode} → {item.destinationCode}
+          </span>
+        </div>
+
+        <div className="flex flex-1 flex-col p-4">
+          <h3 className="line-clamp-1 pr-8 text-base font-black leading-tight text-slate-950">
+            {item.title}
+          </h3>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            {item.originCity} to {item.destinationCity}
+          </p>
+          <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
+            {item.routeNote}
+          </p>
+          <span className="mt-4 inline-flex items-center justify-between rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white transition group-hover:bg-indigo-700 group-focus-visible:bg-indigo-700">
+            Explore route
+            <ArrowRightLeft size={14} />
+          </span>
+        </div>
+      </Link>
 
       <button
         type="button"
@@ -190,23 +208,7 @@ function SavedRouteCard({
       >
         <Heart className="h-4 w-4 fill-current" />
       </button>
-
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-1 pr-8 text-base font-black leading-tight text-slate-950">
-          {item.title}
-        </h3>
-        <p className="mt-1 text-sm font-semibold text-slate-500">
-          {item.originCity} to {item.destinationCity}
-        </p>
-        <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
-          {item.routeNote}
-        </p>
-        <span className="mt-4 inline-flex items-center justify-between rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white transition group-hover:bg-indigo-700 group-focus-visible:bg-indigo-700">
-          Explore route
-          <ArrowRightLeft size={14} />
-        </span>
-      </div>
-    </Link>
+    </article>
   );
 }
 
