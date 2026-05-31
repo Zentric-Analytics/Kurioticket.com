@@ -2099,7 +2099,7 @@ export function FlightResultsClient() {
           />
         </aside>
 
-        <section className="min-w-0 space-y-5">
+        <section className="min-w-0 space-y-4">
           {loading ? (
             <div className="space-y-4">
               <div className="rounded-xl border border-teal/20 bg-white p-5 text-sm font-bold text-teal-dark shadow-sm">
