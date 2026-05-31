@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BedDouble, Calendar, ChevronDown, Minus, Plus } from "lucide-react";
+import { Calendar, ChevronDown, Minus, Plus } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -11,8 +11,67 @@ import { Footer } from "@/components/layout/Footer";
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
-  return next.toISOString().split("T")[0];
+  return toIsoDate(next);
 };
+
+const parseIsoDate = (value: string) => {
+  if (!value) return null;
+
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+
+  const parsed = new Date(year, month - 1, day);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const toIsoDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const startOfLocalDay = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const todayLocal = () => startOfLocalDay(new Date());
+
+const isBeforeToday = (date: Date) =>
+  startOfLocalDay(date).getTime() < todayLocal().getTime();
+
+const addMonths = (date: Date, offset: number) =>
+  new Date(date.getFullYear(), date.getMonth() + offset, 1);
+
+type MonthCell = {
+  date: Date;
+  isCurrentMonth: boolean;
+};
+
+const buildMonthCells = (monthDate: Date): MonthCell[] => {
+  const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const startOffset = firstDay.getDay();
+  const startDate = new Date(
+    monthDate.getFullYear(),
+    monthDate.getMonth(),
+    1 - startOffset,
+  );
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate() + index,
+    );
+
+    return {
+      date,
+      isCurrentMonth: date.getMonth() === monthDate.getMonth(),
+    };
+  });
+};
+
+const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const formatShortDate = (value: string) => {
   if (!value) return "";
@@ -38,33 +97,44 @@ export default function HotelsSearchPage() {
   const [destination, setDestination] = useState("");
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState("2");
+  const [hotelAdultCount, setHotelAdultCount] = useState(1);
+  const [hotelChildCount, setHotelChildCount] = useState(0);
   const [rooms, setRooms] = useState("1");
+  const [hotelPetFriendly, setHotelPetFriendly] = useState(false);
   const [error, setError] = useState("");
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
+  const [hotelVisibleMonthDate, setHotelVisibleMonthDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
 
   const dateSummary = useMemo(() => {
     const formattedCheckIn = formatShortDate(checkIn);
     const formattedCheckOut = formatShortDate(checkOut);
 
-    if (formattedCheckIn && formattedCheckOut) {
-      return `${formattedCheckIn} – ${formattedCheckOut}`;
+    if (!formattedCheckIn) {
+      return "Check-in — Check-out";
     }
 
-    if (formattedCheckIn) {
-      return `${formattedCheckIn} – Check-out`;
+    if (formattedCheckOut) {
+      return `${formattedCheckIn} — ${formattedCheckOut}`;
     }
 
-    return "Travel dates";
+    return formattedCheckIn;
   }, [checkIn, checkOut]);
 
+  const totalHotelGuests = hotelAdultCount + hotelChildCount;
+
   const guestsRoomsSummary = useMemo(() => {
-    const normalizedGuests = clampCount(guests, 1, 12);
+    const normalizedGuests = Math.max(1, Math.min(12, totalHotelGuests));
     const normalizedRooms = clampCount(rooms, 1, 6);
 
-    return `${normalizedGuests} ${normalizedGuests === 1 ? "guest" : "guests"} · ${normalizedRooms} ${normalizedRooms === 1 ? "room" : "rooms"}`;
-  }, [guests, rooms]);
+    return `${normalizedGuests} ${normalizedGuests === 1 ? "guest" : "guests"}, ${normalizedRooms} ${normalizedRooms === 1 ? "room" : "rooms"}`;
+  }, [rooms, totalHotelGuests]);
+
+  const checkInParsed = parseIsoDate(checkIn);
+  const checkOutParsed = parseIsoDate(checkOut);
 
   const popularCityLinks = useMemo(() => {
     const baseDate = new Date();
@@ -91,15 +161,34 @@ export default function HotelsSearchPage() {
     }));
   }, []);
 
+  const handleSelectHotelDate = (date: Date) => {
+    if (isBeforeToday(date)) {
+      return;
+    }
+
+    const selectedIso = toIsoDate(date);
+
+    if (!checkIn || (checkIn && checkOut)) {
+      setCheckIn(selectedIso);
+      setCheckOut("");
+      return;
+    }
+
+    if (selectedIso <= checkIn) {
+      setCheckIn(selectedIso);
+      setCheckOut("");
+      return;
+    }
+
+    setCheckOut(selectedIso);
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const trimmedDestination = destination.trim();
-    const parsedGuests = Number.parseInt(guests, 10);
     const parsedRooms = Number.parseInt(rooms, 10);
-    const normalizedGuests = Number.isNaN(parsedGuests)
-      ? 1
-      : Math.max(1, Math.min(12, parsedGuests));
+    const normalizedGuests = Math.max(1, Math.min(12, totalHotelGuests));
     const normalizedRooms = Number.isNaN(parsedRooms)
       ? 1
       : Math.max(1, Math.min(6, parsedRooms));
@@ -124,6 +213,16 @@ export default function HotelsSearchPage() {
       return;
     }
 
+    if (normalizedGuests < 1 || normalizedGuests > 12) {
+      setError("Please select between 1 and 12 guests.");
+      return;
+    }
+
+    if (normalizedRooms < 1 || normalizedRooms > 6) {
+      setError("Please select between 1 and 6 rooms.");
+      return;
+    }
+
     const params = new URLSearchParams({
       destination: trimmedDestination,
       checkIn,
@@ -132,7 +231,6 @@ export default function HotelsSearchPage() {
       rooms: String(normalizedRooms),
     });
 
-    setGuests(String(normalizedGuests));
     setRooms(String(normalizedRooms));
     setError("");
     router.push(`/hotels/results?${params.toString()}`);
@@ -141,15 +239,15 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 bg-gradient-to-b from-indigo-50/70 via-white to-white px-4 pb-16 pt-8 sm:pt-10 sm:px-6 lg:px-8 lg:pt-12">
+      <main className="page-shell flex-1 bg-gradient-to-b from-indigo-50/70 via-white to-white px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
         <div className="mx-auto max-w-6xl space-y-8 md:space-y-10">
-          <section className="mx-auto w-full max-w-6xl space-y-3">
+          <section className="mx-auto w-full max-w-[1040px] space-y-3">
             <p className="px-1 text-sm font-medium text-slate-600">
               Find available stays
             </p>
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-                <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]">
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px] lg:gap-0">
                   <label className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                     <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
                       Destination
@@ -159,7 +257,7 @@ export default function HotelsSearchPage() {
                       value={destination}
                       onChange={(event) => setDestination(event.target.value)}
                       placeholder="City, area, or hotel"
-                      className="h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:outline-none md:text-sm"
+                      className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                       required
                     />
                   </label>
@@ -174,53 +272,126 @@ export default function HotelsSearchPage() {
                       aria-expanded={datesOpen}
                       aria-haspopup="dialog"
                       aria-label="Choose travel dates"
-                      className="flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                     >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <Calendar
-                          size={16}
-                          className="shrink-0 text-slate-500"
-                        />
-                        <span className="truncate">{dateSummary}</span>
-                      </span>
-                      <ChevronDown
-                        className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${datesOpen ? "rotate-180" : ""}`}
-                      />
+                      <Calendar size={16} className="shrink-0 text-slate-500" />
+                      <span className="truncate">{dateSummary}</span>
                     </button>
                     {datesOpen ? (
-                      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,360px)] sm:p-4">
-                        <p className="mb-3 text-sm font-semibold text-slate-900">
+                      <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
+                        <p className="mb-3 text-base font-semibold text-slate-900">
                           Choose travel dates
                         </p>
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          <label className="min-w-0">
-                            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Check-in
-                            </span>
-                            <input
-                              type="date"
-                              value={checkIn}
-                              onChange={(event) =>
-                                setCheckIn(event.target.value)
-                              }
-                              className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-[16px] text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 md:text-sm"
-                              required
-                            />
-                          </label>
-                          <label className="min-w-0">
-                            <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                              Check-out
-                            </span>
-                            <input
-                              type="date"
-                              value={checkOut}
-                              onChange={(event) =>
-                                setCheckOut(event.target.value)
-                              }
-                              className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-[16px] text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 md:text-sm"
-                              required
-                            />
-                          </label>
+                        <div className="mb-3 flex items-center justify-between">
+                          <button
+                            type="button"
+                            aria-label="Previous month"
+                            onClick={() =>
+                              setHotelVisibleMonthDate((prev) =>
+                                addMonths(prev, -1),
+                              )
+                            }
+                            className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                          >
+                            Prev
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Next month"
+                            onClick={() =>
+                              setHotelVisibleMonthDate((prev) =>
+                                addMonths(prev, 1),
+                              )
+                            }
+                            className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                          >
+                            Next
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                          {[0, 1].map((monthOffset) => {
+                            const monthDate = addMonths(
+                              hotelVisibleMonthDate,
+                              monthOffset,
+                            );
+                            const cells = buildMonthCells(monthDate);
+
+                            return (
+                              <div key={monthOffset}>
+                                <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
+                                  {monthDate.toLocaleDateString("en-US", {
+                                    month: "long",
+                                    year: "numeric",
+                                  })}
+                                </p>
+                                <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
+                                  {weekdays.map((weekday) => (
+                                    <span key={weekday}>{weekday}</span>
+                                  ))}
+                                </div>
+                                <div className="grid grid-cols-7 gap-1">
+                                  {cells.map((cell) => {
+                                    const day = cell.date;
+                                    const iso = toIsoDate(day);
+                                    const isCheckIn = iso === checkIn;
+                                    const isCheckOut = iso === checkOut;
+                                    const isPastDate = isBeforeToday(day);
+                                    const isInRange = !!(
+                                      checkInParsed &&
+                                      checkOutParsed &&
+                                      !isPastDate &&
+                                      day > checkInParsed &&
+                                      day < checkOutParsed
+                                    );
+
+                                    if (!cell.isCurrentMonth) {
+                                      return (
+                                        <span
+                                          key={`placeholder-${iso}`}
+                                          aria-hidden="true"
+                                          className="h-8 w-8 justify-self-center"
+                                        />
+                                      );
+                                    }
+
+                                    return (
+                                      <button
+                                        key={iso}
+                                        type="button"
+                                        aria-label={`Select ${day.toLocaleDateString(
+                                          "en-US",
+                                          {
+                                            month: "long",
+                                            day: "numeric",
+                                            year: "numeric",
+                                          },
+                                        )}`}
+                                        onClick={() =>
+                                          handleSelectHotelDate(day)
+                                        }
+                                        disabled={isPastDate}
+                                        className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
+                                          isPastDate
+                                            ? "text-slate-300 hover:bg-transparent"
+                                            : "text-slate-900 hover:bg-indigo-50"
+                                        } ${
+                                          isInRange
+                                            ? "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100"
+                                            : ""
+                                        } ${
+                                          isCheckIn || isCheckOut
+                                            ? "bg-indigo-700 text-white hover:bg-indigo-700"
+                                            : ""
+                                        }`}
+                                      >
+                                        {day.getDate()}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                         <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
                           <button
@@ -229,14 +400,14 @@ export default function HotelsSearchPage() {
                               setCheckIn("");
                               setCheckOut("");
                             }}
-                            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                            className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                           >
                             Clear
                           </button>
                           <button
                             type="button"
                             onClick={() => setDatesOpen(false)}
-                            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40"
+                            className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
                           >
                             Done
                           </button>
@@ -247,7 +418,7 @@ export default function HotelsSearchPage() {
 
                   <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                     <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
-                      Guests / Rooms
+                      Guests
                     </span>
                     <button
                       type="button"
@@ -255,40 +426,48 @@ export default function HotelsSearchPage() {
                       aria-expanded={guestsRoomsOpen}
                       aria-haspopup="dialog"
                       aria-label="Choose guests and rooms"
-                      className="flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                      className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                     >
-                      <span className="flex min-w-0 items-center gap-2">
-                        <BedDouble
-                          size={16}
-                          className="shrink-0 text-slate-500"
-                        />
-                        <span className="truncate">{guestsRoomsSummary}</span>
-                      </span>
+                      <span className="truncate">{guestsRoomsSummary}</span>
                       <ChevronDown
-                        className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${guestsRoomsOpen ? "rotate-180" : ""}`}
+                        size={16}
+                        className={`shrink-0 text-slate-500 transition-transform ${
+                          guestsRoomsOpen ? "rotate-180" : ""
+                        }`}
                       />
                     </button>
                     {guestsRoomsOpen ? (
-                      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 w-[calc(100vw-24px)] max-w-[330px] rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
+                      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 w-[calc(100vw-24px)] max-w-[330px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
                         <div className="space-y-3">
                           {[
                             {
-                              key: "guests",
-                              label: "Guests",
-                              value: clampCount(guests, 1, 12),
+                              key: "adults",
+                              label: "Adults",
+                              value: hotelAdultCount,
                               min: 1,
-                              max: 12,
+                              max: 12 - hotelChildCount,
                               onDecrement: () =>
-                                setGuests((prev) =>
-                                  String(
-                                    Math.max(1, clampCount(prev, 1, 12) - 1),
-                                  ),
+                                setHotelAdultCount((prev) =>
+                                  Math.max(1, prev - 1),
                                 ),
                               onIncrement: () =>
-                                setGuests((prev) =>
-                                  String(
-                                    Math.min(12, clampCount(prev, 1, 12) + 1),
-                                  ),
+                                setHotelAdultCount((prev) =>
+                                  Math.min(12 - hotelChildCount, prev + 1),
+                                ),
+                            },
+                            {
+                              key: "children",
+                              label: "Children",
+                              value: hotelChildCount,
+                              min: 0,
+                              max: 12 - hotelAdultCount,
+                              onDecrement: () =>
+                                setHotelChildCount((prev) =>
+                                  Math.max(0, prev - 1),
+                                ),
+                              onIncrement: () =>
+                                setHotelChildCount((prev) =>
+                                  Math.min(12 - hotelAdultCount, prev + 1),
                                 ),
                             },
                             {
@@ -317,7 +496,7 @@ export default function HotelsSearchPage() {
                             return (
                               <div
                                 key={row.key}
-                                className="flex items-center justify-between gap-3"
+                                className="flex items-center justify-between gap-2.5"
                               >
                                 <span className="text-sm font-semibold text-slate-900">
                                   {row.label}
@@ -327,7 +506,7 @@ export default function HotelsSearchPage() {
                                     type="button"
                                     onClick={row.onDecrement}
                                     disabled={!canDecrement}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                                   >
                                     <Minus className="h-4 w-4" />
                                   </button>
@@ -338,7 +517,7 @@ export default function HotelsSearchPage() {
                                     type="button"
                                     onClick={row.onIncrement}
                                     disabled={!canIncrement}
-                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                                   >
                                     <Plus className="h-4 w-4" />
                                   </button>
@@ -346,26 +525,51 @@ export default function HotelsSearchPage() {
                               </div>
                             );
                           })}
-                        </div>
-                        <div className="mt-3 flex justify-end border-t border-slate-200 pt-3">
-                          <button
-                            type="button"
-                            onClick={() => setGuestsRoomsOpen(false)}
-                            className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/40"
-                          >
-                            Done
-                          </button>
+                          <div className="border-t border-slate-200 pt-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-slate-900">
+                                  Pet-friendly
+                                </p>
+                                <p className="pr-2 text-xs leading-5 text-slate-600">
+                                  Only show stays that allow pets
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                role="switch"
+                                aria-checked={hotelPetFriendly}
+                                aria-label="Toggle pet-friendly stays"
+                                onClick={() =>
+                                  setHotelPetFriendly((prev) => !prev)
+                                }
+                                className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
+                                  hotelPetFriendly
+                                    ? "border-indigo-600 bg-indigo-600"
+                                    : "border-slate-300 bg-slate-200"
+                                }`}
+                              >
+                                <span
+                                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                                    hotelPetFriendly
+                                      ? "translate-x-5"
+                                      : "translate-x-0.5"
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ) : null}
                   </div>
 
-                  <div className="sm:col-span-2 lg:col-span-1">
+                  <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
                     <button
                       type="submit"
-                      className="h-full min-h-12 w-full rounded-xl bg-indigo-600 px-3 text-sm font-semibold text-white transition hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-1 active:bg-indigo-700"
+                      className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
                     >
-                      Find stays
+                      Search
                     </button>
                   </div>
                 </div>
