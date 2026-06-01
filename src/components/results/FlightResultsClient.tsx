@@ -1857,7 +1857,7 @@ export function FlightResultsClient() {
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
               </div>
 
-              <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.82fr)_minmax(0,0.82fr)_minmax(0,0.92fr)] lg:gap-1">
+              <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-1">
                 <div
                   ref={originWrapRef}
                   className="relative rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15"
@@ -1986,44 +1986,16 @@ export function FlightResultsClient() {
                       </span>
                       <span className="block truncate text-[13px] font-normal text-slate-950">
                         {departureDateInput
-                          ? formatDateLabel(departureDateInput)
-                          : "Choose date"}
+                          ? tripTypeInput === "round-trip" && returnDateInput
+                            ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
+                            : formatDateLabel(departureDateInput)
+                          : "Travel dates"}
                       </span>
                     </span>
                   </button>
                 </div>
 
-                {tripTypeInput === "round-trip" ? (
-                  <div ref={returnWrapRef}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActiveDatePicker("return");
-                        setDatePickerPosition(null);
-                      }}
-                      className="focus-ring flex h-full min-h-[48px] w-full items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left transition hover:border-slate-300 hover:bg-white"
-                    >
-                      <Calendar className="h-3.5 w-3.5 shrink-0 text-indigo-700" />
-                      <span className="min-w-0">
-                        <span className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500">
-                          Return
-                        </span>
-                        <span className="block truncate text-[13px] font-normal text-slate-950">
-                          {returnDateInput
-                            ? formatDateLabel(returnDateInput)
-                            : "Choose date"}
-                        </span>
-                      </span>
-                    </button>
-                  </div>
-                ) : null}
-
-                <div
-                  ref={travelerCabinWrapRef}
-                  className={cn(
-                    tripTypeInput !== "round-trip" ? "lg:col-span-2" : ""
-                  )}
-                >
+                <div ref={travelerCabinWrapRef}>
                   <button
                     type="button"
                     onClick={() => {
