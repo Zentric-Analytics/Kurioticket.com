@@ -7,18 +7,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
-  BookmarkCheck,
   Calendar,
   ChevronDown,
-  Clock3,
   Heart,
-  Luggage,
   Minus,
   Plus,
-  ShieldCheck,
   SlidersHorizontal,
   X,
-  type LucideIcon,
 } from "lucide-react";
 
 import { FlightCard } from "@/components/results/FlightCard";
@@ -102,37 +97,6 @@ const flightFaqItems: Array<{ question: string; answer: string }> = [
   },
 ];
 
-const decisionSupportCards: Array<{
-  title: string;
-  copy: string;
-  icon: LucideIcon;
-}> = [
-  {
-    title: "Compare route options",
-    copy:
-      "Look across airports, departure times, and stop patterns before choosing the itinerary that fits your trip.",
-    icon: ArrowRightLeft,
-  },
-  {
-    title: "Review timing and stopovers",
-    copy:
-      "Balance total travel time, layover length, and arrival windows so the lowest fare is not the only factor.",
-    icon: Clock3,
-  },
-  {
-    title: "Save routes for later",
-    copy:
-      "Keep promising routes on this device and return to them when you are ready to continue planning.",
-    icon: BookmarkCheck,
-  },
-  {
-    title: "Check fare details",
-    copy:
-      "Before booking, review baggage rules, flexibility, seat selection, and ticket-change terms with the provider.",
-    icon: Luggage,
-  },
-];
-
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
 };
@@ -145,6 +109,65 @@ const allDiscoveryItems = [
 const discoveryById = new Map<string, HomeDiscoveryItem>(
   allDiscoveryItems.map((item) => [item.id, item])
 );
+
+const beachVacationKeywords = [
+  "beach",
+  "island",
+  "coast",
+  "coastal",
+  "sunshine",
+  "tropical",
+  "cancun",
+  "honolulu",
+  "miami",
+  "bali",
+  "zanzibar",
+  "puerto vallarta",
+  "san juan",
+  "faro",
+  "cape town",
+  "sydney",
+  "san diego",
+];
+
+function isBeachVacationCard(item: HomeDiscoveryItem) {
+  const searchableText = [
+    item.title,
+    item.destinationCity,
+    item.routeNote,
+    item.imageAlt,
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  return beachVacationKeywords.some((keyword) =>
+    searchableText.includes(keyword)
+  );
+}
+
+function getBeachVacationCards(regionCode: string, excludedIds: Set<string>) {
+  const selectedCards: HomeDiscoveryItem[] = [];
+  const selectedIds = new Set<string>();
+
+  function addCards(items: HomeDiscoveryItem[], avoidExcludedCards: boolean) {
+    for (const item of items) {
+      if (selectedCards.length >= 4) return;
+      if (selectedIds.has(item.id)) continue;
+      if (avoidExcludedCards && excludedIds.has(item.id)) continue;
+      if (!isBeachVacationCard(item)) continue;
+
+      selectedCards.push(item);
+      selectedIds.add(item.id);
+    }
+  }
+
+  addCards(getHomeDiscoveryByRegion(regionCode), true);
+  addCards(getHomeDiscoveryByRegion(), true);
+  addCards(getHomeDiscoveryByRegion(regionCode), false);
+  addCards(getHomeDiscoveryByRegion(), false);
+
+  return selectedCards;
+}
 
 function RecentSearchCard({
   entry,
@@ -286,118 +309,38 @@ function SavedRouteCard({
   );
 }
 
-function FlightDecisionSupportSection() {
-  return (
-    <section className="mt-8 overflow-hidden rounded-[2rem] border border-indigo-100 bg-slate-950 shadow-[0_24px_70px_rgba(15,23,42,0.16)]">
-      <div className="relative p-5 sm:p-6 lg:p-8">
-        <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
-        <div className="absolute -bottom-24 left-10 h-60 w-60 rounded-full bg-sky-400/15 blur-3xl" />
-
-        <div className="relative grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)] lg:items-stretch">
-          <div className="flex min-h-[360px] flex-col justify-between rounded-[1.5rem] border border-white/10 bg-white/[0.06] p-5 text-white shadow-inner shadow-white/5 backdrop-blur sm:p-6">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-indigo-100">
-                <ShieldCheck className="h-4 w-4" />
-                Booking checklist
-              </span>
-              <h2 className="mt-5 max-w-xl text-3xl font-black leading-[0.98] tracking-tight sm:text-4xl lg:text-5xl">
-                Plan your flight with more confidence
-              </h2>
-              <p className="mt-4 max-w-lg text-base leading-7 text-slate-300">
-                Compare route choices, review timing and stopovers, and save
-                routes you may want to revisit before you book.
-              </p>
-            </div>
-
-            <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.07] p-4">
-              <p className="text-sm font-bold leading-6 text-slate-200">
-                Use Kurioticket to narrow the routes that fit your trip, then
-                confirm baggage, fare rules, seat options, and flexibility with
-                the booking provider before checkout.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {decisionSupportCards.map((card, index) => {
-              const Icon = card.icon;
-
-              return (
-                <article
-                  key={card.title}
-                  className="group rounded-[1.35rem] border border-white/10 bg-white p-5 shadow-[0_14px_35px_rgba(15,23,42,0.12)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(15,23,42,0.18)]"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100 transition group-hover:bg-indigo-700 group-hover:text-white">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[0.65rem] font-black tracking-[0.18em] text-slate-500">
-                      0{index + 1}
-                    </span>
-                  </div>
-                  <h3 className="mt-5 text-lg font-black tracking-tight text-slate-950">
-                    {card.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {card.copy}
-                  </p>
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function FlightBookingFaqSection() {
   return (
     <section
       aria-labelledby="flight-booking-faq-heading"
-      className="mt-8 overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_18px_55px_rgba(15,23,42,0.08)]"
+      className="mt-8 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_18px_55px_rgba(15,23,42,0.07)] sm:p-6 lg:p-8"
     >
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.25fr)]">
-        <div className="relative overflow-hidden bg-slate-950 p-6 text-white sm:p-8 lg:p-10">
-          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-indigo-500/25 blur-3xl" />
-          <div className="absolute -bottom-24 right-8 h-64 w-64 rounded-full bg-sky-400/15 blur-3xl" />
-          <div className="relative">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-indigo-100">
-              <ShieldCheck className="h-4 w-4" />
-              Flight guide
-            </span>
-            <h2
-              id="flight-booking-faq-heading"
-              className="mt-5 max-w-lg text-3xl font-black leading-[1.02] tracking-tight sm:text-4xl"
-            >
-              Flight booking questions, answered
-            </h2>
-            <p className="mt-4 max-w-lg text-base leading-7 text-slate-300">
-              Helpful guidance for comparing fares, understanding flexibility,
-              and reviewing details before you complete your booking with a
-              provider.
-            </p>
-          </div>
-        </div>
+      <div className="max-w-3xl">
+        <h2
+          id="flight-booking-faq-heading"
+          className="text-3xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-4xl"
+        >
+          Flight booking questions, answered
+        </h2>
+      </div>
 
-        <div className="divide-y divide-slate-200 p-3 sm:p-4 lg:p-5">
-          {flightFaqItems.map((item) => (
-            <details
-              key={item.question}
-              className="group rounded-2xl px-4 py-3 transition-colors open:bg-slate-50 sm:px-5"
-            >
-              <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl py-2 text-left text-base font-black text-slate-950 marker:hidden [&::-webkit-details-marker]:hidden">
-                <span>{item.question}</span>
-                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 transition group-open:rotate-180 group-open:bg-indigo-700 group-open:text-white">
-                  <ChevronDown className="h-4 w-4" />
-                </span>
-              </summary>
-              <p className="pb-3 pr-0 text-sm leading-6 text-slate-600 sm:pr-12">
-                {item.answer}
-              </p>
-            </details>
-          ))}
-        </div>
+      <div className="mt-6 divide-y divide-slate-200 rounded-[1.5rem] border border-slate-200 bg-slate-50/60 p-2 sm:p-3">
+        {flightFaqItems.map((item) => (
+          <details
+            key={item.question}
+            className="group rounded-2xl px-4 py-3 transition-colors open:bg-white open:shadow-sm sm:px-5"
+          >
+            <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl py-2 text-left text-base font-black text-slate-950 marker:hidden [&::-webkit-details-marker]:hidden">
+              <span>{item.question}</span>
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 transition group-open:rotate-180 group-open:bg-indigo-700 group-open:text-white">
+                <ChevronDown className="h-4 w-4" />
+              </span>
+            </summary>
+            <p className="pb-3 pr-0 text-sm leading-6 text-slate-600 sm:pr-12">
+              {item.answer}
+            </p>
+          </details>
+        ))}
       </div>
     </section>
   );
@@ -409,17 +352,14 @@ export function FlightResultsClient() {
   const { selectedOption } = useRegion();
   const selectedCurrency = selectedOption.currency;
   const discoveryCards = useMemo(
-    () => getHomeDiscoveryByRegion(selectedOption.code).slice(0, 8),
+    () => getHomeDiscoveryByRegion(selectedOption.code).slice(0, 4),
     [selectedOption.code]
   );
-  const middleDiscoveryCards = useMemo(() => {
-    const regionalDiscoveryCards = getHomeDiscoveryByRegion(selectedOption.code);
-    const laterDiscoveryCards = regionalDiscoveryCards.slice(8, 12);
+  const beachVacationCards = useMemo(() => {
+    const discoveryCardIds = new Set(discoveryCards.map((item) => item.id));
 
-    return laterDiscoveryCards.length >= 4
-      ? laterDiscoveryCards
-      : regionalDiscoveryCards.slice(4, 8);
-  }, [selectedOption.code]);
+    return getBeachVacationCards(selectedOption.code, discoveryCardIds);
+  }, [discoveryCards, selectedOption.code]);
 
   const [sort] = useState<SortMode>(
     (params.get("sort") as SortMode) || "cheapest"
@@ -1598,7 +1538,7 @@ export function FlightResultsClient() {
               </div>
 
               <div className="mt-6 flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:pb-0 xl:gap-6 [&::-webkit-scrollbar]:hidden">
-                {discoveryCards.slice(0, 8).map((item) => (
+                {discoveryCards.slice(0, 4).map((item) => (
                   <Link
                     key={item.id}
                     href={buildDiscoveryLink(item)}
@@ -1641,24 +1581,21 @@ export function FlightResultsClient() {
               </div>
             </section>
 
-            <section className="mt-8 overflow-hidden rounded-[2rem] border border-indigo-100/80 bg-gradient-to-br from-white via-indigo-50/55 to-sky-50/70 p-4 shadow-[0_18px_55px_rgba(15,23,42,0.07)] sm:p-5 lg:p-6">
+            <section className="mt-8 overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white p-4 shadow-[0_18px_55px_rgba(15,23,42,0.07)] sm:p-5 lg:p-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">
-                    Route inspiration
-                  </p>
-                  <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-                    More places to start from your region
+                  <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                    Beach vacations
                   </h2>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                    Browse curated route ideas with clear destination context
-                    before you choose dates and fare details.
+                    Explore flight routes to sunny coastlines, island escapes,
+                    and warm-weather beach destinations.
                   </p>
                 </div>
               </div>
 
               <div className="mt-6 flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
-                {middleDiscoveryCards.map((item) => (
+                {beachVacationCards.map((item) => (
                   <Link
                     key={item.id}
                     href={buildDiscoveryLink(item)}
@@ -1702,7 +1639,6 @@ export function FlightResultsClient() {
               </div>
             </section>
 
-            <FlightDecisionSupportSection />
             <FlightBookingFaqSection />
           </div>
         </section>
