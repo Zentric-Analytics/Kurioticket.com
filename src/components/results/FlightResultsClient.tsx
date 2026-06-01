@@ -44,8 +44,8 @@ import { cn, formatCurrency } from "@/lib/utils";
 const loadingMessages = [
   "Searching airlines...",
   "Comparing prices...",
-  "Checking best-value routes...",
-  "Finding cheaper options...",
+  "Checking value-focused routes...",
+  "Finding lower-priced options...",
   "Analyzing layover quality...",
   "Comparing baggage-inclusive fares...",
 ];
@@ -407,6 +407,7 @@ export function FlightResultsClient() {
   );
   const [results, setResults] = useState<PublicFlightResult[]>([]);
   const [error, setError] = useState("");
+  const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -679,6 +680,7 @@ export function FlightResultsClient() {
     const timer = window.setTimeout(() => {
       setLoading(true);
       setError("");
+      setWarnings([]);
 
       fetch("/api/flights/search", {
         method: "POST",
@@ -698,6 +700,7 @@ export function FlightResultsClient() {
           if (!active) return;
 
           setResults(data.results);
+          setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
           setMaxPrice(
             Math.max(
               500,
@@ -1072,10 +1075,10 @@ export function FlightResultsClient() {
 
                   <div className="text-center">
                     <h1 className="mx-auto text-balance text-[clamp(1.8rem,7vw,3rem)] font-semibold tracking-tight text-slate-900 sm:whitespace-nowrap">
-                      Find millions of cheap flights
+                      Compare available flight options
                     </h1>
                     <p className="mx-auto mt-3 max-w-2xl text-balance text-center text-base leading-7 text-slate-700 whitespace-normal sm:text-lg sm:whitespace-nowrap">
-                      Compare fares and lock in the best route in a few taps.
+                      Review fares and choose the route that fits your trip in a few taps.
                     </p>
                   </div>
 
@@ -2067,6 +2070,12 @@ export function FlightResultsClient() {
                   Filters
                 </Button>
               </div>
+
+              {warnings.length > 0 ? (
+                <div className="mx-auto w-full max-w-[640px] rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900 shadow-sm" role="status">
+                  Some provider checks may be limited for this search. Review final availability and fare details with the provider before booking.
+                </div>
+              ) : null}
 
               {filtered.length ? (
                 filtered.map((flight) => (
