@@ -1227,11 +1227,11 @@ export function FlightResultsClient() {
                     value={cabinClassInput}
                   />
 
-                  <div className="text-center">
-                    <h1 className="mx-auto max-w-sm text-balance text-[clamp(1.9rem,7vw,2.75rem)] font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-2xl">
+                  <div className="mx-auto max-w-[18rem] text-center sm:max-w-2xl">
+                    <h1 className="text-balance text-[clamp(1.85rem,7vw,2.65rem)] font-semibold leading-tight tracking-tight text-slate-900">
                       Compare available flight options
                     </h1>
-                    <p className="mx-auto mt-3 max-w-sm text-balance text-center text-sm leading-6 text-slate-600 sm:max-w-2xl sm:text-base">
+                    <p className="mx-auto mt-3 max-w-[17rem] text-balance text-sm leading-6 text-slate-600 sm:max-w-2xl sm:text-base">
                       Review fares and choose the route that fits your trip in a few taps.
                     </p>
                   </div>
@@ -1726,32 +1726,32 @@ export function FlightResultsClient() {
 
           <div className="mt-8 space-y-8">
             <section>
-              <div className="mb-4 sm:max-w-3xl">
-                <h2 className="max-w-sm text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-none sm:text-3xl">
+              <div className="mb-4 mx-auto max-w-[20rem] text-center sm:mx-0 sm:max-w-3xl sm:text-left">
+                <h2 className="text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
                   Discover destinations from your region
                 </h2>
-                <p className="mt-1.5 max-w-xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
+                <p className="mx-auto mt-2 max-w-[18rem] text-balance text-sm leading-6 text-slate-600 sm:mx-0 sm:max-w-xl sm:text-base">
                   Explore curated routes and start your next trip with confidence.
                 </p>
               </div>
 
               <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                <div className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:pb-0 xl:gap-6 [&::-webkit-scrollbar]:hidden">
+                <div className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-2 lg:gap-5 lg:overflow-visible lg:pb-0 xl:gap-6 [&::-webkit-scrollbar]:hidden">
                   {discoveryCards.slice(0, 4).map((item) => (
                     <Link
                       key={item.id}
                       href={buildDiscoveryLink(item)}
                       aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                      className="group min-w-[78vw] max-w-[300px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[280px] lg:min-w-0 lg:max-w-none"
+                      className="group min-w-[82vw] max-w-[340px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[340px] lg:min-w-0 lg:max-w-none"
                     >
                       <article className="flex h-full flex-col">
-                        <div className="relative h-40 overflow-hidden bg-slate-100 sm:h-44 lg:h-52">
+                        <div className="relative h-40 overflow-hidden bg-slate-100 sm:h-44 lg:h-56">
                           <Image
                             src={item.image}
                             alt={item.imageAlt}
                             fill
                             priority={false}
-                            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 280px, 78vw"
+                            sizes="(min-width: 1024px) 50vw, (min-width: 640px) 340px, 82vw"
                             className="object-cover saturate-[1.08] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                           />
                         </div>
@@ -1769,48 +1769,44 @@ export function FlightResultsClient() {
 
             {routeInspirationCards.length > 0 ? (
               <section>
-                <div className="mb-4 flex flex-col gap-2 sm:max-w-3xl">
-                  <h2 className="max-w-sm text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-none sm:text-3xl">
+                <div className="mb-4 mx-auto flex max-w-[20rem] flex-col gap-2 text-center sm:mx-0 sm:max-w-3xl sm:text-left">
+                  <h2 className="text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
                     More flight routes to explore
                   </h2>
-                  <p className="max-w-2xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
+                  <p className="mx-auto max-w-[18rem] text-balance text-sm leading-6 text-slate-600 sm:mx-0 sm:max-w-2xl sm:text-base">
                     Browse route ideas from your region and open one when you are ready to compare dates and fare details.
                   </p>
                 </div>
 
                 <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                  <div className="flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-3 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
+                  <div className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
                     {routeInspirationCards.map((item) => (
                       <Link
                         key={item.id}
                         href={buildDiscoveryLink(item)}
                         aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                        className="group flex min-w-[72vw] snap-start items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[260px] lg:min-w-0"
+                        className="group min-w-[76vw] max-w-[300px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[300px] lg:min-w-0 lg:max-w-none"
                       >
-                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                          <Image
-                            src={item.image}
-                            alt={item.imageAlt}
-                            fill
-                            priority={false}
-                            sizes="64px"
-                            className="object-cover saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-slate-900 sm:text-base">
-                            {item.originCity} → {item.destinationCity}
-                          </h3>
-                          <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                            {item.originCode} → {item.destinationCode}
-                          </p>
-                        </div>
-                        <span
-                          aria-hidden="true"
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-sm font-black text-slate-400 transition group-hover:bg-indigo-50 group-hover:text-indigo-600"
-                        >
-                          →
-                        </span>
+                        <article className="flex h-full flex-col">
+                          <div className="relative h-36 overflow-hidden bg-slate-100 sm:h-40 lg:h-44">
+                            <Image
+                              src={item.image}
+                              alt={item.imageAlt}
+                              fill
+                              priority={false}
+                              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 300px, 76vw"
+                              className="object-cover saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                            />
+                          </div>
+                          <div className="bg-white p-4">
+                            <h3 className="line-clamp-1 text-base font-semibold leading-tight text-slate-900 sm:text-lg">
+                              {item.originCity} → {item.destinationCity}
+                            </h3>
+                            <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                              {item.originCode} → {item.destinationCode}
+                            </p>
+                          </div>
+                        </article>
                       </Link>
                     ))}
                   </div>
@@ -1819,11 +1815,11 @@ export function FlightResultsClient() {
             ) : null}
 
             <section>
-              <div className="mb-4 sm:max-w-3xl">
-                <h2 className="max-w-sm text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-none sm:text-3xl">
+              <div className="mb-4 mx-auto max-w-[20rem] text-center sm:mx-0 sm:max-w-3xl sm:text-left">
+                <h2 className="text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
                   Beach vacations
                 </h2>
-                <p className="mt-1.5 max-w-2xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
+                <p className="mx-auto mt-2 max-w-[18rem] text-balance text-sm leading-6 text-slate-600 sm:mx-0 sm:max-w-2xl sm:text-base">
                   Explore flight routes to sunny coastlines, island escapes, and warm-weather beach destinations.
                 </p>
               </div>
