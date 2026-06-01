@@ -69,7 +69,7 @@ export default function SupportPage() {
           </div>
         </section>
 
-        <section aria-label="Create a support ticket" className="mt-8 max-w-3xl">
+        <section aria-label="Create a support ticket" className="mx-auto mt-8 w-full max-w-2xl">
           <SupportForm />
         </section>
 
