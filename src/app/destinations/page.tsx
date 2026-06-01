@@ -33,39 +33,16 @@ type DestinationSection = {
   destinations: Destination[];
 };
 
-const destinationPhotoUrls = {
-  London:
-    "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  Paris:
-    "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  Rome: "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  Barcelona:
-    "https://images.pexels.com/photos/35759447/pexels-photo-35759447.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  Dubai:
-    "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "New York":
-    "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  Tokyo:
-    "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
-} as const;
+function getDestinationPhotoUrl(name: string, country: string) {
+  const locationQuery = encodeURIComponent(
+    `${name} ${country} landmark skyline travel`,
+  );
+  const uniqueKey = encodeURIComponent(
+    `${name}-${country}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+  );
 
-const regionalDestinationImages: Record<RegionName, string> = {
-  Europe:
-    "https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "North America":
-    "https://images.pexels.com/photos/466685/pexels-photo-466685.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  Asia: "https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  Africa:
-    "https://images.pexels.com/photos/259447/pexels-photo-259447.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "Middle East":
-    "https://images.pexels.com/photos/3787839/pexels-photo-3787839.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "South America":
-    "https://images.pexels.com/photos/2868242/pexels-photo-2868242.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  Caribbean:
-    "https://images.pexels.com/photos/457882/pexels-photo-457882.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  Oceania:
-    "https://images.pexels.com/photos/1878293/pexels-photo-1878293.jpeg?auto=compress&cs=tinysrgb&w=1200",
-};
+  return `https://source.unsplash.com/1200x800/?${locationQuery}&sig=${uniqueKey}`;
+}
 
 const destinationTags = [
   "skyline glow",
@@ -131,807 +108,844 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
     {
       name: "London",
       country: "United Kingdom",
-      image: destinationPhotoUrls.London,
+      image: getDestinationPhotoUrl("London", "United Kingdom"),
     },
-    { name: "Paris", country: "France", image: destinationPhotoUrls.Paris },
-    { name: "Rome", country: "Italy", image: destinationPhotoUrls.Rome },
+    {
+      name: "Paris",
+      country: "France",
+      image: getDestinationPhotoUrl("Paris", "France"),
+    },
+    {
+      name: "Rome",
+      country: "Italy",
+      image: getDestinationPhotoUrl("Rome", "Italy"),
+    },
     {
       name: "Barcelona",
       country: "Spain",
-      image: destinationPhotoUrls.Barcelona,
+      image: getDestinationPhotoUrl("Barcelona", "Spain"),
     },
     {
       name: "Amsterdam",
       country: "Netherlands",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Amsterdam", "Netherlands"),
     },
     {
       name: "Berlin",
       country: "Germany",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Berlin", "Germany"),
     },
     {
       name: "Madrid",
       country: "Spain",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Madrid", "Spain"),
     },
     {
       name: "Lisbon",
       country: "Portugal",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Lisbon", "Portugal"),
     },
     {
       name: "Prague",
       country: "Czechia",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Prague", "Czechia"),
     },
     {
       name: "Vienna",
       country: "Austria",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Vienna", "Austria"),
     },
     {
       name: "Athens",
       country: "Greece",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Athens", "Greece"),
     },
     {
       name: "Dublin",
       country: "Ireland",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Dublin", "Ireland"),
     },
     {
       name: "Copenhagen",
       country: "Denmark",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Copenhagen", "Denmark"),
     },
     {
       name: "Stockholm",
       country: "Sweden",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Stockholm", "Sweden"),
     },
     {
       name: "Oslo",
       country: "Norway",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Oslo", "Norway"),
     },
     {
       name: "Budapest",
       country: "Hungary",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Budapest", "Hungary"),
     },
     {
       name: "Florence",
       country: "Italy",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Florence", "Italy"),
     },
     {
       name: "Venice",
       country: "Italy",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Venice", "Italy"),
     },
     {
       name: "Edinburgh",
       country: "United Kingdom",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Edinburgh", "United Kingdom"),
     },
     {
       name: "Reykjavik",
       country: "Iceland",
-      image: regionalDestinationImages["Europe"],
+      image: getDestinationPhotoUrl("Reykjavik", "Iceland"),
     },
   ],
   "North America": [
     {
       name: "New York",
       country: "United States",
-      image: destinationPhotoUrls["New York"],
+      image: getDestinationPhotoUrl("New York", "United States"),
     },
     {
       name: "Los Angeles",
       country: "United States",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Los Angeles", "United States"),
     },
     {
       name: "Chicago",
       country: "United States",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Chicago", "United States"),
     },
     {
       name: "Miami",
       country: "United States",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Miami", "United States"),
     },
     {
       name: "San Francisco",
       country: "United States",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("San Francisco", "United States"),
     },
     {
       name: "Las Vegas",
       country: "United States",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Las Vegas", "United States"),
     },
     {
       name: "Seattle",
       country: "United States",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Seattle", "United States"),
     },
     {
       name: "Boston",
       country: "United States",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Boston", "United States"),
     },
     {
       name: "Washington",
       country: "United States",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Washington", "United States"),
     },
     {
       name: "Orlando",
       country: "United States",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Orlando", "United States"),
     },
     {
       name: "Toronto",
       country: "Canada",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Toronto", "Canada"),
     },
     {
       name: "Vancouver",
       country: "Canada",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Vancouver", "Canada"),
     },
     {
       name: "Montreal",
       country: "Canada",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Montreal", "Canada"),
     },
     {
       name: "Calgary",
       country: "Canada",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Calgary", "Canada"),
     },
     {
       name: "Quebec City",
       country: "Canada",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Quebec City", "Canada"),
     },
     {
       name: "Mexico City",
       country: "Mexico",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Mexico City", "Mexico"),
     },
     {
       name: "Cancun",
       country: "Mexico",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Cancun", "Mexico"),
     },
     {
       name: "Guadalajara",
       country: "Mexico",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Guadalajara", "Mexico"),
     },
     {
       name: "Monterrey",
       country: "Mexico",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Monterrey", "Mexico"),
     },
     {
       name: "Tulum",
       country: "Mexico",
-      image: regionalDestinationImages["North America"],
+      image: getDestinationPhotoUrl("Tulum", "Mexico"),
     },
   ],
   Asia: [
-    { name: "Tokyo", country: "Japan", image: destinationPhotoUrls.Tokyo },
+    {
+      name: "Tokyo",
+      country: "Japan",
+      image: getDestinationPhotoUrl("Tokyo", "Japan"),
+    },
     {
       name: "Seoul",
       country: "South Korea",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Seoul", "South Korea"),
     },
     {
       name: "Bangkok",
       country: "Thailand",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Bangkok", "Thailand"),
     },
     {
       name: "Singapore",
       country: "Singapore",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Singapore", "Singapore"),
     },
     {
       name: "Hong Kong",
       country: "Hong Kong",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Hong Kong", "Hong Kong"),
     },
     {
       name: "Kuala Lumpur",
       country: "Malaysia",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Kuala Lumpur", "Malaysia"),
     },
     {
       name: "Bali",
       country: "Indonesia",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Bali", "Indonesia"),
     },
     {
       name: "Jakarta",
       country: "Indonesia",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Jakarta", "Indonesia"),
     },
     {
       name: "Hanoi",
       country: "Vietnam",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Hanoi", "Vietnam"),
     },
     {
       name: "Ho Chi Minh City",
       country: "Vietnam",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Ho Chi Minh City", "Vietnam"),
     },
     {
       name: "Manila",
       country: "Philippines",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Manila", "Philippines"),
     },
     {
       name: "Taipei",
       country: "Taiwan",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Taipei", "Taiwan"),
     },
     {
       name: "Shanghai",
       country: "China",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Shanghai", "China"),
     },
     {
       name: "Beijing",
       country: "China",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Beijing", "China"),
     },
     {
       name: "Mumbai",
       country: "India",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Mumbai", "India"),
     },
     {
       name: "Delhi",
       country: "India",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Delhi", "India"),
     },
     {
       name: "Jaipur",
       country: "India",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Jaipur", "India"),
     },
     {
       name: "Phuket",
       country: "Thailand",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Phuket", "Thailand"),
     },
     {
       name: "Chiang Mai",
       country: "Thailand",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Chiang Mai", "Thailand"),
     },
     {
       name: "Kyoto",
       country: "Japan",
-      image: regionalDestinationImages["Asia"],
+      image: getDestinationPhotoUrl("Kyoto", "Japan"),
     },
   ],
   Africa: [
     {
       name: "Cape Town",
       country: "South Africa",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Cape Town", "South Africa"),
     },
     {
       name: "Johannesburg",
       country: "South Africa",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Johannesburg", "South Africa"),
     },
     {
       name: "Nairobi",
       country: "Kenya",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Nairobi", "Kenya"),
     },
     {
       name: "Marrakech",
       country: "Morocco",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Marrakech", "Morocco"),
     },
     {
       name: "Casablanca",
       country: "Morocco",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Casablanca", "Morocco"),
     },
     {
       name: "Cairo",
       country: "Egypt",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Cairo", "Egypt"),
     },
     {
       name: "Lagos",
       country: "Nigeria",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Lagos", "Nigeria"),
     },
     {
       name: "Abuja",
       country: "Nigeria",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Abuja", "Nigeria"),
     },
     {
       name: "Accra",
       country: "Ghana",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Accra", "Ghana"),
     },
     {
       name: "Dakar",
       country: "Senegal",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Dakar", "Senegal"),
     },
     {
       name: "Addis Ababa",
       country: "Ethiopia",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Addis Ababa", "Ethiopia"),
     },
     {
       name: "Zanzibar",
       country: "Tanzania",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Zanzibar", "Tanzania"),
     },
     {
       name: "Kigali",
       country: "Rwanda",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Kigali", "Rwanda"),
     },
     {
       name: "Victoria Falls",
       country: "Zimbabwe",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Victoria Falls", "Zimbabwe"),
     },
     {
       name: "Windhoek",
       country: "Namibia",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Windhoek", "Namibia"),
     },
     {
       name: "Gaborone",
       country: "Botswana",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Gaborone", "Botswana"),
     },
     {
       name: "Tunis",
       country: "Tunisia",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Tunis", "Tunisia"),
     },
     {
       name: "Algiers",
       country: "Algeria",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Algiers", "Algeria"),
     },
     {
       name: "Mauritius",
       country: "Mauritius",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Mauritius", "Mauritius"),
     },
     {
       name: "Seychelles",
       country: "Seychelles",
-      image: regionalDestinationImages["Africa"],
+      image: getDestinationPhotoUrl("Seychelles", "Seychelles"),
     },
   ],
   "Middle East": [
     {
       name: "Dubai",
       country: "United Arab Emirates",
-      image: destinationPhotoUrls.Dubai,
+      image: getDestinationPhotoUrl("Dubai", "United Arab Emirates"),
     },
     {
       name: "Abu Dhabi",
       country: "United Arab Emirates",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Abu Dhabi", "United Arab Emirates"),
     },
     {
       name: "Doha",
       country: "Qatar",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Doha", "Qatar"),
     },
     {
       name: "Riyadh",
       country: "Saudi Arabia",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Riyadh", "Saudi Arabia"),
     },
     {
       name: "Jeddah",
       country: "Saudi Arabia",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Jeddah", "Saudi Arabia"),
     },
     {
       name: "Muscat",
       country: "Oman",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Muscat", "Oman"),
     },
     {
       name: "Manama",
       country: "Bahrain",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Manama", "Bahrain"),
     },
     {
       name: "Kuwait City",
       country: "Kuwait",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Kuwait City", "Kuwait"),
     },
     {
       name: "Amman",
       country: "Jordan",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Amman", "Jordan"),
     },
     {
       name: "Petra",
       country: "Jordan",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Petra", "Jordan"),
     },
     {
       name: "Beirut",
       country: "Lebanon",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Beirut", "Lebanon"),
     },
     {
       name: "Tel Aviv",
       country: "Israel",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Tel Aviv", "Israel"),
     },
     {
       name: "Jerusalem",
       country: "Israel",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Jerusalem", "Israel"),
     },
     {
       name: "Istanbul",
       country: "Turkey",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Istanbul", "Turkey"),
     },
     {
       name: "Cappadocia",
       country: "Turkey",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Cappadocia", "Turkey"),
     },
     {
       name: "Ankara",
       country: "Turkey",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Ankara", "Turkey"),
     },
     {
       name: "Bodrum",
       country: "Turkey",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Bodrum", "Turkey"),
     },
     {
       name: "Antalya",
       country: "Turkey",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Antalya", "Turkey"),
     },
     {
       name: "Salalah",
       country: "Oman",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("Salalah", "Oman"),
     },
     {
       name: "AlUla",
       country: "Saudi Arabia",
-      image: regionalDestinationImages["Middle East"],
+      image: getDestinationPhotoUrl("AlUla", "Saudi Arabia"),
     },
   ],
   "South America": [
     {
       name: "Buenos Aires",
       country: "Argentina",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Buenos Aires", "Argentina"),
     },
     {
       name: "Rio de Janeiro",
       country: "Brazil",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Rio de Janeiro", "Brazil"),
     },
     {
       name: "Sao Paulo",
       country: "Brazil",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Sao Paulo", "Brazil"),
     },
     {
       name: "Lima",
       country: "Peru",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Lima", "Peru"),
     },
     {
       name: "Cusco",
       country: "Peru",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Cusco", "Peru"),
     },
     {
       name: "Santiago",
       country: "Chile",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Santiago", "Chile"),
     },
     {
       name: "Bogota",
       country: "Colombia",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Bogota", "Colombia"),
     },
     {
       name: "Cartagena",
       country: "Colombia",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Cartagena", "Colombia"),
     },
     {
       name: "Medellin",
       country: "Colombia",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Medellin", "Colombia"),
     },
     {
       name: "Quito",
       country: "Ecuador",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Quito", "Ecuador"),
     },
     {
       name: "Galapagos Islands",
       country: "Ecuador",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Galapagos Islands", "Ecuador"),
     },
     {
       name: "Montevideo",
       country: "Uruguay",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Montevideo", "Uruguay"),
     },
     {
       name: "Punta del Este",
       country: "Uruguay",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Punta del Este", "Uruguay"),
     },
     {
       name: "La Paz",
       country: "Bolivia",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("La Paz", "Bolivia"),
     },
     {
       name: "Uyuni",
       country: "Bolivia",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Uyuni", "Bolivia"),
     },
     {
       name: "Asuncion",
       country: "Paraguay",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Asuncion", "Paraguay"),
     },
     {
       name: "Georgetown",
       country: "Guyana",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Georgetown", "Guyana"),
     },
     {
       name: "Mendoza",
       country: "Argentina",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Mendoza", "Argentina"),
     },
     {
       name: "Florianopolis",
       country: "Brazil",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Florianopolis", "Brazil"),
     },
     {
       name: "Manaus",
       country: "Brazil",
-      image: regionalDestinationImages["South America"],
+      image: getDestinationPhotoUrl("Manaus", "Brazil"),
     },
   ],
   Caribbean: [
     {
       name: "Nassau",
       country: "Bahamas",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Nassau", "Bahamas"),
     },
     {
       name: "Montego Bay",
       country: "Jamaica",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Montego Bay", "Jamaica"),
     },
     {
       name: "Kingston",
       country: "Jamaica",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Kingston", "Jamaica"),
     },
     {
       name: "Punta Cana",
       country: "Dominican Republic",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Punta Cana", "Dominican Republic"),
     },
     {
       name: "Santo Domingo",
       country: "Dominican Republic",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Santo Domingo", "Dominican Republic"),
     },
     {
       name: "San Juan",
       country: "Puerto Rico",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("San Juan", "Puerto Rico"),
     },
     {
       name: "Aruba",
       country: "Aruba",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Aruba", "Aruba"),
     },
     {
       name: "Curacao",
       country: "Curacao",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Curacao", "Curacao"),
     },
     {
       name: "Barbados",
       country: "Barbados",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Barbados", "Barbados"),
     },
     {
       name: "St Lucia",
       country: "Saint Lucia",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("St Lucia", "Saint Lucia"),
     },
     {
       name: "Antigua",
       country: "Antigua and Barbuda",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Antigua", "Antigua and Barbuda"),
     },
     {
       name: "St Kitts",
       country: "Saint Kitts and Nevis",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("St Kitts", "Saint Kitts and Nevis"),
     },
     {
       name: "Grenada",
       country: "Grenada",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Grenada", "Grenada"),
     },
     {
       name: "Trinidad",
       country: "Trinidad and Tobago",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Trinidad", "Trinidad and Tobago"),
     },
     {
       name: "Tobago",
       country: "Trinidad and Tobago",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Tobago", "Trinidad and Tobago"),
     },
     {
       name: "Grand Cayman",
       country: "Cayman Islands",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Grand Cayman", "Cayman Islands"),
     },
     {
       name: "Turks and Caicos",
       country: "Turks and Caicos Islands",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Turks and Caicos", "Turks and Caicos Islands"),
     },
     {
       name: "St Martin",
       country: "Saint Martin",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("St Martin", "Saint Martin"),
     },
     {
       name: "Havana",
       country: "Cuba",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Havana", "Cuba"),
     },
     {
       name: "Varadero",
       country: "Cuba",
-      image: regionalDestinationImages["Caribbean"],
+      image: getDestinationPhotoUrl("Varadero", "Cuba"),
     },
   ],
   Oceania: [
     {
       name: "Sydney",
       country: "Australia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Sydney", "Australia"),
     },
     {
       name: "Melbourne",
       country: "Australia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Melbourne", "Australia"),
     },
     {
       name: "Brisbane",
       country: "Australia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Brisbane", "Australia"),
     },
     {
       name: "Perth",
       country: "Australia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Perth", "Australia"),
     },
     {
       name: "Adelaide",
       country: "Australia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Adelaide", "Australia"),
     },
     {
       name: "Gold Coast",
       country: "Australia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Gold Coast", "Australia"),
     },
     {
       name: "Cairns",
       country: "Australia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Cairns", "Australia"),
     },
     {
       name: "Hobart",
       country: "Australia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Hobart", "Australia"),
     },
     {
       name: "Auckland",
       country: "New Zealand",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Auckland", "New Zealand"),
     },
     {
       name: "Wellington",
       country: "New Zealand",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Wellington", "New Zealand"),
     },
     {
       name: "Queenstown",
       country: "New Zealand",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Queenstown", "New Zealand"),
     },
     {
       name: "Christchurch",
       country: "New Zealand",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Christchurch", "New Zealand"),
     },
     {
       name: "Rotorua",
       country: "New Zealand",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Rotorua", "New Zealand"),
     },
     {
       name: "Fiji",
       country: "Fiji",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Fiji", "Fiji"),
     },
     {
       name: "Nadi",
       country: "Fiji",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Nadi", "Fiji"),
     },
     {
       name: "Tahiti",
       country: "French Polynesia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Tahiti", "French Polynesia"),
     },
     {
       name: "Bora Bora",
       country: "French Polynesia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Bora Bora", "French Polynesia"),
     },
     {
       name: "Port Vila",
       country: "Vanuatu",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Port Vila", "Vanuatu"),
     },
     {
       name: "Apia",
       country: "Samoa",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Apia", "Samoa"),
     },
     {
       name: "Noumea",
       country: "New Caledonia",
-      image: regionalDestinationImages["Oceania"],
+      image: getDestinationPhotoUrl("Noumea", "New Caledonia"),
     },
   ],
 };
+
+
+function assertUniqueDestinationImages(
+  catalog: Record<RegionName, DestinationSeed[]>,
+) {
+  const seenImages = new Map<string, string>();
+
+  for (const destinations of Object.values(catalog)) {
+    for (const destination of destinations) {
+      const previousDestination = seenImages.get(destination.image);
+
+      if (previousDestination) {
+        throw new Error(
+          `Duplicate destination image URL for ${destination.name}; already used by ${previousDestination}.`,
+        );
+      }
+
+      seenImages.set(destination.image, destination.name);
+    }
+  }
+}
+
+
+// Keep destination images city-specific and unique so discovery cards never collapse back to a shared regional fallback.
+assertUniqueDestinationImages(destinationCatalog);
 
 function getDestinationImageAlt(destination: DestinationSeed) {
   return `${destination.name}, ${destination.country} travel photography`;
