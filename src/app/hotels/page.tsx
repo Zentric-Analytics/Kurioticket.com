@@ -8,13 +8,10 @@ import {
   ArrowRight,
   Building2,
   Calendar,
-  CheckCircle2,
   ChevronDown,
   ClipboardCheck,
   Minus,
   Plus,
-  Search,
-  SlidersHorizontal,
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -322,8 +319,11 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 bg-gradient-to-b from-indigo-50/70 via-white to-white px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
-        <div className="mx-auto max-w-6xl space-y-8 md:space-y-10">
+      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#eef4ff_0%,#f7f4ff_44%,#eefaf8_100%)] px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
+        <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-72 w-[min(54rem,92vw)] -translate-x-1/2 rounded-full bg-cyan-200/35 blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 top-[28rem] -z-10 h-80 w-80 rounded-full bg-indigo-200/30 blur-3xl" />
+        <div className="pointer-events-none absolute -right-28 bottom-20 -z-10 h-96 w-96 rounded-full bg-violet-200/25 blur-3xl" />
+        <div className="relative mx-auto max-w-6xl space-y-10 md:space-y-12">
           <section className="mx-auto w-full max-w-[1040px] space-y-3">
             <p className="px-1 text-sm font-medium text-slate-600">
               Find available stays
@@ -666,7 +666,7 @@ export default function HotelsSearchPage() {
             </form>
           </section>
 
-          <section className="space-y-5 py-2 sm:space-y-6">
+          <section className="space-y-5 py-4 sm:space-y-6 sm:py-5">
             <h2 className="text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl">
               Explore hotel stays by destination
             </h2>
@@ -676,7 +676,7 @@ export default function HotelsSearchPage() {
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative min-h-[300px] overflow-hidden rounded-[2rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:min-h-[340px] xl:min-h-[360px]"
+                  className="group relative min-h-[300px] overflow-hidden rounded-[2rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[340px] xl:min-h-[360px]"
                 >
                   <Image
                     src={card.image}
@@ -705,7 +705,7 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="grid gap-4 py-5 sm:py-6 md:grid-cols-3 md:py-7">
+          <section className="relative isolate grid gap-4 py-4 sm:py-6 md:grid-cols-3">
             {[
               {
                 title: "Compare provider offers",
@@ -728,13 +728,13 @@ export default function HotelsSearchPage() {
               return (
                 <article
                   key={item.title}
-                  className="group relative isolate overflow-hidden rounded-[1.75rem] border border-indigo-100/60 bg-[linear-gradient(135deg,rgba(238,242,255,0.64),rgba(255,255,255,0.16)_48%,rgba(236,254,255,0.34))] p-6 shadow-[0_26px_70px_-48px_rgba(49,46,129,0.82),0_12px_34px_-30px_rgba(14,165,233,0.58)] ring-1 ring-white/35 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-indigo-200/80 hover:bg-[linear-gradient(135deg,rgba(238,242,255,0.72),rgba(255,255,255,0.22)_48%,rgba(236,254,255,0.42))] hover:shadow-[0_34px_86px_-50px_rgba(49,46,129,0.86),0_16px_42px_-32px_rgba(14,165,233,0.62)]"
+                  className="group relative isolate overflow-hidden rounded-[1.75rem] border border-indigo-200/45 bg-[linear-gradient(135deg,rgba(224,231,255,0.62),rgba(240,253,250,0.34)_52%,rgba(221,214,254,0.36))] p-6 shadow-[0_24px_64px_-46px_rgba(49,46,129,0.78),0_12px_34px_-30px_rgba(14,165,233,0.5)] ring-1 ring-indigo-50/60 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-indigo-200/75 hover:bg-[linear-gradient(135deg,rgba(224,231,255,0.7),rgba(240,253,250,0.42)_52%,rgba(221,214,254,0.42))] hover:shadow-[0_32px_82px_-50px_rgba(49,46,129,0.82),0_16px_42px_-32px_rgba(14,165,233,0.58)]"
                 >
                   <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/70 to-transparent" />
                   <div className="pointer-events-none absolute -right-12 -top-14 h-32 w-32 rounded-full bg-indigo-200/30 blur-3xl transition group-hover:bg-cyan-200/35" />
                   <div className="pointer-events-none absolute -left-14 bottom-1 h-28 w-28 rounded-full bg-sky-200/20 blur-3xl" />
                   <div className="relative mb-5 inline-flex rounded-[1.15rem] bg-gradient-to-br from-indigo-400/80 via-violet-300/70 to-cyan-300/75 p-px shadow-[0_16px_36px_-22px_rgba(79,70,229,0.9)] transition group-hover:from-indigo-500/85 group-hover:via-violet-400/75 group-hover:to-cyan-300/85">
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.1rem] bg-[linear-gradient(145deg,rgba(255,255,255,0.88),rgba(238,242,255,0.62)_52%,rgba(224,242,254,0.72))] text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_24px_-20px_rgba(79,70,229,0.9)] ring-1 ring-white/70 transition group-hover:text-indigo-800">
+                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.1rem] bg-[linear-gradient(145deg,rgba(248,250,252,0.86),rgba(238,242,255,0.7)_52%,rgba(224,242,254,0.74))] text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_24px_-20px_rgba(79,70,229,0.9)] ring-1 ring-white/70 transition group-hover:text-indigo-800">
                       <Icon
                         className="h-5 w-5 stroke-[1.9]"
                         aria-hidden="true"
@@ -752,65 +752,7 @@ export default function HotelsSearchPage() {
             })}
           </section>
 
-          <section className="grid gap-5 rounded-3xl border border-slate-200/80 bg-slate-950 p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] md:grid-cols-[0.9fr_1.4fr] md:p-6">
-            <div>
-              <p className="text-sm font-medium text-indigo-200">
-                How hotel search works
-              </p>
-              <h2 className="mt-1 text-xl font-semibold tracking-tight md:text-2xl">
-                Plan your stay with Kurioticket
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300">
-                Keep the important trip details in view as you move from search
-                to provider selection.
-              </p>
-            </div>
-            <ol className="grid gap-3 sm:grid-cols-3">
-              {[
-                {
-                  title: "Start with destination and dates",
-                  body: "Enter where and when you want to stay.",
-                  icon: Search,
-                },
-                {
-                  title: "Compare hotel options on the results page",
-                  body: "Review matching stays and trip details together.",
-                  icon: SlidersHorizontal,
-                },
-                {
-                  title: "Continue with the provider when you are ready",
-                  body: "Choose an option and finish booking with the provider.",
-                  icon: CheckCircle2,
-                },
-              ].map((item, index) => {
-                const Icon = item.icon;
-
-                return (
-                  <li
-                    key={item.title}
-                    className="rounded-2xl border border-white/10 bg-white/[0.06] p-4"
-                  >
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-indigo-100">
-                        <Icon className="h-4 w-4" aria-hidden="true" />
-                      </span>
-                      <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                        Step {index + 1}
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-semibold leading-5 text-white">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-300">
-                      {item.body}
-                    </p>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-
-          <section className="grid gap-3 border-y border-slate-200/80 py-5 md:grid-cols-[0.75fr_1.25fr] md:items-center">
+          <section className="grid gap-3 rounded-[1.75rem] border border-indigo-100/45 bg-indigo-50/25 px-4 py-5 shadow-[0_20px_60px_-52px_rgba(49,46,129,0.65)] md:grid-cols-[0.75fr_1.25fr] md:items-center md:px-5">
             <div>
               <p className="text-sm font-medium text-indigo-700">
                 Search smarter
@@ -820,13 +762,13 @@ export default function HotelsSearchPage() {
               </h2>
             </div>
             <ul className="grid gap-2 text-sm leading-6 text-slate-600 sm:grid-cols-3">
-              <li className="rounded-2xl bg-white/75 p-3 ring-1 ring-slate-200">
+              <li className="rounded-2xl bg-indigo-50/45 p-3 ring-1 ring-indigo-100/70">
                 Adjust dates if your trip is flexible.
               </li>
-              <li className="rounded-2xl bg-white/75 p-3 ring-1 ring-slate-200">
+              <li className="rounded-2xl bg-indigo-50/45 p-3 ring-1 ring-indigo-100/70">
                 Review room and guest details before continuing.
               </li>
-              <li className="rounded-2xl bg-white/75 p-3 ring-1 ring-slate-200">
+              <li className="rounded-2xl bg-indigo-50/45 p-3 ring-1 ring-indigo-100/70">
                 Use filters on results to narrow your options.
               </li>
             </ul>
