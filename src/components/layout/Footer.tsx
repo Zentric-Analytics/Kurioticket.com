@@ -99,27 +99,6 @@ export function Footer() {
       ],
     },
     {
-      heading: "Partners",
-      links: [
-        {
-          label: "Partner with us",
-          href: "#",
-        },
-        {
-          label: "List your property",
-          href: "#",
-        },
-        {
-          label: "Affiliate program",
-          href: "#",
-        },
-        {
-          label: "Advertise with us",
-          href: "#",
-        },
-      ],
-    },
-    {
       heading: "About Curioticket",
       links: [
         {
@@ -152,7 +131,7 @@ export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white text-slate-700">
       <div className="page-shell py-10 md:py-12">
-        <div className="hidden gap-8 lg:grid lg:grid-cols-5">
+        <div className="hidden gap-8 lg:grid lg:grid-cols-4">
           {footerSections.map(
             (section) => (
               <div key={section.heading}>
