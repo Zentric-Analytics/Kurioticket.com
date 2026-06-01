@@ -224,59 +224,85 @@ const hotelInspirationCategoryChips = [
   "Family trips",
   "Relaxed stays",
   "Weekend ideas",
-];
+] as const;
+
+type HotelInspirationCategory = (typeof hotelInspirationCategoryChips)[number];
 
 type HotelInspirationCard = HotelDestinationCard & {
   badge: string;
   detail: string;
 };
 
-const hotelInspirationCards: HotelInspirationCard[] = [
-  {
-    title: "Cancun",
-    subtitle: "Mexico",
-    destinationQuery: "Cancun",
-    image:
-      "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Cancun beach with white sand and turquoise water",
-    linkLabel: "Search hotels in Cancun, Mexico",
-    badge: "Coastal stays",
-    detail: "Mexico",
-  },
-  {
-    title: "Barcelona",
-    subtitle: "Spain",
-    destinationQuery: "Barcelona",
-    image:
-      "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Barcelona cityscape with Sagrada Familia in daylight",
-    linkLabel: "Search hotels in Barcelona, Spain",
-    badge: "City coast",
-    detail: "Spain",
-  },
-  {
-    title: "Istanbul",
-    subtitle: "Turkey",
-    destinationQuery: "Istanbul",
-    image:
-      "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Istanbul waterfront with domes and minarets at golden hour",
-    linkLabel: "Search hotels in Istanbul, Turkey",
-    badge: "Culture stays",
-    detail: "Turkey",
-  },
-  {
-    title: "Toronto",
-    subtitle: "Canada",
-    destinationQuery: "Toronto",
-    image:
-      "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Toronto skyline with the CN Tower beside Lake Ontario",
-    linkLabel: "Search hotels in Toronto, Canada",
-    badge: "City ideas",
-    detail: "Canada",
-  },
+const destinationImageCatalog = [
+  ...hotelDestinationCards,
+  ...moreHotelDestinationCards,
+  ...globalHotelDestinationCards,
 ];
+
+const getDestinationCard = (destinationQuery: string) => {
+  const card = destinationImageCatalog.find(
+    (item) => item.destinationQuery === destinationQuery,
+  );
+
+  if (!card) {
+    throw new Error(
+      `Hotel inspiration category references unknown destination: ${destinationQuery}`,
+    );
+  }
+
+  return card;
+};
+
+const createHotelInspirationCard = (
+  destinationQuery: string,
+  badge: string,
+): HotelInspirationCard => {
+  const card = getDestinationCard(destinationQuery);
+
+  return {
+    ...card,
+    title: card.destinationQuery,
+    subtitle: card.title,
+    badge,
+    detail: card.title,
+  };
+};
+
+const hotelInspirationCardsByCategory: Record<
+  HotelInspirationCategory,
+  HotelInspirationCard[]
+> = {
+  Beach: [
+    createHotelInspirationCard("Cancun", "Coastal stays"),
+    createHotelInspirationCard("Barcelona", "City coast"),
+    createHotelInspirationCard("Dubai", "Waterfront stays"),
+    createHotelInspirationCard("Singapore", "Harbor city"),
+  ],
+  "City breaks": [
+    createHotelInspirationCard("London", "Capital stays"),
+    createHotelInspirationCard("Paris", "Classic city"),
+    createHotelInspirationCard("Toronto", "City ideas"),
+    createHotelInspirationCard("Istanbul", "Culture stays"),
+  ],
+  "Family trips": [
+    createHotelInspirationCard("Toronto", "Family city"),
+    createHotelInspirationCard("Singapore", "Easy exploring"),
+    createHotelInspirationCard("Cancun", "Beach time"),
+    createHotelInspirationCard("London", "City exploring"),
+  ],
+  "Relaxed stays": [
+    createHotelInspirationCard("Cancun", "Coastal stays"),
+    createHotelInspirationCard("Dubai", "Waterfront stays"),
+    createHotelInspirationCard("Singapore", "Harbor city"),
+    createHotelInspirationCard("Amsterdam", "Canal stays"),
+  ],
+  "Weekend ideas": [
+    createHotelInspirationCard("Rome", "Historic city"),
+    createHotelInspirationCard("Amsterdam", "Canal stays"),
+    createHotelInspirationCard("Barcelona", "City coast"),
+    createHotelInspirationCard("Istanbul", "Culture stays"),
+  ],
+};
 
 type HotelDestinationLink = HotelDestinationCard & {
   href: string;
@@ -375,23 +401,21 @@ function InspirationCard({ card }: InspirationCardProps) {
 
 validateDestinationImages(
   "hotel destination cards",
-  [
-    ...hotelDestinationCards,
-    ...moreHotelDestinationCards,
-    ...globalHotelDestinationCards,
-  ].map((card) => ({
+  destinationImageCatalog.map((card) => ({
     id: card.destinationQuery,
     image: card.image,
   })),
 );
 
-validateDestinationImages(
-  "hotel inspiration cards",
-  hotelInspirationCards.map((card) => ({
-    id: card.destinationQuery,
-    image: card.image,
-  })),
-);
+hotelInspirationCategoryChips.forEach((category) => {
+  validateDestinationImages(
+    `hotel inspiration ${category} cards`,
+    hotelInspirationCardsByCategory[category].map((card) => ({
+      id: card.destinationQuery,
+      image: card.image,
+    })),
+  );
+});
 
 const formatShortDate = (value: string) => {
   if (!value) return "";
@@ -421,6 +445,8 @@ export default function HotelsSearchPage() {
   const [hotelChildCount, setHotelChildCount] = useState(0);
   const [rooms, setRooms] = useState("1");
   const [hotelPetFriendly, setHotelPetFriendly] = useState(false);
+  const [selectedInspirationCategory, setSelectedInspirationCategory] =
+    useState<HotelInspirationCategory>("Beach");
   const [error, setError] = useState("");
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
@@ -500,11 +526,13 @@ export default function HotelsSearchPage() {
 
   const hotelInspirationLinks = useMemo(
     () =>
-      hotelInspirationCards.map((card) => ({
-        ...card,
-        href: destinationCardHref(card.destinationQuery),
-      })),
-    [destinationCardHref],
+      hotelInspirationCardsByCategory[selectedInspirationCategory].map(
+        (card) => ({
+          ...card,
+          href: destinationCardHref(card.destinationQuery),
+        }),
+      ),
+    [destinationCardHref, selectedInspirationCategory],
   );
 
   const handleToggleDates = () => {
@@ -1020,23 +1048,28 @@ export default function HotelsSearchPage() {
                   </p>
                 </div>
                 <div
-                  role="list"
                   className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] md:flex-wrap md:justify-end md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden"
                   aria-label="Hotel inspiration categories"
                 >
-                  {hotelInspirationCategoryChips.map((chip, index) => (
-                    <span
-                      key={chip}
-                      role="listitem"
-                      className={`whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-semibold ${
-                        index === 0
-                          ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-                          : "border-slate-200 bg-white text-slate-600"
-                      }`}
-                    >
-                      {chip}
-                    </span>
-                  ))}
+                  {hotelInspirationCategoryChips.map((chip) => {
+                    const isSelected = chip === selectedInspirationCategory;
+
+                    return (
+                      <button
+                        key={chip}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => setSelectedInspirationCategory(chip)}
+                        className={`focus-ring whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors ${
+                          isSelected
+                            ? "border-indigo-600 bg-indigo-600 text-white shadow-sm shadow-indigo-600/20"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                        }`}
+                      >
+                        {chip}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
