@@ -1,191 +1,321 @@
-import Image from "next/image";
 import Link from "next/link";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
-import { LinkButton } from "@/components/ui/Button";
 
-const destinationSections = [
-  {
-    region: "Europe",
+type RegionName =
+  | "Europe"
+  | "North America"
+  | "Asia"
+  | "Africa"
+  | "Middle East"
+  | "South America"
+  | "Caribbean"
+  | "Oceania";
+
+type DestinationSeed = {
+  name: string;
+  country: string;
+};
+
+type Destination = DestinationSeed & {
+  region: RegionName;
+  image: string;
+  tag: string;
+};
+
+type DestinationSection = {
+  region: RegionName;
+  accent: string;
+  summary: string;
+  destinations: Destination[];
+};
+
+const gradientPalettes = [
+  ["#0f172a", "#2563eb", "#a855f7"],
+  ["#111827", "#db2777", "#f97316"],
+  ["#064e3b", "#059669", "#38bdf8"],
+  ["#1e1b4b", "#7c3aed", "#f43f5e"],
+  ["#451a03", "#d97706", "#facc15"],
+  ["#082f49", "#0891b2", "#22c55e"],
+  ["#172554", "#4f46e5", "#ec4899"],
+  ["#052e16", "#16a34a", "#84cc16"],
+] as const;
+
+const destinationTags = [
+  "skyline glow",
+  "old town lanes",
+  "beachfront escape",
+  "food market nights",
+  "museum weekend",
+  "garden district",
+  "harbor views",
+  "sunset boulevard",
+] as const;
+
+const destinationSubtitle = "Explore flights, hotels, and travel deals";
+
+const regionDetails: Record<
+  RegionName,
+  Pick<DestinationSection, "accent" | "summary">
+> = {
+  Europe: {
     accent: "from-blue-600 to-violet-600",
     summary:
-      "Classic city breaks with culture, food, landmarks, and easy rail connections.",
-    destinations: [
-      {
-        name: "London",
-        country: "United Kingdom",
-        image:
-          "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1400&q=85",
-        tag: "Theatre & landmarks",
-      },
-      {
-        name: "Paris",
-        country: "France",
-        image:
-          "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=85",
-        tag: "Romantic escape",
-      },
-      {
-        name: "Rome",
-        country: "Italy",
-        image:
-          "https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=1400&q=85",
-        tag: "History & food",
-      },
-      {
-        name: "Amsterdam",
-        country: "Netherlands",
-        image:
-          "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1400&q=85",
-        tag: "Canals & museums",
-      },
-    ],
+      "Layered history, food capitals, museums, nightlife, and quick city-to-city getaways.",
   },
-  {
-    region: "Middle East",
-    accent: "from-amber-500 to-fuchsia-600",
-    summary:
-      "Warm weather, statement hotels, skyline views, and effortless luxury escapes.",
-    destinations: [
-      {
-        name: "Dubai",
-        country: "United Arab Emirates",
-        image:
-          "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1400&q=85",
-        tag: "Luxury skyline",
-      },
-      {
-        name: "Doha",
-        country: "Qatar",
-        image:
-          "https://images.unsplash.com/photo-1559827291-72ee739d0d9a?auto=format&fit=crop&w=1400&q=85",
-        tag: "Culture & coast",
-      },
-      {
-        name: "Abu Dhabi",
-        country: "United Arab Emirates",
-        image:
-          "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1400&q=85",
-        tag: "Island resorts",
-      },
-    ],
-  },
-  {
-    region: "Africa",
-    accent: "from-emerald-600 to-violet-600",
-    summary:
-      "Creative cities, coastal views, national parks, and bold cultural energy.",
-    destinations: [
-      {
-        name: "Lagos",
-        country: "Nigeria",
-        image:
-          "https://images.unsplash.com/photo-1577948000111-9c970dfe3743?auto=format&fit=crop&w=1400&q=85",
-        tag: "Nightlife & culture",
-      },
-      {
-        name: "Abuja",
-        country: "Nigeria",
-        image:
-          "https://images.unsplash.com/photo-1572883454114-1cf0031ede2a?auto=format&fit=crop&w=1400&q=85",
-        tag: "Capital getaway",
-      },
-      {
-        name: "Cape Town",
-        country: "South Africa",
-        image:
-          "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?auto=format&fit=crop&w=1400&q=85",
-        tag: "Mountains & ocean",
-      },
-      {
-        name: "Nairobi",
-        country: "Kenya",
-        image:
-          "https://images.unsplash.com/photo-1611348586804-61bf6c080437?auto=format&fit=crop&w=1400&q=85",
-        tag: "Safari gateway",
-      },
-    ],
-  },
-  {
-    region: "North America",
+  "North America": {
     accent: "from-sky-600 to-indigo-700",
     summary:
-      "Big-city weekends, beach days, entertainment, shopping, and iconic skylines.",
-    destinations: [
-      {
-        name: "New York",
-        country: "United States",
-        image:
-          "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1400&q=85",
-        tag: "City icons",
-      },
-      {
-        name: "Toronto",
-        country: "Canada",
-        image:
-          "https://images.unsplash.com/photo-1517935706615-2717063c2225?auto=format&fit=crop&w=1400&q=85",
-        tag: "Food & skyline",
-      },
-      {
-        name: "Los Angeles",
-        country: "United States",
-        image:
-          "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?auto=format&fit=crop&w=1400&q=85",
-        tag: "Sun & studios",
-      },
-    ],
+      "Big skylines, national parks, entertainment hubs, beaches, and family-friendly escapes.",
   },
-  {
-    region: "Asia",
+  Asia: {
     accent: "from-rose-500 to-violet-700",
     summary:
-      "Street food, night markets, futuristic skylines, temples, and city adventures.",
-    destinations: [
-      {
-        name: "Singapore",
-        country: "Singapore",
-        image:
-          "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1400&q=85",
-        tag: "Garden city",
-      },
-      {
-        name: "Bangkok",
-        country: "Thailand",
-        image:
-          "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1400&q=85",
-        tag: "Food markets",
-      },
-      {
-        name: "Tokyo",
-        country: "Japan",
-        image:
-          "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1400&q=85",
-        tag: "Neon nights",
-      },
-      {
-        name: "Kuala Lumpur",
-        country: "Malaysia",
-        image:
-          "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=1400&q=85",
-        tag: "Towers & food",
-      },
-    ],
+      "Street food, temples, neon city breaks, island stays, shopping, and cultural adventures.",
   },
-];
+  Africa: {
+    accent: "from-emerald-600 to-violet-600",
+    summary:
+      "Safari gateways, creative capitals, desert landscapes, beaches, and unforgettable nature.",
+  },
+  "Middle East": {
+    accent: "from-amber-500 to-fuchsia-600",
+    summary:
+      "Statement skylines, desert escapes, heritage sites, warm coasts, and luxury stays.",
+  },
+  "South America": {
+    accent: "from-lime-600 to-cyan-700",
+    summary:
+      "Mountain scenery, rainforest routes, colorful cities, beaches, and food-led adventures.",
+  },
+  Caribbean: {
+    accent: "from-cyan-500 to-blue-700",
+    summary:
+      "Island-hopping favorites with turquoise water, music, beach resorts, and laid-back sunshine.",
+  },
+  Oceania: {
+    accent: "from-teal-500 to-indigo-700",
+    summary:
+      "Coastal cities, reef adventures, island retreats, wine regions, and dramatic road trips.",
+  },
+};
 
-const featuredDestinations = [
-  destinationSections[0].destinations[1],
-  destinationSections[1].destinations[0],
-  destinationSections[2].destinations[2],
-];
+const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
+  Europe: [
+    { name: "London", country: "United Kingdom" },
+    { name: "Paris", country: "France" },
+    { name: "Rome", country: "Italy" },
+    { name: "Barcelona", country: "Spain" },
+    { name: "Amsterdam", country: "Netherlands" },
+    { name: "Berlin", country: "Germany" },
+    { name: "Madrid", country: "Spain" },
+    { name: "Lisbon", country: "Portugal" },
+    { name: "Prague", country: "Czechia" },
+    { name: "Vienna", country: "Austria" },
+    { name: "Athens", country: "Greece" },
+    { name: "Dublin", country: "Ireland" },
+    { name: "Copenhagen", country: "Denmark" },
+    { name: "Stockholm", country: "Sweden" },
+    { name: "Oslo", country: "Norway" },
+    { name: "Budapest", country: "Hungary" },
+    { name: "Florence", country: "Italy" },
+    { name: "Venice", country: "Italy" },
+    { name: "Edinburgh", country: "United Kingdom" },
+    { name: "Reykjavik", country: "Iceland" },
+  ],
+  "North America": [
+    { name: "New York", country: "United States" },
+    { name: "Los Angeles", country: "United States" },
+    { name: "Chicago", country: "United States" },
+    { name: "Miami", country: "United States" },
+    { name: "San Francisco", country: "United States" },
+    { name: "Las Vegas", country: "United States" },
+    { name: "Seattle", country: "United States" },
+    { name: "Boston", country: "United States" },
+    { name: "Washington", country: "United States" },
+    { name: "Orlando", country: "United States" },
+    { name: "Toronto", country: "Canada" },
+    { name: "Vancouver", country: "Canada" },
+    { name: "Montreal", country: "Canada" },
+    { name: "Calgary", country: "Canada" },
+    { name: "Quebec City", country: "Canada" },
+    { name: "Mexico City", country: "Mexico" },
+    { name: "Cancun", country: "Mexico" },
+    { name: "Guadalajara", country: "Mexico" },
+    { name: "Monterrey", country: "Mexico" },
+    { name: "Tulum", country: "Mexico" },
+  ],
+  Asia: [
+    { name: "Tokyo", country: "Japan" },
+    { name: "Seoul", country: "South Korea" },
+    { name: "Bangkok", country: "Thailand" },
+    { name: "Singapore", country: "Singapore" },
+    { name: "Hong Kong", country: "Hong Kong" },
+    { name: "Kuala Lumpur", country: "Malaysia" },
+    { name: "Bali", country: "Indonesia" },
+    { name: "Jakarta", country: "Indonesia" },
+    { name: "Hanoi", country: "Vietnam" },
+    { name: "Ho Chi Minh City", country: "Vietnam" },
+    { name: "Manila", country: "Philippines" },
+    { name: "Taipei", country: "Taiwan" },
+    { name: "Shanghai", country: "China" },
+    { name: "Beijing", country: "China" },
+    { name: "Mumbai", country: "India" },
+    { name: "Delhi", country: "India" },
+    { name: "Jaipur", country: "India" },
+    { name: "Phuket", country: "Thailand" },
+    { name: "Chiang Mai", country: "Thailand" },
+    { name: "Kyoto", country: "Japan" },
+  ],
+  Africa: [
+    { name: "Cape Town", country: "South Africa" },
+    { name: "Johannesburg", country: "South Africa" },
+    { name: "Nairobi", country: "Kenya" },
+    { name: "Marrakech", country: "Morocco" },
+    { name: "Casablanca", country: "Morocco" },
+    { name: "Cairo", country: "Egypt" },
+    { name: "Lagos", country: "Nigeria" },
+    { name: "Abuja", country: "Nigeria" },
+    { name: "Accra", country: "Ghana" },
+    { name: "Dakar", country: "Senegal" },
+    { name: "Addis Ababa", country: "Ethiopia" },
+    { name: "Zanzibar", country: "Tanzania" },
+    { name: "Kigali", country: "Rwanda" },
+    { name: "Victoria Falls", country: "Zimbabwe" },
+    { name: "Windhoek", country: "Namibia" },
+    { name: "Gaborone", country: "Botswana" },
+    { name: "Tunis", country: "Tunisia" },
+    { name: "Algiers", country: "Algeria" },
+    { name: "Mauritius", country: "Mauritius" },
+    { name: "Seychelles", country: "Seychelles" },
+  ],
+  "Middle East": [
+    { name: "Dubai", country: "United Arab Emirates" },
+    { name: "Abu Dhabi", country: "United Arab Emirates" },
+    { name: "Doha", country: "Qatar" },
+    { name: "Riyadh", country: "Saudi Arabia" },
+    { name: "Jeddah", country: "Saudi Arabia" },
+    { name: "Muscat", country: "Oman" },
+    { name: "Manama", country: "Bahrain" },
+    { name: "Kuwait City", country: "Kuwait" },
+    { name: "Amman", country: "Jordan" },
+    { name: "Petra", country: "Jordan" },
+    { name: "Beirut", country: "Lebanon" },
+    { name: "Tel Aviv", country: "Israel" },
+    { name: "Jerusalem", country: "Israel" },
+    { name: "Istanbul", country: "Turkey" },
+    { name: "Cappadocia", country: "Turkey" },
+    { name: "Ankara", country: "Turkey" },
+    { name: "Bodrum", country: "Turkey" },
+    { name: "Antalya", country: "Turkey" },
+    { name: "Salalah", country: "Oman" },
+    { name: "AlUla", country: "Saudi Arabia" },
+  ],
+  "South America": [
+    { name: "Buenos Aires", country: "Argentina" },
+    { name: "Rio de Janeiro", country: "Brazil" },
+    { name: "Sao Paulo", country: "Brazil" },
+    { name: "Lima", country: "Peru" },
+    { name: "Cusco", country: "Peru" },
+    { name: "Santiago", country: "Chile" },
+    { name: "Bogota", country: "Colombia" },
+    { name: "Cartagena", country: "Colombia" },
+    { name: "Medellin", country: "Colombia" },
+    { name: "Quito", country: "Ecuador" },
+    { name: "Galapagos Islands", country: "Ecuador" },
+    { name: "Montevideo", country: "Uruguay" },
+    { name: "Punta del Este", country: "Uruguay" },
+    { name: "La Paz", country: "Bolivia" },
+    { name: "Uyuni", country: "Bolivia" },
+    { name: "Asuncion", country: "Paraguay" },
+    { name: "Georgetown", country: "Guyana" },
+    { name: "Mendoza", country: "Argentina" },
+    { name: "Florianopolis", country: "Brazil" },
+    { name: "Manaus", country: "Brazil" },
+  ],
+  Caribbean: [
+    { name: "Nassau", country: "Bahamas" },
+    { name: "Montego Bay", country: "Jamaica" },
+    { name: "Kingston", country: "Jamaica" },
+    { name: "Punta Cana", country: "Dominican Republic" },
+    { name: "Santo Domingo", country: "Dominican Republic" },
+    { name: "San Juan", country: "Puerto Rico" },
+    { name: "Aruba", country: "Aruba" },
+    { name: "Curacao", country: "Curacao" },
+    { name: "Barbados", country: "Barbados" },
+    { name: "St Lucia", country: "Saint Lucia" },
+    { name: "Antigua", country: "Antigua and Barbuda" },
+    { name: "St Kitts", country: "Saint Kitts and Nevis" },
+    { name: "Grenada", country: "Grenada" },
+    { name: "Trinidad", country: "Trinidad and Tobago" },
+    { name: "Tobago", country: "Trinidad and Tobago" },
+    { name: "Grand Cayman", country: "Cayman Islands" },
+    { name: "Turks and Caicos", country: "Turks and Caicos Islands" },
+    { name: "St Martin", country: "Saint Martin" },
+    { name: "Havana", country: "Cuba" },
+    { name: "Varadero", country: "Cuba" },
+  ],
+  Oceania: [
+    { name: "Sydney", country: "Australia" },
+    { name: "Melbourne", country: "Australia" },
+    { name: "Brisbane", country: "Australia" },
+    { name: "Perth", country: "Australia" },
+    { name: "Adelaide", country: "Australia" },
+    { name: "Gold Coast", country: "Australia" },
+    { name: "Cairns", country: "Australia" },
+    { name: "Hobart", country: "Australia" },
+    { name: "Auckland", country: "New Zealand" },
+    { name: "Wellington", country: "New Zealand" },
+    { name: "Queenstown", country: "New Zealand" },
+    { name: "Christchurch", country: "New Zealand" },
+    { name: "Rotorua", country: "New Zealand" },
+    { name: "Fiji", country: "Fiji" },
+    { name: "Nadi", country: "Fiji" },
+    { name: "Tahiti", country: "French Polynesia" },
+    { name: "Bora Bora", country: "French Polynesia" },
+    { name: "Port Vila", country: "Vanuatu" },
+    { name: "Apia", country: "Samoa" },
+    { name: "Noumea", country: "New Caledonia" },
+  ],
+};
 
-const travelStyles = [
-  "Weekend city breaks",
-  "Luxury hotel deals",
-  "Beach and skyline escapes",
-  "Culture-first trips",
-];
+function getGradientImage(index: number) {
+  const [base, middle, highlight] =
+    gradientPalettes[index % gradientPalettes.length];
+
+  return `radial-gradient(circle at 20% 20%, ${highlight} 0, transparent 34%), radial-gradient(circle at 78% 18%, ${middle} 0, transparent 30%), linear-gradient(135deg, ${base} 0%, ${middle} 54%, ${highlight} 100%)`;
+}
+
+const destinationSections: DestinationSection[] = Object.entries(
+  destinationCatalog,
+).map(([region, destinations], regionIndex) => {
+  const regionName = region as RegionName;
+
+  return {
+    region: regionName,
+    ...regionDetails[regionName],
+    destinations: destinations.map((destination, destinationIndex) => ({
+      ...destination,
+      region: regionName,
+      image: getGradientImage(regionIndex + destinationIndex),
+      tag: destinationTags[destinationIndex % destinationTags.length],
+    })),
+  };
+});
+
+const totalDestinations = destinationSections.reduce(
+  (count, section) => count + section.destinations.length,
+  0,
+);
+
+function getRegionId(region: string) {
+  return region.toLowerCase().replaceAll(" ", "-");
+}
+
+function getDestinationHref(destination: Destination) {
+  return `/flights/results?destination=${encodeURIComponent(destination.name)}`;
+}
 
 export default function DestinationsPage() {
   return (
@@ -193,260 +323,125 @@ export default function DestinationsPage() {
       <AppHeader />
 
       <main className="flex-1 bg-[#f5f7fb] text-slate-950">
-        <section className="relative overflow-hidden bg-[#f5f7fb]">
-          <div className="absolute inset-x-0 top-0 h-[30rem] bg-[linear-gradient(135deg,#2b136f_0%,#5b21b6_45%,#0f172a_100%)]" />
-          <div className="absolute left-[8%] top-10 h-72 w-72 rounded-full bg-fuchsia-400/20 blur-3xl" />
-          <div className="absolute right-[10%] top-20 h-80 w-80 rounded-full bg-blue-400/20 blur-3xl" />
-
-          <div className="page-shell relative py-8 sm:py-12 lg:py-14">
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(360px,0.58fr)] lg:items-stretch">
-              <div className="flex min-h-[31rem] flex-col justify-between rounded-[2rem] bg-white p-5 shadow-2xl shadow-slate-950/20 sm:p-8 lg:p-10">
-                <div>
-                  <p className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-violet-700">
-                    Travel Inspiration
-                  </p>
-
-                  <h1 className="mt-5 max-w-3xl text-5xl font-black tracking-[-0.05em] text-slate-950 sm:text-6xl lg:text-7xl">
-                    Destinations
-                  </h1>
-
-                  <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                    Discover popular destinations and travel ideas for your next
-                    journey.
-                  </p>
-                </div>
-
-                <div className="mt-8 rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-xl shadow-slate-200/80">
-                  <div className="grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                          Explore by vibe
-                        </p>
-                        <p className="mt-1 text-base font-black text-slate-950">
-                          Culture, food, beaches
-                        </p>
-                      </div>
-
-                      <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
-                          Plan faster
-                        </p>
-                        <p className="mt-1 text-base font-black text-slate-950">
-                          Flights, hotels, cars
-                        </p>
-                      </div>
-                    </div>
-
-                    <LinkButton
-                      href="/deals"
-                      variant="accent"
-                      size="lg"
-                      className="h-14 rounded-2xl px-7 text-base shadow-lg shadow-violet-200"
-                    >
-                      Search Travel Deals
-                    </LinkButton>
-                  </div>
-                </div>
+        <section className="border-b border-slate-200 bg-white">
+          <div className="page-shell py-8 sm:py-10">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <p className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-violet-700">
+                  Destination discovery
+                </p>
+                <h1 className="mt-4 text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
+                  Find your next place to go
+                </h1>
+                <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
+                  Browse {totalDestinations} clickable destinations across eight
+                  regions, then jump straight into flight results for the city
+                  you like.
+                </p>
               </div>
 
-              <div className="grid min-h-[31rem] grid-cols-2 gap-4">
-                {featuredDestinations.map((destination, index) => (
-                  <Link
-                    key={destination.name}
-                    href={`/flights/results?destination=${encodeURIComponent(
-                      destination.name,
-                    )}`}
-                    className={`group relative overflow-hidden rounded-[2rem] bg-slate-900 shadow-2xl shadow-slate-950/20 outline-none transition duration-300 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-violet-200 ${
-                      index === 0 ? "col-span-2" : ""
-                    }`}
-                  >
-                    <Image
-                      src={destination.image}
-                      alt={`${destination.name} destination skyline`}
-                      fill
-                      priority={index === 0}
-                      sizes={
-                        index === 0
-                          ? "(min-width: 1024px) 40vw, 100vw"
-                          : "(min-width: 1024px) 20vw, 50vw"
-                      }
-                      className="object-cover transition duration-700 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
-                    <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/75">
-                        Featured destination
-                      </p>
-                      <h2 className="mt-2 text-3xl font-black tracking-tight">
-                        {destination.name}
-                      </h2>
-                      <p className="mt-1 text-sm font-semibold text-white/85">
-                        {destination.tag}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
+              <div className="grid grid-cols-2 gap-3 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3 text-center sm:min-w-80">
+                <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+                  <p className="text-2xl font-black text-slate-950">
+                    {totalDestinations}
+                  </p>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                    Destinations
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+                  <p className="text-2xl font-black text-slate-950">
+                    {destinationSections.length}
+                  </p>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+                    Regions
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="page-shell -mt-2 pb-10">
-          <div className="rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-xl shadow-slate-200/70">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-sm font-black text-slate-950">
-                  Browse destination ideas
-                </p>
-                <p className="mt-1 text-sm text-slate-500">
-                  Jump to a region or filter your inspiration by trip style.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {destinationSections.map((section) => (
-                  <a
-                    key={section.region}
-                    href={`#${section.region
-                      .toLowerCase()
-                      .replaceAll(" ", "-")}`}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
-                  >
-                    {section.region}
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-              {travelStyles.map((style) => (
-                <span
-                  key={style}
-                  className="shrink-0 rounded-full bg-violet-50 px-4 py-2 text-sm font-bold text-violet-700"
+        <section className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
+          <div className="page-shell py-3">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {destinationSections.map((section) => (
+                <a
+                  key={section.region}
+                  href={`#${getRegionId(section.region)}`}
+                  className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200"
                 >
-                  {style}
-                </span>
+                  {section.region}
+                </a>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="page-shell pb-16 lg:pb-20">
-          <div className="space-y-14">
+        <section className="page-shell py-8 sm:py-10 lg:py-12">
+          <div className="space-y-12">
             {destinationSections.map((section) => (
               <section
                 key={section.region}
-                id={section.region.toLowerCase().replaceAll(" ", "-")}
+                id={getRegionId(section.region)}
                 className="scroll-mt-24"
               >
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div className="max-w-2xl">
+                  <div className="max-w-3xl">
                     <div
                       className={`mb-3 h-1.5 w-16 rounded-full bg-gradient-to-r ${section.accent}`}
                     />
-                    <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                    <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
                       {section.region}
                     </h2>
-                    <p className="mt-2 text-base leading-7 text-slate-600">
+                    <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
                       {section.summary}
                     </p>
                   </div>
-
-                  <Link
-                    href="/deals"
-                    className="text-sm font-black text-violet-700 transition hover:text-violet-900"
-                  >
-                    View deals
-                  </Link>
+                  <p className="text-sm font-black text-slate-500">
+                    {section.destinations.length} places
+                  </p>
                 </div>
 
-                <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-                  {section.destinations.map((destination, index) => (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {section.destinations.map((destination) => (
                     <Link
-                      key={destination.name}
-                      href={`/flights/results?destination=${encodeURIComponent(
-                        destination.name,
-                      )}`}
-                      className={`group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-lg shadow-slate-200/80 outline-none transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-200/70 focus-visible:ring-4 focus-visible:ring-violet-200 ${
-                        index === 0 ? "md:col-span-2" : ""
-                      }`}
+                      key={`${destination.region}-${destination.name}`}
+                      href={getDestinationHref(destination)}
+                      className="group relative min-h-48 overflow-hidden rounded-[1.35rem] bg-slate-900 p-5 text-white shadow-lg shadow-slate-200/80 outline-none transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-200/60 focus-visible:ring-4 focus-visible:ring-violet-200 sm:min-h-52"
+                      style={{ backgroundImage: destination.image }}
+                      aria-label={`Search flights to ${destination.name}`}
                     >
-                      <div className="relative h-64 overflow-hidden bg-slate-900">
-                        <Image
-                          src={destination.image}
-                          alt={`${destination.name}, ${destination.country}`}
-                          fill
-                          sizes="(min-width: 1280px) 25vw, (min-width: 768px) 50vw, 100vw"
-                          className="object-cover transition duration-700 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/10 to-transparent" />
-                        <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-violet-700 shadow-lg backdrop-blur">
-                          {destination.tag}
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(255,255,255,0.22),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0.12)_0%,rgba(15,23,42,0.64)_54%,rgba(15,23,42,0.9)_100%)] transition duration-300 group-hover:bg-[radial-gradient(circle_at_30%_15%,rgba(255,255,255,0.28),transparent_30%),linear-gradient(180deg,rgba(15,23,42,0.06)_0%,rgba(15,23,42,0.56)_50%,rgba(15,23,42,0.92)_100%)]" />
+                      <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/10 to-transparent" />
+
+                      <div className="relative flex h-full min-h-40 flex-col justify-between sm:min-h-44">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-white/90 ring-1 ring-white/25 backdrop-blur">
+                            {destination.country}
+                          </span>
+                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/18 text-lg font-black ring-1 ring-white/25 backdrop-blur transition group-hover:bg-white group-hover:text-violet-700">
+                            →
+                          </span>
                         </div>
-                        <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                          <h3 className="text-3xl font-black tracking-tight drop-shadow-sm">
+
+                        <div>
+                          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-white/70">
+                            {destination.tag}
+                          </p>
+                          <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">
                             {destination.name}
                           </h3>
-                          <p className="mt-1 text-sm font-semibold text-white/85">
-                            {destination.country}
+                          <p className="mt-2 text-sm font-semibold leading-5 text-white/86">
+                            {destinationSubtitle}
                           </p>
                         </div>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4 p-5">
-                        <div>
-                          <p className="text-sm font-bold text-slate-500">
-                            Flights • Hotels • Cars
-                          </p>
-                          <p className="mt-1 text-base font-black text-slate-950">
-                            Plan a trip to {destination.name}
-                          </p>
-                        </div>
-                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-violet-50 text-lg font-black text-violet-700 transition group-hover:bg-violet-600 group-hover:text-white">
-                          →
-                        </span>
                       </div>
                     </Link>
                   ))}
                 </div>
               </section>
             ))}
-          </div>
-        </section>
-
-        <section className="page-shell pb-16 lg:pb-24">
-          <div className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#2b136f,#6d28d9_52%,#111827)] px-6 py-10 text-white shadow-2xl shadow-violet-950/25 sm:px-10 lg:px-14">
-            <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-fuchsia-400/25 blur-2xl" />
-            <div className="absolute -bottom-20 left-10 h-52 w-52 rounded-full bg-blue-400/20 blur-2xl" />
-
-            <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.24em] text-violet-200">
-                  Start exploring
-                </p>
-                <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-                  Ready to plan your next trip?
-                </h2>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <LinkButton
-                  href="/deals"
-                  variant="accent"
-                  size="lg"
-                  className="rounded-full px-6 shadow-lg shadow-violet-950/20"
-                >
-                  Search Travel Deals
-                </LinkButton>
-                <Link
-                  href="/"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-white/25 px-6 text-sm font-bold text-white transition hover:bg-white/10"
-                >
-                  Homepage
-                </Link>
-              </div>
-            </div>
           </div>
         </section>
       </main>
