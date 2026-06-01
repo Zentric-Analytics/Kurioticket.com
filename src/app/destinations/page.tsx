@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -21,6 +22,7 @@ type DestinationSeed = {
 type Destination = DestinationSeed & {
   region: RegionName;
   image: string;
+  imageAlt: string;
   tag: string;
 };
 
@@ -31,16 +33,32 @@ type DestinationSection = {
   destinations: Destination[];
 };
 
-const gradientPalettes = [
-  ["#0f172a", "#2563eb", "#a855f7"],
-  ["#111827", "#db2777", "#f97316"],
-  ["#064e3b", "#059669", "#38bdf8"],
-  ["#1e1b4b", "#7c3aed", "#f43f5e"],
-  ["#451a03", "#d97706", "#facc15"],
-  ["#082f49", "#0891b2", "#22c55e"],
-  ["#172554", "#4f46e5", "#ec4899"],
-  ["#052e16", "#16a34a", "#84cc16"],
-] as const;
+const destinationPhotoUrls: Partial<Record<string, string>> = {
+  London:
+    "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  Paris:
+    "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  Rome:
+    "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  Barcelona:
+    "https://images.pexels.com/photos/35759447/pexels-photo-35759447.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  Dubai:
+    "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "New York":
+    "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  Tokyo:
+    "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
+};
+
+const imageSearchHints: Partial<Record<string, string>> = {
+  London: "London skyline Big Ben",
+  Paris: "Eiffel Tower Paris cityscape",
+  Rome: "Colosseum historic Rome",
+  Barcelona: "Sagrada Familia Barcelona skyline",
+  Dubai: "Burj Khalifa Dubai skyline",
+  "New York": "Manhattan skyline New York",
+  Tokyo: "Tokyo city lights skyline",
+};
 
 const destinationTags = [
   "skyline glow",
@@ -280,16 +298,27 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
   ],
 };
 
-function getGradientImage(index: number) {
-  const [base, middle, highlight] =
-    gradientPalettes[index % gradientPalettes.length];
+function getDestinationImageUrl(destination: DestinationSeed) {
+  const curatedPhotoUrl = destinationPhotoUrls[destination.name];
 
-  return `radial-gradient(circle at 20% 20%, ${highlight} 0, transparent 34%), radial-gradient(circle at 78% 18%, ${middle} 0, transparent 30%), linear-gradient(135deg, ${base} 0%, ${middle} 54%, ${highlight} 100%)`;
+  if (curatedPhotoUrl) {
+    return curatedPhotoUrl;
+  }
+
+  const query =
+    imageSearchHints[destination.name] ??
+    `${destination.name} ${destination.country} landmark travel`;
+
+  return `https://source.unsplash.com/900x650/?${encodeURIComponent(query)}`;
+}
+
+function getDestinationImageAlt(destination: DestinationSeed) {
+  return `${destination.name}, ${destination.country} travel photography`;
 }
 
 const destinationSections: DestinationSection[] = Object.entries(
   destinationCatalog,
-).map(([region, destinations], regionIndex) => {
+).map(([region, destinations]) => {
   const regionName = region as RegionName;
 
   return {
@@ -298,7 +327,8 @@ const destinationSections: DestinationSection[] = Object.entries(
     destinations: destinations.map((destination, destinationIndex) => ({
       ...destination,
       region: regionName,
-      image: getGradientImage(regionIndex + destinationIndex),
+      image: getDestinationImageUrl(destination),
+      imageAlt: getDestinationImageAlt(destination),
       tag: destinationTags[destinationIndex % destinationTags.length],
     })),
   };
@@ -409,11 +439,17 @@ export default function DestinationsPage() {
                       key={`${destination.region}-${destination.name}`}
                       href={getDestinationHref(destination)}
                       className="group relative min-h-48 overflow-hidden rounded-[1.35rem] bg-slate-900 p-5 text-white shadow-lg shadow-slate-200/80 outline-none transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-200/60 focus-visible:ring-4 focus-visible:ring-violet-200 sm:min-h-52"
-                      style={{ backgroundImage: destination.image }}
                       aria-label={`Search flights to ${destination.name}`}
                     >
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(255,255,255,0.22),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0.12)_0%,rgba(15,23,42,0.64)_54%,rgba(15,23,42,0.9)_100%)] transition duration-300 group-hover:bg-[radial-gradient(circle_at_30%_15%,rgba(255,255,255,0.28),transparent_30%),linear-gradient(180deg,rgba(15,23,42,0.06)_0%,rgba(15,23,42,0.56)_50%,rgba(15,23,42,0.92)_100%)]" />
-                      <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/10 to-transparent" />
+                      <Image
+                        src={destination.image}
+                        alt={destination.imageAlt}
+                        fill
+                        unoptimized
+                        sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover transition duration-700 ease-out group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/12 via-slate-950/48 to-slate-950/88 transition duration-300 group-hover:from-slate-950/6 group-hover:via-slate-950/42 group-hover:to-slate-950/90" />
 
                       <div className="relative flex h-full min-h-40 flex-col justify-between sm:min-h-44">
                         <div className="flex items-center justify-between gap-3">
