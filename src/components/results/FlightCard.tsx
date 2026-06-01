@@ -31,7 +31,7 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
 
           <div className="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2">
             <div>
-              <div className="text-lg font-black text-navy">{formatTime(flight.departureTime)}</div>
+              <div className="text-lg font-extrabold text-navy">{formatTime(flight.departureTime)}</div>
               <div className="text-xs font-semibold text-muted">{flight.originAirport}</div>
             </div>
             <div className="min-w-16 text-center">
@@ -44,14 +44,14 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
               <div className="text-xs font-semibold text-muted">{flight.stops === 0 ? "Nonstop" : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`}</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-black text-navy">{formatTime(flight.arrivalTime)}</div>
+              <div className="text-lg font-extrabold text-navy">{formatTime(flight.arrivalTime)}</div>
               <div className="text-xs font-semibold text-muted">{flight.destinationAirport}</div>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-2 lg:w-32 lg:flex-col lg:items-end">
             <div className="text-right">
-              <div className="text-xl font-black text-navy">{formatCurrency(flight.price, flight.currency)}</div>
+              <div className="text-xl font-extrabold text-navy">{formatCurrency(flight.price, flight.currency)}</div>
               <div className="text-xs font-semibold text-muted">total estimate</div>
             </div>
             <LinkButton href={`/flights/details/${encodeURIComponent(flight.id)}`} variant="primary" size="sm" className="whitespace-nowrap bg-navy px-2.5 hover:bg-navy-soft">
