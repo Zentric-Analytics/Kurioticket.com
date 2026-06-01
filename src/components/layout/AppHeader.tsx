@@ -332,7 +332,7 @@ export function AppHeader({
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-gradient-to-r from-indigo-700 via-violet-600 to-sky-700 text-white shadow-[0_8px_24px_rgba(67,56,202,0.16)]">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
           <Link href="/" aria-label="Kurioticket home" className="shrink-0">
             <KurioticketLogo variant="full" tone="light" />
