@@ -670,24 +670,26 @@ export default function HotelsSearchPage() {
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative min-h-[300px] overflow-hidden rounded-[2rem] bg-slate-950 shadow-[0_28px_70px_-38px_rgba(15,23,42,0.95)] ring-1 ring-slate-950/10 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_80px_-38px_rgba(79,70,229,0.9)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:min-h-[340px] xl:min-h-[360px]"
+                  className="group relative min-h-[300px] overflow-hidden rounded-[2rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:min-h-[340px] xl:min-h-[360px]"
                 >
                   <Image
                     src={card.image}
                     alt={card.imageAlt}
                     fill
                     sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover transition duration-700 group-hover:scale-105"
+                    className="object-cover brightness-[1.06] saturate-[1.12] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.16]"
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/35 to-slate-950/5" />
-                  <div className="pointer-events-none absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/15" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/68 via-slate-900/18 to-white/0" />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-indigo-950/30 via-slate-900/8 to-transparent" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-cyan-300/10 opacity-80" />
+                  <div className="pointer-events-none absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/25" />
                   <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-7">
-                    <p className="text-2xl font-semibold leading-tight tracking-tight drop-shadow-md">
+                    <p className="text-2xl font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)]">
                       {card.title}
                     </p>
-                    <div className="mt-3 flex items-center justify-between gap-3 text-sm font-semibold text-white/90">
+                    <div className="mt-3 flex items-center justify-between gap-3 text-sm font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)]">
                       <span>{card.subtitle}</span>
-                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/30 backdrop-blur transition group-hover:translate-x-1 group-hover:bg-white/25">
+                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32">
                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </span>
                     </div>
@@ -697,7 +699,7 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="grid gap-4 md:grid-cols-3">
+          <section className="grid gap-4 py-3 md:grid-cols-3 md:py-4">
             {[
               {
                 title: "Compare provider offers",
@@ -720,11 +722,12 @@ export default function HotelsSearchPage() {
               return (
                 <article
                   key={item.title}
-                  className="group relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-gradient-to-br from-white via-white to-indigo-50/60 p-6 shadow-[0_24px_70px_-42px_rgba(15,23,42,0.9)] ring-1 ring-white/80 transition duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_30px_80px_-42px_rgba(79,70,229,0.75)]"
+                  className="group relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/80 p-6 shadow-[0_22px_62px_-44px_rgba(79,70,229,0.72)] ring-1 ring-indigo-100/70 backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-indigo-200/80 hover:bg-white/90 hover:shadow-[0_30px_80px_-46px_rgba(79,70,229,0.68)]"
                 >
-                  <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-indigo-100/70 blur-2xl transition group-hover:bg-indigo-200/80" />
-                  <div className="relative mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-950/20 ring-1 ring-slate-950/10 transition group-hover:bg-indigo-700">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-indigo-100/55 blur-2xl transition group-hover:bg-cyan-100/80" />
+                  <div className="pointer-events-none absolute -left-12 bottom-0 h-24 w-24 rounded-full bg-sky-50/80 blur-2xl" />
+                  <div className="relative mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-cyan-50 text-indigo-700 shadow-[0_14px_34px_-22px_rgba(79,70,229,0.82)] ring-1 ring-indigo-200/70 transition group-hover:text-indigo-800 group-hover:ring-indigo-300/80">
+                    <Icon className="h-5 w-5 stroke-[1.8]" aria-hidden="true" />
                   </div>
                   <h2 className="relative text-base font-semibold tracking-tight text-slate-950">
                     {item.title}
