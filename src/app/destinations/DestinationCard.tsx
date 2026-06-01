@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 const destinationImageFallback =
-  "https://picsum.photos/seed/24161/1200/800.jpg";
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80";
 
 type DestinationCardProps = {
   href: string;

@@ -7,10 +7,7 @@ type RegionName =
   | "North America"
   | "Asia"
   | "Africa"
-  | "Middle East"
-  | "South America"
-  | "Caribbean"
-  | "Oceania";
+  | "Middle East";
 
 type DestinationSeed = {
   name: string;
@@ -33,134 +30,116 @@ type DestinationSection = {
 
 const curatedDestinationPhotos: Record<string, string> = {
   "London|United Kingdom":
-    "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
   "Paris|France":
-    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80",
-  "Rome|Italy":
-    "https://images.unsplash.com/photo-1525874684015-58379d421a52?auto=format&fit=crop&w=1200&q=80",
-  "Barcelona|Spain":
-    "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80",
-  "Amsterdam|Netherlands":
-    "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80",
-  "Berlin|Germany":
-    "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
   "Dubai|United Arab Emirates":
-    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
   "New York|United States":
-    "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80",
-  "Istanbul|Turkey":
-    "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80",
-  "Las Vegas|United States":
-    "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Rome|Italy":
+    "https://images.unsplash.com/photo-1525874684015-58379d421a52?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Barcelona|Spain":
+    "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Amsterdam|Netherlands":
+    "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
   "Tokyo|Japan":
-    "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
   "Singapore|Singapore":
-    "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Bangkok|Thailand":
+    "https://images.unsplash.com/photo-1508009603885-50cf7c579365?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Cape Town|South Africa":
+    "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Istanbul|Turkey":
+    "https://images.unsplash.com/photo-1527838832700-5059252407fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Las Vegas|United States":
+    "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Toronto|Canada":
+    "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Los Angeles|United States":
+    "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Miami|United States":
+    "https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Doha|Qatar":
+    "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Abu Dhabi|United Arab Emirates":
+    "https://images.unsplash.com/photo-1518684079-3c830dcef090?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Lisbon|Portugal":
+    "https://images.unsplash.com/photo-1501927023255-9063be98970c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Prague|Czechia":
+    "https://images.unsplash.com/photo-1541849546-216549ae216d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Athens|Greece":
+    "https://images.unsplash.com/photo-1555993539-1732b0258235?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Marrakech|Morocco":
+    "https://images.unsplash.com/photo-1597212720158-0a65b7ab7434?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Nairobi|Kenya":
+    "https://images.unsplash.com/photo-1523805009345-7448845a9e53?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Kuala Lumpur|Malaysia":
+    "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Venice|Italy":
+    "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Florence|Italy":
+    "https://images.unsplash.com/photo-1543429257-3eb0b65d9c58?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Berlin|Germany":
+    "https://images.unsplash.com/photo-1560969184-10fe8719e047?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Madrid|Spain":
+    "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Copenhagen|Denmark":
+    "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Zurich|Switzerland":
+    "https://images.unsplash.com/photo-1515488764276-beab7607c1e6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Vienna|Austria":
+    "https://images.unsplash.com/photo-1516550893923-42d28e5677af?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Milan|Italy":
+    "https://images.unsplash.com/photo-1520440229-6469a149ac59?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Accra|Ghana":
+    "https://images.unsplash.com/photo-1553901753-215db3446770?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
   "Lagos|Nigeria":
     "https://images.pexels.com/photos/32014864/pexels-photo-32014864.jpeg?auto=compress&cs=tinysrgb&w=1200",
   "Abuja|Nigeria":
     "https://images.pexels.com/photos/20453360/pexels-photo-20453360.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "Cape Town|South Africa":
-    "https://images.pexels.com/photos/35398305/pexels-photo-35398305.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "Nairobi|Kenya":
-    "https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&w=1200&q=80",
-  "Toronto|Canada":
-    "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80",
-  "Los Angeles|United States":
-    "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?auto=format&fit=crop&w=1200&q=80",
-  "Bangkok|Thailand":
-    "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=80",
-  "Kuala Lumpur|Malaysia":
-    "https://images.pexels.com/photos/33196113/pexels-photo-33196113.jpeg?auto=compress&cs=tinysrgb&w=1200",
-  "Miami|United States":
-    "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
-  "Orlando|United States":
-    "https://images.unsplash.com/photo-1597466599360-3b9775841aec?auto=format&fit=crop&w=1200&q=80",
-  "Chicago|United States":
-    "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=1200&q=80",
-  "San Francisco|United States":
-    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1200&q=80",
-  "Seattle|United States":
-    "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=1200&q=80",
-  "Washington|United States":
-    "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?auto=format&fit=crop&w=1200&q=80",
+  "Muscat|Oman":
+    "https://images.unsplash.com/photo-1582647509711-c8aa8bdc5a09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Jeddah|Saudi Arabia":
+    "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
   "Vancouver|Canada":
-    "https://images.unsplash.com/photo-1578922746465-3a80a228f223?auto=format&fit=crop&w=1200&q=80",
-  "Cancun|Mexico":
-    "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
-  "Mexico City|Mexico":
-    "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?auto=format&fit=crop&w=1200&q=80",
-  "Madrid|Spain":
-    "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80",
-  "Doha|Qatar":
-    "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=1200&q=80",
-  "Accra|Ghana":
-    "https://images.unsplash.com/photo-1553901753-215db3446770?auto=format&fit=crop&w=1200&q=80",
-  "Cairo|Egypt":
-    "https://images.unsplash.com/photo-1539650116574-75c0c6d73f56?auto=format&fit=crop&w=1200&q=80",
-  "Casablanca|Morocco":
-    "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1578922746465-3a80a228f223?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Chicago|United States":
+    "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "San Francisco|United States":
+    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Seoul|South Korea":
+    "https://images.unsplash.com/photo-1538485399081-7c8ed0e8fabb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Osaka|Japan":
+    "https://images.unsplash.com/photo-1590559899731-a382839e5549?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Bali|Indonesia":
+    "https://images.unsplash.com/photo-1537996194471-e657df975ab4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+  "Phuket|Thailand":
+    "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
 };
 
-const priorityDestinationPhotoKeys = [
-  "London|United Kingdom",
-  "Paris|France",
-  "Rome|Italy",
-  "Barcelona|Spain",
-  "Amsterdam|Netherlands",
-  "Berlin|Germany",
-  "Dubai|United Arab Emirates",
-  "New York|United States",
-  "Istanbul|Turkey",
-  "Las Vegas|United States",
-  "Tokyo|Japan",
-  "Singapore|Singapore",
-  "Lagos|Nigeria",
-  "Abuja|Nigeria",
-  "Cape Town|South Africa",
-  "Nairobi|Kenya",
-  "Toronto|Canada",
-  "Los Angeles|United States",
-  "Bangkok|Thailand",
-  "Kuala Lumpur|Malaysia",
-] as const;
+function getDestinationPhotoUrl(name: string, country: string) {
+  const image = curatedDestinationPhotos[`${name}|${country}`];
 
-const destinationPhotoSeeds = Array.from({ length: 160 }, (_, index) =>
-  String(24001 + index),
-);
-
-let nextDestinationPhotoSeedIndex = 0;
-
-function getDestinationFallbackPhotoUrl() {
-  const photoSeed = destinationPhotoSeeds[nextDestinationPhotoSeedIndex];
-
-  if (!photoSeed) {
+  if (!image) {
     throw new Error(
-      "Every destination must have a unique photographic image seed.",
+      `Destination ${name}, ${country} must have a curated city-specific photo.`,
     );
   }
 
-  nextDestinationPhotoSeedIndex += 1;
-
-  return `https://picsum.photos/seed/${photoSeed}/1200/800.jpg`;
-}
-
-function getDestinationPhotoUrl(name: string, country: string) {
-  return (
-    curatedDestinationPhotos[`${name}|${country}`] ??
-    getDestinationFallbackPhotoUrl()
-  );
+  return image;
 }
 
 const destinationTags = [
-  "skyline glow",
-  "old town lanes",
-  "beachfront escape",
+  "iconic skyline",
+  "landmark escape",
+  "culture capital",
+  "golden-hour views",
+  "coastal energy",
   "food market nights",
-  "museum weekend",
-  "garden district",
-  "harbor views",
-  "sunset boulevard",
+  "historic streets",
+  "design weekend",
 ] as const;
 
 const destinationSubtitle = "Explore flights, hotels, and travel deals";
@@ -172,42 +151,27 @@ const regionDetails: Record<
   Europe: {
     accent: "from-blue-600 to-violet-600",
     summary:
-      "Layered history, food capitals, museums, nightlife, and quick city-to-city getaways.",
+      "A focused edit of landmark cities, romantic canals, design capitals, and timeless food-and-culture weekends.",
   },
   "North America": {
     accent: "from-sky-600 to-indigo-700",
     summary:
-      "Big skylines, national parks, entertainment hubs, beaches, and family-friendly escapes.",
+      "Statement skylines, coastal icons, entertainment capitals, and cinematic city breaks worth planning around.",
   },
   Asia: {
     accent: "from-rose-500 to-violet-700",
     summary:
-      "Street food, temples, neon city breaks, island stays, shopping, and cultural adventures.",
+      "Neon cityscapes, island escapes, street-food legends, temples, beaches, and premium shopping gateways.",
   },
   Africa: {
     accent: "from-emerald-600 to-violet-600",
     summary:
-      "Safari gateways, creative capitals, desert landscapes, beaches, and unforgettable nature.",
+      "High-impact travel favorites with ocean scenery, safari access, creative capitals, and rich cultural texture.",
   },
   "Middle East": {
     accent: "from-amber-500 to-fuchsia-600",
     summary:
-      "Statement skylines, desert escapes, heritage sites, warm coasts, and luxury stays.",
-  },
-  "South America": {
-    accent: "from-lime-600 to-cyan-700",
-    summary:
-      "Mountain scenery, rainforest routes, colorful cities, beaches, and food-led adventures.",
-  },
-  Caribbean: {
-    accent: "from-cyan-500 to-blue-700",
-    summary:
-      "Island-hopping favorites with turquoise water, music, beach resorts, and laid-back sunshine.",
-  },
-  Oceania: {
-    accent: "from-teal-500 to-indigo-700",
-    summary:
-      "Coastal cities, reef adventures, island retreats, wine regions, and dramatic road trips.",
+      "Luxury skylines, warm coasts, desert drama, heritage districts, and modern hospitality hubs.",
   },
 };
 
@@ -239,16 +203,6 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Amsterdam", "Netherlands"),
     },
     {
-      name: "Berlin",
-      country: "Germany",
-      image: getDestinationPhotoUrl("Berlin", "Germany"),
-    },
-    {
-      name: "Madrid",
-      country: "Spain",
-      image: getDestinationPhotoUrl("Madrid", "Spain"),
-    },
-    {
       name: "Lisbon",
       country: "Portugal",
       image: getDestinationPhotoUrl("Lisbon", "Portugal"),
@@ -259,44 +213,9 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Prague", "Czechia"),
     },
     {
-      name: "Vienna",
-      country: "Austria",
-      image: getDestinationPhotoUrl("Vienna", "Austria"),
-    },
-    {
       name: "Athens",
       country: "Greece",
       image: getDestinationPhotoUrl("Athens", "Greece"),
-    },
-    {
-      name: "Dublin",
-      country: "Ireland",
-      image: getDestinationPhotoUrl("Dublin", "Ireland"),
-    },
-    {
-      name: "Copenhagen",
-      country: "Denmark",
-      image: getDestinationPhotoUrl("Copenhagen", "Denmark"),
-    },
-    {
-      name: "Stockholm",
-      country: "Sweden",
-      image: getDestinationPhotoUrl("Stockholm", "Sweden"),
-    },
-    {
-      name: "Oslo",
-      country: "Norway",
-      image: getDestinationPhotoUrl("Oslo", "Norway"),
-    },
-    {
-      name: "Budapest",
-      country: "Hungary",
-      image: getDestinationPhotoUrl("Budapest", "Hungary"),
-    },
-    {
-      name: "Florence",
-      country: "Italy",
-      image: getDestinationPhotoUrl("Florence", "Italy"),
     },
     {
       name: "Venice",
@@ -304,14 +223,39 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Venice", "Italy"),
     },
     {
-      name: "Edinburgh",
-      country: "United Kingdom",
-      image: getDestinationPhotoUrl("Edinburgh", "United Kingdom"),
+      name: "Florence",
+      country: "Italy",
+      image: getDestinationPhotoUrl("Florence", "Italy"),
     },
     {
-      name: "Reykjavik",
-      country: "Iceland",
-      image: getDestinationPhotoUrl("Reykjavik", "Iceland"),
+      name: "Berlin",
+      country: "Germany",
+      image: getDestinationPhotoUrl("Berlin", "Germany"),
+    },
+    {
+      name: "Madrid",
+      country: "Spain",
+      image: getDestinationPhotoUrl("Madrid", "Spain"),
+    },
+    {
+      name: "Copenhagen",
+      country: "Denmark",
+      image: getDestinationPhotoUrl("Copenhagen", "Denmark"),
+    },
+    {
+      name: "Zurich",
+      country: "Switzerland",
+      image: getDestinationPhotoUrl("Zurich", "Switzerland"),
+    },
+    {
+      name: "Vienna",
+      country: "Austria",
+      image: getDestinationPhotoUrl("Vienna", "Austria"),
+    },
+    {
+      name: "Milan",
+      country: "Italy",
+      image: getDestinationPhotoUrl("Milan", "Italy"),
     },
   ],
   "North America": [
@@ -321,49 +265,9 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("New York", "United States"),
     },
     {
-      name: "Los Angeles",
-      country: "United States",
-      image: getDestinationPhotoUrl("Los Angeles", "United States"),
-    },
-    {
-      name: "Chicago",
-      country: "United States",
-      image: getDestinationPhotoUrl("Chicago", "United States"),
-    },
-    {
-      name: "Miami",
-      country: "United States",
-      image: getDestinationPhotoUrl("Miami", "United States"),
-    },
-    {
-      name: "San Francisco",
-      country: "United States",
-      image: getDestinationPhotoUrl("San Francisco", "United States"),
-    },
-    {
       name: "Las Vegas",
       country: "United States",
       image: getDestinationPhotoUrl("Las Vegas", "United States"),
-    },
-    {
-      name: "Seattle",
-      country: "United States",
-      image: getDestinationPhotoUrl("Seattle", "United States"),
-    },
-    {
-      name: "Boston",
-      country: "United States",
-      image: getDestinationPhotoUrl("Boston", "United States"),
-    },
-    {
-      name: "Washington",
-      country: "United States",
-      image: getDestinationPhotoUrl("Washington", "United States"),
-    },
-    {
-      name: "Orlando",
-      country: "United States",
-      image: getDestinationPhotoUrl("Orlando", "United States"),
     },
     {
       name: "Toronto",
@@ -371,49 +275,29 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Toronto", "Canada"),
     },
     {
+      name: "Los Angeles",
+      country: "United States",
+      image: getDestinationPhotoUrl("Los Angeles", "United States"),
+    },
+    {
+      name: "Miami",
+      country: "United States",
+      image: getDestinationPhotoUrl("Miami", "United States"),
+    },
+    {
       name: "Vancouver",
       country: "Canada",
       image: getDestinationPhotoUrl("Vancouver", "Canada"),
     },
     {
-      name: "Montreal",
-      country: "Canada",
-      image: getDestinationPhotoUrl("Montreal", "Canada"),
+      name: "Chicago",
+      country: "United States",
+      image: getDestinationPhotoUrl("Chicago", "United States"),
     },
     {
-      name: "Calgary",
-      country: "Canada",
-      image: getDestinationPhotoUrl("Calgary", "Canada"),
-    },
-    {
-      name: "Quebec City",
-      country: "Canada",
-      image: getDestinationPhotoUrl("Quebec City", "Canada"),
-    },
-    {
-      name: "Mexico City",
-      country: "Mexico",
-      image: getDestinationPhotoUrl("Mexico City", "Mexico"),
-    },
-    {
-      name: "Cancun",
-      country: "Mexico",
-      image: getDestinationPhotoUrl("Cancun", "Mexico"),
-    },
-    {
-      name: "Guadalajara",
-      country: "Mexico",
-      image: getDestinationPhotoUrl("Guadalajara", "Mexico"),
-    },
-    {
-      name: "Monterrey",
-      country: "Mexico",
-      image: getDestinationPhotoUrl("Monterrey", "Mexico"),
-    },
-    {
-      name: "Tulum",
-      country: "Mexico",
-      image: getDestinationPhotoUrl("Tulum", "Mexico"),
+      name: "San Francisco",
+      country: "United States",
+      image: getDestinationPhotoUrl("San Francisco", "United States"),
     },
   ],
   Asia: [
@@ -423,9 +307,9 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Tokyo", "Japan"),
     },
     {
-      name: "Seoul",
-      country: "South Korea",
-      image: getDestinationPhotoUrl("Seoul", "South Korea"),
+      name: "Singapore",
+      country: "Singapore",
+      image: getDestinationPhotoUrl("Singapore", "Singapore"),
     },
     {
       name: "Bangkok",
@@ -433,19 +317,19 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Bangkok", "Thailand"),
     },
     {
-      name: "Singapore",
-      country: "Singapore",
-      image: getDestinationPhotoUrl("Singapore", "Singapore"),
-    },
-    {
-      name: "Hong Kong",
-      country: "Hong Kong",
-      image: getDestinationPhotoUrl("Hong Kong", "Hong Kong"),
-    },
-    {
       name: "Kuala Lumpur",
       country: "Malaysia",
       image: getDestinationPhotoUrl("Kuala Lumpur", "Malaysia"),
+    },
+    {
+      name: "Seoul",
+      country: "South Korea",
+      image: getDestinationPhotoUrl("Seoul", "South Korea"),
+    },
+    {
+      name: "Osaka",
+      country: "Japan",
+      image: getDestinationPhotoUrl("Osaka", "Japan"),
     },
     {
       name: "Bali",
@@ -453,69 +337,9 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Bali", "Indonesia"),
     },
     {
-      name: "Jakarta",
-      country: "Indonesia",
-      image: getDestinationPhotoUrl("Jakarta", "Indonesia"),
-    },
-    {
-      name: "Hanoi",
-      country: "Vietnam",
-      image: getDestinationPhotoUrl("Hanoi", "Vietnam"),
-    },
-    {
-      name: "Ho Chi Minh City",
-      country: "Vietnam",
-      image: getDestinationPhotoUrl("Ho Chi Minh City", "Vietnam"),
-    },
-    {
-      name: "Manila",
-      country: "Philippines",
-      image: getDestinationPhotoUrl("Manila", "Philippines"),
-    },
-    {
-      name: "Taipei",
-      country: "Taiwan",
-      image: getDestinationPhotoUrl("Taipei", "Taiwan"),
-    },
-    {
-      name: "Shanghai",
-      country: "China",
-      image: getDestinationPhotoUrl("Shanghai", "China"),
-    },
-    {
-      name: "Beijing",
-      country: "China",
-      image: getDestinationPhotoUrl("Beijing", "China"),
-    },
-    {
-      name: "Mumbai",
-      country: "India",
-      image: getDestinationPhotoUrl("Mumbai", "India"),
-    },
-    {
-      name: "Delhi",
-      country: "India",
-      image: getDestinationPhotoUrl("Delhi", "India"),
-    },
-    {
-      name: "Jaipur",
-      country: "India",
-      image: getDestinationPhotoUrl("Jaipur", "India"),
-    },
-    {
       name: "Phuket",
       country: "Thailand",
       image: getDestinationPhotoUrl("Phuket", "Thailand"),
-    },
-    {
-      name: "Chiang Mai",
-      country: "Thailand",
-      image: getDestinationPhotoUrl("Chiang Mai", "Thailand"),
-    },
-    {
-      name: "Kyoto",
-      country: "Japan",
-      image: getDestinationPhotoUrl("Kyoto", "Japan"),
     },
   ],
   Africa: [
@@ -525,9 +349,9 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Cape Town", "South Africa"),
     },
     {
-      name: "Johannesburg",
-      country: "South Africa",
-      image: getDestinationPhotoUrl("Johannesburg", "South Africa"),
+      name: "Marrakech",
+      country: "Morocco",
+      image: getDestinationPhotoUrl("Marrakech", "Morocco"),
     },
     {
       name: "Nairobi",
@@ -535,19 +359,9 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Nairobi", "Kenya"),
     },
     {
-      name: "Marrakech",
-      country: "Morocco",
-      image: getDestinationPhotoUrl("Marrakech", "Morocco"),
-    },
-    {
-      name: "Casablanca",
-      country: "Morocco",
-      image: getDestinationPhotoUrl("Casablanca", "Morocco"),
-    },
-    {
-      name: "Cairo",
-      country: "Egypt",
-      image: getDestinationPhotoUrl("Cairo", "Egypt"),
+      name: "Accra",
+      country: "Ghana",
+      image: getDestinationPhotoUrl("Accra", "Ghana"),
     },
     {
       name: "Lagos",
@@ -559,66 +373,6 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       country: "Nigeria",
       image: getDestinationPhotoUrl("Abuja", "Nigeria"),
     },
-    {
-      name: "Accra",
-      country: "Ghana",
-      image: getDestinationPhotoUrl("Accra", "Ghana"),
-    },
-    {
-      name: "Dakar",
-      country: "Senegal",
-      image: getDestinationPhotoUrl("Dakar", "Senegal"),
-    },
-    {
-      name: "Addis Ababa",
-      country: "Ethiopia",
-      image: getDestinationPhotoUrl("Addis Ababa", "Ethiopia"),
-    },
-    {
-      name: "Zanzibar",
-      country: "Tanzania",
-      image: getDestinationPhotoUrl("Zanzibar", "Tanzania"),
-    },
-    {
-      name: "Kigali",
-      country: "Rwanda",
-      image: getDestinationPhotoUrl("Kigali", "Rwanda"),
-    },
-    {
-      name: "Victoria Falls",
-      country: "Zimbabwe",
-      image: getDestinationPhotoUrl("Victoria Falls", "Zimbabwe"),
-    },
-    {
-      name: "Windhoek",
-      country: "Namibia",
-      image: getDestinationPhotoUrl("Windhoek", "Namibia"),
-    },
-    {
-      name: "Gaborone",
-      country: "Botswana",
-      image: getDestinationPhotoUrl("Gaborone", "Botswana"),
-    },
-    {
-      name: "Tunis",
-      country: "Tunisia",
-      image: getDestinationPhotoUrl("Tunis", "Tunisia"),
-    },
-    {
-      name: "Algiers",
-      country: "Algeria",
-      image: getDestinationPhotoUrl("Algiers", "Algeria"),
-    },
-    {
-      name: "Mauritius",
-      country: "Mauritius",
-      image: getDestinationPhotoUrl("Mauritius", "Mauritius"),
-    },
-    {
-      name: "Seychelles",
-      country: "Seychelles",
-      image: getDestinationPhotoUrl("Seychelles", "Seychelles"),
-    },
   ],
   "Middle East": [
     {
@@ -627,9 +381,9 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Dubai", "United Arab Emirates"),
     },
     {
-      name: "Abu Dhabi",
-      country: "United Arab Emirates",
-      image: getDestinationPhotoUrl("Abu Dhabi", "United Arab Emirates"),
+      name: "Istanbul",
+      country: "Turkey",
+      image: getDestinationPhotoUrl("Istanbul", "Turkey"),
     },
     {
       name: "Doha",
@@ -637,14 +391,9 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Doha", "Qatar"),
     },
     {
-      name: "Riyadh",
-      country: "Saudi Arabia",
-      image: getDestinationPhotoUrl("Riyadh", "Saudi Arabia"),
-    },
-    {
-      name: "Jeddah",
-      country: "Saudi Arabia",
-      image: getDestinationPhotoUrl("Jeddah", "Saudi Arabia"),
+      name: "Abu Dhabi",
+      country: "United Arab Emirates",
+      image: getDestinationPhotoUrl("Abu Dhabi", "United Arab Emirates"),
     },
     {
       name: "Muscat",
@@ -652,390 +401,16 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       image: getDestinationPhotoUrl("Muscat", "Oman"),
     },
     {
-      name: "Manama",
-      country: "Bahrain",
-      image: getDestinationPhotoUrl("Manama", "Bahrain"),
-    },
-    {
-      name: "Kuwait City",
-      country: "Kuwait",
-      image: getDestinationPhotoUrl("Kuwait City", "Kuwait"),
-    },
-    {
-      name: "Amman",
-      country: "Jordan",
-      image: getDestinationPhotoUrl("Amman", "Jordan"),
-    },
-    {
-      name: "Petra",
-      country: "Jordan",
-      image: getDestinationPhotoUrl("Petra", "Jordan"),
-    },
-    {
-      name: "Beirut",
-      country: "Lebanon",
-      image: getDestinationPhotoUrl("Beirut", "Lebanon"),
-    },
-    {
-      name: "Tel Aviv",
-      country: "Israel",
-      image: getDestinationPhotoUrl("Tel Aviv", "Israel"),
-    },
-    {
-      name: "Jerusalem",
-      country: "Israel",
-      image: getDestinationPhotoUrl("Jerusalem", "Israel"),
-    },
-    {
-      name: "Istanbul",
-      country: "Turkey",
-      image: getDestinationPhotoUrl("Istanbul", "Turkey"),
-    },
-    {
-      name: "Cappadocia",
-      country: "Turkey",
-      image: getDestinationPhotoUrl("Cappadocia", "Turkey"),
-    },
-    {
-      name: "Ankara",
-      country: "Turkey",
-      image: getDestinationPhotoUrl("Ankara", "Turkey"),
-    },
-    {
-      name: "Bodrum",
-      country: "Turkey",
-      image: getDestinationPhotoUrl("Bodrum", "Turkey"),
-    },
-    {
-      name: "Antalya",
-      country: "Turkey",
-      image: getDestinationPhotoUrl("Antalya", "Turkey"),
-    },
-    {
-      name: "Salalah",
-      country: "Oman",
-      image: getDestinationPhotoUrl("Salalah", "Oman"),
-    },
-    {
-      name: "AlUla",
+      name: "Jeddah",
       country: "Saudi Arabia",
-      image: getDestinationPhotoUrl("AlUla", "Saudi Arabia"),
-    },
-  ],
-  "South America": [
-    {
-      name: "Buenos Aires",
-      country: "Argentina",
-      image: getDestinationPhotoUrl("Buenos Aires", "Argentina"),
-    },
-    {
-      name: "Rio de Janeiro",
-      country: "Brazil",
-      image: getDestinationPhotoUrl("Rio de Janeiro", "Brazil"),
-    },
-    {
-      name: "Sao Paulo",
-      country: "Brazil",
-      image: getDestinationPhotoUrl("Sao Paulo", "Brazil"),
-    },
-    {
-      name: "Lima",
-      country: "Peru",
-      image: getDestinationPhotoUrl("Lima", "Peru"),
-    },
-    {
-      name: "Cusco",
-      country: "Peru",
-      image: getDestinationPhotoUrl("Cusco", "Peru"),
-    },
-    {
-      name: "Santiago",
-      country: "Chile",
-      image: getDestinationPhotoUrl("Santiago", "Chile"),
-    },
-    {
-      name: "Bogota",
-      country: "Colombia",
-      image: getDestinationPhotoUrl("Bogota", "Colombia"),
-    },
-    {
-      name: "Cartagena",
-      country: "Colombia",
-      image: getDestinationPhotoUrl("Cartagena", "Colombia"),
-    },
-    {
-      name: "Medellin",
-      country: "Colombia",
-      image: getDestinationPhotoUrl("Medellin", "Colombia"),
-    },
-    {
-      name: "Quito",
-      country: "Ecuador",
-      image: getDestinationPhotoUrl("Quito", "Ecuador"),
-    },
-    {
-      name: "Galapagos Islands",
-      country: "Ecuador",
-      image: getDestinationPhotoUrl("Galapagos Islands", "Ecuador"),
-    },
-    {
-      name: "Montevideo",
-      country: "Uruguay",
-      image: getDestinationPhotoUrl("Montevideo", "Uruguay"),
-    },
-    {
-      name: "Punta del Este",
-      country: "Uruguay",
-      image: getDestinationPhotoUrl("Punta del Este", "Uruguay"),
-    },
-    {
-      name: "La Paz",
-      country: "Bolivia",
-      image: getDestinationPhotoUrl("La Paz", "Bolivia"),
-    },
-    {
-      name: "Uyuni",
-      country: "Bolivia",
-      image: getDestinationPhotoUrl("Uyuni", "Bolivia"),
-    },
-    {
-      name: "Asuncion",
-      country: "Paraguay",
-      image: getDestinationPhotoUrl("Asuncion", "Paraguay"),
-    },
-    {
-      name: "Georgetown",
-      country: "Guyana",
-      image: getDestinationPhotoUrl("Georgetown", "Guyana"),
-    },
-    {
-      name: "Mendoza",
-      country: "Argentina",
-      image: getDestinationPhotoUrl("Mendoza", "Argentina"),
-    },
-    {
-      name: "Florianopolis",
-      country: "Brazil",
-      image: getDestinationPhotoUrl("Florianopolis", "Brazil"),
-    },
-    {
-      name: "Manaus",
-      country: "Brazil",
-      image: getDestinationPhotoUrl("Manaus", "Brazil"),
-    },
-  ],
-  Caribbean: [
-    {
-      name: "Nassau",
-      country: "Bahamas",
-      image: getDestinationPhotoUrl("Nassau", "Bahamas"),
-    },
-    {
-      name: "Montego Bay",
-      country: "Jamaica",
-      image: getDestinationPhotoUrl("Montego Bay", "Jamaica"),
-    },
-    {
-      name: "Kingston",
-      country: "Jamaica",
-      image: getDestinationPhotoUrl("Kingston", "Jamaica"),
-    },
-    {
-      name: "Punta Cana",
-      country: "Dominican Republic",
-      image: getDestinationPhotoUrl("Punta Cana", "Dominican Republic"),
-    },
-    {
-      name: "Santo Domingo",
-      country: "Dominican Republic",
-      image: getDestinationPhotoUrl("Santo Domingo", "Dominican Republic"),
-    },
-    {
-      name: "San Juan",
-      country: "Puerto Rico",
-      image: getDestinationPhotoUrl("San Juan", "Puerto Rico"),
-    },
-    {
-      name: "Aruba",
-      country: "Aruba",
-      image: getDestinationPhotoUrl("Aruba", "Aruba"),
-    },
-    {
-      name: "Curacao",
-      country: "Curacao",
-      image: getDestinationPhotoUrl("Curacao", "Curacao"),
-    },
-    {
-      name: "Barbados",
-      country: "Barbados",
-      image: getDestinationPhotoUrl("Barbados", "Barbados"),
-    },
-    {
-      name: "St Lucia",
-      country: "Saint Lucia",
-      image: getDestinationPhotoUrl("St Lucia", "Saint Lucia"),
-    },
-    {
-      name: "Antigua",
-      country: "Antigua and Barbuda",
-      image: getDestinationPhotoUrl("Antigua", "Antigua and Barbuda"),
-    },
-    {
-      name: "St Kitts",
-      country: "Saint Kitts and Nevis",
-      image: getDestinationPhotoUrl("St Kitts", "Saint Kitts and Nevis"),
-    },
-    {
-      name: "Grenada",
-      country: "Grenada",
-      image: getDestinationPhotoUrl("Grenada", "Grenada"),
-    },
-    {
-      name: "Trinidad",
-      country: "Trinidad and Tobago",
-      image: getDestinationPhotoUrl("Trinidad", "Trinidad and Tobago"),
-    },
-    {
-      name: "Tobago",
-      country: "Trinidad and Tobago",
-      image: getDestinationPhotoUrl("Tobago", "Trinidad and Tobago"),
-    },
-    {
-      name: "Grand Cayman",
-      country: "Cayman Islands",
-      image: getDestinationPhotoUrl("Grand Cayman", "Cayman Islands"),
-    },
-    {
-      name: "Turks and Caicos",
-      country: "Turks and Caicos Islands",
-      image: getDestinationPhotoUrl("Turks and Caicos", "Turks and Caicos Islands"),
-    },
-    {
-      name: "St Martin",
-      country: "Saint Martin",
-      image: getDestinationPhotoUrl("St Martin", "Saint Martin"),
-    },
-    {
-      name: "Havana",
-      country: "Cuba",
-      image: getDestinationPhotoUrl("Havana", "Cuba"),
-    },
-    {
-      name: "Varadero",
-      country: "Cuba",
-      image: getDestinationPhotoUrl("Varadero", "Cuba"),
-    },
-  ],
-  Oceania: [
-    {
-      name: "Sydney",
-      country: "Australia",
-      image: getDestinationPhotoUrl("Sydney", "Australia"),
-    },
-    {
-      name: "Melbourne",
-      country: "Australia",
-      image: getDestinationPhotoUrl("Melbourne", "Australia"),
-    },
-    {
-      name: "Brisbane",
-      country: "Australia",
-      image: getDestinationPhotoUrl("Brisbane", "Australia"),
-    },
-    {
-      name: "Perth",
-      country: "Australia",
-      image: getDestinationPhotoUrl("Perth", "Australia"),
-    },
-    {
-      name: "Adelaide",
-      country: "Australia",
-      image: getDestinationPhotoUrl("Adelaide", "Australia"),
-    },
-    {
-      name: "Gold Coast",
-      country: "Australia",
-      image: getDestinationPhotoUrl("Gold Coast", "Australia"),
-    },
-    {
-      name: "Cairns",
-      country: "Australia",
-      image: getDestinationPhotoUrl("Cairns", "Australia"),
-    },
-    {
-      name: "Hobart",
-      country: "Australia",
-      image: getDestinationPhotoUrl("Hobart", "Australia"),
-    },
-    {
-      name: "Auckland",
-      country: "New Zealand",
-      image: getDestinationPhotoUrl("Auckland", "New Zealand"),
-    },
-    {
-      name: "Wellington",
-      country: "New Zealand",
-      image: getDestinationPhotoUrl("Wellington", "New Zealand"),
-    },
-    {
-      name: "Queenstown",
-      country: "New Zealand",
-      image: getDestinationPhotoUrl("Queenstown", "New Zealand"),
-    },
-    {
-      name: "Christchurch",
-      country: "New Zealand",
-      image: getDestinationPhotoUrl("Christchurch", "New Zealand"),
-    },
-    {
-      name: "Rotorua",
-      country: "New Zealand",
-      image: getDestinationPhotoUrl("Rotorua", "New Zealand"),
-    },
-    {
-      name: "Fiji",
-      country: "Fiji",
-      image: getDestinationPhotoUrl("Fiji", "Fiji"),
-    },
-    {
-      name: "Nadi",
-      country: "Fiji",
-      image: getDestinationPhotoUrl("Nadi", "Fiji"),
-    },
-    {
-      name: "Tahiti",
-      country: "French Polynesia",
-      image: getDestinationPhotoUrl("Tahiti", "French Polynesia"),
-    },
-    {
-      name: "Bora Bora",
-      country: "French Polynesia",
-      image: getDestinationPhotoUrl("Bora Bora", "French Polynesia"),
-    },
-    {
-      name: "Port Vila",
-      country: "Vanuatu",
-      image: getDestinationPhotoUrl("Port Vila", "Vanuatu"),
-    },
-    {
-      name: "Apia",
-      country: "Samoa",
-      image: getDestinationPhotoUrl("Apia", "Samoa"),
-    },
-    {
-      name: "Noumea",
-      country: "New Caledonia",
-      image: getDestinationPhotoUrl("Noumea", "New Caledonia"),
+      image: getDestinationPhotoUrl("Jeddah", "Saudi Arabia"),
     },
   ],
 };
 
-
-
 const photographicImageSourcePatterns = [
   /^https:\/\/images\.unsplash\.com\/photo-[A-Za-z0-9_-]+\?.+$/,
   /^https:\/\/images\.pexels\.com\/photos\/\d+\/pexels-photo-\d+\.jpeg\?.+$/,
-  /^https:\/\/picsum\.photos\/seed\/\d+\/1200\/800\.jpg$/,
 ];
 
 function assertPhotographicDestinationImages(
@@ -1049,7 +424,7 @@ function assertPhotographicDestinationImages(
 
       if (!hasPhotographicSource) {
         throw new Error(
-          `Destination image for ${destination.name} must be a curated photographic image URL or numeric seeded fallback, not a prompt, search phrase, SVG, or generated illustration.`,
+          `Destination image for ${destination.name} must be a curated photographic image URL, not a prompt, search phrase, SVG, generated illustration, or placeholder fallback.`,
         );
       }
     }
@@ -1076,19 +451,23 @@ function assertUniqueDestinationImages(
   }
 }
 
+function assertCuratedDestinationCount(
+  catalog: Record<RegionName, DestinationSeed[]>,
+) {
+  const destinationCount = Object.values(catalog).reduce(
+    (count, destinations) => count + destinations.length,
+    0,
+  );
 
-function assertPriorityDestinationPhotos() {
-  for (const destinationKey of priorityDestinationPhotoKeys) {
-    if (!curatedDestinationPhotos[destinationKey]) {
-      throw new Error(
-        `Priority destination ${destinationKey} must use a curated city-specific photo.`,
-      );
-    }
+  if (destinationCount < 40 || destinationCount > 50) {
+    throw new Error(
+      `Curated destinations should stay between 40 and 50 places; found ${destinationCount}.`,
+    );
   }
 }
 
-// Keep destination images photographic and unique so discovery cards never collapse back to illustrations or shared fallback art.
-assertPriorityDestinationPhotos();
+// Keep destination images photographic, unique, and tightly curated so discovery cards never collapse back to generic database results.
+assertCuratedDestinationCount(destinationCatalog);
 assertPhotographicDestinationImages(destinationCatalog);
 assertUniqueDestinationImages(destinationCatalog);
 
@@ -1144,9 +523,9 @@ export default function DestinationsPage() {
                   Find your next place to go
                 </h1>
                 <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
-                  Browse {totalDestinations} clickable destinations across eight
-                  regions, then jump straight into flight results for the city
-                  you like.
+                  Browse a curated edit of {totalDestinations} highly visual
+                  destinations across focused region collections, then jump
+                  straight into flight results for the city you like.
                 </p>
               </div>
 
