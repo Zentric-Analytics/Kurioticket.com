@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ClipboardCheck,
-  MapPin,
   Minus,
   Plus,
   Search,
@@ -129,26 +128,9 @@ const hotelDestinationCards: HotelDestinationCard[] = [
     destinationQuery: "New York",
     image:
       "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "New York City skyline with One World Trade Center and waterfront",
+    imageAlt:
+      "New York City skyline with One World Trade Center and waterfront",
     linkLabel: "Search hotels in New York, United States",
-  },
-  {
-    title: "Italy",
-    subtitle: "Rome stays",
-    destinationQuery: "Rome",
-    image:
-      "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "The Colosseum in Rome beneath a clear blue sky",
-    linkLabel: "Search hotels in Rome, Italy",
-  },
-  {
-    title: "United Arab Emirates",
-    subtitle: "Dubai stays",
-    destinationQuery: "Dubai",
-    image:
-      "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    imageAlt: "Dubai skyline with the Burj Khalifa rising above skyscrapers",
-    linkLabel: "Search hotels in Dubai, United Arab Emirates",
   },
 ];
 
@@ -214,33 +196,6 @@ export default function HotelsSearchPage() {
 
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
-
-  const popularCityLinks = useMemo(() => {
-    const baseDate = new Date();
-    const defaultCheckIn = addDays(baseDate, 21);
-    const defaultCheckOut = addDays(baseDate, 24);
-    const cities = [
-      "Tokyo",
-      "London",
-      "Paris",
-      "New York",
-      "Dubai",
-      "Singapore",
-      "Rome",
-      "Barcelona",
-    ];
-
-    return cities.map((city) => ({
-      city,
-      href: `/hotels/results?${new URLSearchParams({
-        destination: city,
-        checkIn: defaultCheckIn,
-        checkOut: defaultCheckOut,
-        guests: "2",
-        rooms: "1",
-      }).toString()}`,
-    }));
-  }, []);
 
   const hotelDestinationLinks = useMemo(() => {
     const baseDate = new Date();
@@ -705,45 +660,35 @@ export default function HotelsSearchPage() {
             </form>
           </section>
 
-          <section className="space-y-4">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-medium text-indigo-700">
-                  Stay ideas
-                </p>
-                <h2 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">
-                  Explore hotel stays by destination
-                </h2>
-              </div>
-              <p className="max-w-md text-sm leading-6 text-slate-600">
-                Choose a destination to open hotel results with sample future
-                dates, two guests, and one room.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <section className="space-y-5 py-2 sm:space-y-6">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl">
+              Explore hotel stays by destination
+            </h2>
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
               {hotelDestinationLinks.map((card) => (
                 <Link
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative h-36 overflow-hidden rounded-3xl bg-slate-900 shadow-[0_20px_55px_-34px_rgba(15,23,42,0.9)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_26px_65px_-36px_rgba(79,70,229,0.85)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:h-40 lg:h-44"
+                  className="group relative min-h-[300px] overflow-hidden rounded-[2rem] bg-slate-950 shadow-[0_28px_70px_-38px_rgba(15,23,42,0.95)] ring-1 ring-slate-950/10 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_80px_-38px_rgba(79,70,229,0.9)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:min-h-[340px] xl:min-h-[360px]"
                 >
                   <Image
                     src={card.image}
                     alt={card.imageAlt}
                     fill
-                    sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
-                    className="object-cover transition duration-500 group-hover:scale-105"
+                    sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover transition duration-700 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/35 to-slate-950/5" />
-                  <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                    <p className="text-base font-semibold leading-5 drop-shadow-sm">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/35 to-slate-950/5" />
+                  <div className="pointer-events-none absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/15" />
+                  <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-7">
+                    <p className="text-2xl font-semibold leading-tight tracking-tight drop-shadow-md">
                       {card.title}
                     </p>
-                    <div className="mt-1 flex items-center justify-between gap-2 text-xs font-medium text-white/85">
+                    <div className="mt-3 flex items-center justify-between gap-3 text-sm font-semibold text-white/90">
                       <span>{card.subtitle}</span>
-                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/25 transition group-hover:translate-x-0.5 group-hover:bg-white/25">
-                        <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 text-white ring-1 ring-white/30 backdrop-blur transition group-hover:translate-x-1 group-hover:bg-white/25">
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </span>
                     </div>
                   </div>
@@ -752,7 +697,7 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="grid gap-3 md:grid-cols-3">
+          <section className="grid gap-4 md:grid-cols-3">
             {[
               {
                 title: "Compare provider offers",
@@ -775,57 +720,21 @@ export default function HotelsSearchPage() {
               return (
                 <article
                   key={item.title}
-                  className="group rounded-2xl border border-white/70 bg-white/80 p-4 shadow-[0_18px_50px_-36px_rgba(15,23,42,0.65)] ring-1 ring-slate-200/70 backdrop-blur transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_22px_55px_-34px_rgba(15,23,42,0.75)]"
+                  className="group relative overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-gradient-to-br from-white via-white to-indigo-50/60 p-6 shadow-[0_24px_70px_-42px_rgba(15,23,42,0.9)] ring-1 ring-white/80 transition duration-300 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-[0_30px_80px_-42px_rgba(79,70,229,0.75)]"
                 >
-                  <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100 transition group-hover:bg-indigo-100">
+                  <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-indigo-100/70 blur-2xl transition group-hover:bg-indigo-200/80" />
+                  <div className="relative mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-950 text-white shadow-lg shadow-slate-950/20 ring-1 ring-slate-950/10 transition group-hover:bg-indigo-700">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </div>
-                  <h2 className="text-sm font-semibold text-slate-950">
+                  <h2 className="relative text-base font-semibold tracking-tight text-slate-950">
                     {item.title}
                   </h2>
-                  <p className="mt-1.5 text-sm leading-6 text-slate-600">
+                  <p className="relative mt-2 text-sm leading-6 text-slate-600">
                     {item.body}
                   </p>
                 </article>
               );
             })}
-          </section>
-
-          <section className="space-y-4">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-medium text-indigo-700">
-                  Start with a destination
-                </p>
-                <h2 className="text-xl font-semibold tracking-tight text-slate-950 md:text-2xl">
-                  Popular city stays
-                </h2>
-              </div>
-              <p className="max-w-md text-sm leading-6 text-slate-600">
-                Choose a city to open hotel results with sample future dates,
-                two guests, and one room.
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              {popularCityLinks.map((item) => (
-                <Link
-                  key={item.city}
-                  href={item.href}
-                  className="group rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-[0_16px_42px_-34px_rgba(15,23,42,0.75)] ring-1 ring-white/70 transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50/70 hover:shadow-[0_22px_52px_-36px_rgba(79,70,229,0.8)]"
-                >
-                  <span className="mb-5 inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition group-hover:bg-white group-hover:text-indigo-700">
-                    <MapPin className="h-4 w-4" aria-hidden="true" />
-                  </span>
-                  <span className="flex items-center justify-between gap-2 text-sm font-semibold text-slate-950">
-                    {item.city}
-                    <ArrowRight
-                      className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-indigo-700"
-                      aria-hidden="true"
-                    />
-                  </span>
-                </Link>
-              ))}
-            </div>
           </section>
 
           <section className="grid gap-5 rounded-3xl border border-slate-200/80 bg-slate-950 p-5 text-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.9)] md:grid-cols-[0.9fr_1.4fr] md:p-6">
