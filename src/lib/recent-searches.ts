@@ -33,7 +33,7 @@ export type RecentSearchEntry = {
   params: RecentFlightParams | RecentHotelParams;
 };
 
-const STORAGE_KEY = "curioticket_recent_searches_v1";
+const STORAGE_KEY = "kurioticket_recent_searches_v1";
 
 const formatIsoDate = (value: string) => {
   if (!value) return "";

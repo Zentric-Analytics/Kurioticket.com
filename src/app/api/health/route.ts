@@ -26,7 +26,7 @@ export async function GET() {
 
   return NextResponse.json({
     ok: database.configured && database.connected,
-    service: "curioticket",
+    service: "kurioticket",
     time: new Date().toISOString(),
     database,
   });

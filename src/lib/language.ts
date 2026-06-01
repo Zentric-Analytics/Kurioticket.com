@@ -1,7 +1,7 @@
 import { localeOptions, getTranslations, type LocaleCode } from "@/lib/i18n";
 
 export const LANGUAGE_STORAGE_KEY = "ct_language";
-export const LANGUAGE_CHANGE_EVENT = "curioticket-language-change";
+export const LANGUAGE_CHANGE_EVENT = "kurioticket-language-change";
 
 export type LanguageDirection = "ltr" | "rtl";
 

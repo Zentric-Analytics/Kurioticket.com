@@ -2,7 +2,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
-  curioticketPrisma?: PrismaClient;
+  kurioticketPrisma?: PrismaClient;
 };
 
 const databaseUrlEnvNames = ["DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL", "POSTGRES_URL_NON_POOLING"] as const;
@@ -33,15 +33,15 @@ export function getPrisma() {
     throw new DatabaseUnavailableError("Database access is not available. Set DATABASE_URL for this deployment.");
   }
 
-  if (!globalForPrisma.curioticketPrisma) {
+  if (!globalForPrisma.kurioticketPrisma) {
     const adapter = new PrismaPg({ connectionString });
-    globalForPrisma.curioticketPrisma = new PrismaClient({
+    globalForPrisma.kurioticketPrisma = new PrismaClient({
       adapter,
       log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
     });
   }
 
-  return globalForPrisma.curioticketPrisma;
+  return globalForPrisma.kurioticketPrisma;
 }
 
 export function getOptionalPrisma() {

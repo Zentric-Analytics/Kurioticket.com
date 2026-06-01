@@ -1,4 +1,4 @@
-const SAVED_TRIPS_STORAGE_KEY = "curioticket_saved_trips_v1";
+const SAVED_TRIPS_STORAGE_KEY = "kurioticket_saved_trips_v1";
 
 function canUseStorage() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";

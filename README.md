@@ -52,18 +52,16 @@ Never commit `.env` or `.env.local`. Only `NEXT_PUBLIC_` values may be used in b
 
 Authentication uses NextAuth credentials plus optional Google OAuth. Set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` to show the Google button on sign-in/sign-up. If either variable is missing, the Google button is hidden gracefully.
 
-Allowed Google OAuth callback URLs should match the active deployed domains in Google OAuth Console. Use Kurioticket callback URLs as the primary production URLs, and keep the old Curioticket callback URLs registered during transition if old domains can still initiate auth.
+Allowed Google OAuth callback URLs should match the active deployed domains in Google OAuth Console. Use Kurioticket callback URLs for staging and production.
 
 Staging:
 
 - `https://staging.kurioticket.com/api/auth/callback/google`
-- `https://staging.curioticket.com/api/auth/callback/google`
 
 Production:
 
 - `https://www.kurioticket.com/api/auth/callback/google`
 - `https://kurioticket.com/api/auth/callback/google`
-- `https://www.curioticket.com/api/auth/callback/google`
 
 Admin access is controlled only by comma-separated `ADMIN_EMAILS` values. Emails are trimmed and normalized to lowercase, for example `ADMIN_EMAILS=admin@zentricresearch.com`.
 
@@ -180,14 +178,8 @@ Primary production domains:
 - `kurioticket.com`
 - `www.kurioticket.com`
 
-Legacy/transition domains:
 
-- `curioticket.com`
-- `www.curioticket.com`
-
-The legacy Curioticket domains may remain supported or redirected during the transition.
-
-Staging may use either the Render staging URL, `staging.kurioticket.com`, or `staging.curioticket.com`. If using a custom staging domain, add the domain to the staging Render service and create the DNS record GoDaddy/Render asks for.
+Staging may use either the Render staging URL or `staging.kurioticket.com`. If using a custom staging domain, add the domain to the staging Render service and create the DNS record GoDaddy/Render asks for.
 
 Use separate production and staging values for Stripe, Resend, OpenAI, Duffel, Travelpayouts, database, auth, and app URL environment variables. Staging must not share production payment webhooks unless intentionally configured by the infrastructure owner.
 
