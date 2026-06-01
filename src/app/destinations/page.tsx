@@ -493,11 +493,6 @@ const destinationSections: DestinationSection[] = Object.entries(
   };
 });
 
-const totalDestinations = destinationSections.reduce(
-  (count, section) => count + section.destinations.length,
-  0,
-);
-
 function getRegionId(region: string) {
   return region.toLowerCase().replaceAll(" ", "-");
 }
@@ -512,62 +507,39 @@ export default function DestinationsPage() {
       <AppHeader />
 
       <main className="flex-1 bg-[#f5f7fb] text-slate-950">
-        <section className="border-b border-slate-200 bg-white">
-          <div className="page-shell py-8 sm:py-10">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-violet-700">
-                  Destination discovery
-                </p>
-                <h1 className="mt-4 text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
-                  Find your next place to go
-                </h1>
-                <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg">
-                  Browse a curated edit of {totalDestinations} highly visual
-                  destinations across focused region collections, then jump
-                  straight into flight results for the city you like.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-3 text-center sm:min-w-80">
-                <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                  <p className="text-2xl font-black text-slate-950">
-                    {totalDestinations}
-                  </p>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                    Destinations
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                  <p className="text-2xl font-black text-slate-950">
-                    {destinationSections.length}
-                  </p>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
-                    Regions
-                  </p>
-                </div>
-              </div>
+        <section className="border-b border-violet-100 bg-white">
+          <div className="page-shell py-6 sm:py-7">
+            <div className="max-w-3xl">
+              <p className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-violet-700">
+                Destination discovery
+              </p>
+              <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
+                Where do you want to go next?
+              </h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+                Browse destinations, compare flights, and find travel deals in
+                minutes.
+              </p>
             </div>
-          </div>
-        </section>
 
-        <section className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/75">
-          <div className="page-shell py-3">
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <nav
+              aria-label="Destination regions"
+              className="mt-5 flex gap-2 overflow-x-auto border-t border-violet-100 pt-4"
+            >
               {destinationSections.map((section) => (
                 <a
                   key={section.region}
                   href={`#${getRegionId(section.region)}`}
-                  className="shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200"
+                  className="shrink-0 rounded-full border border-violet-100 bg-violet-50/70 px-4 py-2 text-sm font-black text-violet-800 transition hover:border-violet-200 hover:bg-violet-100 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200"
                 >
                   {section.region}
                 </a>
               ))}
-            </div>
+            </nav>
           </div>
         </section>
 
-        <section className="page-shell py-8 sm:py-10 lg:py-12">
+        <section className="page-shell py-6 sm:py-8 lg:py-10">
           <div className="space-y-12">
             {destinationSections.map((section) => (
               <section
