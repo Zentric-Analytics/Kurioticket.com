@@ -13,6 +13,7 @@ type DestinationSeed = {
   name: string;
   country: string;
   image: string;
+  imagePosition?: string;
 };
 
 type Destination = DestinationSeed & {
@@ -30,93 +31,93 @@ type DestinationSection = {
 
 const curatedDestinationPhotos: Record<string, string> = {
   "London|United Kingdom":
-    "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Paris|France":
-    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Dubai|United Arab Emirates":
-    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "New York|United States":
-    "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Rome|Italy":
-    "https://images.unsplash.com/photo-1525874684015-58379d421a52?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1525874684015-58379d421a52?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Barcelona|Spain":
-    "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Amsterdam|Netherlands":
-    "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Tokyo|Japan":
-    "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Singapore|Singapore":
-    "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Bangkok|Thailand":
-    "https://images.unsplash.com/photo-1508009603885-50cf7c579365?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1508009603885-50cf7c579365?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Cape Town|South Africa":
-    "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Istanbul|Turkey":
-    "https://images.unsplash.com/photo-1527838832700-5059252407fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1527838832700-5059252407fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Las Vegas|United States":
-    "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Toronto|Canada":
-    "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Los Angeles|United States":
-    "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Miami|United States":
-    "https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Doha|Qatar":
-    "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Abu Dhabi|United Arab Emirates":
-    "https://images.unsplash.com/photo-1518684079-3c830dcef090?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1518684079-3c830dcef090?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Lisbon|Portugal":
-    "https://images.unsplash.com/photo-1501927023255-9063be98970c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1501927023255-9063be98970c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Prague|Czechia":
-    "https://images.unsplash.com/photo-1541849546-216549ae216d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1541849546-216549ae216d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Athens|Greece":
-    "https://images.unsplash.com/photo-1555993539-1732b0258235?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1555993539-1732b0258235?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Marrakech|Morocco":
-    "https://images.unsplash.com/photo-1597212720158-0a65b7ab7434?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1597212720158-0a65b7ab7434?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Nairobi|Kenya":
-    "https://images.unsplash.com/photo-1523805009345-7448845a9e53?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1523805009345-7448845a9e53?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Kuala Lumpur|Malaysia":
-    "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Venice|Italy":
-    "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Florence|Italy":
-    "https://images.unsplash.com/photo-1543429257-3eb0b65d9c58?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1543429257-3eb0b65d9c58?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Berlin|Germany":
-    "https://images.unsplash.com/photo-1560969184-10fe8719e047?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1560969184-10fe8719e047?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Madrid|Spain":
-    "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Copenhagen|Denmark":
-    "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Zurich|Switzerland":
-    "https://images.unsplash.com/photo-1515488764276-beab7607c1e6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1515488764276-beab7607c1e6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Vienna|Austria":
-    "https://images.unsplash.com/photo-1516550893923-42d28e5677af?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1516550893923-42d28e5677af?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Milan|Italy":
-    "https://images.unsplash.com/photo-1520440229-6469a149ac59?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1520440229-6469a149ac59?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Accra|Ghana":
-    "https://images.unsplash.com/photo-1553901753-215db3446770?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1553901753-215db3446770?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Lagos|Nigeria":
-    "https://images.pexels.com/photos/32014864/pexels-photo-32014864.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/32014864/pexels-photo-32014864.jpeg?auto=compress&cs=tinysrgb&w=1600",
   "Abuja|Nigeria":
-    "https://images.pexels.com/photos/20453360/pexels-photo-20453360.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    "https://images.pexels.com/photos/20453360/pexels-photo-20453360.jpeg?auto=compress&cs=tinysrgb&w=1600",
   "Muscat|Oman":
-    "https://images.unsplash.com/photo-1582647509711-c8aa8bdc5a09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1582647509711-c8aa8bdc5a09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Jeddah|Saudi Arabia":
-    "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Vancouver|Canada":
-    "https://images.unsplash.com/photo-1578922746465-3a80a228f223?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1578922746465-3a80a228f223?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Chicago|United States":
-    "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "San Francisco|United States":
-    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Seoul|South Korea":
-    "https://images.unsplash.com/photo-1538485399081-7c8ed0e8fabb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1538485399081-7c8ed0e8fabb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Osaka|Japan":
-    "https://images.unsplash.com/photo-1590559899731-a382839e5549?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1590559899731-a382839e5549?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Bali|Indonesia":
-    "https://images.unsplash.com/photo-1537996194471-e657df975ab4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1537996194471-e657df975ab4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Phuket|Thailand":
-    "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
 };
 
 function getDestinationPhotoUrl(name: string, country: string) {
@@ -181,81 +182,97 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       name: "London",
       country: "United Kingdom",
       image: getDestinationPhotoUrl("London", "United Kingdom"),
+      imagePosition: "center 42%",
     },
     {
       name: "Paris",
       country: "France",
       image: getDestinationPhotoUrl("Paris", "France"),
+      imagePosition: "center 45%",
     },
     {
       name: "Rome",
       country: "Italy",
       image: getDestinationPhotoUrl("Rome", "Italy"),
+      imagePosition: "center 45%",
     },
     {
       name: "Barcelona",
       country: "Spain",
       image: getDestinationPhotoUrl("Barcelona", "Spain"),
+      imagePosition: "center 50%",
     },
     {
       name: "Amsterdam",
       country: "Netherlands",
       image: getDestinationPhotoUrl("Amsterdam", "Netherlands"),
+      imagePosition: "center 48%",
     },
     {
       name: "Lisbon",
       country: "Portugal",
       image: getDestinationPhotoUrl("Lisbon", "Portugal"),
+      imagePosition: "center 52%",
     },
     {
       name: "Prague",
       country: "Czechia",
       image: getDestinationPhotoUrl("Prague", "Czechia"),
+      imagePosition: "center 48%",
     },
     {
       name: "Athens",
       country: "Greece",
       image: getDestinationPhotoUrl("Athens", "Greece"),
+      imagePosition: "center 50%",
     },
     {
       name: "Venice",
       country: "Italy",
       image: getDestinationPhotoUrl("Venice", "Italy"),
+      imagePosition: "center 50%",
     },
     {
       name: "Florence",
       country: "Italy",
       image: getDestinationPhotoUrl("Florence", "Italy"),
+      imagePosition: "center 50%",
     },
     {
       name: "Berlin",
       country: "Germany",
       image: getDestinationPhotoUrl("Berlin", "Germany"),
+      imagePosition: "center 46%",
     },
     {
       name: "Madrid",
       country: "Spain",
       image: getDestinationPhotoUrl("Madrid", "Spain"),
+      imagePosition: "center 48%",
     },
     {
       name: "Copenhagen",
       country: "Denmark",
       image: getDestinationPhotoUrl("Copenhagen", "Denmark"),
+      imagePosition: "center 52%",
     },
     {
       name: "Zurich",
       country: "Switzerland",
       image: getDestinationPhotoUrl("Zurich", "Switzerland"),
+      imagePosition: "center 50%",
     },
     {
       name: "Vienna",
       country: "Austria",
       image: getDestinationPhotoUrl("Vienna", "Austria"),
+      imagePosition: "center 48%",
     },
     {
       name: "Milan",
       country: "Italy",
       image: getDestinationPhotoUrl("Milan", "Italy"),
+      imagePosition: "center 48%",
     },
   ],
   "North America": [
@@ -263,41 +280,49 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       name: "New York",
       country: "United States",
       image: getDestinationPhotoUrl("New York", "United States"),
+      imagePosition: "center 40%",
     },
     {
       name: "Las Vegas",
       country: "United States",
       image: getDestinationPhotoUrl("Las Vegas", "United States"),
+      imagePosition: "center 48%",
     },
     {
       name: "Toronto",
       country: "Canada",
       image: getDestinationPhotoUrl("Toronto", "Canada"),
+      imagePosition: "center 44%",
     },
     {
       name: "Los Angeles",
       country: "United States",
       image: getDestinationPhotoUrl("Los Angeles", "United States"),
+      imagePosition: "center 50%",
     },
     {
       name: "Miami",
       country: "United States",
       image: getDestinationPhotoUrl("Miami", "United States"),
+      imagePosition: "center 58%",
     },
     {
       name: "Vancouver",
       country: "Canada",
       image: getDestinationPhotoUrl("Vancouver", "Canada"),
+      imagePosition: "center 44%",
     },
     {
       name: "Chicago",
       country: "United States",
       image: getDestinationPhotoUrl("Chicago", "United States"),
+      imagePosition: "center 43%",
     },
     {
       name: "San Francisco",
       country: "United States",
       image: getDestinationPhotoUrl("San Francisco", "United States"),
+      imagePosition: "center 46%",
     },
   ],
   Asia: [
@@ -305,41 +330,49 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       name: "Tokyo",
       country: "Japan",
       image: getDestinationPhotoUrl("Tokyo", "Japan"),
+      imagePosition: "center 45%",
     },
     {
       name: "Singapore",
       country: "Singapore",
       image: getDestinationPhotoUrl("Singapore", "Singapore"),
+      imagePosition: "center 42%",
     },
     {
       name: "Bangkok",
       country: "Thailand",
       image: getDestinationPhotoUrl("Bangkok", "Thailand"),
+      imagePosition: "center 55%",
     },
     {
       name: "Kuala Lumpur",
       country: "Malaysia",
       image: getDestinationPhotoUrl("Kuala Lumpur", "Malaysia"),
+      imagePosition: "center 42%",
     },
     {
       name: "Seoul",
       country: "South Korea",
       image: getDestinationPhotoUrl("Seoul", "South Korea"),
+      imagePosition: "center 45%",
     },
     {
       name: "Osaka",
       country: "Japan",
       image: getDestinationPhotoUrl("Osaka", "Japan"),
+      imagePosition: "center 50%",
     },
     {
       name: "Bali",
       country: "Indonesia",
       image: getDestinationPhotoUrl("Bali", "Indonesia"),
+      imagePosition: "center 58%",
     },
     {
       name: "Phuket",
       country: "Thailand",
       image: getDestinationPhotoUrl("Phuket", "Thailand"),
+      imagePosition: "center 56%",
     },
   ],
   Africa: [
@@ -347,31 +380,37 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       name: "Cape Town",
       country: "South Africa",
       image: getDestinationPhotoUrl("Cape Town", "South Africa"),
+      imagePosition: "center 45%",
     },
     {
       name: "Marrakech",
       country: "Morocco",
       image: getDestinationPhotoUrl("Marrakech", "Morocco"),
+      imagePosition: "center 54%",
     },
     {
       name: "Nairobi",
       country: "Kenya",
       image: getDestinationPhotoUrl("Nairobi", "Kenya"),
+      imagePosition: "center 52%",
     },
     {
       name: "Accra",
       country: "Ghana",
       image: getDestinationPhotoUrl("Accra", "Ghana"),
+      imagePosition: "center 52%",
     },
     {
       name: "Lagos",
       country: "Nigeria",
       image: getDestinationPhotoUrl("Lagos", "Nigeria"),
+      imagePosition: "center 52%",
     },
     {
       name: "Abuja",
       country: "Nigeria",
       image: getDestinationPhotoUrl("Abuja", "Nigeria"),
+      imagePosition: "center 48%",
     },
   ],
   "Middle East": [
@@ -379,31 +418,37 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
       name: "Dubai",
       country: "United Arab Emirates",
       image: getDestinationPhotoUrl("Dubai", "United Arab Emirates"),
+      imagePosition: "center 44%",
     },
     {
       name: "Istanbul",
       country: "Turkey",
       image: getDestinationPhotoUrl("Istanbul", "Turkey"),
+      imagePosition: "center 48%",
     },
     {
       name: "Doha",
       country: "Qatar",
       image: getDestinationPhotoUrl("Doha", "Qatar"),
+      imagePosition: "center 45%",
     },
     {
       name: "Abu Dhabi",
       country: "United Arab Emirates",
       image: getDestinationPhotoUrl("Abu Dhabi", "United Arab Emirates"),
+      imagePosition: "center 45%",
     },
     {
       name: "Muscat",
       country: "Oman",
       image: getDestinationPhotoUrl("Muscat", "Oman"),
+      imagePosition: "center 50%",
     },
     {
       name: "Jeddah",
       country: "Saudi Arabia",
       image: getDestinationPhotoUrl("Jeddah", "Saudi Arabia"),
+      imagePosition: "center 50%",
     },
   ],
 };
@@ -524,10 +569,7 @@ export default function DestinationsPage() {
               strokeLinecap="round"
               strokeWidth="2"
             />
-            <path
-              d="m597 60 46 18-44 20 10-20-12-18Z"
-              fill="currentColor"
-            />
+            <path d="m597 60 46 18-44 20 10-20-12-18Z" fill="currentColor" />
           </svg>
           <svg
             aria-hidden="true"
@@ -623,6 +665,7 @@ export default function DestinationsPage() {
                       country={destination.country}
                       image={destination.image}
                       imageAlt={destination.imageAlt}
+                      imagePosition={destination.imagePosition}
                       tag={destination.tag}
                       subtitle={destinationSubtitle}
                     />
