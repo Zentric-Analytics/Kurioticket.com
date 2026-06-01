@@ -218,6 +218,66 @@ const globalHotelDestinationCards: HotelDestinationCard[] = [
   },
 ];
 
+const hotelInspirationCategoryChips = [
+  "Beach",
+  "City breaks",
+  "Family trips",
+  "Relaxed stays",
+  "Weekend ideas",
+];
+
+type HotelInspirationCard = HotelDestinationCard & {
+  badge: string;
+  detail: string;
+};
+
+const hotelInspirationCards: HotelInspirationCard[] = [
+  {
+    title: "Cancun",
+    subtitle: "Mexico",
+    destinationQuery: "Cancun",
+    image:
+      "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Cancun beach with white sand and turquoise water",
+    linkLabel: "Search hotels in Cancun, Mexico",
+    badge: "Coastal stays",
+    detail: "Mexico",
+  },
+  {
+    title: "Barcelona",
+    subtitle: "Spain",
+    destinationQuery: "Barcelona",
+    image:
+      "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Barcelona cityscape with Sagrada Familia in daylight",
+    linkLabel: "Search hotels in Barcelona, Spain",
+    badge: "City coast",
+    detail: "Spain",
+  },
+  {
+    title: "Istanbul",
+    subtitle: "Turkey",
+    destinationQuery: "Istanbul",
+    image:
+      "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Istanbul waterfront with domes and minarets at golden hour",
+    linkLabel: "Search hotels in Istanbul, Turkey",
+    badge: "Culture stays",
+    detail: "Turkey",
+  },
+  {
+    title: "Toronto",
+    subtitle: "Canada",
+    destinationQuery: "Toronto",
+    image:
+      "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Toronto skyline with the CN Tower beside Lake Ontario",
+    linkLabel: "Search hotels in Toronto, Canada",
+    badge: "City ideas",
+    detail: "Canada",
+  },
+];
+
 type HotelDestinationLink = HotelDestinationCard & {
   href: string;
 };
@@ -277,12 +337,49 @@ function DestinationCard({
   );
 }
 
+type InspirationCardProps = {
+  card: HotelDestinationLink & Pick<HotelInspirationCard, "badge" | "detail">;
+};
+
+function InspirationCard({ card }: InspirationCardProps) {
+  return (
+    <Link
+      href={card.href}
+      aria-label={card.linkLabel}
+      className="group flex h-full min-w-0 flex-col rounded-2xl bg-white p-2.5 transition duration-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50"
+    >
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100">
+        <Image
+          src={card.image}
+          alt={card.imageAlt}
+          fill
+          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 76vw"
+          className="object-cover saturate-[1.06] contrast-[1.02] transition duration-700 group-hover:scale-[1.03]"
+        />
+        <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
+        <span className="absolute left-3 top-3 rounded-full border border-white/75 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-[0_8px_20px_-18px_rgba(15,23,42,0.55)] backdrop-blur-sm">
+          {card.badge}
+        </span>
+      </div>
+      <div className="px-1 pb-1.5 pt-3">
+        <p className="text-base font-semibold leading-tight tracking-[-0.012em] text-slate-900 sm:text-lg">
+          {card.title}
+        </p>
+        <p className="mt-1.5 text-sm font-medium leading-5 text-slate-600">
+          {card.detail}
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 validateDestinationImages(
   "hotel destination cards",
   [
     ...hotelDestinationCards,
     ...moreHotelDestinationCards,
     ...globalHotelDestinationCards,
+    ...hotelInspirationCards,
   ].map((card) => ({
     id: card.destinationQuery,
     image: card.image,
@@ -388,6 +485,15 @@ export default function HotelsSearchPage() {
   const globalHotelDestinationLinks = useMemo(
     () =>
       globalHotelDestinationCards.map((card) => ({
+        ...card,
+        href: destinationCardHref(card.destinationQuery),
+      })),
+    [destinationCardHref],
+  );
+
+  const hotelInspirationLinks = useMemo(
+    () =>
+      hotelInspirationCards.map((card) => ({
         ...card,
         href: destinationCardHref(card.destinationQuery),
       })),
@@ -865,6 +971,75 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
+          <section
+            className="space-y-4"
+            aria-labelledby="more-hotel-destinations-heading"
+          >
+            <h2
+              id="more-hotel-destinations-heading"
+              className="px-1 text-[1.5rem] font-semibold leading-[1.2] tracking-[-0.014em] text-slate-800 md:text-[1.85rem]"
+            >
+              Featured hotel destinations
+            </h2>
+            <div className="border border-slate-200/80 bg-slate-50/85 p-4 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+              <div className="grid auto-cols-[minmax(250px,78vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+                {moreHotelDestinationLinks.map((card) => (
+                  <DestinationCard
+                    key={card.title}
+                    card={card}
+                    imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 78vw"
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section
+            className="space-y-5"
+            aria-labelledby="hotel-inspiration-heading"
+          >
+            <div className="border border-slate-200/80 bg-slate-50/90 p-4 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div className="max-w-2xl">
+                  <h2
+                    id="hotel-inspiration-heading"
+                    className="text-[1.5rem] font-semibold leading-[1.2] tracking-[-0.014em] text-slate-800 md:text-[1.85rem]"
+                  >
+                    Find stays for every kind of trip
+                  </h2>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
+                    Browse destination ideas by the kind of stay you have in
+                    mind.
+                  </p>
+                </div>
+                <div
+                  role="list"
+                  className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] md:flex-wrap md:justify-end md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden"
+                  aria-label="Hotel inspiration categories"
+                >
+                  {hotelInspirationCategoryChips.map((chip, index) => (
+                    <span
+                      key={chip}
+                      role="listitem"
+                      className={`whitespace-nowrap rounded-full border px-3.5 py-2 text-sm font-semibold ${
+                        index === 0
+                          ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                          : "border-slate-200 bg-white text-slate-600"
+                      }`}
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-5 grid auto-cols-[minmax(240px,76vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+                {hotelInspirationLinks.map((card) => (
+                  <InspirationCard key={card.title} card={card} />
+                ))}
+              </div>
+            </div>
+          </section>
           <section className="relative isolate rounded-[2rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-3 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:p-4">
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
               {[
@@ -910,29 +1085,6 @@ export default function HotelsSearchPage() {
                   </article>
                 );
               })}
-            </div>
-          </section>
-
-          <section
-            className="space-y-4"
-            aria-labelledby="more-hotel-destinations-heading"
-          >
-            <h2
-              id="more-hotel-destinations-heading"
-              className="px-1 text-[1.5rem] font-semibold leading-[1.2] tracking-[-0.014em] text-slate-800 md:text-[1.85rem]"
-            >
-              Featured hotel destinations
-            </h2>
-            <div className="border border-slate-200/80 bg-slate-50/85 p-4 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(250px,78vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
-                {moreHotelDestinationLinks.map((card) => (
-                  <DestinationCard
-                    key={card.title}
-                    card={card}
-                    imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 78vw"
-                  />
-                ))}
-              </div>
             </div>
           </section>
 
