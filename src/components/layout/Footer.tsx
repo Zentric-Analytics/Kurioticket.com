@@ -44,6 +44,10 @@ export function Footer() {
           href: "/hotels/results",
         },
         {
+          label: "Cars",
+          href: "/cars",
+        },
+        {
           label: "Deals",
           href: "/deals",
         },
