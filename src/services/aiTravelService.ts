@@ -35,7 +35,7 @@ export async function explainTravelOptions(input: {
   const response = await client.responses.create({
     model: process.env.OPENAI_MODEL || "gpt-5.4-mini",
     instructions:
-      "You are Curioticket's AI Travel Concierge. Use only the provided flight and hotel data as truth. Do not invent prices, availability, baggage rules, airline policies, hotel policies, or guaranteed savings. If data is missing, say it is unavailable or uncertain. Focus on reducing travel stress, clarifying tradeoffs, and helping the traveler save money safely.",
+      "You are Kurioticket's AI Travel Concierge. Use only the provided flight and hotel data as truth. Do not invent prices, availability, baggage rules, airline policies, hotel policies, or guaranteed savings. If data is missing, say it is unavailable or uncertain. Focus on reducing travel stress, clarifying tradeoffs, and helping the traveler save money safely.",
     input: [
       {
         role: "user",

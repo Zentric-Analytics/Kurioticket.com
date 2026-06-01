@@ -109,7 +109,7 @@ export default async function AdminPage() {
   return (
     <AdminPageShell
       title="Operations Dashboard"
-      description="Manage Curioticket flight metasearch operations, users, provider health, redirects, support, and audit logs."
+      description="Manage Kurioticket flight metasearch operations, users, provider health, redirects, support, and audit logs."
     >
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
