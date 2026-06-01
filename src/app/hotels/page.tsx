@@ -699,7 +699,7 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="grid gap-4 py-3 md:grid-cols-3 md:py-4">
+          <section className="grid gap-4 py-5 sm:py-6 md:grid-cols-3 md:py-7">
             {[
               {
                 title: "Compare provider offers",
@@ -722,17 +722,23 @@ export default function HotelsSearchPage() {
               return (
                 <article
                   key={item.title}
-                  className="group relative overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/80 p-6 shadow-[0_22px_62px_-44px_rgba(79,70,229,0.72)] ring-1 ring-indigo-100/70 backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-indigo-200/80 hover:bg-white/90 hover:shadow-[0_30px_80px_-46px_rgba(79,70,229,0.68)]"
+                  className="group relative isolate overflow-hidden rounded-[1.75rem] border border-indigo-100/60 bg-[linear-gradient(135deg,rgba(238,242,255,0.64),rgba(255,255,255,0.16)_48%,rgba(236,254,255,0.34))] p-6 shadow-[0_26px_70px_-48px_rgba(49,46,129,0.82),0_12px_34px_-30px_rgba(14,165,233,0.58)] ring-1 ring-white/35 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-indigo-200/80 hover:bg-[linear-gradient(135deg,rgba(238,242,255,0.72),rgba(255,255,255,0.22)_48%,rgba(236,254,255,0.42))] hover:shadow-[0_34px_86px_-50px_rgba(49,46,129,0.86),0_16px_42px_-32px_rgba(14,165,233,0.62)]"
                 >
-                  <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-indigo-100/55 blur-2xl transition group-hover:bg-cyan-100/80" />
-                  <div className="pointer-events-none absolute -left-12 bottom-0 h-24 w-24 rounded-full bg-sky-50/80 blur-2xl" />
-                  <div className="relative mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-cyan-50 text-indigo-700 shadow-[0_14px_34px_-22px_rgba(79,70,229,0.82)] ring-1 ring-indigo-200/70 transition group-hover:text-indigo-800 group-hover:ring-indigo-300/80">
-                    <Icon className="h-5 w-5 stroke-[1.8]" aria-hidden="true" />
+                  <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/70 to-transparent" />
+                  <div className="pointer-events-none absolute -right-12 -top-14 h-32 w-32 rounded-full bg-indigo-200/30 blur-3xl transition group-hover:bg-cyan-200/35" />
+                  <div className="pointer-events-none absolute -left-14 bottom-1 h-28 w-28 rounded-full bg-sky-200/20 blur-3xl" />
+                  <div className="relative mb-5 inline-flex rounded-[1.15rem] bg-gradient-to-br from-indigo-400/80 via-violet-300/70 to-cyan-300/75 p-px shadow-[0_16px_36px_-22px_rgba(79,70,229,0.9)] transition group-hover:from-indigo-500/85 group-hover:via-violet-400/75 group-hover:to-cyan-300/85">
+                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.1rem] bg-[linear-gradient(145deg,rgba(255,255,255,0.88),rgba(238,242,255,0.62)_52%,rgba(224,242,254,0.72))] text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_24px_-20px_rgba(79,70,229,0.9)] ring-1 ring-white/70 transition group-hover:text-indigo-800">
+                      <Icon
+                        className="h-5 w-5 stroke-[1.9]"
+                        aria-hidden="true"
+                      />
+                    </span>
                   </div>
                   <h2 className="relative text-base font-semibold tracking-tight text-slate-950">
                     {item.title}
                   </h2>
-                  <p className="relative mt-2 text-sm leading-6 text-slate-600">
+                  <p className="relative mt-2 text-sm leading-6 text-slate-700">
                     {item.body}
                   </p>
                 </article>
