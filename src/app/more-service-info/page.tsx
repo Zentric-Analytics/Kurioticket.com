@@ -136,11 +136,11 @@ export default function MoreServiceInfoPage() {
           </div>
         </section>
 
-        <section aria-labelledby="how-curioticket-works" className="mx-auto mt-10 max-w-5xl">
+        <section aria-labelledby="how-kurioticket-works" className="mx-auto mt-10 max-w-5xl">
           <div className="rounded-3xl border border-border bg-white/80 p-5 shadow-sm sm:p-6 lg:p-7">
             <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
-                <h2 id="how-curioticket-works" className="text-2xl font-bold tracking-tight text-navy">
+                <h2 id="how-kurioticket-works" className="text-2xl font-bold tracking-tight text-navy">
                   How Kurioticket works
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-muted sm:text-base">

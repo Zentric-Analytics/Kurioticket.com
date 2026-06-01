@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: curioticket-web
+    name: kurioticket-web
     runtime: node
     plan: free
     branch: main
@@ -13,7 +13,7 @@ services:
         value: 24.14.0
       - key: DATABASE_URL
         fromDatabase:
-          name: curioticket-postgres
+          name: kurioticket-postgres
           property: connectionString
       - key: NEXT_PUBLIC_APP_URL
         sync: false
@@ -63,7 +63,7 @@ services:
         sync: false
 
   - type: web
-    name: curioticket-web-staging
+    name: kurioticket-web-staging
     runtime: node
     plan: free
     branch: dev
@@ -76,7 +76,7 @@ services:
         value: 24.14.0
       - key: DATABASE_URL
         fromDatabase:
-          name: curioticket-postgres-staging
+          name: kurioticket-postgres-staging
           property: connectionString
       - key: NEXT_PUBLIC_APP_URL
         sync: false
@@ -126,12 +126,12 @@ services:
         sync: false
 
 databases:
-  - name: curioticket-postgres
-    databaseName: curioticket
-    user: curioticket
+  - name: kurioticket-postgres
+    databaseName: kurioticket
+    user: kurioticket
     plan: free
 
-  - name: curioticket-postgres-staging
-    databaseName: curioticket_staging
-    user: curioticket_staging
+  - name: kurioticket-postgres-staging
+    databaseName: kurioticket_staging
+    user: kurioticket_staging
     plan: free

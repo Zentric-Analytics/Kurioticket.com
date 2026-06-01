@@ -39,7 +39,7 @@ export default async function RootLayout({
   );
 
   const headerRegion = normalizeRegion(
-    headerStore.get("x-curioticket-region")
+    headerStore.get("x-kurioticket-region")
   );
 
   const ipRegion = countryToRegion(

@@ -1,8 +1,8 @@
 import { normalizeLanguage, type LanguageCode } from "@/lib/language";
 
-export const LOCALE_COOKIE_KEY = "curioticket_locale";
-export const REGION_COOKIE_KEY = "curioticket_region";
-export const CURRENCY_COOKIE_KEY = "curioticket_currency";
+export const LOCALE_COOKIE_KEY = "kurioticket_locale";
+export const REGION_COOKIE_KEY = "kurioticket_region";
+export const CURRENCY_COOKIE_KEY = "kurioticket_currency";
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 

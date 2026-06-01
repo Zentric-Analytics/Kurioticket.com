@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   const cookieRegion = normalizeRegion(request.cookies.get(REGION_COOKIE_KEY)?.value);
 
   if (cookieRegion) {
-    response.headers.set("x-curioticket-region", cookieRegion);
+    response.headers.set("x-kurioticket-region", cookieRegion);
     return response;
   }
 
@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
-  response.headers.set("x-curioticket-region", detectedRegion);
+  response.headers.set("x-kurioticket-region", detectedRegion);
 
   return response;
 }
