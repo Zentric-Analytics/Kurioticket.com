@@ -16,7 +16,13 @@ import {
 import { useRegion } from "@/components/region/RegionProvider";
 
 
-export function CountryCurrencySelector() {
+type CountryCurrencySelectorProps = {
+  variant?: "default" | "header";
+};
+
+export function CountryCurrencySelector({
+  variant = "default",
+}: CountryCurrencySelectorProps) {
   const {
     mode,
     setMode,
@@ -29,6 +35,17 @@ export function CountryCurrencySelector() {
 
   const [query, setQuery] =
     useState("");
+
+  const isHeaderVariant =
+    variant === "header";
+
+  const triggerClassName = isHeaderVariant
+    ? "inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 text-sm font-semibold text-indigo-50 shadow-sm transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
+    : "inline-flex h-12 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm";
+
+  const chevronClassName = isHeaderVariant
+    ? "text-indigo-100"
+    : "text-slate-500";
 
   useEffect(() => {
     const onKeyDown = (
@@ -88,7 +105,7 @@ export function CountryCurrencySelector() {
         onClick={() =>
           setOpen((value) => !value)
         }
-        className="inline-flex h-12 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm"
+        className={triggerClassName}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
@@ -100,7 +117,7 @@ export function CountryCurrencySelector() {
 
         <ChevronDown
           size={14}
-          className="text-slate-500"
+          className={chevronClassName}
         />
       </button>
 
