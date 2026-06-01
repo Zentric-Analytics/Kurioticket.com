@@ -332,58 +332,6 @@ export function AppHeader() {
                 </Button>
               </div>
 
-              <div className="relative" ref={desktopMenuRef}>
-                <button
-                  type="button"
-                  onClick={() => setDesktopMenuOpen((value) => !value)}
-                  aria-expanded={desktopMenuOpen}
-                  aria-haspopup="menu"
-                  aria-label={
-                    desktopMenuOpen
-                      ? "Close more navigation"
-                      : "Open more navigation"
-                  }
-                  className={`inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 text-indigo-50 shadow-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900 ${
-                    desktopMoreActive ? "bg-white/15 ring-2 ring-white/60" : ""
-                  }`}
-                >
-                  {desktopMenuOpen ? (
-                    <X size={18} aria-hidden="true" />
-                  ) : (
-                    <Menu size={18} aria-hidden="true" />
-                  )}
-                </button>
-
-                {desktopMenuOpen ? (
-                  <div
-                    role="menu"
-                    className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-2xl"
-                  >
-                    {desktopMoreNavItems.map((item) => {
-                      const Icon = item.icon;
-                      const active = isNavItemActive(item.href);
-
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          role="menuitem"
-                          onClick={() => setDesktopMenuOpen(false)}
-                          className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
-                            active
-                              ? "bg-violet-50 text-violet-700"
-                              : "text-slate-700 hover:bg-slate-100"
-                          }`}
-                        >
-                          {Icon ? <Icon size={16} aria-hidden="true" /> : null}
-                          <span>{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                ) : null}
-              </div>
-
               {isSignedIn ? (
                 <>
                   <LinkButton
@@ -420,9 +368,60 @@ export function AppHeader() {
                   </Link>
                 </>
               )}
+              <div className="relative" ref={desktopMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setDesktopMenuOpen((value) => !value)}
+                  aria-expanded={desktopMenuOpen}
+                  aria-haspopup="menu"
+                  aria-label={
+                    desktopMenuOpen
+                      ? "Close more navigation"
+                      : "Open more navigation"
+                  }
+                  className={`inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white shadow-md shadow-indigo-950/20 transition-colors hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900 ${
+                    desktopMoreActive ? "border-white/40 bg-white/20 ring-2 ring-white/60" : ""
+                  }`}
+                >
+                  {desktopMenuOpen ? (
+                    <X size={19} aria-hidden="true" />
+                  ) : (
+                    <Menu size={19} aria-hidden="true" />
+                  )}
+                </button>
+
+                {desktopMenuOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-64 rounded-2xl border border-slate-200 bg-white p-2 text-slate-900 shadow-2xl"
+                  >
+                    {desktopMoreNavItems.map((item) => {
+                      const Icon = item.icon;
+                      const active = isNavItemActive(item.href);
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          role="menuitem"
+                          onClick={() => setDesktopMenuOpen(false)}
+                          className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 ${
+                            active
+                              ? "bg-violet-50 text-violet-700"
+                              : "text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          {Icon ? <Icon size={16} aria-hidden="true" /> : null}
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
             </div>
 
-            <nav className="flex items-center gap-2">
+            <nav className="flex items-center gap-2.5">
               {desktopPrimaryNavItems.map((item) => {
                 const Icon = item.icon;
                 const active = isNavItemActive(item.href);
@@ -431,13 +430,13 @@ export function AppHeader() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold transition-colors ${
+                    className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-base font-semibold transition-colors ${
                       active
                         ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm"
                         : "text-indigo-50 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                    {Icon ? <Icon size={17} aria-hidden="true" /> : null}
                     <span>{item.label}</span>
                   </Link>
                 );
