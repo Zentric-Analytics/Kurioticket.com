@@ -12,7 +12,7 @@ const legalSections = [
   {
     title: "Privacy Policy",
     description:
-      "Learn how Curioticket handles personal information, account data, search details, and privacy choices when you use the platform.",
+      "Learn how Kurioticket handles personal information, account data, search details, and privacy choices when you use the platform.",
     href: "/legal/privacy-policy",
     cta: "View Privacy Policy",
     icon: ShieldCheck,
@@ -20,7 +20,7 @@ const legalSections = [
   {
     title: "Terms of Service",
     description:
-      "Review the terms that explain acceptable use, account responsibilities, provider redirects, and Curioticket platform rules.",
+      "Review the terms that explain acceptable use, account responsibilities, provider redirects, and Kurioticket platform rules.",
     href: "/legal/terms-of-service",
     cta: "View Terms of Service",
     icon: Scale,
@@ -46,7 +46,7 @@ export default function LegalCenterPage() {
             Legal Center
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-muted sm:text-base">
-            Access important legal and policy information related to using Curioticket.
+            Access important legal and policy information related to using Kurioticket.
           </p>
         </section>
 
@@ -58,7 +58,7 @@ export default function LegalCenterPage() {
                   Legal resources
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
-                  Choose a policy below to learn more about Curioticket&apos;s legal terms and data practices.
+                  Choose a policy below to learn more about Kurioticket&apos;s legal terms and data practices.
                 </p>
               </div>
               <p className="rounded-full bg-teal/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-dark">
@@ -102,7 +102,7 @@ export default function LegalCenterPage() {
             <div>
               <h2 className="text-xl font-bold text-navy">Additional legal resources</h2>
               <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
-                Additional legal resources may be added as Curioticket grows.
+                Additional legal resources may be added as Kurioticket grows.
               </p>
             </div>
           </div>
