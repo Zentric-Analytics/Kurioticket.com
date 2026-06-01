@@ -71,14 +71,14 @@ export function Footer() {
       ],
     },
     {
-      heading: "About Curioticket",
+      heading: "About Kurioticket",
       links: [
         {
           label: "About Us",
           href: "/about",
         },
         {
-          label: "How Curioticket Works",
+          label: "How Kurioticket Works",
           href: "/how-it-works",
         },
       ],
@@ -169,7 +169,7 @@ export function Footer() {
           <div className="flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="font-semibold text-slate-900">
-                Curioticket
+                Kurioticket
               </p>
 
               <p className="mt-1 text-xs text-slate-500">
@@ -179,7 +179,7 @@ export function Footer() {
 
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <p>
-                © {currentYear} Curioticket. All rights reserved.
+                © {currentYear} Kurioticket. All rights reserved.
               </p>
 
               <Link href="/legal/privacy-policy" className="transition-colors hover:text-indigo-600">

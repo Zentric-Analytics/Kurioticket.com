@@ -165,7 +165,7 @@ export function SigninForm({
       ) : null}
 
       <p className="mt-4 text-sm text-muted">
-        New to Curioticket?{" "}
+        New to Kurioticket?{" "}
         <Link className="font-semibold text-teal-dark" href="/auth/signup">
           Create an account
         </Link>

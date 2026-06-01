@@ -834,7 +834,7 @@ export default function HotelsSearchPage() {
                 How hotel search works
               </p>
               <h2 className="mt-1 text-xl font-semibold tracking-tight md:text-2xl">
-                Plan your stay with Curioticket
+                Plan your stay with Kurioticket
               </h2>
               <p className="mt-3 text-sm leading-6 text-slate-300">
                 Keep the important trip details in view as you move from search

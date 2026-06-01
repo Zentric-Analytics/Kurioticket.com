@@ -167,7 +167,7 @@ function RecentSearchCard({
           <div className="flex h-full items-center justify-between p-4 text-white">
             <div>
               <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-white/70">
-                Curioticket
+                Kurioticket
               </p>
               <p className="mt-1 max-w-[9rem] text-lg font-black leading-tight">
                 {entry.type === "flight" ? "Flight search" : "Hotel search"}
@@ -311,7 +311,7 @@ function FlightDecisionSupportSection() {
 
             <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.07] p-4">
               <p className="text-sm font-bold leading-6 text-slate-200">
-                Use Curioticket to narrow the routes that fit your trip, then
+                Use Kurioticket to narrow the routes that fit your trip, then
                 confirm baggage, fare rules, seat options, and flexibility with
                 the booking provider before checkout.
               </p>
@@ -1585,7 +1585,7 @@ export function FlightResultsClient() {
                 <div className="relative flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">
-                      Curioticket picks
+                      Kurioticket picks
                     </p>
                     <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
                       Discover destinations from your region
@@ -1595,7 +1595,7 @@ export function FlightResultsClient() {
                     </p>
                   </div>
                   <p className="max-w-sm text-sm leading-6 text-slate-500">
-                    These routes are planning prompts from Curioticket discovery,
+                    These routes are planning prompts from Kurioticket discovery,
                     with searches opened using flexible future dates.
                   </p>
                 </div>

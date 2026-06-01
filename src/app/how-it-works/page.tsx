@@ -4,7 +4,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 
 export const metadata = {
-  title: "How Curioticket Works",
+  title: "How Kurioticket Works",
 };
 
 const steps = [
@@ -44,10 +44,10 @@ export default function HowItWorksPage() {
       <AppHeader />
       <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
         <section className="max-w-3xl">
-          <p className="text-sm font-semibold text-teal-dark">How Curioticket works</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">How Curioticket Works</h1>
+          <p className="text-sm font-semibold text-teal-dark">How Kurioticket works</p>
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">How Kurioticket Works</h1>
           <p className="mt-4 text-sm leading-6 text-muted sm:text-base">
-            Curioticket helps travelers move from search to comparison, then on to the provider
+            Kurioticket helps travelers move from search to comparison, then on to the provider
             when an offer is selected.
           </p>
         </section>
@@ -88,7 +88,7 @@ export default function HowItWorksPage() {
         <section className="mt-10 max-w-3xl rounded-2xl border border-border bg-white p-5 sm:p-6">
           <h2 className="text-xl font-bold text-navy">Provider websites</h2>
           <p className="mt-3 text-sm leading-6 text-muted sm:text-base">
-            Some bookings may be completed on provider websites after Curioticket redirects you.
+            Some bookings may be completed on provider websites after Kurioticket redirects you.
             Review the provider page for final availability, pricing, terms, payment steps, and
             booking details before completing a purchase.
           </p>

@@ -16,7 +16,7 @@ const serviceSections = [
     summary:
       "Search travel options across different providers from one place instead of opening each provider separately.",
     details:
-      "Curioticket brings available flight, hotel, route, and travel result information into a single search experience so travelers can review options more efficiently.",
+      "Kurioticket brings available flight, hotel, route, and travel result information into a single search experience so travelers can review options more efficiently.",
   },
   {
     number: "02",
@@ -50,22 +50,22 @@ const serviceSections = [
     title: "Account & Travel Tools",
     icon: UserRound,
     summary:
-      "Use account tools to organize saved searches, trips, alerts, and preferences in one Curioticket workspace.",
+      "Use account tools to organize saved searches, trips, alerts, and preferences in one Kurioticket workspace.",
     details:
-      "These tools support travel planning on Curioticket, while provider-specific booking management remains with the provider when your booking is completed externally.",
+      "These tools support travel planning on Kurioticket, while provider-specific booking management remains with the provider when your booking is completed externally.",
   },
 ];
 
 const serviceFaqs = [
   {
-    question: "What is Curioticket?",
+    question: "What is Kurioticket?",
     answer:
-      "Curioticket is a travel search and comparison platform for finding, comparing, saving, and organizing travel options from multiple providers.",
+      "Kurioticket is a travel search and comparison platform for finding, comparing, saving, and organizing travel options from multiple providers.",
   },
   {
     question: "How does travel search work?",
     answer:
-      "You enter trip details, and Curioticket displays available travel options and provider information that may help you compare choices.",
+      "You enter trip details, and Kurioticket displays available travel options and provider information that may help you compare choices.",
   },
   {
     question: "Why am I redirected to another provider?",
@@ -73,9 +73,9 @@ const serviceFaqs = [
       "Some offers are completed on external provider sites. The provider handles final booking steps, payment, confirmation, and fulfillment.",
   },
   {
-    question: "Does Curioticket process payments?",
+    question: "Does Kurioticket process payments?",
     answer:
-      "For redirected provider offers, Curioticket does not process payment. Review and complete payment directly on the provider page.",
+      "For redirected provider offers, Kurioticket does not process payment. Review and complete payment directly on the provider page.",
   },
   {
     question: "Can I save trips and alerts?",
@@ -106,7 +106,7 @@ export default function MoreServiceInfoPage() {
               More Service Information
             </h1>
             <p className="mt-4 text-sm leading-6 text-muted sm:text-base">
-              Learn how Curioticket helps travelers search, compare, save, and organize travel options from multiple providers in one place.
+              Learn how Kurioticket helps travelers search, compare, save, and organize travel options from multiple providers in one place.
             </p>
           </div>
 
@@ -141,10 +141,10 @@ export default function MoreServiceInfoPage() {
             <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
                 <h2 id="how-curioticket-works" className="text-2xl font-bold tracking-tight text-navy">
-                  How Curioticket works
+                  How Kurioticket works
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
-                  These service details explain Curioticket&apos;s role before, during, and after a travel search.
+                  These service details explain Kurioticket&apos;s role before, during, and after a travel search.
                 </p>
               </div>
               <p className="rounded-full bg-teal/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-dark">

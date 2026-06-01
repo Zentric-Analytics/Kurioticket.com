@@ -173,7 +173,7 @@ export default async function CarsResultsPage({
                 Live car rental search is not available yet
               </h2>
               <p className="mt-4 text-lg leading-8 text-slate-700">
-                Curioticket is not connected to an approved live car rental provider for this search yet, so we won’t show placeholder cars, fake prices, or sandbox inventory in production.
+                Kurioticket is not connected to an approved live car rental provider for this search yet, so we won’t show placeholder cars, fake prices, or sandbox inventory in production.
               </p>
               <p className="mt-4 leading-7 text-slate-600">
                 Your search details are preserved in the URL so this page is ready for a future live provider integration.
