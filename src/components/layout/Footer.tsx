@@ -179,7 +179,7 @@ export function Footer() {
 
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <p>
-                © {currentYear} Kurioticket. All rights reserved.
+                © {currentYear} Kurioticket LLC. All rights reserved.
               </p>
 
               <Link href="/legal/privacy-policy" className="transition-colors hover:text-indigo-600">

@@ -6,15 +6,15 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "terms-of-service",
     title: "Terms of Service",
-    summary: "Rules for using Curioticket search, accounts, dashboards, premium tools, and partner redirects.",
+    summary: "Rules for using Kurioticket search, accounts, dashboards, premium tools, and partner redirects.",
     lastUpdated,
     sections: [
       {
         id: "overview",
         title: "Overview",
         paragraphs: [
-          "Curioticket is an intelligent travel confidence platform that helps users search flights and hotels, compare partner prices, save travel options, create price alerts, and use premium optimization tools.",
-          "Curioticket is not an airline, hotel, online travel agency, travel agency, payment processor for travel purchases, or ticket issuer. Purchases, fare rules, ticketing, itinerary changes, cancellations, refunds, boarding, check-in, and travel documents are handled by the external provider.",
+          "Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) operates a travel search and comparison platform that helps users search flights, hotels, cars, compare provider options, save travel plans, create alerts, and use premium travel tools.",
+          "Kurioticket is not an airline, hotel, online travel agency, travel agency, payment processor for travel purchases, or ticket issuer. Purchases, fare rules, ticketing, itinerary changes, cancellations, refunds, boarding, check-in, and travel documents are handled by the external provider.",
         ],
       },
       {
@@ -29,7 +29,7 @@ export const legalDocuments: LegalDocument[] = [
         id: "acceptable-use",
         title: "Acceptable Use",
         paragraphs: [
-          "You may not abuse search, payment, alert, support, or AI systems; reverse engineer provider integrations; attempt to bypass rate limits; or use Curioticket for fraudulent, unlawful, or harmful activity.",
+          "You may not abuse search, payment, alert, support, or AI systems; reverse engineer provider integrations; attempt to bypass rate limits; or use Kurioticket for fraudulent, unlawful, or harmful activity.",
           "We may suspend access if activity threatens platform reliability, provider relationships, payment security, or user safety.",
         ],
       },
@@ -38,7 +38,7 @@ export const legalDocuments: LegalDocument[] = [
         title: "Partner Services",
         paragraphs: [
           "Travel results may include prices, availability, policies, route data, hotel data, and external provider links supplied by APIs, airlines, hotels, or affiliate partners.",
-          "Partner terms apply once you leave Curioticket or complete a transaction with a partner. Review all fare, hotel, baggage, change, refund, visa, and traveler requirements before purchase.",
+          "Partner terms apply once you leave Kurioticket or complete a transaction with a partner. Review all fare, hotel, baggage, change, refund, visa, and traveler requirements before purchase.",
         ],
       },
     ],
@@ -46,7 +46,7 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "privacy-policy",
     title: "Privacy Policy",
-    summary: "How Curioticket collects, uses, stores, and protects account, search, alert, subscription, support, and email data.",
+    summary: "How Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) collects, uses, stores, and protects account, search, alert, subscription, support, and email data.",
     lastUpdated,
     sections: [
       {
@@ -62,7 +62,7 @@ export const legalDocuments: LegalDocument[] = [
         title: "Service Providers",
         paragraphs: [
           "We may use third-party service providers to help operate our services, process payments, send communications, and support product functionality.",
-          "Curioticket does not store credit card numbers. Payment service providers process subscription payment details. Curioticket does not store passport data.",
+          "Kurioticket does not store credit card numbers. Payment service providers process subscription payment details. Kurioticket does not store passport data.",
         ],
       },
       {
@@ -78,14 +78,14 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "cookie-policy",
     title: "Cookie Policy",
-    summary: "How Curioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
+    summary: "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
     lastUpdated,
     sections: [
       {
         id: "use",
         title: "How Cookies Are Used",
         paragraphs: [
-          "Curioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
+          "Kurioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
           "Some cookies are necessary for login, dashboard access, subscriptions, support tickets, and saved travel features.",
         ],
       },
@@ -109,14 +109,14 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "affiliate-disclosure",
     title: "Affiliate Disclosure",
-    summary: "How Curioticket may earn commissions when users click or book through trusted partners.",
+    summary: "How Kurioticket may earn commissions when users click or book through trusted partners.",
     lastUpdated,
     sections: [
       {
         id: "model",
         title: "Affiliate Model",
         paragraphs: [
-          "Curioticket offers free flight and hotel search without service fees. We may earn affiliate commissions when users click, book, or purchase through airline, hotel, or travel partner links.",
+          "Kurioticket offers free flight and hotel search without service fees. We may earn affiliate commissions when users click, book, or purchase through airline, hotel, or travel partner links.",
           "Affiliate compensation helps fund free search, alerts, support, platform development, and premium optimization features.",
         ],
       },
@@ -124,7 +124,7 @@ export const legalDocuments: LegalDocument[] = [
         id: "ranking",
         title: "Ranking Integrity",
         paragraphs: [
-          "Curioticket aims to rank results by user value signals such as price, duration, stops, confidence, comfort, and stress reduction. Affiliate relationships should not create fake urgency, hidden fees, or misleading recommendations.",
+          "Kurioticket aims to rank results by user value signals such as price, duration, stops, confidence, comfort, and stress reduction. Affiliate relationships should not create fake urgency, hidden fees, or misleading recommendations.",
         ],
       },
     ],
@@ -132,15 +132,15 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "refund-booking-disclaimer",
     title: "Refund & External Provider Disclaimer",
-    summary: "Clarifies that purchases, ticketing, refunds, cancellations, and payment for travel inventory happen outside Curioticket.",
+    summary: "Clarifies that purchases, ticketing, refunds, cancellations, and payment for travel inventory happen outside Kurioticket.",
     lastUpdated,
     sections: [
       {
         id: "no-ticketing",
         title: "No Direct Ticket Issuing",
         paragraphs: [
-          "Curioticket does not sell airline tickets or hotel reservations. We redirect users to external airlines, hotels, affiliate partners, or travel providers to continue comparison and purchase steps.",
-          "Your purchase contract is with the external provider that accepts your payment, not Curioticket.",
+          "Kurioticket does not sell airline tickets or hotel reservations. We redirect users to external airlines, hotels, affiliate partners, or travel providers to continue comparison and purchase steps.",
+          "Your purchase contract is with the external provider that accepts your payment, not Kurioticket.",
         ],
       },
       {
@@ -148,7 +148,7 @@ export const legalDocuments: LegalDocument[] = [
         title: "Refunds and Changes",
         paragraphs: [
           "Refunds, credits, schedule changes, cancellations, missed connections, check-in issues, baggage disputes, and purchase problems are handled by the external airline, hotel, or travel provider.",
-          "Curioticket support can help you understand platform usage and travel guidance boundaries, but cannot override partner or airline policies.",
+          "Kurioticket support can help you understand platform usage and travel guidance boundaries, but cannot override partner or airline policies.",
         ],
       },
     ],
@@ -156,14 +156,14 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "subscription-terms",
     title: "Subscription Terms",
-    summary: "Terms for the Curioticket Premium membership, trial, billing, cancellation, invoices, and access.",
+    summary: "Terms for the Kurioticket Premium membership, trial, billing, cancellation, invoices, and access.",
     lastUpdated,
     sections: [
       {
         id: "pricing",
         title: "Premium Pricing",
         paragraphs: [
-          "Curioticket Premium is available for $9.99 per month or $79 per year, with a 7-day free trial when eligible. Taxes may apply.",
+          "Kurioticket Premium is available for $9.99 per month or $79 per year, with a 7-day free trial when eligible. Taxes may apply.",
           "Premium is an intelligent travel optimization membership. It is not required to search flights, search hotels, view results, view details, or redirect to partners.",
         ],
       },
@@ -171,7 +171,7 @@ export const legalDocuments: LegalDocument[] = [
         id: "billing",
         title: "Billing and Cancellation",
         paragraphs: [
-          "Stripe manages checkout, subscriptions, invoices, payment methods, webhooks, and billing portal access. Curioticket does not store card numbers.",
+          "Stripe manages checkout, subscriptions, invoices, payment methods, webhooks, and billing portal access. Kurioticket does not store card numbers.",
           "Unless canceled, subscriptions renew automatically at the selected interval. You may manage or cancel billing through the Stripe billing portal.",
         ],
       },
@@ -188,15 +188,15 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "acceptable-use-policy",
     title: "Acceptable Use Policy",
-    summary: "Behavior rules for safe, fair, lawful use of Curioticket systems.",
+    summary: "Behavior rules for safe, fair, lawful use of Kurioticket systems.",
     lastUpdated,
     sections: [
       {
         id: "prohibited",
         title: "Prohibited Conduct",
         paragraphs: [
-          "You may not scrape Curioticket, scrape airline websites through Curioticket, attack provider APIs, automate abusive searches, create fraudulent accounts, test stolen cards, spam support, or interfere with platform reliability.",
-          "You may not use Curioticket to facilitate unlawful travel activity, harassment, fraud, abuse, or unauthorized access.",
+          "You may not scrape Kurioticket, scrape airline websites through Kurioticket, attack provider APIs, automate abusive searches, create fraudulent accounts, test stolen cards, spam support, or interfere with platform reliability.",
+          "You may not use Kurioticket to facilitate unlawful travel activity, harassment, fraud, abuse, or unauthorized access.",
         ],
       },
       {
@@ -241,7 +241,7 @@ export const legalDocuments: LegalDocument[] = [
         title: "Prices Can Change",
         paragraphs: [
           "Flight and hotel prices, taxes, fees, baggage rules, cabin availability, rooms, schedules, and policies can change quickly and may differ by the time you reach a partner checkout page.",
-          "Curioticket aims to compare current provider data, but provider delays, rate limits, cache windows, currency conversion, partner rules, and user selections can affect displayed information.",
+          "Kurioticket aims to compare current provider data, but provider delays, rate limits, cache windows, currency conversion, partner rules, and user selections can affect displayed information.",
         ],
       },
       {
@@ -256,15 +256,15 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "partner-redirect-disclaimer",
     title: "Partner Redirect Disclaimer",
-    summary: "What happens when Curioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
+    summary: "What happens when Kurioticket redirects users to airlines, hotels, affiliate partners, or travel providers.",
     lastUpdated,
     sections: [
       {
         id: "redirect",
         title: "Secure Redirects",
         paragraphs: [
-          "When you continue to an external provider, Curioticket redirects you to an airline, hotel, affiliate partner, or travel provider. We may log redirect metadata such as provider, route, price, timestamp, user type, and source page for analytics, support, abuse prevention, and affiliate tracking.",
-          "Curioticket does not auto-fill airline websites, scrape airline websites, or complete partner purchases on your behalf.",
+          "When you continue to an external provider, Kurioticket redirects you to an airline, hotel, affiliate partner, or travel provider. We may log redirect metadata such as provider, route, price, timestamp, user type, and source page for analytics, support, abuse prevention, and affiliate tracking.",
+          "Kurioticket does not auto-fill airline websites, scrape airline websites, or complete partner purchases on your behalf.",
         ],
       },
       {
