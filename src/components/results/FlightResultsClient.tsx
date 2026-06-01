@@ -498,17 +498,17 @@ function FlightBookingFaqSection() {
         Frequently asked question
       </h2>
 
-      <div className="mt-4 grid gap-x-8 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-2 items-start gap-x-4 gap-y-0 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
         {flightFaqItems.map((item) => (
           <details
             key={item.question}
             className="group border-b border-slate-200/80"
           >
-            <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-left text-sm font-semibold leading-6 text-slate-800 marker:hidden [&::-webkit-details-marker]:hidden sm:text-base">
+            <summary className="focus-ring flex cursor-pointer list-none items-start justify-between gap-2 py-3 text-left text-xs font-semibold leading-5 text-slate-800 marker:hidden [&::-webkit-details-marker]:hidden sm:gap-3 sm:text-sm sm:leading-6">
               <span>{item.question}</span>
-              <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition group-open:rotate-180 group-open:text-slate-600" />
+              <ChevronDown className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400 transition group-open:rotate-180 group-open:text-slate-600" />
             </summary>
-            <p className="pb-4 text-sm leading-6 text-slate-600">{item.answer}</p>
+            <p className="pb-3 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">{item.answer}</p>
           </details>
         ))}
       </div>
@@ -1702,10 +1702,10 @@ export function FlightResultsClient() {
           <div className="mt-8">
             <section>
               <div>
-                <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                <h2 className="text-2xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-3xl sm:whitespace-nowrap">
                   Discover destinations from your region
                 </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                <p className="mt-1.5 text-xs leading-5 text-slate-600 sm:text-sm sm:whitespace-nowrap">
                   Explore curated routes and start your next trip with confidence.
                 </p>
               </div>
@@ -1716,16 +1716,16 @@ export function FlightResultsClient() {
                     key={item.id}
                     href={buildDiscoveryLink(item)}
                     aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                    className="group min-w-[78vw] max-w-[350px] snap-start overflow-hidden rounded-[1.45rem] border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[320px] lg:min-w-0 lg:max-w-none"
+                    className="group min-w-[70vw] max-w-[280px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[280px] lg:min-w-0 lg:max-w-none"
                   >
                     <article className="flex h-full flex-col">
-                      <div className="relative h-48 overflow-hidden bg-slate-100 lg:h-52">
+                      <div className="relative h-32 overflow-hidden bg-slate-100 sm:h-36 lg:h-44">
                         <Image
                           src={item.image}
                           alt={item.imageAlt}
                           fill
                           priority={false}
-                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 320px, 78vw"
+                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 280px, 70vw"
                           className="object-cover saturate-[1.08] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                         />
                         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white/70 via-white/20 to-transparent" />
@@ -1733,19 +1733,19 @@ export function FlightResultsClient() {
                           {item.originCode} → {item.destinationCode}
                         </span>
                       </div>
-                      <div className="flex flex-1 flex-col p-5">
-                        <h3 className="line-clamp-2 text-xl font-black leading-tight text-slate-950">
+                      <div className="flex flex-1 flex-col p-3.5 sm:p-4">
+                        <h3 className="line-clamp-2 text-base font-extrabold leading-tight text-slate-950 sm:text-lg">
                           {item.title}
                         </h3>
-                        <p className="mt-1 text-sm font-semibold text-slate-500">
+                        <p className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">
                           {item.originCity} to {item.destinationCity}
                         </p>
-                        <p className="mt-3 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
+                        <p className="mt-2 line-clamp-2 flex-1 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
                           {item.routeNote}
                         </p>
-                        <span className="mt-5 inline-flex items-center justify-between rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-600 group-hover:text-white group-focus-visible:border-indigo-200 group-focus-visible:bg-indigo-600 group-focus-visible:text-white">
+                        <span className="mt-3 inline-flex items-center justify-between rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-600 group-hover:text-white group-focus-visible:border-indigo-200 group-focus-visible:bg-indigo-600 group-focus-visible:text-white sm:px-3.5 sm:py-2">
                           Explore route
-                          <ArrowRightLeft size={15} />
+                          <ArrowRightLeft size={14} />
                         </span>
                       </div>
                     </article>
@@ -1756,12 +1756,11 @@ export function FlightResultsClient() {
 
             <section className="mt-8">
               <div>
-                <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                <h2 className="text-2xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-3xl sm:whitespace-nowrap">
                   Beach vacations
                 </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                  Explore flight routes to sunny coastlines, island escapes,
-                  and warm-weather beach destinations.
+                <p className="mt-1.5 text-xs leading-5 text-slate-600 sm:text-sm sm:whitespace-nowrap">
+                  Explore flight routes to sunny coastlines, island escapes, and warm-weather beach destinations.
                 </p>
               </div>
 
@@ -1774,7 +1773,7 @@ export function FlightResultsClient() {
                       key={item.id}
                       href={buildDiscoveryLink(item)}
                       aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                      className="group min-w-[70vw] max-w-[300px] snap-start overflow-hidden rounded-[1.15rem] border border-slate-200/90 bg-white/95 shadow-[0_8px_20px_rgba(15,23,42,0.045)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.075)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[270px] lg:min-w-0 lg:max-w-none"
+                      className="group min-w-[70vw] max-w-[280px] snap-start overflow-hidden rounded-[1.15rem] border border-slate-200/90 bg-white/95 shadow-[0_8px_20px_rgba(15,23,42,0.045)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.075)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[270px] lg:min-w-0 lg:max-w-none"
                     >
                       <article className="flex h-full flex-col">
                         <div className="relative h-32 overflow-hidden bg-sky-50 sm:h-36 lg:h-36">
