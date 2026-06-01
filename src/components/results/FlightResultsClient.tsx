@@ -1751,7 +1751,7 @@ export function FlightResultsClient() {
             className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2.5"
           >
             <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch">
-              <div className="relative h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-2 lg:w-[118px] lg:shrink-0">
+              <div className="relative flex h-full min-h-[48px] w-full items-center rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15 lg:w-[132px] lg:shrink-0">
                 <label htmlFor="compactTripType" className="sr-only">
                   Trip type
                 </label>
@@ -1772,12 +1772,12 @@ export function FlightResultsClient() {
                       }
                     }
                   }}
-                  className="focus-ring h-full w-full appearance-none bg-transparent pr-5 text-[12px] font-normal text-slate-950 outline-none"
+                  className="focus-ring h-full w-full appearance-none bg-transparent pr-6 text-[13px] font-normal text-slate-950 outline-none"
                 >
                   <option value="round-trip">Round-trip</option>
                   <option value="one-way">One-way</option>
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500" />
+                <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
               </div>
 
               <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.1fr)_minmax(0,0.88fr)_minmax(0,0.88fr)_minmax(0,1fr)] lg:gap-1">
