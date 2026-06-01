@@ -1798,7 +1798,7 @@ export function FlightResultsClient() {
                     className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500"
                     htmlFor="results-origin"
                   >
-                    From
+                    Origin
                   </label>
                   <input
                     id="results-origin"
@@ -1825,7 +1825,7 @@ export function FlightResultsClient() {
                         setDropdownPosition(null);
                       }
                     }}
-                    placeholder="City or airport"
+                    placeholder="From?"
                     autoComplete="off"
                     className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[16px] font-bold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
                   />
@@ -1853,7 +1853,7 @@ export function FlightResultsClient() {
                     className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500"
                     htmlFor="results-destination"
                   >
-                    To
+                    Destination
                   </label>
                   <input
                     id="results-destination"
@@ -1882,7 +1882,7 @@ export function FlightResultsClient() {
                         setDropdownPosition(null);
                       }
                     }}
-                    placeholder="City or airport"
+                    placeholder="To?"
                     autoComplete="off"
                     className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[16px] font-bold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
                   />
@@ -1914,7 +1914,7 @@ export function FlightResultsClient() {
                     <Calendar className="h-3.5 w-3.5 shrink-0 text-indigo-700" />
                     <span className="min-w-0">
                       <span className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500">
-                        Depart
+                        Travel dates
                       </span>
                       <span className="block truncate text-[13px] font-normal text-slate-950">
                         {departureDateInput
