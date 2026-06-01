@@ -1228,10 +1228,10 @@ export function FlightResultsClient() {
                   />
 
                   <div className="text-center">
-                    <h1 className="mx-auto text-balance text-[clamp(1.8rem,7vw,3rem)] font-semibold tracking-tight text-slate-900 sm:whitespace-nowrap">
+                    <h1 className="mx-auto max-w-sm text-balance text-[clamp(1.9rem,7vw,2.75rem)] font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-2xl">
                       Compare available flight options
                     </h1>
-                    <p className="mx-auto mt-3 max-w-2xl text-balance text-center text-base leading-7 text-slate-700 whitespace-normal sm:text-lg sm:whitespace-nowrap">
+                    <p className="mx-auto mt-3 max-w-sm text-balance text-center text-sm leading-6 text-slate-600 sm:max-w-2xl sm:text-base">
                       Review fares and choose the route that fits your trip in a few taps.
                     </p>
                   </div>
@@ -1726,11 +1726,11 @@ export function FlightResultsClient() {
 
           <div className="mt-8 space-y-8">
             <section>
-              <div className="mb-4">
-                <h2 className="text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
+              <div className="mb-4 sm:max-w-3xl">
+                <h2 className="max-w-sm text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-none sm:text-3xl">
                   Discover destinations from your region
                 </h2>
-                <p className="mt-1.5 text-sm font-normal leading-6 text-slate-600 sm:text-base">
+                <p className="mt-1.5 max-w-xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
                   Explore curated routes and start your next trip with confidence.
                 </p>
               </div>
@@ -1742,7 +1742,7 @@ export function FlightResultsClient() {
                       key={item.id}
                       href={buildDiscoveryLink(item)}
                       aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                      className="group min-w-[72vw] max-w-[280px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[280px] lg:min-w-0 lg:max-w-none"
+                      className="group min-w-[78vw] max-w-[300px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[280px] lg:min-w-0 lg:max-w-none"
                     >
                       <article className="flex h-full flex-col">
                         <div className="relative h-40 overflow-hidden bg-slate-100 sm:h-44 lg:h-52">
@@ -1751,12 +1751,12 @@ export function FlightResultsClient() {
                             alt={item.imageAlt}
                             fill
                             priority={false}
-                            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 280px, 72vw"
+                            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 280px, 78vw"
                             className="object-cover saturate-[1.08] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                           />
                         </div>
                         <div className="bg-white px-4 py-3.5 sm:px-4 sm:py-4">
-                          <h3 className="line-clamp-1 text-lg font-extrabold leading-tight text-slate-950">
+                          <h3 className="line-clamp-1 text-base font-semibold leading-tight text-slate-900 sm:text-lg">
                             {item.destinationCity}
                           </h3>
                         </div>
@@ -1770,35 +1770,35 @@ export function FlightResultsClient() {
             {routeInspirationCards.length > 0 ? (
               <section>
                 <div className="mb-4 flex flex-col gap-2 sm:max-w-3xl">
-                  <h2 className="text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
+                  <h2 className="max-w-sm text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-none sm:text-3xl">
                     More flight routes to explore
                   </h2>
-                  <p className="text-sm font-normal leading-6 text-slate-600 sm:text-base">
+                  <p className="max-w-2xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
                     Browse route ideas from your region and open one when you are ready to compare dates and fare details.
                   </p>
                 </div>
 
                 <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-3 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
                     {routeInspirationCards.map((item) => (
                       <Link
                         key={item.id}
                         href={buildDiscoveryLink(item)}
                         aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                        className="group flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                        className="group flex min-w-[72vw] snap-start items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[260px] lg:min-w-0"
                       >
-                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-16 sm:w-16">
+                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
                           <Image
                             src={item.image}
                             alt={item.imageAlt}
                             fill
                             priority={false}
-                            sizes="(min-width: 1024px) 64px, 56px"
+                            sizes="64px"
                             className="object-cover saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                           />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <h3 className="line-clamp-1 text-sm font-extrabold leading-5 text-slate-950 sm:text-base">
+                          <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-slate-900 sm:text-base">
                             {item.originCity} → {item.destinationCity}
                           </h3>
                           <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
@@ -1819,17 +1819,17 @@ export function FlightResultsClient() {
             ) : null}
 
             <section>
-              <div className="mb-4">
-                <h2 className="text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
+              <div className="mb-4 sm:max-w-3xl">
+                <h2 className="max-w-sm text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-none sm:text-3xl">
                   Beach vacations
                 </h2>
-                <p className="mt-1.5 text-sm font-normal leading-6 text-slate-600 sm:text-base">
+                <p className="mt-1.5 max-w-2xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
                   Explore flight routes to sunny coastlines, island escapes, and warm-weather beach destinations.
                 </p>
               </div>
 
               <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                <div className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-3 lg:gap-5 lg:overflow-visible lg:pb-0 xl:gap-6 [&::-webkit-scrollbar]:hidden">
+                <div className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:pb-0 xl:gap-6 [&::-webkit-scrollbar]:hidden">
                   {beachVacationCards.slice(0, 6).map((item) => {
                     const beachVisual = getBeachVacationVisual(item);
 
@@ -1847,12 +1847,12 @@ export function FlightResultsClient() {
                               alt={beachVisual.imageAlt}
                               fill
                               priority={false}
-                              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 280px, 72vw"
+                              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 280px, 72vw"
                               className="object-cover brightness-[1.05] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                             />
                           </div>
                           <div className="bg-white px-4 py-3.5 sm:px-4 sm:py-4">
-                            <h3 className="line-clamp-1 text-lg font-extrabold leading-tight text-slate-950">
+                            <h3 className="line-clamp-1 text-base font-semibold leading-tight text-slate-900 sm:text-lg">
                               {item.destinationCity}
                             </h3>
                           </div>
