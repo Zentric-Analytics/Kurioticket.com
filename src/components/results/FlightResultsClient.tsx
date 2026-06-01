@@ -114,16 +114,29 @@ const premiumBeachVacationKeywords = [
   "beach",
   "beaches",
   "beachfront",
+  "cancun",
   "caribbean",
+  "coast",
+  "coastal",
   "coastline",
   "coastlines",
+  "faro",
+  "honolulu",
   "island",
+  "islands",
+  "miami",
   "oahu",
   "ocean",
+  "pacific",
   "palm",
   "palms",
+  "puerto vallarta",
   "resort",
+  "san diego",
+  "san juan",
+  "seaside",
   "shoreline",
+  "sunshine",
   "sunny",
   "surf",
   "tropical",
@@ -136,20 +149,50 @@ const beachDestinationKeywords = [
   "algarve",
   "bali",
   "cancun",
+  "cape town",
   "faro",
   "honolulu",
   "miami",
+  "puerto vallarta",
   "san diego",
   "san juan",
+  "sydney",
   "zanzibar",
 ];
 
 const nonPremiumBeachImageKeywords = [
   "at dusk",
+  "buildings",
+  "city and",
   "cityscape",
+  "colonial buildings",
   "downtown",
+  "market streets",
   "night",
+  "skyline-only",
   "skyline",
+  "street",
+  "streets",
+  "tower",
+  "towers",
+];
+
+const nonPremiumBeachRouteKeywords = [
+  "business",
+  "city break",
+  "city transit",
+  "city weekends",
+  "conference",
+  "conferences",
+  "downtown",
+  "food districts",
+  "market streets",
+  "neon",
+  "night markets",
+  "startup",
+  "startups",
+  "tech",
+  "urban food",
 ];
 
 function getBeachVacationScore(item: HomeDiscoveryItem) {
@@ -162,21 +205,40 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
     .join(" ")
     .toLowerCase();
   const imageText = item.imageAlt.toLowerCase();
+  const routeText = [item.title, item.routeNote].join(" ").toLowerCase();
 
   let score = 0;
+  let imageScore = 0;
+  let routeScore = 0;
 
   for (const keyword of premiumBeachVacationKeywords) {
     if (searchableText.includes(keyword)) score += 2;
-    if (imageText.includes(keyword)) score += 3;
+    if (routeText.includes(keyword)) routeScore += 2;
+    if (imageText.includes(keyword)) {
+      score += 4;
+      imageScore += 4;
+    }
   }
 
   for (const keyword of beachDestinationKeywords) {
-    if (searchableText.includes(keyword)) score += 1;
+    if (searchableText.includes(keyword)) {
+      score += 3;
+      routeScore += 1;
+    }
   }
 
   for (const keyword of nonPremiumBeachImageKeywords) {
-    if (imageText.includes(keyword)) score -= 5;
+    if (imageText.includes(keyword)) {
+      score -= 9;
+      imageScore -= 9;
+    }
   }
+
+  for (const keyword of nonPremiumBeachRouteKeywords) {
+    if (routeText.includes(keyword)) score -= 4;
+  }
+
+  if (imageScore < 5 || routeScore < 3) return 0;
 
   return score;
 }
@@ -184,7 +246,7 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
 function getBeachVacationCards(regionCode: string, excludedIds: Set<string>) {
   const selectedCards: HomeDiscoveryItem[] = [];
   const selectedIds = new Set<string>();
-  const selectedDestinationCodes = new Set<string>();
+  const selectedDestinationCities = new Set<string>();
 
   function getSortedBeachCandidates(items: HomeDiscoveryItem[]) {
     return items
@@ -198,19 +260,21 @@ function getBeachVacationCards(regionCode: string, excludedIds: Set<string>) {
     for (const item of getSortedBeachCandidates(items)) {
       if (selectedCards.length >= 4) return;
       if (selectedIds.has(item.id)) continue;
-      if (selectedDestinationCodes.has(item.destinationCode)) continue;
+      if (selectedDestinationCities.has(item.destinationCity.toLowerCase())) {
+        continue;
+      }
       if (avoidExcludedCards && excludedIds.has(item.id)) continue;
 
       selectedCards.push(item);
       selectedIds.add(item.id);
-      selectedDestinationCodes.add(item.destinationCode);
+      selectedDestinationCities.add(item.destinationCity.toLowerCase());
     }
   }
 
   addCards(getHomeDiscoveryByRegion(regionCode), true);
-  addCards(getHomeDiscoveryByRegion(), true);
+  addCards(allDiscoveryItems, true);
   addCards(getHomeDiscoveryByRegion(regionCode), false);
-  addCards(getHomeDiscoveryByRegion(), false);
+  addCards(allDiscoveryItems, false);
 
   return selectedCards;
 }
@@ -361,7 +425,7 @@ function FlightBookingFaqSection() {
       <div className="max-w-3xl">
         <h2
           id="flight-booking-faq-heading"
-          className="text-3xl font-black leading-[1.02] tracking-tight text-slate-950 sm:text-4xl"
+          className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl"
         >
           Frequently asked question
         </h2>
@@ -371,15 +435,15 @@ function FlightBookingFaqSection() {
         {flightFaqItems.map((item) => (
           <details
             key={item.question}
-            className="group rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.06)] transition duration-200 open:border-indigo-100 open:shadow-[0_18px_38px_rgba(15,23,42,0.1)] sm:p-5"
+            className="group rounded-[1.25rem] border border-slate-200/80 bg-white/80 p-4 shadow-[0_8px_18px_rgba(15,23,42,0.035)] backdrop-blur transition duration-200 open:border-indigo-100 open:bg-white open:shadow-[0_12px_24px_rgba(15,23,42,0.06)]"
           >
-            <summary className="focus-ring flex cursor-pointer list-none items-start justify-between gap-4 rounded-xl text-left text-base font-black leading-6 text-slate-950 marker:hidden [&::-webkit-details-marker]:hidden">
+            <summary className="focus-ring flex cursor-pointer list-none items-start justify-between gap-4 rounded-xl text-left text-sm font-semibold leading-6 text-slate-800 marker:hidden [&::-webkit-details-marker]:hidden sm:text-base">
               <span>{item.question}</span>
-              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700 transition group-open:rotate-180 group-open:bg-indigo-700 group-open:text-white">
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50/80 text-indigo-600 transition group-open:rotate-180 group-open:bg-indigo-100 group-open:text-indigo-700">
                 <ChevronDown className="h-4 w-4" />
               </span>
             </summary>
-            <p className="mt-4 text-sm leading-6 text-slate-600">{item.answer}</p>
+            <p className="mt-4 text-sm leading-6 text-slate-500">{item.answer}</p>
           </details>
         ))}
       </div>
@@ -1642,34 +1706,34 @@ export function FlightResultsClient() {
                     key={item.id}
                     href={buildDiscoveryLink(item)}
                     aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                    className="group min-w-[78vw] max-w-[350px] snap-start overflow-hidden rounded-[1.45rem] border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.08)] transition duration-200 hover:-translate-y-1 hover:border-indigo-200 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[320px] lg:min-w-0 lg:max-w-none"
+                    className="group min-w-[72vw] max-w-[310px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200/90 bg-white/90 shadow-[0_10px_24px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_16px_32px_rgba(15,23,42,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[280px] lg:min-w-0 lg:max-w-none"
                   >
                     <article className="flex h-full flex-col">
-                      <div className="relative h-48 overflow-hidden bg-slate-100 lg:h-52">
+                      <div className="relative h-36 overflow-hidden bg-sky-50 sm:h-40 lg:h-40">
                         <Image
                           src={item.image}
                           alt={item.imageAlt}
                           fill
                           priority={false}
-                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 320px, 78vw"
-                          className="object-cover saturate-[1.08] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 280px, 72vw"
+                          className="object-cover brightness-[1.04] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                         />
-                        <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-white/70 via-white/20 to-transparent" />
-                        <span className="absolute bottom-3 left-3 rounded-full border border-white/80 bg-white/95 px-3 py-1 text-[0.68rem] font-black tracking-[0.15em] text-slate-900 shadow-sm backdrop-blur">
+                        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white/75 via-white/20 to-transparent" />
+                        <span className="absolute bottom-3 left-3 rounded-full border border-white/80 bg-white/95 px-2.5 py-1 text-[0.65rem] font-bold tracking-[0.14em] text-slate-800 shadow-sm backdrop-blur">
                           {item.originCode} → {item.destinationCode}
                         </span>
                       </div>
-                      <div className="flex flex-1 flex-col p-5">
-                        <h3 className="line-clamp-2 text-xl font-black leading-tight text-slate-950">
+                      <div className="flex flex-1 flex-col p-4">
+                        <h3 className="line-clamp-2 text-base font-bold leading-tight text-slate-900 sm:text-lg">
                           {item.title}
                         </h3>
-                        <p className="mt-1 text-sm font-semibold text-slate-500">
+                        <p className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">
                           {item.originCity} to {item.destinationCity}
                         </p>
-                        <p className="mt-3 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
+                        <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
                           {item.routeNote}
                         </p>
-                        <span className="mt-5 inline-flex items-center justify-between rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-600 group-hover:text-white group-focus-visible:border-indigo-200 group-focus-visible:bg-indigo-600 group-focus-visible:text-white">
+                        <span className="mt-4 inline-flex items-center justify-between rounded-full border border-sky-100 bg-sky-50 px-3.5 py-2 text-sm font-bold text-sky-700 transition group-hover:border-sky-200 group-hover:bg-sky-600 group-hover:text-white group-focus-visible:border-sky-200 group-focus-visible:bg-sky-600 group-focus-visible:text-white">
                           Explore route
                           <ArrowRightLeft size={15} />
                         </span>
