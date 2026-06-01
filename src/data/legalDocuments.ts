@@ -46,7 +46,7 @@ export const legalDocuments: LegalDocument[] = [
   {
     slug: "privacy-policy",
     title: "Privacy Policy",
-    summary: "How Curioticket collects, uses, stores, and protects account, search, alert, subscription, support, email, and AI feature data.",
+    summary: "How Curioticket collects, uses, stores, and protects account, search, alert, subscription, support, and email data.",
     lastUpdated,
     sections: [
       {
@@ -61,16 +61,8 @@ export const legalDocuments: LegalDocument[] = [
         id: "vendors",
         title: "Service Providers",
         paragraphs: [
-          "We use PostgreSQL and Prisma for application data, Stripe for subscriptions and billing, Resend for transactional email, OpenAI for premium AI analysis, and travel API providers for search results.",
-          "Curioticket does not store credit card numbers. Stripe processes subscription payment details. Curioticket does not store passport data.",
-        ],
-      },
-      {
-        id: "ai-data",
-        title: "AI Features",
-        paragraphs: [
-          "Premium AI features use search and travel context to explain options, compare tradeoffs, and reduce decision stress. AI outputs are informational and must not be treated as guarantees.",
-          "AI systems are instructed not to invent prices, availability, baggage rules, airline policies, hotel policies, or guaranteed savings.",
+          "We may use third-party service providers to help operate our services, process payments, send communications, and support product functionality.",
+          "Curioticket does not store credit card numbers. Payment service providers process subscription payment details. Curioticket does not store passport data.",
         ],
       },
       {
