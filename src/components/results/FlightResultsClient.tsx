@@ -160,6 +160,75 @@ const beachDestinationKeywords = [
   "zanzibar",
 ];
 
+type BeachVacationVisual = { image: string; imageAlt: string };
+
+const beachVacationVisualsByDestinationCode: Record<string, BeachVacationVisual> = {
+  CUN: {
+    image:
+      "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Bright Cancun beach with white sand and turquoise water",
+  },
+  HNL: {
+    image:
+      "https://images.unsplash.com/photo-1507878866276-a947ef722fee?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Sunny Waikiki beach and clear Pacific water in Honolulu",
+  },
+  SJU: {
+    image:
+      "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Turquoise Caribbean shoreline with palms",
+  },
+  DPS: {
+    image:
+      "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Sunny Bali coastline with tropical ocean views",
+  },
+  ZNZ: {
+    image:
+      "https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Zanzibar beach with palm trees and turquoise water",
+  },
+  PVR: {
+    image:
+      "https://images.unsplash.com/photo-1665039400840-b6b2a5786fef?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Puerto Vallarta coastline with bright Pacific water",
+  },
+  FAO: {
+    image:
+      "https://images.unsplash.com/photo-1530845640344-3fcbe6f1db9f?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Sunny Algarve cliffs and beach near Faro",
+  },
+  CPT: {
+    image:
+      "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Cape Town coastline with ocean and mountains",
+  },
+  SYD: {
+    image:
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Bright ocean beach with turquoise water",
+  },
+  SAN: {
+    image:
+      "https://images.unsplash.com/photo-1577083552431-6e5fd01988f1?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Sunny San Diego coastline and blue ocean",
+  },
+  MIA: {
+    image:
+      "https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Bright Miami coast and Biscayne Bay waterfront",
+  },
+};
+
+function getBeachVacationVisual(item: HomeDiscoveryItem): BeachVacationVisual {
+  return (
+    beachVacationVisualsByDestinationCode[item.destinationCode] ?? {
+      image: item.image,
+      imageAlt: item.imageAlt,
+    }
+  );
+}
+
 const nonPremiumBeachImageKeywords = [
   "at dusk",
   "buildings",
@@ -204,7 +273,7 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
   ]
     .join(" ")
     .toLowerCase();
-  const imageText = item.imageAlt.toLowerCase();
+  const imageText = getBeachVacationVisual(item).imageAlt.toLowerCase();
   const routeText = [item.title, item.routeNote].join(" ").toLowerCase();
 
   let score = 0;
@@ -421,29 +490,25 @@ function SavedRouteCard({
 
 function FlightBookingFaqSection() {
   return (
-    <section aria-labelledby="flight-booking-faq-heading" className="mt-10">
-      <div className="max-w-3xl">
-        <h2
-          id="flight-booking-faq-heading"
-          className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl"
-        >
-          Frequently asked question
-        </h2>
-      </div>
+    <section aria-labelledby="flight-booking-faq-heading" className="mt-8">
+      <h2
+        id="flight-booking-faq-heading"
+        className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl"
+      >
+        Frequently asked question
+      </h2>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-4 grid gap-x-8 lg:grid-cols-2">
         {flightFaqItems.map((item) => (
           <details
             key={item.question}
-            className="group rounded-[1.25rem] border border-slate-200/80 bg-white/80 p-4 shadow-[0_8px_18px_rgba(15,23,42,0.035)] backdrop-blur transition duration-200 open:border-indigo-100 open:bg-white open:shadow-[0_12px_24px_rgba(15,23,42,0.06)]"
+            className="group border-b border-slate-200/80"
           >
-            <summary className="focus-ring flex cursor-pointer list-none items-start justify-between gap-4 rounded-xl text-left text-sm font-semibold leading-6 text-slate-800 marker:hidden [&::-webkit-details-marker]:hidden sm:text-base">
+            <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-left text-sm font-semibold leading-6 text-slate-800 marker:hidden [&::-webkit-details-marker]:hidden sm:text-base">
               <span>{item.question}</span>
-              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-50/80 text-indigo-600 transition group-open:rotate-180 group-open:bg-indigo-100 group-open:text-indigo-700">
-                <ChevronDown className="h-4 w-4" />
-              </span>
+              <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition group-open:rotate-180 group-open:text-slate-600" />
             </summary>
-            <p className="mt-4 text-sm leading-6 text-slate-500">{item.answer}</p>
+            <p className="pb-4 text-sm leading-6 text-slate-600">{item.answer}</p>
           </details>
         ))}
       </div>
@@ -1701,46 +1766,50 @@ export function FlightResultsClient() {
               </div>
 
               <div className="mt-6 flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:pb-0 xl:gap-6 [&::-webkit-scrollbar]:hidden">
-                {beachVacationCards.map((item) => (
-                  <Link
-                    key={item.id}
-                    href={buildDiscoveryLink(item)}
-                    aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                    className="group min-w-[72vw] max-w-[310px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200/90 bg-white/90 shadow-[0_10px_24px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_16px_32px_rgba(15,23,42,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[280px] lg:min-w-0 lg:max-w-none"
-                  >
-                    <article className="flex h-full flex-col">
-                      <div className="relative h-36 overflow-hidden bg-sky-50 sm:h-40 lg:h-40">
-                        <Image
-                          src={item.image}
-                          alt={item.imageAlt}
-                          fill
-                          priority={false}
-                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 280px, 72vw"
-                          className="object-cover brightness-[1.04] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                        />
-                        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white/75 via-white/20 to-transparent" />
-                        <span className="absolute bottom-3 left-3 rounded-full border border-white/80 bg-white/95 px-2.5 py-1 text-[0.65rem] font-bold tracking-[0.14em] text-slate-800 shadow-sm backdrop-blur">
-                          {item.originCode} → {item.destinationCode}
-                        </span>
-                      </div>
-                      <div className="flex flex-1 flex-col p-4">
-                        <h3 className="line-clamp-2 text-base font-bold leading-tight text-slate-900 sm:text-lg">
-                          {item.title}
-                        </h3>
-                        <p className="mt-1 text-xs font-semibold text-slate-500 sm:text-sm">
-                          {item.originCity} to {item.destinationCity}
-                        </p>
-                        <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
-                          {item.routeNote}
-                        </p>
-                        <span className="mt-4 inline-flex items-center justify-between rounded-full border border-sky-100 bg-sky-50 px-3.5 py-2 text-sm font-bold text-sky-700 transition group-hover:border-sky-200 group-hover:bg-sky-600 group-hover:text-white group-focus-visible:border-sky-200 group-focus-visible:bg-sky-600 group-focus-visible:text-white">
-                          Explore route
-                          <ArrowRightLeft size={15} />
-                        </span>
-                      </div>
-                    </article>
-                  </Link>
-                ))}
+                {beachVacationCards.map((item) => {
+                  const beachVisual = getBeachVacationVisual(item);
+
+                  return (
+                    <Link
+                      key={item.id}
+                      href={buildDiscoveryLink(item)}
+                      aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                      className="group min-w-[70vw] max-w-[300px] snap-start overflow-hidden rounded-[1.15rem] border border-slate-200/90 bg-white/95 shadow-[0_8px_20px_rgba(15,23,42,0.045)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.075)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[270px] lg:min-w-0 lg:max-w-none"
+                    >
+                      <article className="flex h-full flex-col">
+                        <div className="relative h-32 overflow-hidden bg-sky-50 sm:h-36 lg:h-36">
+                          <Image
+                            src={beachVisual.image}
+                            alt={beachVisual.imageAlt}
+                            fill
+                            priority={false}
+                            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 270px, 70vw"
+                            className="object-cover brightness-[1.05] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                          />
+                          <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white/70 via-white/15 to-transparent" />
+                          <span className="absolute bottom-2.5 left-2.5 rounded-full border border-white/80 bg-white/95 px-2.5 py-1 text-[0.64rem] font-bold tracking-[0.14em] text-slate-800 shadow-sm backdrop-blur">
+                            {item.originCode} → {item.destinationCode}
+                          </span>
+                        </div>
+                        <div className="flex flex-1 flex-col p-3.5 sm:p-4">
+                          <h3 className="line-clamp-2 text-base font-bold leading-tight text-slate-900 sm:text-lg">
+                            {item.title}
+                          </h3>
+                          <p className="mt-1 text-xs font-semibold text-slate-500">
+                            {item.originCity} to {item.destinationCity}
+                          </p>
+                          <p className="mt-2 line-clamp-2 flex-1 text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                            {item.routeNote}
+                          </p>
+                          <span className="mt-3 inline-flex items-center justify-between rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-xs font-bold text-sky-700 transition group-hover:border-sky-200 group-hover:bg-sky-100 group-hover:text-sky-800 group-focus-visible:border-sky-200 group-focus-visible:bg-sky-100 group-focus-visible:text-sky-800">
+                            Explore route
+                            <ArrowRightLeft size={14} />
+                          </span>
+                        </div>
+                      </article>
+                    </Link>
+                  );
+                })}
               </div>
             </section>
 
