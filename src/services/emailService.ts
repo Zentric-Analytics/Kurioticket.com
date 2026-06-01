@@ -62,8 +62,8 @@ export function priceAlertEmail(input: { name?: string | null; route: string; pr
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">A meaningful price change was found</h1>
-      <p>${input.name ? `Hi ${input.name},` : "Hi,"} Curioticket found an option for ${input.route} at ${input.price}.</p>
-      <p>Review the route on Curioticket, then confirm current price, availability, and fare rules on the external provider site.</p>
+      <p>${input.name ? `Hi ${input.name},` : "Hi,"} Kurioticket found an option for ${input.route} at ${input.price}.</p>
+      <p>Review the route on Kurioticket, then confirm current price, availability, and fare rules on the external provider site.</p>
       <p><a href="${input.url}" style="color:#0f766e">View alert</a></p>
     </div>
   `;
@@ -73,10 +73,10 @@ export function supportTicketEmail(input: { ticketId: string; subject: string })
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
       <h1 style="font-size:22px">We received your request</h1>
-      <p>Your Curioticket support ticket is open.</p>
+      <p>Your Kurioticket support ticket is open.</p>
       <p><strong>Ticket:</strong> ${input.ticketId}</p>
       <p><strong>Subject:</strong> ${input.subject}</p>
-      <p>Our team can help with Curioticket searches, alerts, premium tools, and travel guidance. External providers handle purchases, check-in, changes, cancellations, and refunds.</p>
+      <p>Our team can help with Kurioticket searches, alerts, premium tools, and travel guidance. External providers handle purchases, check-in, changes, cancellations, and refunds.</p>
     </div>
   `;
 }
@@ -84,12 +84,12 @@ export function supportTicketEmail(input: { ticketId: string; subject: string })
 export function verificationCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number; verifyUrl: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h1 style="font-size:22px">Your Curioticket verification code</h1>
+      <h1 style="font-size:22px">Your Kurioticket verification code</h1>
       <p>${input.name ? `Hi ${input.name},` : "Hi,"} use this code to verify your email address:</p>
       <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${input.code}</p>
       <p>This code expires in ${input.expiresInMinutes} minutes.</p>
       <p><a href="${input.verifyUrl}" style="color:#0f766e">Enter verification code</a></p>
-      <p>If you did not request this Curioticket email verification, you can ignore this email.</p>
+      <p>If you did not request this Kurioticket email verification, you can ignore this email.</p>
     </div>
   `;
 }
@@ -97,11 +97,11 @@ export function verificationCodeEmail(input: { code: string; name?: string | nul
 export function passwordResetEmail(input: { name?: string | null; expiresInMinutes: number; resetUrl: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h1 style="font-size:22px">Reset your Curioticket password</h1>
+      <h1 style="font-size:22px">Reset your Kurioticket password</h1>
       <p>${input.name ? `Hi ${input.name},` : "Hi,"} click the link below to reset your password.</p>
       <p><a href="${input.resetUrl}" style="color:#0f766e">Reset your password</a></p>
       <p>This link expires in ${input.expiresInMinutes} minutes.</p>
-      <p>If you did not request a Curioticket password reset, you can ignore this email.</p>
+      <p>If you did not request a Kurioticket password reset, you can ignore this email.</p>
     </div>
   `;
 }
@@ -109,11 +109,11 @@ export function passwordResetEmail(input: { name?: string | null; expiresInMinut
 export function loginVerificationCodeEmail(input: { code: string; name?: string | null; expiresInMinutes: number }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
-      <h1 style="font-size:22px">Your Curioticket login verification code</h1>
-      <p>${input.name ? `Hi ${input.name},` : "Hi,"} use this code to finish logging in to Curioticket:</p>
+      <h1 style="font-size:22px">Your Kurioticket login verification code</h1>
+      <p>${input.name ? `Hi ${input.name},` : "Hi,"} use this code to finish logging in to Kurioticket:</p>
       <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${input.code}</p>
       <p>This code expires in ${input.expiresInMinutes} minutes.</p>
-      <p>If you did not try to log in to Curioticket, you can ignore this email.</p>
+      <p>If you did not try to log in to Kurioticket, you can ignore this email.</p>
     </div>
   `;
 }

@@ -51,7 +51,7 @@ export async function sendEmailVerificationCode(input: { email: string; name?: s
   try {
     await sendTransactionalEmail({
       to: email,
-      subject: "Curioticket verification code",
+      subject: "Kurioticket verification code",
       html: verificationCodeEmail({ code, name: input.name, expiresInMinutes: verificationCodeTtlMinutes, verifyUrl: `${getBaseUrl()}${getEmailVerificationRedirect(email)}` }),
       idempotencyKey: `email-verification-${email}-${token.slice(0, 16)}`,
       requireConfigured: true,
@@ -165,7 +165,7 @@ export async function sendLoginVerificationCode(input: { email: string; name?: s
   try {
     await sendTransactionalEmail({
       to: email,
-      subject: "Curioticket login verification code",
+      subject: "Kurioticket login verification code",
       html: loginVerificationCodeEmail({
         code,
         name: input.name,
