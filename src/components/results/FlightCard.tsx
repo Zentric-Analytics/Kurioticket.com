@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { Clock, Luggage, PlaneTakeoff, ShieldCheck } from "lucide-react";
 import type { PublicFlightResult } from "@/lib/types";
-import { Badge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ScoreMeter } from "@/components/ui/ScoreMeter";
@@ -11,16 +10,7 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
   return (
     <Card className="mx-auto w-full max-w-[640px] overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       <div className="border-b border-indigo-900/30 bg-gradient-to-r from-indigo-950 to-violet-800 px-3 py-2">
-        <div className="flex flex-wrap items-center justify-between gap-1.5">
-          <div className="flex flex-wrap gap-1">
-            {flight.badges.slice(0, 4).map((badge) => (
-              <Badge key={badge} variant={badge.includes("Risk") ? "teal" : badge.includes("Price") ? "blue" : "neutral"} className="bg-white/15 text-white ring-1 ring-white/25">
-                {badge}
-              </Badge>
-            ))}
-          </div>
-          <p className="text-xs font-bold uppercase tracking-wide text-white/80">{flight.provider} live offer</p>
-        </div>
+        <div aria-hidden="true" className="h-3" />
       </div>
 
       <div className="px-3 py-3">
