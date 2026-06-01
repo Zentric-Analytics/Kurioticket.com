@@ -258,9 +258,6 @@ export function AppHeader({
       "/hotels",
       "/cars",
       "/deals",
-      "/destinations",
-      "/explore",
-      "/saved",
     ]);
 
     return navItems.filter(
@@ -268,32 +265,25 @@ export function AppHeader({
     );
   }, [navItems]);
 
-  const mobileHiddenHrefs = useMemo(
-    () => new Set(["/destinations", "/explore", "/saved"]),
-    []
+  const visibleMobilePrimaryNavItems = useMemo(
+    () => mobilePrimaryNavItems,
+    [hideMobileSecondaryNavLinks, mobilePrimaryNavItems]
   );
 
-  const visibleMobilePrimaryNavItems = useMemo(() => {
-    if (!hideMobileSecondaryNavLinks) {
-      return mobilePrimaryNavItems;
-    }
-
-    return mobilePrimaryNavItems.filter(
-      (item) => !mobileHiddenHrefs.has(item.href)
-    );
-  }, [
-    hideMobileSecondaryNavLinks,
-    mobileHiddenHrefs,
-    mobilePrimaryNavItems,
-  ]);
+  const mobileDrawerHrefs = useMemo(
+    () =>
+      new Set([
+        "/destinations",
+        "/explore",
+        "/saved",
+        ...(isSignedIn ? ["/pricing", "/dashboard"] : []),
+      ]),
+    [isSignedIn]
+  );
 
   const mobileMenuNavItems = useMemo(() => {
-    if (!hideMobileSecondaryNavLinks) {
-      return navItems;
-    }
-
-    return navItems.filter((item) => !mobileHiddenHrefs.has(item.href));
-  }, [hideMobileSecondaryNavLinks, mobileHiddenHrefs, navItems]);
+    return navItems.filter((item) => mobileDrawerHrefs.has(item.href));
+  }, [mobileDrawerHrefs, navItems]);
 
   const renderFlag = (
     countryCode: string | undefined,
@@ -556,7 +546,7 @@ export function AppHeader({
         </div>
 
         <nav className="bg-white/5 md:hidden">
-          <div className="page-shell overflow-x-auto py-2">
+          <div className="page-shell overflow-x-auto py-2.5">
             <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
               {visibleMobilePrimaryNavItems.map((item) => {
                 const Icon = item.icon;
@@ -566,13 +556,15 @@ export function AppHeader({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                    className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2.5 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                       active
                         ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm"
                         : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                    {Icon ? (
+                      <Icon size={17} className="shrink-0" aria-hidden="true" />
+                    ) : null}
                     <span>{item.label}</span>
                   </Link>
                 );
