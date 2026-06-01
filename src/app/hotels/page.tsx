@@ -171,9 +171,61 @@ const moreHotelDestinationCards: HotelDestinationCard[] = [
   },
 ];
 
+const globalHotelDestinationCards: HotelDestinationCard[] = [
+  {
+    title: "Canada",
+    subtitle: "Toronto stays",
+    destinationQuery: "Toronto",
+    image:
+      "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Toronto skyline with the CN Tower beside Lake Ontario",
+    linkLabel: "Search hotels in Toronto, Canada",
+  },
+  {
+    title: "Netherlands",
+    subtitle: "Amsterdam stays",
+    destinationQuery: "Amsterdam",
+    image:
+      "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Amsterdam canal houses and bridge along the water",
+    linkLabel: "Search hotels in Amsterdam, Netherlands",
+  },
+  {
+    title: "Thailand",
+    subtitle: "Bangkok stays",
+    destinationQuery: "Bangkok",
+    image:
+      "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Bangkok city skyline and Chao Phraya river at sunset",
+    linkLabel: "Search hotels in Bangkok, Thailand",
+  },
+  {
+    title: "Mexico",
+    subtitle: "Cancun stays",
+    destinationQuery: "Cancun",
+    image:
+      "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Cancun beach with white sand and turquoise water",
+    linkLabel: "Search hotels in Cancun, Mexico",
+  },
+  {
+    title: "Turkey",
+    subtitle: "Istanbul stays",
+    destinationQuery: "Istanbul",
+    image:
+      "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Istanbul waterfront with domes and minarets at golden hour",
+    linkLabel: "Search hotels in Istanbul, Turkey",
+  },
+];
+
 validateDestinationImages(
   "hotel destination cards",
-  [...hotelDestinationCards, ...moreHotelDestinationCards].map((card) => ({
+  [
+    ...hotelDestinationCards,
+    ...moreHotelDestinationCards,
+    ...globalHotelDestinationCards,
+  ].map((card) => ({
     id: card.destinationQuery,
     image: card.image,
   })),
@@ -269,6 +321,15 @@ export default function HotelsSearchPage() {
   const moreHotelDestinationLinks = useMemo(
     () =>
       moreHotelDestinationCards.map((card) => ({
+        ...card,
+        href: destinationCardHref(card.destinationQuery),
+      })),
+    [destinationCardHref],
+  );
+
+  const globalHotelDestinationLinks = useMemo(
+    () =>
+      globalHotelDestinationCards.map((card) => ({
         ...card,
         href: destinationCardHref(card.destinationQuery),
       })),
@@ -809,14 +870,11 @@ export default function HotelsSearchPage() {
           <section className="space-y-5 pt-2 sm:pt-4" aria-labelledby="more-hotel-destinations-heading">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700/80">
-                  More hotel ideas
-                </p>
                 <h2
                   id="more-hotel-destinations-heading"
-                  className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl"
+                  className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl"
                 >
-                  Explore more hotel destinations
+                  Featured hotel destinations
                 </h2>
               </div>
             </div>
@@ -846,6 +904,50 @@ export default function HotelsSearchPage() {
                     <div className="mt-3 flex items-center justify-between gap-3 text-sm font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)]">
                       <span>{card.subtitle}</span>
                       <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32">
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="space-y-5 pt-2 sm:pt-4" aria-labelledby="global-hotel-destinations-heading">
+            <div className="max-w-2xl">
+              <h2
+                id="global-hotel-destinations-heading"
+                className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl"
+              >
+                Explore stays around the world
+              </h2>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {globalHotelDestinationLinks.map((card) => (
+                <Link
+                  key={card.title}
+                  href={card.href}
+                  aria-label={card.linkLabel}
+                  className="group relative min-h-[200px] overflow-hidden rounded-[1.5rem] bg-indigo-100 shadow-[0_20px_56px_-38px_rgba(79,70,229,0.76)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_68px_-42px_rgba(79,70,229,0.72)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[220px] xl:min-h-[210px]"
+                >
+                  <Image
+                    src={card.image}
+                    alt={card.imageAlt}
+                    fill
+                    sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover brightness-[1.05] saturate-[1.1] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.15]"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/72 via-slate-900/20 to-white/0" />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950/22 via-slate-900/10 to-transparent" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-cyan-300/10 opacity-80" />
+                  <div className="pointer-events-none absolute inset-0 rounded-[1.5rem] ring-1 ring-inset ring-white/25" />
+                  <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                    <p className="text-xl font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.44)]">
+                      {card.title}
+                    </p>
+                    <div className="mt-2.5 flex items-center justify-between gap-3 text-sm font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.38)]">
+                      <span>{card.subtitle}</span>
+                      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-0.5 group-hover:bg-white/32">
                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </span>
                     </div>
