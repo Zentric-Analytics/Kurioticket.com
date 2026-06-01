@@ -1,8 +1,6 @@
-import Image from "next/image";
-import Link from "next/link";
-
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { DestinationCard } from "./DestinationCard";
 
 type RegionName =
   | "Europe"
@@ -33,15 +31,125 @@ type DestinationSection = {
   destinations: Destination[];
 };
 
-function getDestinationPhotoUrl(name: string, country: string) {
-  const locationQuery = encodeURIComponent(
-    `${name} ${country} landmark skyline travel`,
-  );
-  const uniqueKey = encodeURIComponent(
-    `${name}-${country}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-  );
+const curatedDestinationPhotos: Record<string, string> = {
+  "London|United Kingdom":
+    "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=1200&q=80",
+  "Paris|France":
+    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=80",
+  "Rome|Italy":
+    "https://images.unsplash.com/photo-1525874684015-58379d421a52?auto=format&fit=crop&w=1200&q=80",
+  "Barcelona|Spain":
+    "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80",
+  "Amsterdam|Netherlands":
+    "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80",
+  "Berlin|Germany":
+    "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=1200&q=80",
+  "Dubai|United Arab Emirates":
+    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=80",
+  "New York|United States":
+    "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1200&q=80",
+  "Istanbul|Turkey":
+    "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80",
+  "Las Vegas|United States":
+    "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=80",
+  "Tokyo|Japan":
+    "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80",
+  "Singapore|Singapore":
+    "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1200&q=80",
+  "Lagos|Nigeria":
+    "https://images.pexels.com/photos/32014864/pexels-photo-32014864.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "Abuja|Nigeria":
+    "https://images.pexels.com/photos/20453360/pexels-photo-20453360.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "Cape Town|South Africa":
+    "https://images.pexels.com/photos/35398305/pexels-photo-35398305.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "Nairobi|Kenya":
+    "https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&w=1200&q=80",
+  "Toronto|Canada":
+    "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80",
+  "Los Angeles|United States":
+    "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?auto=format&fit=crop&w=1200&q=80",
+  "Bangkok|Thailand":
+    "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=80",
+  "Kuala Lumpur|Malaysia":
+    "https://images.pexels.com/photos/33196113/pexels-photo-33196113.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  "Miami|United States":
+    "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
+  "Orlando|United States":
+    "https://images.unsplash.com/photo-1597466599360-3b9775841aec?auto=format&fit=crop&w=1200&q=80",
+  "Chicago|United States":
+    "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=1200&q=80",
+  "San Francisco|United States":
+    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1200&q=80",
+  "Seattle|United States":
+    "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=1200&q=80",
+  "Washington|United States":
+    "https://images.unsplash.com/photo-1617581629397-a72507c3de9e?auto=format&fit=crop&w=1200&q=80",
+  "Vancouver|Canada":
+    "https://images.unsplash.com/photo-1578922746465-3a80a228f223?auto=format&fit=crop&w=1200&q=80",
+  "Cancun|Mexico":
+    "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
+  "Mexico City|Mexico":
+    "https://images.unsplash.com/photo-1585464231875-d9ef1f5ad396?auto=format&fit=crop&w=1200&q=80",
+  "Madrid|Spain":
+    "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80",
+  "Doha|Qatar":
+    "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?auto=format&fit=crop&w=1200&q=80",
+  "Accra|Ghana":
+    "https://images.unsplash.com/photo-1553901753-215db3446770?auto=format&fit=crop&w=1200&q=80",
+  "Cairo|Egypt":
+    "https://images.unsplash.com/photo-1539650116574-75c0c6d73f56?auto=format&fit=crop&w=1200&q=80",
+  "Casablanca|Morocco":
+    "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80",
+};
 
-  return `https://source.unsplash.com/1200x800/?${locationQuery}&sig=${uniqueKey}`;
+const priorityDestinationPhotoKeys = [
+  "London|United Kingdom",
+  "Paris|France",
+  "Rome|Italy",
+  "Barcelona|Spain",
+  "Amsterdam|Netherlands",
+  "Berlin|Germany",
+  "Dubai|United Arab Emirates",
+  "New York|United States",
+  "Istanbul|Turkey",
+  "Las Vegas|United States",
+  "Tokyo|Japan",
+  "Singapore|Singapore",
+  "Lagos|Nigeria",
+  "Abuja|Nigeria",
+  "Cape Town|South Africa",
+  "Nairobi|Kenya",
+  "Toronto|Canada",
+  "Los Angeles|United States",
+  "Bangkok|Thailand",
+  "Kuala Lumpur|Malaysia",
+] as const;
+
+const destinationPhotoSeeds = Array.from({ length: 160 }, (_, index) =>
+  String(24001 + index),
+);
+
+let nextDestinationPhotoSeedIndex = 0;
+
+function getDestinationFallbackPhotoUrl() {
+  const photoSeed = destinationPhotoSeeds[nextDestinationPhotoSeedIndex];
+
+  if (!photoSeed) {
+    throw new Error(
+      "Every destination must have a unique photographic image seed.",
+    );
+  }
+
+  nextDestinationPhotoSeedIndex += 1;
+
+  return `https://picsum.photos/seed/${photoSeed}/1200/800.jpg`;
+}
+
+function getDestinationPhotoUrl(name: string, country: string) {
+  return (
+    curatedDestinationPhotos[`${name}|${country}`] ??
+    getDestinationFallbackPhotoUrl()
+  );
 }
 
 const destinationTags = [
@@ -923,6 +1031,31 @@ const destinationCatalog: Record<RegionName, DestinationSeed[]> = {
 };
 
 
+
+const photographicImageSourcePatterns = [
+  /^https:\/\/images\.unsplash\.com\/photo-[A-Za-z0-9_-]+\?.+$/,
+  /^https:\/\/images\.pexels\.com\/photos\/\d+\/pexels-photo-\d+\.jpeg\?.+$/,
+  /^https:\/\/picsum\.photos\/seed\/\d+\/1200\/800\.jpg$/,
+];
+
+function assertPhotographicDestinationImages(
+  catalog: Record<RegionName, DestinationSeed[]>,
+) {
+  for (const destinations of Object.values(catalog)) {
+    for (const destination of destinations) {
+      const hasPhotographicSource = photographicImageSourcePatterns.some(
+        (pattern) => pattern.test(destination.image),
+      );
+
+      if (!hasPhotographicSource) {
+        throw new Error(
+          `Destination image for ${destination.name} must be a curated photographic image URL or numeric seeded fallback, not a prompt, search phrase, SVG, or generated illustration.`,
+        );
+      }
+    }
+  }
+}
+
 function assertUniqueDestinationImages(
   catalog: Record<RegionName, DestinationSeed[]>,
 ) {
@@ -944,7 +1077,19 @@ function assertUniqueDestinationImages(
 }
 
 
-// Keep destination images city-specific and unique so discovery cards never collapse back to a shared regional fallback.
+function assertPriorityDestinationPhotos() {
+  for (const destinationKey of priorityDestinationPhotoKeys) {
+    if (!curatedDestinationPhotos[destinationKey]) {
+      throw new Error(
+        `Priority destination ${destinationKey} must use a curated city-specific photo.`,
+      );
+    }
+  }
+}
+
+// Keep destination images photographic and unique so discovery cards never collapse back to illustrations or shared fallback art.
+assertPriorityDestinationPhotos();
+assertPhotographicDestinationImages(destinationCatalog);
 assertUniqueDestinationImages(destinationCatalog);
 
 function getDestinationImageAlt(destination: DestinationSeed) {
@@ -1070,45 +1215,16 @@ export default function DestinationsPage() {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {section.destinations.map((destination) => (
-                    <Link
+                    <DestinationCard
                       key={`${destination.region}-${destination.name}`}
                       href={getDestinationHref(destination)}
-                      className="group relative min-h-48 overflow-hidden rounded-[1.35rem] bg-slate-900 p-5 text-white shadow-lg shadow-slate-200/80 outline-none transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-200/60 focus-visible:ring-4 focus-visible:ring-violet-200 sm:min-h-52"
-                      aria-label={`Search flights to ${destination.name}`}
-                    >
-                      <Image
-                        src={destination.image}
-                        alt={destination.imageAlt}
-                        fill
-                        unoptimized
-                        sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                        className="object-cover transition duration-700 ease-out group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/12 via-slate-950/48 to-slate-950/88 transition duration-300 group-hover:from-slate-950/6 group-hover:via-slate-950/42 group-hover:to-slate-950/90" />
-
-                      <div className="relative flex h-full min-h-40 flex-col justify-between sm:min-h-44">
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-white/90 ring-1 ring-white/25 backdrop-blur">
-                            {destination.country}
-                          </span>
-                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/18 text-lg font-black ring-1 ring-white/25 backdrop-blur transition group-hover:bg-white group-hover:text-violet-700">
-                            →
-                          </span>
-                        </div>
-
-                        <div>
-                          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-white/70">
-                            {destination.tag}
-                          </p>
-                          <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">
-                            {destination.name}
-                          </h3>
-                          <p className="mt-2 text-sm font-semibold leading-5 text-white/86">
-                            {destinationSubtitle}
-                          </p>
-                        </div>
-                      </div>
-                    </Link>
+                      name={destination.name}
+                      country={destination.country}
+                      image={destination.image}
+                      imageAlt={destination.imageAlt}
+                      tag={destination.tag}
+                      subtitle={destinationSubtitle}
+                    />
                   ))}
                 </div>
               </section>
