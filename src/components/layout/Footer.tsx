@@ -91,11 +91,11 @@ export function Footer() {
       links: [
         {
           label: "About Us",
-          href: "#",
+          href: "/about",
         },
         {
           label: "How Curioticket Works",
-          href: "#",
+          href: "/how-it-works",
         },
       ],
     },
