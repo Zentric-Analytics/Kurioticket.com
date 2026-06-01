@@ -319,10 +319,10 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#eef4ff_0%,#f7f4ff_44%,#eefaf8_100%)] px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
-        <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-72 w-[min(54rem,92vw)] -translate-x-1/2 rounded-full bg-cyan-200/35 blur-3xl" />
-        <div className="pointer-events-none absolute -left-24 top-[28rem] -z-10 h-80 w-80 rounded-full bg-indigo-200/30 blur-3xl" />
-        <div className="pointer-events-none absolute -right-28 bottom-20 -z-10 h-96 w-96 rounded-full bg-violet-200/25 blur-3xl" />
+      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f7f8fb_0%,#f2f5fa_48%,#f8fafc_100%)] px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
+        <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-slate-200/35 blur-3xl" />
+        <div className="pointer-events-none absolute -left-24 top-[28rem] -z-10 h-72 w-72 rounded-full bg-indigo-100/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/25 blur-3xl" />
         <div className="relative mx-auto max-w-6xl space-y-10 md:space-y-12">
           <section className="mx-auto w-full max-w-[1040px] space-y-3">
             <p className="px-1 text-sm font-medium text-slate-600">
@@ -750,28 +750,6 @@ export default function HotelsSearchPage() {
                 </article>
               );
             })}
-          </section>
-
-          <section className="grid gap-3 rounded-[1.75rem] border border-indigo-100/45 bg-indigo-50/25 px-4 py-5 shadow-[0_20px_60px_-52px_rgba(49,46,129,0.65)] md:grid-cols-[0.75fr_1.25fr] md:items-center md:px-5">
-            <div>
-              <p className="text-sm font-medium text-indigo-700">
-                Search smarter
-              </p>
-              <h2 className="mt-1 text-lg font-semibold text-slate-950">
-                Small checks can make results easier to review
-              </h2>
-            </div>
-            <ul className="grid gap-2 text-sm leading-6 text-slate-600 sm:grid-cols-3">
-              <li className="rounded-2xl bg-indigo-50/45 p-3 ring-1 ring-indigo-100/70">
-                Adjust dates if your trip is flexible.
-              </li>
-              <li className="rounded-2xl bg-indigo-50/45 p-3 ring-1 ring-indigo-100/70">
-                Review room and guest details before continuing.
-              </li>
-              <li className="rounded-2xl bg-indigo-50/45 p-3 ring-1 ring-indigo-100/70">
-                Use filters on results to narrow your options.
-              </li>
-            </ul>
           </section>
         </div>
       </main>
