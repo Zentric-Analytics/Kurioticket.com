@@ -789,32 +789,32 @@ export default function HotelsSearchPage() {
             <h2 className="text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl">
               Explore hotel stays by destination
             </h2>
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
               {hotelDestinationLinks.map((card) => (
                 <Link
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative min-h-[300px] overflow-hidden rounded-[2rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[340px] xl:min-h-[360px]"
+                  className="group relative min-h-[210px] overflow-hidden rounded-[1.5rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[300px] sm:rounded-[2rem] lg:min-h-[360px]"
                 >
                   <Image
                     src={card.image}
                     alt={card.imageAlt}
                     fill
-                    sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    sizes="(min-width: 1024px) 25vw, 50vw"
                     className="object-cover brightness-[1.06] saturate-[1.12] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.16]"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/68 via-slate-900/18 to-white/0" />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-slate-950/18 via-slate-900/8 to-transparent" />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-cyan-300/10 opacity-80" />
-                  <div className="pointer-events-none absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/25" />
-                  <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-7">
-                    <p className="text-2xl font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)]">
+                  <div className="pointer-events-none absolute inset-0 rounded-[1.5rem] ring-1 ring-inset ring-white/25 sm:rounded-[2rem]" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-7">
+                    <p className="text-lg font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)] sm:text-2xl">
                       {card.title}
                     </p>
-                    <div className="mt-3 flex items-center justify-between gap-3 text-sm font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)]">
+                    <div className="mt-2.5 flex items-center justify-between gap-2 text-xs font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)] sm:mt-3 sm:gap-3 sm:text-sm">
                       <span>{card.subtitle}</span>
-                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32 sm:h-10 sm:w-10">
                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </span>
                     </div>
@@ -825,7 +825,7 @@ export default function HotelsSearchPage() {
           </section>
 
           <section className="relative isolate rounded-[2rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(248,250,252,0.82),rgba(241,245,249,0.62)_54%,rgba(238,242,255,0.44))] p-3 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:p-4">
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
               {[
                 {
                   title: "Compare provider offers",
@@ -842,17 +842,19 @@ export default function HotelsSearchPage() {
                   body: "When you choose an option, continue with the provider to confirm final price, availability, fees, and cancellation rules.",
                   icon: Calendar,
                 },
-              ].map((item) => {
+              ].map((item, index) => {
                 const Icon = item.icon;
 
                 return (
                   <article
                     key={item.title}
-                    className="relative isolate cursor-default overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-6 shadow-[0_18px_44px_-36px_rgba(15,23,42,0.42)] ring-1 ring-white/70 backdrop-blur-sm"
+                    className={`relative isolate cursor-default overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-4 shadow-[0_18px_44px_-36px_rgba(15,23,42,0.42)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6 ${
+                      index === 2 ? "col-span-2 md:col-span-1" : ""
+                    }`}
                   >
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
                     <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
-                    <div className="relative mb-5 inline-flex h-12 w-12 items-center justify-center rounded-[1rem] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,245,249,0.86))] text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_12px_24px_-22px_rgba(15,23,42,0.55)]" aria-hidden="true">
+                    <div className="relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-[1rem] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,245,249,0.86))] text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_12px_24px_-22px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12" aria-hidden="true">
                       <Icon className="h-5 w-5 stroke-[1.9]" />
                     </div>
                     <h2 className="relative text-base font-semibold tracking-tight text-slate-950">
@@ -878,32 +880,32 @@ export default function HotelsSearchPage() {
                 </h2>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {moreHotelDestinationLinks.map((card) => (
                 <Link
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative min-h-[300px] overflow-hidden rounded-[2rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[340px] xl:min-h-[360px]"
+                  className="group relative min-h-[210px] overflow-hidden rounded-[1.5rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[300px] sm:rounded-[2rem] lg:min-h-[360px]"
                 >
                   <Image
                     src={card.image}
                     alt={card.imageAlt}
                     fill
-                    sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    sizes="(min-width: 1024px) 25vw, 50vw"
                     className="object-cover brightness-[1.06] saturate-[1.12] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.16]"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/68 via-slate-900/18 to-white/0" />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-slate-950/18 via-slate-900/8 to-transparent" />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-cyan-300/10 opacity-80" />
-                  <div className="pointer-events-none absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/25" />
-                  <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-7">
-                    <p className="text-2xl font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)]">
+                  <div className="pointer-events-none absolute inset-0 rounded-[1.5rem] ring-1 ring-inset ring-white/25 sm:rounded-[2rem]" />
+                  <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-7">
+                    <p className="text-lg font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)] sm:text-2xl">
                       {card.title}
                     </p>
-                    <div className="mt-3 flex items-center justify-between gap-3 text-sm font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)]">
+                    <div className="mt-2.5 flex items-center justify-between gap-2 text-xs font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)] sm:mt-3 sm:gap-3 sm:text-sm">
                       <span>{card.subtitle}</span>
-                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32 sm:h-10 sm:w-10">
                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </span>
                     </div>
@@ -922,32 +924,34 @@ export default function HotelsSearchPage() {
                 Explore stays around the world
               </h2>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {globalHotelDestinationLinks.map((card) => (
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
+              {globalHotelDestinationLinks.map((card, index) => (
                 <Link
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative min-h-[200px] overflow-hidden rounded-[1.5rem] bg-indigo-100 shadow-[0_20px_56px_-38px_rgba(79,70,229,0.76)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_68px_-42px_rgba(79,70,229,0.72)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[220px] xl:min-h-[210px]"
+                  className={`group relative min-h-[170px] overflow-hidden rounded-[1.35rem] bg-indigo-100 shadow-[0_20px_56px_-38px_rgba(79,70,229,0.76)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_68px_-42px_rgba(79,70,229,0.72)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[220px] sm:rounded-[1.5rem] lg:min-h-[210px] ${
+                    index === 4 ? "col-span-2 md:col-span-1" : ""
+                  }`}
                 >
                   <Image
                     src={card.image}
                     alt={card.imageAlt}
                     fill
-                    sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    sizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 50vw"
                     className="object-cover brightness-[1.05] saturate-[1.1] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.15]"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/72 via-slate-900/20 to-white/0" />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-slate-950/22 via-slate-900/10 to-transparent" />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-cyan-300/10 opacity-80" />
                   <div className="pointer-events-none absolute inset-0 rounded-[1.5rem] ring-1 ring-inset ring-white/25" />
-                  <div className="absolute inset-x-0 bottom-0 p-5 text-white">
-                    <p className="text-xl font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.44)]">
+                  <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-5">
+                    <p className="text-lg font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.44)] sm:text-xl">
                       {card.title}
                     </p>
-                    <div className="mt-2.5 flex items-center justify-between gap-3 text-sm font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.38)]">
+                    <div className="mt-2 flex items-center justify-between gap-2 text-xs font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.38)] sm:mt-2.5 sm:gap-3 sm:text-sm">
                       <span>{card.subtitle}</span>
-                      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-0.5 group-hover:bg-white/32">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_24px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-0.5 group-hover:bg-white/32 sm:h-9 sm:w-9">
                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </span>
                     </div>
