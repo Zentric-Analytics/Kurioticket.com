@@ -530,6 +530,31 @@ export function FlightResultsClient() {
 
     return getBeachVacationCards(selectedOption.code, discoveryCardIds);
   }, [discoveryCards, selectedOption.code]);
+  const routeInspirationCards = useMemo(() => {
+    const excludedIds = new Set([
+      ...discoveryCards.map((item) => item.id),
+      ...beachVacationCards.map((item) => item.id),
+    ]);
+    const selectedCards: HomeDiscoveryItem[] = [];
+    const selectedIds = new Set<string>();
+
+    function addCards(items: HomeDiscoveryItem[]) {
+      for (const item of items) {
+        if (selectedCards.length >= 8) return;
+        if (excludedIds.has(item.id) || selectedIds.has(item.id)) continue;
+
+        selectedCards.push(item);
+        selectedIds.add(item.id);
+      }
+    }
+
+    const regionalCards = getHomeDiscoveryByRegion(selectedOption.code);
+
+    addCards(regionalCards.slice(4));
+    addCards(regionalCards);
+
+    return selectedCards;
+  }, [beachVacationCards, discoveryCards, selectedOption.code]);
 
   const [sort] = useState<SortMode>(
     (params.get("sort") as SortMode) || "cheapest"
@@ -1739,6 +1764,55 @@ export function FlightResultsClient() {
                 ))}
               </div>
             </section>
+
+            {routeInspirationCards.length > 0 ? (
+              <section className="rounded-[1.5rem] border border-slate-200/75 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.04)] sm:p-5 lg:p-6">
+                <div className="flex flex-col gap-2 sm:max-w-3xl">
+                  <h2 className="text-2xl font-extrabold leading-tight tracking-tight text-slate-950 sm:text-3xl">
+                    More flight routes to explore
+                  </h2>
+                  <p className="text-sm leading-6 text-slate-500 sm:text-base">
+                    Browse route ideas from your region and open one when you are ready to compare dates and fare details.
+                  </p>
+                </div>
+
+                <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {routeInspirationCards.map((item) => (
+                    <Link
+                      key={item.id}
+                      href={buildDiscoveryLink(item)}
+                      aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                      className="group flex min-w-0 items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    >
+                      <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-16 sm:w-16">
+                        <Image
+                          src={item.image}
+                          alt={item.imageAlt}
+                          fill
+                          priority={false}
+                          sizes="(min-width: 1024px) 64px, 56px"
+                          className="object-cover saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="line-clamp-1 text-sm font-extrabold leading-5 text-slate-950 sm:text-base">
+                          {item.originCity} → {item.destinationCity}
+                        </h3>
+                        <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                          {item.originCode} → {item.destinationCode}
+                        </p>
+                      </div>
+                      <span
+                        aria-hidden="true"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-sm font-black text-slate-400 transition group-hover:bg-indigo-50 group-hover:text-indigo-600"
+                      >
+                        →
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <section className="rounded-[1.5rem] border border-slate-200/70 bg-white/90 p-4 shadow-[0_14px_36px_rgba(15,23,42,0.045)] sm:p-5 lg:p-6">
               <div>
