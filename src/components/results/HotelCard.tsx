@@ -55,12 +55,17 @@ export function HotelCard({ hotel }: { hotel: PublicHotelResult }) {
                 ))}
               </div>
             </div>
-            <div className="text-left lg:text-right">
+            <div className="text-left lg:max-w-[240px] lg:text-right">
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted">Estimated stay total</div>
               <div className="text-2xl font-bold text-navy">{formatCurrency(hotel.totalPrice, hotel.currency)}</div>
               <div className="text-sm text-muted">{formatCurrency(hotel.pricePerNight, hotel.currency)} per night</div>
+              <p className="mt-1 text-xs font-semibold text-teal">Final price confirmed by provider</p>
               <Button variant="primary" className="mt-3" onClick={redirectToHotel}>
                 View Hotel
               </Button>
+              <p className="mt-2 text-xs leading-5 text-muted">
+                Review final price, availability, fees, and cancellation rules with the provider.
+              </p>
             </div>
           </div>
 

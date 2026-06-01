@@ -16,6 +16,9 @@ const messages = [
   "Finding low-stress stays...",
 ];
 
+const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
+  Math.max(300, Math.ceil(Math.max(...hotels.map((hotel) => hotel.totalPrice), 300) / 100) * 100);
+
 export function HotelResultsClient() {
   const router = useRouter();
   const params = useSearchParams();
@@ -101,7 +104,7 @@ export function HotelResultsClient() {
         const data = await response.json();
         if (data.warningCategory === "no_live_hotel_provider") {
           throw new Error(
-            "Live hotel search is temporarily unavailable. We could not connect to a live hotel provider for this search. Please try again later.",
+            "Live hotel search is temporarily unavailable because Kurioticket is not connected to an approved live hotel provider for this search. We won’t show placeholder stays or unverified prices. Please try again later or start a new search.",
           );
         }
         if (!response.ok) throw new Error(data.error || "Unable to search hotels.");
@@ -111,7 +114,7 @@ export function HotelResultsClient() {
         if (!active) return;
         setResults(data.results);
         setWarnings(data.warnings || []);
-        setMaxPrice(Math.max(300, Math.ceil(Math.max(...data.results.map((hotel) => hotel.totalPrice), 300) / 100) * 100));
+        setMaxPrice(getResultMaxPrice(data.results));
       })
       .catch((searchError) => {
         if (!active) return;
@@ -133,6 +136,14 @@ export function HotelResultsClient() {
   }, [loading]);
 
   const filtered = results.filter((hotel) => hotel.totalPrice <= maxPrice && hotel.rating >= minRating);
+  const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
+  const showFilteredEmptyState = !loading && !error && results.length > 0 && filtered.length === 0;
+
+  const resetFilters = () => {
+    setMaxPrice(resultMaxPrice);
+    setMinRating(3);
+    setFiltersOpen(false);
+  };
 
   return (
     <main className="flex-1 pt-6 pb-8 sm:pt-8 lg:pt-8">
@@ -229,9 +240,9 @@ export function HotelResultsClient() {
           <HotelFilters maxPrice={maxPrice} setMaxPrice={setMaxPrice} minRating={minRating} setMinRating={setMinRating} />
         </aside>
         <section className="min-w-0 space-y-4">
-          {warnings.length ? (
+          {!loading && !error && warnings.length ? (
             <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
-              {warnings[0]}
+              Some provider checks may be limited for this hotel search. Review final availability, taxes, fees, and cancellation rules with the provider before booking.
             </div>
           ) : null}
           {loading ? (
@@ -245,6 +256,16 @@ export function HotelResultsClient() {
             </div>
           ) : error ? (
             <div className="rounded-md border border-danger/30 bg-red-50 p-4 text-danger">{error}</div>
+          ) : showFilteredEmptyState ? (
+            <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
+              <p className="text-lg font-bold text-indigo-950">No stays match these filters</p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                Try increasing the price range or lowering the rating filter to see more available hotel options.
+              </p>
+              <Button variant="secondary" className="mt-4" onClick={resetFilters}>
+                Reset filters
+              </Button>
+            </div>
           ) : (
             <>
               <p className="text-sm font-semibold text-muted">
