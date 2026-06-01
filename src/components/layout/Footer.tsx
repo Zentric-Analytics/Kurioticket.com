@@ -1,16 +1,8 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 export function Footer() {
-  const { data: session } =
-    useSession();
-
-  const isSignedIn = Boolean(
-    session?.user
-  );
-
   const currentYear =
     new Date().getFullYear();
 
@@ -55,18 +47,6 @@ export function Footer() {
           label: "Destinations",
           href: "/destinations",
         },
-        {
-          label: "Explore",
-          href: "/explore",
-        },
-        ...(isSignedIn
-          ? [
-              {
-                label: "Dashboard",
-                href: "/dashboard",
-              },
-            ]
-          : []),
       ],
     },
     {
