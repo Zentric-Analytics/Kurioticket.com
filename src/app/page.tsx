@@ -150,7 +150,7 @@ export default function Home() {
 
   return (
     <>
-      <AppHeader />
+      <AppHeader hideMobileSecondaryNavLinks />
 
       <main className="flex-1 bg-white">
         <section className="relative overflow-visible bg-[#f8f7ff]">
