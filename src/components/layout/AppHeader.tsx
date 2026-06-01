@@ -57,7 +57,14 @@ function SavedHeartIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-export function AppHeader() {
+
+type AppHeaderProps = {
+  hideMobileSecondaryNavLinks?: boolean;
+};
+
+export function AppHeader({
+  hideMobileSecondaryNavLinks = false,
+}: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
   const isSignedIn = Boolean(session?.user);
@@ -260,6 +267,33 @@ export function AppHeader() {
       (item) => Boolean(item.icon) && mobilePrimaryHrefs.has(item.href)
     );
   }, [navItems]);
+
+  const mobileHiddenHrefs = useMemo(
+    () => new Set(["/destinations", "/explore", "/saved"]),
+    []
+  );
+
+  const visibleMobilePrimaryNavItems = useMemo(() => {
+    if (!hideMobileSecondaryNavLinks) {
+      return mobilePrimaryNavItems;
+    }
+
+    return mobilePrimaryNavItems.filter(
+      (item) => !mobileHiddenHrefs.has(item.href)
+    );
+  }, [
+    hideMobileSecondaryNavLinks,
+    mobileHiddenHrefs,
+    mobilePrimaryNavItems,
+  ]);
+
+  const mobileMenuNavItems = useMemo(() => {
+    if (!hideMobileSecondaryNavLinks) {
+      return navItems;
+    }
+
+    return navItems.filter((item) => !mobileHiddenHrefs.has(item.href));
+  }, [hideMobileSecondaryNavLinks, mobileHiddenHrefs, navItems]);
 
   const renderFlag = (
     countryCode: string | undefined,
@@ -531,7 +565,7 @@ export function AppHeader() {
         <nav className="bg-white/5 md:hidden">
           <div className="page-shell overflow-x-auto py-2">
             <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
-              {mobilePrimaryNavItems.map((item) => {
+              {visibleMobilePrimaryNavItems.map((item) => {
                 const Icon = item.icon;
                 const active = isNavItemActive(item.href);
 
@@ -577,7 +611,7 @@ export function AppHeader() {
                 <ChevronDown size={14} className="text-slate-500" />
               </button>
 
-              {navItems.map((item) => {
+              {mobileMenuNavItems.map((item) => {
                 const Icon = item.icon;
 
                 return (
