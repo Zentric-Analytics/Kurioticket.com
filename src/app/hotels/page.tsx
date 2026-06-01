@@ -438,11 +438,10 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f7f8fb_0%,#f2f5fa_48%,#f8fafc_100%)] px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
-        <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-slate-200/35 blur-3xl" />
-        <div className="pointer-events-none absolute -left-24 top-[28rem] -z-10 h-72 w-72 rounded-full bg-indigo-100/20 blur-3xl" />
-        <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/25 blur-3xl" />
-        <div className="relative mx-auto max-w-6xl space-y-10 md:space-y-12">
+      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
+        <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
+        <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
+        <div className="relative mx-auto max-w-6xl space-y-11 md:space-y-14">
           <section className="mx-auto w-full max-w-[1040px] space-y-3">
             <p className="px-1 text-sm font-medium text-slate-600">
               Compare hotel options
@@ -785,8 +784,8 @@ export default function HotelsSearchPage() {
             </form>
           </section>
 
-          <section className="space-y-5 py-4 sm:space-y-6 sm:py-5">
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl">
+          <section className="space-y-6 py-5 sm:space-y-7 sm:py-6">
+            <h2 className="text-[1.7rem] font-semibold leading-[1.18] tracking-[-0.018em] text-slate-800 sm:text-3xl md:text-[2.15rem]">
               Explore hotel stays by destination
             </h2>
             <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
@@ -795,7 +794,7 @@ export default function HotelsSearchPage() {
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative min-h-[210px] overflow-hidden rounded-[1.5rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[300px] sm:rounded-[2rem] lg:min-h-[360px]"
+                  className="group relative min-h-[210px] overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_26px_70px_-44px_rgba(15,23,42,0.52)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(15,23,42,0.48)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f8fafc] sm:min-h-[300px] sm:rounded-[2rem] lg:min-h-[360px]"
                 >
                   <Image
                     src={card.image}
@@ -824,7 +823,7 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="relative isolate rounded-[2rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(248,250,252,0.82),rgba(241,245,249,0.62)_54%,rgba(238,242,255,0.44))] p-3 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:p-4">
+          <section className="relative isolate rounded-[2rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-3 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:p-4">
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
               {[
                 {
@@ -857,7 +856,7 @@ export default function HotelsSearchPage() {
                     <div className="relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-[1rem] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,245,249,0.86))] text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_12px_24px_-22px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12" aria-hidden="true">
                       <Icon className="h-5 w-5 stroke-[1.9]" />
                     </div>
-                    <h2 className="relative text-base font-semibold tracking-tight text-slate-950">
+                    <h2 className="relative text-base font-semibold leading-snug tracking-[-0.012em] text-slate-800">
                       {item.title}
                     </h2>
                     <p className="relative mt-2 text-sm leading-6 text-slate-700">
@@ -869,12 +868,12 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="space-y-5 pt-2 sm:pt-4" aria-labelledby="more-hotel-destinations-heading">
+          <section className="space-y-6 pt-3 sm:space-y-7 sm:pt-5" aria-labelledby="more-hotel-destinations-heading">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2
                   id="more-hotel-destinations-heading"
-                  className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl"
+                  className="text-[1.55rem] font-semibold leading-[1.2] tracking-[-0.016em] text-slate-800 sm:text-[1.9rem]"
                 >
                   Featured hotel destinations
                 </h2>
@@ -886,7 +885,7 @@ export default function HotelsSearchPage() {
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative min-h-[210px] overflow-hidden rounded-[1.5rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[300px] sm:rounded-[2rem] lg:min-h-[360px]"
+                  className="group relative min-h-[210px] overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_26px_70px_-44px_rgba(15,23,42,0.52)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(15,23,42,0.48)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f8fafc] sm:min-h-[300px] sm:rounded-[2rem] lg:min-h-[360px]"
                 >
                   <Image
                     src={card.image}
@@ -915,11 +914,11 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="space-y-5 pt-2 sm:pt-4" aria-labelledby="global-hotel-destinations-heading">
+          <section className="space-y-6 pt-3 sm:space-y-7 sm:pt-5" aria-labelledby="global-hotel-destinations-heading">
             <div className="max-w-2xl">
               <h2
                 id="global-hotel-destinations-heading"
-                className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl"
+                className="text-[1.55rem] font-semibold leading-[1.2] tracking-[-0.016em] text-slate-800 sm:text-[1.9rem]"
               >
                 Explore stays around the world
               </h2>
@@ -930,7 +929,7 @@ export default function HotelsSearchPage() {
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className={`group relative min-h-[170px] overflow-hidden rounded-[1.35rem] bg-indigo-100 shadow-[0_20px_56px_-38px_rgba(79,70,229,0.76)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_68px_-42px_rgba(79,70,229,0.72)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[220px] sm:rounded-[1.5rem] lg:min-h-[210px] ${
+                  className={`group relative min-h-[170px] overflow-hidden rounded-[1.35rem] bg-slate-100 shadow-[0_20px_56px_-38px_rgba(15,23,42,0.48)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_68px_-42px_rgba(15,23,42,0.44)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f8fafc] sm:min-h-[220px] sm:rounded-[1.5rem] lg:min-h-[210px] ${
                     index === 4 ? "col-span-2 md:col-span-1" : ""
                   }`}
                 >
