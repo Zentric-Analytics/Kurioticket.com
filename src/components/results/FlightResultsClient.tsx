@@ -1751,7 +1751,7 @@ export function FlightResultsClient() {
             className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2.5"
           >
             <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch">
-              <div className="grid min-h-[48px] grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 lg:w-[184px] lg:shrink-0">
+              <div className="grid h-12 w-full grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1 lg:h-auto lg:min-h-[48px] lg:w-[184px] lg:shrink-0">
                 {[
                   { label: "Round-trip", value: "round-trip" },
                   { label: "One-way", value: "one-way" },
@@ -1773,7 +1773,7 @@ export function FlightResultsClient() {
                       }
                     }}
                     className={cn(
-                      "focus-ring flex h-full min-h-[38px] items-center justify-center whitespace-nowrap rounded-lg px-2 text-[11px] font-black transition",
+                      "focus-ring flex min-h-10 w-full min-w-0 items-center justify-center whitespace-nowrap rounded-lg px-2 text-xs font-black leading-none transition",
                       tripTypeInput === option.value
                         ? "bg-white text-indigo-950 shadow-sm"
                         : "text-slate-600 hover:text-slate-950"
