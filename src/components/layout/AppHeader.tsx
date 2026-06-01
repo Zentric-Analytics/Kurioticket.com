@@ -26,12 +26,12 @@ import {
   Menu,
   Plane,
   Search,
-  Sparkles,
   Tag,
   UserCircle,
   X,
 } from "lucide-react";
 
+import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 import {
@@ -332,17 +332,10 @@ export function AppHeader({
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-gradient-to-r from-indigo-950 via-indigo-900 to-violet-900 text-white shadow-[0_10px_30px_rgba(30,27,75,0.28)]">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-gradient-to-r from-indigo-900 via-violet-800 to-purple-700 text-white shadow-[0_10px_30px_rgba(76,29,149,0.22)]">
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
-          <Link
-            href="/"
-            className="flex items-center gap-3 text-xl font-bold text-white"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6d28d9] text-white">
-              <Sparkles size={24} />
-            </span>
-
-            <span className="leading-none">Kurioticket</span>
+          <Link href="/" aria-label="Kurioticket home" className="shrink-0">
+            <KurioticketLogo variant="full" tone="light" />
           </Link>
 
           <div className="hidden flex-1 flex-col gap-3 md:flex">
