@@ -308,7 +308,7 @@ export function AppHeader() {
               <Sparkles size={24} />
             </span>
 
-            <span className="leading-none">Curioticket</span>
+            <span className="leading-none">Kurioticket</span>
           </Link>
 
           <div className="hidden flex-1 flex-col gap-3 md:flex">

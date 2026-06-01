@@ -84,7 +84,7 @@ const trustCards = [
   {
     title: "No placeholder pricing",
     description:
-      "Curioticket only shows rental prices after a live provider is connected.",
+      "Kurioticket only shows rental prices after a live provider is connected.",
     icon: ShieldCheck,
   },
 ];
@@ -237,7 +237,7 @@ function CarsSearchPage() {
                   Production-safe planning
                 </p>
                 <p className="mt-3 leading-7">
-                  Curioticket is preparing cars as part of a complete trip flow. This page collects search intent only; it does not display placeholder inventory, unverified prices, or booking claims.
+                  Kurioticket is preparing cars as part of a complete trip flow. This page collects search intent only; it does not display placeholder inventory, unverified prices, or booking claims.
                 </p>
               </div>
             </div>

@@ -123,7 +123,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
           <Card className="p-5">
             <h2 className="text-lg font-bold text-navy">External Provider Transparency</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Curioticket is a flight metasearch platform. We help you compare options, then send you securely to an external provider where prices, rules, availability, and purchase steps are completed.
+              Kurioticket is a flight metasearch platform. We help you compare options, then send you securely to an external provider where prices, rules, availability, and purchase steps are completed.
             </p>
           </Card>
         </section>

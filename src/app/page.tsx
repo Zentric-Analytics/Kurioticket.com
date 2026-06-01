@@ -399,22 +399,22 @@ export default function Home() {
               Frequently asked questions
             </h2>
             <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-              Learn how Curioticket helps you compare flights, hotels, and travel options before booking with trusted providers.
+              Learn how Kurioticket helps you compare flights, hotels, and travel options before booking with trusted providers.
             </p>
           </div>
 
           <div className="mt-5 grid gap-x-8 gap-y-1 md:grid-cols-2">
               {[
                 {
-                  question: "How does Curioticket find flight and hotel options?",
+                  question: "How does Kurioticket find flight and hotel options?",
                   answer:
-                    "Curioticket searches live offers from travel providers and brings options together in one place so you can compare prices, routes, stays, and details before choosing.",
+                    "Kurioticket searches live offers from travel providers and brings options together in one place so you can compare prices, routes, stays, and details before choosing.",
                 },
                 {
                   question:
-                    "Does Curioticket sell tickets or hotel rooms directly?",
+                    "Does Kurioticket sell tickets or hotel rooms directly?",
                   answer:
-                    "Curioticket helps you compare travel options. When you choose an offer, you are sent to the selected provider to review details and complete the booking on that provider’s site.",
+                    "Kurioticket helps you compare travel options. When you choose an offer, you are sent to the selected provider to review details and complete the booking on that provider’s site.",
                 },
                 {
                   question: "Why can prices change after I click an offer?",
@@ -425,7 +425,7 @@ export default function Home() {
                   question:
                     "Can I compare multiple providers for the same trip?",
                   answer:
-                    "Yes. Curioticket is designed to help you compare options side by side so you can evaluate price, timing, route details, hotel details, and overall value.",
+                    "Yes. Kurioticket is designed to help you compare options side by side so you can evaluate price, timing, route details, hotel details, and overall value.",
                 },
                 {
                   question: "How do I complete my booking securely?",
@@ -435,12 +435,12 @@ export default function Home() {
                 {
                   question: "Can I set currency and language preferences?",
                   answer:
-                    "Yes. Curioticket supports language and region preferences so the experience can feel more relevant based on how you prefer to search and compare travel options.",
+                    "Yes. Kurioticket supports language and region preferences so the experience can feel more relevant based on how you prefer to search and compare travel options.",
                 },
                 {
                   question: "Are search results live or cached?",
                   answer:
-                    "Curioticket uses provider search results that can refresh as availability and prices change. This helps show current options, but final availability is confirmed by the provider.",
+                    "Kurioticket uses provider search results that can refresh as availability and prices change. This helps show current options, but final availability is confirmed by the provider.",
                 },
                 {
                   question: "Where do I manage changes or cancellations?",

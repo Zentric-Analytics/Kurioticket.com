@@ -72,7 +72,7 @@ export function PremiumDashboardFoundation() {
         <Headphones className="text-teal" size={24} />
         <h2 className="mt-3 text-xl font-bold text-navy">Priority Support Foundation</h2>
         <p className="mt-2 text-sm leading-6 text-muted">
-          Support is scoped to Curioticket platform usage, premium tools, alerts, and travel guidance. External providers handle purchases, fare rules, and trip servicing.
+          Support is scoped to Kurioticket platform usage, premium tools, alerts, and travel guidance. External providers handle purchases, fare rules, and trip servicing.
         </p>
       </Card>
     </div>
