@@ -10,9 +10,9 @@ export const metadata = {
 
 const serviceFaqs = [
   {
-    question: "What does Curioticket guarantee?",
+    question: "What does Kurioticket guarantee?",
     answer:
-      "Curioticket is designed to help travelers compare travel options clearly. We aim to provide a reliable platform experience, transparent search information, and clear paths to provider booking pages.",
+      "Kurioticket is designed to help travelers compare travel options clearly. We aim to provide a reliable platform experience, transparent search information, and clear paths to provider booking pages.",
   },
   {
     question: "How are travel results displayed?",
@@ -22,12 +22,12 @@ const serviceFaqs = [
   {
     question: "Why am I redirected to another provider?",
     answer:
-      "Some results are completed on an external provider site. When you choose one of those options, Curioticket redirects you so the provider can handle booking, payment, and trip-specific service.",
+      "Some results are completed on an external provider site. When you choose one of those options, Kurioticket redirects you so the provider can handle booking, payment, and trip-specific service.",
   },
   {
-    question: "Do I book directly on Curioticket?",
+    question: "Do I book directly on Kurioticket?",
     answer:
-      "Curioticket is primarily a travel search and comparison platform. If a result redirects to a provider, the booking is completed with that provider rather than on Curioticket.",
+      "Kurioticket is primarily a travel search and comparison platform. If a result redirects to a provider, the booking is completed with that provider rather than on Kurioticket.",
   },
   {
     question: "Are prices always guaranteed?",
@@ -35,14 +35,14 @@ const serviceFaqs = [
       "No. Prices can change based on provider availability, taxes, fees, currency, and timing. Always review the final price on the provider page before booking.",
   },
   {
-    question: "How does Curioticket choose providers?",
+    question: "How does Kurioticket choose providers?",
     answer:
-      "Curioticket works with travel providers and data sources that can supply relevant search results. Availability, pricing, and displayed options may vary by route, destination, and provider coverage.",
+      "Kurioticket works with travel providers and data sources that can supply relevant search results. Availability, pricing, and displayed options may vary by route, destination, and provider coverage.",
   },
   {
     question: "What should I do if I encounter an issue?",
     answer:
-      "If the issue is related to search, account access, saved trips, alerts, or a redirect from Curioticket, contact Curioticket support. If you already booked with a provider, contact that provider for booking changes, refunds, cancellations, or travel documents.",
+      "If the issue is related to search, account access, saved trips, alerts, or a redirect from Kurioticket, contact Kurioticket support. If you already booked with a provider, contact that provider for booking changes, refunds, cancellations, or travel documents.",
   },
   {
     question: "How can I contact support?",
@@ -57,10 +57,10 @@ export default function ServiceGuaranteePage() {
       <AppHeader />
       <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
         <section className="max-w-3xl">
-          <p className="text-sm font-semibold text-teal-dark">Curioticket service commitment</p>
+          <p className="text-sm font-semibold text-teal-dark">Kurioticket service commitment</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">Service Guarantee</h1>
           <p className="mt-4 text-sm leading-6 text-muted sm:text-base">
-            We want travelers to understand how Curioticket works and what they can expect when using our platform.
+            We want travelers to understand how Kurioticket works and what they can expect when using our platform.
           </p>
         </section>
 
@@ -74,7 +74,7 @@ export default function ServiceGuaranteePage() {
                 Frequently asked questions
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
-                These answers explain Curioticket&apos;s role as a travel search and comparison platform.
+                These answers explain Kurioticket&apos;s role as a travel search and comparison platform.
               </p>
             </div>
           </div>
