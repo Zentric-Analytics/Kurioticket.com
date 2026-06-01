@@ -785,35 +785,35 @@ export default function HotelsSearchPage() {
           </section>
 
           <section className="space-y-6 py-5 sm:space-y-7 sm:py-6">
-            <h2 className="text-[1.7rem] font-semibold leading-[1.18] tracking-[-0.018em] text-slate-800 sm:text-3xl md:text-[2.15rem]">
+            <h2 className="text-[1.65rem] font-semibold leading-[1.18] tracking-[-0.016em] text-slate-800 md:text-[2rem]">
               Explore hotel stays by destination
             </h2>
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
+            <div className="grid auto-cols-[minmax(260px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
               {hotelDestinationLinks.map((card) => (
                 <Link
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative min-h-[210px] overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_26px_70px_-44px_rgba(15,23,42,0.52)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(15,23,42,0.48)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f8fafc] sm:min-h-[300px] sm:rounded-[2rem] lg:min-h-[360px]"
+                  className="group relative min-h-[240px] overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_26px_70px_-44px_rgba(15,23,42,0.52)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(15,23,42,0.48)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f8fafc] md:min-h-[280px] md:rounded-[2rem] lg:min-h-[310px]"
                 >
                   <Image
                     src={card.image}
                     alt={card.imageAlt}
                     fill
-                    sizes="(min-width: 1024px) 25vw, 50vw"
+                    sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 82vw"
                     className="object-cover brightness-[1.06] saturate-[1.12] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.16]"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/68 via-slate-900/18 to-white/0" />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-slate-950/18 via-slate-900/8 to-transparent" />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-cyan-300/10 opacity-80" />
                   <div className="pointer-events-none absolute inset-0 rounded-[1.5rem] ring-1 ring-inset ring-white/25 sm:rounded-[2rem]" />
-                  <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-7">
-                    <p className="text-lg font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)] sm:text-2xl">
+                  <div className="absolute inset-x-0 bottom-0 p-4 text-white md:p-7">
+                    <p className="text-lg font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)] md:text-2xl">
                       {card.title}
                     </p>
-                    <div className="mt-2.5 flex items-center justify-between gap-2 text-xs font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)] sm:mt-3 sm:gap-3 sm:text-sm">
+                    <div className="mt-2.5 flex items-center justify-between gap-2 text-xs font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)] md:mt-3 md:gap-3 md:text-sm">
                       <span>{card.subtitle}</span>
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32 sm:h-10 sm:w-10">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32 md:h-10 md:w-10">
                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </span>
                     </div>
@@ -853,7 +853,10 @@ export default function HotelsSearchPage() {
                   >
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
                     <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
-                    <div className="relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-[1rem] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,245,249,0.86))] text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_12px_24px_-22px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12" aria-hidden="true">
+                    <div
+                      className="relative mb-4 inline-flex h-11 w-11 items-center justify-center rounded-[1rem] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,245,249,0.86))] text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_12px_24px_-22px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12"
+                      aria-hidden="true"
+                    >
                       <Icon className="h-5 w-5 stroke-[1.9]" />
                     </div>
                     <h2 className="relative text-base font-semibold leading-snug tracking-[-0.012em] text-slate-800">
@@ -868,43 +871,46 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="space-y-6 pt-3 sm:space-y-7 sm:pt-5" aria-labelledby="more-hotel-destinations-heading">
+          <section
+            className="space-y-6 pt-3 sm:space-y-7 sm:pt-5"
+            aria-labelledby="more-hotel-destinations-heading"
+          >
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <h2
                   id="more-hotel-destinations-heading"
-                  className="text-[1.55rem] font-semibold leading-[1.2] tracking-[-0.016em] text-slate-800 sm:text-[1.9rem]"
+                  className="text-[1.5rem] font-semibold leading-[1.2] tracking-[-0.014em] text-slate-800 md:text-[1.85rem]"
                 >
                   Featured hotel destinations
                 </h2>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <div className="grid auto-cols-[minmax(250px,78vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
               {moreHotelDestinationLinks.map((card) => (
                 <Link
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className="group relative min-h-[210px] overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_26px_70px_-44px_rgba(15,23,42,0.52)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(15,23,42,0.48)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f8fafc] sm:min-h-[300px] sm:rounded-[2rem] lg:min-h-[360px]"
+                  className="group relative min-h-[230px] overflow-hidden rounded-[1.5rem] bg-slate-100 shadow-[0_26px_70px_-44px_rgba(15,23,42,0.52)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(15,23,42,0.48)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f8fafc] md:min-h-[270px] md:rounded-[2rem] lg:min-h-[300px]"
                 >
                   <Image
                     src={card.image}
                     alt={card.imageAlt}
                     fill
-                    sizes="(min-width: 1024px) 25vw, 50vw"
+                    sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 78vw"
                     className="object-cover brightness-[1.06] saturate-[1.12] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.16]"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/68 via-slate-900/18 to-white/0" />
                   <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-slate-950/18 via-slate-900/8 to-transparent" />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-cyan-300/10 opacity-80" />
                   <div className="pointer-events-none absolute inset-0 rounded-[1.5rem] ring-1 ring-inset ring-white/25 sm:rounded-[2rem]" />
-                  <div className="absolute inset-x-0 bottom-0 p-4 text-white sm:p-7">
-                    <p className="text-lg font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)] sm:text-2xl">
+                  <div className="absolute inset-x-0 bottom-0 p-4 text-white md:p-7">
+                    <p className="text-lg font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)] md:text-2xl">
                       {card.title}
                     </p>
-                    <div className="mt-2.5 flex items-center justify-between gap-2 text-xs font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)] sm:mt-3 sm:gap-3 sm:text-sm">
+                    <div className="mt-2.5 flex items-center justify-between gap-2 text-xs font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)] md:mt-3 md:gap-3 md:text-sm">
                       <span>{card.subtitle}</span>
-                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32 sm:h-10 sm:w-10">
+                      <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32 md:h-10 md:w-10">
                         <ArrowRight className="h-4 w-4" aria-hidden="true" />
                       </span>
                     </div>
@@ -914,30 +920,31 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="space-y-6 pt-3 sm:space-y-7 sm:pt-5" aria-labelledby="global-hotel-destinations-heading">
+          <section
+            className="space-y-6 pt-3 sm:space-y-7 sm:pt-5"
+            aria-labelledby="global-hotel-destinations-heading"
+          >
             <div className="max-w-2xl">
               <h2
                 id="global-hotel-destinations-heading"
-                className="text-[1.55rem] font-semibold leading-[1.2] tracking-[-0.016em] text-slate-800 sm:text-[1.9rem]"
+                className="text-[1.5rem] font-semibold leading-[1.2] tracking-[-0.014em] text-slate-800 md:text-[1.85rem]"
               >
                 Explore stays around the world
               </h2>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
-              {globalHotelDestinationLinks.map((card, index) => (
+            <div className="grid auto-cols-[minmax(220px,68vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-5 [&::-webkit-scrollbar]:hidden">
+              {globalHotelDestinationLinks.map((card) => (
                 <Link
                   key={card.title}
                   href={card.href}
                   aria-label={card.linkLabel}
-                  className={`group relative min-h-[170px] overflow-hidden rounded-[1.35rem] bg-slate-100 shadow-[0_20px_56px_-38px_rgba(15,23,42,0.48)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_68px_-42px_rgba(15,23,42,0.44)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f8fafc] sm:min-h-[220px] sm:rounded-[1.5rem] lg:min-h-[210px] ${
-                    index === 4 ? "col-span-2 md:col-span-1" : ""
-                  }`}
+                  className="group relative min-h-[190px] overflow-hidden rounded-[1.35rem] bg-slate-100 shadow-[0_20px_56px_-38px_rgba(15,23,42,0.48)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_28px_68px_-42px_rgba(15,23,42,0.44)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f8fafc] md:min-h-[210px] md:rounded-[1.5rem] lg:min-h-[205px]"
                 >
                   <Image
                     src={card.image}
                     alt={card.imageAlt}
                     fill
-                    sizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 50vw"
+                    sizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 68vw"
                     className="object-cover brightness-[1.05] saturate-[1.1] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.15]"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/72 via-slate-900/20 to-white/0" />
