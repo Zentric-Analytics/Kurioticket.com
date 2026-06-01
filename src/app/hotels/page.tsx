@@ -650,7 +650,7 @@ export default function HotelsSearchPage() {
                   <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
                     <button
                       type="submit"
-                      className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
+                      className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                     >
                       Search
                     </button>
@@ -686,7 +686,7 @@ export default function HotelsSearchPage() {
                     className="object-cover brightness-[1.06] saturate-[1.12] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.16]"
                   />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/68 via-slate-900/18 to-white/0" />
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-indigo-950/30 via-slate-900/8 to-transparent" />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-slate-950/18 via-slate-900/8 to-transparent" />
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-cyan-300/10 opacity-80" />
                   <div className="pointer-events-none absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/25" />
                   <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-7">

@@ -332,7 +332,7 @@ export function AppHeader({
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-gradient-to-r from-indigo-900 via-violet-800 to-purple-700 text-white shadow-[0_10px_30px_rgba(76,29,149,0.22)]">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-gradient-to-r from-indigo-700 via-violet-600 to-sky-700 text-white shadow-[0_8px_24px_rgba(67,56,202,0.16)]">
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
           <Link href="/" aria-label="Kurioticket home" className="shrink-0">
             <KurioticketLogo variant="full" tone="light" />
@@ -348,7 +348,7 @@ export function AppHeader({
                   size="sm"
                   onClick={() => setLanguageOpen((value) => !value)}
                   aria-label={`Change language, current language ${selectedLanguage?.label}`}
-                  className="h-12 gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-indigo-50 shadow-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:ring-white/60 focus-visible:ring-offset-indigo-900"
+                  className="h-12 gap-2 rounded-full border border-white/20 bg-white/10 px-4 text-indigo-50 shadow-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:ring-white/60 focus-visible:ring-offset-indigo-700"
                 >
                   {renderFlag(
                     selectedLanguage?.countryCode,
@@ -406,7 +406,7 @@ export function AppHeader({
                       ? "Close more navigation"
                       : "Open more navigation"
                   }
-                  className={`inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white shadow-md shadow-indigo-950/20 transition-colors hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900 ${
+                  className={`inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/15 text-white shadow-sm shadow-indigo-700/15 transition-colors hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                     desktopMoreActive ? "border-white/40 bg-white/20 ring-2 ring-white/60" : ""
                   }`}
                 >
@@ -566,7 +566,7 @@ export function AppHeader({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900 ${
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                       active
                         ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm"
                         : "text-indigo-50/90 hover:bg-white/10 hover:text-white"

@@ -209,7 +209,7 @@ export default function Home() {
               href="/hotels/tokyo"
               variant="ghost"
               size="sm"
-              className="hidden text-[#6d28d9] sm:inline-flex"
+              className="hidden text-violet-600 sm:inline-flex"
             >
               {t("homeViewAllDestinations")}
               <ArrowRight size={16} />
@@ -758,7 +758,7 @@ function PromoPanel({
           size="md"
           className={`mt-5 font-semibold ${
             isViolet
-              ? "bg-[#5b21d6] hover:bg-[#4c1d95]"
+              ? "bg-violet-600 hover:bg-violet-700"
               : "bg-[#2563eb] hover:bg-[#1d4ed8]"
           }`}
         >
@@ -769,7 +769,7 @@ function PromoPanel({
 
       <div
         className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isViolet ? "bg-white/55 text-[#6d28d9]" : "bg-white/70 text-[#2563eb]"
+          isViolet ? "bg-white/55 text-violet-600" : "bg-white/70 text-[#2563eb]"
         }`}
       >
         <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />
