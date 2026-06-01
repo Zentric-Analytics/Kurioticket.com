@@ -412,6 +412,14 @@ export function FlightResultsClient() {
     () => getHomeDiscoveryByRegion(selectedOption.code).slice(0, 8),
     [selectedOption.code]
   );
+  const middleDiscoveryCards = useMemo(() => {
+    const regionalDiscoveryCards = getHomeDiscoveryByRegion(selectedOption.code);
+    const laterDiscoveryCards = regionalDiscoveryCards.slice(8, 12);
+
+    return laterDiscoveryCards.length >= 4
+      ? laterDiscoveryCards
+      : regionalDiscoveryCards.slice(4, 8);
+  }, [selectedOption.code]);
 
   const [sort] = useState<SortMode>(
     (params.get("sort") as SortMode) || "cheapest"
@@ -1624,6 +1632,67 @@ export function FlightResultsClient() {
                         </p>
                         <span className="mt-5 inline-flex items-center justify-between rounded-full border border-indigo-100 bg-indigo-50 px-4 py-2.5 text-sm font-black text-indigo-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-600 group-hover:text-white group-focus-visible:border-indigo-200 group-focus-visible:bg-indigo-600 group-focus-visible:text-white">
                           Explore route
+                          <ArrowRightLeft size={15} />
+                        </span>
+                      </div>
+                    </article>
+                  </Link>
+                ))}
+              </div>
+            </section>
+
+            <section className="mt-8 overflow-hidden rounded-[2rem] border border-indigo-100/80 bg-gradient-to-br from-white via-indigo-50/55 to-sky-50/70 p-4 shadow-[0_18px_55px_rgba(15,23,42,0.07)] sm:p-5 lg:p-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">
+                    Route inspiration
+                  </p>
+                  <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                    More places to start from your region
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                    Browse curated route ideas with clear destination context
+                    before you choose dates and fare details.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
+                {middleDiscoveryCards.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={buildDiscoveryLink(item)}
+                    aria-label={`Compare ${item.originCode} to ${item.destinationCode}`}
+                    className="group min-w-[76vw] max-w-[340px] snap-start overflow-hidden rounded-[1.35rem] border border-white/80 bg-white shadow-[0_12px_28px_rgba(15,23,42,0.07)] ring-1 ring-slate-200/70 transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_38px_rgba(15,23,42,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[300px] md:min-w-[320px] lg:min-w-0 lg:max-w-none"
+                  >
+                    <article className="flex h-full flex-col">
+                      <div className="relative h-44 overflow-hidden bg-slate-100 sm:h-48 lg:h-44 xl:h-48">
+                        <Image
+                          src={item.image}
+                          alt={item.imageAlt}
+                          fill
+                          priority={false}
+                          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 320px, (min-width: 640px) 300px, 76vw"
+                          className="object-cover saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white/75 via-white/25 to-transparent" />
+                        <span className="absolute bottom-3 left-3 rounded-full border border-white/80 bg-white/95 px-3 py-1 text-[0.68rem] font-black tracking-[0.15em] text-slate-900 shadow-sm backdrop-blur">
+                          {item.originCode} → {item.destinationCode}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-1 flex-col p-5">
+                        <h3 className="line-clamp-2 text-lg font-black leading-tight text-slate-950">
+                          {item.title}
+                        </h3>
+                        <p className="mt-1 text-sm font-semibold text-slate-500">
+                          {item.originCity} to {item.destinationCity}
+                        </p>
+                        <p className="mt-3 line-clamp-3 flex-1 text-sm leading-6 text-slate-600">
+                          {item.routeNote}
+                        </p>
+                        <span className="mt-5 inline-flex items-center justify-between rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-950 shadow-sm transition group-hover:border-indigo-200 group-hover:bg-indigo-600 group-hover:text-white group-focus-visible:border-indigo-200 group-focus-visible:bg-indigo-600 group-focus-visible:text-white">
+                          Compare route
                           <ArrowRightLeft size={15} />
                         </span>
                       </div>
