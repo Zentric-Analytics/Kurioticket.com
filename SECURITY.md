@@ -1,6 +1,6 @@
 # Security Policy
 
-Curioticket is built for real production services. Do not commit secrets.
+Kurioticket is built for real production services. Do not commit secrets.
 
 ## Secret Handling
 
