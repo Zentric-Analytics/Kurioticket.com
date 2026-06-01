@@ -507,16 +507,57 @@ export default function DestinationsPage() {
       <AppHeader />
 
       <main className="flex-1 bg-[#f5f7fb] text-slate-950">
-        <section className="border-b border-violet-100 bg-white">
-          <div className="page-shell py-6 sm:py-7">
+        <section className="relative isolate overflow-hidden border-b border-violet-200 bg-[radial-gradient(circle_at_50%_100%,rgba(251,191,36,0.30),transparent_32%),linear-gradient(180deg,#111036_0%,#3b1578_48%,#7c3aed_100%)] text-white">
+          <div className="absolute inset-0 -z-10 opacity-25 [background-image:radial-gradient(circle_at_center,rgba(255,255,255,0.42)_1px,transparent_1.6px)] [background-size:28px_28px]" />
+          <div className="absolute -left-20 top-12 -z-10 h-56 w-56 rounded-full bg-fuchsia-400/20 blur-3xl" />
+          <div className="absolute -right-16 bottom-2 -z-10 h-64 w-64 rounded-full bg-amber-300/20 blur-3xl" />
+          <svg
+            aria-hidden="true"
+            className="absolute right-0 top-6 -z-10 hidden h-56 w-[42rem] text-white/25 sm:block"
+            fill="none"
+            viewBox="0 0 672 224"
+          >
+            <path
+              d="M13 154C111 65 207 210 318 112C428 15 535 47 659 80"
+              stroke="currentColor"
+              strokeDasharray="10 14"
+              strokeLinecap="round"
+              strokeWidth="2"
+            />
+            <path
+              d="m597 60 46 18-44 20 10-20-12-18Z"
+              fill="currentColor"
+            />
+          </svg>
+          <svg
+            aria-hidden="true"
+            className="absolute bottom-4 left-1/2 -z-10 h-32 w-[34rem] -translate-x-1/2 text-white/10"
+            fill="none"
+            viewBox="0 0 544 128"
+          >
+            <path
+              d="M32 64c40-34 72-34 112 0s72 34 112 0 72-34 112 0 72 34 144 0"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeWidth="2"
+            />
+            <path
+              d="M96 28c50 24 102 24 156 0M292 100c46-22 92-22 138 0"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeWidth="1.5"
+            />
+          </svg>
+
+          <div className="page-shell relative py-7 sm:py-9 lg:py-10">
             <div className="max-w-3xl">
-              <p className="inline-flex rounded-full bg-violet-50 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-violet-700">
+              <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-violet-50 shadow-sm shadow-black/10 backdrop-blur">
                 Destination discovery
               </p>
-              <h1 className="mt-3 text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-6xl">
+              <h1 className="mt-4 text-4xl font-black tracking-[-0.04em] text-white drop-shadow-sm sm:text-5xl lg:text-6xl">
                 Where do you want to go next?
               </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              <p className="mt-3 max-w-2xl text-base leading-7 text-violet-50/90 sm:text-lg">
                 Browse destinations, compare flights, and find travel deals in
                 minutes.
               </p>
@@ -524,22 +565,31 @@ export default function DestinationsPage() {
 
             <nav
               aria-label="Destination regions"
-              className="mt-5 flex gap-2 overflow-x-auto border-t border-violet-100 pt-4"
+              className="mt-6 flex gap-2 overflow-x-auto border-t border-white/15 pt-4"
             >
-              {destinationSections.map((section) => (
-                <a
-                  key={section.region}
-                  href={`#${getRegionId(section.region)}`}
-                  className="shrink-0 rounded-full border border-violet-100 bg-violet-50/70 px-4 py-2 text-sm font-black text-violet-800 transition hover:border-violet-200 hover:bg-violet-100 hover:text-violet-900 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-200"
-                >
-                  {section.region}
-                </a>
-              ))}
+              {destinationSections.map((section, sectionIndex) => {
+                const isActive = sectionIndex === 0;
+
+                return (
+                  <a
+                    key={section.region}
+                    href={`#${getRegionId(section.region)}`}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`shrink-0 rounded-full border px-4 py-2 text-sm font-black shadow-sm backdrop-blur transition focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/25 ${
+                      isActive
+                        ? "border-white bg-white text-violet-800 shadow-black/10 hover:bg-violet-50"
+                        : "border-white/25 bg-white/10 text-white hover:border-white/45 hover:bg-white/18"
+                    }`}
+                  >
+                    {section.region}
+                  </a>
+                );
+              })}
             </nav>
           </div>
         </section>
 
-        <section className="page-shell py-6 sm:py-8 lg:py-10">
+        <section className="page-shell py-5 sm:py-6 lg:py-8">
           <div className="space-y-12">
             {destinationSections.map((section) => (
               <section
