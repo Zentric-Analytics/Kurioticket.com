@@ -445,7 +445,7 @@ export default function HotelsSearchPage() {
         <div className="relative mx-auto max-w-6xl space-y-10 md:space-y-12">
           <section className="mx-auto w-full max-w-[1040px] space-y-3">
             <p className="px-1 text-sm font-medium text-slate-600">
-              Find available stays
+              Compare hotel options
             </p>
             <form onSubmit={handleSubmit} className="space-y-4" noValidate>
               <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
@@ -839,7 +839,7 @@ export default function HotelsSearchPage() {
                 },
                 {
                   title: "Continue with the provider",
-                  body: "When you choose an option, continue with the provider to complete booking.",
+                  body: "When you choose an option, continue with the provider to confirm final price, availability, fees, and cancellation rules.",
                   icon: Calendar,
                 },
               ].map((item) => {
