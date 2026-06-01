@@ -1228,12 +1228,16 @@ export function FlightResultsClient() {
                   />
 
                   <div className="text-center">
-                    <h1 className="mx-auto max-w-sm text-balance text-[clamp(1.9rem,7vw,2.75rem)] font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-2xl">
-                      Compare available flight options
-                    </h1>
-                    <p className="mx-auto mt-3 max-w-sm text-balance text-center text-sm leading-6 text-slate-600 sm:max-w-2xl sm:text-base">
-                      Review fares and choose the route that fits your trip in a few taps.
-                    </p>
+                    <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                      <h1 className="mx-auto w-max whitespace-nowrap text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-[clamp(1.9rem,5vw,2.75rem)]">
+                        Compare available flight options
+                      </h1>
+                    </div>
+                    <div className="mx-auto mt-3 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                      <p className="mx-auto w-max whitespace-nowrap text-center text-xs leading-6 text-slate-600 sm:text-base">
+                        Review fares and choose the route that fits your trip in a few taps.
+                      </p>
+                    </div>
                   </div>
 
                   {isFormDirty ? (
@@ -1727,12 +1731,16 @@ export function FlightResultsClient() {
           <div className="mt-8 space-y-8">
             <section>
               <div className="mb-4 sm:max-w-3xl">
-                <h2 className="max-w-sm text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-none sm:text-3xl">
-                  Discover destinations from your region
-                </h2>
-                <p className="mt-1.5 max-w-xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
-                  Explore curated routes and start your next trip with confidence.
-                </p>
+                <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                  <h2 className="w-max whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
+                    Discover destinations from your region
+                  </h2>
+                </div>
+                <div className="mt-1.5 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                  <p className="w-max whitespace-nowrap text-xs font-normal leading-6 text-slate-600 sm:text-base">
+                    Explore curated routes and start your next trip with confidence.
+                  </p>
+                </div>
               </div>
 
               <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
@@ -1770,12 +1778,16 @@ export function FlightResultsClient() {
             {routeInspirationCards.length > 0 ? (
               <section>
                 <div className="mb-4 flex flex-col gap-2 sm:max-w-3xl">
-                  <h2 className="max-w-sm text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-none sm:text-3xl">
-                    More flight routes to explore
-                  </h2>
-                  <p className="max-w-2xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
-                    Browse route ideas from your region and open one when you are ready to compare dates and fare details.
-                  </p>
+                  <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                    <h2 className="w-max whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
+                      More flight routes to explore
+                    </h2>
+                  </div>
+                  <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                    <p className="w-max whitespace-nowrap text-xs font-normal leading-6 text-slate-600 sm:text-base">
+                      Browse route ideas from your region and open one when you are ready to compare dates and fare details.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
@@ -1820,12 +1832,16 @@ export function FlightResultsClient() {
 
             <section>
               <div className="mb-4 sm:max-w-3xl">
-                <h2 className="max-w-sm text-balance text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:max-w-none sm:text-3xl">
-                  Beach vacations
-                </h2>
-                <p className="mt-1.5 max-w-2xl text-sm font-normal leading-6 text-slate-600 sm:text-base">
-                  Explore flight routes to sunny coastlines, island escapes, and warm-weather beach destinations.
-                </p>
+                <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                  <h2 className="w-max whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
+                    Beach vacations
+                  </h2>
+                </div>
+                <div className="mt-1.5 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                  <p className="w-max whitespace-nowrap text-xs font-normal leading-6 text-slate-600 sm:text-base">
+                    Explore flight routes to sunny coastlines, island escapes, and warm-weather beach destinations.
+                  </p>
+                </div>
               </div>
 
               <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
