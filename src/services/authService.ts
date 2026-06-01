@@ -252,7 +252,7 @@ export async function sendPasswordResetLink(emailInput: string) {
   try {
     await sendTransactionalEmail({
       to: email,
-      subject: "Reset your Curioticket password",
+      subject: "Reset your Kurioticket password",
       html: passwordResetEmail({
         name: user.name,
         expiresInMinutes: passwordResetTtlMinutes,

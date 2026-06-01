@@ -41,7 +41,7 @@ export async function createSupportTicket(input: {
 
   await sendTransactionalEmail({
     to: input.email,
-    subject: "Curioticket support request received",
+    subject: "Kurioticket support request received",
     html: supportTicketEmail({ ticketId: ticket.id, subject: input.subject }),
     idempotencyKey: `support-ticket-${ticket.id}`,
   });
