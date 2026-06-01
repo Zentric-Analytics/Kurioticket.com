@@ -1963,7 +1963,7 @@ export function FlightResultsClient() {
                       <span className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500">
                         Travelers
                       </span>
-                      <span className="block truncate text-[13px] font-bold text-slate-950">
+                      <span className="block truncate text-[13px] font-normal text-slate-950">
                         {buildTravelerCabinSummary(
                           adultCount,
                           childCount,
