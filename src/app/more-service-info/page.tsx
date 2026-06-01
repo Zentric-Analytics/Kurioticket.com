@@ -111,71 +111,77 @@ export default function MoreServiceInfoPage() {
           </div>
 
           <div className="rounded-3xl border border-border bg-white p-5 shadow-sm">
-            <div className="rounded-2xl bg-surface-muted p-5">
+            <div className="rounded-2xl bg-gradient-to-br from-surface-muted to-white p-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-teal text-white">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-teal text-white shadow-sm">
                   <Search size={22} />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-navy">Plan with context</p>
-                  <p className="text-xs text-muted">Search, compare, save, redirect</p>
+                  <p className="text-xs text-muted">From search results to provider redirects</p>
                 </div>
               </div>
-              <div className="mt-5 grid gap-3">
-                {serviceSections.slice(0, 4).map((item) => (
-                  <div key={item.title} className="flex items-center justify-between rounded-xl bg-white px-4 py-3 text-sm shadow-sm">
-                    <span className="font-semibold text-navy">{item.title}</span>
-                    <span className="text-xs font-bold text-teal-dark">{item.number}</span>
-                  </div>
-                ))}
+              <div className="mt-5 grid gap-2 text-sm text-navy">
+                <div className="rounded-xl border border-white bg-white/80 px-4 py-3 shadow-sm">
+                  Compare options from multiple travel providers.
+                </div>
+                <div className="rounded-xl border border-white bg-white/80 px-4 py-3 shadow-sm">
+                  Save trips, alerts, and preferences when signed in.
+                </div>
+                <div className="rounded-xl border border-white bg-white/80 px-4 py-3 shadow-sm">
+                  Continue with provider details before booking externally.
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section aria-labelledby="how-curioticket-works" className="mt-10">
-          <div className="max-w-3xl">
-            <h2 id="how-curioticket-works" className="text-2xl font-bold tracking-tight text-navy">
-              How Curioticket works
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
-              These service details explain Curioticket&apos;s role before, during, and after a travel search.
-            </p>
-          </div>
+        <section aria-labelledby="how-curioticket-works" className="mx-auto mt-10 max-w-5xl">
+          <div className="rounded-3xl border border-border bg-white/80 p-5 shadow-sm sm:p-6 lg:p-7">
+            <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="max-w-2xl">
+                <h2 id="how-curioticket-works" className="text-2xl font-bold tracking-tight text-navy">
+                  How Curioticket works
+                </h2>
+                <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
+                  These service details explain Curioticket&apos;s role before, during, and after a travel search.
+                </p>
+              </div>
+              <p className="rounded-full bg-teal/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-dark">
+                Travel planning basics
+              </p>
+            </div>
 
-          <div className="mt-6 grid gap-5">
-            {serviceSections.map((item, index) => {
-              const Icon = item.icon;
-              const reverse = index % 2 === 1;
+            <div className="mt-6 grid gap-4">
+              {serviceSections.map((item) => {
+                const Icon = item.icon;
 
-              return (
-                <article
-                  key={item.title}
-                  className="grid overflow-hidden rounded-3xl border border-border bg-white shadow-sm lg:grid-cols-[0.88fr_1.12fr]"
-                >
-                  <div className={`bg-surface-muted p-5 sm:p-6 ${reverse ? "lg:order-2" : ""}`}>
-                    <div className="flex h-full min-h-40 flex-col justify-between rounded-2xl border border-white/80 bg-white/70 p-5">
-                      <div className="flex items-center justify-between gap-4">
-                        <span className="text-sm font-bold text-teal-dark">{item.number}</span>
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-teal/10 text-teal">
-                          <Icon size={24} />
-                        </div>
+                return (
+                  <article
+                    key={item.title}
+                    className="grid gap-4 rounded-2xl border border-border/80 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-teal/30 hover:shadow-md sm:grid-cols-[auto_1fr] sm:p-5"
+                  >
+                    <div className="flex items-center gap-3 sm:block">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal/10 text-teal ring-1 ring-teal/15">
+                        <Icon size={21} />
                       </div>
-                      <div className="mt-8 h-2 rounded-full bg-white">
-                        <div className="h-2 w-2/3 rounded-full bg-teal" />
-                      </div>
+                      <span className="inline-flex rounded-full bg-surface-muted px-2.5 py-1 text-xs font-bold text-teal-dark sm:mt-3">
+                        {item.number}
+                      </span>
                     </div>
-                  </div>
 
-                  <div className="p-5 sm:p-6 lg:p-8">
-                    <p className="text-xs font-bold uppercase tracking-[0.24em] text-teal-dark">Service step</p>
-                    <h3 className="mt-2 text-2xl font-bold text-navy">{item.title}</h3>
-                    <p className="mt-3 text-sm font-semibold leading-6 text-navy sm:text-base">{item.summary}</p>
-                    <p className="mt-3 text-sm leading-6 text-muted sm:text-base">{item.details}</p>
-                  </div>
-                </article>
-              );
-            })}
+                    <div className="min-w-0">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h3 className="text-lg font-bold text-navy sm:text-xl">{item.title}</h3>
+                        <span className="hidden h-px flex-1 bg-border sm:block" />
+                      </div>
+                      <p className="mt-2 text-sm font-semibold leading-6 text-navy sm:text-[15px]">{item.summary}</p>
+                      <p className="mt-2 text-sm leading-6 text-muted sm:text-[15px]">{item.details}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </section>
 
