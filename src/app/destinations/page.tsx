@@ -9,7 +9,8 @@ const destinationSections = [
   {
     region: "Europe",
     accent: "from-blue-600 to-violet-600",
-    summary: "Classic city breaks with culture, food, landmarks, and easy rail connections.",
+    summary:
+      "Classic city breaks with culture, food, landmarks, and easy rail connections.",
     destinations: [
       {
         name: "London",
@@ -44,7 +45,8 @@ const destinationSections = [
   {
     region: "Middle East",
     accent: "from-amber-500 to-fuchsia-600",
-    summary: "Warm weather, statement hotels, skyline views, and effortless luxury escapes.",
+    summary:
+      "Warm weather, statement hotels, skyline views, and effortless luxury escapes.",
     destinations: [
       {
         name: "Dubai",
@@ -72,7 +74,8 @@ const destinationSections = [
   {
     region: "Africa",
     accent: "from-emerald-600 to-violet-600",
-    summary: "Creative cities, coastal views, national parks, and bold cultural energy.",
+    summary:
+      "Creative cities, coastal views, national parks, and bold cultural energy.",
     destinations: [
       {
         name: "Lagos",
@@ -107,7 +110,8 @@ const destinationSections = [
   {
     region: "North America",
     accent: "from-sky-600 to-indigo-700",
-    summary: "Big-city weekends, beach days, entertainment, shopping, and iconic skylines.",
+    summary:
+      "Big-city weekends, beach days, entertainment, shopping, and iconic skylines.",
     destinations: [
       {
         name: "New York",
@@ -135,7 +139,8 @@ const destinationSections = [
   {
     region: "Asia",
     accent: "from-rose-500 to-violet-700",
-    summary: "Street food, night markets, futuristic skylines, temples, and city adventures.",
+    summary:
+      "Street food, night markets, futuristic skylines, temples, and city adventures.",
     destinations: [
       {
         name: "Singapore",
@@ -206,7 +211,8 @@ export default function DestinationsPage() {
                   </h1>
 
                   <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-                    Discover popular destinations and travel ideas for your next journey.
+                    Discover popular destinations and travel ideas for your next
+                    journey.
                   </p>
                 </div>
 
@@ -221,6 +227,7 @@ export default function DestinationsPage() {
                           Culture, food, beaches
                         </p>
                       </div>
+
                       <div className="rounded-2xl bg-slate-50 px-4 py-3">
                         <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
                           Plan faster
@@ -247,7 +254,9 @@ export default function DestinationsPage() {
                 {featuredDestinations.map((destination, index) => (
                   <Link
                     key={destination.name}
-                    href={`/flights/results?destination=${encodeURIComponent(destination.name)}`}
+                    href={`/flights/results?destination=${encodeURIComponent(
+                      destination.name,
+                    )}`}
                     className={`group relative overflow-hidden rounded-[2rem] bg-slate-900 shadow-2xl shadow-slate-950/20 outline-none transition duration-300 hover:-translate-y-1 focus-visible:ring-4 focus-visible:ring-violet-200 ${
                       index === 0 ? "col-span-2" : ""
                     }`}
@@ -257,7 +266,11 @@ export default function DestinationsPage() {
                       alt={`${destination.name} destination skyline`}
                       fill
                       priority={index === 0}
-                      sizes={index === 0 ? "(min-width: 1024px) 40vw, 100vw" : "(min-width: 1024px) 20vw, 50vw"}
+                      sizes={
+                        index === 0
+                          ? "(min-width: 1024px) 40vw, 100vw"
+                          : "(min-width: 1024px) 20vw, 50vw"
+                      }
                       className="object-cover transition duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
@@ -295,7 +308,9 @@ export default function DestinationsPage() {
                 {destinationSections.map((section) => (
                   <a
                     key={section.region}
-                    href={`#${section.region.toLowerCase().replaceAll(" ", "-")}`}
+                    href={`#${section.region
+                      .toLowerCase()
+                      .replaceAll(" ", "-")}`}
                     className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
                   >
                     {section.region}
@@ -327,7 +342,9 @@ export default function DestinationsPage() {
               >
                 <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div className="max-w-2xl">
-                    <div className={`mb-3 h-1.5 w-16 rounded-full bg-gradient-to-r ${section.accent}`} />
+                    <div
+                      className={`mb-3 h-1.5 w-16 rounded-full bg-gradient-to-r ${section.accent}`}
+                    />
                     <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
                       {section.region}
                     </h2>
@@ -348,7 +365,9 @@ export default function DestinationsPage() {
                   {section.destinations.map((destination, index) => (
                     <Link
                       key={destination.name}
-                      href={`/flights/results?destination=${encodeURIComponent(destination.name)}`}
+                      href={`/flights/results?destination=${encodeURIComponent(
+                        destination.name,
+                      )}`}
                       className={`group overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-lg shadow-slate-200/80 outline-none transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-violet-200/70 focus-visible:ring-4 focus-visible:ring-violet-200 ${
                         index === 0 ? "md:col-span-2" : ""
                       }`}

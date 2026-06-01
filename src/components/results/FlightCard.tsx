@@ -10,16 +10,16 @@ import { formatCurrency, formatTime } from "@/lib/utils";
 export function FlightCard({ flight, premium = false }: { flight: PublicFlightResult; premium?: boolean }) {
   return (
     <Card className="mx-auto w-full max-w-[640px] overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-      <div className="border-b border-slate-100 bg-gradient-to-r from-white to-slate-50 px-3 py-2">
+      <div className="border-b border-indigo-900/30 bg-gradient-to-r from-indigo-950 to-violet-800 px-3 py-2">
         <div className="flex flex-wrap items-center justify-between gap-1.5">
           <div className="flex flex-wrap gap-1">
             {flight.badges.slice(0, 4).map((badge) => (
-              <Badge key={badge} variant={badge.includes("Risk") ? "teal" : badge.includes("Price") ? "blue" : "neutral"}>
+              <Badge key={badge} variant={badge.includes("Risk") ? "teal" : badge.includes("Price") ? "blue" : "neutral"} className="bg-white/15 text-white ring-1 ring-white/25">
                 {badge}
               </Badge>
             ))}
           </div>
-          <p className="text-xs font-bold uppercase tracking-wide text-muted">{flight.provider} live offer</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-white/80">{flight.provider} live offer</p>
         </div>
       </div>
 
