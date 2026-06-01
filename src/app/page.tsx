@@ -28,6 +28,7 @@ import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { RecentSearches } from "@/components/search/RecentSearches";
 import { LinkButton } from "@/components/ui/Button";
+import { validateDestinationImages } from "@/data/destinationImageValidation";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { getTranslations } from "@/lib/i18n";
@@ -45,7 +46,7 @@ const destinations = [
     altKey: "homeDestinationDubaiAlt",
     amountUsd: 420,
     image:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1400&q=90",
+      "https://images.unsplash.com/photo-1582672060674-bc2bd808a8b5?auto=format&fit=crop&w=1400&q=90",
   },
   {
     id: "london",
@@ -54,7 +55,7 @@ const destinations = [
     altKey: "homeDestinationLondonAlt",
     amountUsd: 380,
     image:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1400&q=90",
+      "https://images.unsplash.com/photo-1529655683826-aba9b3e77383?auto=format&fit=crop&w=1400&q=90",
   },
   {
     id: "paris",
@@ -63,7 +64,7 @@ const destinations = [
     altKey: "homeDestinationParisAlt",
     amountUsd: 410,
     image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=90",
+      "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1400&q=90",
   },
   {
     id: "bali",
@@ -81,12 +82,14 @@ const destinations = [
     altKey: "homeDestinationNewYorkAlt",
     amountUsd: 390,
     image:
-      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1400&q=90",
+      "https://images.unsplash.com/photo-1522083165195-3424ed129620?auto=format&fit=crop&w=1400&q=90",
   },
 ];
 
-
-
+validateDestinationImages(
+  "popular destination rail",
+  destinations.map((destination) => ({ id: destination.id, image: destination.image })),
+);
 
 export default function Home() {
   const { locale } = useLocale();

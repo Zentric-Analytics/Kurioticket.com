@@ -19,6 +19,7 @@ import {
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { validateDestinationImages } from "@/data/destinationImageValidation";
 
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
@@ -133,6 +134,11 @@ const hotelDestinationCards: HotelDestinationCard[] = [
     linkLabel: "Search hotels in New York, United States",
   },
 ];
+
+validateDestinationImages(
+  "hotel destination cards",
+  hotelDestinationCards.map((card) => ({ id: card.destinationQuery, image: card.image })),
+);
 
 const formatShortDate = (value: string) => {
   if (!value) return "";
