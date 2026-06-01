@@ -1744,7 +1744,7 @@ export function FlightResultsClient() {
         <section className="lg:col-span-2">
           <form
             onSubmit={handleCompactSearchSubmit}
-            className="mx-auto w-full max-w-4xl rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2.5"
+            className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2.5"
           >
             <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch">
               <div className="relative flex h-full min-h-[48px] w-full items-center rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15 lg:w-[132px] lg:shrink-0">
