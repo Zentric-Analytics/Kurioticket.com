@@ -70,7 +70,7 @@ export function Footer() {
       ],
     },
     {
-      heading: "Terms and settings",
+      heading: "Terms & Settings",
       links: [
         {
           label: "Privacy Policy",
@@ -83,6 +83,10 @@ export function Footer() {
         {
           label: "Cookie Policy",
           href: "/legal/cookie-policy",
+        },
+        {
+          label: "Legal Center",
+          href: "/legal-center",
         },
       ],
     },
