@@ -1649,8 +1649,8 @@ export function FlightResultsClient() {
             onSubmit={handleCompactSearchSubmit}
             className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2.5"
           >
-            <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch">
-              <div className="relative flex h-full min-h-[48px] w-full items-center rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15 lg:w-[132px] lg:shrink-0">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch lg:gap-1.5">
+              <div className="relative flex h-full min-h-[48px] w-full items-center rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15 lg:w-[124px] lg:shrink-0">
                 <label htmlFor="compactTripType" className="sr-only">
                   Trip type
                 </label>
@@ -1679,7 +1679,7 @@ export function FlightResultsClient() {
                 <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
               </div>
 
-              <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.1fr)_minmax(0,0.88fr)_minmax(0,0.88fr)_minmax(0,1fr)] lg:gap-1">
+              <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.82fr)_minmax(0,0.82fr)_minmax(0,0.92fr)] lg:gap-1">
                 <div
                   ref={originWrapRef}
                   className="relative rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15"
@@ -1874,7 +1874,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="h-10 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-5 text-sm font-black text-white shadow-md shadow-indigo-950/20 lg:h-[48px] lg:w-auto lg:min-w-[112px]"
+                className="h-10 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-5 text-sm font-black text-white shadow-md shadow-indigo-950/20 lg:h-[48px] lg:w-auto lg:min-w-[104px]"
               >
                 Search
               </Button>
