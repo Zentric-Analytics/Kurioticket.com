@@ -379,8 +379,15 @@ validateDestinationImages(
     ...hotelDestinationCards,
     ...moreHotelDestinationCards,
     ...globalHotelDestinationCards,
-    ...hotelInspirationCards,
   ].map((card) => ({
+    id: card.destinationQuery,
+    image: card.image,
+  })),
+);
+
+validateDestinationImages(
+  "hotel inspiration cards",
+  hotelInspirationCards.map((card) => ({
     id: card.destinationQuery,
     image: card.image,
   })),
