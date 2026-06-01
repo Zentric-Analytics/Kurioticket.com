@@ -49,14 +49,20 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-2 lg:w-32 lg:flex-col lg:items-end">
+          <div className="flex items-center justify-between gap-2 lg:w-40 lg:flex-col lg:items-end">
             <div className="text-right">
               <div className="text-xl font-extrabold text-navy">{formatCurrency(flight.price, flight.currency)}</div>
-              <div className="text-xs font-semibold text-muted">total estimate</div>
+              <div className="text-xs font-semibold text-muted">estimated total</div>
+              <div className="text-[11px] font-semibold leading-4 text-muted">Final price confirmed by provider</div>
             </div>
-            <LinkButton href={`/flights/details/${encodeURIComponent(flight.id)}`} variant="primary" size="sm" className="whitespace-nowrap bg-navy px-2.5 hover:bg-navy-soft">
-              View Flight
-            </LinkButton>
+            <div className="text-right">
+              <LinkButton href={`/flights/details/${encodeURIComponent(flight.id)}`} variant="primary" size="sm" className="whitespace-nowrap bg-navy px-2.5 hover:bg-navy-soft">
+                View Flight
+              </LinkButton>
+              <p className="mt-1 max-w-36 text-[11px] font-semibold leading-4 text-muted">
+                Review final fare and rules with the provider before booking.
+              </p>
+            </div>
           </div>
         </div>
 

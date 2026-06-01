@@ -72,7 +72,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
             </div>
             <div className="text-left lg:text-right">
               <div className="text-3xl font-bold text-navy">{formatCurrency(flight.price, flight.currency)}</div>
-              <p className="text-sm text-muted">Price and availability are confirmed on the external provider site</p>
+              <p className="text-sm text-muted">Final price, availability, and fare rules are confirmed by the provider.</p>
             </div>
           </div>
         </div>
@@ -123,7 +123,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
           <Card className="p-5">
             <h2 className="text-lg font-bold text-navy">External Provider Transparency</h2>
             <p className="mt-2 text-sm leading-6 text-muted">
-              Kurioticket is a flight metasearch platform. We help you compare options, then send you securely to an external provider where prices, rules, availability, and purchase steps are completed.
+              Kurioticket helps you compare this option. Booking, payment, final price, availability, and fare rules are confirmed by the provider.
             </p>
           </Card>
         </section>
@@ -151,9 +151,14 @@ export function FlightDetailsClient({ id }: { id: string }) {
               ))}
             </div>
           </Card>
-          <Button variant="accent" size="lg" className="w-full" onClick={continueToProvider} disabled={!flight.partnerRedirectUrl && !flight.bookingUrl}>
-            Continue to Provider
-          </Button>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold leading-5 text-muted">
+              Booking, payment, final price, availability, and fare rules are confirmed by the provider.
+            </p>
+            <Button variant="accent" size="lg" className="w-full" onClick={continueToProvider} disabled={!flight.partnerRedirectUrl && !flight.bookingUrl}>
+              Continue to Provider
+            </Button>
+          </div>
         </aside>
       </div>
     </main>
