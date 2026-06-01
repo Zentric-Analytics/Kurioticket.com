@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
+
 export function Footer() {
   const currentYear =
     new Date().getFullYear();
@@ -168,9 +170,12 @@ export function Footer() {
         <div className="mt-10 border-t border-slate-200 pt-5">
           <div className="flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="font-semibold text-slate-900">
-                Kurioticket
-              </p>
+              <KurioticketLogo
+                variant="full"
+                tone="dark"
+                markClassName="h-9 w-9"
+                textClassName="text-base"
+              />
 
               <p className="mt-1 text-xs text-slate-500">
                 Search flights, hotels, and travel deals with confidence.
