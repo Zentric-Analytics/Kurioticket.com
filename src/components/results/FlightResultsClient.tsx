@@ -2115,7 +2115,7 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <>
-              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div className="mx-auto flex w-full max-w-[640px] flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
                   {filtered.length} option{filtered.length === 1 ? "" : "s"}{" "}
                   found
