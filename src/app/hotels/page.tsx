@@ -637,7 +637,7 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
+      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] px-2 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
         <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
         <div className="relative mx-auto max-w-6xl space-y-11 md:space-y-14">
@@ -993,13 +993,13 @@ export default function HotelsSearchPage() {
             >
               Explore hotel stays by destination
             </h2>
-            <div className="border border-slate-200/80 bg-white/80 p-4 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(260px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-6 md:p-7">
+              <div className="grid auto-cols-[minmax(260px,86vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {hotelDestinationLinks.map((card) => (
                   <DestinationCard
                     key={card.title}
                     card={card}
-                    imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 82vw"
+                    imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 86vw"
                   />
                 ))}
               </div>
@@ -1016,13 +1016,13 @@ export default function HotelsSearchPage() {
             >
               Featured hotel destinations
             </h2>
-            <div className="border border-slate-200/80 bg-slate-50/85 p-4 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(250px,78vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+            <div className="border border-slate-200/80 bg-slate-50/85 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+              <div className="grid auto-cols-[minmax(250px,84vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {moreHotelDestinationLinks.map((card) => (
                   <DestinationCard
                     key={card.title}
                     card={card}
-                    imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 78vw"
+                    imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 84vw"
                   />
                 ))}
               </div>
@@ -1033,7 +1033,7 @@ export default function HotelsSearchPage() {
             className="space-y-5"
             aria-labelledby="hotel-inspiration-heading"
           >
-            <div className="border border-slate-200/80 bg-slate-50/90 p-4 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+            <div className="border border-slate-200/80 bg-slate-50/90 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div className="max-w-2xl">
                   <h2
@@ -1073,14 +1073,14 @@ export default function HotelsSearchPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid auto-cols-[minmax(240px,76vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              <div className="mt-5 grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {hotelInspirationLinks.map((card) => (
                   <InspirationCard key={card.title} card={card} />
                 ))}
               </div>
             </div>
           </section>
-          <section className="relative isolate rounded-[2rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-3 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:p-4">
+          <section className="relative isolate rounded-[2rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-2 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:p-4">
             <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
               {[
                 {
@@ -1138,13 +1138,13 @@ export default function HotelsSearchPage() {
             >
               Explore stays around the world
             </h2>
-            <div className="border border-slate-200/80 bg-white/80 p-4 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="grid auto-cols-[minmax(220px,68vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-5 [&::-webkit-scrollbar]:hidden">
+            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+              <div className="grid auto-cols-[minmax(220px,76vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-5 [&::-webkit-scrollbar]:hidden">
                 {globalHotelDestinationLinks.map((card) => (
                   <DestinationCard
                     key={card.title}
                     card={card}
-                    imageSizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 68vw"
+                    imageSizes="(min-width: 1024px) 20vw, (min-width: 768px) 33vw, 76vw"
                     isCompact
                   />
                 ))}
