@@ -1828,7 +1828,7 @@ export function FlightResultsClient() {
             className="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2.5"
           >
             <div className="flex flex-col gap-2 lg:flex-row lg:items-stretch lg:gap-1.5">
-              <div className="relative flex h-full min-h-[48px] w-full items-center rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15 lg:w-[124px] lg:shrink-0">
+              <div className="relative flex h-full min-h-[48px] w-full items-center rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:border-slate-400 focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15 lg:w-[124px] lg:shrink-0">
                 <label htmlFor="compactTripType" className="sr-only">
                   Trip type
                 </label>
@@ -1849,7 +1849,7 @@ export function FlightResultsClient() {
                       }
                     }
                   }}
-                  className="focus-ring h-full w-full appearance-none bg-transparent pr-6 text-[13px] font-normal text-slate-950 outline-none"
+                  className="focus-ring h-full w-full appearance-none bg-transparent pr-6 text-[13px] font-semibold text-slate-950 outline-none"
                 >
                   <option value="round-trip">Round-trip</option>
                   <option value="one-way">One-way</option>
@@ -1860,7 +1860,7 @@ export function FlightResultsClient() {
               <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-1">
                 <div
                   ref={originWrapRef}
-                  className="relative rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15"
+                  className="relative rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:border-slate-400 focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15"
                 >
                   <label
                     className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500"
@@ -1915,7 +1915,7 @@ export function FlightResultsClient() {
 
                 <div
                   ref={destinationWrapRef}
-                  className="relative rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 transition focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15"
+                  className="relative rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:border-slate-400 focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15"
                 >
                   <label
                     className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500"
@@ -1977,14 +1977,14 @@ export function FlightResultsClient() {
                       setActiveDatePicker("departure");
                       setDatePickerPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[48px] w-full items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left transition hover:border-slate-300 hover:bg-white"
+                    className="focus-ring flex h-full min-h-[48px] w-full items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:border-slate-400 hover:bg-white"
                   >
                     <Calendar className="h-3.5 w-3.5 shrink-0 text-indigo-700" />
                     <span className="min-w-0">
                       <span className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500">
                         Travel dates
                       </span>
-                      <span className="block truncate text-[13px] font-normal text-slate-950">
+                      <span className="block truncate text-[13px] font-semibold text-slate-950">
                         {departureDateInput
                           ? tripTypeInput === "round-trip" && returnDateInput
                             ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
@@ -2002,13 +2002,13 @@ export function FlightResultsClient() {
                       setTravelerPopoverOpen(true);
                       setTravelerPopoverPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[48px] w-full items-center justify-between gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-left transition hover:border-slate-300 hover:bg-white"
+                    className="focus-ring flex h-full min-h-[48px] w-full items-center justify-between gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:border-slate-400 hover:bg-white"
                   >
                     <span className="min-w-0">
                       <span className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500">
                         Travelers
                       </span>
-                      <span className="block truncate text-[13px] font-normal text-slate-950">
+                      <span className="block truncate text-[13px] font-semibold text-slate-950">
                         {buildTravelerCabinSummary(
                           adultCount,
                           childCount,
@@ -2024,7 +2024,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="h-10 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-black text-white shadow-md shadow-indigo-700/15 lg:h-[48px] lg:w-auto lg:min-w-[104px]"
+                className="h-10 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-black text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:h-[48px] lg:w-auto lg:min-w-[104px]"
               >
                 Search
               </Button>
