@@ -132,9 +132,51 @@ const hotelDestinationCards: HotelDestinationCard[] = [
   },
 ];
 
+const moreHotelDestinationCards: HotelDestinationCard[] = [
+  {
+    title: "Italy",
+    subtitle: "Rome stays",
+    destinationQuery: "Rome",
+    image:
+      "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "The Colosseum in Rome beneath a clear blue sky",
+    linkLabel: "Search hotels in Rome, Italy",
+  },
+  {
+    title: "United Arab Emirates",
+    subtitle: "Dubai stays",
+    destinationQuery: "Dubai",
+    image:
+      "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Dubai skyline with the Burj Khalifa rising above skyscrapers",
+    linkLabel: "Search hotels in Dubai, United Arab Emirates",
+  },
+  {
+    title: "Singapore",
+    subtitle: "Singapore stays",
+    destinationQuery: "Singapore",
+    image:
+      "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Marina Bay skyline in Singapore at dusk",
+    linkLabel: "Search hotels in Singapore, Singapore",
+  },
+  {
+    title: "Spain",
+    subtitle: "Barcelona stays",
+    destinationQuery: "Barcelona",
+    image:
+      "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Barcelona cityscape with Sagrada Familia in daylight",
+    linkLabel: "Search hotels in Barcelona, Spain",
+  },
+];
+
 validateDestinationImages(
   "hotel destination cards",
-  hotelDestinationCards.map((card) => ({ id: card.destinationQuery, image: card.image })),
+  [...hotelDestinationCards, ...moreHotelDestinationCards].map((card) => ({
+    id: card.destinationQuery,
+    image: card.image,
+  })),
 );
 
 const formatShortDate = (value: string) => {
@@ -200,22 +242,38 @@ export default function HotelsSearchPage() {
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
 
-  const hotelDestinationLinks = useMemo(() => {
+  const destinationCardHref = useMemo(() => {
     const baseDate = new Date();
     const defaultCheckIn = addDays(baseDate, 21);
     const defaultCheckOut = addDays(baseDate, 24);
 
-    return hotelDestinationCards.map((card) => ({
-      ...card,
-      href: `/hotels/results?${new URLSearchParams({
-        destination: card.destinationQuery,
+    return (destinationQuery: string) =>
+      `/hotels/results?${new URLSearchParams({
+        destination: destinationQuery,
         checkIn: defaultCheckIn,
         checkOut: defaultCheckOut,
         guests: "2",
         rooms: "1",
-      }).toString()}`,
-    }));
+      }).toString()}`;
   }, []);
+
+  const hotelDestinationLinks = useMemo(
+    () =>
+      hotelDestinationCards.map((card) => ({
+        ...card,
+        href: destinationCardHref(card.destinationQuery),
+      })),
+    [destinationCardHref],
+  );
+
+  const moreHotelDestinationLinks = useMemo(
+    () =>
+      moreHotelDestinationCards.map((card) => ({
+        ...card,
+        href: destinationCardHref(card.destinationQuery),
+      })),
+    [destinationCardHref],
+  );
 
   const handleToggleDates = () => {
     setDatesOpen((prev) => {
@@ -705,51 +763,96 @@ export default function HotelsSearchPage() {
             </div>
           </section>
 
-          <section className="relative isolate grid gap-4 py-4 sm:py-6 md:grid-cols-3">
-            {[
-              {
-                title: "Compare provider offers",
-                body: "View hotel options from travel providers in one place before you continue.",
-                icon: Building2,
-              },
-              {
-                title: "Review stay details",
-                body: "Check dates, guests, rooms, pricing context, and stay information before choosing.",
-                icon: ClipboardCheck,
-              },
-              {
-                title: "Continue with the provider",
-                body: "When you choose an option, continue with the provider to complete booking.",
-                icon: ArrowRight,
-              },
-            ].map((item) => {
-              const Icon = item.icon;
+          <section className="relative isolate rounded-[2rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(248,250,252,0.82),rgba(241,245,249,0.62)_54%,rgba(238,242,255,0.44))] p-3 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:p-4">
+            <div className="grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  title: "Compare provider offers",
+                  body: "View hotel options from travel providers in one place before you continue.",
+                  icon: Building2,
+                },
+                {
+                  title: "Review stay details",
+                  body: "Check dates, guests, rooms, pricing context, and stay information before choosing.",
+                  icon: ClipboardCheck,
+                },
+                {
+                  title: "Continue with the provider",
+                  body: "When you choose an option, continue with the provider to complete booking.",
+                  icon: Calendar,
+                },
+              ].map((item) => {
+                const Icon = item.icon;
 
-              return (
-                <article
-                  key={item.title}
-                  className="group relative isolate overflow-hidden rounded-[1.75rem] border border-indigo-200/45 bg-[linear-gradient(135deg,rgba(224,231,255,0.62),rgba(240,253,250,0.34)_52%,rgba(221,214,254,0.36))] p-6 shadow-[0_24px_64px_-46px_rgba(49,46,129,0.78),0_12px_34px_-30px_rgba(14,165,233,0.5)] ring-1 ring-indigo-50/60 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-indigo-200/75 hover:bg-[linear-gradient(135deg,rgba(224,231,255,0.7),rgba(240,253,250,0.42)_52%,rgba(221,214,254,0.42))] hover:shadow-[0_32px_82px_-50px_rgba(49,46,129,0.82),0_16px_42px_-32px_rgba(14,165,233,0.58)]"
+                return (
+                  <article
+                    key={item.title}
+                    className="relative isolate cursor-default overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-6 shadow-[0_18px_44px_-36px_rgba(15,23,42,0.42)] ring-1 ring-white/70 backdrop-blur-sm"
+                  >
+                    <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
+                    <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
+                    <div className="relative mb-5 inline-flex h-12 w-12 items-center justify-center rounded-[1rem] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,245,249,0.86))] text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_12px_24px_-22px_rgba(15,23,42,0.55)]" aria-hidden="true">
+                      <Icon className="h-5 w-5 stroke-[1.9]" />
+                    </div>
+                    <h2 className="relative text-base font-semibold tracking-tight text-slate-950">
+                      {item.title}
+                    </h2>
+                    <p className="relative mt-2 text-sm leading-6 text-slate-700">
+                      {item.body}
+                    </p>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className="space-y-5 pt-2 sm:pt-4" aria-labelledby="more-hotel-destinations-heading">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-700/80">
+                  More hotel ideas
+                </p>
+                <h2
+                  id="more-hotel-destinations-heading"
+                  className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl"
                 >
-                  <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300/70 to-transparent" />
-                  <div className="pointer-events-none absolute -right-12 -top-14 h-32 w-32 rounded-full bg-indigo-200/30 blur-3xl transition group-hover:bg-cyan-200/35" />
-                  <div className="pointer-events-none absolute -left-14 bottom-1 h-28 w-28 rounded-full bg-sky-200/20 blur-3xl" />
-                  <div className="relative mb-5 inline-flex rounded-[1.15rem] bg-gradient-to-br from-indigo-400/80 via-violet-300/70 to-cyan-300/75 p-px shadow-[0_16px_36px_-22px_rgba(79,70,229,0.9)] transition group-hover:from-indigo-500/85 group-hover:via-violet-400/75 group-hover:to-cyan-300/85">
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-[1.1rem] bg-[linear-gradient(145deg,rgba(248,250,252,0.86),rgba(238,242,255,0.7)_52%,rgba(224,242,254,0.74))] text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_24px_-20px_rgba(79,70,229,0.9)] ring-1 ring-white/70 transition group-hover:text-indigo-800">
-                      <Icon
-                        className="h-5 w-5 stroke-[1.9]"
-                        aria-hidden="true"
-                      />
-                    </span>
+                  Explore more hotel destinations
+                </h2>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {moreHotelDestinationLinks.map((card) => (
+                <Link
+                  key={card.title}
+                  href={card.href}
+                  aria-label={card.linkLabel}
+                  className="group relative min-h-[300px] overflow-hidden rounded-[2rem] bg-indigo-100 shadow-[0_26px_70px_-44px_rgba(79,70,229,0.82)] ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 hover:shadow-[0_34px_82px_-46px_rgba(79,70,229,0.78)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-[#f3f6ff] sm:min-h-[340px] xl:min-h-[360px]"
+                >
+                  <Image
+                    src={card.image}
+                    alt={card.imageAlt}
+                    fill
+                    sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover brightness-[1.06] saturate-[1.12] contrast-[1.02] transition duration-700 group-hover:scale-105 group-hover:brightness-[1.1] group-hover:saturate-[1.16]"
+                  />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/68 via-slate-900/18 to-white/0" />
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-slate-950/18 via-slate-900/8 to-transparent" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-cyan-300/10 opacity-80" />
+                  <div className="pointer-events-none absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/25" />
+                  <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-7">
+                    <p className="text-2xl font-semibold leading-tight tracking-tight text-white drop-shadow-[0_2px_14px_rgba(15,23,42,0.42)]">
+                      {card.title}
+                    </p>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-sm font-medium text-white/90 drop-shadow-[0_1px_10px_rgba(15,23,42,0.36)]">
+                      <span>{card.subtitle}</span>
+                      <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/22 text-white shadow-[0_10px_28px_rgba(15,23,42,0.18)] ring-1 ring-white/45 backdrop-blur-md transition group-hover:translate-x-1 group-hover:bg-white/32">
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </span>
+                    </div>
                   </div>
-                  <h2 className="relative text-base font-semibold tracking-tight text-slate-950">
-                    {item.title}
-                  </h2>
-                  <p className="relative mt-2 text-sm leading-6 text-slate-700">
-                    {item.body}
-                  </p>
-                </article>
-              );
-            })}
+                </Link>
+              ))}
+            </div>
           </section>
         </div>
       </main>
