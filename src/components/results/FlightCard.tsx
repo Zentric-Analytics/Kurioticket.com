@@ -9,7 +9,7 @@ import { formatCurrency, formatTime } from "@/lib/utils";
 export function FlightCard({ flight, premium = false }: { flight: PublicFlightResult; premium?: boolean }) {
   return (
     <Card className="mx-auto w-full max-w-[640px] overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-      <div className="border-b border-indigo-900/30 bg-gradient-to-r from-indigo-950 to-violet-800 px-3 py-2">
+      <div className="border-b border-indigo-200/70 bg-gradient-to-r from-indigo-600 to-violet-500 px-3 py-2">
         <div aria-hidden="true" className="h-3" />
       </div>
 

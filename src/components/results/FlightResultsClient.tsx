@@ -155,7 +155,7 @@ function RecentSearchCard({
 }) {
   const cardContent = (
     <>
-      <div className="relative h-24 overflow-hidden bg-gradient-to-br from-indigo-950 via-violet-800 to-sky-500">
+      <div className="relative h-24 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-sky-400">
         {entry.image ? (
           <img
             src={entry.image}
@@ -1385,7 +1385,7 @@ export function FlightResultsClient() {
 
                     <Button
                       type="submit"
-                      className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 sm:mt-3 lg:mt-0 lg:h-auto lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
+                      className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 sm:mt-3 lg:mt-0 lg:h-auto lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                     >
                       Search
                     </Button>
@@ -1874,7 +1874,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="h-10 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-5 text-sm font-black text-white shadow-md shadow-indigo-950/20 lg:h-[48px] lg:w-auto lg:min-w-[104px]"
+                className="h-10 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-black text-white shadow-md shadow-indigo-700/15 lg:h-[48px] lg:w-auto lg:min-w-[104px]"
               >
                 Search
               </Button>
@@ -2609,7 +2609,7 @@ function Filters({
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div className="-m-3 mb-3 flex items-start justify-between gap-2 rounded-t-xl bg-gradient-to-r from-indigo-950 to-violet-800 p-3">
+      <div className="-m-3 mb-3 flex items-start justify-between gap-2 rounded-t-xl bg-gradient-to-r from-indigo-700 to-violet-600 p-3">
         <div>
           <h2 className="text-base font-bold text-white">Refine Results</h2>
         </div>
