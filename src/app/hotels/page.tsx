@@ -989,7 +989,7 @@ export default function HotelsSearchPage() {
           >
             <h2
               id="hotel-destinations-heading"
-              className="px-1 text-[1.65rem] font-semibold leading-[1.18] tracking-[-0.016em] text-slate-800 md:text-[2rem]"
+              className="px-1 text-[1.35rem] font-semibold leading-[1.18] tracking-[-0.014em] text-slate-800 md:text-[2rem]"
             >
               Explore hotel stays by destination
             </h2>
@@ -1012,7 +1012,7 @@ export default function HotelsSearchPage() {
           >
             <h2
               id="more-hotel-destinations-heading"
-              className="px-1 text-[1.5rem] font-semibold leading-[1.2] tracking-[-0.014em] text-slate-800 md:text-[1.85rem]"
+              className="px-1 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
             >
               Featured hotel destinations
             </h2>
@@ -1034,15 +1034,15 @@ export default function HotelsSearchPage() {
             aria-labelledby="hotel-inspiration-heading"
           >
             <div className="border border-slate-200/80 bg-slate-50/90 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div className="max-w-2xl">
                   <h2
                     id="hotel-inspiration-heading"
-                    className="text-[1.5rem] font-semibold leading-[1.2] tracking-[-0.014em] text-slate-800 md:text-[1.85rem]"
+                    className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
                   >
                     Find stays for every kind of trip
                   </h2>
-                  <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
+                  <p className="mt-1.5 max-w-xl text-[0.9rem] leading-5 text-slate-600 md:mt-2 md:text-base md:leading-6">
                     Browse destination ideas by the kind of stay you have in
                     mind.
                   </p>
@@ -1073,15 +1073,15 @@ export default function HotelsSearchPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              <div className="mt-4 grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {hotelInspirationLinks.map((card) => (
                   <InspirationCard key={card.title} card={card} />
                 ))}
               </div>
             </div>
           </section>
-          <section className="relative isolate rounded-[2rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-2 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:p-4">
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
+          <section className="relative isolate rounded-[1.5rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-2 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:rounded-[2rem] sm:p-4">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3">
               {[
                 {
                   title: "Compare provider offers",
@@ -1104,22 +1104,22 @@ export default function HotelsSearchPage() {
                 return (
                   <article
                     key={item.title}
-                    className={`relative isolate cursor-default overflow-hidden rounded-[1.1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-3 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6 ${
+                    className={`relative isolate cursor-default overflow-hidden rounded-[1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-2.5 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6 ${
                       index === 2 ? "col-span-2 md:col-span-1" : ""
                     }`}
                   >
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
                     <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
                     <div
-                      className="relative mb-3 inline-flex h-9 w-9 items-center justify-center rounded-[0.9rem] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,245,249,0.86))] text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_10px_20px_-20px_rgba(15,23,42,0.5)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
+                      className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,245,249,0.86))] text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_10px_20px_-20px_rgba(15,23,42,0.5)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
                       aria-hidden="true"
                     >
-                      <Icon className="h-4 w-4 stroke-[1.9] sm:h-5 sm:w-5" />
+                      <Icon className="h-3.5 w-3.5 stroke-[1.9] sm:h-5 sm:w-5" />
                     </div>
-                    <h2 className="relative text-sm font-semibold leading-snug tracking-[-0.012em] text-slate-800 sm:text-base">
+                    <h2 className="relative text-[0.82rem] font-semibold leading-snug tracking-[-0.01em] text-slate-800 sm:text-base">
                       {item.title}
                     </h2>
-                    <p className="relative mt-1.5 text-xs leading-5 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
+                    <p className="relative mt-1.5 text-[0.75rem] leading-4 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
                       {item.body}
                     </p>
                   </article>
@@ -1134,7 +1134,7 @@ export default function HotelsSearchPage() {
           >
             <h2
               id="global-hotel-destinations-heading"
-              className="px-1 text-[1.5rem] font-semibold leading-[1.2] tracking-[-0.014em] text-slate-800 md:text-[1.85rem]"
+              className="px-1 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
             >
               Explore stays around the world
             </h2>
