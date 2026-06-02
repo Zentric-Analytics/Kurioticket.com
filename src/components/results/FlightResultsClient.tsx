@@ -1854,7 +1854,7 @@ export function FlightResultsClient() {
                         className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                       >
                         <article className="flex h-full flex-col">
-                          <div className="relative h-24 overflow-hidden bg-sky-50 sm:h-32 lg:h-40">
+                          <div className="relative h-28 overflow-hidden bg-sky-50 sm:h-32 lg:h-40">
                             <Image
                               src={beachVisual.image}
                               alt={beachVisual.imageAlt}
@@ -1864,11 +1864,11 @@ export function FlightResultsClient() {
                               className="object-cover brightness-[1.05] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                             />
                           </div>
-                          <div className="bg-white px-2 py-2.5 sm:px-4 sm:py-3.5">
-                            <h3 className="line-clamp-1 text-xs font-semibold leading-tight text-slate-900 sm:text-base">
+                          <div className="bg-white px-2 py-3 sm:px-4 sm:py-3.5">
+                            <h3 className="line-clamp-2 text-[0.8rem] font-semibold leading-snug text-slate-900 sm:line-clamp-1 sm:text-base">
                               {item.destinationCity}
                             </h3>
-                            <p className="mt-1 line-clamp-1 text-[0.68rem] font-medium leading-4 text-slate-600 sm:text-sm">
+                            <p className="mt-1 line-clamp-1 text-[0.72rem] font-medium leading-4 text-slate-600 sm:text-sm">
                               {item.originCode} → {item.destinationCode}
                             </p>
                           </div>
