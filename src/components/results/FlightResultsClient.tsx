@@ -2954,7 +2954,7 @@ function Filters({
     <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
       <div className="-m-3 mb-3 flex items-start justify-between gap-2 rounded-t-xl bg-gradient-to-r from-indigo-700 to-violet-600 p-3">
         <div>
-          <h2 className="text-base font-bold text-white">Refine Results</h2>
+          <h2 className="text-base font-bold text-white">Filter by</h2>
         </div>
         <SlidersHorizontal className="text-white/90" size={18} />
       </div>
