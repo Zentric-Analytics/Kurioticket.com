@@ -277,30 +277,40 @@ const hotelInspirationCardsByCategory: Record<
     createHotelInspirationCard("Barcelona", "City coast"),
     createHotelInspirationCard("Dubai", "Waterfront stays"),
     createHotelInspirationCard("Singapore", "Harbor city"),
+    createHotelInspirationCard("Bangkok", "Warm escape"),
+    createHotelInspirationCard("Tokyo", "Bay city"),
   ],
   "City breaks": [
     createHotelInspirationCard("London", "Capital stays"),
     createHotelInspirationCard("Paris", "Classic city"),
     createHotelInspirationCard("Toronto", "City ideas"),
     createHotelInspirationCard("Istanbul", "Culture stays"),
+    createHotelInspirationCard("Rome", "Historic city"),
+    createHotelInspirationCard("Amsterdam", "Canal stays"),
   ],
   "Family trips": [
     createHotelInspirationCard("Toronto", "Family city"),
     createHotelInspirationCard("Singapore", "Easy exploring"),
     createHotelInspirationCard("Cancun", "Beach time"),
     createHotelInspirationCard("London", "City exploring"),
+    createHotelInspirationCard("Dubai", "Waterfront stays"),
+    createHotelInspirationCard("Tokyo", "City adventure"),
   ],
   "Relaxed stays": [
     createHotelInspirationCard("Cancun", "Coastal stays"),
     createHotelInspirationCard("Dubai", "Waterfront stays"),
     createHotelInspirationCard("Singapore", "Harbor city"),
     createHotelInspirationCard("Amsterdam", "Canal stays"),
+    createHotelInspirationCard("Bangkok", "Warm escape"),
+    createHotelInspirationCard("Paris", "Slow city days"),
   ],
   "Weekend ideas": [
     createHotelInspirationCard("Rome", "Historic city"),
     createHotelInspirationCard("Amsterdam", "Canal stays"),
     createHotelInspirationCard("Barcelona", "City coast"),
     createHotelInspirationCard("Istanbul", "Culture stays"),
+    createHotelInspirationCard("Paris", "Classic city"),
+    createHotelInspirationCard("Toronto", "City ideas"),
   ],
 };
 
@@ -378,26 +388,26 @@ function InspirationCard({ card }: InspirationCardProps) {
     <Link
       href={card.href}
       aria-label={card.linkLabel}
-      className="group flex h-full min-w-0 flex-col rounded-2xl bg-white p-2.5 transition duration-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50"
+      className="group flex h-full min-w-0 flex-col rounded-2xl bg-white p-2 transition duration-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-50 sm:p-2.5"
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-slate-100">
+      <div className="relative h-[6.75rem] w-full overflow-hidden rounded-xl bg-slate-100 sm:h-32 md:h-44 lg:h-48">
         <Image
           src={card.image}
           alt={card.imageAlt}
           fill
-          sizes="(min-width: 768px) 50vw, 50vw"
+          sizes="(min-width: 1024px) 31vw, (min-width: 768px) 45vw, 42vw"
           className="object-cover saturate-[1.06] contrast-[1.02] transition duration-700 group-hover:scale-[1.03]"
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
-      <div className="px-1 pb-1.5 pt-3">
-        <span className="mb-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
+      <div className="px-1 pb-1 pt-2.5 sm:pb-1.5 sm:pt-3">
+        <span className="mb-1.5 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[0.68rem] font-semibold leading-5 text-slate-700 sm:mb-2 sm:px-2.5 sm:py-1 sm:text-xs">
           {card.badge}
         </span>
-        <p className="text-base font-semibold leading-tight tracking-[-0.012em] text-slate-900 sm:text-lg">
+        <p className="text-[0.95rem] font-semibold leading-tight tracking-[-0.012em] text-slate-900 sm:text-base md:text-lg">
           {card.title}
         </p>
-        <p className="mt-1.5 text-sm font-medium leading-5 text-slate-600">
+        <p className="mt-1 text-xs font-medium leading-5 text-slate-600 sm:mt-1.5 sm:text-sm">
           {card.detail}
         </p>
       </div>
@@ -1080,10 +1090,12 @@ export default function HotelsSearchPage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2">
-                {hotelInspirationLinks.map((card) => (
-                  <InspirationCard key={card.title} card={card} />
-                ))}
+              <div className="mt-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:overflow-visible md:px-0 md:pb-0 md:pt-0 [&::-webkit-scrollbar]:hidden">
+                <div className="grid auto-cols-[minmax(148px,42vw)] grid-flow-col grid-rows-2 gap-3 sm:auto-cols-[minmax(170px,34vw)] sm:gap-4 md:grid-flow-row md:auto-cols-auto md:grid-cols-3 md:grid-rows-none">
+                  {hotelInspirationLinks.map((card) => (
+                    <InspirationCard key={card.title} card={card} />
+                  ))}
+                </div>
               </div>
             </div>
           </section>
@@ -1118,10 +1130,14 @@ export default function HotelsSearchPage() {
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
                     <div className="pointer-events-none absolute -right-10 -top-12 h-28 w-28 rounded-full bg-slate-200/30 blur-3xl" />
                     <div
-                      className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-slate-200/85 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(241,245,249,0.86))] text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.92),0_10px_20px_-20px_rgba(15,23,42,0.5)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
+                      className="relative mb-2.5 inline-flex h-8 w-8 items-center justify-center rounded-[0.8rem] border border-indigo-200/70 bg-[linear-gradient(145deg,rgba(255,255,255,0.98),rgba(238,242,255,0.72)_52%,rgba(248,250,252,0.92))] text-indigo-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_12px_22px_-18px_rgba(79,70,229,0.55),0_8px_18px_-20px_rgba(15,23,42,0.55)] sm:mb-5 sm:h-12 sm:w-12 sm:rounded-[1rem]"
                       aria-hidden="true"
                     >
-                      <Icon className="h-3.5 w-3.5 stroke-[1.9] sm:h-5 sm:w-5" />
+                      <span className="pointer-events-none absolute inset-[3px] rounded-[0.62rem] border border-white/80 shadow-[inset_0_1px_2px_rgba(255,255,255,0.88)] sm:inset-1 sm:rounded-[0.78rem]" />
+                      <span className="pointer-events-none absolute left-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-white shadow-[0_0_0_1px_rgba(129,140,248,0.18)] sm:left-2 sm:top-2 sm:h-2 sm:w-2" />
+                      <span className="relative inline-flex h-5 w-5 items-center justify-center rounded-lg bg-white/45 ring-1 ring-indigo-100/70 sm:h-8 sm:w-8 sm:rounded-xl">
+                        <Icon className="h-3.5 w-3.5 stroke-[1.8] sm:h-5 sm:w-5" />
+                      </span>
                     </div>
                     <h2 className="relative text-[0.82rem] font-semibold leading-snug tracking-[-0.01em] text-slate-800 sm:text-base">
                       {item.title}
