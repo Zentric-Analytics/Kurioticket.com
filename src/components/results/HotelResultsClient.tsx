@@ -284,7 +284,7 @@ export function HotelResultsClient() {
         </div>
       </div>
 
-      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[260px_1fr]">
+      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[290px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="hidden lg:block">
           <HotelFilters
             maxPrice={maxPrice}
