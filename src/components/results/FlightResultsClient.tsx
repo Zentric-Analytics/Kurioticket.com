@@ -1120,6 +1120,18 @@ export function FlightResultsClient() {
     };
   }, [travelerPopoverOpen]);
 
+  function handleSwapLocations() {
+    const currentOriginInput = originInput;
+    const currentOriginCode = originCode;
+
+    setOriginInput(destinationInput);
+    setOriginCode(destinationCode);
+    setDestinationInput(currentOriginInput);
+    setDestinationCode(currentOriginCode);
+    setActiveSuggest(null);
+    setDropdownPosition(null);
+  }
+
   function handleCompactSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -1376,15 +1388,7 @@ export function FlightResultsClient() {
                       <button
                         type="button"
                         aria-label="Swap origin and destination"
-                        onClick={() => {
-                          const currentOrigin = originInput;
-                          const currentOriginCode = originCode;
-
-                          setOriginInput(destinationInput);
-                          setOriginCode(destinationCode);
-                          setDestinationInput(currentOrigin);
-                          setDestinationCode(currentOriginCode);
-                        }}
+                        onClick={handleSwapLocations}
                         className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                       >
                         <ArrowRightLeft size={14} />
@@ -2010,7 +2014,8 @@ export function FlightResultsClient() {
 
               <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2">
                 <div className="flex flex-col gap-1 lg:flex-row lg:items-stretch lg:gap-1.5">
-                  <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-1">
+                  <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-1">
+                    <div className="grid min-w-0 grid-cols-1 gap-1.5 sm:col-span-2 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch lg:contents">
                 <div
                   ref={originWrapRef}
                   className="relative rounded-xl border border-slate-300 bg-white px-2.5 py-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:border-slate-400 focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/15"
@@ -2064,6 +2069,17 @@ export function FlightResultsClient() {
                       }}
                     />
                   ) : null}
+                </div>
+
+                <div className="flex items-center justify-center">
+                  <button
+                    type="button"
+                    aria-label="Swap origin and destination"
+                    onClick={handleSwapLocations}
+                    className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                  >
+                    <ArrowRightLeft size={14} />
+                  </button>
                 </div>
 
                 <div
@@ -2122,6 +2138,7 @@ export function FlightResultsClient() {
                     />
                   ) : null}
                 </div>
+                    </div>
 
                 <div ref={departureWrapRef}>
                   <button
