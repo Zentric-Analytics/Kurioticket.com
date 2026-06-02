@@ -1842,7 +1842,7 @@ export function FlightResultsClient() {
               </div>
 
               <div className="border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:grid-cols-4 lg:gap-5 xl:gap-6">
+                <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5 xl:gap-6">
                   {beachVacationCards.slice(0, 6).map((item) => {
                     const beachVisual = getBeachVacationVisual(item);
 
@@ -1854,7 +1854,7 @@ export function FlightResultsClient() {
                         className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                       >
                         <article className="flex h-full flex-col">
-                          <div className="relative h-20 overflow-hidden bg-sky-50 sm:h-32 lg:h-40">
+                          <div className="relative h-24 overflow-hidden bg-sky-50 sm:h-32 lg:h-40">
                             <Image
                               src={beachVisual.image}
                               alt={beachVisual.imageAlt}
