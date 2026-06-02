@@ -2,16 +2,7 @@
 
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  AlertCircle,
-  ChevronDown,
-  Hotel,
-  Info,
-  MapPinned,
-  SlidersHorizontal,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { AlertCircle, Hotel, Info, SlidersHorizontal, X } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { HotelCard } from "@/components/results/HotelCard";
@@ -29,56 +20,9 @@ const messages = [
 const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
   Math.max(
     300,
-    Math.ceil(
-      Math.max(...hotels.map((hotel) => hotel.pricePerNight), 300) / 50,
-    ) * 50,
+    Math.ceil(Math.max(...hotels.map((hotel) => hotel.totalPrice), 300) / 100) *
+      100,
   );
-
-type HotelFiltersState = {
-  maxNightlyPrice: number;
-  starRatings: string[];
-  guestRatings: string[];
-  propertyTypes: string[];
-  amenities: string[];
-  roomFacilities: string[];
-  locations: string[];
-  meals: string[];
-  bedTypes: string[];
-  paymentOptions: string[];
-  bookingPolicies: string[];
-  popular: string[];
-};
-
-type FilterGroupKey = keyof Omit<HotelFiltersState, "maxNightlyPrice">;
-
-type FilterOption = {
-  label: string;
-  value: string;
-  count: number;
-  matcher: (hotel: PublicHotelResult) => boolean;
-};
-
-type FilterGroup = {
-  key: FilterGroupKey;
-  title: string;
-  control: "checkbox" | "radio";
-  options: FilterOption[];
-};
-
-const defaultFilters = (maxNightlyPrice: number): HotelFiltersState => ({
-  maxNightlyPrice,
-  starRatings: [],
-  guestRatings: [],
-  propertyTypes: [],
-  amenities: [],
-  roomFacilities: [],
-  locations: [],
-  meals: [],
-  bedTypes: [],
-  paymentOptions: [],
-  bookingPolicies: [],
-  popular: [],
-});
 
 export function HotelResultsClient() {
   const params = useSearchParams();
@@ -88,9 +32,8 @@ export function HotelResultsClient() {
   const [error, setError] = useState("");
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState<HotelFiltersState>(() =>
-    defaultFilters(1200),
-  );
+  const [maxPrice, setMaxPrice] = useState(1200);
+  const [minRating, setMinRating] = useState(3);
   const body = useMemo(
     () => ({
       destination: params.get("destination") || "Tokyo",
@@ -123,10 +66,9 @@ export function HotelResultsClient() {
       })
       .then((data) => {
         if (!active) return;
-        const nextMaxPrice = getResultMaxPrice(data.results);
         setResults(data.results);
         setWarnings(data.warnings || []);
-        setFilters(defaultFilters(nextMaxPrice));
+        setMaxPrice(getResultMaxPrice(data.results));
       })
       .catch((searchError) => {
         if (!active) return;
@@ -154,30 +96,24 @@ export function HotelResultsClient() {
     return () => window.clearInterval(id);
   }, [loading]);
 
+  const filtered = results.filter(
+    (hotel) => hotel.totalPrice <= maxPrice && hotel.rating >= minRating,
+  );
   const nights = getNightCount(body.checkIn, body.checkOut);
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
-  const filterGroups = useMemo(() => buildFilterGroups(results), [results]);
-  const activeFilterCount = getActiveFilterCount(filters, resultMaxPrice);
-  const activeFilterPills = useMemo(
-    () => getActiveFilterPills(filters, filterGroups, resultMaxPrice),
-    [filters, filterGroups, resultMaxPrice],
-  );
-  const filtered = useMemo(
-    () => applyHotelFilters(results, filters, filterGroups),
-    [results, filters, filterGroups],
-  );
   const showFilteredEmptyState =
     !loading && !error && results.length > 0 && filtered.length === 0;
   const showNoResultsState = !loading && !error && results.length === 0;
 
   const resetFilters = () => {
-    setFilters(defaultFilters(resultMaxPrice));
+    setMaxPrice(resultMaxPrice);
+    setMinRating(3);
     setFiltersOpen(false);
   };
 
   return (
-    <main className="flex-1 bg-[#f5f7fb] pb-10 pt-4 sm:pt-6 lg:pt-7">
-      <div className="sticky top-16 z-30 border-b border-slate-200 bg-white/95 shadow-[0_10px_30px_-26px_rgba(15,23,42,0.8)] backdrop-blur">
+    <main className="flex-1 bg-gradient-to-b from-violet-50/55 via-white to-white pb-8 pt-5 sm:pt-7 lg:pt-8">
+      <div className="sticky top-16 z-30 border-b border-indigo-100 bg-white/95 backdrop-blur">
         <div className="page-shell py-3">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
@@ -191,72 +127,46 @@ export function HotelResultsClient() {
           />
           <Button
             variant="secondary"
-            className="mt-3 h-12 w-full rounded-xl border-blue-200 bg-blue-50 font-extrabold text-blue-800 hover:bg-blue-100 lg:hidden"
+            className="mt-3 w-full rounded-xl border-indigo-100 md:hidden"
             onClick={() => setFiltersOpen(true)}
           >
             <SlidersHorizontal size={17} />
             Filters
-            {activeFilterCount ? (
-              <span className="ml-1 rounded-full bg-violet-700 px-2 py-0.5 text-xs text-white">
-                {activeFilterCount}
-              </span>
-            ) : null}
           </Button>
         </div>
       </div>
 
-      <div className="page-shell grid gap-5 py-5 lg:grid-cols-[318px_minmax(0,1fr)] lg:items-start lg:gap-6 xl:gap-7">
+      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr]">
         <aside className="hidden lg:block">
           <HotelFilters
-            filters={filters}
-            groups={filterGroups}
-            resultMaxPrice={resultMaxPrice}
-            activeFilterCount={activeFilterCount}
-            filteredCount={filtered.length}
-            onFiltersChange={setFilters}
-            onReset={resetFilters}
+            maxPrice={maxPrice}
+            setMaxPrice={setMaxPrice}
+            minRating={minRating}
+            setMinRating={setMinRating}
           />
         </aside>
-        <section className="min-w-0 space-y-4">
-          <div className="overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_12px_34px_-28px_rgba(15,23,42,0.9)]">
-            <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 md:flex-row md:items-start md:justify-between">
+        <section className="min-w-0 space-y-5">
+          <div className="rounded-3xl border border-indigo-100 bg-white/90 p-5 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)]">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-blue-800">
-                  <Sparkles size={14} />
-                  Hotel search results
+                <div className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-violet-800">
+                  <Hotel size={14} />
+                  Hotel comparison
                 </div>
-                <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+                <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-indigo-950 sm:text-3xl">
                   Stays in {body.destination}
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Compare nightly price, guest score, property facilities, location signals, and booking conditions before you choose a stay.
+                  Compare hotel prices, amenities, and provider details in one
+                  place. Kurioticket may redirect you to a hotel provider to
+                  review final availability and complete booking.
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center md:min-w-[270px]">
+              <div className="grid grid-cols-3 gap-2 text-center md:min-w-[260px]">
                 <SummaryStat label="Nights" value={String(nights)} />
                 <SummaryStat label="Guests" value={String(body.guests)} />
                 <SummaryStat label="Rooms" value={String(body.rooms)} />
               </div>
-            </div>
-            <div className="flex flex-col gap-3 bg-slate-50 px-5 py-3 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex flex-wrap gap-2">
-                {activeFilterPills.length ? (
-                  activeFilterPills.slice(0, 8).map((pill) => (
-                    <span key={pill} className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
-                      {pill}
-                    </span>
-                  ))
-                ) : (
-                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600 shadow-sm">
-                    No filters selected
-                  </span>
-                )}
-              </div>
-              {activeFilterCount ? (
-                <button type="button" className="text-left text-xs font-extrabold text-blue-700 hover:text-blue-900 lg:text-right" onClick={resetFilters}>
-                  Clear all filters
-                </button>
-              ) : null}
             </div>
           </div>
 
@@ -305,13 +215,13 @@ export function HotelResultsClient() {
             />
           ) : (
             <>
-              <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-black text-slate-950">
+              <div className="flex flex-col gap-2 rounded-2xl border border-indigo-100 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-bold text-indigo-950">
                   {filtered.length} stay option
                   {filtered.length === 1 ? "" : "s"} found
                 </p>
-                <p className="text-xs font-bold text-slate-500">
-                  Sorted by {getSortLabel(body.sort)} · prices are per provider availability
+                <p className="text-xs font-semibold text-slate-500">
+                  Sorted by {getSortLabel(body.sort)}
                 </p>
               </div>
               {filtered.map((hotel) => (
@@ -331,7 +241,7 @@ export function HotelResultsClient() {
       />
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-3xl bg-white p-4 shadow-2xl transition-transform lg:hidden",
+          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-3xl bg-white p-5 shadow-2xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
@@ -347,13 +257,10 @@ export function HotelResultsClient() {
           </Button>
         </div>
         <HotelFilters
-          filters={filters}
-          groups={filterGroups}
-          resultMaxPrice={resultMaxPrice}
-          activeFilterCount={activeFilterCount}
-          filteredCount={filtered.length}
-          onFiltersChange={setFilters}
-          onReset={resetFilters}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
+          minRating={minRating}
+          setMinRating={setMinRating}
         />
       </aside>
     </main>
@@ -361,558 +268,79 @@ export function HotelResultsClient() {
 }
 
 function HotelFilters({
-  filters,
-  groups,
-  resultMaxPrice,
-  activeFilterCount,
-  filteredCount,
-  onFiltersChange,
-  onReset,
+  maxPrice,
+  setMaxPrice,
+  minRating,
+  setMinRating,
 }: {
-  filters: HotelFiltersState;
-  groups: FilterGroup[];
-  resultMaxPrice: number;
-  activeFilterCount: number;
-  filteredCount: number;
-  onFiltersChange: (filters: HotelFiltersState) => void;
-  onReset: () => void;
+  maxPrice: number;
+  setMaxPrice: (value: number) => void;
+  minRating: number;
+  setMinRating: (value: number) => void;
 }) {
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
-    {},
-  );
-
-  const toggleOption = (group: FilterGroup, value: string) => {
-    const selectedValues = filters[group.key];
-    const nextValues =
-      group.control === "radio"
-        ? selectedValues.includes(value)
-          ? []
-          : [value]
-        : selectedValues.includes(value)
-          ? selectedValues.filter((selected) => selected !== value)
-          : [...selectedValues, value];
-
-    onFiltersChange({ ...filters, [group.key]: nextValues });
-  };
-
   return (
-    <div className="hotel-filter-scroll overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_14px_38px_-30px_rgba(15,23,42,0.9)] lg:sticky lg:top-36 lg:max-h-[calc(100dvh-9.5rem)] lg:overflow-auto">
-      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-base font-black tracking-tight text-slate-950">
-              Filter by
-            </h2>
-            <p className="mt-1 text-xs leading-5 text-slate-500">
-              Marketplace-style filters: budget, score, property type, facilities, location, meals, and policies.
-            </p>
-          </div>
-          {activeFilterCount ? (
-            <span className="rounded-full bg-blue-700 px-2.5 py-1 text-xs font-black text-white shadow-sm">
-              {activeFilterCount}
-            </span>
-          ) : null}
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-          <span className="text-xs font-bold text-slate-600">{filteredCount} matching stays</span>
-          {activeFilterCount ? (
-            <button type="button" className="text-xs font-black text-blue-700 hover:text-blue-900" onClick={onReset}>
-              Reset
-            </button>
-          ) : null}
-        </div>
-        <div className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-blue-100 bg-blue-50/80 p-3 text-blue-950">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-blue-700 shadow-sm">
-            <MapPinned size={18} />
-          </div>
-          <div>
-            <p className="text-xs font-black uppercase tracking-wide">Compare areas fast</p>
-            <p className="mt-1 text-xs leading-5 text-blue-900/75">
-              Use location, distance, facilities, and policy filters together so long result lists stay easy to scan.
-            </p>
-          </div>
-        </div>
+    <div className="rounded-3xl border border-indigo-100 bg-white p-5 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)]">
+      <div>
+        <h2 className="text-base font-extrabold text-indigo-950">
+          Refine results
+        </h2>
+        <p className="mt-1 text-xs leading-5 text-slate-500">
+          Keep the list focused on stays that fit your budget and quality
+          preference.
+        </p>
       </div>
-
-      <div className="divide-y divide-slate-200">
-        <section className="px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-[15px] font-black tracking-tight text-slate-950">
-              Your budget (per night)
-            </h3>
-            <span className="rounded-md bg-blue-50 px-2 py-1 font-mono text-sm font-black text-blue-800">
-              {formatCurrency(filters.maxNightlyPrice)}
+      <div className="mt-5 grid gap-5">
+        <label className="block rounded-2xl bg-violet-50/70 p-4">
+          <span className="mb-3 flex items-center justify-between text-sm font-bold text-indigo-950">
+            Total up to{" "}
+            <span className="font-mono text-violet-700">
+              {formatCurrency(maxPrice)}
             </span>
-          </div>
+          </span>
           <input
-            className="mt-4 w-full accent-blue-700"
+            className="w-full accent-violet-700"
             type="range"
-            min={50}
-            max={Math.max(resultMaxPrice, 50)}
+            min={100}
+            max={3000}
             step={25}
-            value={Math.min(
-              filters.maxNightlyPrice,
-              Math.max(resultMaxPrice, 50),
-            )}
-            onChange={(event) =>
-              onFiltersChange({
-                ...filters,
-                maxNightlyPrice: Number(event.target.value),
-              })
-            }
+            value={maxPrice}
+            onChange={(event) => setMaxPrice(Number(event.target.value))}
           />
-          <div className="mt-2 flex justify-between text-[11px] font-bold text-slate-500">
-            <span>{formatCurrency(50)}</span>
-            <span>{formatCurrency(resultMaxPrice)}+</span>
-          </div>
-        </section>
-
-        {groups.map((group) => {
-          const isExpanded = expandedGroups[group.key];
-          const visibleOptions = isExpanded
-            ? group.options
-            : group.options.slice(0, 5);
-          const hasMore = group.options.length > 5;
-
-          return (
-            <section
-              key={group.key}
-              className="px-4 py-4"
-            >
-              <h3 className="text-[15px] font-black tracking-tight text-slate-950">
-                {group.title}
-              </h3>
-              <div className="mt-3 space-y-1.5">
-                {visibleOptions.map((option) => {
-                  const checked = filters[group.key].includes(option.value);
-                  return (
-                    <label
-                      key={option.value}
-                      className={cn(
-                        "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition",
-                        checked
-                          ? "bg-blue-50 text-slate-950 ring-1 ring-blue-200"
-                          : "text-slate-700 hover:bg-slate-50",
-                      )}
-                    >
-                      <input
-                        type={group.control}
-                        name={`hotel-filter-${group.key}`}
-                        className="h-4 w-4 shrink-0 accent-blue-700"
-                        checked={checked}
-                        onChange={() => toggleOption(group, option.value)}
-                      />
-                      <span
-                        className={cn(
-                          "min-w-0 break-words text-sm font-semibold leading-5",
-                          checked && "font-black text-slate-950",
-                        )}
-                      >
-                        {option.label}
-                      </span>
-                      <span
-                        className={cn(
-                          "self-center justify-self-end rounded-full px-2 py-0.5 text-[11px] font-bold leading-5",
-                          checked
-                            ? "border border-blue-100 bg-white text-blue-700 shadow-sm"
-                            : "bg-slate-100 text-slate-500",
-                        )}
-                      >
-                        {option.count}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-              {hasMore ? (
-                <button
-                  type="button"
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-black text-blue-700 hover:text-blue-900"
-                  onClick={() =>
-                    setExpandedGroups((current) => ({
-                      ...current,
-                      [group.key]: !isExpanded,
-                    }))
-                  }
-                >
-                  {isExpanded
-                    ? "Show less"
-                    : `Show more (${group.options.length - 5})`}
-                  <ChevronDown
-                    size={14}
-                    className={cn(
-                      "transition-transform",
-                      isExpanded && "rotate-180",
-                    )}
-                  />
-                </button>
-              ) : null}
-            </section>
-          );
-        })}
+        </label>
+        <label className="block rounded-2xl bg-violet-50/70 p-4">
+          <span className="mb-3 flex items-center justify-between text-sm font-bold text-indigo-950">
+            Rating from{" "}
+            <span className="font-mono text-violet-700">{minRating}+</span>
+          </span>
+          <input
+            className="w-full accent-violet-700"
+            type="range"
+            min={1}
+            max={5}
+            step={0.5}
+            value={minRating}
+            onChange={(event) => setMinRating(Number(event.target.value))}
+          />
+        </label>
+        <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600">
+          <p className="font-bold text-indigo-950">Quick comparison cues</p>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-violet-600" />{" "}
+              Late-arrival score
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-violet-600" /> Total stay
+              price
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-violet-600" /> Provider
+              confirmation
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
-  );
-}
-
-function buildFilterGroups(hotels: PublicHotelResult[]): FilterGroup[] {
-  const groups: FilterGroup[] = [
-    createPopularFilters(hotels),
-    createPropertyTypeFilters(hotels),
-    createStarRatingFilters(hotels),
-    createGuestRatingFilters(hotels),
-    createAmenityFilters(
-      hotels,
-      "amenities",
-      "Property facilities",
-      (hotel) => hotel.amenities,
-    ),
-    createAmenityFilters(
-      hotels,
-      "roomFacilities",
-      "Room facilities",
-      (hotel) => [hotel.roomType, ...hotel.amenities],
-    ),
-    createTextFilters(hotels, "locations", "Location / area", (hotel) => [
-      hotel.location,
-      hotel.distanceFromCenter,
-    ]),
-    createMealFilters(hotels),
-    createBedTypeFilters(hotels),
-    createPaymentFilters(hotels),
-    createBookingPolicyFilters(hotels),
-  ];
-
-  return groups.filter((group) => group.options.length > 0);
-}
-
-function createPopularFilters(hotels: PublicHotelResult[]): FilterGroup {
-  const definitions = [
-    keywordOption("Free Wi-Fi", /wi-?fi|internet/i, (hotel) => hotel.amenities),
-    keywordOption(
-      "Breakfast included",
-      /breakfast/i,
-      (hotel) => hotel.amenities,
-    ),
-    keywordOption(
-      "Free cancellation",
-      /free cancellation|flexible cancellation|refundable/i,
-      (hotel) => [hotel.cancellationInfo, ...hotel.amenities],
-    ),
-    keywordOption(
-      "Late check-in",
-      /late check-?in|24-hour|24 hour/i,
-      (hotel) => hotel.amenities,
-    ),
-    keywordOption(
-      "Airport or transit access",
-      /airport|transit|shuttle/i,
-      (hotel) => [hotel.distanceFromCenter, ...hotel.amenities],
-    ),
-  ];
-
-  return {
-    key: "popular",
-    title: "Popular filters",
-    control: "checkbox",
-    options: withCounts(hotels, definitions),
-  };
-}
-
-function createPropertyTypeFilters(hotels: PublicHotelResult[]): FilterGroup {
-  const definitions = [
-    keywordOption("Hotel", /hotel/i, (hotel) => [hotel.name]),
-    keywordOption("Resort", /resort/i, (hotel) => [hotel.name]),
-    keywordOption(
-      "Apartment",
-      /apartment|aparthotel|suite/i,
-      (hotel) => [hotel.name, hotel.roomType],
-    ),
-    keywordOption("Inn", /inn/i, (hotel) => [hotel.name]),
-    keywordOption("Hostel", /hostel/i, (hotel) => [hotel.name]),
-    keywordOption("Villa", /villa/i, (hotel) => [hotel.name, hotel.roomType]),
-  ];
-
-  return {
-    key: "propertyTypes",
-    title: "Property type",
-    control: "checkbox",
-    options: withCounts(hotels, definitions),
-  };
-}
-
-function createStarRatingFilters(hotels: PublicHotelResult[]): FilterGroup {
-  const definitions = [5, 4, 3, 2].map((stars) => ({
-    label: `${stars} stars`,
-    value: String(stars),
-    matcher: (hotel: PublicHotelResult) => Math.floor(hotel.rating) === stars,
-  }));
-
-  return {
-    key: "starRatings",
-    title: "Star rating",
-    control: "checkbox",
-    options: withCounts(hotels, definitions),
-  };
-}
-
-function createGuestRatingFilters(hotels: PublicHotelResult[]): FilterGroup {
-  const definitions = [4.5, 4, 3.5, 3].map((rating) => ({
-    label: `${rating}+ excellent`,
-    value: String(rating),
-    matcher: (hotel: PublicHotelResult) => hotel.rating >= rating,
-  }));
-
-  return {
-    key: "guestRatings",
-    title: "Guest rating",
-    control: "radio",
-    options: withCounts(hotels, definitions),
-  };
-}
-
-function createMealFilters(hotels: PublicHotelResult[]): FilterGroup {
-  const definitions = [
-    keywordOption("Breakfast", /breakfast/i, (hotel) => hotel.amenities),
-    keywordOption("Half board", /half board/i, (hotel) => hotel.amenities),
-    keywordOption("Full board", /full board/i, (hotel) => hotel.amenities),
-    keywordOption("All inclusive", /all inclusive/i, (hotel) => hotel.amenities),
-    keywordOption("Room only", /room only/i, (hotel) => hotel.amenities),
-  ];
-
-  return {
-    key: "meals",
-    title: "Meals",
-    control: "checkbox",
-    options: withCounts(hotels, definitions),
-  };
-}
-
-function createBedTypeFilters(hotels: PublicHotelResult[]): FilterGroup {
-  const definitions = [
-    keywordOption("King bed", /king/i, (hotel) => [hotel.roomType]),
-    keywordOption("Queen bed", /queen/i, (hotel) => [hotel.roomType]),
-    keywordOption("Double bed", /double/i, (hotel) => [hotel.roomType]),
-    keywordOption("Twin beds", /twin/i, (hotel) => [hotel.roomType]),
-    keywordOption("Single bed", /single/i, (hotel) => [hotel.roomType]),
-  ];
-
-  return {
-    key: "bedTypes",
-    title: "Bed type",
-    control: "checkbox",
-    options: withCounts(hotels, definitions),
-  };
-}
-
-function createPaymentFilters(hotels: PublicHotelResult[]): FilterGroup {
-  const definitions = [
-    keywordOption(
-      "Pay at hotel",
-      /pay at hotel|pay later|payment at/i,
-      (hotel) => [hotel.cancellationInfo, ...hotel.amenities],
-    ),
-    keywordOption(
-      "Prepay online",
-      /prepay|prepaid|advance payment/i,
-      (hotel) => [hotel.cancellationInfo, ...hotel.amenities],
-    ),
-  ];
-
-  return {
-    key: "paymentOptions",
-    title: "Payment options",
-    control: "checkbox",
-    options: withCounts(hotels, definitions),
-  };
-}
-
-function createBookingPolicyFilters(hotels: PublicHotelResult[]): FilterGroup {
-  const definitions = [
-    keywordOption(
-      "Free cancellation",
-      /free cancellation|flexible cancellation|refundable/i,
-      (hotel) => [hotel.cancellationInfo, ...hotel.amenities],
-    ),
-    keywordOption(
-      "Cancellation details available",
-      /cancellation|policy/i,
-      (hotel) => [hotel.cancellationInfo],
-    ),
-    keywordOption(
-      "Confirm before booking",
-      /confirm|provider|shown/i,
-      (hotel) => [hotel.cancellationInfo],
-    ),
-  ];
-
-  return {
-    key: "bookingPolicies",
-    title: "Booking policy",
-    control: "checkbox",
-    options: withCounts(hotels, definitions),
-  };
-}
-
-function createAmenityFilters(
-  hotels: PublicHotelResult[],
-  key: FilterGroupKey,
-  title: string,
-  getValues: (hotel: PublicHotelResult) => Array<string | undefined>,
-): FilterGroup {
-  const counts = new Map<string, number>();
-  for (const hotel of hotels) {
-    const values = new Set(
-      getValues(hotel)
-        .filter(Boolean)
-        .flatMap((value) => splitFilterText(value as string))
-        .filter((value) => value.length >= 3),
-    );
-    values.forEach((value) => counts.set(value, (counts.get(value) || 0) + 1));
-  }
-
-  return {
-    key,
-    title,
-    control: "checkbox",
-    options: [...counts.entries()]
-      .map(([label, count]) => ({
-        label,
-        value: label,
-        count,
-        matcher: (hotel: PublicHotelResult) =>
-          getValues(hotel).some((value) =>
-            value?.toLowerCase().includes(label.toLowerCase()),
-          ),
-      }))
-      .filter((option) => option.count > 0)
-      .sort(sortByCountThenLabel),
-  };
-}
-
-function createTextFilters(
-  hotels: PublicHotelResult[],
-  key: FilterGroupKey,
-  title: string,
-  getValues: (hotel: PublicHotelResult) => Array<string | undefined>,
-): FilterGroup {
-  const counts = new Map<string, number>();
-  for (const hotel of hotels) {
-    getValues(hotel)
-      .filter(Boolean)
-      .map((value) => (value as string).trim())
-      .filter((value) => value.length > 1)
-      .forEach((value) => counts.set(value, (counts.get(value) || 0) + 1));
-  }
-
-  return {
-    key,
-    title,
-    control: "checkbox",
-    options: [...counts.entries()]
-      .map(([label, count]) => ({
-        label,
-        value: label,
-        count,
-        matcher: (hotel: PublicHotelResult) =>
-          getValues(hotel).some((value) => value === label),
-      }))
-      .filter((option) => option.count > 0)
-      .sort(sortByCountThenLabel),
-  };
-}
-
-function withCounts(
-  hotels: PublicHotelResult[],
-  options: Omit<FilterOption, "count">[],
-): FilterOption[] {
-  return options
-    .map((option) => ({
-      ...option,
-      count: hotels.filter(option.matcher).length,
-    }))
-    .filter((option) => option.count > 0)
-    .sort(sortByCountThenLabel);
-}
-
-function keywordOption(
-  label: string,
-  pattern: RegExp,
-  getValues: (hotel: PublicHotelResult) => Array<string | undefined>,
-): Omit<FilterOption, "count"> {
-  return {
-    label,
-    value: label,
-    matcher: (hotel) =>
-      getValues(hotel).some((value) => Boolean(value && pattern.test(value))),
-  };
-}
-
-function splitFilterText(value: string) {
-  return value
-    .split(/[,/•|]+/)
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
-
-function sortByCountThenLabel(a: FilterOption, b: FilterOption) {
-  return b.count - a.count || a.label.localeCompare(b.label);
-}
-
-function applyHotelFilters(
-  hotels: PublicHotelResult[],
-  filters: HotelFiltersState,
-  groups: FilterGroup[],
-) {
-  return hotels.filter((hotel) => {
-    if (hotel.pricePerNight > filters.maxNightlyPrice) return false;
-
-    return groups.every((group) => {
-      const selected = filters[group.key];
-      if (!selected.length) return true;
-      const selectedOptions = group.options.filter((option) =>
-        selected.includes(option.value),
-      );
-      return selectedOptions.some((option) => option.matcher(hotel));
-    });
-  });
-}
-
-function getActiveFilterPills(
-  filters: HotelFiltersState,
-  groups: FilterGroup[],
-  resultMaxPrice: number,
-) {
-  const pills: string[] = [];
-  if (filters.maxNightlyPrice < resultMaxPrice) {
-    pills.push(`Up to ${formatCurrency(filters.maxNightlyPrice)} / night`);
-  }
-
-  for (const group of groups) {
-    const selected = filters[group.key];
-    if (!selected.length) continue;
-
-    for (const value of selected) {
-      const option = group.options.find((candidate) => candidate.value === value);
-      pills.push(option ? option.label : value);
-    }
-  }
-
-  return pills;
-}
-
-function getActiveFilterCount(
-  filters: HotelFiltersState,
-  resultMaxPrice: number,
-) {
-  const selectedOptionCount = (
-    Object.keys(filters) as Array<keyof HotelFiltersState>
-  )
-    .filter((key) => key !== "maxNightlyPrice")
-    .reduce((count, key) => count + filters[key].length, 0);
-
-  return (
-    selectedOptionCount + (filters.maxNightlyPrice < resultMaxPrice ? 1 : 0)
   );
 }
 
