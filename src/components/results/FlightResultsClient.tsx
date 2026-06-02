@@ -581,6 +581,9 @@ export function FlightResultsClient() {
   const [maxLandingMinutes, setMaxLandingMinutes] = useState<number | null>(
     null
   );
+  const [maxDurationMinutes, setMaxDurationMinutes] = useState<number | null>(
+    null
+  );
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
@@ -1290,6 +1293,26 @@ export function FlightResultsClient() {
     setMaxLandingMinutes(timeBounds.landing?.max ?? null);
   }, [timeBounds.landing?.max]);
 
+  const durationBounds = useMemo(() => {
+    const durations = results
+      .map((flight) => flight.durationMinutes)
+      .filter((duration) => Number.isFinite(duration) && duration > 0);
+
+    if (!durations.length) {
+      return null;
+    }
+
+    return {
+      min: Math.floor(Math.min(...durations)),
+      max: Math.ceil(Math.max(...durations)),
+    };
+  }, [results]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset only when new result duration bounds are derived.
+    setMaxDurationMinutes(durationBounds?.max ?? null);
+  }, [durationBounds?.max]);
+
   const filtered = results.filter((flight) => {
     const matchesPrice = flight.price <= maxPrice;
     const matchesSelectedStops =
@@ -1315,6 +1338,10 @@ export function FlightResultsClient() {
       maxLandingMinutes === null ||
       arrivalMinutes === null ||
       arrivalMinutes <= maxLandingMinutes;
+    const matchesDuration =
+      maxDurationMinutes === null ||
+      !Number.isFinite(flight.durationMinutes) ||
+      flight.durationMinutes <= maxDurationMinutes;
 
     return (
       matchesPrice &&
@@ -1324,7 +1351,8 @@ export function FlightResultsClient() {
       matchesBaggage &&
       matchesFlexibility &&
       matchesTakeoffTime &&
-      matchesLandingTime
+      matchesLandingTime &&
+      matchesDuration
     );
   });
 
@@ -2458,6 +2486,9 @@ export function FlightResultsClient() {
             setMaxTakeoffMinutes={setMaxTakeoffMinutes}
             maxLandingMinutes={maxLandingMinutes}
             setMaxLandingMinutes={setMaxLandingMinutes}
+            durationBounds={durationBounds}
+            maxDurationMinutes={maxDurationMinutes}
+            setMaxDurationMinutes={setMaxDurationMinutes}
             stopOptions={stopOptions}
             selectedStops={selectedStops}
             setSelectedStops={setSelectedStops}
@@ -2564,6 +2595,9 @@ export function FlightResultsClient() {
           setMaxTakeoffMinutes={setMaxTakeoffMinutes}
           maxLandingMinutes={maxLandingMinutes}
           setMaxLandingMinutes={setMaxLandingMinutes}
+          durationBounds={durationBounds}
+          maxDurationMinutes={maxDurationMinutes}
+          setMaxDurationMinutes={setMaxDurationMinutes}
           stopOptions={stopOptions}
           selectedStops={selectedStops}
           setSelectedStops={setSelectedStops}
@@ -3157,6 +3191,17 @@ function formatTimeFromMinutes(value: number) {
   return `${hours12}:${String(minutes).padStart(2, "0")} ${period}`;
 }
 
+function formatDurationFromMinutes(totalMinutes: number) {
+  const minutes = Math.max(0, Math.round(totalMinutes));
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours <= 0) return `${remainingMinutes}m`;
+  if (remainingMinutes === 0) return `${hours}h`;
+
+  return `${hours}h ${remainingMinutes}m`;
+}
+
 function getStopBucket(stops: number) {
   return stops >= 2 ? "2+" : String(stops);
 }
@@ -3234,6 +3279,9 @@ function Filters({
   setMaxTakeoffMinutes,
   maxLandingMinutes,
   setMaxLandingMinutes,
+  durationBounds,
+  maxDurationMinutes,
+  setMaxDurationMinutes,
   stopOptions,
   selectedStops,
   setSelectedStops,
@@ -3259,6 +3307,9 @@ function Filters({
   setMaxTakeoffMinutes: (value: number | null) => void;
   maxLandingMinutes: number | null;
   setMaxLandingMinutes: (value: number | null) => void;
+  durationBounds: { min: number; max: number } | null;
+  maxDurationMinutes: number | null;
+  setMaxDurationMinutes: (value: number | null) => void;
   stopOptions: FilterOption[];
   selectedStops: string[];
   setSelectedStops: Dispatch<SetStateAction<string[]>>;
@@ -3414,6 +3465,43 @@ function Filters({
               </div>
             </div>
           )}
+        </FilterSection>
+
+        <FilterSection title="Duration">
+          <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-muted">
+            <span>Total trip time</span>
+            <span className="font-mono text-navy">
+              {durationBounds && maxDurationMinutes !== null
+                ? formatDurationFromMinutes(maxDurationMinutes)
+                : "Loading"}
+            </span>
+          </div>
+
+          <input
+            className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            type="range"
+            min={durationBounds?.min ?? 0}
+            max={durationBounds?.max ?? 0}
+            step={15}
+            value={maxDurationMinutes ?? durationBounds?.max ?? 0}
+            disabled={!durationBounds}
+            onChange={(event) =>
+              setMaxDurationMinutes(Number(event.target.value))
+            }
+          />
+
+          <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-400">
+            <span>
+              {durationBounds
+                ? formatDurationFromMinutes(durationBounds.min)
+                : "—"}
+            </span>
+            <span>
+              {durationBounds
+                ? formatDurationFromMinutes(durationBounds.max)
+                : "—"}
+            </span>
+          </div>
         </FilterSection>
 
         <FilterSection
