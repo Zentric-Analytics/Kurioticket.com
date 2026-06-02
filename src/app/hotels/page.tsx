@@ -340,7 +340,7 @@ function DestinationCard({
       <div
         className={`relative w-full overflow-hidden bg-slate-100 ${
           isFeatured
-            ? "h-[18rem] sm:h-[20rem] md:h-[26rem] lg:h-[27rem]"
+            ? "h-[18rem] sm:h-[20rem] md:h-[24rem] lg:h-[25rem]"
             : isCompact
               ? "aspect-[16/11]"
               : "aspect-[4/3]"
