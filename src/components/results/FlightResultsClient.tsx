@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { FormEvent, MouseEvent as ReactMouseEvent } from "react";
+import type {
+  Dispatch,
+  FormEvent,
+  MouseEvent as ReactMouseEvent,
+  ReactNode,
+  SetStateAction,
+} from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -567,6 +573,11 @@ export function FlightResultsClient() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [maxPrice, setMaxPrice] = useState(1200);
   const [maxStops, setMaxStops] = useState(3);
+  const [selectedStops, setSelectedStops] = useState<string[]>([]);
+  const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
+  const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
+  const [baggageIncludedOnly, setBaggageIncludedOnly] = useState(true);
+  const [flexibleOnly, setFlexibleOnly] = useState(false);
   const [tripTypeInput, setTripTypeInput] = useState(
     params.get("tripType") || "round-trip"
   );
@@ -1189,18 +1200,67 @@ export function FlightResultsClient() {
     router.push(`/flights/results?${nextParams.toString()}`);
   }
 
-  const filtered = results.filter(
-    (flight) => flight.price <= maxPrice && flight.stops <= maxStops
+  const stopOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    results.forEach((flight) => {
+      const bucket = getStopBucket(flight.stops);
+      counts.set(bucket, (counts.get(bucket) ?? 0) + 1);
+    });
+
+    return Array.from(counts, ([value, count]) => ({
+      value,
+      label: stopLabel(value),
+      count,
+    })).sort(
+      (first, second) =>
+        stopBucketSortValue(first.value) - stopBucketSortValue(second.value)
+    );
+  }, [results]);
+
+  const airlineOptions = useMemo(
+    () =>
+      buildCountOptions(results.map((flight) => flight.airlineName)).slice(0, 8),
+    [results]
   );
 
-  const flightDetailSummaries = filtered.slice(0, 6).map((flight) => ({
-    id: flight.id,
-    airlineName: flight.airlineName,
-    flightNumber: flight.flightNumber || flight.provider,
-    baggageInfo: flight.baggageInfo,
-    recommendationReason: flight.recommendationReasons?.[0],
-    refundInfo: flight.refundInfo,
-  }));
+  const airportOptions = useMemo(() => {
+    const airportsForResults = results.flatMap((flight) => [
+      flight.originAirport,
+      flight.destinationAirport,
+      ...flight.layovers.map((layover) => layover.airport),
+    ]);
+
+    return buildCountOptions(airportsForResults).slice(0, 8);
+  }, [results]);
+
+  const filtered = results.filter((flight) => {
+    const matchesPrice = flight.price <= maxPrice;
+    const matchesMaxStops = flight.stops <= maxStops;
+    const matchesSelectedStops =
+      selectedStops.length === 0 ||
+      selectedStops.includes(getStopBucket(flight.stops));
+    const matchesAirline =
+      selectedAirlines.length === 0 ||
+      selectedAirlines.includes(flight.airlineName);
+    const matchesAirport =
+      selectedAirports.length === 0 ||
+      selectedAirports.some((airport) =>
+        flightMatchesAirport(flight, airport)
+      );
+    const matchesBaggage = !baggageIncludedOnly || hasBaggageIncluded(flight);
+    const matchesFlexibility = !flexibleOnly || hasFlexibleTerms(flight);
+
+    return (
+      matchesPrice &&
+      matchesMaxStops &&
+      matchesSelectedStops &&
+      matchesAirline &&
+      matchesAirport &&
+      matchesBaggage &&
+      matchesFlexibility
+    );
+  });
 
   if (!body) {
     return (
@@ -2326,7 +2386,19 @@ export function FlightResultsClient() {
             maxStops={maxStops}
             setMaxStops={setMaxStops}
             currency={selectedCurrency}
-            flightDetailSummaries={flightDetailSummaries}
+            stopOptions={stopOptions}
+            selectedStops={selectedStops}
+            setSelectedStops={setSelectedStops}
+            airlineOptions={airlineOptions}
+            selectedAirlines={selectedAirlines}
+            setSelectedAirlines={setSelectedAirlines}
+            airportOptions={airportOptions}
+            selectedAirports={selectedAirports}
+            setSelectedAirports={setSelectedAirports}
+            baggageIncludedOnly={baggageIncludedOnly}
+            setBaggageIncludedOnly={setBaggageIncludedOnly}
+            flexibleOnly={flexibleOnly}
+            setFlexibleOnly={setFlexibleOnly}
           />
         </aside>
 
@@ -2414,7 +2486,19 @@ export function FlightResultsClient() {
           maxStops={maxStops}
           setMaxStops={setMaxStops}
           currency={selectedCurrency}
-          flightDetailSummaries={flightDetailSummaries}
+          stopOptions={stopOptions}
+          selectedStops={selectedStops}
+          setSelectedStops={setSelectedStops}
+          airlineOptions={airlineOptions}
+          selectedAirlines={selectedAirlines}
+          setSelectedAirlines={setSelectedAirlines}
+          airportOptions={airportOptions}
+          selectedAirports={selectedAirports}
+          setSelectedAirports={setSelectedAirports}
+          baggageIncludedOnly={baggageIncludedOnly}
+          setBaggageIncludedOnly={setBaggageIncludedOnly}
+          flexibleOnly={flexibleOnly}
+          setFlexibleOnly={setFlexibleOnly}
         />
       </aside>
     </main>
@@ -2950,14 +3034,76 @@ function SuggestionList({
   );
 }
 
-type FlightDetailSummary = {
-  id: string;
-  airlineName: string;
-  flightNumber?: string;
-  baggageInfo?: string;
-  recommendationReason?: string;
-  refundInfo?: string;
+type FilterOption = {
+  value: string;
+  label: string;
+  count: number;
 };
+
+function getStopBucket(stops: number) {
+  return stops >= 2 ? "2+" : String(stops);
+}
+
+function stopLabel(bucket: string) {
+  if (bucket === "0") return "Nonstop";
+  if (bucket === "1") return "1 stop";
+  return "2+ stops";
+}
+
+function stopBucketSortValue(bucket: string) {
+  return bucket === "2+" ? 2 : Number(bucket);
+}
+
+function hasBaggageIncluded(flight: PublicFlightResult) {
+  return /included|carry-on|checked/i.test(flight.baggageInfo || "");
+}
+
+function hasFlexibleTerms(flight: PublicFlightResult) {
+  return /refundable|changes allowed|change allowed|flexible/i.test(
+    flight.refundInfo || ""
+  );
+}
+
+function flightMatchesAirport(flight: PublicFlightResult, airport: string) {
+  return (
+    flight.originAirport === airport ||
+    flight.destinationAirport === airport ||
+    flight.layovers.some((layover) => layover.airport === airport)
+  );
+}
+
+function buildCountOptions(values: string[]): FilterOption[] {
+  const counts = new Map<string, number>();
+
+  values.forEach((value) => {
+    const normalized = value.trim();
+
+    if (!normalized) return;
+
+    counts.set(normalized, (counts.get(normalized) ?? 0) + 1);
+  });
+
+  return Array.from(counts, ([value, count]) => ({
+    value,
+    label: value,
+    count,
+  })).sort((first, second) => {
+    if (second.count !== first.count) return second.count - first.count;
+
+    return first.label.localeCompare(second.label);
+  });
+}
+
+function toggleFilterValue(
+  value: string,
+  setter: Dispatch<SetStateAction<string[]>>
+) {
+  setter((current) =>
+    current.includes(value)
+      ? current.filter((item) => item !== value)
+      : [...current, value]
+  );
+}
 
 function Filters({
   maxPrice,
@@ -2965,14 +3111,38 @@ function Filters({
   maxStops,
   setMaxStops,
   currency,
-  flightDetailSummaries,
+  stopOptions,
+  selectedStops,
+  setSelectedStops,
+  airlineOptions,
+  selectedAirlines,
+  setSelectedAirlines,
+  airportOptions,
+  selectedAirports,
+  setSelectedAirports,
+  baggageIncludedOnly,
+  setBaggageIncludedOnly,
+  flexibleOnly,
+  setFlexibleOnly,
 }: {
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   maxStops: number;
   setMaxStops: (value: number) => void;
   currency: string;
-  flightDetailSummaries: FlightDetailSummary[];
+  stopOptions: FilterOption[];
+  selectedStops: string[];
+  setSelectedStops: Dispatch<SetStateAction<string[]>>;
+  airlineOptions: FilterOption[];
+  selectedAirlines: string[];
+  setSelectedAirlines: Dispatch<SetStateAction<string[]>>;
+  airportOptions: FilterOption[];
+  selectedAirports: string[];
+  setSelectedAirports: Dispatch<SetStateAction<string[]>>;
+  baggageIncludedOnly: boolean;
+  setBaggageIncludedOnly: (value: boolean) => void;
+  flexibleOnly: boolean;
+  setFlexibleOnly: (value: boolean) => void;
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -3018,55 +3188,127 @@ function Filters({
           />
         </label>
 
-        <div className="grid gap-0.5 rounded-lg border border-slate-200 bg-slate-50 p-1.5 text-xs font-semibold text-muted">
-          <label className="flex items-center gap-1.5 rounded-md px-1.5 py-1 transition hover:bg-slate-100">
-            <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40" defaultChecked />
-            Baggage included where available
-          </label>
+        <FilterSection
+          title="Stops"
+          emptyText="Stops appear after results load."
+        >
+          {stopOptions.map((option) => (
+            <FilterOptionRow
+              key={option.value}
+              label={option.label}
+              count={option.count}
+              checked={selectedStops.includes(option.value)}
+              onChange={() => toggleFilterValue(option.value, setSelectedStops)}
+            />
+          ))}
+        </FilterSection>
 
-          <label className="flex items-center gap-1.5 rounded-md px-1.5 py-1 transition hover:bg-slate-100">
-            <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40" />
-            Evening departures
-          </label>
+        <FilterSection
+          title="Airlines"
+          emptyText="Airlines appear after results load."
+        >
+          {airlineOptions.map((option) => (
+            <FilterOptionRow
+              key={option.value}
+              label={option.label}
+              count={option.count}
+              checked={selectedAirlines.includes(option.value)}
+              onChange={() =>
+                toggleFilterValue(option.value, setSelectedAirlines)
+              }
+            />
+          ))}
+        </FilterSection>
 
-          <label className="flex items-center gap-1.5 rounded-md px-1.5 py-1 transition hover:bg-slate-100">
-            <input type="checkbox" className="h-3.5 w-3.5 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40" />
-            Low-risk connections
-          </label>
-        </div>
+        <FilterSection
+          title="Airports"
+          emptyText="Airports appear after results load."
+        >
+          {airportOptions.map((option) => (
+            <FilterOptionRow
+              key={option.value}
+              label={option.label}
+              count={option.count}
+              checked={selectedAirports.includes(option.value)}
+              onChange={() =>
+                toggleFilterValue(option.value, setSelectedAirports)
+              }
+            />
+          ))}
+        </FilterSection>
 
-        <section className="rounded-lg border border-slate-200 bg-slate-50 p-2">
-          <h3 className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
-            Result details
-          </h3>
-
-          <div className="mt-2 grid gap-2">
-            {flightDetailSummaries.length ? (
-              flightDetailSummaries.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-md bg-white p-2 text-xs font-semibold leading-5 text-slate-600 shadow-sm"
-                >
-                  <p className="font-bold text-slate-900">
-                    {item.airlineName}
-                    {item.flightNumber ? ` · ${item.flightNumber}` : ""}
-                  </p>
-
-                  {item.baggageInfo ? <p>{item.baggageInfo}</p> : null}
-                  {item.recommendationReason ? (
-                    <p>{item.recommendationReason}</p>
-                  ) : null}
-                  {item.refundInfo ? <p>{item.refundInfo}</p> : null}
-                </div>
-              ))
-            ) : (
-              <p className="text-xs font-semibold text-slate-500">
-                Result details will appear after flights load.
-              </p>
-            )}
-          </div>
-        </section>
+        <FilterSection title="Amenities">
+          <FilterOptionRow
+            label="Baggage included"
+            checked={baggageIncludedOnly}
+            onChange={() => setBaggageIncludedOnly(!baggageIncludedOnly)}
+          />
+          <FilterOptionRow
+            label="Flexible/refundable"
+            checked={flexibleOnly}
+            onChange={() => setFlexibleOnly(!flexibleOnly)}
+          />
+        </FilterSection>
       </div>
     </div>
+  );
+}
+
+function FilterSection({
+  title,
+  emptyText,
+  children,
+}: {
+  title: string;
+  emptyText?: string;
+  children: ReactNode;
+}) {
+  const hasOptions =
+    Boolean(children) && (!Array.isArray(children) || children.length > 0);
+
+  return (
+    <section className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+      <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+        {title}
+      </h3>
+      <div className="mt-1.5 grid gap-0.5">
+        {hasOptions ? (
+          children
+        ) : (
+          <p className="px-1.5 py-1 text-xs font-semibold text-slate-500">
+            {emptyText}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function FilterOptionRow({
+  label,
+  count,
+  checked,
+  onChange,
+}: {
+  label: string;
+  count?: number;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <label className="flex items-center justify-between gap-2 rounded-md px-1.5 py-1 text-xs font-semibold text-muted transition hover:bg-slate-100">
+      <span className="flex min-w-0 items-center gap-1.5">
+        <input
+          type="checkbox"
+          className="h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          checked={checked}
+          onChange={onChange}
+        />
+        <span className="truncate">{label}</span>
+      </span>
+      {typeof count === "number" ? (
+        <span className="font-mono text-[11px] text-slate-400">{count}</span>
+      ) : null}
+    </label>
   );
 }
