@@ -1962,33 +1962,50 @@ export function FlightResultsClient() {
                 X
               </button>
 
-              <div className="relative inline-flex items-center self-start">
-                <label htmlFor="compactTripType" className="sr-only">
-                  Trip type
-                </label>
-                <select
-                  id="compactTripType"
-                  name="compactTripType"
-                  value={tripTypeInput}
-                  onChange={(event) => {
-                    const nextTripType = event.target.value;
-                    setTripTypeInput(nextTripType);
+              <div
+                className="inline-flex items-center gap-6 self-start"
+                role="tablist"
+                aria-label="Trip type"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={tripTypeInput === "round-trip"}
+                  onClick={() => {
+                    setTripTypeInput("round-trip");
+                  }}
+                  className={cn(
+                    "focus-ring border-b-2 pb-1 text-[13px] font-semibold outline-none transition-colors",
+                    tripTypeInput === "round-trip"
+                      ? "border-violet-600 text-slate-950"
+                      : "border-transparent text-slate-500 hover:text-slate-900"
+                  )}
+                >
+                  Round-trip
+                </button>
 
-                    if (nextTripType !== "round-trip") {
-                      setReturnDateInput("");
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={tripTypeInput === "one-way"}
+                  onClick={() => {
+                    setTripTypeInput("one-way");
+                    setReturnDateInput("");
 
-                      if (activeDatePicker === "return") {
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                      }
+                    if (activeDatePicker === "return") {
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
                     }
                   }}
-                  className="focus-ring h-7 appearance-none bg-transparent py-0 pl-0 pr-5 text-[13px] font-semibold text-slate-950 outline-none"
+                  className={cn(
+                    "focus-ring border-b-2 pb-1 text-[13px] font-semibold outline-none transition-colors",
+                    tripTypeInput === "one-way"
+                      ? "border-violet-600 text-slate-950"
+                      : "border-transparent text-slate-500 hover:text-slate-900"
+                  )}
                 >
-                  <option value="round-trip">Round-trip</option>
-                  <option value="one-way">One-way</option>
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-0 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  One-way
+                </button>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2">
