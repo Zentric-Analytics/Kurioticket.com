@@ -571,7 +571,7 @@ export function FlightResultsClient() {
   const [loading, setLoading] = useState(true);
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [maxPrice, setMaxPrice] = useState(1200);
+  const [maxPrice, setMaxPrice] = useState(0);
   const [maxStops, setMaxStops] = useState(3);
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
@@ -895,15 +895,6 @@ export function FlightResultsClient() {
 
           setResults(data.results);
           setWarnings(Array.isArray(data.warnings) ? data.warnings : []);
-          setMaxPrice(
-            Math.max(
-              500,
-              Math.ceil(
-                Math.max(...data.results.map((flight) => flight.price), 500) /
-                  100
-              ) * 100
-            )
-          );
         })
         .catch((searchError) => {
           if (!active) return;
@@ -1233,6 +1224,28 @@ export function FlightResultsClient() {
 
     return buildCountOptions(airportsForResults).slice(0, 8);
   }, [results]);
+
+  const priceBounds = useMemo(() => {
+    const prices = results
+      .map((flight) => flight.price)
+      .filter((price) => Number.isFinite(price));
+
+    if (!prices.length) {
+      return { min: 0, max: 0 };
+    }
+
+    return {
+      min: Math.floor(Math.min(...prices)),
+      max: Math.ceil(Math.max(...prices)),
+    };
+  }, [results]);
+
+  useEffect(() => {
+    if (priceBounds.max > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset only when new result price bounds are derived.
+      setMaxPrice(priceBounds.max);
+    }
+  }, [priceBounds]);
 
   const filtered = results.filter((flight) => {
     const matchesPrice = flight.price <= maxPrice;
@@ -2383,6 +2396,7 @@ export function FlightResultsClient() {
           <Filters
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
+            priceBounds={priceBounds}
             maxStops={maxStops}
             setMaxStops={setMaxStops}
             currency={selectedCurrency}
@@ -2483,6 +2497,7 @@ export function FlightResultsClient() {
         <Filters
           maxPrice={maxPrice}
           setMaxPrice={setMaxPrice}
+          priceBounds={priceBounds}
           maxStops={maxStops}
           setMaxStops={setMaxStops}
           currency={selectedCurrency}
@@ -3108,6 +3123,7 @@ function toggleFilterValue(
 function Filters({
   maxPrice,
   setMaxPrice,
+  priceBounds,
   maxStops,
   setMaxStops,
   currency,
@@ -3127,6 +3143,7 @@ function Filters({
 }: {
   maxPrice: number;
   setMaxPrice: (value: number) => void;
+  priceBounds: { min: number; max: number };
   maxStops: number;
   setMaxStops: (value: number) => void;
   currency: string;
@@ -3156,20 +3173,34 @@ function Filters({
       <div className="mt-3 grid gap-3">
         <label className="block rounded-lg border border-slate-200 bg-slate-50 p-2">
           <span className="mb-1.5 flex items-center justify-between gap-2 text-xs font-semibold text-muted">
-            Price up to{" "}
+            Price
             <span className="font-mono text-navy">
-              {formatCurrency(maxPrice, currency)}
+              {priceBounds.max
+                ? `${formatCurrency(priceBounds.min, currency)} - ${formatCurrency(
+                    Math.min(maxPrice, priceBounds.max),
+                    currency
+                  )}`
+                : "Loading prices"}
             </span>
           </span>
           <input
-            className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none"
+            className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
             type="range"
-            min={100}
-            max={2000}
+            min={priceBounds.min || 0}
+            max={priceBounds.max || 0}
             step={25}
-            value={maxPrice}
+            value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
+            disabled={!priceBounds.max}
             onChange={(event) => setMaxPrice(Number(event.target.value))}
           />
+          <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-400">
+            <span>
+              {priceBounds.max ? formatCurrency(priceBounds.min, currency) : "—"}
+            </span>
+            <span>
+              {priceBounds.max ? formatCurrency(priceBounds.max, currency) : "—"}
+            </span>
+          </div>
         </label>
 
         <label className="block rounded-lg border border-slate-200 bg-slate-50 p-2">
