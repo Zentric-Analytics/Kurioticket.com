@@ -507,7 +507,7 @@ export default function DealsPage() {
       <AppHeader />
 
       <main className="flex-1 bg-slate-50 pb-12">
-        <section className="relative overflow-visible bg-[#f8f7ff] pb-10 sm:pb-14">
+        <section className="relative overflow-visible border-b border-slate-200/80 bg-[#f8f7ff] pb-14 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:pb-20">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={dealsHeroImage}
@@ -887,8 +887,8 @@ export default function DealsPage() {
           </div>
         </section>
 
-        <section className="page-shell pt-8 sm:pt-10">
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <section className="page-shell pt-12 sm:pt-16 lg:pt-20">
+          <div className="border-t border-slate-200/80 pt-8 sm:pt-10">
             <div className="max-w-2xl">
               <h2 className="text-2xl font-extrabold [letter-spacing:-0.025em] text-slate-950">
                 {dictionary.startersTitle}
@@ -921,7 +921,7 @@ export default function DealsPage() {
                 </Card>
               ))}
             </div>
-          </section>
+          </div>
         </section>
       </main>
 
