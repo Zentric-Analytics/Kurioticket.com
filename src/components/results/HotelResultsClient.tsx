@@ -1,8 +1,8 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X } from "lucide-react";
+import { AlertCircle, Hotel, Info, SlidersHorizontal, X } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { HotelCard } from "@/components/results/HotelCard";
@@ -10,10 +10,10 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const messages = [
-  "Searching hotel partners...",
+  "Searching trusted hotel partners...",
   "Comparing total stay prices...",
-  "Checking arrival convenience...",
-  "Finding low-stress stays...",
+  "Checking room details and provider terms...",
+  "Finding easy-to-compare stays...",
 ];
 
 const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
@@ -35,6 +35,7 @@ export function HotelResultsClient() {
   const [checkOut, setCheckOut] = useState(() => params.get("checkOut") || nextDate(35));
   const [guests, setGuests] = useState(() => params.get("guests") || "2");
   const [rooms, setRooms] = useState(() => params.get("rooms") || "1");
+  const [sort, setSort] = useState(() => params.get("sort") || "cheapest");
   const [formError, setFormError] = useState("");
 
   const body = useMemo(
@@ -88,7 +89,7 @@ export function HotelResultsClient() {
       checkOut,
       guests: String(parsedGuests),
       rooms: String(parsedRooms),
-      sort: body.sort,
+      sort,
     });
     router.push(`/hotels/results?${query.toString()}`);
   };
@@ -136,8 +137,10 @@ export function HotelResultsClient() {
   }, [loading]);
 
   const filtered = results.filter((hotel) => hotel.totalPrice <= maxPrice && hotel.rating >= minRating);
+  const nights = getNightCount(body.checkIn, body.checkOut);
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
   const showFilteredEmptyState = !loading && !error && results.length > 0 && filtered.length === 0;
+  const showNoResultsState = !loading && !error && results.length === 0;
 
   const resetFilters = () => {
     setMaxPrice(resultMaxPrice);
@@ -146,12 +149,12 @@ export function HotelResultsClient() {
   };
 
   return (
-    <main className="flex-1 pt-6 pb-8 sm:pt-8 lg:pt-8">
-      <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
+    <main className="flex-1 bg-gradient-to-b from-violet-50/55 via-white to-white pb-8 pt-5 sm:pt-7 lg:pt-8">
+      <div className="sticky top-16 z-30 border-b border-indigo-100 bg-white/95 backdrop-blur">
         <div className="page-shell py-3">
-          <form className="mx-auto w-full max-w-5xl" onSubmit={handleSearchSubmit}>
-            <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-              <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]">
+          <form className="mx-auto w-full max-w-6xl" onSubmit={handleSearchSubmit}>
+            <div className="overflow-visible rounded-3xl border border-indigo-100 bg-white p-1.5 shadow-[0_16px_45px_-28px_rgba(67,56,202,0.65)]">
+              <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,0.9fr)_124px]">
                 <label className="grid min-h-[54px] gap-1 rounded-xl px-3 py-2 lg:rounded-l-xl lg:border-r lg:border-slate-200">
                   <span className="text-xs font-semibold uppercase tracking-wide text-muted">Destination</span>
                   <input
@@ -212,10 +215,23 @@ export function HotelResultsClient() {
                     </label>
                   </div>
                 </div>
-                <div className="rounded-xl lg:rounded-r-xl">
+                <label className="grid min-h-[54px] gap-1 rounded-xl px-3 py-2 lg:border-r lg:border-slate-200">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted">Sort</span>
+                  <select
+                    value={sort}
+                    onChange={(event) => setSort(event.target.value)}
+                    className="h-6 w-full bg-transparent text-[16px] text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 md:text-sm"
+                  >
+                    <option value="cheapest">Lowest price</option>
+                    <option value="best">Best value</option>
+                    <option value="rating">Top rated</option>
+                    <option value="location">Location</option>
+                  </select>
+                </label>
+                <div className="rounded-xl lg:rounded-r-2xl">
                   <button
                     type="submit"
-                    className="min-h-[54px] w-full rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full lg:rounded-r-xl"
+                    className="min-h-[54px] w-full rounded-2xl bg-violet-700 px-4 text-sm font-bold text-white transition-colors hover:bg-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-full"
                   >
                     Search hotels
                   </button>
@@ -228,26 +244,51 @@ export function HotelResultsClient() {
               </p>
             ) : null}
           </form>
-          <Button variant="secondary" className="mt-3 w-fit md:hidden" onClick={() => setFiltersOpen(true)}>
+          <Button variant="secondary" className="mt-3 w-full rounded-xl border-indigo-100 md:hidden" onClick={() => setFiltersOpen(true)}>
             <SlidersHorizontal size={17} />
             Filters
           </Button>
         </div>
       </div>
 
-      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[260px_1fr]">
+      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr]">
         <aside className="hidden lg:block">
           <HotelFilters maxPrice={maxPrice} setMaxPrice={setMaxPrice} minRating={minRating} setMinRating={setMinRating} />
         </aside>
-        <section className="min-w-0 space-y-4">
+        <section className="min-w-0 space-y-5">
+          <div className="rounded-3xl border border-indigo-100 bg-white/90 p-5 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)]">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-violet-800">
+                  <Hotel size={14} />
+                  Hotel comparison
+                </div>
+                <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-indigo-950 sm:text-3xl">
+                  Stays in {body.destination}
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                  Compare hotel prices, amenities, and provider details in one place. Kurioticket may redirect you to a hotel provider to review final availability and complete booking.
+                </p>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center md:min-w-[260px]">
+                <SummaryStat label="Nights" value={String(nights)} />
+                <SummaryStat label="Guests" value={String(body.guests)} />
+                <SummaryStat label="Rooms" value={String(body.rooms)} />
+              </div>
+            </div>
+          </div>
+
           {!loading && !error && warnings.length ? (
-            <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
-              Some provider checks may be limited for this hotel search. Review final availability, taxes, fees, and cancellation rules with the provider before booking.
+            <div className="flex items-start gap-3 rounded-2xl border border-amber/30 bg-amber/10 p-4 text-sm leading-6 text-amber">
+              <Info size={18} className="mt-0.5 shrink-0" />
+              <span>Some provider checks may be limited for this hotel search. Review final availability, taxes, fees, and cancellation rules with the provider before booking.</span>
             </div>
           ) : null}
+
           {loading ? (
             <div className="space-y-4">
-              <div className="rounded-md border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-semibold text-violet-700">
+              <div className="flex items-center gap-3 rounded-2xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-violet-700 shadow-sm">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-violet-600" />
                 {messages[messageIndex]}
               </div>
               <HotelSkeleton />
@@ -255,22 +296,35 @@ export function HotelResultsClient() {
               <HotelSkeleton />
             </div>
           ) : error ? (
-            <div className="rounded-md border border-danger/30 bg-red-50 p-4 text-danger">{error}</div>
+            <EmptyPanel
+              icon={<AlertCircle size={22} />}
+              title="Hotel search is temporarily unavailable"
+              body={error}
+              actionLabel="Try this search again"
+              onAction={() => window.location.reload()}
+            />
+          ) : showNoResultsState ? (
+            <EmptyPanel
+              icon={<Hotel size={22} />}
+              title="No hotel deals found"
+              body="We could not find verified hotel options for this search. Try adjusting your destination, dates, guests, or rooms."
+            />
           ) : showFilteredEmptyState ? (
-            <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
-              <p className="text-lg font-bold text-indigo-950">No stays match these filters</p>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                Try increasing the price range or lowering the rating filter to see more available hotel options.
-              </p>
-              <Button variant="secondary" className="mt-4" onClick={resetFilters}>
-                Reset filters
-              </Button>
-            </div>
+            <EmptyPanel
+              icon={<SlidersHorizontal size={22} />}
+              title="No stays match these filters"
+              body="Try increasing the price range or lowering the rating filter to see more available hotel options."
+              actionLabel="Reset filters"
+              onAction={resetFilters}
+            />
           ) : (
             <>
-              <p className="text-sm font-semibold text-muted">
-                {filtered.length} stay option{filtered.length === 1 ? "" : "s"} found
-              </p>
+              <div className="flex flex-col gap-2 rounded-2xl border border-indigo-100 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-bold text-indigo-950">
+                  {filtered.length} stay option{filtered.length === 1 ? "" : "s"} found
+                </p>
+                <p className="text-xs font-semibold text-slate-500">Sorted by {getSortLabel(body.sort)}</p>
+              </div>
               {filtered.map((hotel) => (
                 <HotelCard key={hotel.id} hotel={hotel} />
               ))}
@@ -310,38 +364,85 @@ function HotelFilters({
   setMinRating: (value: number) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
-      <h2 className="text-base font-bold text-indigo-950">Filters</h2>
+    <div className="rounded-3xl border border-indigo-100 bg-white p-5 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)]">
+      <div>
+        <h2 className="text-base font-extrabold text-indigo-950">Refine results</h2>
+        <p className="mt-1 text-xs leading-5 text-slate-500">Keep the list focused on stays that fit your budget and quality preference.</p>
+      </div>
       <div className="mt-5 grid gap-5">
-        <label className="block">
-          <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
-            Total up to <span className="font-mono text-indigo-950">{formatCurrency(maxPrice)}</span>
+        <label className="block rounded-2xl bg-violet-50/70 p-4">
+          <span className="mb-3 flex items-center justify-between text-sm font-bold text-indigo-950">
+            Total up to <span className="font-mono text-violet-700">{formatCurrency(maxPrice)}</span>
           </span>
-          <input className="w-full accent-violet-600" type="range" min={100} max={3000} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
+          <input className="w-full accent-violet-700" type="range" min={100} max={3000} step={25} value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} />
         </label>
-        <label className="block">
-          <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
-            Rating from <span className="font-mono text-indigo-950">{minRating}+</span>
+        <label className="block rounded-2xl bg-violet-50/70 p-4">
+          <span className="mb-3 flex items-center justify-between text-sm font-bold text-indigo-950">
+            Rating from <span className="font-mono text-violet-700">{minRating}+</span>
           </span>
-          <input className="w-full accent-violet-600" type="range" min={1} max={5} step={0.5} value={minRating} onChange={(event) => setMinRating(Number(event.target.value))} />
+          <input className="w-full accent-violet-700" type="range" min={1} max={5} step={0.5} value={minRating} onChange={(event) => setMinRating(Number(event.target.value))} />
         </label>
-        <div className="grid gap-2 text-sm text-muted">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" className="accent-violet-600" defaultChecked />
-            Late arrival friendly
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" className="accent-violet-600" />
-            Airport convenience
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="checkbox" className="accent-violet-600" />
-            Flexible cancellation
-          </label>
+        <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600">
+          <p className="font-bold text-indigo-950">Quick comparison cues</p>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-violet-600" /> Late-arrival score</li>
+            <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-violet-600" /> Total stay price</li>
+            <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-violet-600" /> Provider confirmation</li>
+          </ul>
         </div>
       </div>
     </div>
   );
+}
+
+function SummaryStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-violet-50 px-3 py-3 ring-1 ring-violet-100">
+      <div className="text-xl font-extrabold text-indigo-950">{value}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{label}</div>
+    </div>
+  );
+}
+
+function EmptyPanel({
+  icon,
+  title,
+  body,
+  actionLabel,
+  onAction,
+}: {
+  icon: ReactNode;
+  title: string;
+  body: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="rounded-3xl border border-indigo-100 bg-white p-6 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)]">
+      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">{icon}</div>
+      <p className="mt-4 text-xl font-extrabold text-indigo-950">{title}</p>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{body}</p>
+      {actionLabel && onAction ? (
+        <Button variant="secondary" className="mt-5 rounded-xl border-indigo-100" onClick={onAction}>
+          {actionLabel}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+function getSortLabel(sortMode: unknown) {
+  if (sortMode === "best") return "best value";
+  if (sortMode === "rating") return "top rated";
+  if (sortMode === "location") return "location";
+  return "lowest price";
+}
+
+function getNightCount(checkIn: string, checkOut: string) {
+  const start = new Date(checkIn).getTime();
+  const end = new Date(checkOut).getTime();
+  const nights = Math.round((end - start) / (1000 * 60 * 60 * 24));
+  return Number.isFinite(nights) && nights > 0 ? nights : 1;
 }
 
 function HotelSkeleton() {
