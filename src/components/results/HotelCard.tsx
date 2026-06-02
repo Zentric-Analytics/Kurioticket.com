@@ -54,7 +54,7 @@ export function HotelCard({ hotel }: { hotel: PublicHotelResult }) {
                 </div>
               ) : null}
             </div>
-            <div className="text-left lg:max-w-[240px] lg:text-right">
+            <div className="text-left lg:max-w-[210px] lg:text-right">
               <div className="text-xs font-semibold uppercase tracking-wide text-muted">Estimated stay total</div>
               <div className="text-2xl font-bold text-navy">{formatCurrency(hotel.totalPrice, hotel.currency)}</div>
               <div className="text-sm text-muted">{formatCurrency(hotel.pricePerNight, hotel.currency)} per night</div>
