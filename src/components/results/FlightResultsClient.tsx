@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 
+import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { FlightCard } from "@/components/results/FlightCard";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
@@ -491,27 +492,24 @@ function SavedRouteCard({
 function FlightBookingFaqSection() {
   return (
     <section aria-labelledby="flight-booking-faq-heading" className="mt-8">
-      <h2
-        id="flight-booking-faq-heading"
-        className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl"
-      >
-        Frequently asked question
-      </h2>
-
-      <div className="mt-4 grid grid-cols-2 items-start gap-x-4 gap-y-0 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8">
-        {flightFaqItems.map((item) => (
-          <details
-            key={item.question}
-            className="group border-b border-slate-200/80"
-          >
-            <summary className="focus-ring flex cursor-pointer list-none items-start justify-between gap-2 py-3 text-left text-xs font-semibold leading-5 text-slate-800 marker:hidden [&::-webkit-details-marker]:hidden sm:gap-3 sm:text-sm sm:leading-6">
-              <span>{item.question}</span>
-              <ChevronDown className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400 transition group-open:rotate-180 group-open:text-slate-600" />
-            </summary>
-            <p className="pb-3 text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">{item.answer}</p>
-          </details>
-        ))}
+      <div className="max-w-3xl">
+        <h2
+          id="flight-booking-faq-heading"
+          className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl"
+        >
+          Flight booking FAQs
+        </h2>
+        <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
+          Review common flight-search details before continuing with a provider.
+        </p>
       </div>
+
+      <FaqAccordion
+        items={flightFaqItems}
+        columns="three"
+        compact
+        className="mt-4"
+      />
     </section>
   );
 }
