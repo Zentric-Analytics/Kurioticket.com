@@ -3,7 +3,6 @@ import { Clock, Luggage, PlaneTakeoff, ShieldCheck } from "lucide-react";
 import type { PublicFlightResult } from "@/lib/types";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ScoreMeter } from "@/components/ui/ScoreMeter";
 import { formatCurrency, formatTime } from "@/lib/utils";
 
 export function FlightCard({ flight, premium = false }: { flight: PublicFlightResult; premium?: boolean }) {
@@ -66,7 +65,7 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
           </div>
         </div>
 
-        <div className="mt-2.5 grid gap-2 md:grid-cols-[1fr_1fr] lg:grid-cols-[1.2fr_1fr]">
+        <div className="mt-2.5">
           <div className="grid gap-1 rounded-xl bg-slate-50 p-2.5 text-xs font-semibold text-muted">
             <p className="flex items-center gap-2">
               <Luggage size={14} className="text-teal" />
@@ -80,12 +79,6 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
               <Clock size={14} className="text-teal" />
               {flight.refundInfo}
             </p>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            <ScoreMeter label="Value" score={flight.valueScore} />
-            <ScoreMeter label="Risk" score={flight.riskScore} invert />
-            <ScoreMeter label="Comfort" score={flight.comfortScore} />
-            <ScoreMeter label="Confidence" score={flight.travelConfidenceScore} />
           </div>
         </div>
 
