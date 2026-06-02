@@ -6,6 +6,7 @@ import {
   ReactNode,
   Suspense,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -669,22 +670,46 @@ function DateInputBox({
   onChange: (value: string) => void;
   value: string;
 }) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const openPicker = () => {
+    const input = inputRef.current;
+
+    if (!input) {
+      return;
+    }
+
+    if (typeof input.showPicker === "function") {
+      input.showPicker();
+      return;
+    }
+
+    input.focus();
+    input.click();
+  };
+
   return (
-    <label className="relative block h-8 cursor-pointer overflow-hidden text-sm font-semibold text-slate-950">
+    <button
+      type="button"
+      onClick={openPicker}
+      className="relative block h-8 w-full cursor-pointer overflow-hidden text-left text-sm font-semibold text-slate-950 focus:outline-none"
+    >
       <span className={value ? "text-slate-950" : "text-slate-400"}>
         {formatDisplayDate(value)}
       </span>
       <input
+        ref={inputRef}
         id={id}
         name={name}
         type="date"
         min={minDate}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
         aria-label={name}
+        tabIndex={-1}
       />
-    </label>
+    </button>
   );
 }
 
