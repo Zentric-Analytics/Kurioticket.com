@@ -587,6 +587,9 @@ export function FlightResultsClient() {
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
+  const [selectedFlightQuality, setSelectedFlightQuality] = useState<string[]>(
+    []
+  );
   const [baggageIncludedOnly, setBaggageIncludedOnly] = useState(true);
   const [flexibleOnly, setFlexibleOnly] = useState(false);
   const [tripTypeInput, setTripTypeInput] = useState(
@@ -1236,6 +1239,18 @@ export function FlightResultsClient() {
     return buildCountOptions(airportsForResults).slice(0, 8);
   }, [results]);
 
+  const flightQualityOptions = useMemo(
+    () =>
+      flightQualityDefinitions
+        .map((option) => ({
+          ...option,
+          count: results.filter((flight) =>
+            flightHasQualityOption(flight, option.value)
+          ).length,
+        }))
+        .filter((option) => option.count > 0),
+    [results]
+  );
 
   const priceBounds = useMemo(() => {
     const prices = results
@@ -1329,6 +1344,11 @@ export function FlightResultsClient() {
       );
     const matchesBaggage = !baggageIncludedOnly || hasBaggageIncluded(flight);
     const matchesFlexibility = !flexibleOnly || hasFlexibleTerms(flight);
+    const matchesFlightQuality =
+      selectedFlightQuality.length === 0 ||
+      selectedFlightQuality.every((option) =>
+        flightHasQualityOption(flight, option)
+      );
     const departureMinutes = getTimeMinutes(flight.departureTime);
     const arrivalMinutes = getTimeMinutes(flight.arrivalTime);
     const matchesTakeoffTime =
@@ -1351,6 +1371,7 @@ export function FlightResultsClient() {
       matchesAirport &&
       matchesBaggage &&
       matchesFlexibility &&
+      matchesFlightQuality &&
       matchesTakeoffTime &&
       matchesLandingTime &&
       matchesDuration
@@ -2499,6 +2520,9 @@ export function FlightResultsClient() {
             airportOptions={airportOptions}
             selectedAirports={selectedAirports}
             setSelectedAirports={setSelectedAirports}
+            flightQualityOptions={flightQualityOptions}
+            selectedFlightQuality={selectedFlightQuality}
+            setSelectedFlightQuality={setSelectedFlightQuality}
             baggageIncludedOnly={baggageIncludedOnly}
             setBaggageIncludedOnly={setBaggageIncludedOnly}
             flexibleOnly={flexibleOnly}
@@ -2608,6 +2632,9 @@ export function FlightResultsClient() {
           airportOptions={airportOptions}
           selectedAirports={selectedAirports}
           setSelectedAirports={setSelectedAirports}
+          flightQualityOptions={flightQualityOptions}
+          selectedFlightQuality={selectedFlightQuality}
+          setSelectedFlightQuality={setSelectedFlightQuality}
           baggageIncludedOnly={baggageIncludedOnly}
           setBaggageIncludedOnly={setBaggageIncludedOnly}
           flexibleOnly={flexibleOnly}
@@ -3160,6 +3187,13 @@ type TimeBounds = {
   landing: { min: number; max: number } | null;
 };
 
+const flightQualityDefinitions = [
+  { value: "wifi", label: "Wi-Fi" },
+  { value: "power", label: "Power outlets" },
+  { value: "entertainment", label: "Entertainment" },
+  { value: "comfort", label: "Better comfort" },
+];
+
 function getTimeMinutes(value: string) {
   const date = new Date(value);
 
@@ -3227,6 +3261,43 @@ function hasFlexibleTerms(flight: PublicFlightResult) {
   );
 }
 
+function getFlightQualityText(flight: PublicFlightResult) {
+  return [
+    ...flight.badges,
+    ...flight.recommendationReasons,
+    flight.baggageInfo,
+    flight.refundInfo,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function flightHasQualityOption(flight: PublicFlightResult, option: string) {
+  const text = getFlightQualityText(flight);
+
+  if (option === "wifi") {
+    return /\bwi[-\s]?fi\b|internet|connectivity/i.test(text);
+  }
+
+  if (option === "power") {
+    return /power|outlet|charging|charger|usb/i.test(text);
+  }
+
+  if (option === "entertainment") {
+    return /entertainment|screen|tv|movie|movies|media/i.test(text);
+  }
+
+  if (option === "comfort") {
+    return (
+      Number.isFinite(flight.comfortScore) &&
+      flight.comfortScore >= 70
+    ) || /comfort|legroom|seat pitch|extra space/i.test(text);
+  }
+
+  return false;
+}
+
 function flightMatchesAirport(flight: PublicFlightResult, airport: string) {
   return (
     flight.originAirport === airport ||
@@ -3292,6 +3363,9 @@ function Filters({
   airportOptions,
   selectedAirports,
   setSelectedAirports,
+  flightQualityOptions,
+  selectedFlightQuality,
+  setSelectedFlightQuality,
   baggageIncludedOnly,
   setBaggageIncludedOnly,
   flexibleOnly,
@@ -3320,6 +3394,9 @@ function Filters({
   airportOptions: FilterOption[];
   selectedAirports: string[];
   setSelectedAirports: Dispatch<SetStateAction<string[]>>;
+  flightQualityOptions: FilterOption[];
+  selectedFlightQuality: string[];
+  setSelectedFlightQuality: Dispatch<SetStateAction<string[]>>;
   baggageIncludedOnly: boolean;
   setBaggageIncludedOnly: (value: boolean) => void;
   flexibleOnly: boolean;
@@ -3504,6 +3581,22 @@ function Filters({
             </span>
           </div>
         </FilterSection>
+
+        {flightQualityOptions.length ? (
+          <FilterSection title="Flight quality">
+            {flightQualityOptions.map((option) => (
+              <FilterOptionRow
+                key={option.value}
+                label={option.label}
+                count={option.count}
+                checked={selectedFlightQuality.includes(option.value)}
+                onChange={() =>
+                  toggleFilterValue(option.value, setSelectedFlightQuality)
+                }
+              />
+            ))}
+          </FilterSection>
+        ) : null}
 
         <FilterSection
           title="Stops"
