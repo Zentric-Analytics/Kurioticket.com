@@ -42,13 +42,18 @@ type CarsFormErrors = Partial<
   Record<keyof CarsFormValues | "dateRange", string>
 >;
 
-type CarPickupCard = {
+type CarImageCard = {
   title: string;
   subtitle: string;
   pickupLocation: string;
   image: string;
   imageAlt: string;
+  ariaLabel: string;
+  cta?: string;
+  vehicleType?: string;
 };
+
+type CarPickupCard = Omit<CarImageCard, "ariaLabel" | "vehicleType">;
 
 const defaultDriverAge = "18-70";
 const defaultDriverAgeLabel = "Any age 18–70";
@@ -68,6 +73,53 @@ const timeOptions = Array.from({ length: 48 }, (_, index) => {
 
   return `${String(hour).padStart(2, "0")}:${minute}`;
 });
+
+const tripStyleCards: CarImageCard[] = [
+  {
+    title: "Economy cars",
+    subtitle: "Affordable city and solo-trip searches",
+    pickupLocation: "City center",
+    vehicleType: "economy",
+    cta: "Start an economy car search",
+    image:
+      "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Compact city cars traveling between downtown buildings",
+    ariaLabel: "Start an economy car search from City center pickup",
+  },
+  {
+    title: "SUVs",
+    subtitle: "Room for family trips, luggage, and longer drives",
+    pickupLocation: "Airport",
+    vehicleType: "suv",
+    cta: "Open SUV rental search",
+    image:
+      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "SUV driving along an open road near mountains",
+    ariaLabel: "Open SUV rental search from Airport pickup",
+  },
+  {
+    title: "Luxury cars",
+    subtitle: "Premium search context for business or special trips",
+    pickupLocation: "Hotel area",
+    vehicleType: "luxury",
+    cta: "Plan a luxury car search",
+    image:
+      "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Premium car parked near an elegant modern building",
+    ariaLabel: "Plan a luxury car search from Hotel area pickup",
+  },
+  {
+    title: "Vans",
+    subtitle: "Search context for group travel and family luggage",
+    pickupLocation: "Airport",
+    vehicleType: "van",
+    cta: "Search vans for group trips",
+    image:
+      "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Passenger van traveling through a bright scenic road",
+    ariaLabel: "Search vans for group trips from Airport pickup",
+  },
+];
 
 const trustCards = [
   {
@@ -259,12 +311,17 @@ const normalizeDriverAge = (value: string) => {
 const getDriverAgeOptionLabel = (age: string) =>
   age === defaultDriverAge ? defaultDriverAgeLabel : age;
 
-const buildPickupHref = (pickupLocation: string) => {
+const buildCarResultsHref = ({
+  pickupLocation,
+  vehicleType,
+}: {
+  pickupLocation: string;
+  vehicleType?: string;
+}) => {
   const today = new Date();
   const pickupDate = toIsoDate(addDays(today, 14));
   const dropoffDate = toIsoDate(addDays(today, 17));
-
-  return `/cars/results?${new URLSearchParams({
+  const params = new URLSearchParams({
     pickupLocation,
     pickupDate,
     pickupTime: "10:00",
@@ -272,8 +329,17 @@ const buildPickupHref = (pickupLocation: string) => {
     dropoffTime: "10:00",
     driverAge: defaultDriverAge,
     dropoffLocation: pickupLocation,
-  }).toString()}`;
+  });
+
+  if (vehicleType) {
+    params.set("vehicleType", vehicleType);
+  }
+
+  return `/cars/results?${params.toString()}`;
 };
+
+const buildPickupHref = (pickupLocation: string) =>
+  buildCarResultsHref({ pickupLocation });
 
 const getInitialValues = (params: URLSearchParams | null): CarsFormValues => {
   const pickupLocation = getSearchParam(params, "pickupLocation");
@@ -479,6 +545,34 @@ function CarsSearchPage() {
               updateValue={updateValue}
               values={values}
             />
+          </section>
+
+          <section
+            className="space-y-4"
+            aria-labelledby="car-trip-style-heading"
+          >
+            <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2
+                  id="car-trip-style-heading"
+                  className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+                >
+                  Explore rental cars by trip style
+                </h2>
+                <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
+                  Choose a car type and we’ll open results with the search
+                  context ready.
+                </p>
+              </div>
+            </div>
+
+            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+              <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+                {tripStyleCards.map((card) => (
+                  <CarImageCardLink key={card.title} card={card} />
+                ))}
+              </div>
+            </div>
           </section>
 
           <section className="relative isolate rounded-[1.5rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-2 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:rounded-[2rem] sm:p-4">
@@ -868,11 +962,18 @@ function CarsPageShell() {
   );
 }
 
-function CarPickupCardLink({ card }: { card: CarPickupCard }) {
+function CarImageCardLink({ card }: { card: CarImageCard }) {
   return (
     <Link
-      href={buildPickupHref(card.pickupLocation)}
-      aria-label={`Open car results for ${card.pickupLocation} pickup`}
+      href={
+        card.vehicleType
+          ? buildCarResultsHref({
+              pickupLocation: card.pickupLocation,
+              vehicleType: card.vehicleType,
+            })
+          : buildPickupHref(card.pickupLocation)
+      }
+      aria-label={card.ariaLabel}
       className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
@@ -883,15 +984,35 @@ function CarPickupCardLink({ card }: { card: CarPickupCard }) {
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
-      <div className="p-4 md:p-5">
+      <div className="flex flex-1 flex-col p-4 md:p-5">
         <p className="text-lg font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-xl">
           {card.title}
         </p>
         <p className="mt-2 text-sm font-medium leading-5 text-slate-600">
           {card.subtitle}
         </p>
+        {card.cta ? (
+          <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 transition-colors group-hover:text-indigo-800">
+            {card.cta}
+            <ArrowRight
+              className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              aria-hidden="true"
+            />
+          </p>
+        ) : null}
       </div>
     </Link>
+  );
+}
+
+function CarPickupCardLink({ card }: { card: CarPickupCard }) {
+  return (
+    <CarImageCardLink
+      card={{
+        ...card,
+        ariaLabel: `Open car results for ${card.pickupLocation} pickup`,
+      }}
+    />
   );
 }
 
@@ -940,8 +1061,13 @@ function RentalDatesField({
         aria-label="Choose rental pickup and return dates"
         className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
       >
-        <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
-        <span className={`truncate ${pickupDate ? "text-slate-950" : "text-slate-400"}`}>
+        <Calendar
+          className="h-4 w-4 shrink-0 text-slate-500"
+          aria-hidden="true"
+        />
+        <span
+          className={`truncate ${pickupDate ? "text-slate-950" : "text-slate-400"}`}
+        >
           {dateSummary}
         </span>
       </button>
@@ -1003,10 +1129,10 @@ function RentalDatesField({
                       );
                       const isInRange = Boolean(
                         pickupParsed &&
-                          dropoffParsed &&
-                          !isPastDate &&
-                          day > pickupParsed &&
-                          day < dropoffParsed,
+                        dropoffParsed &&
+                        !isPastDate &&
+                        day > pickupParsed &&
+                        day < dropoffParsed,
                       );
 
                       if (!cell.isCurrentMonth) {
@@ -1023,11 +1149,14 @@ function RentalDatesField({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`Select ${day.toLocaleDateString("en-US", {
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })}${isBeforePickup ? "; starts a new pickup date" : ""}`}
+                          aria-label={`Select ${day.toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            },
+                          )}${isBeforePickup ? "; starts a new pickup date" : ""}`}
                           onClick={() => onSelectDate(day)}
                           disabled={isPastDate}
                           className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
@@ -1128,7 +1257,9 @@ function TimeRangeField({
               <select
                 id="pickupTime"
                 value={pickupTime}
-                onChange={(event) => updateValue("pickupTime", event.target.value)}
+                onChange={(event) =>
+                  updateValue("pickupTime", event.target.value)
+                }
                 className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-indigo-300 md:text-sm"
               >
                 {timeOptions.map((time) => (
@@ -1146,7 +1277,9 @@ function TimeRangeField({
               <select
                 id="dropoffTime"
                 value={returnTime}
-                onChange={(event) => updateValue("dropoffTime", event.target.value)}
+                onChange={(event) =>
+                  updateValue("dropoffTime", event.target.value)
+                }
                 className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-indigo-300 md:text-sm"
               >
                 {timeOptions.map((time) => (
