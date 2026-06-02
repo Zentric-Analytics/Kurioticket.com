@@ -56,7 +56,7 @@ const packageModes: Array<{
 ];
 
 const dealsHeroImage =
-  "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80";
+  "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?auto=format&fit=crop&w=1200&q=80";
 
 const cabinClasses: Array<{ value: CabinClass; label: string }> = [
   { value: "economy", label: "Economy" },
@@ -515,15 +515,15 @@ export default function DealsPage() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-[center_45%]"
+              className="object-cover object-[center_52%]"
             />
             <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(248,250,252,0.98)_0%,rgba(248,250,252,0.94)_40%,rgba(238,242,255,0.76)_68%,rgba(238,242,255,0.36)_100%)]" />
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-50 via-slate-50/85 to-transparent" />
           </div>
 
           <div className="page-shell relative z-10 pt-10 sm:pt-14">
-            <div className="max-w-3xl">
-              <h1 className="max-w-3xl text-balance text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-slate-900 sm:text-5xl lg:text-6xl lg:leading-[1.02]">
+            <div className="max-w-[1040px]">
+              <h1 className="max-w-none text-balance text-4xl font-semibold leading-[1.12] tracking-[-0.015em] text-slate-800 sm:text-5xl lg:whitespace-nowrap lg:text-5xl lg:leading-[1.08]">
                 {dictionary.title}
               </h1>
               <p className="mt-4 max-w-2xl text-lg font-medium leading-8 text-slate-700">
