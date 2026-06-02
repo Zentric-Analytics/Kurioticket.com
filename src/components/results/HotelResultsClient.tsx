@@ -121,6 +121,84 @@ const PROPERTY_TYPE_FILTERS = [
   { value: "villa", label: "Villa", terms: ["villa"] },
 ];
 
+const LOCATION_AREA_FILTERS = [
+  {
+    value: "city-centre",
+    label: "City Centre",
+    terms: ["city centre", "city center", "central", "downtown", "centre", "center"],
+  },
+  {
+    value: "airport-area",
+    label: "Airport Area",
+    terms: ["airport", "airport area", "airport link", "airport transit"],
+  },
+  {
+    value: "business-district",
+    label: "Business District",
+    terms: ["business district", "financial district", "business area"],
+  },
+  {
+    value: "near-attractions",
+    label: "Near Attractions",
+    terms: ["attraction", "attractions", "landmark", "museum", "tourist"],
+  },
+  {
+    value: "residential-area",
+    label: "Residential Area",
+    terms: ["residential", "neighborhood", "neighbourhood"],
+  },
+];
+
+const ROOM_TYPE_FILTERS = [
+  {
+    value: "single-room",
+    label: "Single Room",
+    terms: ["single room", "single standard", "single"],
+  },
+  {
+    value: "double-room",
+    label: "Double Room",
+    terms: ["double room", "double standard", "double"],
+  },
+  {
+    value: "twin-room",
+    label: "Twin Room",
+    terms: ["twin room", "twin standard", "twin"],
+  },
+  {
+    value: "family-room",
+    label: "Family Room",
+    terms: ["family room", "family standard", "family"],
+  },
+  { value: "suite", label: "Suite", terms: ["suite"] },
+  { value: "standard-room", label: "Standard Room", terms: ["standard room"] },
+  { value: "deluxe-room", label: "Deluxe Room", terms: ["deluxe room"] },
+  { value: "studio", label: "Studio", terms: ["studio"] },
+];
+
+const BED_TYPE_FILTERS = [
+  {
+    value: "twin-beds",
+    label: "Twin Beds",
+    terms: ["twin bed", "twin beds", "2 twin", "two twin"],
+  },
+  {
+    value: "double-bed",
+    label: "Double Bed",
+    terms: ["double bed", "double beds"],
+  },
+  {
+    value: "queen-bed",
+    label: "Queen Bed",
+    terms: ["queen bed", "queen beds", "queen room"],
+  },
+  {
+    value: "king-bed",
+    label: "King Bed",
+    terms: ["king bed", "king beds", "king room"],
+  },
+];
+
 type FilterOption = {
   value: string;
   label: string;
@@ -141,6 +219,7 @@ type HotelFilterSelections = {
   facilities: string[];
   locations: string[];
   roomTypes: string[];
+  bedTypes: string[];
 };
 
 const emptySelections: HotelFilterSelections = {
@@ -151,6 +230,7 @@ const emptySelections: HotelFilterSelections = {
   facilities: [],
   locations: [],
   roomTypes: [],
+  bedTypes: [],
 };
 
 const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
@@ -453,10 +533,34 @@ function HotelFilters({
         </FilterSection>
 
         <CheckboxFilterSection
+          title="Location / area"
+          options={options.locations}
+          selected={selectedFilters.locations}
+          onToggle={(value) => toggleFilter("locations", value)}
+          collapsedCount={5}
+        />
+
+        <CheckboxFilterSection
           title="Property type"
           options={options.propertyTypes}
           selected={selectedFilters.propertyTypes}
           onToggle={(value) => toggleFilter("propertyTypes", value)}
+        />
+
+        <CheckboxFilterSection
+          title="Room type"
+          options={options.roomTypes}
+          selected={selectedFilters.roomTypes}
+          onToggle={(value) => toggleFilter("roomTypes", value)}
+          collapsedCount={5}
+        />
+
+        <CheckboxFilterSection
+          title="Bed type"
+          options={options.bedTypes}
+          selected={selectedFilters.bedTypes}
+          onToggle={(value) => toggleFilter("bedTypes", value)}
+          collapsedCount={5}
         />
 
         <CheckboxFilterSection
@@ -479,22 +583,6 @@ function HotelFilters({
           selected={selectedFilters.facilities}
           onToggle={(value) => toggleFilter("facilities", value)}
           collapsedCount={6}
-        />
-
-        <CheckboxFilterSection
-          title="Location / area"
-          options={options.locations}
-          selected={selectedFilters.locations}
-          onToggle={(value) => toggleFilter("locations", value)}
-          collapsedCount={5}
-        />
-
-        <CheckboxFilterSection
-          title="Room type / bed type"
-          options={options.roomTypes}
-          selected={selectedFilters.roomTypes}
-          onToggle={(value) => toggleFilter("roomTypes", value)}
-          collapsedCount={5}
         />
       </div>
     </div>
@@ -591,11 +679,14 @@ function buildHotelFilterOptions(hotels: PublicHotelResult[]) {
     facilities: buildTermOptions(hotels, FACILITY_FILTERS, (hotel) =>
       hotel.amenities.join(" "),
     ),
-    locations: buildValueOptions(
-      hotels.map((hotel) => normalizeOptionLabel(hotel.location)).filter(Boolean),
+    locations: buildTermOptions(hotels, LOCATION_AREA_FILTERS, (hotel) =>
+      [hotel.location, hotel.distanceFromCenter, ...hotel.amenities].join(" "),
     ),
-    roomTypes: buildValueOptions(
-      hotels.map((hotel) => normalizeOptionLabel(hotel.roomType)).filter(Boolean),
+    roomTypes: buildTermOptions(hotels, ROOM_TYPE_FILTERS, (hotel) =>
+      hotel.roomType,
+    ),
+    bedTypes: buildTermOptions(hotels, BED_TYPE_FILTERS, (hotel) =>
+      hotel.roomType,
     ),
   };
 }
@@ -614,24 +705,6 @@ function buildTermOptions(
       ).length,
     }))
     .filter((option) => option.count > 0 && option.count < hotels.length)
-    .sort(
-      (first, second) =>
-        second.count - first.count || first.label.localeCompare(second.label),
-    );
-}
-
-function buildValueOptions(values: string[]) {
-  const counts = values.reduce<Map<string, number>>((current, value) => {
-    current.set(value, (current.get(value) || 0) + 1);
-    return current;
-  }, new Map());
-
-  return Array.from(counts, ([label, count]) => ({
-    value: slugify(label),
-    label,
-    count,
-  }))
-    .filter((option) => option.count < values.length)
     .sort(
       (first, second) =>
         second.count - first.count || first.label.localeCompare(second.label),
@@ -677,11 +750,24 @@ function hotelMatchesFilters(
       FACILITY_FILTERS,
       (item) => item.amenities.join(" "),
     ) &&
-    matchesValueGroup(
-      normalizeOptionLabel(hotel.location),
+    matchesTermGroup(
+      hotel,
       selectedFilters.locations,
+      LOCATION_AREA_FILTERS,
+      (item) => [item.location, item.distanceFromCenter, ...item.amenities].join(" "),
     ) &&
-    matchesValueGroup(normalizeOptionLabel(hotel.roomType), selectedFilters.roomTypes)
+    matchesTermGroup(
+      hotel,
+      selectedFilters.roomTypes,
+      ROOM_TYPE_FILTERS,
+      (item) => item.roomType,
+    ) &&
+    matchesTermGroup(
+      hotel,
+      selectedFilters.bedTypes,
+      BED_TYPE_FILTERS,
+      (item) => item.roomType,
+    )
   );
 }
 
@@ -698,11 +784,6 @@ function matchesTermGroup(
   });
 }
 
-function matchesValueGroup(label: string, selectedValues: string[]) {
-  if (!selectedValues.length) return true;
-  return selectedValues.includes(slugify(label));
-}
-
 function getSearchableHotelText(hotel: PublicHotelResult) {
   return [
     hotel.name,
@@ -716,17 +797,6 @@ function getSearchableHotelText(hotel: PublicHotelResult) {
 function textIncludesTerms(text: string, terms: string[]) {
   const normalizedText = text.toLowerCase();
   return terms.some((term) => normalizedText.includes(term));
-}
-
-function normalizeOptionLabel(value?: string) {
-  return value?.trim().replace(/\s+/g, " ") || "";
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }
 
 function HotelSkeleton() {
