@@ -10,10 +10,7 @@ import {
   useState,
 } from "react";
 
-import {
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   CalendarClock,
@@ -37,7 +34,9 @@ type CarsFormValues = {
   dropoffLocation: string;
 };
 
-type CarsFormErrors = Partial<Record<keyof CarsFormValues | "dateRange", string>>;
+type CarsFormErrors = Partial<
+  Record<keyof CarsFormValues | "dateRange", string>
+>;
 
 type CarPickupCard = {
   title: string;
@@ -90,7 +89,8 @@ const timeOptions = Array.from({ length: 48 }, (_, index) => {
 const trustCards = [
   {
     title: "Built for complete trips",
-    description: "Plan flights, stays, and ground transportation in one Kurioticket flow.",
+    description:
+      "Plan flights, stays, and ground transportation in one Kurioticket flow.",
     icon: CheckCircle2,
   },
   {
@@ -139,6 +139,40 @@ const pickupCards: CarPickupCard[] = [
     image:
       "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Hotel exterior with palm trees and a driveway",
+  },
+];
+
+const carsFaqItems = [
+  {
+    question: "Can I search rental cars on Kurioticket?",
+    answer:
+      "Yes. You can enter pickup and return details now, and live rental inventory will appear once an approved rental provider is connected.",
+  },
+  {
+    question: "Why don’t I see live car prices yet?",
+    answer:
+      "Kurioticket only shows real provider-backed prices after a live rental provider or API is approved, so car pricing is not displayed until that connection is ready.",
+  },
+  {
+    question: "Can I choose a different return location?",
+    answer:
+      "Yes. Select Different return location in the search form and enter a separate drop-off location for your return.",
+  },
+  {
+    question: "What details should I check before booking a rental car?",
+    answer:
+      "Review the pickup location, return location, dates, times, driver age, mileage and fuel policy, cancellation terms, deposit requirements, and required documents before booking.",
+  },
+  {
+    question:
+      "Will Kurioticket show fake car listings while cars are being prepared?",
+    answer:
+      "No. Kurioticket does not show placeholder cars, fake prices, fake provider names, fake ratings, fake availability, or booking claims while car providers are being prepared.",
+  },
+  {
+    question: "What will happen when live car providers are connected?",
+    answer:
+      "When live providers are connected, you will be able to compare real vehicle options, rental conditions, pricing, and continue with the provider to complete your booking.",
   },
 ];
 
@@ -246,7 +280,12 @@ const validateCarsForm = (
     errors.dropoffTime = "Select a drop-off time.";
   }
 
-  if (!values.driverAge || Number.isNaN(driverAge) || driverAge < 18 || driverAge > 99) {
+  if (
+    !values.driverAge ||
+    Number.isNaN(driverAge) ||
+    driverAge < 18 ||
+    driverAge > 99
+  ) {
     errors.driverAge = "Select a driver age between 18 and 99.";
   }
 
@@ -263,7 +302,8 @@ const validateCarsForm = (
       values.dropoffTime &&
       values.dropoffTime <= values.pickupTime
     ) {
-      errors.dateRange = "For same-day returns, drop-off time must be after pickup time.";
+      errors.dateRange =
+        "For same-day returns, drop-off time must be after pickup time.";
     }
   }
 
@@ -281,7 +321,10 @@ export default function CarsPage() {
 function CarsSearchPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialValues = useMemo(() => getInitialValues(searchParams), [searchParams]);
+  const initialValues = useMemo(
+    () => getInitialValues(searchParams),
+    [searchParams],
+  );
   const todayIso = useMemo(() => toIsoDate(new Date()), []);
   const [values, setValues] = useState<CarsFormValues>(initialValues);
   const [errors, setErrors] = useState<CarsFormErrors>({});
@@ -312,7 +355,9 @@ function CarsSearchPage() {
       ...current,
       [key]: undefined,
       dateRange: undefined,
-      ...(key === "returnToDifferentLocation" ? { dropoffLocation: undefined } : {}),
+      ...(key === "returnToDifferentLocation"
+        ? { dropoffLocation: undefined }
+        : {}),
     }));
   };
 
@@ -417,7 +462,10 @@ function CarsSearchPage() {
             </div>
           </section>
 
-          <section className="space-y-4" aria-labelledby="car-pickup-ideas-heading">
+          <section
+            className="space-y-4"
+            aria-labelledby="car-pickup-ideas-heading"
+          >
             <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
               <div>
                 <h2
@@ -427,7 +475,8 @@ function CarsSearchPage() {
                   Start with popular car pickup points
                 </h2>
                 <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  Choose a pickup style and we’ll open the cars results page with search details ready.
+                  Choose a pickup style and we’ll open the cars results page
+                  with search details ready.
                 </p>
               </div>
             </div>
@@ -440,10 +489,58 @@ function CarsSearchPage() {
               </div>
             </div>
           </section>
+
+          <CarsFaqSection />
         </div>
       </main>
       <Footer />
     </>
+  );
+}
+
+function CarsFaqSection() {
+  return (
+    <section className="space-y-4 px-1" aria-labelledby="cars-faq-heading">
+      <div className="max-w-2xl">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
+          Cars FAQ
+        </p>
+        <h2
+          id="cars-faq-heading"
+          className="mt-2 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+        >
+          Helpful car rental search questions
+        </h2>
+        <p className="mt-1.5 text-sm leading-6 text-slate-600 md:text-base">
+          Clear answers about how Kurioticket handles car search details before
+          live rental providers are connected.
+        </p>
+      </div>
+
+      <div className="border border-slate-200/80 bg-white/85 p-2.5 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-4 md:p-5">
+        <div className="grid gap-2 md:grid-cols-2 md:gap-3">
+          {carsFaqItems.map((item) => (
+            <details
+              key={item.question}
+              className="group border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(248,250,252,0.78))] px-4 py-3 shadow-[0_10px_28px_-26px_rgba(15,23,42,0.3)] open:border-indigo-200/80 open:bg-white"
+            >
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
+                <span>{item.question}</span>
+                <span
+                  className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center border border-slate-200 bg-white text-sm leading-none text-slate-500 transition group-open:rotate-45 group-open:border-indigo-200 group-open:text-indigo-600"
+                  aria-hidden="true"
+                >
+                  +
+                </span>
+              </summary>
+              <p className="mt-2.5 text-sm leading-6 text-slate-600">
+                {item.answer}
+              </p>
+            </details>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -468,10 +565,10 @@ function CarsSearchBar({
   values: CarsFormValues;
 }) {
   return (
-    <section className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-4">
-      <form onSubmit={onSubmit} className="space-y-3" noValidate>
-        <div className="overflow-visible border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.08)]">
-          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.8fr)_minmax(8.6rem,0.78fr)_minmax(6.3rem,0.56fr)_minmax(8.6rem,0.78fr)_minmax(6.3rem,0.56fr)_minmax(5.7rem,0.46fr)_104px] lg:gap-0">
+    <section className="border border-slate-200/80 bg-white/80 p-2.5 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-4">
+      <form onSubmit={onSubmit} className="space-y-2 sm:space-y-3" noValidate>
+        <div className="overflow-visible border border-slate-200 bg-white p-0.5 shadow-[0_10px_28px_rgba(15,23,42,0.08)] sm:p-1">
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,1.8fr)_minmax(8.6rem,0.78fr)_minmax(6.3rem,0.56fr)_minmax(8.6rem,0.78fr)_minmax(6.3rem,0.56fr)_minmax(5.7rem,0.46fr)_104px] lg:gap-0">
             <SearchCell
               label="Pickup"
               error={errors.pickupLocation || errors.dropoffLocation}
@@ -483,9 +580,11 @@ function CarsSearchBar({
                   name="pickupLocation"
                   type="text"
                   value={values.pickupLocation}
-                  onChange={(event) => updateValue("pickupLocation", event.target.value)}
+                  onChange={(event) =>
+                    updateValue("pickupLocation", event.target.value)
+                  }
                   placeholder="Airport, city, or address"
-                  className="h-8 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm"
+                  className="h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8"
                   autoComplete="off"
                 />
 
@@ -499,11 +598,11 @@ function CarsSearchBar({
                       updateValue("dropoffLocation", event.target.value)
                     }
                     placeholder="Return city, airport, or address"
-                    className="h-8 w-full border-t border-slate-100 bg-transparent p-0 pt-2 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm"
+                    className="h-7 w-full border-t border-slate-100 bg-transparent p-0 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8 lg:pt-2"
                     autoComplete="off"
                   />
                 ) : (
-                  <p className="truncate border-t border-slate-100 pt-2 text-sm font-semibold text-slate-500">
+                  <p className="truncate border-t border-slate-100 pt-1.5 text-sm font-semibold text-slate-500 lg:pt-2">
                     Return to same location
                   </p>
                 )}
@@ -561,8 +660,10 @@ function CarsSearchBar({
                 id="driverAge"
                 name="driverAge"
                 value={values.driverAge}
-                onChange={(event) => updateValue("driverAge", event.target.value)}
-                className="h-8 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+                onChange={(event) =>
+                  updateValue("driverAge", event.target.value)
+                }
+                className="h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm lg:h-8"
               >
                 {driverAgeOptions.map((age) => (
                   <option key={age} value={age}>
@@ -575,7 +676,7 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-full min-h-14 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700"
+                className="focus-ring inline-flex h-full min-h-12 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 lg:min-h-14"
               >
                 Search
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -620,7 +721,10 @@ function CarsPageShell() {
       <main className="page-shell bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] py-16">
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
           <div className="flex items-center gap-3 text-slate-600">
-            <Clock className="h-5 w-5 animate-pulse text-indigo-600" aria-hidden="true" />
+            <Clock
+              className="h-5 w-5 animate-pulse text-indigo-600"
+              aria-hidden="true"
+            />
             Preparing car search...
           </div>
         </section>
@@ -692,7 +796,7 @@ function DateInputBox({
     <button
       type="button"
       onClick={openPicker}
-      className="relative block h-8 w-full cursor-pointer overflow-hidden text-left text-sm font-semibold text-slate-950 focus:outline-none"
+      className="relative block h-7 w-full cursor-pointer overflow-hidden text-left text-sm font-semibold text-slate-950 focus:outline-none lg:h-8"
     >
       <span className={value ? "text-slate-950" : "text-slate-400"}>
         {formatDisplayDate(value)}
@@ -730,7 +834,7 @@ function TimeSelect({
       name={name}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      className="h-8 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+      className="h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm lg:h-8"
     >
       {timeOptions.map((time) => (
         <option key={`${id}-${time}`} value={time}>
@@ -754,9 +858,9 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[78px] border border-transparent bg-white px-3 py-2.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 ${className}`}
+      className={`min-h-[64px] border border-transparent bg-white px-2.5 py-2 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:min-h-[78px] lg:px-3 lg:py-2.5 ${className}`}
     >
-      <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <label className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 lg:mb-1">
         {label}
       </label>
       {children}
