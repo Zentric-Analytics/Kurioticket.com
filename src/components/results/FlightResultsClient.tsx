@@ -1744,7 +1744,7 @@ export function FlightResultsClient() {
               </div>
 
               <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-4 lg:gap-5">
                   {discoveryCards.slice(0, 4).map((item) => (
                     <Link
                       key={item.id}
@@ -1759,7 +1759,7 @@ export function FlightResultsClient() {
                             alt={item.imageAlt}
                             fill
                             priority={false}
-                            sizes="(min-width: 1024px) 50vw, 100vw"
+                            sizes="(min-width: 1024px) 25vw, 100vw"
                             className="object-cover saturate-[1.08] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                           />
                         </div>
