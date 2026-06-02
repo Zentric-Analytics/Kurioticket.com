@@ -587,6 +587,7 @@ export function FlightResultsClient() {
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
+  const [selectedBookingSites, setSelectedBookingSites] = useState<string[]>([]);
   const [baggageIncludedOnly, setBaggageIncludedOnly] = useState(true);
   const [flexibleOnly, setFlexibleOnly] = useState(false);
   const [tripTypeInput, setTripTypeInput] = useState(
@@ -1236,6 +1237,12 @@ export function FlightResultsClient() {
     return buildCountOptions(airportsForResults).slice(0, 8);
   }, [results]);
 
+  const bookingSiteOptions = useMemo(
+    () =>
+      buildCountOptions(results.map((flight) => flight.provider)).slice(0, 8),
+    [results]
+  );
+
   const priceBounds = useMemo(() => {
     const prices = results
       .map((flight) => flight.price)
@@ -1326,6 +1333,9 @@ export function FlightResultsClient() {
       selectedAirports.some((airport) =>
         flightMatchesAirport(flight, airport)
       );
+    const matchesBookingSite =
+      selectedBookingSites.length === 0 ||
+      selectedBookingSites.includes(flight.provider);
     const matchesBaggage = !baggageIncludedOnly || hasBaggageIncluded(flight);
     const matchesFlexibility = !flexibleOnly || hasFlexibleTerms(flight);
     const departureMinutes = getTimeMinutes(flight.departureTime);
@@ -1348,6 +1358,7 @@ export function FlightResultsClient() {
       matchesSelectedStops &&
       matchesAirline &&
       matchesAirport &&
+      matchesBookingSite &&
       matchesBaggage &&
       matchesFlexibility &&
       matchesTakeoffTime &&
@@ -2498,6 +2509,9 @@ export function FlightResultsClient() {
             airportOptions={airportOptions}
             selectedAirports={selectedAirports}
             setSelectedAirports={setSelectedAirports}
+            bookingSiteOptions={bookingSiteOptions}
+            selectedBookingSites={selectedBookingSites}
+            setSelectedBookingSites={setSelectedBookingSites}
             baggageIncludedOnly={baggageIncludedOnly}
             setBaggageIncludedOnly={setBaggageIncludedOnly}
             flexibleOnly={flexibleOnly}
@@ -2607,6 +2621,9 @@ export function FlightResultsClient() {
           airportOptions={airportOptions}
           selectedAirports={selectedAirports}
           setSelectedAirports={setSelectedAirports}
+          bookingSiteOptions={bookingSiteOptions}
+          selectedBookingSites={selectedBookingSites}
+          setSelectedBookingSites={setSelectedBookingSites}
           baggageIncludedOnly={baggageIncludedOnly}
           setBaggageIncludedOnly={setBaggageIncludedOnly}
           flexibleOnly={flexibleOnly}
@@ -3291,6 +3308,9 @@ function Filters({
   airportOptions,
   selectedAirports,
   setSelectedAirports,
+  bookingSiteOptions,
+  selectedBookingSites,
+  setSelectedBookingSites,
   baggageIncludedOnly,
   setBaggageIncludedOnly,
   flexibleOnly,
@@ -3319,6 +3339,9 @@ function Filters({
   airportOptions: FilterOption[];
   selectedAirports: string[];
   setSelectedAirports: Dispatch<SetStateAction<string[]>>;
+  bookingSiteOptions: FilterOption[];
+  selectedBookingSites: string[];
+  setSelectedBookingSites: Dispatch<SetStateAction<string[]>>;
   baggageIncludedOnly: boolean;
   setBaggageIncludedOnly: (value: boolean) => void;
   flexibleOnly: boolean;
@@ -3548,6 +3571,23 @@ function Filters({
               checked={selectedAirports.includes(option.value)}
               onChange={() =>
                 toggleFilterValue(option.value, setSelectedAirports)
+              }
+            />
+          ))}
+        </FilterSection>
+
+        <FilterSection
+          title="Booking sites"
+          emptyText="Booking sites appear after results load."
+        >
+          {bookingSiteOptions.map((option) => (
+            <FilterOptionRow
+              key={option.value}
+              label={option.label}
+              count={option.count}
+              checked={selectedBookingSites.includes(option.value)}
+              onChange={() =>
+                toggleFilterValue(option.value, setSelectedBookingSites)
               }
             />
           ))}
