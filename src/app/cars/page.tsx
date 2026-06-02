@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   FormEvent,
   ReactNode,
@@ -36,6 +37,14 @@ type CarsFormValues = {
 };
 
 type CarsFormErrors = Partial<Record<keyof CarsFormValues | "dateRange", string>>;
+
+type CarPickupCard = {
+  title: string;
+  subtitle: string;
+  pickupLocation: string;
+  image: string;
+  imageAlt: string;
+};
 
 const driverAgeOptions = [
   "18",
@@ -97,6 +106,41 @@ const trustCards = [
   },
 ];
 
+const pickupCards: CarPickupCard[] = [
+  {
+    title: "Airport pickups",
+    subtitle: "Start from major airport arrival points",
+    pickupLocation: "Airport",
+    image:
+      "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Airplane parked at an airport gate at sunset",
+  },
+  {
+    title: "City center pickups",
+    subtitle: "Pick up near downtown hotels and business districts",
+    pickupLocation: "City center",
+    image:
+      "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Cars driving through a city street between tall buildings",
+  },
+  {
+    title: "Train station pickups",
+    subtitle: "Continue your trip after rail arrivals",
+    pickupLocation: "Train station",
+    image:
+      "https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Train platform with tracks leading into a city station",
+  },
+  {
+    title: "Hotel area pickups",
+    subtitle: "Plan a car pickup near where you are staying",
+    pickupLocation: "Hotel area",
+    image:
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Hotel exterior with palm trees and a driveway",
+  },
+];
+
 const getSearchParam = (params: URLSearchParams | null, key: string) =>
   params?.get(key)?.trim() ?? "";
 
@@ -106,6 +150,29 @@ const toIsoDate = (date: Date) => {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+};
+
+const addDays = (date: Date, days: number) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+
+  return next;
+};
+
+const buildPickupHref = (pickupLocation: string) => {
+  const today = new Date();
+  const pickupDate = toIsoDate(addDays(today, 14));
+  const dropoffDate = toIsoDate(addDays(today, 17));
+
+  return `/cars?${new URLSearchParams({
+    pickupLocation,
+    pickupDate,
+    pickupTime: "10:00",
+    dropoffDate,
+    dropoffTime: "10:00",
+    driverAge: "30",
+    dropoffLocation: pickupLocation,
+  }).toString()}`;
 };
 
 const getInitialValues = (params: URLSearchParams | null): CarsFormValues => {
@@ -331,12 +398,27 @@ function CarsSearchPage() {
             </div>
           </section>
 
-          <section className="rounded-[1.5rem] border border-indigo-100 bg-white/86 p-5 shadow-[0_16px_44px_-38px_rgba(15,23,42,0.28)] ring-1 ring-white/80 md:p-6">
-            <div className="flex gap-3">
-              <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-indigo-600" aria-hidden="true" />
-              <p className="max-w-3xl text-sm leading-6 text-slate-700 md:text-base md:leading-7">
-                This Cars page is production-safe: it collects search intent and routes to a preserved results shell, but it does not show rental inventory, prices, provider names, ratings, availability, or booking claims until a live car rental provider is approved.
-              </p>
+          <section className="space-y-4" aria-labelledby="car-pickup-ideas-heading">
+            <div className="flex flex-col gap-2 px-1 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2
+                  id="car-pickup-ideas-heading"
+                  className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+                >
+                  Start with popular car pickup points
+                </h2>
+                <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
+                  Choose a pickup style and we’ll prefill the car form so you can adjust the details.
+                </p>
+              </div>
+            </div>
+
+            <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
+              <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+                {pickupCards.map((card) => (
+                  <CarPickupCardLink key={card.title} card={card} />
+                ))}
+              </div>
             </div>
           </section>
         </div>
@@ -516,6 +598,33 @@ function CarsPageShell() {
       </main>
       <Footer />
     </>
+  );
+}
+
+function CarPickupCardLink({ card }: { card: CarPickupCard }) {
+  return (
+    <Link
+      href={buildPickupHref(card.pickupLocation)}
+      aria-label={`Start car pickup search for ${card.pickupLocation}`}
+      className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
+    >
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
+        <img
+          src={card.image}
+          alt={card.imageAlt}
+          className="h-full w-full object-cover saturate-[1.08] contrast-[1.02] transition duration-700 group-hover:scale-[1.03] group-hover:saturate-[1.12]"
+        />
+        <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
+      </div>
+      <div className="p-4 md:p-5">
+        <p className="text-lg font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-xl">
+          {card.title}
+        </p>
+        <p className="mt-2 text-sm font-medium leading-5 text-slate-600">
+          {card.subtitle}
+        </p>
+      </div>
+    </Link>
   );
 }
 
