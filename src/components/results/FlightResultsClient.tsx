@@ -1842,40 +1842,46 @@ export function FlightResultsClient() {
               </div>
 
               <div className="border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 lg:gap-5 xl:gap-6">
-                  {beachVacationCards.slice(0, 6).map((item) => {
-                    const beachVisual = getBeachVacationVisual(item);
+                <div className="max-w-full overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
+                  <div className="grid w-max grid-cols-4 grid-rows-2 gap-3 [grid-template-columns:repeat(4,9.75rem)] sm:w-auto sm:grid-cols-3 sm:grid-rows-none sm:gap-4 sm:[grid-template-columns:repeat(3,minmax(0,1fr))] lg:grid-cols-4 lg:gap-5 lg:[grid-template-columns:repeat(4,minmax(0,1fr))] xl:gap-6">
+                    {beachVacationCards.slice(0, 6).map((item, index) => {
+                      const beachVisual = getBeachVacationVisual(item);
+                      const mobilePlacement =
+                        index < 4
+                          ? "row-start-1 sm:row-auto"
+                          : "row-start-2 sm:row-auto";
 
-                    return (
-                      <Link
-                        key={item.id}
-                        href={buildDiscoveryLink(item)}
-                        aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                        className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-                      >
-                        <article className="flex h-full flex-col">
-                          <div className="relative h-28 overflow-hidden bg-sky-50 sm:h-32 lg:h-40">
-                            <Image
-                              src={beachVisual.image}
-                              alt={beachVisual.imageAlt}
-                              fill
-                              priority={false}
-                              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 33vw"
-                              className="object-cover brightness-[1.05] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                            />
-                          </div>
-                          <div className="bg-white px-2 py-3 sm:px-4 sm:py-3.5">
-                            <h3 className="line-clamp-2 text-[0.8rem] font-semibold leading-snug text-slate-900 sm:line-clamp-1 sm:text-base">
-                              {item.destinationCity}
-                            </h3>
-                            <p className="mt-1 line-clamp-1 text-[0.72rem] font-medium leading-4 text-slate-600 sm:text-sm">
-                              {item.originCode} → {item.destinationCode}
-                            </p>
-                          </div>
-                        </article>
-                      </Link>
-                    );
-                  })}
+                      return (
+                        <Link
+                          key={item.id}
+                          href={buildDiscoveryLink(item)}
+                          aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                          className={`${mobilePlacement} group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2`}
+                        >
+                          <article className="flex h-full flex-col">
+                            <div className="relative h-36 overflow-hidden bg-sky-50 sm:h-32 lg:h-40">
+                              <Image
+                                src={beachVisual.image}
+                                alt={beachVisual.imageAlt}
+                                fill
+                                priority={false}
+                                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 9.75rem"
+                                className="object-cover brightness-[1.05] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                              />
+                            </div>
+                            <div className="bg-white px-3 py-3 sm:px-4 sm:py-3.5">
+                              <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-slate-900 sm:line-clamp-1 sm:text-base">
+                                {item.destinationCity}
+                              </h3>
+                              <p className="mt-1 line-clamp-1 text-xs font-medium leading-4 text-slate-600 sm:text-sm">
+                                {item.originCode} → {item.destinationCode}
+                              </p>
+                            </div>
+                          </article>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </section>
