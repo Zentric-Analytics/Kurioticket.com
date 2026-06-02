@@ -47,7 +47,7 @@ export function PremiumDashboardFoundation() {
           <Sparkles className="text-teal" size={24} />
           <div>
             <h2 className="text-xl font-bold text-navy">Premium Home</h2>
-            <p className="text-sm text-muted">Travel optimization tools are ready for Phase 1 and built for deeper intelligence later.</p>
+            <p className="text-sm text-muted">Use saved trips, alerts, and account tools to keep travel planning organized.</p>
           </div>
         </div>
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -70,7 +70,7 @@ export function PremiumDashboardFoundation() {
       </Card>
       <Card className="p-5 lg:col-span-2">
         <Headphones className="text-teal" size={24} />
-        <h2 className="mt-3 text-xl font-bold text-navy">Priority Support Foundation</h2>
+        <h2 className="mt-3 text-xl font-bold text-navy">Priority Support</h2>
         <p className="mt-2 text-sm leading-6 text-muted">
           Support is scoped to Kurioticket platform usage, premium tools, alerts, and travel guidance. External providers handle purchases, fare rules, and trip servicing.
         </p>

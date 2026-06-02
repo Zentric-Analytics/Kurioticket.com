@@ -275,7 +275,7 @@ export function HotelResultsClient() {
         const data = await response.json();
         if (data.warningCategory === "no_live_hotel_provider") {
           throw new Error(
-            "Live hotel search is temporarily unavailable because Kurioticket is not connected to an approved live hotel provider for this search. We won’t show placeholder stays or unverified prices. Please try again later or start a new search.",
+            "Hotel search is temporarily unavailable for this request. We only show stay options when price, availability, fees, and rules can be reviewed with the provider. Please try again later or start a new search.",
           );
         }
         if (!response.ok)

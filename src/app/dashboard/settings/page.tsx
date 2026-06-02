@@ -15,11 +15,11 @@ export default function SettingsPage() {
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <Card className="p-5">
             <h2 className="font-bold text-navy">Notification preferences</h2>
-            <p className="mt-2 text-sm text-muted">Email alerts, in-app notifications, and future route intelligence preferences live here.</p>
+            <p className="mt-2 text-sm text-muted">Manage email alerts, in-app notifications, and route-planning preferences.</p>
           </Card>
           <Card className="p-5">
             <h2 className="font-bold text-navy">Privacy controls</h2>
-            <p className="mt-2 text-sm text-muted">Account deletion and GDPR/CCPA-style request workflows are modeled for Phase 1.</p>
+            <p className="mt-2 text-sm text-muted">Review privacy controls, account deletion options, and data request workflows.</p>
           </Card>
         </div>
       </main>
