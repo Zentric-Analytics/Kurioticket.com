@@ -572,6 +572,15 @@ export function FlightResultsClient() {
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [maxPrice, setMaxPrice] = useState(0);
+  const [timeFilterMode, setTimeFilterMode] = useState<"takeoff" | "landing">(
+    "takeoff"
+  );
+  const [maxTakeoffMinutes, setMaxTakeoffMinutes] = useState<number | null>(
+    null
+  );
+  const [maxLandingMinutes, setMaxLandingMinutes] = useState<number | null>(
+    null
+  );
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
@@ -1246,6 +1255,41 @@ export function FlightResultsClient() {
     }
   }, [priceBounds]);
 
+  const timeBounds = useMemo(() => {
+    const departureMinutes = results
+      .map((flight) => getTimeMinutes(flight.departureTime))
+      .filter((value): value is number => value !== null);
+
+    const arrivalMinutes = results
+      .map((flight) => getTimeMinutes(flight.arrivalTime))
+      .filter((value): value is number => value !== null);
+
+    return {
+      takeoff: departureMinutes.length
+        ? {
+            min: Math.min(...departureMinutes),
+            max: Math.max(...departureMinutes),
+          }
+        : null,
+      landing: arrivalMinutes.length
+        ? {
+            min: Math.min(...arrivalMinutes),
+            max: Math.max(...arrivalMinutes),
+          }
+        : null,
+    };
+  }, [results]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset only when new result time bounds are derived.
+    setMaxTakeoffMinutes(timeBounds.takeoff?.max ?? null);
+  }, [timeBounds.takeoff?.max]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset only when new result time bounds are derived.
+    setMaxLandingMinutes(timeBounds.landing?.max ?? null);
+  }, [timeBounds.landing?.max]);
+
   const filtered = results.filter((flight) => {
     const matchesPrice = flight.price <= maxPrice;
     const matchesSelectedStops =
@@ -1261,6 +1305,16 @@ export function FlightResultsClient() {
       );
     const matchesBaggage = !baggageIncludedOnly || hasBaggageIncluded(flight);
     const matchesFlexibility = !flexibleOnly || hasFlexibleTerms(flight);
+    const departureMinutes = getTimeMinutes(flight.departureTime);
+    const arrivalMinutes = getTimeMinutes(flight.arrivalTime);
+    const matchesTakeoffTime =
+      maxTakeoffMinutes === null ||
+      departureMinutes === null ||
+      departureMinutes <= maxTakeoffMinutes;
+    const matchesLandingTime =
+      maxLandingMinutes === null ||
+      arrivalMinutes === null ||
+      arrivalMinutes <= maxLandingMinutes;
 
     return (
       matchesPrice &&
@@ -1268,7 +1322,9 @@ export function FlightResultsClient() {
       matchesAirline &&
       matchesAirport &&
       matchesBaggage &&
-      matchesFlexibility
+      matchesFlexibility &&
+      matchesTakeoffTime &&
+      matchesLandingTime
     );
   });
 
@@ -2395,6 +2451,13 @@ export function FlightResultsClient() {
             setMaxPrice={setMaxPrice}
             priceBounds={priceBounds}
             currency={selectedCurrency}
+            timeFilterMode={timeFilterMode}
+            setTimeFilterMode={setTimeFilterMode}
+            timeBounds={timeBounds}
+            maxTakeoffMinutes={maxTakeoffMinutes}
+            setMaxTakeoffMinutes={setMaxTakeoffMinutes}
+            maxLandingMinutes={maxLandingMinutes}
+            setMaxLandingMinutes={setMaxLandingMinutes}
             stopOptions={stopOptions}
             selectedStops={selectedStops}
             setSelectedStops={setSelectedStops}
@@ -2494,6 +2557,13 @@ export function FlightResultsClient() {
           setMaxPrice={setMaxPrice}
           priceBounds={priceBounds}
           currency={selectedCurrency}
+          timeFilterMode={timeFilterMode}
+          setTimeFilterMode={setTimeFilterMode}
+          timeBounds={timeBounds}
+          maxTakeoffMinutes={maxTakeoffMinutes}
+          setMaxTakeoffMinutes={setMaxTakeoffMinutes}
+          maxLandingMinutes={maxLandingMinutes}
+          setMaxLandingMinutes={setMaxLandingMinutes}
           stopOptions={stopOptions}
           selectedStops={selectedStops}
           setSelectedStops={setSelectedStops}
@@ -3048,6 +3118,45 @@ type FilterOption = {
   count: number;
 };
 
+type TimeFilterMode = "takeoff" | "landing";
+
+type TimeBounds = {
+  takeoff: { min: number; max: number } | null;
+  landing: { min: number; max: number } | null;
+};
+
+function getTimeMinutes(value: string) {
+  const date = new Date(value);
+
+  if (!Number.isNaN(date.getTime())) {
+    return date.getHours() * 60 + date.getMinutes();
+  }
+
+  const match = value.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (!match) return null;
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const period = match[3]?.toUpperCase();
+
+  if (period === "PM" && hours < 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+
+  return hours * 60 + minutes;
+}
+
+function formatTimeFromMinutes(value: number) {
+  const normalized = Math.max(0, Math.min(1439, value));
+  const hours24 = Math.floor(normalized / 60);
+  const minutes = normalized % 60;
+  const period = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = hours24 % 12 || 12;
+
+  return `${hours12}:${String(minutes).padStart(2, "0")} ${period}`;
+}
+
 function getStopBucket(stops: number) {
   return stops >= 2 ? "2+" : String(stops);
 }
@@ -3118,6 +3227,13 @@ function Filters({
   setMaxPrice,
   priceBounds,
   currency,
+  timeFilterMode,
+  setTimeFilterMode,
+  timeBounds,
+  maxTakeoffMinutes,
+  setMaxTakeoffMinutes,
+  maxLandingMinutes,
+  setMaxLandingMinutes,
   stopOptions,
   selectedStops,
   setSelectedStops,
@@ -3136,6 +3252,13 @@ function Filters({
   setMaxPrice: (value: number) => void;
   priceBounds: { min: number; max: number };
   currency: string;
+  timeFilterMode: TimeFilterMode;
+  setTimeFilterMode: Dispatch<SetStateAction<TimeFilterMode>>;
+  timeBounds: TimeBounds;
+  maxTakeoffMinutes: number | null;
+  setMaxTakeoffMinutes: (value: number | null) => void;
+  maxLandingMinutes: number | null;
+  setMaxLandingMinutes: (value: number | null) => void;
   stopOptions: FilterOption[];
   selectedStops: string[];
   setSelectedStops: Dispatch<SetStateAction<string[]>>;
@@ -3191,6 +3314,107 @@ function Filters({
             </span>
           </div>
         </label>
+
+        <FilterSection title="Times">
+          <div className="grid grid-cols-2 rounded-md border border-slate-200 bg-white p-0.5">
+            <button
+              type="button"
+              onClick={() => setTimeFilterMode("takeoff")}
+              className={cn(
+                "rounded px-2 py-1 text-xs font-bold transition",
+                timeFilterMode === "takeoff"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-600 hover:bg-slate-100"
+              )}
+            >
+              Take-off
+            </button>
+            <button
+              type="button"
+              onClick={() => setTimeFilterMode("landing")}
+              className={cn(
+                "rounded px-2 py-1 text-xs font-bold transition",
+                timeFilterMode === "landing"
+                  ? "bg-indigo-600 text-white"
+                  : "text-slate-600 hover:bg-slate-100"
+              )}
+            >
+              Landing
+            </button>
+          </div>
+
+          {timeFilterMode === "takeoff" ? (
+            <div className="mt-2">
+              <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-muted">
+                <span>Take-off time from origin</span>
+                <span className="font-mono text-navy">
+                  {timeBounds.takeoff && maxTakeoffMinutes !== null
+                    ? formatTimeFromMinutes(maxTakeoffMinutes)
+                    : "Loading"}
+                </span>
+              </div>
+              <input
+                className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                type="range"
+                min={timeBounds.takeoff?.min ?? 0}
+                max={timeBounds.takeoff?.max ?? 0}
+                step={15}
+                value={maxTakeoffMinutes ?? timeBounds.takeoff?.max ?? 0}
+                disabled={!timeBounds.takeoff}
+                onChange={(event) =>
+                  setMaxTakeoffMinutes(Number(event.target.value))
+                }
+              />
+              <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-400">
+                <span>
+                  {timeBounds.takeoff
+                    ? formatTimeFromMinutes(timeBounds.takeoff.min)
+                    : "—"}
+                </span>
+                <span>
+                  {timeBounds.takeoff
+                    ? formatTimeFromMinutes(timeBounds.takeoff.max)
+                    : "—"}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-2">
+              <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-muted">
+                <span>Landing time at destination</span>
+                <span className="font-mono text-navy">
+                  {timeBounds.landing && maxLandingMinutes !== null
+                    ? formatTimeFromMinutes(maxLandingMinutes)
+                    : "Loading"}
+                </span>
+              </div>
+              <input
+                className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                type="range"
+                min={timeBounds.landing?.min ?? 0}
+                max={timeBounds.landing?.max ?? 0}
+                step={15}
+                value={maxLandingMinutes ?? timeBounds.landing?.max ?? 0}
+                disabled={!timeBounds.landing}
+                onChange={(event) =>
+                  setMaxLandingMinutes(Number(event.target.value))
+                }
+              />
+              <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-400">
+                <span>
+                  {timeBounds.landing
+                    ? formatTimeFromMinutes(timeBounds.landing.min)
+                    : "—"}
+                </span>
+                <span>
+                  {timeBounds.landing
+                    ? formatTimeFromMinutes(timeBounds.landing.max)
+                    : "—"}
+                </span>
+              </div>
+            </div>
+          )}
+        </FilterSection>
 
         <FilterSection
           title="Stops"
