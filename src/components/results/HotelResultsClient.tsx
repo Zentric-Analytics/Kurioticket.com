@@ -7,7 +7,9 @@ import {
   ChevronDown,
   Hotel,
   Info,
+  MapPinned,
   SlidersHorizontal,
+  Sparkles,
   X,
 } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
@@ -156,6 +158,10 @@ export function HotelResultsClient() {
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
   const filterGroups = useMemo(() => buildFilterGroups(results), [results]);
   const activeFilterCount = getActiveFilterCount(filters, resultMaxPrice);
+  const activeFilterPills = useMemo(
+    () => getActiveFilterPills(filters, filterGroups, resultMaxPrice),
+    [filters, filterGroups, resultMaxPrice],
+  );
   const filtered = useMemo(
     () => applyHotelFilters(results, filters, filterGroups),
     [results, filters, filterGroups],
@@ -170,8 +176,8 @@ export function HotelResultsClient() {
   };
 
   return (
-    <main className="flex-1 bg-gradient-to-b from-violet-50/55 via-white to-white pb-8 pt-5 sm:pt-7 lg:pt-8">
-      <div className="sticky top-16 z-30 border-b border-indigo-100 bg-white/95 backdrop-blur">
+    <main className="flex-1 bg-[#f5f7fb] pb-10 pt-4 sm:pt-6 lg:pt-7">
+      <div className="sticky top-16 z-30 border-b border-slate-200 bg-white/95 shadow-[0_10px_30px_-26px_rgba(15,23,42,0.8)] backdrop-blur">
         <div className="page-shell py-3">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
@@ -185,7 +191,7 @@ export function HotelResultsClient() {
           />
           <Button
             variant="secondary"
-            className="mt-3 w-full rounded-xl border-indigo-100 lg:hidden"
+            className="mt-3 h-12 w-full rounded-xl border-blue-200 bg-blue-50 font-extrabold text-blue-800 hover:bg-blue-100 lg:hidden"
             onClick={() => setFiltersOpen(true)}
           >
             <SlidersHorizontal size={17} />
@@ -199,39 +205,58 @@ export function HotelResultsClient() {
         </div>
       </div>
 
-      <div className="page-shell grid gap-7 py-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-8 xl:gap-10">
+      <div className="page-shell grid gap-5 py-5 lg:grid-cols-[318px_minmax(0,1fr)] lg:items-start lg:gap-6 xl:gap-7">
         <aside className="hidden lg:block">
           <HotelFilters
             filters={filters}
             groups={filterGroups}
             resultMaxPrice={resultMaxPrice}
             activeFilterCount={activeFilterCount}
+            filteredCount={filtered.length}
             onFiltersChange={setFilters}
             onReset={resetFilters}
           />
         </aside>
-        <section className="min-w-0 space-y-5">
-          <div className="rounded-3xl border border-indigo-100 bg-white/90 p-5 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)]">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <section className="min-w-0 space-y-4">
+          <div className="overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_12px_34px_-28px_rgba(15,23,42,0.9)]">
+            <div className="flex flex-col gap-4 border-b border-slate-100 px-5 py-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-violet-800">
-                  <Hotel size={14} />
-                  Hotel comparison
+                <div className="inline-flex items-center gap-2 rounded-md bg-blue-50 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wide text-blue-800">
+                  <Sparkles size={14} />
+                  Hotel search results
                 </div>
-                <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-indigo-950 sm:text-3xl">
+                <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
                   Stays in {body.destination}
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                  Compare hotel prices, amenities, and provider details in one
-                  place. Kurioticket may redirect you to a hotel provider to
-                  review final availability and complete booking.
+                  Compare nightly price, guest score, property facilities, location signals, and booking conditions before you choose a stay.
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center md:min-w-[260px]">
+              <div className="grid grid-cols-3 gap-2 text-center md:min-w-[270px]">
                 <SummaryStat label="Nights" value={String(nights)} />
                 <SummaryStat label="Guests" value={String(body.guests)} />
                 <SummaryStat label="Rooms" value={String(body.rooms)} />
               </div>
+            </div>
+            <div className="flex flex-col gap-3 bg-slate-50 px-5 py-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap gap-2">
+                {activeFilterPills.length ? (
+                  activeFilterPills.slice(0, 8).map((pill) => (
+                    <span key={pill} className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-bold text-blue-800 shadow-sm">
+                      {pill}
+                    </span>
+                  ))
+                ) : (
+                  <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-slate-600 shadow-sm">
+                    No filters selected
+                  </span>
+                )}
+              </div>
+              {activeFilterCount ? (
+                <button type="button" className="text-left text-xs font-extrabold text-blue-700 hover:text-blue-900 lg:text-right" onClick={resetFilters}>
+                  Clear all filters
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -280,13 +305,13 @@ export function HotelResultsClient() {
             />
           ) : (
             <>
-              <div className="flex flex-col gap-2 rounded-2xl border border-indigo-100 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-bold text-indigo-950">
+              <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-black text-slate-950">
                   {filtered.length} stay option
                   {filtered.length === 1 ? "" : "s"} found
                 </p>
-                <p className="text-xs font-semibold text-slate-500">
-                  Sorted by {getSortLabel(body.sort)}
+                <p className="text-xs font-bold text-slate-500">
+                  Sorted by {getSortLabel(body.sort)} · prices are per provider availability
                 </p>
               </div>
               {filtered.map((hotel) => (
@@ -306,7 +331,7 @@ export function HotelResultsClient() {
       />
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-3xl bg-white p-5 shadow-2xl transition-transform lg:hidden",
+          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-3xl bg-white p-4 shadow-2xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
@@ -326,6 +351,7 @@ export function HotelResultsClient() {
           groups={filterGroups}
           resultMaxPrice={resultMaxPrice}
           activeFilterCount={activeFilterCount}
+          filteredCount={filtered.length}
           onFiltersChange={setFilters}
           onReset={resetFilters}
         />
@@ -339,6 +365,7 @@ function HotelFilters({
   groups,
   resultMaxPrice,
   activeFilterCount,
+  filteredCount,
   onFiltersChange,
   onReset,
 }: {
@@ -346,6 +373,7 @@ function HotelFilters({
   groups: FilterGroup[];
   resultMaxPrice: number;
   activeFilterCount: number;
+  filteredCount: number;
   onFiltersChange: (filters: HotelFiltersState) => void;
   onReset: () => void;
 }) {
@@ -368,46 +396,56 @@ function HotelFilters({
   };
 
   return (
-    <div className="rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_22px_60px_-42px_rgba(15,23,42,0.65),0_10px_28px_-24px_rgba(109,40,217,0.5)] lg:sticky lg:top-40 lg:max-h-[calc(100dvh-11rem)] lg:overflow-auto">
-      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 p-5 backdrop-blur">
+    <div className="hotel-filter-scroll overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_14px_38px_-30px_rgba(15,23,42,0.9)] lg:sticky lg:top-36 lg:max-h-[calc(100dvh-9.5rem)] lg:overflow-auto">
+      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-extrabold tracking-tight text-indigo-950">
+            <h2 className="text-base font-black tracking-tight text-slate-950">
               Filter by
             </h2>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Narrow the current hotel results with available stay details.
+              Marketplace-style filters: budget, score, property type, facilities, location, meals, and policies.
             </p>
           </div>
           {activeFilterCount ? (
-            <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-extrabold text-violet-800 shadow-sm">
+            <span className="rounded-full bg-blue-700 px-2.5 py-1 text-xs font-black text-white shadow-sm">
               {activeFilterCount}
             </span>
           ) : null}
         </div>
-        {activeFilterCount ? (
-          <Button
-            variant="ghost"
-            className="mt-4 h-9 w-full rounded-xl border border-violet-100 text-violet-700 hover:bg-violet-50"
-            onClick={onReset}
-          >
-            Reset filters
-          </Button>
-        ) : null}
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
+          <span className="text-xs font-bold text-slate-600">{filteredCount} matching stays</span>
+          {activeFilterCount ? (
+            <button type="button" className="text-xs font-black text-blue-700 hover:text-blue-900" onClick={onReset}>
+              Reset
+            </button>
+          ) : null}
+        </div>
+        <div className="mt-3 grid grid-cols-[auto_minmax(0,1fr)] gap-3 rounded-lg border border-blue-100 bg-blue-50/80 p-3 text-blue-950">
+          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-white text-blue-700 shadow-sm">
+            <MapPinned size={18} />
+          </div>
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide">Compare areas fast</p>
+            <p className="mt-1 text-xs leading-5 text-blue-900/75">
+              Use location, distance, facilities, and policy filters together so long result lists stay easy to scan.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-6 p-5 pt-5">
-        <section className="border-b border-slate-200 pb-6">
+      <div className="divide-y divide-slate-200">
+        <section className="px-4 py-4">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-[15px] font-extrabold tracking-tight text-indigo-950">
-              Budget / price per night
+            <h3 className="text-[15px] font-black tracking-tight text-slate-950">
+              Your budget (per night)
             </h3>
-            <span className="font-mono text-sm font-extrabold text-violet-700">
+            <span className="rounded-md bg-blue-50 px-2 py-1 font-mono text-sm font-black text-blue-800">
               {formatCurrency(filters.maxNightlyPrice)}
             </span>
           </div>
           <input
-            className="mt-4 w-full accent-violet-700"
+            className="mt-4 w-full accent-blue-700"
             type="range"
             min={50}
             max={Math.max(resultMaxPrice, 50)}
@@ -423,7 +461,7 @@ function HotelFilters({
               })
             }
           />
-          <div className="mt-2 flex justify-between text-[11px] font-semibold text-slate-500">
+          <div className="mt-2 flex justify-between text-[11px] font-bold text-slate-500">
             <span>{formatCurrency(50)}</span>
             <span>{formatCurrency(resultMaxPrice)}+</span>
           </div>
@@ -439,35 +477,35 @@ function HotelFilters({
           return (
             <section
               key={group.key}
-              className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0"
+              className="px-4 py-4"
             >
-              <h3 className="text-[15px] font-extrabold tracking-tight text-indigo-950">
+              <h3 className="text-[15px] font-black tracking-tight text-slate-950">
                 {group.title}
               </h3>
-              <div className="mt-4 space-y-2.5">
+              <div className="mt-3 space-y-1.5">
                 {visibleOptions.map((option) => {
                   const checked = filters[group.key].includes(option.value);
                   return (
                     <label
                       key={option.value}
                       className={cn(
-                        "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-3.5 py-3 text-sm transition",
+                        "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition",
                         checked
-                          ? "border-violet-300 bg-violet-50 text-indigo-950 shadow-[0_10px_24px_-18px_rgba(109,40,217,0.75)] ring-1 ring-violet-100"
-                          : "border-transparent text-slate-700 hover:border-violet-100 hover:bg-violet-50/50",
+                          ? "bg-blue-50 text-slate-950 ring-1 ring-blue-200"
+                          : "text-slate-700 hover:bg-slate-50",
                       )}
                     >
                       <input
                         type={group.control}
                         name={`hotel-filter-${group.key}`}
-                        className="h-4 w-4 shrink-0 accent-violet-700"
+                        className="h-4 w-4 shrink-0 accent-blue-700"
                         checked={checked}
                         onChange={() => toggleOption(group, option.value)}
                       />
                       <span
                         className={cn(
-                          "min-w-0 break-words text-sm font-medium leading-5",
-                          checked && "font-bold text-indigo-950",
+                          "min-w-0 break-words text-sm font-semibold leading-5",
+                          checked && "font-black text-slate-950",
                         )}
                       >
                         {option.label}
@@ -476,7 +514,7 @@ function HotelFilters({
                         className={cn(
                           "self-center justify-self-end rounded-full px-2 py-0.5 text-[11px] font-bold leading-5",
                           checked
-                            ? "border border-violet-100 bg-white text-violet-700 shadow-sm"
+                            ? "border border-blue-100 bg-white text-blue-700 shadow-sm"
                             : "bg-slate-100 text-slate-500",
                         )}
                       >
@@ -489,7 +527,7 @@ function HotelFilters({
               {hasMore ? (
                 <button
                   type="button"
-                  className="mt-4 inline-flex items-center gap-1 text-xs font-extrabold text-violet-700 hover:text-violet-900"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-black text-blue-700 hover:text-blue-900"
                   onClick={() =>
                     setExpandedGroups((current) => ({
                       ...current,
@@ -840,6 +878,29 @@ function applyHotelFilters(
   });
 }
 
+function getActiveFilterPills(
+  filters: HotelFiltersState,
+  groups: FilterGroup[],
+  resultMaxPrice: number,
+) {
+  const pills: string[] = [];
+  if (filters.maxNightlyPrice < resultMaxPrice) {
+    pills.push(`Up to ${formatCurrency(filters.maxNightlyPrice)} / night`);
+  }
+
+  for (const group of groups) {
+    const selected = filters[group.key];
+    if (!selected.length) continue;
+
+    for (const value of selected) {
+      const option = group.options.find((candidate) => candidate.value === value);
+      pills.push(option ? option.label : value);
+    }
+  }
+
+  return pills;
+}
+
 function getActiveFilterCount(
   filters: HotelFiltersState,
   resultMaxPrice: number,
@@ -854,7 +915,6 @@ function getActiveFilterCount(
     selectedOptionCount + (filters.maxNightlyPrice < resultMaxPrice ? 1 : 0)
   );
 }
-
 
 function SummaryStat({ label, value }: { label: string; value: string }) {
   return (
