@@ -148,35 +148,34 @@ const pickupCards: CarPickupCard[] = [
 
 const carsFaqItems = [
   {
-    question: "Can I search rental cars on Kurioticket?",
+    question: "What information do I need to search for a rental car?",
     answer:
-      "Yes. You can enter pickup and return details now, and live rental inventory will appear once an approved rental provider is connected.",
+      "Enter your pickup location, pickup and return dates, pickup and return times, driver age, and whether you plan to return the car to a different location.",
   },
   {
-    question: "Why don’t I see live car prices yet?",
+    question: "Can I return the car to a different location?",
     answer:
-      "Kurioticket only shows real provider-backed prices after a live rental provider or API is approved, so car pricing is not displayed until that connection is ready.",
+      "Yes. Select Different return location in the search form and enter the drop-off city, airport, or address where you plan to return the car.",
   },
   {
-    question: "Can I choose a different return location?",
+    question: "Why does driver age matter for rental cars?",
     answer:
-      "Yes. Select Different return location in the search form and enter a separate drop-off location for your return.",
+      "Rental providers may apply different rules, fees, vehicle eligibility, or deposit requirements based on the driver’s age and location.",
   },
   {
-    question: "What details should I check before booking a rental car?",
+    question: "What should I check before booking a rental car?",
     answer:
-      "Review the pickup location, return location, dates, times, driver age, mileage and fuel policy, cancellation terms, deposit requirements, and required documents before booking.",
+      "Review the pickup and return location, dates, times, mileage policy, fuel policy, insurance options, cancellation terms, deposit requirements, and required documents before booking.",
   },
   {
-    question:
-      "Will Kurioticket show fake car listings while cars are being prepared?",
+    question: "Where is the final rental price confirmed?",
     answer:
-      "No. Kurioticket does not show placeholder cars, fake prices, fake provider names, fake ratings, fake availability, or booking claims while car providers are being prepared.",
+      "Final price, vehicle availability, taxes, fees, deposit requirements, and rental rules are confirmed by the provider before booking.",
   },
   {
-    question: "What will happen when live car providers are connected?",
+    question: "What documents might I need at pickup?",
     answer:
-      "When live providers are connected, you will be able to compare real vehicle options, rental conditions, pricing, and continue with the provider to complete your booking.",
+      "Rental providers may require a valid driver’s license, payment card, proof of identity, and any documents required by the pickup country or location.",
   },
 ];
 
@@ -559,19 +558,12 @@ function CarsFaqSection() {
   return (
     <section className="space-y-4 px-1" aria-labelledby="cars-faq-heading">
       <div className="max-w-2xl">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
-          Cars FAQ
-        </p>
         <h2
           id="cars-faq-heading"
-          className="mt-2 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+          className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
         >
-          Helpful car rental search questions
+          FAQ
         </h2>
-        <p className="mt-1.5 text-sm leading-6 text-slate-600 md:text-base">
-          Clear answers about how Kurioticket handles car search details before
-          live rental providers are connected.
-        </p>
       </div>
 
       <div className="border border-slate-200/80 bg-white/85 p-2.5 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-4 md:p-5">
