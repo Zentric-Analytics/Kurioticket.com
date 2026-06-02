@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { PriceText } from "@/components/currency/PriceText";
+import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
@@ -31,6 +32,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { validateDestinationImages } from "@/data/destinationImageValidation";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
+import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
@@ -433,69 +435,18 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-5 grid gap-x-8 gap-y-1 md:grid-cols-2">
-            {[
-              {
-                question: "How does Kurioticket find flight and hotel options?",
-                answer:
-                  "Kurioticket searches live offers from travel providers and brings options together in one place so you can compare prices, routes, stays, and details before choosing.",
-              },
-              {
-                question:
-                  "Does Kurioticket sell tickets or hotel rooms directly?",
-                answer:
-                  "Kurioticket helps you compare travel options. When you choose an offer, you are sent to the selected provider to review details and complete the booking on that provider’s site.",
-              },
-              {
-                question: "Why can prices change after I click an offer?",
-                answer:
-                  "Prices and availability can change in real time because airlines, hotels, and travel providers update inventory frequently. Always review the final price on the provider’s checkout page before booking.",
-              },
-              {
-                question: "Can I compare multiple providers for the same trip?",
-                answer:
-                  "Yes. Kurioticket is designed to help you compare options side by side so you can evaluate price, timing, route details, hotel details, and overall value.",
-              },
-              {
-                question: "How do I complete my booking securely?",
-                answer:
-                  "Booking and payment are completed on the provider’s checkout flow. You should always review the provider’s terms, cancellation policy, and final price before confirming.",
-              },
-              {
-                question: "Can I set currency and language preferences?",
-                answer:
-                  "Yes. Kurioticket supports language and region preferences so the experience can feel more relevant based on how you prefer to search and compare travel options.",
-              },
-              {
-                question: "Are search results live or cached?",
-                answer:
-                  "Kurioticket uses provider search results that can refresh as availability and prices change. This helps show current options, but final availability is confirmed by the provider.",
-              },
-              {
-                question: "Where do I manage changes or cancellations?",
-                answer:
-                  "Trip changes, cancellations, refunds, and booking support are usually handled by the provider where the booking was completed. Use the confirmation details from that provider for service requests.",
-              },
-            ].map((item) => (
-              <details
-                key={item.question}
-                className="group border-b border-slate-200 py-4"
-              >
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-slate-900 marker:hidden sm:text-base">
-                  <span>{item.question}</span>
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 text-base leading-none text-slate-500 transition-transform duration-200 group-open:rotate-45"
-                  >
-                    +
-                  </span>
-                </summary>
-                <p className="mt-2 text-sm font-medium leading-6 text-slate-700 sm:text-base">
-                  {item.answer}
-                </p>
-              </details>
-            ))}
-          </div>
+          <FaqAccordion
+            items={generalFaqs}
+            mobileLimit={homepageMobileFaqLimit}
+            className="mt-5"
+          />
+
+          <Link
+            href="/faq"
+            className="mt-4 inline-flex text-sm font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline sm:hidden"
+          >
+            View all FAQs
+          </Link>
         </section>
 
         <section className="page-shell pb-6 sm:pb-8">
