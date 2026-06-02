@@ -639,20 +639,15 @@ export default function DestinationsPage() {
                 id={getRegionId(section.region)}
                 className="scroll-mt-24"
               >
-                <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div className="max-w-3xl">
-                    <div
-                      className={`mb-3 h-1.5 w-16 rounded-full bg-gradient-to-r ${section.accent}`}
-                    />
-                    <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-                      {section.region}
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                      {section.summary}
-                    </p>
-                  </div>
-                  <p className="text-sm font-black text-slate-500">
-                    {section.destinations.length} places
+                <div className="mb-5 max-w-3xl">
+                  <div
+                    className={`mb-3 h-1.5 w-16 rounded-full bg-gradient-to-r ${section.accent}`}
+                  />
+                  <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+                    {section.region}
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+                    {section.summary}
                   </p>
                 </div>
 
