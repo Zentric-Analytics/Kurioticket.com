@@ -312,12 +312,14 @@ type DestinationCardProps = {
   card: HotelDestinationLink;
   imageSizes: string;
   isCompact?: boolean;
+  isFeatured?: boolean;
 };
 
 function DestinationCard({
   card,
   imageSizes,
   isCompact = false,
+  isFeatured = false,
 }: DestinationCardProps) {
   return (
     <Link
@@ -327,7 +329,11 @@ function DestinationCard({
     >
       <div
         className={`relative w-full overflow-hidden bg-slate-100 ${
-          isCompact ? "aspect-[16/11]" : "aspect-[4/3]"
+          isFeatured
+            ? "h-[18rem] sm:h-[20rem] md:h-[27rem] lg:h-[28rem]"
+            : isCompact
+              ? "aspect-[16/11]"
+              : "aspect-[4/3]"
         }`}
       >
         <Image
@@ -379,15 +385,15 @@ function InspirationCard({ card }: InspirationCardProps) {
           src={card.image}
           alt={card.imageAlt}
           fill
-          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 76vw"
+          sizes="(min-width: 768px) 50vw, 50vw"
           className="object-cover saturate-[1.06] contrast-[1.02] transition duration-700 group-hover:scale-[1.03]"
         />
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
-        <span className="absolute left-3 top-3 rounded-full border border-white/75 bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-[0_8px_20px_-18px_rgba(15,23,42,0.55)] backdrop-blur-sm">
-          {card.badge}
-        </span>
       </div>
       <div className="px-1 pb-1.5 pt-3">
+        <span className="mb-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
+          {card.badge}
+        </span>
         <p className="text-base font-semibold leading-tight tracking-[-0.012em] text-slate-900 sm:text-lg">
           {card.title}
         </p>
@@ -637,7 +643,7 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] px-2 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8 lg:pt-12">
+      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16 pt-8 sm:pt-10 lg:pt-12">
         <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
         <div className="relative mx-auto max-w-6xl space-y-11 md:space-y-14">
@@ -1023,6 +1029,7 @@ export default function HotelsSearchPage() {
                     key={card.title}
                     card={card}
                     imageSizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 84vw"
+                    isFeatured
                   />
                 ))}
               </div>
@@ -1073,7 +1080,7 @@ export default function HotelsSearchPage() {
                 </div>
               </div>
 
-              <div className="mt-4 grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2">
                 {hotelInspirationLinks.map((card) => (
                   <InspirationCard key={card.title} card={card} />
                 ))}
