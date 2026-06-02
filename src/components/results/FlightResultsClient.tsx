@@ -3549,10 +3549,10 @@ function Filters({
       </div>
 
       <div className="mt-3 grid gap-3">
-        <label className="block rounded-lg border border-slate-200 bg-slate-50 p-2">
-          <span className="mb-1.5 flex items-center justify-between gap-2 text-xs font-semibold text-muted">
+        <label className="block">
+          <span className="mb-1.5 flex items-center justify-between gap-2 text-[13px] font-semibold leading-5 text-slate-800">
             Price
-            <span className="font-mono text-navy">
+            <span className="text-xs font-medium text-navy">
               {priceBounds.max
                 ? `${formatCurrency(priceBounds.min, currency)} - ${formatCurrency(
                     Math.min(maxPrice, priceBounds.max),
@@ -3582,7 +3582,7 @@ function Filters({
         </label>
 
         <FilterSection title="Times">
-          <div className="grid grid-cols-2 rounded-md border border-slate-200 bg-white p-0.5">
+          <div className="grid grid-cols-2 overflow-hidden rounded-md bg-slate-100 p-0.5">
             <button
               type="button"
               onClick={() => setTimeFilterMode("takeoff")}
@@ -3815,15 +3815,15 @@ function FilterSection({
     Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-slate-50 p-2">
-      <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+    <section className="border-t border-slate-200 pt-3 first:border-t-0 first:pt-0">
+      <h3 className="text-[13px] font-semibold leading-5 text-slate-800">
         {title}
       </h3>
       <div className="mt-1.5 grid gap-0.5">
         {hasOptions ? (
           children
         ) : (
-          <p className="px-1.5 py-1 text-xs font-semibold text-slate-500">
+          <p className="py-1 text-xs font-medium text-slate-500">
             {emptyText}
           </p>
         )}
@@ -3844,7 +3844,7 @@ function FilterOptionRow({
   onChange: () => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-2 rounded-md px-1.5 py-1 text-xs font-semibold text-muted transition hover:bg-slate-100">
+    <label className="flex items-center justify-between gap-2 rounded-md py-1 text-[13px] font-medium text-slate-700 transition hover:bg-slate-50">
       <span className="flex min-w-0 items-center gap-1.5">
         <input
           type="checkbox"
@@ -3855,7 +3855,7 @@ function FilterOptionRow({
         <span className="truncate">{label}</span>
       </span>
       {typeof count === "number" ? (
-        <span className="font-mono text-[11px] text-slate-400">{count}</span>
+        <span className="text-xs font-medium text-slate-400">{count}</span>
       ) : null}
     </label>
   );
