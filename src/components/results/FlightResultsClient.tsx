@@ -1753,7 +1753,7 @@ export function FlightResultsClient() {
                       className="group w-full overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     >
                       <article className="flex h-full flex-col">
-                        <div className="relative h-36 overflow-hidden bg-slate-100 sm:h-40 lg:h-48">
+                        <div className="relative h-36 overflow-hidden bg-slate-100 sm:h-40 lg:h-52">
                           <Image
                             src={item.image}
                             alt={item.imageAlt}
