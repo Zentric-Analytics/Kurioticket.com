@@ -404,7 +404,7 @@ function HotelFilters({
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)] lg:sticky lg:top-44">
+    <div className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)] lg:sticky lg:top-44 lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto">
       <h2 className="text-base font-bold text-indigo-950">Filters</h2>
       <div className="mt-5 divide-y divide-indigo-100">
         <FilterSection title="Budget / price">
