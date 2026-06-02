@@ -1193,6 +1193,15 @@ export function FlightResultsClient() {
     (flight) => flight.price <= maxPrice && flight.stops <= maxStops
   );
 
+  const flightDetailSummaries = filtered.slice(0, 6).map((flight) => ({
+    id: flight.id,
+    airlineName: flight.airlineName,
+    flightNumber: flight.flightNumber || flight.provider,
+    baggageInfo: flight.baggageInfo,
+    recommendationReason: flight.recommendationReasons?.[0],
+    refundInfo: flight.refundInfo,
+  }));
+
   if (!body) {
     return (
       <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-6 sm:pt-8 lg:pt-8">
@@ -2317,6 +2326,7 @@ export function FlightResultsClient() {
             maxStops={maxStops}
             setMaxStops={setMaxStops}
             currency={selectedCurrency}
+            flightDetailSummaries={flightDetailSummaries}
           />
         </aside>
 
@@ -2404,6 +2414,7 @@ export function FlightResultsClient() {
           maxStops={maxStops}
           setMaxStops={setMaxStops}
           currency={selectedCurrency}
+          flightDetailSummaries={flightDetailSummaries}
         />
       </aside>
     </main>
@@ -2939,18 +2950,29 @@ function SuggestionList({
   );
 }
 
+type FlightDetailSummary = {
+  id: string;
+  airlineName: string;
+  flightNumber?: string;
+  baggageInfo?: string;
+  recommendationReason?: string;
+  refundInfo?: string;
+};
+
 function Filters({
   maxPrice,
   setMaxPrice,
   maxStops,
   setMaxStops,
   currency,
+  flightDetailSummaries,
 }: {
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   maxStops: number;
   setMaxStops: (value: number) => void;
   currency: string;
+  flightDetailSummaries: FlightDetailSummary[];
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
@@ -3012,6 +3034,38 @@ function Filters({
             Low-risk connections
           </label>
         </div>
+
+        <section className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+          <h3 className="text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+            Result details
+          </h3>
+
+          <div className="mt-2 grid gap-2">
+            {flightDetailSummaries.length ? (
+              flightDetailSummaries.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-md bg-white p-2 text-xs font-semibold leading-5 text-slate-600 shadow-sm"
+                >
+                  <p className="font-bold text-slate-900">
+                    {item.airlineName}
+                    {item.flightNumber ? ` · ${item.flightNumber}` : ""}
+                  </p>
+
+                  {item.baggageInfo ? <p>{item.baggageInfo}</p> : null}
+                  {item.recommendationReason ? (
+                    <p>{item.recommendationReason}</p>
+                  ) : null}
+                  {item.refundInfo ? <p>{item.refundInfo}</p> : null}
+                </div>
+              ))
+            ) : (
+              <p className="text-xs font-semibold text-slate-500">
+                Result details will appear after flights load.
+              </p>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );

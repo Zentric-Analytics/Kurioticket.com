@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Clock, Luggage, PlaneTakeoff, ShieldCheck } from "lucide-react";
+import { PlaneTakeoff } from "lucide-react";
 import type { PublicFlightResult } from "@/lib/types";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -62,23 +62,6 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
                 Review final fare and rules with the provider before booking.
               </p>
             </div>
-          </div>
-        </div>
-
-        <div className="mt-2.5">
-          <div className="grid gap-1 rounded-xl bg-slate-50 p-2.5 text-xs font-semibold text-muted">
-            <p className="flex items-center gap-2">
-              <Luggage size={14} className="text-teal" />
-              {flight.baggageInfo}
-            </p>
-            <p className="flex items-center gap-2">
-              <ShieldCheck size={14} className="text-teal" />
-              {flight.recommendationReasons[0]}
-            </p>
-            <p className="flex items-center gap-2">
-              <Clock size={14} className="text-teal" />
-              {flight.refundInfo}
-            </p>
           </div>
         </div>
 
