@@ -164,7 +164,7 @@ const buildPickupHref = (pickupLocation: string) => {
   const pickupDate = toIsoDate(addDays(today, 14));
   const dropoffDate = toIsoDate(addDays(today, 17));
 
-  return `/cars?${new URLSearchParams({
+  return `/cars/results?${new URLSearchParams({
     pickupLocation,
     pickupDate,
     pickupTime: "10:00",
@@ -408,7 +408,7 @@ function CarsSearchPage() {
                   Start with popular car pickup points
                 </h2>
                 <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  Choose a pickup style and we’ll prefill the car form so you can adjust the details.
+                  Choose a pickup style and we’ll open the cars results page with search details ready.
                 </p>
               </div>
             </div>
@@ -605,7 +605,7 @@ function CarPickupCardLink({ card }: { card: CarPickupCard }) {
   return (
     <Link
       href={buildPickupHref(card.pickupLocation)}
-      aria-label={`Start car pickup search for ${card.pickupLocation}`}
+      aria-label={`Open car results for ${card.pickupLocation} pickup`}
       className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_12px_28px_-26px_rgba(15,23,42,0.34)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_30px_-26px_rgba(15,23,42,0.38)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/70 focus-visible:ring-offset-4 focus-visible:ring-offset-white"
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-100">
