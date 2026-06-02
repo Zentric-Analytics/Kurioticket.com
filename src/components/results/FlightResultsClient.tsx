@@ -572,7 +572,6 @@ export function FlightResultsClient() {
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [maxPrice, setMaxPrice] = useState(0);
-  const [maxStops, setMaxStops] = useState(3);
   const [selectedStops, setSelectedStops] = useState<string[]>([]);
   const [selectedAirlines, setSelectedAirlines] = useState<string[]>([]);
   const [selectedAirports, setSelectedAirports] = useState<string[]>([]);
@@ -1249,7 +1248,6 @@ export function FlightResultsClient() {
 
   const filtered = results.filter((flight) => {
     const matchesPrice = flight.price <= maxPrice;
-    const matchesMaxStops = flight.stops <= maxStops;
     const matchesSelectedStops =
       selectedStops.length === 0 ||
       selectedStops.includes(getStopBucket(flight.stops));
@@ -1266,7 +1264,6 @@ export function FlightResultsClient() {
 
     return (
       matchesPrice &&
-      matchesMaxStops &&
       matchesSelectedStops &&
       matchesAirline &&
       matchesAirport &&
@@ -2397,8 +2394,6 @@ export function FlightResultsClient() {
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
             priceBounds={priceBounds}
-            maxStops={maxStops}
-            setMaxStops={setMaxStops}
             currency={selectedCurrency}
             stopOptions={stopOptions}
             selectedStops={selectedStops}
@@ -2498,8 +2493,6 @@ export function FlightResultsClient() {
           maxPrice={maxPrice}
           setMaxPrice={setMaxPrice}
           priceBounds={priceBounds}
-          maxStops={maxStops}
-          setMaxStops={setMaxStops}
           currency={selectedCurrency}
           stopOptions={stopOptions}
           selectedStops={selectedStops}
@@ -3124,8 +3117,6 @@ function Filters({
   maxPrice,
   setMaxPrice,
   priceBounds,
-  maxStops,
-  setMaxStops,
   currency,
   stopOptions,
   selectedStops,
@@ -3144,8 +3135,6 @@ function Filters({
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   priceBounds: { min: number; max: number };
-  maxStops: number;
-  setMaxStops: (value: number) => void;
   currency: string;
   stopOptions: FilterOption[];
   selectedStops: string[];
@@ -3201,22 +3190,6 @@ function Filters({
               {priceBounds.max ? formatCurrency(priceBounds.max, currency) : "—"}
             </span>
           </div>
-        </label>
-
-        <label className="block rounded-lg border border-slate-200 bg-slate-50 p-2">
-          <span className="mb-1.5 flex items-center justify-between gap-2 text-xs font-semibold text-muted">
-            Stops up to{" "}
-            <span className="font-mono text-navy">{maxStops}</span>
-          </span>
-          <input
-            className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none"
-            type="range"
-            min={0}
-            max={3}
-            step={1}
-            value={maxStops}
-            onChange={(event) => setMaxStops(Number(event.target.value))}
-          />
         </label>
 
         <FilterSection
