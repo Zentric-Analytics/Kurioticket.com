@@ -42,7 +42,7 @@ export function DestinationCard({
         fill
         quality={92}
         sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-        className="object-cover transition duration-700 ease-out group-hover:scale-105"
+        className="object-cover brightness-110 contrast-105 saturate-[1.18] transition duration-700 ease-out group-hover:scale-105 group-hover:brightness-115 group-hover:saturate-[1.28]"
         style={{ objectPosition: imagePosition }}
         onError={() => {
           if (imageSource !== destinationImageFallback) {
@@ -50,26 +50,26 @@ export function DestinationCard({
           }
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/12 via-slate-950/48 to-slate-950/88 transition duration-300 group-hover:from-slate-950/6 group-hover:via-slate-950/42 group-hover:to-slate-950/90" />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/0 via-slate-950/24 to-slate-950/66 transition duration-300 group-hover:from-slate-950/0 group-hover:via-slate-950/18 group-hover:to-slate-950/70" />
 
       <div className="relative flex h-full min-h-[19.5rem] flex-col justify-between sm:min-h-[21.5rem]">
         <div className="flex items-center justify-between gap-3">
-          <span className="rounded-full bg-white/18 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-white/90 ring-1 ring-white/25 backdrop-blur">
+          <span className="rounded-full bg-white/28 px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-white ring-1 ring-white/35 backdrop-blur">
             {country}
           </span>
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/18 text-lg font-black ring-1 ring-white/25 backdrop-blur transition group-hover:bg-white group-hover:text-violet-700">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/28 text-lg font-black ring-1 ring-white/35 backdrop-blur transition group-hover:bg-white group-hover:text-violet-700">
             →
           </span>
         </div>
 
         <div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-white/70">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-white/82">
             {tag}
           </p>
           <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">
             {name}
           </h3>
-          <p className="mt-2 text-sm font-semibold leading-5 text-white/86">
+          <p className="mt-2 text-sm font-semibold leading-5 text-white/92">
             {subtitle}
           </p>
         </div>
