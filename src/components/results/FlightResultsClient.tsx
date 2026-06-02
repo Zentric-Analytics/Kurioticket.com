@@ -3540,15 +3540,15 @@ function Filters({
   setFlexibleOnly: (value: boolean) => void;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-      <div className="-m-3 mb-3 flex items-start justify-between gap-2 rounded-t-xl bg-gradient-to-r from-indigo-700 to-violet-600 p-3">
+    <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70">
+      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
           <h2 className="text-base font-bold text-white">Filter by</h2>
         </div>
         <SlidersHorizontal className="text-white/90" size={18} />
       </div>
 
-      <div className="mt-3 grid gap-3">
+      <div className="space-y-3 px-3 py-3">
         <label className="block">
           <span className="mb-1.5 flex items-center justify-between gap-2 text-[13px] font-semibold leading-5 text-slate-800">
             Price
