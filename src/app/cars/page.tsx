@@ -152,6 +152,24 @@ const toIsoDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
+const formatDisplayDate = (isoDate: string) => {
+  if (!isoDate) {
+    return "Select date";
+  }
+
+  const [year, month, day] = isoDate.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return "Select date";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(year, month - 1, day));
+};
+
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
   next.setDate(next.getDate() + days);
@@ -452,7 +470,7 @@ function CarsSearchBar({
     <section className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-4">
       <form onSubmit={onSubmit} className="space-y-3" noValidate>
         <div className="overflow-visible border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.08)]">
-          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.1fr)_minmax(14.5rem,1.45fr)_minmax(14.5rem,1.45fr)_minmax(6.5rem,0.68fr)_110px] lg:gap-0">
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.8fr)_minmax(8.6rem,0.78fr)_minmax(6.3rem,0.56fr)_minmax(8.6rem,0.78fr)_minmax(6.3rem,0.56fr)_minmax(5.7rem,0.46fr)_104px] lg:gap-0">
             <SearchCell
               label="Pickup"
               error={errors.pickupLocation || errors.dropoffLocation}
@@ -492,38 +510,48 @@ function CarsSearchBar({
             </SearchCell>
 
             <SearchCell
-              label="Pickup date / time"
-              error={errors.pickupDate || errors.pickupTime}
+              label="Pickup date"
+              error={errors.pickupDate}
               className="lg:border-x lg:border-x-slate-200/80"
             >
-              <DateTimeInputs
-                dateId="pickupDate"
-                dateName="pickupDate"
-                dateValue={values.pickupDate}
+              <DateInputBox
+                id="pickupDate"
+                name="pickupDate"
+                value={values.pickupDate}
                 minDate={todayIso}
-                onDateChange={(value) => updateValue("pickupDate", value)}
-                onTimeChange={(value) => updateValue("pickupTime", value)}
-                timeId="pickupTime"
-                timeName="pickupTime"
-                timeValue={values.pickupTime}
+                onChange={(value) => updateValue("pickupDate", value)}
+              />
+            </SearchCell>
+
+            <SearchCell label="Pickup time" error={errors.pickupTime}>
+              <TimeSelect
+                id="pickupTime"
+                name="pickupTime"
+                value={values.pickupTime}
+                onChange={(value) => updateValue("pickupTime", value)}
               />
             </SearchCell>
 
             <SearchCell
-              label="Return date / time"
-              error={errors.dropoffDate || errors.dropoffTime || errors.dateRange}
-              className="lg:border-r lg:border-r-slate-200/80"
+              label="Return date"
+              error={errors.dropoffDate || errors.dateRange}
+              className="lg:border-x lg:border-x-slate-200/80"
             >
-              <DateTimeInputs
-                dateId="dropoffDate"
-                dateName="dropoffDate"
-                dateValue={values.dropoffDate}
+              <DateInputBox
+                id="dropoffDate"
+                name="dropoffDate"
+                value={values.dropoffDate}
                 minDate={values.pickupDate || todayIso}
-                onDateChange={(value) => updateValue("dropoffDate", value)}
-                onTimeChange={(value) => updateValue("dropoffTime", value)}
-                timeId="dropoffTime"
-                timeName="dropoffTime"
-                timeValue={values.dropoffTime}
+                onChange={(value) => updateValue("dropoffDate", value)}
+              />
+            </SearchCell>
+
+            <SearchCell label="Return time" error={errors.dropoffTime}>
+              <TimeSelect
+                id="dropoffTime"
+                name="dropoffTime"
+                value={values.dropoffTime}
+                onChange={(value) => updateValue("dropoffTime", value)}
               />
             </SearchCell>
 
@@ -628,52 +656,63 @@ function CarPickupCardLink({ card }: { card: CarPickupCard }) {
   );
 }
 
-function DateTimeInputs({
-  dateId,
-  dateName,
-  dateValue,
+function DateInputBox({
+  id,
   minDate,
-  onDateChange,
-  onTimeChange,
-  timeId,
-  timeName,
-  timeValue,
+  name,
+  onChange,
+  value,
 }: {
-  dateId: string;
-  dateName: string;
-  dateValue: string;
+  id: string;
   minDate: string;
-  onDateChange: (value: string) => void;
-  onTimeChange: (value: string) => void;
-  timeId: string;
-  timeName: string;
-  timeValue: string;
+  name: string;
+  onChange: (value: string) => void;
+  value: string;
 }) {
   return (
-    <div className="grid grid-cols-[minmax(8.75rem,1fr)_minmax(5.75rem,0.6fr)] items-end gap-2">
+    <label className="relative block h-8 cursor-pointer overflow-hidden text-sm font-semibold text-slate-950">
+      <span className={value ? "text-slate-950" : "text-slate-400"}>
+        {formatDisplayDate(value)}
+      </span>
       <input
-        id={dateId}
-        name={dateName}
+        id={id}
+        name={name}
         type="date"
         min={minDate}
-        value={dateValue}
-        onChange={(event) => onDateChange(event.target.value)}
-        className="h-8 min-w-0 border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+        aria-label={name}
       />
-      <select
-        id={timeId}
-        name={timeName}
-        value={timeValue}
-        onChange={(event) => onTimeChange(event.target.value)}
-        className="h-8 min-w-0 border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
-      >
-        {timeOptions.map((time) => (
-          <option key={`${timeId}-${time}`} value={time}>
-            {time}
-          </option>
-        ))}
-      </select>
-    </div>
+    </label>
+  );
+}
+
+function TimeSelect({
+  id,
+  name,
+  onChange,
+  value,
+}: {
+  id: string;
+  name: string;
+  onChange: (value: string) => void;
+  value: string;
+}) {
+  return (
+    <select
+      id={id}
+      name={name}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      className="h-8 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+    >
+      {timeOptions.map((time) => (
+        <option key={`${id}-${time}`} value={time}>
+          {time}
+        </option>
+      ))}
+    </select>
   );
 }
 
