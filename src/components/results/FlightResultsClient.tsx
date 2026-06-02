@@ -1845,7 +1845,7 @@ export function FlightResultsClient() {
 
               <div className="border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
                 <div className="max-w-full overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
-                  <div className="grid w-max grid-cols-4 grid-rows-2 gap-3 [grid-template-columns:repeat(4,9.75rem)] sm:w-auto sm:grid-cols-3 sm:grid-rows-none sm:gap-4 sm:[grid-template-columns:repeat(3,minmax(0,1fr))] lg:grid-cols-4 lg:gap-5 lg:[grid-template-columns:repeat(4,minmax(0,1fr))] xl:gap-6">
+                  <div className="grid w-max grid-cols-4 grid-rows-2 gap-3 [grid-template-columns:repeat(4,11.5rem)] sm:w-auto sm:grid-cols-3 sm:grid-rows-none sm:gap-4 sm:[grid-template-columns:repeat(3,minmax(0,1fr))] lg:grid-cols-4 lg:gap-5 lg:[grid-template-columns:repeat(4,minmax(0,1fr))] xl:gap-6">
                     {beachVacationCards.slice(0, 6).map((item, index) => {
                       const beachVisual = getBeachVacationVisual(item);
                       const mobilePlacement =
@@ -1861,13 +1861,13 @@ export function FlightResultsClient() {
                           className={`${mobilePlacement} group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2`}
                         >
                           <article className="flex h-full flex-col">
-                            <div className="relative h-36 overflow-hidden bg-sky-50 sm:h-32 lg:h-40">
+                            <div className="relative h-44 overflow-hidden bg-sky-50 sm:h-32 lg:h-40">
                               <Image
                                 src={beachVisual.image}
                                 alt={beachVisual.imageAlt}
                                 fill
                                 priority={false}
-                                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 9.75rem"
+                                sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 11.5rem"
                                 className="object-cover brightness-[1.05] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                               />
                             </div>
