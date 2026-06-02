@@ -136,28 +136,27 @@ export function HotelResultsClient() {
         </div>
       </div>
 
-      <div className="page-shell grid gap-5 py-4 lg:grid-cols-[300px_1fr]">
+      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr]">
         <aside className="hidden lg:block">
           <HotelFilters
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
             minRating={minRating}
             setMinRating={setMinRating}
-            results={results}
           />
         </aside>
-        <section className="min-w-0 space-y-4">
-          <div className="rounded-3xl border border-indigo-100 bg-white/90 p-4 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)]">
+        <section className="min-w-0 space-y-5">
+          <div className="rounded-3xl border border-indigo-100 bg-white/90 p-5 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)]">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-violet-800">
                   <Hotel size={14} />
                   Hotel comparison
                 </div>
-                <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-indigo-950 sm:text-3xl">
+                <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-indigo-950 sm:text-3xl">
                   Stays in {body.destination}
                 </h1>
-                <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
                   Compare hotel prices, amenities, and provider details in one
                   place. Kurioticket may redirect you to a hotel provider to
                   review final availability and complete booking.
@@ -225,8 +224,8 @@ export function HotelResultsClient() {
                   Sorted by {getSortLabel(body.sort)}
                 </p>
               </div>
-              {filtered.map((hotel, index) => (
-                <HotelCard key={hotel.id} hotel={hotel} index={index} />
+              {filtered.map((hotel) => (
+                <HotelCard key={hotel.id} hotel={hotel} />
               ))}
             </>
           )}
@@ -262,7 +261,6 @@ export function HotelResultsClient() {
           setMaxPrice={setMaxPrice}
           minRating={minRating}
           setMinRating={setMinRating}
-          results={results}
         />
       </aside>
     </main>
@@ -274,189 +272,76 @@ function HotelFilters({
   setMaxPrice,
   minRating,
   setMinRating,
-  results,
 }: {
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   minRating: number;
   setMinRating: (value: number) => void;
-  results: PublicHotelResult[];
 }) {
-  const availableCount = results.length;
-  const popularFilters = [
-    { label: "Free Wi-Fi", count: countAmenities(results, /wi-?fi|internet/i) },
-    { label: "Breakfast included", count: countAmenities(results, /breakfast/i) },
-    { label: "Late check-in", count: countAmenities(results, /late|24/i) },
-    { label: "Transit friendly", count: countAmenities(results, /airport|transit|shuttle/i) },
-  ];
-  const facilities = [
-    { label: "Pool", count: countAmenities(results, /pool/i) },
-    { label: "Airport shuttle", count: countAmenities(results, /shuttle|airport/i) },
-    { label: "Parking", count: countAmenities(results, /parking/i) },
-  ];
-  const meals = [
-    { label: "Breakfast", count: countAmenities(results, /breakfast/i) },
-    { label: "Board available", count: countAmenities(results, /board|meal|restaurant/i) },
-  ];
-  const cancellation = [
-    { label: "Policy shown", count: results.filter((hotel) => Boolean(hotel.cancellationInfo)).length },
-    { label: "Flexible wording", count: results.filter((hotel) => /flexible|free/i.test(hotel.cancellationInfo)).length },
-  ];
-
   return (
-    <div className="rounded-[1.65rem] border border-indigo-100 bg-white p-4 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.6)] lg:sticky lg:top-32">
-      <div className="border-b border-indigo-100 pb-3">
-        <h2 className="text-lg font-black tracking-tight text-indigo-950">
-          Filter by
+    <div className="rounded-3xl border border-indigo-100 bg-white p-5 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)]">
+      <div>
+        <h2 className="text-base font-extrabold text-indigo-950">
+          Refine results
         </h2>
         <p className="mt-1 text-xs leading-5 text-slate-500">
-          Narrow the list without losing sight of total stay price.
+          Keep the list focused on stays that fit your budget and quality
+          preference.
         </p>
       </div>
-      <div className="divide-y divide-slate-100">
-        <FilterSection title="Budget">
-          <label className="block rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-50 p-3 ring-1 ring-violet-100">
-            <span className="mb-2 flex items-center justify-between text-sm font-extrabold text-indigo-950">
-              Total up to
-              <span className="font-mono text-violet-700">
-                {formatCurrency(maxPrice)}
-              </span>
+      <div className="mt-5 grid gap-5">
+        <label className="block rounded-2xl bg-violet-50/70 p-4">
+          <span className="mb-3 flex items-center justify-between text-sm font-bold text-indigo-950">
+            Total up to{" "}
+            <span className="font-mono text-violet-700">
+              {formatCurrency(maxPrice)}
             </span>
-            <input
-              className="w-full accent-violet-700"
-              type="range"
-              min={100}
-              max={3000}
-              step={25}
-              value={maxPrice}
-              onChange={(event) => setMaxPrice(Number(event.target.value))}
-            />
-          </label>
-        </FilterSection>
-
-        <FilterSection title="Popular filters">
-          {popularFilters.map((option) => (
-            <FilterOption key={option.label} {...option} />
-          ))}
-        </FilterSection>
-
-        <FilterSection title="Star rating">
-          {[5, 4, 3].map((rating) => (
-            <button
-              key={rating}
-              type="button"
-              className={cn(
-                "flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left text-sm font-semibold transition hover:bg-violet-50",
-                minRating === rating ? "text-violet-800" : "text-slate-700",
-              )}
-              onClick={() => setMinRating(rating)}
-            >
-              <span
-                className={cn(
-                  "flex h-4 w-4 items-center justify-center rounded border",
-                  minRating === rating
-                    ? "border-violet-700 bg-violet-700 text-white"
-                    : "border-slate-300 bg-white",
-                )}
-              >
-                {minRating === rating ? "✓" : ""}
-              </span>
-              <span className="min-w-0 flex-1">{rating}+ stars</span>
-              <span className="text-xs font-semibold text-slate-400">
-                {results.filter((hotel) => hotel.rating >= rating).length}
-              </span>
-            </button>
-          ))}
-        </FilterSection>
-
-        <FilterSection title="Guest rating">
-          <label className="block rounded-2xl bg-violet-50/70 p-3">
-            <span className="mb-2 flex items-center justify-between text-sm font-extrabold text-indigo-950">
-              Rating from
-              <span className="font-mono text-violet-700">{minRating}+</span>
-            </span>
-            <input
-              className="w-full accent-violet-700"
-              type="range"
-              min={1}
-              max={5}
-              step={0.5}
-              value={minRating}
-              onChange={(event) => setMinRating(Number(event.target.value))}
-            />
-          </label>
-        </FilterSection>
-
-        <FilterSection title="Property type">
-          <FilterOption label="Hotels" count={availableCount} checked />
-          <FilterOption label="Apartments" count={countHotelText(results, /apartment|suite/i)} />
-          <FilterOption label="Resorts" count={countHotelText(results, /resort/i)} />
-        </FilterSection>
-
-        <FilterSection title="Facilities">
-          {facilities.map((option) => (
-            <FilterOption key={option.label} {...option} />
-          ))}
-        </FilterSection>
-
-        <FilterSection title="Meals">
-          {meals.map((option) => (
-            <FilterOption key={option.label} {...option} />
-          ))}
-        </FilterSection>
-
-        <FilterSection title="Cancellation policy">
-          {cancellation.map((option) => (
-            <FilterOption key={option.label} {...option} />
-          ))}
-        </FilterSection>
-
-        <FilterSection title="Location">
-          <FilterOption label="Central area" count={results.filter((hotel) => /central|center|centre/i.test(hotel.distanceFromCenter || hotel.location)).length} checked />
-          <FilterOption label="Transit-friendly" count={results.filter((hotel) => /transit|airport/i.test(`${hotel.distanceFromCenter} ${hotel.amenities.join(" ")}`)).length} />
-        </FilterSection>
+          </span>
+          <input
+            className="w-full accent-violet-700"
+            type="range"
+            min={100}
+            max={3000}
+            step={25}
+            value={maxPrice}
+            onChange={(event) => setMaxPrice(Number(event.target.value))}
+          />
+        </label>
+        <label className="block rounded-2xl bg-violet-50/70 p-4">
+          <span className="mb-3 flex items-center justify-between text-sm font-bold text-indigo-950">
+            Rating from{" "}
+            <span className="font-mono text-violet-700">{minRating}+</span>
+          </span>
+          <input
+            className="w-full accent-violet-700"
+            type="range"
+            min={1}
+            max={5}
+            step={0.5}
+            value={minRating}
+            onChange={(event) => setMinRating(Number(event.target.value))}
+          />
+        </label>
+        <div className="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600">
+          <p className="font-bold text-indigo-950">Quick comparison cues</p>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-violet-600" />{" "}
+              Late-arrival score
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-violet-600" /> Total stay
+              price
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-violet-600" /> Provider
+              confirmation
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   );
-}
-
-function FilterSection({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="py-3 first:pt-4 last:pb-0">
-      <h3 className="mb-2 text-sm font-black tracking-tight text-indigo-950">{title}</h3>
-      <div className="space-y-1">{children}</div>
-    </section>
-  );
-}
-
-function FilterOption({ label, count, checked = false }: { label: string; count: number; checked?: boolean }) {
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm font-semibold",
-        checked ? "bg-violet-50 text-violet-800" : "text-slate-700",
-      )}
-    >
-      <span
-        className={cn(
-          "flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[10px]",
-          checked ? "border-violet-700 bg-violet-700 text-white" : "border-slate-300 bg-white",
-        )}
-      >
-        {checked ? "✓" : ""}
-      </span>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      <span className="text-xs font-semibold text-slate-400">{count}</span>
-    </div>
-  );
-}
-
-function countAmenities(results: PublicHotelResult[], matcher: RegExp) {
-  return results.filter((hotel) => hotel.amenities.some((amenity) => matcher.test(amenity))).length;
-}
-
-function countHotelText(results: PublicHotelResult[], matcher: RegExp) {
-  return results.filter((hotel) => matcher.test(`${hotel.name} ${hotel.roomType} ${hotel.amenities.join(" ")}`)).length;
 }
 
 function SummaryStat({ label, value }: { label: string; value: string }) {
@@ -520,8 +405,8 @@ function getNightCount(checkIn: string, checkOut: string) {
 function HotelSkeleton() {
   return (
     <div className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
-      <div className="grid gap-4 lg:grid-cols-[34%_1fr]">
-        <Skeleton className="aspect-[16/10] min-h-[230px] lg:aspect-auto lg:min-h-[286px]" />
+      <div className="grid gap-4 md:grid-cols-[260px_1fr]">
+        <Skeleton className="aspect-[16/10] md:aspect-auto md:min-h-[236px]" />
         <div className="space-y-3">
           <Skeleton className="h-5 w-56" />
           <Skeleton className="h-4 w-40" />
