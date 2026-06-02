@@ -18,10 +18,12 @@ import { useRegion } from "@/components/region/RegionProvider";
 
 type CountryCurrencySelectorProps = {
   variant?: "default" | "header";
+  grouped?: boolean;
 };
 
 export function CountryCurrencySelector({
   variant = "default",
+  grouped = false,
 }: CountryCurrencySelectorProps) {
   const {
     mode,
@@ -39,9 +41,14 @@ export function CountryCurrencySelector({
   const isHeaderVariant =
     variant === "header";
 
-  const triggerClassName = isHeaderVariant
-    ? "inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 text-sm font-semibold text-indigo-50 shadow-sm transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
-    : "inline-flex h-12 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm";
+  const isGroupedHeaderVariant =
+    isHeaderVariant && grouped;
+
+  const triggerClassName = isGroupedHeaderVariant
+    ? "inline-flex h-12 items-center gap-2 rounded-l-full border-0 bg-transparent px-4 text-sm font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+    : isHeaderVariant
+      ? "inline-flex h-12 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 text-sm font-semibold text-indigo-50 shadow-sm transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
+      : "inline-flex h-12 items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm";
 
   const chevronClassName = isHeaderVariant
     ? "text-indigo-100"
