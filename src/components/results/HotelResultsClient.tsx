@@ -199,7 +199,7 @@ export function HotelResultsClient() {
         </div>
       </div>
 
-      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[280px_1fr] xl:grid-cols-[300px_1fr]">
+      <div className="page-shell grid gap-7 py-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:gap-8 xl:gap-10">
         <aside className="hidden lg:block">
           <HotelFilters
             filters={filters}
@@ -368,11 +368,11 @@ function HotelFilters({
   };
 
   return (
-    <div className="rounded-3xl border border-indigo-100 bg-white shadow-[0_20px_65px_-38px_rgba(67,56,202,0.65)] lg:sticky lg:top-40 lg:max-h-[calc(100dvh-11rem)] lg:overflow-auto">
-      <div className="sticky top-0 z-10 border-b border-indigo-100 bg-white/95 p-5 backdrop-blur">
+    <div className="rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_22px_60px_-42px_rgba(15,23,42,0.65),0_10px_28px_-24px_rgba(109,40,217,0.5)] lg:sticky lg:top-40 lg:max-h-[calc(100dvh-11rem)] lg:overflow-auto">
+      <div className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 p-5 backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-extrabold text-indigo-950">
+            <h2 className="text-lg font-extrabold tracking-tight text-indigo-950">
               Filter by
             </h2>
             <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -380,7 +380,7 @@ function HotelFilters({
             </p>
           </div>
           {activeFilterCount ? (
-            <span className="rounded-full bg-violet-100 px-2.5 py-1 text-xs font-extrabold text-violet-800">
+            <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-extrabold text-violet-800 shadow-sm">
               {activeFilterCount}
             </span>
           ) : null}
@@ -396,10 +396,10 @@ function HotelFilters({
         ) : null}
       </div>
 
-      <div className="space-y-1 p-5 pt-4">
-        <section className="border-b border-slate-100 pb-5">
+      <div className="space-y-6 p-5 pt-5">
+        <section className="border-b border-slate-200 pb-6">
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-extrabold text-indigo-950">
+            <h3 className="text-[15px] font-extrabold tracking-tight text-indigo-950">
               Budget / price per night
             </h3>
             <span className="font-mono text-sm font-extrabold text-violet-700">
@@ -439,22 +439,22 @@ function HotelFilters({
           return (
             <section
               key={group.key}
-              className="border-b border-slate-100 py-5 last:border-b-0 last:pb-0"
+              className="border-b border-slate-200 pb-6 last:border-b-0 last:pb-0"
             >
-              <h3 className="text-sm font-extrabold text-indigo-950">
+              <h3 className="text-[15px] font-extrabold tracking-tight text-indigo-950">
                 {group.title}
               </h3>
-              <div className="mt-3 space-y-2">
+              <div className="mt-4 space-y-2.5">
                 {visibleOptions.map((option) => {
                   const checked = filters[group.key].includes(option.value);
                   return (
                     <label
                       key={option.value}
                       className={cn(
-                        "flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition",
+                        "grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border px-3.5 py-3 text-sm transition",
                         checked
-                          ? "border-violet-200 bg-violet-50/80 text-indigo-950 shadow-sm"
-                          : "border-transparent text-slate-600 hover:border-violet-100 hover:bg-violet-50/45",
+                          ? "border-violet-300 bg-violet-50 text-indigo-950 shadow-[0_10px_24px_-18px_rgba(109,40,217,0.75)] ring-1 ring-violet-100"
+                          : "border-transparent text-slate-700 hover:border-violet-100 hover:bg-violet-50/50",
                       )}
                     >
                       <input
@@ -466,7 +466,7 @@ function HotelFilters({
                       />
                       <span
                         className={cn(
-                          "min-w-0 flex-1 truncate",
+                          "min-w-0 break-words text-sm font-medium leading-5",
                           checked && "font-bold text-indigo-950",
                         )}
                       >
@@ -474,9 +474,9 @@ function HotelFilters({
                       </span>
                       <span
                         className={cn(
-                          "rounded-full px-2 py-0.5 text-xs font-bold",
+                          "self-center justify-self-end rounded-full px-2 py-0.5 text-[11px] font-bold leading-5",
                           checked
-                            ? "bg-white text-violet-700"
+                            ? "border border-violet-100 bg-white text-violet-700 shadow-sm"
                             : "bg-slate-100 text-slate-500",
                         )}
                       >
@@ -489,7 +489,7 @@ function HotelFilters({
               {hasMore ? (
                 <button
                   type="button"
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-extrabold text-violet-700 hover:text-violet-900"
+                  className="mt-4 inline-flex items-center gap-1 text-xs font-extrabold text-violet-700 hover:text-violet-900"
                   onClick={() =>
                     setExpandedGroups((current) => ({
                       ...current,
