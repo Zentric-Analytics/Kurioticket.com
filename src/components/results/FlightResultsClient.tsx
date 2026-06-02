@@ -1792,36 +1792,38 @@ export function FlightResultsClient() {
                 </div>
 
                 <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5">
-                    {routeInspirationCards.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={buildDiscoveryLink(item)}
-                        aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                        className="group rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:p-3"
-                      >
-                        <article className="flex h-full flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
-                          <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem]">
-                            <Image
-                              src={item.image}
-                              alt={item.imageAlt}
-                              fill
-                              priority={false}
-                              sizes="(min-width: 1024px) 72px, (min-width: 640px) 64px, 33vw"
-                              className="object-cover saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-900 sm:text-base sm:leading-6">
-                              {item.originCity} → {item.destinationCity}
-                            </h3>
-                            <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
-                              {item.originCode} → {item.destinationCode}
-                            </p>
-                          </div>
-                        </article>
-                      </Link>
-                    ))}
+                  <div className="max-w-full overflow-x-auto overflow-y-hidden pb-2 [scrollbar-width:none] [-ms-overflow-style:none] sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden">
+                    <div className="grid grid-flow-col grid-rows-3 auto-cols-[9.5rem] gap-3 sm:grid-flow-row sm:grid-rows-none sm:auto-cols-auto sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5">
+                      {routeInspirationCards.map((item) => (
+                        <Link
+                          key={item.id}
+                          href={buildDiscoveryLink(item)}
+                          aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                          className="group rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:p-3"
+                        >
+                          <article className="flex h-full flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
+                            <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem]">
+                              <Image
+                                src={item.image}
+                                alt={item.imageAlt}
+                                fill
+                                priority={false}
+                                sizes="(min-width: 1024px) 72px, (min-width: 640px) 64px, 9.5rem"
+                                className="object-cover saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                              />
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-900 sm:text-base sm:leading-6">
+                                {item.originCity} → {item.destinationCity}
+                              </h3>
+                              <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                                {item.originCode} → {item.destinationCode}
+                              </p>
+                            </div>
+                          </article>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </section>
