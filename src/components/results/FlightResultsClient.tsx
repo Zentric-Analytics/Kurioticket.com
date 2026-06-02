@@ -42,6 +42,8 @@ import {
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatCurrency } from "@/lib/utils";
 
+const resultStackClass = "w-full max-w-[640px] lg:ml-4 xl:ml-6";
+
 const loadingMessages = [
   "Searching airlines...",
   "Comparing prices...",
@@ -2333,8 +2335,8 @@ export function FlightResultsClient() {
               {error}
             </div>
           ) : (
-            <>
-              <div className="mx-auto flex w-full max-w-[640px] flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className={cn(resultStackClass, "space-y-4")}>
+              <div className="flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
                   {filtered.length} option{filtered.length === 1 ? "" : "s"}{" "}
                   found
@@ -2350,7 +2352,7 @@ export function FlightResultsClient() {
               </div>
 
               {warnings.length > 0 ? (
-                <div className="mx-auto w-full max-w-[640px] rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900 shadow-sm" role="status">
+                <div className="w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900 shadow-sm" role="status">
                   Some provider checks may be limited for this search. Review final availability and fare details with the provider before booking.
                 </div>
               ) : null}
@@ -2365,7 +2367,7 @@ export function FlightResultsClient() {
                   range to see more live options.
                 </div>
               )}
-            </>
+            </div>
           )}
         </section>
       </div>
