@@ -73,7 +73,7 @@ const curatedDestinationPhotos: Record<string, string> = {
   "Athens|Greece":
     "https://images.unsplash.com/photo-1555993539-1732b0258235?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Marrakech|Morocco":
-    "https://images.unsplash.com/photo-1597212720158-0a65b7ab7434?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.pexels.com/photos/31356131/pexels-photo-31356131.jpeg?auto=compress&cs=tinysrgb&w=1600",
   "Nairobi|Kenya":
     "https://images.unsplash.com/photo-1523805009345-7448845a9e53?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Kuala Lumpur|Malaysia":
@@ -95,13 +95,13 @@ const curatedDestinationPhotos: Record<string, string> = {
   "Milan|Italy":
     "https://images.unsplash.com/photo-1520440229-6469a149ac59?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Accra|Ghana":
-    "https://images.unsplash.com/photo-1553901753-215db3446770?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.pexels.com/photos/31781975/pexels-photo-31781975.jpeg?auto=compress&cs=tinysrgb&w=1600",
   "Lagos|Nigeria":
     "https://images.pexels.com/photos/32014864/pexels-photo-32014864.jpeg?auto=compress&cs=tinysrgb&w=1600",
   "Abuja|Nigeria":
     "https://images.pexels.com/photos/20453360/pexels-photo-20453360.jpeg?auto=compress&cs=tinysrgb&w=1600",
   "Muscat|Oman":
-    "https://images.unsplash.com/photo-1582647509711-c8aa8bdc5a09?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.pexels.com/photos/30798979/pexels-photo-30798979.jpeg?auto=compress&cs=tinysrgb&w=1600",
   "Jeddah|Saudi Arabia":
     "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Vancouver|Canada":
@@ -111,7 +111,7 @@ const curatedDestinationPhotos: Record<string, string> = {
   "San Francisco|United States":
     "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Seoul|South Korea":
-    "https://images.unsplash.com/photo-1538485399081-7c8ed0e8fabb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.pexels.com/photos/32196432/pexels-photo-32196432.jpeg?auto=compress&cs=tinysrgb&w=1600",
   "Osaka|Japan":
     "https://images.unsplash.com/photo-1590559899731-a382839e5549?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
   "Bali|Indonesia":
