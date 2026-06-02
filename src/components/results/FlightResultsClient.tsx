@@ -1792,22 +1792,22 @@ export function FlightResultsClient() {
                 </div>
 
                 <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5">
+                  <div className="flex snap-x gap-3 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:pb-0 lg:grid-cols-3 lg:gap-5 [&::-webkit-scrollbar]:hidden">
                     {routeInspirationCards.map((item) => (
                       <Link
                         key={item.id}
                         href={buildDiscoveryLink(item)}
                         aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                        className="group rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:p-3"
+                        className="group min-w-[72vw] snap-start rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-0 sm:p-3"
                       >
                         <article className="flex h-full flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
-                          <div className="relative h-20 w-full shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem]">
+                          <div className="relative h-32 w-full shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-16 sm:w-16 lg:h-[4.5rem] lg:w-[4.5rem]">
                             <Image
                               src={item.image}
                               alt={item.imageAlt}
                               fill
                               priority={false}
-                              sizes="(min-width: 1024px) 72px, (min-width: 640px) 64px, 50vw"
+                              sizes="(min-width: 1024px) 72px, (min-width: 640px) 64px, 72vw"
                               className="object-cover saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                             />
                           </div>
