@@ -1955,10 +1955,11 @@ export function FlightResultsClient() {
             <div className="flex flex-col gap-1">
               <button
                 type="button"
+                aria-label="Close search form"
                 onClick={() => setMobileSearchOpen(false)}
-                className="self-start text-xs font-semibold text-slate-500 transition hover:text-slate-700 sm:hidden"
+                className="inline-flex h-8 w-8 items-center justify-center self-start rounded-full text-sm font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:hidden"
               >
-                Cancel
+                X
               </button>
 
               <div className="relative inline-flex items-center self-start">
