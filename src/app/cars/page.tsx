@@ -465,7 +465,7 @@ function CarsSearchPage() {
             <div className="px-1">
               <h1
                 id="cars-search-heading"
-                className="text-[2rem] font-black leading-[1.04] tracking-[-0.04em] text-slate-950 md:text-[2.35rem] lg:whitespace-nowrap lg:text-[2.5rem] xl:text-[2.7rem]"
+                className="text-[2rem] font-semibold leading-[1.08] tracking-[-0.025em] text-slate-900 md:text-[2.35rem] lg:whitespace-nowrap lg:text-[2.5rem] xl:text-[2.7rem]"
               >
                 Search rental cars for every part of your trip
               </h1>
@@ -555,7 +555,7 @@ function CarsFaqSection() {
           id="cars-faq-heading"
           className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
         >
-          FAQ
+          Cars Frequently asked questions
         </h2>
       </div>
 
