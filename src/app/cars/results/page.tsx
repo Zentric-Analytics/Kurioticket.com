@@ -86,7 +86,27 @@ const formatDate = (date: string) => {
     : date;
 };
 
+const defaultDriverAge = "18-70";
+const driverAgeRangeLabel = "Any driver age 18–70";
+
 const displayValue = (value: string) => value || "Not selected";
+
+const formatDriverAge = (driverAge: string) => {
+  if (!driverAge) {
+    return "Not selected";
+  }
+
+  if (driverAge === defaultDriverAge || driverAge === "18–70") {
+    return driverAgeRangeLabel;
+  }
+
+  const numericDriverAge = Number.parseInt(driverAge, 10);
+
+  return !Number.isNaN(numericDriverAge) &&
+    String(numericDriverAge) === driverAge
+    ? `${numericDriverAge} years old`
+    : driverAge;
+};
 
 const buildEditHref = (params: Awaited<CarsResultsSearchParams>) => {
   const editParams = new URLSearchParams();
@@ -158,7 +178,7 @@ export default async function CarsResultsPage({
     },
     {
       label: "Driver age",
-      value: driverAge ? `${driverAge} years old` : "Not selected",
+      value: formatDriverAge(driverAge),
       icon: Users,
     },
   ];

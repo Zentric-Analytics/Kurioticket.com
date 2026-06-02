@@ -50,38 +50,17 @@ type CarPickupCard = {
   imageAlt: string;
 };
 
-const driverAgeOptions = [
-  "18",
-  "19",
-  "20",
-  "21",
-  "22",
-  "23",
-  "24",
-  "25",
-  "26",
-  "27",
-  "28",
-  "29",
-  "30",
-  "31",
-  "32",
-  "33",
-  "34",
-  "35",
-  "36",
-  "37",
-  "38",
-  "39",
-  "40",
-  "45",
-  "50",
-  "55",
-  "60",
-  "65",
-  "70",
-  "75",
-];
+const defaultDriverAge = "18-70";
+const defaultDriverAgeLabel = "Any age 18–70";
+const minimumDriverAge = 18;
+const maximumDriverAge = 70;
+
+const specificDriverAgeOptions = Array.from(
+  { length: maximumDriverAge - minimumDriverAge + 1 },
+  (_, index) => String(minimumDriverAge + index),
+);
+
+const driverAgeOptions = [defaultDriverAge, ...specificDriverAgeOptions];
 
 const timeOptions = Array.from({ length: 48 }, (_, index) => {
   const hour = Math.floor(index / 2);
@@ -270,6 +249,17 @@ const addDays = (date: Date, days: number) => {
   return next;
 };
 
+const normalizeDriverAge = (value: string) => {
+  const trimmedValue = value.trim();
+
+  return driverAgeOptions.includes(trimmedValue)
+    ? trimmedValue
+    : defaultDriverAge;
+};
+
+const getDriverAgeOptionLabel = (age: string) =>
+  age === defaultDriverAge ? defaultDriverAgeLabel : age;
+
 const buildPickupHref = (pickupLocation: string) => {
   const today = new Date();
   const pickupDate = toIsoDate(addDays(today, 14));
@@ -281,7 +271,7 @@ const buildPickupHref = (pickupLocation: string) => {
     pickupTime: "10:00",
     dropoffDate,
     dropoffTime: "10:00",
-    driverAge: "30",
+    driverAge: defaultDriverAge,
     dropoffLocation: pickupLocation,
   }).toString()}`;
 };
@@ -299,7 +289,7 @@ const getInitialValues = (params: URLSearchParams | null): CarsFormValues => {
     pickupTime: getSearchParam(params, "pickupTime") || "10:00",
     dropoffDate: getSearchParam(params, "dropoffDate"),
     dropoffTime: getSearchParam(params, "dropoffTime") || "10:00",
-    driverAge: getSearchParam(params, "driverAge") || "30",
+    driverAge: normalizeDriverAge(getSearchParam(params, "driverAge")),
     returnToDifferentLocation: differentDropoff,
     dropoffLocation: differentDropoff ? dropoffLocation : "",
   };
@@ -313,6 +303,7 @@ const validateCarsForm = (
   const pickupLocation = values.pickupLocation.trim();
   const dropoffLocation = values.dropoffLocation.trim();
   const driverAge = Number.parseInt(values.driverAge, 10);
+  const hasDefaultDriverAge = values.driverAge === defaultDriverAge;
 
   if (!pickupLocation) {
     errors.pickupLocation = "Enter a pickup location.";
@@ -339,12 +330,14 @@ const validateCarsForm = (
   }
 
   if (
-    !values.driverAge ||
-    Number.isNaN(driverAge) ||
-    driverAge < 18 ||
-    driverAge > 99
+    !hasDefaultDriverAge &&
+    (!values.driverAge ||
+      Number.isNaN(driverAge) ||
+      String(driverAge) !== values.driverAge ||
+      driverAge < minimumDriverAge ||
+      driverAge > maximumDriverAge)
   ) {
-    errors.driverAge = "Select a driver age between 18 and 99.";
+    errors.driverAge = "Select Any age 18–70 or a driver age from 18 to 70.";
   }
 
   if (values.returnToDifferentLocation && !dropoffLocation) {
@@ -391,7 +384,7 @@ function CarsSearchPage() {
     values.pickupLocation.trim() ||
     values.pickupDate ||
     values.dropoffDate ||
-    values.driverAge !== "30" ||
+    values.driverAge !== defaultDriverAge ||
     values.returnToDifferentLocation ||
     values.dropoffLocation.trim();
 
@@ -426,7 +419,7 @@ function CarsSearchPage() {
       pickupTime: "10:00",
       dropoffDate: "",
       dropoffTime: "10:00",
-      driverAge: "30",
+      driverAge: defaultDriverAge,
       returnToDifferentLocation: false,
       dropoffLocation: "",
     });
@@ -574,28 +567,26 @@ function CarsFaqSection() {
         </p>
       </div>
 
-      <div className="border border-slate-200/80 bg-white/85 p-2.5 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-4 md:p-5">
-        <div className="grid gap-2 md:grid-cols-2 md:gap-3">
-          {carsFaqItems.map((item) => (
-            <details
-              key={item.question}
-              className="group border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.96),rgba(248,250,252,0.78))] px-4 py-3 shadow-[0_10px_28px_-26px_rgba(15,23,42,0.3)] open:border-indigo-200/80 open:bg-white"
-            >
-              <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
-                <span>{item.question}</span>
-                <span
-                  className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center border border-slate-200 bg-white text-sm leading-none text-slate-500 transition group-open:rotate-45 group-open:border-indigo-200 group-open:text-indigo-600"
-                  aria-hidden="true"
-                >
-                  +
-                </span>
-              </summary>
-              <p className="mt-2.5 text-sm leading-6 text-slate-600">
-                {item.answer}
-              </p>
-            </details>
-          ))}
-        </div>
+      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+        {carsFaqItems.map((item) => (
+          <details
+            key={item.question}
+            className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-4 py-4 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-indigo-200/80 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(79,70,229,0.36)] sm:px-5"
+          >
+            <summary className="flex min-h-12 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
+              <span>{item.question}</span>
+              <span
+                className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-indigo-200 group-open:text-indigo-600"
+                aria-hidden="true"
+              >
+                +
+              </span>
+            </summary>
+            <p className="mt-2.5 text-sm leading-6 text-slate-600">
+              {item.answer}
+            </p>
+          </details>
+        ))}
       </div>
     </section>
   );
@@ -818,7 +809,7 @@ function CarsSearchBar({
               >
                 {driverAgeOptions.map((age) => (
                   <option key={age} value={age}>
-                    {age}
+                    {getDriverAgeOptionLabel(age)}
                   </option>
                 ))}
               </select>
