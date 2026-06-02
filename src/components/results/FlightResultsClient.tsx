@@ -653,6 +653,34 @@ export function FlightResultsClient() {
     destinationSuggestions.length > 0
       ? destinationSuggestions
       : destinationFallbackSuggestions;
+  const mobileTripTypeSummary =
+    tripTypeInput === "one-way" ? "One-way" : "Round-trip";
+  const mobileOriginSummary = (originCode || originInput || "Origin").trim();
+  const mobileDestinationSummary = (
+    destinationCode ||
+    destinationInput ||
+    "Destination"
+  ).trim();
+  const mobileRouteSummary = `${mobileOriginSummary} → ${mobileDestinationSummary}`;
+  const mobileDateSummary = departureDateInput
+    ? tripTypeInput === "round-trip" && returnDateInput
+      ? `${formatCompactDateLabel(departureDateInput)} – ${formatCompactDateLabel(returnDateInput)}`
+      : formatCompactDateLabel(departureDateInput)
+    : "Travel dates";
+  const mobileTravelerTotal = Math.max(
+    1,
+    adultCount + childCount + infantCount
+  );
+  const mobileTravelerSummary =
+    mobileTravelerTotal === 1 && adultCount === 1
+      ? "1 adult"
+      : `${mobileTravelerTotal} travelers`;
+  const mobileSearchSummary = [
+    mobileTripTypeSummary,
+    mobileRouteSummary,
+    mobileDateSummary,
+    mobileTravelerSummary,
+  ].join(" | ");
   const savedRoutes = useMemo(
     () =>
       savedTripIds
@@ -1899,9 +1927,17 @@ export function FlightResultsClient() {
     <main className="flex-1 bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
       <div className="page-shell grid gap-5 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <section className="lg:col-span-2">
+          <div className="mx-auto w-full max-w-3xl sm:hidden">
+            <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
+              <p className="truncate text-sm font-semibold text-slate-950">
+                {mobileSearchSummary}
+              </p>
+            </div>
+          </div>
+
           <form
             onSubmit={handleCompactSearchSubmit}
-            className="mx-auto w-full max-w-3xl"
+            className="hidden sm:block mx-auto w-full max-w-3xl"
           >
             <div className="flex flex-col gap-1">
               <div className="relative inline-flex items-center self-start">
@@ -2412,6 +2448,19 @@ function formatDateLabel(value: string): string {
     month: "short",
     year: "numeric",
   });
+}
+
+function formatCompactDateLabel(value: string): string {
+  if (!value) return "";
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return new Intl.DateTimeFormat("en", {
+    day: "2-digit",
+    month: "short",
+  }).format(date);
 }
 
 function buildMonthDays(month: Date): Array<Date | null> {
