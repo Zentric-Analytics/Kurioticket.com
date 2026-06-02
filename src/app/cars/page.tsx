@@ -4,7 +4,9 @@ import Link from "next/link";
 import {
   FormEvent,
   ReactNode,
+  RefObject,
   Suspense,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -13,8 +15,10 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
+  Calendar,
   CalendarClock,
   CheckCircle2,
+  ChevronDown,
   Clock,
   RotateCcw,
   ShieldCheck,
@@ -189,21 +193,75 @@ const toIsoDate = (date: Date) => {
 
 const formatDisplayDate = (isoDate: string) => {
   if (!isoDate) {
-    return "Select date";
+    return "";
   }
 
   const [year, month, day] = isoDate.split("-").map(Number);
 
   if (!year || !month || !day) {
-    return "Select date";
+    return "";
   }
 
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
   }).format(new Date(year, month - 1, day));
 };
+
+const parseIsoDate = (value: string) => {
+  if (!value) {
+    return null;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  const parsed = new Date(year, month - 1, day);
+
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const startOfLocalDay = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const isBeforeToday = (date: Date) =>
+  startOfLocalDay(date).getTime() < startOfLocalDay(new Date()).getTime();
+
+const addMonths = (date: Date, offset: number) =>
+  new Date(date.getFullYear(), date.getMonth() + offset, 1);
+
+type MonthCell = {
+  date: Date;
+  isCurrentMonth: boolean;
+};
+
+const buildMonthCells = (monthDate: Date): MonthCell[] => {
+  const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+  const startOffset = firstDay.getDay();
+  const startDate = new Date(
+    monthDate.getFullYear(),
+    monthDate.getMonth(),
+    1 - startOffset,
+  );
+
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate() + index,
+    );
+
+    return {
+      date,
+      isCurrentMonth: date.getMonth() === monthDate.getMonth(),
+    };
+  });
+};
+
+const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
@@ -426,7 +484,6 @@ function CarsSearchPage() {
               hasActiveSearch={Boolean(hasActiveSearch)}
               onClearSearch={clearSearch}
               onSubmit={handleSubmit}
-              todayIso={todayIso}
               updateValue={updateValue}
               values={values}
             />
@@ -549,7 +606,6 @@ function CarsSearchBar({
   hasActiveSearch,
   onClearSearch,
   onSubmit,
-  todayIso,
   updateValue,
   values,
 }: {
@@ -557,20 +613,122 @@ function CarsSearchBar({
   hasActiveSearch: boolean;
   onClearSearch: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  todayIso: string;
   updateValue: <Key extends keyof CarsFormValues>(
     key: Key,
     value: CarsFormValues[Key],
   ) => void;
   values: CarsFormValues;
 }) {
+  const dateWrapRef = useRef<HTMLDivElement | null>(null);
+  const timeWrapRef = useRef<HTMLDivElement | null>(null);
+  const [datesOpen, setDatesOpen] = useState(false);
+  const [timesOpen, setTimesOpen] = useState(false);
+  const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
+    const parsedPickup = parseIsoDate(values.pickupDate);
+
+    if (parsedPickup) {
+      return new Date(parsedPickup.getFullYear(), parsedPickup.getMonth(), 1);
+    }
+
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+
+  useEffect(() => {
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+
+      if (datesOpen && !dateWrapRef.current?.contains(target)) {
+        setDatesOpen(false);
+      }
+
+      if (timesOpen && !timeWrapRef.current?.contains(target)) {
+        setTimesOpen(false);
+      }
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDatesOpen(false);
+        setTimesOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [datesOpen, timesOpen]);
+
+  const toggleDates = () => {
+    setDatesOpen((current) => {
+      const nextOpen = !current;
+
+      if (nextOpen) {
+        setTimesOpen(false);
+      }
+
+      return nextOpen;
+    });
+  };
+
+  const toggleTimes = () => {
+    setTimesOpen((current) => {
+      const nextOpen = !current;
+
+      if (nextOpen) {
+        setDatesOpen(false);
+      }
+
+      return nextOpen;
+    });
+  };
+
+  const selectRentalDate = (date: Date) => {
+    if (isBeforeToday(date)) {
+      return;
+    }
+
+    const selectedIso = toIsoDate(date);
+
+    if (!values.pickupDate || (values.pickupDate && values.dropoffDate)) {
+      updateValue("pickupDate", selectedIso);
+      updateValue("dropoffDate", "");
+      return;
+    }
+
+    if (selectedIso < values.pickupDate) {
+      updateValue("pickupDate", selectedIso);
+      updateValue("dropoffDate", "");
+      return;
+    }
+
+    updateValue("dropoffDate", selectedIso);
+  };
+
+  const clearRentalDates = () => {
+    updateValue("pickupDate", "");
+    updateValue("dropoffDate", "");
+  };
+
+  const dateError = errors.pickupDate || errors.dropoffDate || errors.dateRange;
+  const timeError = errors.pickupTime || errors.dropoffTime;
+
   return (
     <section className="border border-slate-200/80 bg-white/80 p-2.5 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-4">
       <form onSubmit={onSubmit} className="space-y-2 sm:space-y-3" noValidate>
+        <input type="hidden" name="pickupDate" value={values.pickupDate} />
+        <input type="hidden" name="dropoffDate" value={values.dropoffDate} />
+        <input type="hidden" name="pickupTime" value={values.pickupTime} />
+        <input type="hidden" name="dropoffTime" value={values.dropoffTime} />
+
         <div className="overflow-visible border border-slate-200 bg-white p-0.5 shadow-[0_10px_28px_rgba(15,23,42,0.08)] sm:p-1">
-          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,1.8fr)_minmax(8.6rem,0.78fr)_minmax(6.3rem,0.56fr)_minmax(8.6rem,0.78fr)_minmax(6.3rem,0.56fr)_minmax(5.7rem,0.46fr)_104px] lg:gap-0">
+          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(5.8rem,0.55fr)_104px] lg:gap-0">
             <SearchCell
-              label="Pickup"
+              label="Pickup location"
               error={errors.pickupLocation || errors.dropoffLocation}
               className="lg:border-r lg:border-r-slate-200/80"
             >
@@ -610,48 +768,41 @@ function CarsSearchBar({
             </SearchCell>
 
             <SearchCell
-              label="Pickup date"
-              error={errors.pickupDate}
-              className="lg:border-x lg:border-x-slate-200/80"
+              label="Rental dates"
+              error={dateError}
+              className="relative lg:border-r lg:border-r-slate-200/80"
             >
-              <DateInputBox
-                id="pickupDate"
-                name="pickupDate"
-                value={values.pickupDate}
-                minDate={todayIso}
-                onChange={(value) => updateValue("pickupDate", value)}
-              />
-            </SearchCell>
-
-            <SearchCell label="Pickup time" error={errors.pickupTime}>
-              <TimeSelect
-                id="pickupTime"
-                name="pickupTime"
-                value={values.pickupTime}
-                onChange={(value) => updateValue("pickupTime", value)}
+              <RentalDatesField
+                dropoffDate={values.dropoffDate}
+                isOpen={datesOpen}
+                onClear={clearRentalDates}
+                onDone={() => setDatesOpen(false)}
+                onNextMonth={() =>
+                  setVisibleMonthDate((current) => addMonths(current, 1))
+                }
+                onPreviousMonth={() =>
+                  setVisibleMonthDate((current) => addMonths(current, -1))
+                }
+                onSelectDate={selectRentalDate}
+                onToggle={toggleDates}
+                pickupDate={values.pickupDate}
+                visibleMonthDate={visibleMonthDate}
+                wrapRef={dateWrapRef}
               />
             </SearchCell>
 
             <SearchCell
-              label="Return date"
-              error={errors.dropoffDate || errors.dateRange}
-              className="lg:border-x lg:border-x-slate-200/80"
+              label="Pickup / return time"
+              error={timeError}
+              className="relative lg:border-r lg:border-r-slate-200/80"
             >
-              <DateInputBox
-                id="dropoffDate"
-                name="dropoffDate"
-                value={values.dropoffDate}
-                minDate={values.pickupDate || todayIso}
-                onChange={(value) => updateValue("dropoffDate", value)}
-              />
-            </SearchCell>
-
-            <SearchCell label="Return time" error={errors.dropoffTime}>
-              <TimeSelect
-                id="dropoffTime"
-                name="dropoffTime"
-                value={values.dropoffTime}
-                onChange={(value) => updateValue("dropoffTime", value)}
+              <TimeRangeField
+                isOpen={timesOpen}
+                onToggle={toggleTimes}
+                pickupTime={values.pickupTime}
+                returnTime={values.dropoffTime}
+                updateValue={updateValue}
+                wrapRef={timeWrapRef}
               />
             </SearchCell>
 
@@ -761,87 +912,271 @@ function CarPickupCardLink({ card }: { card: CarPickupCard }) {
   );
 }
 
-function DateInputBox({
-  id,
-  minDate,
-  name,
-  onChange,
-  value,
+function RentalDatesField({
+  dropoffDate,
+  isOpen,
+  onClear,
+  onDone,
+  onNextMonth,
+  onPreviousMonth,
+  onSelectDate,
+  onToggle,
+  pickupDate,
+  visibleMonthDate,
+  wrapRef,
 }: {
-  id: string;
-  minDate: string;
-  name: string;
-  onChange: (value: string) => void;
-  value: string;
+  dropoffDate: string;
+  isOpen: boolean;
+  onClear: () => void;
+  onDone: () => void;
+  onNextMonth: () => void;
+  onPreviousMonth: () => void;
+  onSelectDate: (date: Date) => void;
+  onToggle: () => void;
+  pickupDate: string;
+  visibleMonthDate: Date;
+  wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
-
-  const openPicker = () => {
-    const input = inputRef.current;
-
-    if (!input) {
-      return;
-    }
-
-    if (typeof input.showPicker === "function") {
-      input.showPicker();
-      return;
-    }
-
-    input.focus();
-    input.click();
-  };
+  const pickupDisplay = formatDisplayDate(pickupDate);
+  const dropoffDisplay = formatDisplayDate(dropoffDate);
+  const pickupParsed = parseIsoDate(pickupDate);
+  const dropoffParsed = parseIsoDate(dropoffDate);
+  const dateSummary = pickupDisplay
+    ? dropoffDisplay
+      ? `${pickupDisplay} — ${dropoffDisplay}`
+      : pickupDisplay
+    : "Pickup date — Return date";
 
   return (
-    <button
-      type="button"
-      onClick={openPicker}
-      className="relative block h-7 w-full cursor-pointer overflow-hidden text-left text-sm font-semibold text-slate-950 focus:outline-none lg:h-8"
-    >
-      <span className={value ? "text-slate-950" : "text-slate-400"}>
-        {formatDisplayDate(value)}
-      </span>
-      <input
-        ref={inputRef}
-        id={id}
-        name={name}
-        type="date"
-        min={minDate}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="pointer-events-none absolute inset-0 h-full w-full opacity-0"
-        aria-label={name}
-        tabIndex={-1}
-      />
-    </button>
+    <div ref={wrapRef}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        aria-label="Choose rental pickup and return dates"
+        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
+      >
+        <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
+        <span className={`truncate ${pickupDate ? "text-slate-950" : "text-slate-400"}`}>
+          {dateSummary}
+        </span>
+      </button>
+
+      {isOpen ? (
+        <div
+          role="dialog"
+          aria-label="Rental date picker"
+          className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4"
+        >
+          <p className="mb-3 text-base font-semibold text-slate-900">
+            Choose rental dates
+          </p>
+          <div className="mb-3 flex items-center justify-between">
+            <button
+              type="button"
+              aria-label="Previous month"
+              onClick={onPreviousMonth}
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              aria-label="Next month"
+              onClick={onNextMonth}
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Next
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+            {[0, 1].map((monthOffset) => {
+              const monthDate = addMonths(visibleMonthDate, monthOffset);
+              const cells = buildMonthCells(monthDate);
+
+              return (
+                <div key={monthOffset}>
+                  <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
+                    {monthDate.toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
+                    {weekdays.map((weekday) => (
+                      <span key={weekday}>{weekday}</span>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {cells.map((cell) => {
+                      const day = cell.date;
+                      const iso = toIsoDate(day);
+                      const isPickup = iso === pickupDate;
+                      const isDropoff = iso === dropoffDate;
+                      const isPastDate = isBeforeToday(day);
+                      const isBeforePickup = Boolean(
+                        pickupDate && !dropoffDate && iso < pickupDate,
+                      );
+                      const isInRange = Boolean(
+                        pickupParsed &&
+                          dropoffParsed &&
+                          !isPastDate &&
+                          day > pickupParsed &&
+                          day < dropoffParsed,
+                      );
+
+                      if (!cell.isCurrentMonth) {
+                        return (
+                          <span
+                            key={`placeholder-${iso}`}
+                            aria-hidden="true"
+                            className="h-8 w-8 justify-self-center"
+                          />
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={iso}
+                          type="button"
+                          aria-label={`Select ${day.toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}${isBeforePickup ? "; starts a new pickup date" : ""}`}
+                          onClick={() => onSelectDate(day)}
+                          disabled={isPastDate}
+                          className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
+                            isPastDate
+                              ? "text-slate-300 hover:bg-transparent"
+                              : isBeforePickup
+                                ? "text-slate-500 hover:bg-indigo-50"
+                                : "text-slate-900 hover:bg-indigo-50"
+                          } ${
+                            isInRange
+                              ? "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100"
+                              : ""
+                          } ${
+                            isPickup || isDropoff
+                              ? "bg-indigo-700 text-white hover:bg-indigo-700"
+                              : ""
+                          }`}
+                        >
+                          {day.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
+            <button
+              type="button"
+              onClick={onClear}
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={onDone}
+              className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
-function TimeSelect({
-  id,
-  name,
-  onChange,
-  value,
+function TimeRangeField({
+  isOpen,
+  onToggle,
+  pickupTime,
+  returnTime,
+  updateValue,
+  wrapRef,
 }: {
-  id: string;
-  name: string;
-  onChange: (value: string) => void;
-  value: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  pickupTime: string;
+  returnTime: string;
+  updateValue: <Key extends keyof CarsFormValues>(
+    key: Key,
+    value: CarsFormValues[Key],
+  ) => void;
+  wrapRef: RefObject<HTMLDivElement | null>;
 }) {
   return (
-    <select
-      id={id}
-      name={name}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm lg:h-8"
-    >
-      {timeOptions.map((time) => (
-        <option key={`${id}-${time}`} value={time}>
-          {time}
-        </option>
-      ))}
-    </select>
+    <div ref={wrapRef}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        aria-label="Choose pickup and return times"
+        className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
+      >
+        <span className="truncate">
+          {pickupTime} pickup — {returnTime} return
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+
+      {isOpen ? (
+        <div
+          role="menu"
+          aria-label="Pickup and return time selector"
+          className="absolute left-0 right-0 top-[calc(100%+8px)] z-[180] w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:right-auto sm:w-[min(92vw,320px)]"
+        >
+          <div className="grid gap-3">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Pickup time
+              </span>
+              <select
+                id="pickupTime"
+                value={pickupTime}
+                onChange={(event) => updateValue("pickupTime", event.target.value)}
+                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-indigo-300 md:text-sm"
+              >
+                {timeOptions.map((time) => (
+                  <option key={`pickup-${time}`} value={time}>
+                    {time}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Return time
+              </span>
+              <select
+                id="dropoffTime"
+                value={returnTime}
+                onChange={(event) => updateValue("dropoffTime", event.target.value)}
+                className="focus-ring h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-[16px] font-semibold text-slate-950 outline-none transition focus:border-indigo-300 md:text-sm"
+              >
+                {timeOptions.map((time) => (
+                  <option key={`return-${time}`} value={time}>
+                    {time}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
