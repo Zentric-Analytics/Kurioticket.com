@@ -2149,7 +2149,7 @@ export function FlightResultsClient() {
                       setActiveDatePicker("departure");
                       setDatePickerPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[42px] w-full items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:border-slate-400 hover:bg-white"
+                    className="focus-ring flex h-full min-h-[42px] w-full items-center gap-1.5 border-t border-slate-200 bg-transparent px-2.5 py-1 text-left transition hover:bg-slate-50 sm:border-l sm:border-t-0 lg:border-l-0"
                   >
                     <Calendar className="h-3.5 w-3.5 shrink-0 text-indigo-700" />
                     <span className="min-w-0">
@@ -2174,7 +2174,7 @@ export function FlightResultsClient() {
                       setTravelerPopoverOpen(true);
                       setTravelerPopoverPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[42px] w-full items-center justify-between gap-1.5 rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition hover:border-slate-400 hover:bg-white"
+                    className="focus-ring flex h-full min-h-[42px] w-full items-center justify-between gap-1.5 border-t border-slate-200 bg-transparent px-2.5 py-1 text-left transition hover:bg-slate-50 sm:border-l sm:border-t-0"
                   >
                     <span className="min-w-0">
                       <span className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500">
