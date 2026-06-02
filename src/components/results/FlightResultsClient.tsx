@@ -1744,22 +1744,22 @@ export function FlightResultsClient() {
               </div>
 
               <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                <div className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:pb-0 xl:gap-6 [&::-webkit-scrollbar]:hidden">
+                <div className="grid grid-cols-1 gap-4 lg:flex lg:snap-x lg:overflow-x-auto lg:pb-2 lg:[scrollbar-width:none] lg:[-ms-overflow-style:none] lg:[&::-webkit-scrollbar]:hidden">
                   {discoveryCards.slice(0, 4).map((item) => (
                     <Link
                       key={item.id}
                       href={buildDiscoveryLink(item)}
                       aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                      className="group min-w-[78vw] max-w-[300px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[280px] lg:min-w-0 lg:max-w-none"
+                      className="group overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 lg:min-w-[280px] lg:snap-start xl:min-w-[310px]"
                     >
                       <article className="flex h-full flex-col">
-                        <div className="relative h-40 overflow-hidden bg-slate-100 sm:h-44 lg:h-52">
+                        <div className="relative h-32 overflow-hidden bg-slate-100 sm:h-36 lg:h-44">
                           <Image
                             src={item.image}
                             alt={item.imageAlt}
                             fill
                             priority={false}
-                            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 280px, 78vw"
+                            sizes="(min-width: 1280px) 310px, (min-width: 1024px) 280px, 100vw"
                             className="object-cover saturate-[1.08] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                           />
                         </div>
@@ -1767,6 +1767,9 @@ export function FlightResultsClient() {
                           <h3 className="line-clamp-1 text-base font-semibold leading-tight text-slate-900 sm:text-lg">
                             {item.destinationCity}
                           </h3>
+                          <p className="mt-1 line-clamp-1 text-sm font-medium leading-5 text-slate-600">
+                            {item.originCity} → {item.destinationCity}
+                          </p>
                         </div>
                       </article>
                     </Link>
@@ -1791,38 +1794,34 @@ export function FlightResultsClient() {
                 </div>
 
                 <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                  <div className="flex snap-x gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-3 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5">
                     {routeInspirationCards.map((item) => (
                       <Link
                         key={item.id}
                         href={buildDiscoveryLink(item)}
                         aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                        className="group flex min-w-[72vw] snap-start items-center gap-3 rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[260px] lg:min-w-0"
+                        className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                       >
-                        <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100">
-                          <Image
-                            src={item.image}
-                            alt={item.imageAlt}
-                            fill
-                            priority={false}
-                            sizes="64px"
-                            className="object-cover saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h3 className="line-clamp-1 text-sm font-semibold leading-5 text-slate-900 sm:text-base">
-                            {item.originCity} → {item.destinationCity}
-                          </h3>
-                          <p className="mt-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                            {item.originCode} → {item.destinationCode}
-                          </p>
-                        </div>
-                        <span
-                          aria-hidden="true"
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-sm font-black text-slate-400 transition group-hover:bg-indigo-50 group-hover:text-indigo-600"
-                        >
-                          →
-                        </span>
+                        <article className="flex h-full flex-col">
+                          <div className="relative h-24 overflow-hidden bg-slate-100 sm:h-28 lg:h-32">
+                            <Image
+                              src={item.image}
+                              alt={item.imageAlt}
+                              fill
+                              priority={false}
+                              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 50vw"
+                              className="object-cover saturate-[1.05] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                            />
+                          </div>
+                          <div className="min-w-0 bg-white px-3 py-3 sm:px-4">
+                            <h3 className="line-clamp-2 text-sm font-semibold leading-5 text-slate-900 sm:text-base">
+                              {item.originCity} → {item.destinationCity}
+                            </h3>
+                            <p className="mt-1 text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                              {item.originCode} → {item.destinationCode}
+                            </p>
+                          </div>
+                        </article>
                       </Link>
                     ))}
                   </div>
@@ -1844,8 +1843,8 @@ export function FlightResultsClient() {
                 </div>
               </div>
 
-              <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                <div className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:pb-0 xl:gap-6 [&::-webkit-scrollbar]:hidden">
+              <div className="border border-slate-200/80 bg-white p-3 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:grid-cols-4 lg:gap-5 xl:gap-6">
                   {beachVacationCards.slice(0, 6).map((item) => {
                     const beachVisual = getBeachVacationVisual(item);
 
@@ -1854,23 +1853,26 @@ export function FlightResultsClient() {
                         key={item.id}
                         href={buildDiscoveryLink(item)}
                         aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
-                        className="group min-w-[72vw] max-w-[280px] snap-start overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:min-w-[280px] lg:min-w-0 lg:max-w-none"
+                        className="group overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                       >
                         <article className="flex h-full flex-col">
-                          <div className="relative h-40 overflow-hidden bg-sky-50 sm:h-44 lg:h-48">
+                          <div className="relative h-20 overflow-hidden bg-sky-50 sm:h-32 lg:h-40">
                             <Image
                               src={beachVisual.image}
                               alt={beachVisual.imageAlt}
                               fill
                               priority={false}
-                              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 280px, 72vw"
+                              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 33vw"
                               className="object-cover brightness-[1.05] saturate-[1.12] transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
                             />
                           </div>
-                          <div className="bg-white px-4 py-3.5 sm:px-4 sm:py-4">
-                            <h3 className="line-clamp-1 text-base font-semibold leading-tight text-slate-900 sm:text-lg">
+                          <div className="bg-white px-2 py-2.5 sm:px-4 sm:py-3.5">
+                            <h3 className="line-clamp-1 text-xs font-semibold leading-tight text-slate-900 sm:text-base">
                               {item.destinationCity}
                             </h3>
+                            <p className="mt-1 line-clamp-1 text-[0.68rem] font-medium leading-4 text-slate-600 sm:text-sm">
+                              {item.originCode} → {item.destinationCode}
+                            </p>
                           </div>
                         </article>
                       </Link>
