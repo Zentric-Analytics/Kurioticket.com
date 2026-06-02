@@ -367,39 +367,14 @@ function CarsSearchBar({
   values: CarsFormValues;
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-      <form onSubmit={onSubmit} className="space-y-2" noValidate>
-        <div className="flex flex-wrap items-center justify-end gap-2 px-1">
-          <label className="focus-within:ring-ring inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50">
-            <input
-              type="checkbox"
-              checked={values.returnToDifferentLocation}
-              onChange={(event) =>
-                updateValue("returnToDifferentLocation", event.target.checked)
-              }
-              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            Different return location
-          </label>
-
-          {hasActiveSearch ? (
-            <button
-              type="button"
-              onClick={onClearSearch}
-              className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
-            >
-              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Clear all
-            </button>
-          ) : null}
-        </div>
-
-        <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.15fr)_minmax(15rem,1.5fr)_minmax(15rem,1.5fr)_minmax(6.75rem,0.7fr)_110px] lg:gap-0">
+    <section className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-4">
+      <form onSubmit={onSubmit} className="space-y-3" noValidate>
+        <div className="overflow-visible border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.08)]">
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.1fr)_minmax(14.5rem,1.45fr)_minmax(14.5rem,1.45fr)_minmax(6.5rem,0.68fr)_110px] lg:gap-0">
             <SearchCell
               label="Pickup"
               error={errors.pickupLocation || errors.dropoffLocation}
-              className="lg:rounded-r-none lg:border-r lg:border-r-slate-200/80"
+              className="lg:border-r lg:border-r-slate-200/80"
             >
               <div className="grid gap-2">
                 <input
@@ -437,7 +412,7 @@ function CarsSearchBar({
             <SearchCell
               label="Pickup date / time"
               error={errors.pickupDate || errors.pickupTime}
-              className="lg:rounded-none lg:border-x lg:border-x-slate-200/80"
+              className="lg:border-x lg:border-x-slate-200/80"
             >
               <DateTimeInputs
                 dateId="pickupDate"
@@ -455,7 +430,7 @@ function CarsSearchBar({
             <SearchCell
               label="Return date / time"
               error={errors.dropoffDate || errors.dropoffTime || errors.dateRange}
-              className="lg:rounded-none lg:border-r lg:border-r-slate-200/80"
+              className="lg:border-r lg:border-r-slate-200/80"
             >
               <DateTimeInputs
                 dateId="dropoffDate"
@@ -470,11 +445,7 @@ function CarsSearchBar({
               />
             </SearchCell>
 
-            <SearchCell
-              label="Driver age"
-              error={errors.driverAge}
-              className="lg:rounded-l-none"
-            >
+            <SearchCell label="Driver age" error={errors.driverAge}>
               <select
                 id="driverAge"
                 name="driverAge"
@@ -493,13 +464,38 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-full min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 lg:rounded-l-none"
+                className="focus-ring inline-flex h-full min-h-14 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700"
               >
                 Search
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+          <label className="focus-within:ring-ring inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-slate-900">
+            <input
+              type="checkbox"
+              checked={values.returnToDifferentLocation}
+              onChange={(event) =>
+                updateValue("returnToDifferentLocation", event.target.checked)
+              }
+              className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            Different return location
+          </label>
+
+          {hasActiveSearch ? (
+            <button
+              type="button"
+              onClick={onClearSearch}
+              className="focus-ring inline-flex items-center gap-1.5 px-2 py-1 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+            >
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+              Clear all
+            </button>
+          ) : null}
         </div>
       </form>
     </section>
@@ -545,40 +541,29 @@ function DateTimeInputs({
   timeValue: string;
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-[minmax(9rem,1fr)_minmax(6.25rem,0.62fr)]">
-      <label className="min-w-0 rounded-xl border border-slate-100 bg-slate-50/70 px-2.5 py-1.5 transition focus-within:border-indigo-200 focus-within:bg-white">
-        <span className="mb-0.5 block text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">
-          Date
-        </span>
-        <input
-          id={dateId}
-          name={dateName}
-          type="date"
-          min={minDate}
-          value={dateValue}
-          onChange={(event) => onDateChange(event.target.value)}
-          className="h-7 w-full min-w-[8.5rem] border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
-        />
-      </label>
-
-      <label className="min-w-0 rounded-xl border border-slate-100 bg-slate-50/70 px-2.5 py-1.5 transition focus-within:border-indigo-200 focus-within:bg-white">
-        <span className="mb-0.5 block text-[0.65rem] font-bold uppercase tracking-wide text-slate-400">
-          Time
-        </span>
-        <select
-          id={timeId}
-          name={timeName}
-          value={timeValue}
-          onChange={(event) => onTimeChange(event.target.value)}
-          className="h-7 w-full min-w-[5.25rem] border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
-        >
-          {timeOptions.map((time) => (
-            <option key={`${timeId}-${time}`} value={time}>
-              {time}
-            </option>
-          ))}
-        </select>
-      </label>
+    <div className="grid grid-cols-[minmax(8.75rem,1fr)_minmax(5.75rem,0.6fr)] items-end gap-2">
+      <input
+        id={dateId}
+        name={dateName}
+        type="date"
+        min={minDate}
+        value={dateValue}
+        onChange={(event) => onDateChange(event.target.value)}
+        className="h-8 min-w-0 border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+      />
+      <select
+        id={timeId}
+        name={timeName}
+        value={timeValue}
+        onChange={(event) => onTimeChange(event.target.value)}
+        className="h-8 min-w-0 border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+      >
+        {timeOptions.map((time) => (
+          <option key={`${timeId}-${time}`} value={time}>
+            {time}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
@@ -596,7 +581,7 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[84px] rounded-xl border border-transparent bg-white px-3 py-2.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 ${className}`}
+      className={`min-h-[78px] border border-transparent bg-white px-3 py-2.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 ${className}`}
     >
       <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
         {label}
