@@ -562,7 +562,7 @@ export function FlightResultsClient() {
     return selectedCards;
   }, [beachVacationCards, discoveryCards, selectedOption.code]);
 
-  const [sort] = useState<SortMode>(
+  const [sortMode, setSortMode] = useState<SortMode>(
     (params.get("sort") as SortMode) || "cheapest"
   );
   const [results, setResults] = useState<PublicFlightResult[]>([]);
@@ -875,10 +875,10 @@ export function FlightResultsClient() {
       infants,
       travelers,
       cabinClass: params.get("cabinClass") || "economy",
-      sort,
+      sort: (params.get("sort") as SortMode) || "cheapest",
       currency: selectedCurrency,
     };
-  }, [params, sort, selectedCurrency]);
+  }, [params, selectedCurrency]);
 
   useEffect(() => {
     if (!body) return;
@@ -1377,6 +1377,69 @@ export function FlightResultsClient() {
       matchesDuration
     );
   });
+
+  const sortedResults = useMemo(() => {
+    const nextResults = [...filtered];
+
+    nextResults.sort((first, second) => {
+      if (sortMode === "cheapest") {
+        return first.price - second.price;
+      }
+
+      if (sortMode === "fastest") {
+        return first.durationMinutes - second.durationMinutes;
+      }
+
+      if (sortMode === "stops") {
+        return first.stops - second.stops || first.price - second.price;
+      }
+
+      const firstBestScore =
+        first.valueScore +
+        first.travelConfidenceScore +
+        first.comfortScore -
+        first.riskScore;
+
+      const secondBestScore =
+        second.valueScore +
+        second.travelConfidenceScore +
+        second.comfortScore -
+        second.riskScore;
+
+      return secondBestScore - firstBestScore || first.price - second.price;
+    });
+
+    return nextResults;
+  }, [filtered, sortMode]);
+
+  const sortSummaries = useMemo(() => {
+    if (!filtered.length) {
+      return {
+        cheapest: null,
+        best: null,
+        fastest: null,
+      };
+    }
+
+    const cheapest = [...filtered].sort((a, b) => a.price - b.price)[0];
+    const fastest = [...filtered].sort(
+      (a, b) => a.durationMinutes - b.durationMinutes
+    )[0];
+    const best = [...filtered].sort((a, b) => {
+      const aScore =
+        a.valueScore + a.travelConfidenceScore + a.comfortScore - a.riskScore;
+      const bScore =
+        b.valueScore + b.travelConfidenceScore + b.comfortScore - b.riskScore;
+
+      return bScore - aScore || a.price - b.price;
+    })[0];
+
+    return {
+      cheapest,
+      best,
+      fastest,
+    };
+  }, [filtered]);
 
   if (!body) {
     return (
@@ -2548,8 +2611,8 @@ export function FlightResultsClient() {
             <div className={cn(resultStackClass, "space-y-4")}>
               <div className="flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
-                  {filtered.length} option{filtered.length === 1 ? "" : "s"}{" "}
-                  found
+                  {sortedResults.length} option
+                  {sortedResults.length === 1 ? "" : "s"} found
                 </p>
                 <Button
                   variant="secondary"
@@ -2561,14 +2624,88 @@ export function FlightResultsClient() {
                 </Button>
               </div>
 
+              {sortedResults.length ? (
+                <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-3">
+                  <button
+                    type="button"
+                    onClick={() => setSortMode("cheapest")}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-left transition",
+                      sortMode === "cheapest"
+                        ? "border-indigo-500 bg-indigo-50 text-navy"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    )}
+                  >
+                    <span className="block text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                      Cheapest
+                    </span>
+                    <span className="mt-1 block text-sm font-bold">
+                      {sortSummaries.cheapest
+                        ? formatCurrency(
+                            sortSummaries.cheapest.price,
+                            selectedCurrency
+                          )
+                        : "—"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSortMode("best")}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-left transition",
+                      sortMode === "best"
+                        ? "border-indigo-500 bg-indigo-50 text-navy"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    )}
+                  >
+                    <span className="block text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                      Best
+                    </span>
+                    <span className="mt-1 block text-sm font-bold">
+                      {sortSummaries.best
+                        ? `${formatCurrency(
+                            sortSummaries.best.price,
+                            selectedCurrency
+                          )} · ${formatDurationFromMinutes(
+                            sortSummaries.best.durationMinutes
+                          )}`
+                        : "—"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSortMode("fastest")}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-left transition",
+                      sortMode === "fastest"
+                        ? "border-indigo-500 bg-indigo-50 text-navy"
+                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    )}
+                  >
+                    <span className="block text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                      Quickest
+                    </span>
+                    <span className="mt-1 block text-sm font-bold">
+                      {sortSummaries.fastest
+                        ? formatDurationFromMinutes(
+                            sortSummaries.fastest.durationMinutes
+                          )
+                        : "—"}
+                    </span>
+                  </button>
+                </div>
+              ) : null}
+
               {warnings.length > 0 ? (
                 <div className="w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900 shadow-sm" role="status">
                   Some provider checks may be limited for this search. Review final availability and fare details with the provider before booking.
                 </div>
               ) : null}
 
-              {filtered.length ? (
-                filtered.map((flight) => (
+              {sortedResults.length ? (
+                sortedResults.map((flight) => (
                   <FlightCard key={flight.id} flight={flight} />
                 ))
               ) : (
