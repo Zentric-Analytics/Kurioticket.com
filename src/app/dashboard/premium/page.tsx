@@ -26,7 +26,7 @@ export default async function PremiumDashboardPage() {
         </div>
         {!session?.user?.isPremium ? (
           <Card className="mt-5 border-teal/30 bg-teal/5 p-4 text-sm text-teal-dark">
-            Premium tools are shown here as the Phase 1 foundation. Subscribe to unlock live premium access.
+            Use premium tools to organize trip planning, alerts, and account features in one place.
           </Card>
         ) : null}
         <div className="mt-6">

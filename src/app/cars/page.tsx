@@ -131,13 +131,13 @@ const trustCards = [
   {
     title: "Pickup details first",
     description:
-      "Capture location, dates, times, and driver age before provider-backed car results are connected.",
+      "Enter pickup location, dates, times, and driver age so your rental search starts with the right trip details.",
     icon: CalendarClock,
   },
   {
-    title: "No placeholder pricing",
+    title: "Clear rental review",
     description:
-      "Kurioticket only shows vehicle inventory and rental prices after a live provider is approved.",
+      "Review final price, availability, fees, and rental rules with the provider before booking.",
     icon: ShieldCheck,
   },
 ];

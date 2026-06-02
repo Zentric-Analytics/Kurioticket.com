@@ -18,7 +18,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
           <h1 className="mt-2 text-3xl font-bold text-navy">{titleize(slug)}</h1>
           <Card className="mt-6 p-6">
             <p className="leading-7 text-muted">
-              This article route is ready for editorial content, provider-backed data, route intelligence, and internal links to flight and hotel searches. Phase 1 establishes the system without pretending to have mature content yet.
+              Use this guide to organize trip planning details, compare travel considerations, and continue into Kurioticket flight and hotel search tools.
             </p>
           </Card>
         </article>

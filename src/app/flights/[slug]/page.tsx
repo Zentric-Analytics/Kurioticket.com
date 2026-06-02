@@ -20,10 +20,10 @@ export default async function FlightRouteLandingPage({ params }: { params: Promi
       <main className="flex-1">
         <section className="border-b border-border bg-white">
           <div className="page-shell pt-24 pb-8 sm:pt-28 lg:pt-28">
-            <p className="text-sm font-semibold text-teal-dark">Future route intelligence page</p>
+            <p className="text-sm font-semibold text-teal-dark">Route planning guide</p>
             <h1 className="mt-2 text-3xl font-bold text-navy">{cheapRouteTitle(slug)}</h1>
             <p className="mt-3 max-w-2xl text-muted">
-              This route landing foundation is ready for fare history, seasonality, airport guidance, and cheap route content.
+              Compare route details, airport options, seasonal timing, and travel planning notes before continuing your search.
             </p>
           </div>
         </section>

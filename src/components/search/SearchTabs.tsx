@@ -1483,7 +1483,7 @@ export function SearchTabs({
                     className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-500"
                   >
                     Multi-city —
-                    Coming soon
+                    Use one-way or round-trip search
                   </button>
                 </div>
               )}
