@@ -103,6 +103,9 @@ function normalizeHotelbedsHotel(raw: unknown, search: HotelSearchParams): Norma
     maxRate?: number;
     currency?: string;
     rooms?: Array<{ name?: string; rates?: Array<{ net?: string | number; boardName?: string; rateComments?: string }> }>;
+    imageUrl?: string;
+    rawSupplierImageField?: string;
+    rawSupplierImagePath?: string;
   };
 
   const name = item.name?.trim();
@@ -116,7 +119,7 @@ function normalizeHotelbedsHotel(raw: unknown, search: HotelSearchParams): Norma
     provider: "Hotelbeds",
     providerId: item.code ? String(item.code) : undefined,
     name,
-    imageUrl: undefined,
+    imageUrl: item.imageUrl,
     rating: categoryToRating(item.categoryName),
     location: item.destinationName || search.destination,
     pricePerNight: nightlyPrice(total, search),
@@ -130,6 +133,8 @@ function normalizeHotelbedsHotel(raw: unknown, search: HotelSearchParams): Norma
       provider: "hotelbeds",
       id: item.code,
       coordinates: item.coordinates,
+      imageField: item.rawSupplierImageField,
+      imagePath: item.rawSupplierImagePath,
     },
   });
 }

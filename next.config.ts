@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "photos.hotelbeds.com",
+        port: "",
+        pathname: "/giata/**",
+      },
     ],
   },
 };
