@@ -2012,11 +2012,11 @@ export function FlightResultsClient() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_12px_28px_rgba(15,23,42,0.08)] sm:p-2">
+              <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.08)] sm:p-2">
                 <div className="flex flex-col gap-1 lg:flex-row lg:items-stretch lg:gap-1.5">
                   <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.36fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-1">
                     <div className="sm:col-span-2 lg:col-span-1">
-                      <div className="grid min-w-0 grid-cols-1 overflow-visible rounded-xl border border-slate-300 bg-white transition hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/15 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch">
+                      <div className="grid min-w-0 grid-cols-1 overflow-visible bg-transparent sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch lg:border-r lg:border-slate-200">
                 <div
                   ref={originWrapRef}
                   className="relative min-h-[54px] px-2.5 py-1 sm:pr-2"
@@ -2072,7 +2072,7 @@ export function FlightResultsClient() {
                   ) : null}
                 </div>
 
-                <div className="flex items-center justify-center border-y border-slate-100 py-1 sm:border-x sm:border-y-0 sm:py-0">
+                <div className="flex items-center justify-center border-y border-slate-200 py-1 sm:border-x sm:border-y-0 sm:py-0">
                   <button
                     type="button"
                     aria-label="Swap origin and destination"
