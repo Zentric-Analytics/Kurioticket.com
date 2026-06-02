@@ -2636,10 +2636,10 @@ export function FlightResultsClient() {
                         : "text-slate-600"
                     )}
                   >
-                    <span className="block text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                    <span className="block text-[12px] font-semibold text-slate-600">
                       Cheapest
                     </span>
-                    <span className="mt-1 block text-sm font-bold text-slate-950">
+                    <span className="mt-0.5 block text-[13px] font-semibold text-slate-950">
                       {sortSummaries.cheapest
                         ? formatCurrency(
                             sortSummaries.cheapest.price,
@@ -2659,10 +2659,10 @@ export function FlightResultsClient() {
                         : "text-slate-600"
                     )}
                   >
-                    <span className="block text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                    <span className="block text-[12px] font-semibold text-slate-600">
                       Best
                     </span>
-                    <span className="mt-1 block text-sm font-bold text-slate-950">
+                    <span className="mt-0.5 block text-[13px] font-semibold text-slate-950">
                       {sortSummaries.best
                         ? `${formatCurrency(
                             sortSummaries.best.price,
@@ -2684,10 +2684,10 @@ export function FlightResultsClient() {
                         : "text-slate-600"
                     )}
                   >
-                    <span className="block text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                    <span className="block text-[12px] font-semibold text-slate-600">
                       Quickest
                     </span>
-                    <span className="mt-1 block text-sm font-bold text-slate-950">
+                    <span className="mt-0.5 block text-[13px] font-semibold text-slate-950">
                       {sortSummaries.fastest
                         ? formatDurationFromMinutes(
                             sortSummaries.fastest.durationMinutes
