@@ -1792,7 +1792,7 @@ export function FlightResultsClient() {
                 </div>
 
                 <div className="border border-slate-200/80 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.05)] sm:p-5 lg:p-6">
-                  <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 lg:gap-5">
+                  <div className="grid grid-cols-3 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 lg:gap-5">
                     {routeInspirationCards.map((item) => (
                       <Link
                         key={item.id}
