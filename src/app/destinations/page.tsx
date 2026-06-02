@@ -632,19 +632,6 @@ export default function DestinationsPage() {
         </section>
 
         <section className="page-shell py-5 sm:py-6 lg:py-8">
-          <div className="mb-6 rounded-[2rem] border border-white bg-white/85 p-5 shadow-xl shadow-violet-100/70 sm:p-6">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">
-              Fresh image upgrade
-            </p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-              Every destination now opens with a brighter, more tempting view.
-            </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-              We tuned the cards for golden light, richer color, cleaner
-              contrast, and clearer booking cues so each city feels like a trip
-              worth clicking.
-            </p>
-          </div>
           <div className="space-y-12">
             {destinationSections.map((section) => (
               <section
