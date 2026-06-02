@@ -622,6 +622,7 @@ export function FlightResultsClient() {
     startOfMonth(new Date())
   );
   const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{
     top: number;
     left: number;
@@ -1927,19 +1928,39 @@ export function FlightResultsClient() {
     <main className="flex-1 bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
       <div className="page-shell grid gap-5 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <section className="lg:col-span-2">
-          <div className="mx-auto w-full max-w-3xl sm:hidden">
-            <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-[0_12px_28px_rgba(15,23,42,0.08)]">
-              <p className="truncate text-sm font-semibold text-slate-950">
+          <div
+            className={cn(
+              "mx-auto w-full max-w-3xl sm:hidden",
+              mobileSearchOpen && "hidden"
+            )}
+          >
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(true)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
+            >
+              <span className="block truncate text-sm font-semibold text-slate-950">
                 {mobileSearchSummary}
-              </p>
-            </div>
+              </span>
+            </button>
           </div>
 
           <form
             onSubmit={handleCompactSearchSubmit}
-            className="hidden sm:block mx-auto w-full max-w-3xl"
+            className={cn(
+              "mx-auto w-full max-w-3xl sm:block",
+              mobileSearchOpen ? "block" : "hidden"
+            )}
           >
             <div className="flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(false)}
+                className="self-start text-xs font-semibold text-slate-500 transition hover:text-slate-700 sm:hidden"
+              >
+                Cancel
+              </button>
+
               <div className="relative inline-flex items-center self-start">
                 <label htmlFor="compactTripType" className="sr-only">
                   Trip type
