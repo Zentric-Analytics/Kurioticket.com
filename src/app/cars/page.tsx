@@ -465,7 +465,7 @@ function CarsSearchPage() {
             <div className="px-1">
               <h1
                 id="cars-search-heading"
-                className="text-[2rem] font-semibold leading-[1.08] tracking-[-0.025em] text-slate-900 md:text-[2.35rem] lg:whitespace-nowrap lg:text-[2.5rem] xl:text-[2.7rem]"
+                className="text-[1.65rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[2rem] lg:whitespace-nowrap lg:text-[2.15rem] xl:text-[2.3rem]"
               >
                 Search rental cars for every part of your trip
               </h1>
