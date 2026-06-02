@@ -69,15 +69,15 @@ export function HotelCard({ hotel, index }: { hotel: PublicHotelResult; index: n
 
   return (
     <Card className="group overflow-hidden rounded-[1.65rem] border-indigo-100/80 bg-white shadow-[0_22px_70px_-42px_rgba(49,46,129,0.7)] transition duration-200 hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_28px_80px_-42px_rgba(67,56,202,0.75)]">
-      <div className="grid lg:grid-cols-[34%_1fr]">
+      <div className="grid lg:grid-cols-[28%_1fr]">
         <div className="p-3 pb-0 lg:pb-3 lg:pr-0">
-          <div className="relative aspect-[16/10] min-h-[230px] overflow-hidden rounded-[1.25rem] bg-indigo-50 lg:h-full lg:min-h-[286px]">
+          <div className="relative aspect-[16/10] min-h-[230px] overflow-hidden rounded-[1.25rem] bg-indigo-50 lg:h-[214px] lg:min-h-0">
             <Image
               src={imageUrl}
               alt={`${hotel.name} stay option${hotel.location ? ` near ${hotel.location}` : ""}`}
               fill
               className="object-cover transition duration-500 group-hover:scale-[1.035]"
-              sizes="(min-width: 1280px) 34vw, (min-width: 1024px) 32vw, 100vw"
+              sizes="(min-width: 1280px) 240px, (min-width: 1024px) 28vw, 100vw"
             />
             <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-indigo-950/35 to-transparent" />
             {hotel.badges[0] ? (
