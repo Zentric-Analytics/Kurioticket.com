@@ -330,10 +330,10 @@ export function AppHeader({
 
           <div className="hidden flex-1 flex-col gap-3 md:flex">
             <div className="flex items-center justify-end gap-3">
-              <div className="inline-flex h-12 items-center overflow-hidden rounded-full border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
+              <div className="inline-flex h-12 items-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
                 <CountryCurrencySelector variant="header" grouped />
 
-                <span className="h-6 w-px bg-white/20" aria-hidden="true" />
+                <span className="pointer-events-none h-6 w-px bg-white/20" aria-hidden="true" />
 
                 <div className="relative" ref={languageRef}>
                   <Button
@@ -341,7 +341,7 @@ export function AppHeader({
                     size="sm"
                     onClick={() => setLanguageOpen((value) => !value)}
                     aria-label={`Change language, current language ${selectedLanguage?.label}`}
-                    className="h-12 gap-2 rounded-none px-4 text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-white/60 focus-visible:ring-offset-indigo-700"
+                    className="h-12 gap-2 rounded-none border-0 bg-transparent px-4 text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-white/60 focus-visible:ring-offset-indigo-700"
                   >
                     {renderFlag(
                       selectedLanguage?.countryCode,
