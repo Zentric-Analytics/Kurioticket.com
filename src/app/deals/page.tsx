@@ -16,7 +16,7 @@ type PackageMode =
   | "hotel-flight-car"
   | "flight-car"
   | "hotel-car";
-type CabinClass = "economy" | "premium-economy" | "business" | "first";
+type CabinClass = "economy" | "business" | "first";
 
 const packageModes: Array<{
   value: PackageMode;
@@ -56,11 +56,10 @@ const packageModes: Array<{
 ];
 
 const dealsHeroImage =
-  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
+  "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80";
 
 const cabinClasses: Array<{ value: CabinClass; label: string }> = [
   { value: "economy", label: "Economy" },
-  { value: "premium-economy", label: "Premium economy" },
   { value: "business", label: "Business" },
   { value: "first", label: "First" },
 ];
@@ -92,7 +91,7 @@ const copy = {
   en: {
     title: "Find travel deals for your next trip",
     subtitle:
-      "Search flights, stays, and cars together, then compare provider results when you continue.",
+      "Search flights, stays, and cars together in one place.",
     modeLegend: "Choose package type",
     origin: "Where from?",
     destination: "Where to?",
@@ -516,18 +515,18 @@ export default function DealsPage() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-center"
+              className="object-cover object-[center_45%]"
             />
-            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.98)_0%,rgba(255,255,255,0.94)_38%,rgba(255,255,255,0.68)_64%,rgba(255,255,255,0.28)_100%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(248,250,252,0.98)_0%,rgba(248,250,252,0.94)_40%,rgba(238,242,255,0.76)_68%,rgba(238,242,255,0.36)_100%)]" />
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-50 via-slate-50/85 to-transparent" />
           </div>
 
           <div className="page-shell relative z-10 pt-10 sm:pt-14">
             <div className="max-w-3xl">
-              <h1 className="text-4xl font-black [letter-spacing:-0.025em] text-slate-950 sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-3xl text-balance text-4xl font-bold leading-[1.05] tracking-[-0.02em] text-slate-900 sm:text-5xl lg:text-6xl lg:leading-[1.02]">
                 {dictionary.title}
               </h1>
-              <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-slate-700">
+              <p className="mt-4 max-w-2xl text-lg font-medium leading-8 text-slate-700">
                 {dictionary.subtitle}
               </p>
             </div>
