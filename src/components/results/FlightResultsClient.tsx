@@ -2625,21 +2625,21 @@ export function FlightResultsClient() {
               </div>
 
               {sortedResults.length ? (
-                <div className="grid overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:grid-cols-3">
+                <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                   <button
                     type="button"
                     onClick={() => setSortMode("cheapest")}
                     className={cn(
-                      "relative px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
+                      "relative px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
                       sortMode === "cheapest"
-                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-violet-600"
+                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
                         : "text-slate-600"
                     )}
                   >
-                    <span className="block text-[12px] font-semibold text-slate-600">
+                    <span className="block text-[11px] font-semibold text-slate-600 sm:text-[12px]">
                       Cheapest
                     </span>
-                    <span className="mt-0.5 block text-[13px] font-semibold text-slate-950">
+                    <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-950 sm:text-[13px]">
                       {sortSummaries.cheapest
                         ? formatCurrency(
                             sortSummaries.cheapest.price,
@@ -2653,16 +2653,16 @@ export function FlightResultsClient() {
                     type="button"
                     onClick={() => setSortMode("best")}
                     className={cn(
-                      "relative border-t border-slate-200 px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:border-l sm:border-t-0",
+                      "relative border-l border-slate-200 px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
                       sortMode === "best"
-                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-violet-600"
+                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
                         : "text-slate-600"
                     )}
                   >
-                    <span className="block text-[12px] font-semibold text-slate-600">
+                    <span className="block text-[11px] font-semibold text-slate-600 sm:text-[12px]">
                       Best
                     </span>
-                    <span className="mt-0.5 block text-[13px] font-semibold text-slate-950">
+                    <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-950 sm:text-[13px]">
                       {sortSummaries.best
                         ? `${formatCurrency(
                             sortSummaries.best.price,
@@ -2678,16 +2678,16 @@ export function FlightResultsClient() {
                     type="button"
                     onClick={() => setSortMode("fastest")}
                     className={cn(
-                      "relative border-t border-slate-200 px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:border-l sm:border-t-0",
+                      "relative border-l border-slate-200 px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
                       sortMode === "fastest"
-                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-violet-600"
+                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
                         : "text-slate-600"
                     )}
                   >
-                    <span className="block text-[12px] font-semibold text-slate-600">
+                    <span className="block text-[11px] font-semibold text-slate-600 sm:text-[12px]">
                       Quickest
                     </span>
-                    <span className="mt-0.5 block text-[13px] font-semibold text-slate-950">
+                    <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-950 sm:text-[13px]">
                       {sortSummaries.fastest
                         ? formatDurationFromMinutes(
                             sortSummaries.fastest.durationMinutes
