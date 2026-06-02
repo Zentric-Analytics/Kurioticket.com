@@ -322,7 +322,7 @@ export function AppHeader({
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
+      <header className="relative z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
           <Link href="/" aria-label="Kurioticket home" className="shrink-0">
             <KurioticketLogo variant="full" tone="light" />
@@ -632,8 +632,6 @@ export function AppHeader({
           </div>
         ) : null}
       </header>
-
-      <div aria-hidden="true" className="h-[150px] shrink-0 md:h-[104px]" />
     </>
   );
 }
