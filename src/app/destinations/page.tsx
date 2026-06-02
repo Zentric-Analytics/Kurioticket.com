@@ -31,93 +31,93 @@ type DestinationSection = {
 
 const curatedDestinationPhotos: Record<string, string> = {
   "London|United Kingdom":
-    "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Paris|France":
-    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Dubai|United Arab Emirates":
-    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "New York|United States":
-    "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Rome|Italy":
-    "https://images.unsplash.com/photo-1525874684015-58379d421a52?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1525874684015-58379d421a52?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Barcelona|Spain":
-    "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Amsterdam|Netherlands":
-    "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Tokyo|Japan":
-    "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Singapore|Singapore":
-    "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Bangkok|Thailand":
-    "https://images.unsplash.com/photo-1508009603885-50cf7c579365?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1508009603885-50cf7c579365?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Cape Town|South Africa":
-    "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1580060839134-75a5edca2e99?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Istanbul|Turkey":
-    "https://images.unsplash.com/photo-1527838832700-5059252407fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1527838832700-5059252407fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Las Vegas|United States":
-    "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Toronto|Canada":
-    "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Los Angeles|United States":
-    "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Miami|United States":
-    "https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Doha|Qatar":
-    "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1580674684081-7617fbf3d745?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Abu Dhabi|United Arab Emirates":
-    "https://images.unsplash.com/photo-1518684079-3c830dcef090?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1518684079-3c830dcef090?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Lisbon|Portugal":
-    "https://images.unsplash.com/photo-1501927023255-9063be98970c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1501927023255-9063be98970c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Prague|Czechia":
-    "https://images.unsplash.com/photo-1541849546-216549ae216d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1541849546-216549ae216d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Athens|Greece":
-    "https://images.unsplash.com/photo-1555993539-1732b0258235?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1555993539-1732b0258235?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Marrakech|Morocco":
-    "https://images.pexels.com/photos/31356131/pexels-photo-31356131.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/31356131/pexels-photo-31356131.jpeg?auto=compress&cs=tinysrgb&w=1800",
   "Nairobi|Kenya":
-    "https://images.unsplash.com/photo-1523805009345-7448845a9e53?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1523805009345-7448845a9e53?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Kuala Lumpur|Malaysia":
-    "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Venice|Italy":
-    "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Florence|Italy":
-    "https://images.unsplash.com/photo-1543429257-3eb0b65d9c58?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1543429257-3eb0b65d9c58?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Berlin|Germany":
-    "https://images.unsplash.com/photo-1560969184-10fe8719e047?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1560969184-10fe8719e047?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Madrid|Spain":
-    "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Copenhagen|Denmark":
-    "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Zurich|Switzerland":
-    "https://images.unsplash.com/photo-1515488764276-beab7607c1e6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1515488764276-beab7607c1e6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Vienna|Austria":
-    "https://images.unsplash.com/photo-1516550893923-42d28e5677af?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1516550893923-42d28e5677af?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Milan|Italy":
-    "https://images.unsplash.com/photo-1520440229-6469a149ac59?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1520440229-6469a149ac59?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Accra|Ghana":
-    "https://images.pexels.com/photos/31781975/pexels-photo-31781975.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/31781975/pexels-photo-31781975.jpeg?auto=compress&cs=tinysrgb&w=1800",
   "Lagos|Nigeria":
-    "https://images.pexels.com/photos/32014864/pexels-photo-32014864.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/32014864/pexels-photo-32014864.jpeg?auto=compress&cs=tinysrgb&w=1800",
   "Abuja|Nigeria":
-    "https://images.pexels.com/photos/20453360/pexels-photo-20453360.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/20453360/pexels-photo-20453360.jpeg?auto=compress&cs=tinysrgb&w=1800",
   "Muscat|Oman":
-    "https://images.pexels.com/photos/30798979/pexels-photo-30798979.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/30798979/pexels-photo-30798979.jpeg?auto=compress&cs=tinysrgb&w=1800",
   "Jeddah|Saudi Arabia":
-    "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1586724237569-f3d0c1dee8c6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Vancouver|Canada":
-    "https://images.unsplash.com/photo-1578922746465-3a80a228f223?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1578922746465-3a80a228f223?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Chicago|United States":
-    "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1494522855154-9297ac14b55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "San Francisco|United States":
-    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Seoul|South Korea":
-    "https://images.pexels.com/photos/32196432/pexels-photo-32196432.jpeg?auto=compress&cs=tinysrgb&w=1600",
+    "https://images.pexels.com/photos/32196432/pexels-photo-32196432.jpeg?auto=compress&cs=tinysrgb&w=1800",
   "Osaka|Japan":
-    "https://images.unsplash.com/photo-1590559899731-a382839e5549?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1590559899731-a382839e5549?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Bali|Indonesia":
-    "https://images.unsplash.com/photo-1537996194471-e657df975ab4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1537996194471-e657df975ab4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
   "Phuket|Thailand":
-    "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=92",
+    "https://images.unsplash.com/photo-1589394815804-964ed0be2eb5?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95",
 };
 
 function getDestinationPhotoUrl(name: string, country: string) {
@@ -143,7 +143,7 @@ const destinationTags = [
   "design weekend",
 ] as const;
 
-const destinationSubtitle = "Explore flights, hotels, and travel deals";
+const destinationSubtitle = "Bright views, flights, hotels, and deals";
 
 const regionDetails: Record<
   RegionName,
@@ -600,8 +600,8 @@ export default function DestinationsPage() {
                 Where do you want to go next?
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-violet-50/90 sm:text-lg">
-                Browse destinations, compare flights, and find travel deals in
-                minutes.
+                Browse brighter, hand-picked city views, compare flights, and
+                find travel deals in minutes.
               </p>
             </div>
 
@@ -632,6 +632,19 @@ export default function DestinationsPage() {
         </section>
 
         <section className="page-shell py-5 sm:py-6 lg:py-8">
+          <div className="mb-6 rounded-[2rem] border border-white bg-white/85 p-5 shadow-xl shadow-violet-100/70 sm:p-6">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-600">
+              Fresh image upgrade
+            </p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+              Every destination now opens with a brighter, more tempting view.
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
+              We tuned the cards for golden light, richer color, cleaner
+              contrast, and clearer booking cues so each city feels like a trip
+              worth clicking.
+            </p>
+          </div>
           <div className="space-y-12">
             {destinationSections.map((section) => (
               <section
