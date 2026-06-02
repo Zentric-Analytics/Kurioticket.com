@@ -2625,21 +2625,21 @@ export function FlightResultsClient() {
               </div>
 
               {sortedResults.length ? (
-                <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-2 shadow-sm sm:grid-cols-3">
+                <div className="grid overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:grid-cols-3">
                   <button
                     type="button"
                     onClick={() => setSortMode("cheapest")}
                     className={cn(
-                      "rounded-lg border px-3 py-2 text-left transition",
+                      "relative px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
                       sortMode === "cheapest"
-                        ? "border-indigo-500 bg-indigo-50 text-navy"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-violet-600"
+                        : "text-slate-600"
                     )}
                   >
-                    <span className="block text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                    <span className="block text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
                       Cheapest
                     </span>
-                    <span className="mt-1 block text-sm font-bold">
+                    <span className="mt-1 block text-sm font-bold text-slate-950">
                       {sortSummaries.cheapest
                         ? formatCurrency(
                             sortSummaries.cheapest.price,
@@ -2653,16 +2653,16 @@ export function FlightResultsClient() {
                     type="button"
                     onClick={() => setSortMode("best")}
                     className={cn(
-                      "rounded-lg border px-3 py-2 text-left transition",
+                      "relative border-t border-slate-200 px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:border-l sm:border-t-0",
                       sortMode === "best"
-                        ? "border-indigo-500 bg-indigo-50 text-navy"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-violet-600"
+                        : "text-slate-600"
                     )}
                   >
-                    <span className="block text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                    <span className="block text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
                       Best
                     </span>
-                    <span className="mt-1 block text-sm font-bold">
+                    <span className="mt-1 block text-sm font-bold text-slate-950">
                       {sortSummaries.best
                         ? `${formatCurrency(
                             sortSummaries.best.price,
@@ -2678,16 +2678,16 @@ export function FlightResultsClient() {
                     type="button"
                     onClick={() => setSortMode("fastest")}
                     className={cn(
-                      "rounded-lg border px-3 py-2 text-left transition",
+                      "relative border-t border-slate-200 px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:border-l sm:border-t-0",
                       sortMode === "fastest"
-                        ? "border-indigo-500 bg-indigo-50 text-navy"
-                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-violet-600"
+                        : "text-slate-600"
                     )}
                   >
-                    <span className="block text-xs font-black uppercase tracking-[0.14em] text-slate-500">
+                    <span className="block text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
                       Quickest
                     </span>
-                    <span className="mt-1 block text-sm font-bold">
+                    <span className="mt-1 block text-sm font-bold text-slate-950">
                       {sortSummaries.fastest
                         ? formatDurationFromMinutes(
                             sortSummaries.fastest.durationMinutes
