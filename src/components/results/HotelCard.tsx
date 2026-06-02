@@ -8,7 +8,18 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { formatCurrency } from "@/lib/utils";
 
+function getHotelStarRating(rating: number) {
+  if (!Number.isFinite(rating) || rating <= 0) return null;
+  return Math.min(Math.max(Math.floor(rating), 1), 5);
+}
+
+function formatHotelRating(rating: number) {
+  return Number.isInteger(rating) ? String(rating) : rating.toFixed(1);
+}
+
 export function HotelCard({ hotel }: { hotel: PublicHotelResult }) {
+  const starRating = getHotelStarRating(hotel.rating);
+
   async function redirectToHotel() {
     const response = await fetch("/api/redirect", {
       method: "POST",
@@ -42,6 +53,17 @@ export function HotelCard({ hotel }: { hotel: PublicHotelResult }) {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 space-y-3">
               <div>
+                {starRating ? (
+                  <div
+                    className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-amber-500"
+                    aria-label={`${formatHotelRating(hotel.rating)}-star hotel`}
+                  >
+                    <span aria-hidden="true" className="tracking-[0.08em]">
+                      {"★".repeat(starRating)}
+                    </span>
+                    <span className="text-muted">{formatHotelRating(hotel.rating)}-star hotel</span>
+                  </div>
+                ) : null}
                 <h2 className="text-xl font-bold leading-snug text-navy">{hotel.name}</h2>
                 <p className="mt-1 flex items-center gap-2 text-sm text-muted">
                   <MapPin size={15} className="shrink-0 text-teal" />
