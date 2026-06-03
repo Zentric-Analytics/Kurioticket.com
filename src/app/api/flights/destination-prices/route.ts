@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getHomeDiscoveryRouteAllowlist } from "@/data/homeDiscovery";
 import type { FlightSearchParams } from "@/lib/types";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 
@@ -13,14 +14,22 @@ const HOMEPAGE_DESTINATIONS = {
 
 const DEFAULT_ORIGIN = "JFK";
 const DEFAULT_CURRENCY = "USD";
-const MAX_DESTINATIONS = 5;
+const MAX_POPULAR_DESTINATIONS = 5;
+const DISCOVER_PRICE_CAP = 6;
 const CACHE_TTL_MS = 20 * 60 * 1000;
 const UNAVAILABLE_TTL_MS = 5 * 60 * 1000;
 const CONCURRENCY_LIMIT = 2;
 const AIRPORT_OR_CITY_CODE_PATTERN = /^[A-Z]{3}$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
+const HOME_DISCOVERY_ROUTES = getHomeDiscoveryRouteAllowlist();
 
 type HomepageDestinationId = keyof typeof HOMEPAGE_DESTINATIONS;
+
+type PriceDestination = {
+  id: string;
+  code: string;
+  origin: string;
+};
 
 type DestinationPrice = {
   id: string;
@@ -53,7 +62,7 @@ export async function POST(request: Request) {
   const origin = originValidation ?? DEFAULT_ORIGIN;
   const originSource = originValidation ? "request" : "default";
   const currency = validateCurrency(readStringProperty(payload, "currency")) ?? DEFAULT_CURRENCY;
-  const destinations = readDestinations(payload).slice(0, MAX_DESTINATIONS);
+  const destinations = readDestinations(payload, origin);
   const departureDate = getNextWeekendDateAroundDaysOut(45);
 
   if (!destinations.length) {
@@ -73,7 +82,6 @@ export async function POST(request: Request) {
 
   const prices = await mapWithConcurrency(destinations, CONCURRENCY_LIMIT, (destination) =>
     getDestinationPrice({
-      origin,
       destination,
       departureDate,
       currency,
@@ -92,22 +100,20 @@ export async function POST(request: Request) {
 }
 
 async function getDestinationPrice({
-  origin,
   destination,
   departureDate,
   currency,
 }: {
-  origin: string;
-  destination: { id: HomepageDestinationId; code: string };
+  destination: PriceDestination;
   departureDate: string;
   currency: string;
 }): Promise<DestinationPrice> {
-  const cacheKey = [origin, destination.code, "one-way", departureDate, "economy", "1-0-0", currency].join(":");
+  const cacheKey = [destination.origin, destination.code, "one-way", departureDate, "economy", "1-0-0", currency].join(":");
   const cached = destinationPriceCache.get(cacheKey);
   const nowMs = Date.now();
 
   if (cached && cached.expiresAtMs > nowMs) {
-    return cached.value;
+    return { ...cached.value, id: destination.id, code: destination.code };
   }
 
   const searchedAt = new Date(nowMs).toISOString();
@@ -115,7 +121,7 @@ async function getDestinationPrice({
   try {
     const search: FlightSearchParams = {
       tripType: "one-way",
-      origin,
+      origin: destination.origin,
       destination: destination.code,
       departureDate,
       adults: 1,
@@ -168,25 +174,66 @@ async function getDestinationPrice({
   return value;
 }
 
-function readDestinations(payload: unknown) {
+function readDestinations(payload: unknown, defaultOrigin: string) {
   if (!isRecord(payload) || !Array.isArray(payload.destinations)) return [];
 
   const seen = new Set<string>();
-  const destinations: Array<{ id: HomepageDestinationId; code: string }> = [];
+  const destinations: PriceDestination[] = [];
+  let popularCount = 0;
+  let discoveryCount = 0;
 
   for (const item of payload.destinations) {
     if (!isRecord(item)) continue;
 
-    const id = typeof item.id === "string" ? item.id : "";
-    const code = validateCode(typeof item.code === "string" ? item.code : undefined);
+    const discoveryDestination = readDiscoveryDestination(item);
 
-    if (!isHomepageDestinationId(id) || code !== HOMEPAGE_DESTINATIONS[id] || seen.has(id)) continue;
+    if (discoveryDestination) {
+      if (discoveryCount >= DISCOVER_PRICE_CAP || seen.has(discoveryDestination.id)) continue;
 
-    seen.add(id);
-    destinations.push({ id, code });
+      seen.add(discoveryDestination.id);
+      destinations.push(discoveryDestination);
+      discoveryCount += 1;
+      continue;
+    }
+
+    const popularDestination = readPopularDestination(item, defaultOrigin);
+
+    if (!popularDestination) continue;
+    if (popularCount >= MAX_POPULAR_DESTINATIONS || seen.has(popularDestination.id)) continue;
+
+    seen.add(popularDestination.id);
+    destinations.push(popularDestination);
+    popularCount += 1;
   }
 
   return destinations;
+}
+
+function readPopularDestination(item: Record<string, unknown>, defaultOrigin: string): PriceDestination | undefined {
+  const id = typeof item.id === "string" ? item.id : "";
+  const code = validateCode(typeof item.code === "string" ? item.code : undefined);
+
+  if (!isHomepageDestinationId(id) || code !== HOMEPAGE_DESTINATIONS[id]) return undefined;
+
+  return { id, code, origin: defaultOrigin };
+}
+
+function readDiscoveryDestination(item: Record<string, unknown>): PriceDestination | undefined {
+  const id = typeof item.id === "string" ? item.id : "";
+  const originCode = validateCode(typeof item.originCode === "string" ? item.originCode : undefined);
+  const destinationCode = validateCode(
+    typeof item.destinationCode === "string"
+      ? item.destinationCode
+      : typeof item.code === "string"
+        ? item.code
+        : undefined,
+  );
+  const allowedRoute = HOME_DISCOVERY_ROUTES.get(id);
+
+  if (!allowedRoute || !originCode || !destinationCode) return undefined;
+  if (originCode !== allowedRoute.originCode || destinationCode !== allowedRoute.destinationCode) return undefined;
+
+  return { id, code: destinationCode, origin: originCode };
 }
 
 function readStringProperty(payload: unknown, key: string) {
