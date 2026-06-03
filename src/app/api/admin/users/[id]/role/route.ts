@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+
 import {
   countActiveAdminsExcluding,
   isProtectedAdminEmail,
@@ -9,31 +10,55 @@ import { getPrisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-type RouteContext = { params: Promise<{ id: string }> };
+const allowedRoles = ["USER", "PREMIUM", "SUPPORT"] as const;
 
-export async function DELETE(request: Request, context: RouteContext) {
+type RouteContext = { params: Promise<{ id: string }> };
+type AllowedRole = (typeof allowedRoles)[number];
+
+export async function PATCH(request: Request, context: RouteContext) {
   const auth = await requireAdminApiSession();
   if (auth.response) return auth.response;
+
   const { id } = await context.params;
+  const body = (await request.json().catch(() => ({}))) as { role?: string };
+
+  if (!allowedRoles.includes(body.role as AllowedRole)) {
+    return NextResponse.json(
+      { error: "Choose a valid user role." },
+      { status: 400 },
+    );
+  }
 
   const target = await getPrisma().user.findUnique({
     where: { id },
     select: { id: true, email: true, role: true, status: true },
   });
+
   if (!target)
     return NextResponse.json({ error: "User not found." }, { status: 404 });
-  if (target.id === auth.session.user.id)
+
+  if (target.id === auth.session.user.id) {
     return NextResponse.json(
-      { error: "Admins cannot delete their own account." },
-      { status: 400 },
-    );
-  if (isProtectedAdminEmail(target.email)) {
-    return NextResponse.json(
-      { error: "Protected admin users cannot be deleted." },
+      { error: "Admins cannot change their own role." },
       { status: 400 },
     );
   }
-  if (target.role === "ADMIN") {
+
+  if (isProtectedAdminEmail(target.email)) {
+    return NextResponse.json(
+      { error: "Protected admin users cannot have their role changed." },
+      { status: 400 },
+    );
+  }
+
+  if (target.role !== "ADMIN") {
+    return NextResponse.json(
+      { error: "Only admin users can be demoted from ADMIN." },
+      { status: 400 },
+    );
+  }
+
+  if (target.status === "ACTIVE") {
     const remainingAdmins = await countActiveAdminsExcluding(target.id);
     if (remainingAdmins === 0) {
       return NextResponse.json(
@@ -41,33 +66,27 @@ export async function DELETE(request: Request, context: RouteContext) {
         { status: 400 },
       );
     }
-    return NextResponse.json(
-      { error: "Demote admin users before deleting them." },
-      { status: 400 },
-    );
   }
 
+  const nextRole = body.role as AllowedRole;
   const user = await getPrisma().user.update({
     where: { id },
-    data: { status: "DELETED" },
+    data: { role: nextRole },
   });
+
   await writeAdminAuditLog({
     adminUserId: auth.session.user.id,
     adminEmail: auth.session.user.email,
-    action: "USER_SOFT_DELETED",
+    action: "USER_ROLE_UPDATED",
     targetType: "User",
     targetId: user.id,
     targetEmail: user.email,
-    metadata: {
-      previousStatus: target.status,
-      nextStatus: user.status,
-      route: "DELETE /api/admin/users/[id]",
-    },
+    metadata: { previousRole: target.role, nextRole: user.role },
     request,
   });
 
   return NextResponse.json({
-    message: "User was soft deleted.",
-    user: { id: user.id, status: user.status },
+    message: `User role updated to ${user.role}.`,
+    user: { id: user.id, role: user.role },
   });
 }

@@ -2225,11 +2225,11 @@ export function FlightResultsClient() {
               type="button"
               variant="secondary"
               aria-label="Open filters"
-              className="h-auto min-h-[64px] w-[72px] shrink-0 rounded-2xl border-slate-200 bg-white px-2 text-[12px] font-semibold text-slate-800 shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+              className="h-[52px] w-[56px] shrink-0 rounded-xl border-slate-200 bg-white px-1.5 text-[10px] font-semibold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
               onClick={() => setFiltersOpen(true)}
             >
-              <span className="flex flex-col items-center justify-center gap-1">
-                <SlidersHorizontal size={17} />
+              <span className="flex flex-col items-center justify-center gap-0.5">
+                <SlidersHorizontal size={15} />
                 <span>Filters</span>
               </span>
             </Button>

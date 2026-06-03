@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { countActiveAdminsExcluding, requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
+import {
+  countActiveAdminsExcluding,
+  isProtectedAdminEmail,
+  requireAdminApiSession,
+  writeAdminAuditLog,
+} from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -15,28 +20,61 @@ export async function PATCH(request: Request, context: RouteContext) {
   const body = (await request.json().catch(() => ({}))) as { status?: string };
 
   if (!allowedStatuses.includes(body.status as never)) {
-    return NextResponse.json({ error: "Choose a valid account status." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Choose a valid account status." },
+      { status: 400 },
+    );
   }
 
-  const target = await getPrisma().user.findUnique({ where: { id }, select: { id: true, email: true, role: true, status: true } });
-  if (!target) return NextResponse.json({ error: "User not found." }, { status: 404 });
+  const target = await getPrisma().user.findUnique({
+    where: { id },
+    select: { id: true, email: true, role: true, status: true },
+  });
+  if (!target)
+    return NextResponse.json({ error: "User not found." }, { status: 404 });
 
   if (target.id === auth.session.user.id && body.status !== "ACTIVE") {
-    return NextResponse.json({ error: "Admins cannot suspend or delete their own account." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Admins cannot suspend or delete their own account." },
+      { status: 400 },
+    );
+  }
+
+  if (isProtectedAdminEmail(target.email) && body.status !== "ACTIVE") {
+    return NextResponse.json(
+      { error: "Protected admin users cannot be suspended or deleted." },
+      { status: 400 },
+    );
   }
 
   if (target.role === "ADMIN" && body.status !== "ACTIVE") {
     const remainingAdmins = await countActiveAdminsExcluding(target.id);
     if (remainingAdmins === 0) {
-      return NextResponse.json({ error: "Cannot remove the last active admin." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Cannot remove the last active admin." },
+        { status: 400 },
+      );
     }
+
+    return NextResponse.json(
+      { error: "Demote admin users before status changes or deletion." },
+      { status: 400 },
+    );
   }
 
-  const user = await getPrisma().user.update({ where: { id }, data: { status: body.status as never } });
+  const user = await getPrisma().user.update({
+    where: { id },
+    data: { status: body.status as never },
+  });
   await writeAdminAuditLog({
     adminUserId: auth.session.user.id,
     adminEmail: auth.session.user.email,
-    action: body.status === "ACTIVE" ? "USER_REACTIVATED" : body.status === "SUSPENDED" ? "USER_SUSPENDED" : "USER_SOFT_DELETED",
+    action:
+      body.status === "ACTIVE"
+        ? "USER_REACTIVATED"
+        : body.status === "SUSPENDED"
+          ? "USER_SUSPENDED"
+          : "USER_SOFT_DELETED",
     targetType: "User",
     targetId: user.id,
     targetEmail: user.email,
@@ -44,5 +82,8 @@ export async function PATCH(request: Request, context: RouteContext) {
     request,
   });
 
-  return NextResponse.json({ message: `User status updated to ${user.status}.`, user: { id: user.id, status: user.status } });
+  return NextResponse.json({
+    message: `User status updated to ${user.status}.`,
+    user: { id: user.id, status: user.status },
+  });
 }
