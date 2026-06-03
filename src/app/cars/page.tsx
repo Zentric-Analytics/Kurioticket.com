@@ -22,6 +22,7 @@ import {
   Clock,
   RotateCcw,
   ShieldCheck,
+  X,
 } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -696,6 +697,7 @@ function CarsSearchBar({
   ) => void;
   values: CarsFormValues;
 }) {
+  const pickupLocationRef = useRef<HTMLInputElement | null>(null);
   const dateWrapRef = useRef<HTMLDivElement | null>(null);
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
@@ -810,18 +812,35 @@ function CarsSearchBar({
               className="lg:border-r lg:border-r-slate-200/80"
             >
               <div className="grid gap-2">
-                <input
-                  id="pickupLocation"
-                  name="pickupLocation"
-                  type="text"
-                  value={values.pickupLocation}
-                  onChange={(event) =>
-                    updateValue("pickupLocation", event.target.value)
-                  }
-                  placeholder="Airport, city, or address"
-                  className="h-7 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8"
-                  autoComplete="off"
-                />
+                <div className="relative">
+                  <input
+                    ref={pickupLocationRef}
+                    id="pickupLocation"
+                    name="pickupLocation"
+                    type="text"
+                    value={values.pickupLocation}
+                    onChange={(event) =>
+                      updateValue("pickupLocation", event.target.value)
+                    }
+                    placeholder="Airport, city, or address"
+                    className="h-7 w-full border-none bg-transparent py-0 pl-0 pr-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8"
+                    autoComplete="off"
+                  />
+
+                  {values.pickupLocation ? (
+                    <button
+                      type="button"
+                      aria-label="Clear pickup location"
+                      onClick={() => {
+                        updateValue("pickupLocation", "");
+                        pickupLocationRef.current?.focus();
+                      }}
+                      className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                    >
+                      <X className="h-4 w-4" aria-hidden="true" />
+                    </button>
+                  ) : null}
+                </div>
 
                 {values.returnToDifferentLocation ? (
                   <input
