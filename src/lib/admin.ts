@@ -57,16 +57,26 @@ export async function requireAdminApiSession() {
   return { session };
 }
 
+export function isProtectedAdminEmail(
+  email?: string | null,
+) {
+  const normalizedEmail = email
+    ?.toLowerCase()
+    .trim();
+
+  return Boolean(
+    normalizedEmail &&
+      getAdminEmails().includes(
+        normalizedEmail,
+      ),
+  );
+}
+
 export function isConfiguredAdminEmail(
   email?: string | null,
 ) {
-  return Boolean(
-    email &&
-      getAdminEmails().includes(
-        email
-          .toLowerCase()
-          .trim(),
-      ),
+  return isProtectedAdminEmail(
+    email,
   );
 }
 
