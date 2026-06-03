@@ -2217,7 +2217,7 @@ export function FlightResultsClient() {
         <section className="lg:col-span-2">
           <div
             className={cn(
-              "mx-auto flex w-full max-w-3xl items-stretch gap-2 sm:hidden",
+              "mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2 overflow-hidden sm:hidden",
               mobileSearchOpen && "hidden"
             )}
           >
@@ -2237,17 +2237,21 @@ export function FlightResultsClient() {
             <button
               type="button"
               onClick={() => setMobileSearchOpen(true)}
-              className="flex h-[64px] min-w-0 flex-1 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-0 text-left shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:shadow-[0_12px_28px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+              className="flex h-[58px] min-w-0 max-w-full flex-1 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-0 text-left shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 hover:shadow-[0_10px_22px_rgba(15,23,42,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
             >
-              <span className="block min-w-0 flex-1 truncate text-[15px] font-semibold leading-5 text-slate-950">
-                {mobileRouteSummary} {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
-                {mobileTravelerSummary}
+              <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
+                <span className="block truncate text-[15px] font-semibold leading-5 text-slate-950">
+                  {mobileRouteSummary}
+                </span>
+                <span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-slate-600">
+                  {mobileTripTypeSummary} · {mobileDateSummary} · {mobileTravelerSummary}
+                </span>
               </span>
               <span
                 aria-hidden="true"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
               >
-                <PencilLine size={17} />
+                <PencilLine size={16} />
               </span>
             </button>
           </div>
