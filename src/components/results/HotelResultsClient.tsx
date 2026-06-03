@@ -10,7 +10,7 @@ import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn, formatCurrency } from "@/lib/utils";
 
-const hotelResultStackClass = "w-full max-w-[640px] lg:ml-4 xl:ml-6";
+const hotelResultStackClass = "w-full max-w-[704px] lg:ml-4 xl:ml-6";
 
 const messages = [
   "Searching hotel partners...",
