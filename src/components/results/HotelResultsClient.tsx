@@ -10,6 +10,8 @@ import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn, formatCurrency } from "@/lib/utils";
 
+const hotelResultStackClass = "w-full max-w-[640px] lg:ml-4 xl:ml-6";
+
 const messages = [
   "Searching hotel partners...",
   "Comparing total stay prices...",
@@ -432,9 +434,9 @@ export function HotelResultsClient() {
               </Button>
             </div>
           ) : (
-            <>
-              <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-white px-3.5 py-2 shadow-[0_12px_30px_-24px_rgba(30,27,75,0.45)]">
-                <p className="text-sm font-semibold text-muted">
+            <div className={cn(hotelResultStackClass, "space-y-4")}>
+              <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-sm font-bold text-navy">
                   {filtered.length} stay option
                   {filtered.length === 1 ? "" : "s"} found
                 </p>
@@ -442,7 +444,7 @@ export function HotelResultsClient() {
               {filtered.map((hotel) => (
                 <HotelCard key={hotel.id} hotel={hotel} />
               ))}
-            </>
+            </div>
           )}
         </section>
       </div>
@@ -509,7 +511,7 @@ function HotelFilters({
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
 
   return (
-    <div className="hotel-filter-panel bg-white lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+    <div className="bg-white">
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
           <h2 className="text-base font-bold text-white">Filter by</h2>
