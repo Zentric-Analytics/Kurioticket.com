@@ -9,7 +9,7 @@ import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
 import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
 import { airports, type AirportOption } from "@/data/airports";
-import { countryMatchesCode, normalizeCountryCode } from "@/lib/geo/context";
+import { countryNameToCountryCode, isIsoCountryCode, normalizeCountryCode } from "@/lib/geo/context";
 import { distanceKm } from "@/lib/geo/distance";
 
 export type DuffelPlaceSuggestion = {
@@ -17,6 +17,7 @@ export type DuffelPlaceSuggestion = {
   city: string;
   airport: string;
   country?: string;
+  countryCode?: string;
   duffelPlaceId?: string;
   type?: "airport" | "city" | string;
   latitude?: number;
@@ -200,6 +201,34 @@ const normalizeSuggestionText = (value: string) =>
 
 const MAX_PLACE_SUGGESTIONS = 8;
 
+const curatedAirportsByCode = new Map(airports.map((airport) => [airport.code.toUpperCase(), airport]));
+
+const normalizeIsoCountryCode = (value?: string | null) => {
+  const normalizedCountryCode = normalizeCountryCode(value);
+  return normalizedCountryCode && isIsoCountryCode(normalizedCountryCode) ? normalizedCountryCode : undefined;
+};
+
+const inferCountryCodeFromDuffelPlaceId = (duffelPlaceId?: string) => {
+  const suffix = duffelPlaceId?.trim().split("_").pop();
+
+  if (!suffix || !/^[A-Za-z]{2}$/.test(suffix)) return undefined;
+
+  return normalizeIsoCountryCode(suffix);
+};
+
+const inferPlaceCountryCode = (place: DuffelPlaceSuggestion) => {
+  const explicitCountryCode = normalizeIsoCountryCode(place.countryCode);
+  if (explicitCountryCode) return explicitCountryCode;
+
+  const providerCountryCode = normalizeIsoCountryCode(countryNameToCountryCode(place.country));
+  if (providerCountryCode) return providerCountryCode;
+
+  const curatedCountryCode = normalizeIsoCountryCode(curatedAirportsByCode.get(place.code.toUpperCase())?.country);
+  if (curatedCountryCode) return curatedCountryCode;
+
+  return inferCountryCodeFromDuffelPlaceId(place.duffelPlaceId);
+};
+
 const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearchContext) => {
   const normalizedCountryCode = normalizeCountryCode(searchContext?.countryCode);
   const withIndex = places.map((place, index) => ({ place, index }));
@@ -225,8 +254,8 @@ const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearch
       const bDistance = distanceFor(b.place);
 
       if (normalizedCountryCode) {
-        const aCountryMatch = countryMatchesCode(a.place.country, normalizedCountryCode) ? 1 : 0;
-        const bCountryMatch = countryMatchesCode(b.place.country, normalizedCountryCode) ? 1 : 0;
+        const aCountryMatch = inferPlaceCountryCode(a.place) === normalizedCountryCode ? 1 : 0;
+        const bCountryMatch = inferPlaceCountryCode(b.place) === normalizedCountryCode ? 1 : 0;
 
         if (aCountryMatch !== bCountryMatch) {
           return bCountryMatch - aCountryMatch;
