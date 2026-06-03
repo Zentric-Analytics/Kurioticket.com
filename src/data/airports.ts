@@ -1,4 +1,5 @@
 import { distanceKm } from "@/lib/geo/distance";
+import { countryMatchesCode } from "@/lib/geo/context";
 
 export type AirportOption = {
   code: string;
@@ -7,19 +8,6 @@ export type AirportOption = {
   country?: string;
   lat?: number;
   lon?: number;
-};
-
-const COUNTRY_BY_CODE: Record<string, string> = {
-  US: "United States",
-  NG: "Nigeria",
-  GB: "United Kingdom",
-  CA: "Canada",
-  AE: "United Arab Emirates",
-  FR: "France",
-  DE: "Germany",
-  NL: "Netherlands",
-  ES: "Spain",
-  IT: "Italy",
 };
 
 export const airports: AirportOption[] = [
@@ -61,7 +49,6 @@ export const destinationDefaults = ["LHR", "CDG", "DXB", "JFK", "LAX", "AMS", "M
 
 export const getDefaultAirports = (params: { context: "origin" | "destination"; countryCode?: string; lat?: number; lon?: number; limit?: number; }) => {
   const limit = params.limit ?? 8;
-  const countryName = params.countryCode ? COUNTRY_BY_CODE[params.countryCode.toUpperCase()] : undefined;
   const destinationOrder = new Map(destinationDefaults.map((code, index) => [code, index]));
 
   return [...airports]
@@ -71,9 +58,9 @@ export const getDefaultAirports = (params: { context: "origin" | "destination"; 
         const bd = destinationOrder.get(b.code) ?? 999;
         if (ad !== bd) return ad - bd;
       }
-      if (countryName) {
-        const aMatch = a.country === countryName ? 1 : 0;
-        const bMatch = b.country === countryName ? 1 : 0;
+      if (params.countryCode) {
+        const aMatch = countryMatchesCode(a.country, params.countryCode) ? 1 : 0;
+        const bMatch = countryMatchesCode(b.country, params.countryCode) ? 1 : 0;
         if (aMatch !== bMatch) return bMatch - aMatch;
       }
       if (typeof params.lat === "number" && typeof params.lon === "number") {
