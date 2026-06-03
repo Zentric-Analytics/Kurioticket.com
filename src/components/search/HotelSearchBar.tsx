@@ -384,7 +384,7 @@ export function HotelSearchBar({
       <form
         onSubmit={handleSubmit}
         className={cn(
-          compact ? "space-y-2 sm:block" : "space-y-4",
+          compact ? "space-y-2 sm:block lg:relative lg:pt-6" : "space-y-4",
           compact && (mobileSearchOpen ? "block" : "hidden"),
         )}
         noValidate
@@ -759,7 +759,7 @@ export function HotelSearchBar({
           <div
             className={cn(
               "flex justify-end px-1",
-              compact && "-mt-1 hidden sm:flex",
+              compact && "-mt-1 hidden sm:flex lg:absolute lg:right-0 lg:top-0 lg:mt-0",
             )}
           >
             <button
