@@ -5,55 +5,53 @@ export type CountryContext = {
   country: string;
   continentCode?: string;
   continent?: string;
-  city?: string;
-  region?: string;
-  latitude?: number;
-  longitude?: number;
   source: "ipinfo-lite";
 };
 
 type IpinfoLiteResponse = {
-  country_code?: string;
-  country?: string;
-  continent_code?: string;
-  continent?: string;
+  country_code?: unknown;
+  country?: unknown;
+  continent_code?: unknown;
+  continent?: unknown;
 };
 
 const DEFAULT_BASE_URL = "https://api.ipinfo.io/lite";
 const REQUEST_TIMEOUT_MS = 2000;
 
-const isEnabled = () => process.env.IPINFO_ENABLED === "true";
-
-const getBaseUrl = () => (process.env.IPINFO_BASE_URL || DEFAULT_BASE_URL).trim().replace(/\/$/, "");
+const firstHeaderValue = (value: string | null) =>
+  value
+    ?.split(",")
+    .map((item) => item.trim())
+    .find((item) => item && item.toLowerCase() !== "unknown") || null;
 
 export const extractVisitorIp = (headers: Headers): string | null => {
-  const cfIp = headers.get("cf-connecting-ip")?.trim();
+  const forwardedFor = firstHeaderValue(headers.get("x-forwarded-for"));
+  if (forwardedFor) return forwardedFor;
+
+  const realIp = firstHeaderValue(headers.get("x-real-ip"));
+  if (realIp) return realIp;
+
+  const cfIp = firstHeaderValue(headers.get("cf-connecting-ip"));
   if (cfIp) return cfIp;
 
-  const forwardedFor = headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const firstIp = forwardedFor
-      .split(",")
-      .map((value) => value.trim())
-      .find(Boolean);
-    if (firstIp) return firstIp;
-  }
-
-  const realIp = headers.get("x-real-ip")?.trim();
-  if (realIp) return realIp;
+  const flyIp = firstHeaderValue(headers.get("fly-client-ip"));
+  if (flyIp) return flyIp;
 
   return null;
 };
 
-export const resolveIpinfoLiteCountryContext = async (visitorIp: string): Promise<CountryContext | null> => {
+const readString = (value: unknown) => (typeof value === "string" ? value.trim() : "");
+
+export const resolveIpinfoLiteCountryContext = async (visitorIp?: string | null): Promise<CountryContext | null> => {
   const token = process.env.IPINFO_TOKEN?.trim();
-  if (!isEnabled() || !token || !visitorIp) return null;
+  if (!token) return null;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const endpoint = `${getBaseUrl()}/${encodeURIComponent(visitorIp)}?token=${encodeURIComponent(token)}`;
+    const ipPath = visitorIp ? encodeURIComponent(visitorIp) : "me";
+    const endpoint = `${DEFAULT_BASE_URL}/${ipPath}?token=${encodeURIComponent(token)}`;
     const response = await fetch(endpoint, {
       method: "GET",
       headers: { Accept: "application/json" },
@@ -64,13 +62,13 @@ export const resolveIpinfoLiteCountryContext = async (visitorIp: string): Promis
     if (!response.ok) return null;
 
     const payload = (await response.json()) as IpinfoLiteResponse;
-    const countryCode = normalizeCountryCode(payload.country_code);
-    const country = payload.country?.trim();
+    const countryCode = normalizeCountryCode(readString(payload.country_code));
+    const country = readString(payload.country);
 
     if (!countryCode || !country) return null;
 
-    const continentCode = normalizeCountryCode(payload.continent_code);
-    const continent = payload.continent?.trim() || undefined;
+    const continentCode = normalizeCountryCode(readString(payload.continent_code));
+    const continent = readString(payload.continent) || undefined;
 
     return {
       countryCode,

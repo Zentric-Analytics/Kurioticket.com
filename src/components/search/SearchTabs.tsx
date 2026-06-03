@@ -57,6 +57,11 @@ type PlacesApiResponse = {
   source?: string;
 };
 
+type LocationApiResponse = {
+  source?: "ipinfo-lite" | "fallback";
+  countryCode?: string | null;
+};
+
 type RecommendedOrigin = AirportOption & {
   confidence?: number;
 };
@@ -67,6 +72,18 @@ const normalizeSuggestionText = (value: string) =>
     .replace(/\p{M}/gu, "")
     .trim()
     .toLowerCase();
+
+const normalizeCountryHint = (value: string | null | undefined) => {
+  const countryCode = value?.trim().toUpperCase() || "";
+  return /^[A-Z]{2}$/.test(countryCode) ? countryCode : "";
+};
+
+const getBrowserCountryHint = () => {
+  if (typeof navigator === "undefined") return "";
+  const language = navigator.language || "";
+  const parts = language.split("-");
+  return normalizeCountryHint(parts.length > 1 ? parts[1] : "");
+};
 
 const dedupeSuggestions = (suggestions: AirportOption[]) => {
   const seenCodes = new Set<string>();
@@ -418,12 +435,40 @@ export function SearchTabs({
 
 
   useEffect(() => {
-    if (typeof navigator === "undefined") return;
-    const language = navigator.language || "";
-    const parts = language.split("-");
-    if (parts.length > 1 && /^[A-Za-z]{2}$/.test(parts[1])) {
-      setCountryHint(parts[1].toUpperCase());
-    }
+    const browserCountryHint = getBrowserCountryHint();
+    if (!browserCountryHint) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setCountryHint(browserCountryHint);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadLocationCountryHint = async () => {
+      try {
+        const response = await fetch("/api/location", {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as LocationApiResponse;
+        const detectedCountryHint = normalizeCountryHint(payload.countryCode);
+        if (detectedCountryHint) {
+          setCountryHint(detectedCountryHint);
+        }
+      } catch {
+        // Keep the browser-language country hint when server-side location is unavailable.
+      }
+    };
+
+    void loadLocationCountryHint();
+
+    return () => controller.abort();
   }, []);
 
 
