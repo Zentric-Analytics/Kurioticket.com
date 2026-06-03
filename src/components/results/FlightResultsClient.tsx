@@ -2216,7 +2216,7 @@ export function FlightResultsClient() {
       <form
         onSubmit={handleCompactSearchSubmit}
         className={cn(
-          "mx-auto w-full max-w-3xl",
+          "mx-auto w-full min-w-0 max-w-full sm:max-w-3xl",
           placement === "desktop" && "hidden sm:block",
         )}
       >
@@ -2281,7 +2281,7 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:p-1.5">
+          <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:p-1.5">
             <div className="flex flex-col gap-0.5 lg:flex-row lg:items-stretch lg:gap-1">
               <div className="grid min-w-0 flex-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.36fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-0">
                 <div className="sm:col-span-2 lg:col-span-1">
@@ -2478,14 +2478,14 @@ export function FlightResultsClient() {
   }
 
   return (
-    <main className="flex-1 bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
+    <main className="flex-1 overflow-x-hidden bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
       <div
         className={cn(
-          "sticky top-0 z-30 -mx-4 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur sm:hidden",
+          "sticky top-0 z-30 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur sm:hidden",
           mobileSearchOpen && "hidden"
         )}
       >
-        <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2 overflow-hidden">
+        <div className="mx-auto flex w-full max-w-full min-w-0 items-center gap-2 overflow-hidden sm:max-w-3xl">
           <Button
             type="button"
             variant="secondary"
@@ -2524,7 +2524,7 @@ export function FlightResultsClient() {
 
       <div
         className={cn(
-          "sticky top-0 z-40 -mx-4 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden",
+          "sticky top-0 z-40 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden",
           mobileSearchOpen ? "block" : "hidden"
         )}
       >
