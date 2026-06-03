@@ -269,7 +269,9 @@ export function HotelResultsClient() {
   const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>(
     [],
   );
-  const filterApplyingTimeoutRef = useRef<number | null>(null);
+  const filterApplyingTimeoutRef = useRef<
+    ReturnType<typeof window.setTimeout> | null
+  >(null);
   const previousFilterSignatureRef = useRef<string | null>(null);
   const previousResultsSignatureRef = useRef<string | null>(null);
   const body = useMemo(
@@ -372,6 +374,19 @@ export function HotelResultsClient() {
     };
   }, []);
 
+  const triggerFilterApplying = () => {
+    setFilterApplying(true);
+
+    if (filterApplyingTimeoutRef.current !== null) {
+      window.clearTimeout(filterApplyingTimeoutRef.current);
+    }
+
+    filterApplyingTimeoutRef.current = window.setTimeout(() => {
+      setFilterApplying(false);
+      filterApplyingTimeoutRef.current = null;
+    }, 325) as unknown as ReturnType<typeof window.setTimeout>;
+  };
+
   useEffect(() => {
     if (filterApplyingTimeoutRef.current !== null) {
       window.clearTimeout(filterApplyingTimeoutRef.current);
@@ -401,7 +416,7 @@ export function HotelResultsClient() {
       setVisibleFiltered(filtered);
       setFilterApplying(false);
       filterApplyingTimeoutRef.current = null;
-    }, 325);
+    }, 325) as unknown as ReturnType<typeof window.setTimeout>;
   }, [
     error,
     filterSignature,
@@ -410,6 +425,16 @@ export function HotelResultsClient() {
     results.length,
     resultsSignature,
   ]);
+
+  const updateMaxPrice = (value: number) => {
+    setMaxPrice(value);
+    triggerFilterApplying();
+  };
+
+  const updateMinRating = (value: number) => {
+    setMinRating(value);
+    triggerFilterApplying();
+  };
 
   const resetFilters = () => {
     setMaxPrice(resultMaxPrice);
