@@ -8,6 +8,8 @@ import type { FlightSearchParams, NormalizedFlightResult, ProviderResult } from 
 import { sanitizeAirportCode } from "@/lib/utils";
 import { normalizeFlightResult } from "@/services/travel/normalizeFlightResult";
 import { fetchJson, runProvider, skippedProvider } from "@/services/travel/providerUtils";
+import { airports, type AirportOption } from "@/data/airports";
+import { countryMatchesCode, normalizeCountryCode } from "@/lib/geo/context";
 import { distanceKm } from "@/lib/geo/distance";
 
 export type DuffelPlaceSuggestion = {
@@ -196,7 +198,10 @@ const normalizeSuggestionText = (value: string) =>
     .trim()
     .toLowerCase();
 
+const MAX_PLACE_SUGGESTIONS = 8;
+
 const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearchContext) => {
+  const normalizedCountryCode = normalizeCountryCode(searchContext?.countryCode);
   const withIndex = places.map((place, index) => ({ place, index }));
 
   const distanceFor = (place: DuffelPlaceSuggestion) => {
@@ -219,6 +224,15 @@ const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearch
       const aDistance = distanceFor(a.place);
       const bDistance = distanceFor(b.place);
 
+      if (normalizedCountryCode) {
+        const aCountryMatch = countryMatchesCode(a.place.country, normalizedCountryCode) ? 1 : 0;
+        const bCountryMatch = countryMatchesCode(b.place.country, normalizedCountryCode) ? 1 : 0;
+
+        if (aCountryMatch !== bCountryMatch) {
+          return bCountryMatch - aCountryMatch;
+        }
+      }
+
       if (searchContext?.context === "origin" && Number.isFinite(aDistance) && Number.isFinite(bDistance) && aDistance !== bDistance) {
         return aDistance - bDistance;
       }
@@ -234,6 +248,82 @@ const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearch
       return a.index - b.index;
     })
     .map((item) => item.place);
+};
+
+
+const airportMatchesQuery = (airport: AirportOption, normalizedQuery: string) => {
+  const haystack = [airport.code, airport.city, airport.airport, airport.country]
+    .filter(Boolean)
+    .map((value) => normalizeSuggestionText(value || ""));
+
+  return haystack.some((value) => value.includes(normalizedQuery));
+};
+
+const curatedAirportToSuggestion = (airport: AirportOption): DuffelPlaceSuggestion => ({
+  code: airport.code,
+  city: airport.city,
+  airport: airport.airport,
+  country: airport.country,
+  type: "airport",
+  latitude: airport.lat,
+  longitude: airport.lon,
+});
+
+const curatedQueryScore = (airport: AirportOption, normalizedQuery: string) => {
+  const code = normalizeSuggestionText(airport.code);
+  const city = normalizeSuggestionText(airport.city);
+  const airportName = normalizeSuggestionText(airport.airport);
+
+  if (code === normalizedQuery) return 0;
+  if (code.startsWith(normalizedQuery)) return 1;
+  if (city.startsWith(normalizedQuery)) return 2;
+  if (airportName.startsWith(normalizedQuery)) return 3;
+  if (city.includes(normalizedQuery)) return 4;
+  if (airportName.includes(normalizedQuery)) return 5;
+  return 6;
+};
+
+export const searchCuratedPlaceSuggestions = (query: string, searchContext?: PlaceSearchContext) => {
+  const normalizedQuery = normalizeSuggestionText(query);
+  const normalizedCountryCode = normalizeCountryCode(searchContext?.countryCode);
+
+  if (!normalizedQuery || !normalizedCountryCode) return [];
+
+  const matchingAirports = airports.filter((airport) => airportMatchesQuery(airport, normalizedQuery));
+  const orderByCode = new Map(airports.map((airport, index) => [airport.code, index]));
+
+  return rankPlaces(
+    matchingAirports
+      .sort((a, b) => {
+        const aScore = curatedQueryScore(a, normalizedQuery);
+        const bScore = curatedQueryScore(b, normalizedQuery);
+        if (aScore !== bScore) return aScore - bScore;
+
+        return (orderByCode.get(a.code) ?? 9999) - (orderByCode.get(b.code) ?? 9999);
+      })
+      .map(curatedAirportToSuggestion),
+    searchContext,
+  ).slice(0, MAX_PLACE_SUGGESTIONS);
+};
+
+const mergeProviderAndCuratedPlaces = (
+  providerPlaces: DuffelPlaceSuggestion[],
+  curatedPlaces: DuffelPlaceSuggestion[],
+  searchContext?: PlaceSearchContext,
+) => {
+  const placesByCode = new Map<string, DuffelPlaceSuggestion>();
+
+  for (const providerPlace of providerPlaces) {
+    placesByCode.set(providerPlace.code, providerPlace);
+  }
+
+  for (const curatedPlace of curatedPlaces) {
+    if (!placesByCode.has(curatedPlace.code)) {
+      placesByCode.set(curatedPlace.code, curatedPlace);
+    }
+  }
+
+  return rankPlaces([...placesByCode.values()], searchContext).slice(0, MAX_PLACE_SUGGESTIONS);
 };
 
 export async function searchDuffelPlaces(query: string, searchContext?: PlaceSearchContext): Promise<ProviderResult<DuffelPlaceSuggestion>> {
@@ -290,6 +380,6 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
       });
     }
 
-    return rankPlaces(results, searchContext).slice(0, 8);
+    return mergeProviderAndCuratedPlaces(results, searchCuratedPlaceSuggestions(query, searchContext), searchContext);
   });
 }
