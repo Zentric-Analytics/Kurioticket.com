@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { getPrisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { isProtectedAdminEmail } from "@/lib/admin";
+import { getAdminEmails } from "@/lib/env";
 
 export const metadata = { title: "Admin Users" };
 
@@ -48,6 +48,21 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       createdAt: true,
       updatedAt: true,
     },
+  });
+  const adminEmails = new Set(getAdminEmails());
+  const sortedUsers = [...users].sort((a, b) => {
+    const aProtected = a.email
+      ? adminEmails.has(a.email.toLowerCase().trim())
+      : false;
+    const bProtected = b.email
+      ? adminEmails.has(b.email.toLowerCase().trim())
+      : false;
+
+    if (aProtected !== bProtected) {
+      return aProtected ? -1 : 1;
+    }
+
+    return 0;
   });
 
   return (
@@ -90,7 +105,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           <Button type="submit">Filter</Button>
         </form>
       </Card>
-      {users.length === 0 ? (
+      {sortedUsers.length === 0 ? (
         <div className="mt-4">
           <EmptyState message="No users match these filters." />
         </div>
@@ -111,8 +126,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => {
-                const isProtectedAdmin = isProtectedAdminEmail(user.email);
+              {sortedUsers.map((user) => {
+                const isProtectedAdmin = user.email
+                  ? adminEmails.has(user.email.toLowerCase().trim())
+                  : false;
 
                 return (
                   <tr
