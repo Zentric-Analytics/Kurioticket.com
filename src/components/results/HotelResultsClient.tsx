@@ -491,106 +491,122 @@ function HotelFilters({
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
 }) {
   return (
-    <div className="hotel-filter-panel rounded-[1.35rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_46px_-34px_rgba(15,23,42,0.38),0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-white/70 lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-      <h2 className="text-[0.95rem] font-extrabold tracking-[-0.01em] text-indigo-950">Filters</h2>
-      <div className="mt-5 divide-y divide-slate-200/70">
-        <FilterSection title="Budget / price">
-          <label className="block">
-            <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
-              Total up to{" "}
-              <span className="font-mono text-indigo-950">
-                {formatCurrency(maxPrice)}
+    <div className="hotel-filter-panel overflow-hidden rounded-[1.35rem] border border-violet-100/90 bg-white shadow-[0_18px_48px_-32px_rgba(67,56,202,0.36),0_1px_3px_rgba(15,23,42,0.08)] ring-1 ring-white/80 lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+      <div className="border-b border-violet-100 bg-[#F5F3FF] px-4 py-4 sm:px-[1.125rem]">
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-violet-700 shadow-sm ring-1 ring-violet-100">
+            <SlidersHorizontal size={17} aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-[0.98rem] font-extrabold tracking-[-0.01em] text-indigo-950">
+              Filters
+            </h2>
+            <p className="mt-0.5 text-xs font-semibold text-violet-700/80">
+              Refine your stay
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="px-5 pb-5">
+        <div className="divide-y divide-slate-200/80">
+          <FilterSection title="Budget / Price">
+            <label className="block">
+              <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
+                Total up to{" "}
+                <span className="font-mono text-indigo-950">
+                  {formatCurrency(maxPrice)}
+                </span>
               </span>
-            </span>
-            <input
-              className="w-full accent-violet-600"
-              type="range"
-              min={100}
-              max={Math.max(resultMaxPrice, 300)}
-              step={25}
-              value={maxPrice}
-              onChange={(event) => setMaxPrice(Number(event.target.value))}
-            />
-          </label>
-        </FilterSection>
+              <input
+                className="w-full accent-violet-600"
+                type="range"
+                min={100}
+                max={Math.max(resultMaxPrice, 300)}
+                step={25}
+                value={maxPrice}
+                onChange={(event) => setMaxPrice(Number(event.target.value))}
+              />
+            </label>
+          </FilterSection>
 
-        <CheckboxFilterSection
-          title="Popular filters"
-          options={options.popular}
-          selected={selectedFilters.popular}
-          onToggle={(value) => toggleFilter("popular", value)}
-        />
+          <CheckboxFilterSection
+            title="Popular Filters"
+            options={options.popular}
+            selected={selectedFilters.popular}
+            onToggle={(value) => toggleFilter("popular", value)}
+          />
 
-        <FilterSection title="Star rating">
-          <label className="block">
-            <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
-              From{" "}
-              <span className="font-mono text-indigo-950">{minRating}+</span>
-            </span>
-            <input
-              className="w-full accent-violet-600"
-              type="range"
-              min={1}
-              max={5}
-              step={0.5}
-              value={minRating}
-              onChange={(event) => setMinRating(Number(event.target.value))}
-            />
-          </label>
-        </FilterSection>
+          <FilterSection title="Star Rating">
+            <label className="block">
+              <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
+                From{" "}
+                <span className="font-mono text-indigo-950">{minRating}+</span>
+              </span>
+              <input
+                className="w-full accent-violet-600"
+                type="range"
+                min={1}
+                max={5}
+                step={0.5}
+                value={minRating}
+                onChange={(event) => setMinRating(Number(event.target.value))}
+              />
+            </label>
+          </FilterSection>
 
-        <CheckboxFilterSection
-          title="Location / area"
-          options={options.locations}
-          selected={selectedFilters.locations}
-          onToggle={(value) => toggleFilter("locations", value)}
-          collapsedCount={5}
-        />
+          <CheckboxFilterSection
+            title="Location / Area"
+            options={options.locations}
+            selected={selectedFilters.locations}
+            onToggle={(value) => toggleFilter("locations", value)}
+            collapsedCount={5}
+          />
 
-        <CheckboxFilterSection
-          title="Property type"
-          options={options.propertyTypes}
-          selected={selectedFilters.propertyTypes}
-          onToggle={(value) => toggleFilter("propertyTypes", value)}
-        />
+          <CheckboxFilterSection
+            title="Property Type"
+            options={options.propertyTypes}
+            selected={selectedFilters.propertyTypes}
+            onToggle={(value) => toggleFilter("propertyTypes", value)}
+          />
 
-        <CheckboxFilterSection
-          title="Room type"
-          options={options.roomTypes}
-          selected={selectedFilters.roomTypes}
-          onToggle={(value) => toggleFilter("roomTypes", value)}
-          collapsedCount={5}
-        />
+          <CheckboxFilterSection
+            title="Room Type"
+            options={options.roomTypes}
+            selected={selectedFilters.roomTypes}
+            onToggle={(value) => toggleFilter("roomTypes", value)}
+            collapsedCount={5}
+          />
 
-        <CheckboxFilterSection
-          title="Bed type"
-          options={options.bedTypes}
-          selected={selectedFilters.bedTypes}
-          onToggle={(value) => toggleFilter("bedTypes", value)}
-          collapsedCount={5}
-        />
+          <CheckboxFilterSection
+            title="Bed Type"
+            options={options.bedTypes}
+            selected={selectedFilters.bedTypes}
+            onToggle={(value) => toggleFilter("bedTypes", value)}
+            collapsedCount={5}
+          />
 
-        <CheckboxFilterSection
-          title="Meals"
-          options={options.meals}
-          selected={selectedFilters.meals}
-          onToggle={(value) => toggleFilter("meals", value)}
-        />
+          <CheckboxFilterSection
+            title="Meals"
+            options={options.meals}
+            selected={selectedFilters.meals}
+            onToggle={(value) => toggleFilter("meals", value)}
+          />
 
-        <CheckboxFilterSection
-          title="Cancellation policy"
-          options={options.cancellationPolicies}
-          selected={selectedFilters.cancellationPolicies}
-          onToggle={(value) => toggleFilter("cancellationPolicies", value)}
-        />
+          <CheckboxFilterSection
+            title="Cancellation Policy"
+            options={options.cancellationPolicies}
+            selected={selectedFilters.cancellationPolicies}
+            onToggle={(value) => toggleFilter("cancellationPolicies", value)}
+          />
 
-        <CheckboxFilterSection
-          title="Facilities"
-          options={options.facilities}
-          selected={selectedFilters.facilities}
-          onToggle={(value) => toggleFilter("facilities", value)}
-          collapsedCount={6}
-        />
+          <CheckboxFilterSection
+            title="Facilities"
+            options={options.facilities}
+            selected={selectedFilters.facilities}
+            onToggle={(value) => toggleFilter("facilities", value)}
+            collapsedCount={6}
+          />
+        </div>
       </div>
     </div>
   );
@@ -604,8 +620,10 @@ function FilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="py-[1.125rem] first:pt-0 last:pb-0">
-      <h3 className="mb-3.5 text-[0.82rem] font-extrabold uppercase tracking-[0.055em] text-slate-900">{title}</h3>
+    <section className="py-[1.15rem] first:pt-5 last:pb-0">
+      <h3 className="mb-4 text-[0.84rem] font-extrabold uppercase tracking-[0.075em] text-indigo-950">
+        {title}
+      </h3>
       {children}
     </section>
   );
@@ -633,14 +651,14 @@ function CheckboxFilterSection({
 
   return (
     <FilterSection title={title}>
-      <div className="grid gap-1.5">
+      <div className="grid gap-2">
         {visibleOptions.map((option) => {
           const checked = selected.includes(option.value);
           return (
             <label
               key={option.value}
               className={cn(
-                "group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2 text-sm transition-colors hover:border-violet-100 hover:bg-violet-50/55",
+                "group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-transparent px-2.5 py-2.5 text-sm transition-colors hover:border-violet-100 hover:bg-violet-50/65",
                 checked
                   ? "border-violet-100 bg-violet-50/85 font-semibold text-violet-800"
                   : "text-slate-700",
@@ -652,8 +670,22 @@ function CheckboxFilterSection({
                 checked={checked}
                 onChange={() => onToggle(option.value)}
               />
-              <span className="min-w-0 truncate leading-5">{option.label}</span>
-              <span className="min-w-6 justify-self-end text-right text-xs font-semibold text-slate-400">
+              <span
+                className={cn(
+                  "min-w-0 truncate leading-5",
+                  checked ? "font-semibold text-violet-900" : "text-slate-700",
+                )}
+              >
+                {option.label}
+              </span>
+              <span
+                className={cn(
+                  "min-w-8 justify-self-end rounded-full px-2 py-0.5 text-right text-xs font-bold",
+                  checked
+                    ? "bg-white text-violet-700"
+                    : "bg-slate-50 text-slate-500",
+                )}
+              >
                 {option.count}
               </span>
             </label>
