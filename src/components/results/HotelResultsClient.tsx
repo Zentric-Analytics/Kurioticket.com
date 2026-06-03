@@ -492,20 +492,13 @@ function HotelFilters({
 }) {
   return (
     <div className="hotel-filter-panel overflow-hidden rounded-[1.35rem] border border-violet-100/90 bg-white shadow-[0_18px_48px_-32px_rgba(67,56,202,0.36),0_1px_3px_rgba(15,23,42,0.08)] ring-1 ring-white/80 lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-      <div className="border-b border-violet-100 bg-[#F5F3FF] px-4 py-4 sm:px-[1.125rem]">
-        <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-violet-700 shadow-sm ring-1 ring-violet-100">
-            <SlidersHorizontal size={17} aria-hidden="true" />
-          </span>
-          <div className="min-w-0">
-            <h2 className="text-[0.98rem] font-extrabold tracking-[-0.01em] text-indigo-950">
-              Filters
-            </h2>
-            <p className="mt-0.5 text-xs font-semibold text-violet-700/80">
-              Refine your stay
-            </p>
-          </div>
-        </div>
+      <div className="rounded-t-[1.35rem] border-b border-violet-200/75 bg-[#EEE9FF] px-5 py-[1.125rem]">
+        <h2 className="text-base font-extrabold tracking-[-0.01em] text-indigo-950">
+          Filters
+        </h2>
+        <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
+          Refine your stay
+        </p>
       </div>
       <div className="px-5 pb-5">
         <div className="divide-y divide-slate-200/80">
