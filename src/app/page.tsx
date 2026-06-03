@@ -83,7 +83,7 @@ const destinations = [
   },
   {
     id: "new-york",
-    code: "JFK",
+    code: "EWR",
     cityKey: "homeDestinationNewYorkCity",
     countryKey: "homeDestinationNewYorkCountry",
     altKey: "homeDestinationNewYorkAlt",
