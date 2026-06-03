@@ -3,6 +3,7 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, ChevronDown, Minus, Plus, RotateCcw, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const parseIsoDate = (value: string) => {
   if (!value) return null;
@@ -101,6 +102,7 @@ export type HotelSearchBarProps = {
   initialSort?: string | null;
   introLabel?: string;
   errorRole?: "alert" | "status";
+  compact?: boolean;
 };
 
 export function HotelSearchBar({
@@ -112,6 +114,7 @@ export function HotelSearchBar({
   initialSort = null,
   introLabel = "Compare hotel options",
   errorRole,
+  compact = false,
 }: HotelSearchBarProps) {
   const router = useRouter();
   const [destination, setDestination] = useState(initialDestination);
@@ -332,14 +335,29 @@ export function HotelSearchBar({
     router.push(`/hotels/results?${params.toString()}`);
   };
 
+  const fieldClassName = cn(
+    "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+    compact ? "min-h-[46px] px-3 py-1" : "min-h-[54px] px-3 py-1.5",
+  );
+  const valueControlClassName = cn(
+    "focus-ring w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors md:text-sm",
+    compact ? "h-7" : "h-8",
+  );
+  const fieldLabelClassName = cn(
+    "block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
+    compact ? "mb-0.5" : "mb-1",
+  );
+
   return (
-    <section className="mx-auto w-full max-w-[1040px] space-y-3">
-      <p className="px-1 text-sm font-medium text-slate-600">{introLabel}</p>
-      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px] lg:gap-0">
-            <label className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
-              <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
+    <section className={cn("mx-auto w-full", compact ? "max-w-none" : "max-w-[1040px] space-y-3")}>
+      {compact ? null : (
+        <p className="px-1 text-sm font-medium text-slate-600">{introLabel}</p>
+      )}
+      <form onSubmit={handleSubmit} className={cn(compact ? "space-y-2" : "space-y-4")} noValidate>
+        <div className={cn("overflow-visible border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]", compact ? "rounded-xl" : "rounded-2xl")}>
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px] lg:gap-0">
+            <label className={cn(fieldClassName, "lg:rounded-l-xl")}>
+              <span className={fieldLabelClassName}>
                 Destination
               </span>
               <span className="relative block">
@@ -349,7 +367,7 @@ export function HotelSearchBar({
                   value={destination}
                   onChange={(event) => setDestination(event.target.value)}
                   placeholder="City, area, or hotel"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                  className={cn(valueControlClassName, "pr-9 placeholder:text-slate-400")}
                   required
                 />
                 {destination ? (
@@ -367,9 +385,9 @@ export function HotelSearchBar({
 
             <div
               ref={datesWrapperRef}
-              className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+              className={fieldClassName}
             >
-              <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
+              <span className={fieldLabelClassName}>
                 Travel dates
               </span>
               <button
@@ -378,7 +396,7 @@ export function HotelSearchBar({
                 aria-expanded={datesOpen}
                 aria-haspopup="dialog"
                 aria-label="Choose travel dates"
-                className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
+                className={cn(valueControlClassName, "flex items-center gap-2 text-left")}
               >
                 <Calendar size={16} className="shrink-0 text-slate-500" />
                 <span className="truncate">{dateSummary}</span>
@@ -518,9 +536,9 @@ export function HotelSearchBar({
 
             <div
               ref={guestsRoomsWrapperRef}
-              className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+              className={fieldClassName}
             >
-              <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
+              <span className={fieldLabelClassName}>
                 Guests
               </span>
               <button
@@ -529,7 +547,7 @@ export function HotelSearchBar({
                 aria-expanded={guestsRoomsOpen}
                 aria-haspopup="dialog"
                 aria-label="Choose guests and rooms"
-                className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
+                className={cn(valueControlClassName, "flex items-center justify-between gap-2 text-left")}
               >
                 <span className="truncate">{guestsRoomsSummary}</span>
                 <ChevronDown
@@ -657,10 +675,10 @@ export function HotelSearchBar({
               ) : null}
             </div>
 
-            <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
+            <div className={cn("sm:col-span-2 lg:col-span-1 lg:self-stretch", compact ? "lg:min-h-[46px]" : "lg:min-h-[54px]")}>
               <button
                 type="submit"
-                className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
+                className={cn("w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20", compact ? "h-11 lg:min-h-[46px]" : "h-12 lg:min-h-[54px]")}
               >
                 Search
               </button>
@@ -669,7 +687,7 @@ export function HotelSearchBar({
         </div>
 
         {hasActiveHotelSearch ? (
-          <div className="flex justify-end px-1">
+          <div className={cn("flex justify-end px-1", compact && "-mt-1")}>
             <button
               type="button"
               onClick={handleResetSearch}

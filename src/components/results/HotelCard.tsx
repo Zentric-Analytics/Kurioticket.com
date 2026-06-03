@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Building2, MapPin } from "lucide-react";
+import { Building2, ImageOff, MapPin } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -17,7 +17,12 @@ function formatHotelRating(rating: number) {
   return Number.isInteger(rating) ? String(rating) : rating.toFixed(1);
 }
 
-export function HotelCard({ hotel }: { hotel: PublicHotelResult }) {
+type HotelCardProps = {
+  hotel: PublicHotelResult;
+  useImagePlaceholder?: boolean;
+};
+
+export function HotelCard({ hotel, useImagePlaceholder = false }: HotelCardProps) {
   const starRating = getHotelStarRating(hotel.rating);
 
   async function redirectToHotel() {
@@ -35,7 +40,7 @@ export function HotelCard({ hotel }: { hotel: PublicHotelResult }) {
     <Card className="overflow-hidden">
       <div className="grid md:grid-cols-[260px_1fr]">
         <div className="relative aspect-[16/10] bg-surface-muted md:aspect-auto md:min-h-[236px]">
-          {hotel.imageUrl ? (
+          {hotel.imageUrl && !useImagePlaceholder ? (
             <Image
               src={hotel.imageUrl}
               alt={`${hotel.name} stay option${hotel.location ? ` near ${hotel.location}` : ""}`}
@@ -44,8 +49,11 @@ export function HotelCard({ hotel }: { hotel: PublicHotelResult }) {
               sizes="(min-width: 768px) 260px, 100vw"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-teal">
-              <Building2 size={36} />
+            <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-indigo-50 via-white to-teal/10 px-5 text-center text-teal">
+              {useImagePlaceholder ? <ImageOff size={34} /> : <Building2 size={36} />}
+              <span className="max-w-[180px] text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Image unavailable
+              </span>
             </div>
           )}
         </div>
@@ -55,13 +63,13 @@ export function HotelCard({ hotel }: { hotel: PublicHotelResult }) {
               <div>
                 {starRating ? (
                   <div
-                    className="mb-1 flex items-center gap-1.5 text-xs font-semibold text-amber-500"
+                    className="mb-1 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-500 ring-1 ring-amber-100"
                     aria-label={`${formatHotelRating(hotel.rating)}-star hotel`}
+                    title={`${formatHotelRating(hotel.rating)}-star hotel`}
                   >
                     <span aria-hidden="true" className="tracking-[0.08em]">
                       {"★".repeat(starRating)}
                     </span>
-                    <span className="text-muted">{formatHotelRating(hotel.rating)}-star hotel</span>
                   </div>
                 ) : null}
                 <h2 className="text-xl font-bold leading-snug text-navy">{hotel.name}</h2>
