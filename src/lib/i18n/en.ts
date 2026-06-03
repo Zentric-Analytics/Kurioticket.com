@@ -17,7 +17,6 @@ export const translations: TranslationDictionary = {
   allLanguages: "All languages",
   platform: "Platform",
   legal: "Legal",
-  premium: "Premium",
   legalCenter: "Legal Center",
   footerAbout: "Search flights and hotels for free, compare trusted partner prices, and make calmer travel decisions.",
   footerMeta: "Kurioticket is a travel metasearch platform.",

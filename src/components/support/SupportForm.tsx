@@ -39,9 +39,8 @@ export function SupportForm() {
           <Select name="category" defaultValue="price-alerts">
             <option value="search-help">Search help</option>
             <option value="price-alerts">Price alerts</option>
-            <option value="premium">Premium tools</option>
             <option value="redirect">Partner redirect</option>
-            <option value="billing">Subscription billing</option>
+            <option value="account">Account help</option>
           </Select>
         </Field>
         <Field label="How can we help?">

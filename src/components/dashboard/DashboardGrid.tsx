@@ -3,7 +3,6 @@ import {
   Bell,
   Bookmark,
   CheckCircle2,
-  CreditCard,
   Headphones,
   Heart,
   LifeBuoy,
@@ -13,7 +12,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  Sparkles,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -148,17 +146,6 @@ const supportCards: DashboardCard[] = [
   },
 ];
 
-const premiumItems = [
-  "AI Travel Concierge",
-  "Smart Route Optimizer",
-  "Advanced Price Tracking",
-  "Travel Risk Insights",
-  "Smart Trip Planner",
-  "Planning Summaries",
-  "Premium Notifications",
-  "Priority Support",
-  "Subscription & Billing",
-];
 
 function ActionCard({ card, compact = false }: { card: DashboardCard; compact?: boolean }) {
   const Icon = card.icon;
@@ -316,46 +303,6 @@ export function FreeDashboardGrid() {
           </div>
         </section>
       </div>
-    </div>
-  );
-}
-
-export function PremiumDashboardFoundation() {
-  return (
-    <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-      <Card className="p-5">
-        <div className="flex items-center gap-3">
-          <Sparkles className="text-teal" size={24} aria-hidden="true" />
-          <div>
-            <h2 className="text-xl font-bold text-navy">Premium Home</h2>
-            <p className="text-sm text-muted">Use saved trips, alerts, and account tools to keep travel planning organized.</p>
-          </div>
-        </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          {premiumItems.map((item) => (
-            <div key={item} className="rounded-md border border-border bg-surface-muted p-3 text-sm font-semibold text-navy">
-              {item}
-            </div>
-          ))}
-        </div>
-      </Card>
-      <Card className="p-5">
-        <CreditCard className="text-teal" size={24} aria-hidden="true" />
-        <h2 className="mt-3 text-xl font-bold text-navy">Subscription & Billing</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Stripe checkout, subscriptions, billing portal, invoices, and webhook sync are wired for production credentials.
-        </p>
-        <LinkButton href="/pricing" variant="accent" className="mt-4 w-full">
-          Manage Premium
-        </LinkButton>
-      </Card>
-      <Card className="p-5 lg:col-span-2">
-        <Headphones className="text-teal" size={24} aria-hidden="true" />
-        <h2 className="mt-3 text-xl font-bold text-navy">Priority Support</h2>
-        <p className="mt-2 text-sm leading-6 text-muted">
-          Support is scoped to Kurioticket platform usage, premium tools, alerts, and travel guidance. External providers handle purchases, fare rules, and trip servicing.
-        </p>
-      </Card>
     </div>
   );
 }

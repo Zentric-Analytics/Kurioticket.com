@@ -16,7 +16,6 @@ export type TranslationDictionary = {
   allLanguages: string;
   platform: string;
   legal: string;
-  premium: string;
   legalCenter: string;
   footerAbout: string;
   footerMeta: string;
