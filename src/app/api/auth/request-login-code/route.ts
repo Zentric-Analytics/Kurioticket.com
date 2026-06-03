@@ -4,6 +4,7 @@ import { AuthRateLimitError, checkAuthRateLimit } from "@/lib/auth-rate-limit";
 import { getPrisma } from "@/lib/prisma";
 import { signinSchema } from "@/lib/validation";
 import {
+  EmailVerificationCooldownError,
   getEmailVerificationRedirect,
   sendEmailVerificationCode,
   sendLoginVerificationCode,
@@ -59,30 +60,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "We could not sign you in. Check your email and password, then try again." }, { status: 401 });
   }
 
+  const loginVerificationRedirect = `/auth/verify-login?email=${encodeURIComponent(parsed.data.email)}&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  let cooldownRedirectTo = loginVerificationRedirect;
+
   try {
     if (!user.emailVerified) {
-      await sendEmailVerificationCode({
+      cooldownRedirectTo = getEmailVerificationRedirect(parsed.data.email);
+      const sendResult = await sendEmailVerificationCode({
         email: parsed.data.email,
         name: user.name,
         action: "login-unverified-email",
+        enforceCooldown: true,
       });
 
       return NextResponse.json({
         redirectTo: getEmailVerificationRedirect(parsed.data.email),
+        cooldownSeconds: sendResult.cooldownSeconds,
       });
     }
 
-    await sendLoginVerificationCode({
+    const sendResult = await sendLoginVerificationCode({
       email: parsed.data.email,
       name: user.name,
     });
-  } catch {
+
+    return NextResponse.json({
+      redirectTo: loginVerificationRedirect,
+      cooldownSeconds: sendResult.cooldownSeconds,
+    });
+  } catch (error) {
+    if (error instanceof EmailVerificationCooldownError) {
+      return NextResponse.json({
+        redirectTo: cooldownRedirectTo,
+        cooldownSeconds: error.retryAfterSeconds,
+        recentlySent: true,
+      });
+    }
+
     return NextResponse.json({ error: "Unable to send login code right now. Please try again." }, { status: 503 });
   }
-
-  return NextResponse.json({
-    redirectTo: `/auth/verify-login?email=${encodeURIComponent(parsed.data.email)}&callbackUrl=${encodeURIComponent(callbackUrl)}`,
-  });
 }
 
 function getSafeCallbackUrl(body: unknown) {
