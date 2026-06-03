@@ -20,7 +20,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import { PriceText } from "@/components/currency/PriceText";
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -49,7 +48,6 @@ const destinations = [
     cityKey: "homeDestinationDubaiCity",
     countryKey: "homeDestinationDubaiCountry",
     altKey: "homeDestinationDubaiAlt",
-    amountUsd: 420,
     image:
       "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
@@ -58,7 +56,6 @@ const destinations = [
     cityKey: "homeDestinationLondonCity",
     countryKey: "homeDestinationLondonCountry",
     altKey: "homeDestinationLondonAlt",
-    amountUsd: 380,
     image:
       "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
@@ -67,7 +64,6 @@ const destinations = [
     cityKey: "homeDestinationParisCity",
     countryKey: "homeDestinationParisCountry",
     altKey: "homeDestinationParisAlt",
-    amountUsd: 410,
     image:
       "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
@@ -76,7 +72,6 @@ const destinations = [
     cityKey: "homeDestinationBaliCity",
     countryKey: "homeDestinationBaliCountry",
     altKey: "homeDestinationBaliAlt",
-    amountUsd: 370,
     image:
       "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1600&q=92",
   },
@@ -85,7 +80,6 @@ const destinations = [
     cityKey: "homeDestinationNewYorkCity",
     countryKey: "homeDestinationNewYorkCountry",
     altKey: "homeDestinationNewYorkAlt",
-    amountUsd: 390,
     image:
       "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
@@ -193,7 +187,7 @@ export default function Home() {
           <div className="page-shell relative pb-5 pt-8 sm:pb-6 sm:pt-10 lg:pt-12">
             <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
               <div className="space-y-2.5 pt-1">
-                <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                <h1 className="max-w-3xl text-[2rem] font-semibold leading-[1.08] tracking-[-0.025em] text-slate-900 sm:text-[2.4rem] lg:text-[3rem]">
                   {t("homeHeroTitle")}
                 </h1>
 
@@ -258,9 +252,7 @@ export default function Home() {
                   city={t(destination.cityKey)}
                   country={t(destination.countryKey)}
                   imageAlt={t(destination.altKey)}
-                  fromLabel={t("fromPrice")}
                   saveLabelTemplate={t("homeSaveDestination")}
-                  amountUsd={destination.amountUsd}
                   image={destination.image}
                   destinationId={destination.id}
                   isSaved={savedTripIds.includes(destination.id)}
@@ -307,7 +299,6 @@ export default function Home() {
                         originCode={item.originCode}
                         destinationCodeLabel={item.destinationCode}
                         routeNote={item.routeNote}
-                        priceFromUsd={item.priceFromUsd}
                         compact
                         isSaved={savedTripIds.includes(item.id)}
                         onHeartToggle={handleSavedTripToggle}
@@ -332,7 +323,6 @@ export default function Home() {
                     originCode={item.originCode}
                     destinationCodeLabel={item.destinationCode}
                     routeNote={item.routeNote}
-                    priceFromUsd={item.priceFromUsd}
                     isSaved={savedTripIds.includes(item.id)}
                     onHeartToggle={handleSavedTripToggle}
                   />
@@ -345,7 +335,7 @@ export default function Home() {
         <section className="page-shell bg-transparent py-4 sm:py-5">
           <div className="space-y-3">
             <div className="max-w-3xl space-y-1.5">
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
+              <h2 className="text-2xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-3xl">
                 {t("homeTrustTitle")}
               </h2>
               <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
@@ -550,7 +540,6 @@ function DiscoverySuggestionCard({
   originCode,
   destinationCodeLabel,
   routeNote,
-  priceFromUsd,
   compact,
   isSaved,
   onHeartToggle,
@@ -564,7 +553,6 @@ function DiscoverySuggestionCard({
   originCode: string;
   destinationCodeLabel: string;
   routeNote: string;
-  priceFromUsd: number;
   compact?: boolean;
   isSaved: boolean;
   onHeartToggle: (
@@ -625,14 +613,9 @@ function DiscoverySuggestionCard({
       <div
         className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-          From
-        </p>
-        <p
-          className={`text-slate-950 ${compact ? "text-xl font-black leading-tight" : "text-[1.4rem] font-black leading-tight"}`}
-        >
-          ${priceFromUsd}
-        </p>
+        <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+          Compare options
+        </span>
       </div>
     </Link>
   );
@@ -642,9 +625,7 @@ function DestinationCard({
   city,
   country,
   imageAlt,
-  amountUsd,
   image,
-  fromLabel,
   saveLabelTemplate,
   destinationId,
   isSaved,
@@ -653,9 +634,7 @@ function DestinationCard({
   city: string;
   country: string;
   imageAlt: string;
-  amountUsd: number;
   image: string;
-  fromLabel: string;
   saveLabelTemplate: string;
   destinationId: string;
   isSaved: boolean;
@@ -706,12 +685,9 @@ function DestinationCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 p-4">
-          <span className="text-sm font-semibold text-slate-600">
-            {fromLabel}
-          </span>
-          <span className="text-xl font-semibold text-slate-800">
-            <PriceText amountUsd={amountUsd} />
+        <div className="flex items-center p-4">
+          <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
+            Explore fares
           </span>
         </div>
       </Link>
