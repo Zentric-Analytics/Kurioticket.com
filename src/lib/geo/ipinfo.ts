@@ -20,6 +20,8 @@ type IpinfoLiteResponse = {
 type IpinfoLiteFallbackReason =
   | "missing_token"
   | "timeout"
+  | "ip_lookup_forbidden_retrying_me"
+  | "me_lookup_non_ok_status"
   | "non_ok_status"
   | "invalid_json"
   | "missing_country"
@@ -32,6 +34,7 @@ type IpinfoLiteFallbackDiagnostic = {
   status?: number;
   hasVisitorIp: boolean;
   mode: IpinfoLiteEndpointMode;
+  retriedMe?: boolean;
 };
 
 const DEFAULT_BASE_URL = "https://api.ipinfo.io/lite";
@@ -123,13 +126,104 @@ const logFallback = (diagnostic: IpinfoLiteFallbackDiagnostic) => {
 
 const isAbortError = (error: unknown) => error instanceof Error && error.name === "AbortError";
 
+type IpinfoLiteLookupResult =
+  | { type: "success"; context: CountryContext }
+  | { type: "non_ok_status"; status: number }
+  | { type: "invalid_json" }
+  | { type: "missing_country" };
+
+const buildIpinfoLiteEndpoint = (token: string, mode: IpinfoLiteEndpointMode, visitorIp?: string) => {
+  const path = mode === "ip" && visitorIp ? encodeURIComponent(visitorIp) : "me";
+
+  return `${DEFAULT_BASE_URL}/${path}?token=${encodeURIComponent(token)}`;
+};
+
+const fetchIpinfoLiteCountryContext = async ({
+  token,
+  visitorIp,
+  mode,
+  signal,
+}: {
+  token: string;
+  visitorIp?: string;
+  mode: IpinfoLiteEndpointMode;
+  signal: AbortSignal;
+}): Promise<IpinfoLiteLookupResult> => {
+  const response = await fetch(buildIpinfoLiteEndpoint(token, mode, visitorIp), {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    signal,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    return { type: "non_ok_status", status: response.status };
+  }
+
+  let payload: IpinfoLiteResponse;
+  try {
+    payload = (await response.json()) as IpinfoLiteResponse;
+  } catch {
+    return { type: "invalid_json" };
+  }
+
+  const countryCode = normalizeCountryCode(readString(payload.country_code));
+  const country = readString(payload.country);
+
+  if (!countryCode || !country) {
+    return { type: "missing_country" };
+  }
+
+  const continentCode = normalizeCountryCode(readString(payload.continent_code));
+  const continent = readString(payload.continent) || undefined;
+
+  return {
+    type: "success",
+    context: {
+      countryCode,
+      country,
+      continentCode,
+      continent,
+      source: "ipinfo-lite",
+    },
+  };
+};
+
+const logLookupFailure = ({
+  result,
+  hasVisitorIp,
+  mode,
+  retriedMe,
+}: {
+  result: Exclude<IpinfoLiteLookupResult, { type: "success" }>;
+  hasVisitorIp: boolean;
+  mode: IpinfoLiteEndpointMode;
+  retriedMe?: boolean;
+}) => {
+  const reason =
+    result.type === "non_ok_status" && mode === "me" && retriedMe ? "me_lookup_non_ok_status" : result.type;
+
+  logFallback({
+    reason,
+    status: result.type === "non_ok_status" ? result.status : undefined,
+    hasVisitorIp,
+    mode,
+    retriedMe,
+  });
+};
+
 export const resolveIpinfoLiteCountryContext = async (visitorIp?: string | null): Promise<CountryContext | null> => {
   const token = process.env.IPINFO_TOKEN?.trim();
   const hasVisitorIp = Boolean(visitorIp);
-  const mode: IpinfoLiteEndpointMode = visitorIp ? "ip" : "me";
+  const initialMode: IpinfoLiteEndpointMode = visitorIp ? "ip" : "me";
+  let activeMode = initialMode;
+  let retriedMe = false;
 
   if (!token) {
-    logFallback({ reason: "missing_token", hasVisitorIp, mode });
+    logFallback({ reason: "missing_token", hasVisitorIp, mode: initialMode, retriedMe: false });
     return null;
   }
 
@@ -137,51 +231,52 @@ export const resolveIpinfoLiteCountryContext = async (visitorIp?: string | null)
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const ipPath = visitorIp ? encodeURIComponent(visitorIp) : "me";
-    const endpoint = `${DEFAULT_BASE_URL}/${ipPath}?token=${encodeURIComponent(token)}`;
-    const response = await fetch(endpoint, {
-      method: "GET",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+    const initialResult = await fetchIpinfoLiteCountryContext({
+      token,
+      visitorIp: visitorIp || undefined,
+      mode: initialMode,
       signal: controller.signal,
-      cache: "no-store",
     });
 
-    if (!response.ok) {
-      logFallback({ reason: "non_ok_status", status: response.status, hasVisitorIp, mode });
+    if (initialResult.type === "success") {
+      return initialResult.context;
+    }
+
+    if (visitorIp && initialResult.type === "non_ok_status" && initialResult.status === 403) {
+      logFallback({
+        reason: "ip_lookup_forbidden_retrying_me",
+        status: initialResult.status,
+        hasVisitorIp,
+        mode: "ip",
+        retriedMe: true,
+      });
+
+      activeMode = "me";
+      retriedMe = true;
+
+      const meResult = await fetchIpinfoLiteCountryContext({
+        token,
+        mode: "me",
+        signal: controller.signal,
+      });
+
+      if (meResult.type === "success") {
+        return meResult.context;
+      }
+
+      logLookupFailure({ result: meResult, hasVisitorIp, mode: "me", retriedMe: true });
       return null;
     }
 
-    let payload: IpinfoLiteResponse;
-    try {
-      payload = (await response.json()) as IpinfoLiteResponse;
-    } catch {
-      logFallback({ reason: "invalid_json", hasVisitorIp, mode });
-      return null;
-    }
-
-    const countryCode = normalizeCountryCode(readString(payload.country_code));
-    const country = readString(payload.country);
-
-    if (!countryCode || !country) {
-      logFallback({ reason: "missing_country", hasVisitorIp, mode });
-      return null;
-    }
-
-    const continentCode = normalizeCountryCode(readString(payload.continent_code));
-    const continent = readString(payload.continent) || undefined;
-
-    return {
-      countryCode,
-      country,
-      continentCode,
-      continent,
-      source: "ipinfo-lite",
-    };
+    logLookupFailure({ result: initialResult, hasVisitorIp, mode: initialMode, retriedMe: false });
+    return null;
   } catch (error) {
-    logFallback({ reason: isAbortError(error) ? "timeout" : "request_error", hasVisitorIp, mode });
+    logFallback({
+      reason: isAbortError(error) ? "timeout" : "request_error",
+      hasVisitorIp,
+      mode: activeMode,
+      retriedMe,
+    });
     return null;
   } finally {
     clearTimeout(timeout);
