@@ -727,7 +727,7 @@ export function FlightResultsClient() {
 
   useEffect(() => {
     return () => {
-      if (filterApplyingTimeoutRef.current) {
+      if (filterApplyingTimeoutRef.current !== null) {
         window.clearTimeout(filterApplyingTimeoutRef.current);
       }
     };
@@ -736,7 +736,7 @@ export function FlightResultsClient() {
   function triggerFilterApplying() {
     setFilterApplying(true);
 
-    if (filterApplyingTimeoutRef.current) {
+    if (filterApplyingTimeoutRef.current !== null) {
       window.clearTimeout(filterApplyingTimeoutRef.current);
     }
 
