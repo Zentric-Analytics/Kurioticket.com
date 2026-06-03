@@ -252,6 +252,8 @@ const ISO_COUNTRY_CODES = [
   "ZW",
 ] as const;
 
+const ISO_COUNTRY_CODE_SET: ReadonlySet<string> = new Set(ISO_COUNTRY_CODES);
+
 const COUNTRY_NAME_ALIASES: Record<string, string> = {
   bolivia: "BO",
   brunei: "BN",
@@ -313,6 +315,11 @@ export const normalizeCountryCode = (value?: string | null) => {
   const trimmed = value.trim();
   if (!COUNTRY_CODE_PATTERN.test(trimmed)) return undefined;
   return trimmed.toUpperCase();
+};
+
+export const isIsoCountryCode = (value?: string | null) => {
+  const normalizedCountryCode = normalizeCountryCode(value);
+  return normalizedCountryCode ? ISO_COUNTRY_CODE_SET.has(normalizedCountryCode) : false;
 };
 
 export const countryNameToCountryCode = (value?: string | null) => {
