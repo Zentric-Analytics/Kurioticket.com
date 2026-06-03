@@ -411,12 +411,19 @@ export function HotelResultsClient() {
     resultsSignature,
   ]);
 
+  const updateMaxPrice = (value: number) => {
+    setMaxPrice(value);
+  };
+
+  const updateMinRating = (value: number) => {
+    setMinRating(value);
+  };
+
   const resetFilters = () => {
     setMaxPrice(resultMaxPrice);
     setMinRating(3);
     setSelectedFilters(emptySelections);
     setFiltersOpen(false);
-    triggerFilterApplying();
   };
 
   const toggleFilter = (group: keyof HotelFilterSelections, value: string) => {
@@ -426,7 +433,6 @@ export function HotelResultsClient() {
         ? current[group].filter((item) => item !== value)
         : [...current[group], value],
     }));
-    triggerFilterApplying();
   };
 
   return (
