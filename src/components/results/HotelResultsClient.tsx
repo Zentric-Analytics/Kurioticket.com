@@ -316,9 +316,27 @@ export function HotelResultsClient() {
   }, [loading]);
 
   const filterOptions = useMemo(() => buildHotelFilterOptions(results), [results]);
-  const filtered = results.filter((hotel) =>
-    hotelMatchesFilters(hotel, maxPrice, minRating, selectedFilters),
+  const filtered = useMemo(
+    () =>
+      results.filter((hotel) =>
+        hotelMatchesFilters(hotel, maxPrice, minRating, selectedFilters),
+      ),
+    [maxPrice, minRating, results, selectedFilters],
   );
+  const repeatedImageUrls = useMemo(() => {
+    const counts = new Map<string, number>();
+
+    for (const hotel of filtered) {
+      if (!hotel.imageUrl) continue;
+      counts.set(hotel.imageUrl, (counts.get(hotel.imageUrl) ?? 0) + 1);
+    }
+
+    return new Set(
+      Array.from(counts.entries())
+        .filter(([, count]) => count > 1)
+        .map(([imageUrl]) => imageUrl),
+    );
+  }, [filtered]);
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
   const showFilteredEmptyState =
     !loading && !error && results.length > 0 && filtered.length === 0;
@@ -340,9 +358,9 @@ export function HotelResultsClient() {
   };
 
   return (
-    <main className="flex-1 pb-8 pt-6 sm:pt-8 lg:pt-8">
+    <main className="flex-1 pb-8 pt-3 sm:pt-4 lg:pt-4">
       <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
-        <div className="page-shell py-3">
+        <div className="page-shell py-2">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
             initialDestination={body.destination}
@@ -352,10 +370,11 @@ export function HotelResultsClient() {
             initialRooms={body.rooms}
             initialSort={body.sort}
             errorRole="alert"
+            compact
           />
           <Button
             variant="secondary"
-            className="mt-3 w-fit md:hidden"
+            className="mt-2 w-fit md:hidden"
             onClick={() => setFiltersOpen(true)}
           >
             <SlidersHorizontal size={17} />
@@ -364,7 +383,7 @@ export function HotelResultsClient() {
         </div>
       </div>
 
-      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[290px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-4 py-4 lg:grid-cols-[290px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="hidden lg:block">
           <HotelFilters
             maxPrice={maxPrice}
@@ -377,7 +396,7 @@ export function HotelResultsClient() {
             toggleFilter={toggleFilter}
           />
         </aside>
-        <section className="min-w-0 space-y-4">
+        <section className="min-w-0 space-y-3">
           {!loading && !error && warnings.length ? (
             <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
               Some provider checks may be limited for this hotel search. Review
@@ -413,12 +432,20 @@ export function HotelResultsClient() {
             </div>
           ) : (
             <>
-              <p className="text-sm font-semibold text-muted">
-                {filtered.length} stay option{filtered.length === 1 ? "" : "s"}{" "}
-                found
-              </p>
+              <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-white px-3.5 py-2 shadow-[0_12px_30px_-24px_rgba(30,27,75,0.45)]">
+                <p className="text-sm font-semibold text-muted">
+                  {filtered.length} stay option{filtered.length === 1 ? "" : "s"}{" "}
+                  found
+                </p>
+              </div>
               {filtered.map((hotel) => (
-                <HotelCard key={hotel.id} hotel={hotel} />
+                <HotelCard
+                  key={hotel.id}
+                  hotel={hotel}
+                  useImagePlaceholder={
+                    hotel.imageUrl ? repeatedImageUrls.has(hotel.imageUrl) : false
+                  }
+                />
               ))}
             </>
           )}
@@ -484,9 +511,9 @@ function HotelFilters({
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-white p-5 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)] lg:sticky lg:top-44 lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto">
+    <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)] lg:sticky lg:top-36 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto">
       <h2 className="text-base font-bold text-indigo-950">Filters</h2>
-      <div className="mt-5 divide-y divide-indigo-100">
+      <div className="mt-4 divide-y divide-indigo-100">
         <FilterSection title="Budget / price">
           <label className="block">
             <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
