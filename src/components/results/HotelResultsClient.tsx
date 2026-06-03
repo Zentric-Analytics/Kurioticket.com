@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
@@ -364,10 +364,25 @@ export function HotelResultsClient() {
     results.length > 0 &&
     visibleFiltered.length === 0;
 
+  const triggerFilterApplying = useCallback(() => {
+    setFilterApplying(true);
+
+    if (filterApplyingTimeoutRef.current !== null) {
+      window.clearTimeout(filterApplyingTimeoutRef.current);
+    }
+
+    filterApplyingTimeoutRef.current = window.setTimeout(() => {
+      setVisibleFiltered(filtered);
+      setFilterApplying(false);
+      filterApplyingTimeoutRef.current = null;
+    }, 700);
+  }, [filtered]);
+
   useEffect(() => {
     return () => {
       if (filterApplyingTimeoutRef.current !== null) {
         window.clearTimeout(filterApplyingTimeoutRef.current);
+        filterApplyingTimeoutRef.current = null;
       }
     };
   }, []);
@@ -396,19 +411,15 @@ export function HotelResultsClient() {
       return;
     }
 
-    setFilterApplying(true);
-    filterApplyingTimeoutRef.current = window.setTimeout(() => {
-      setVisibleFiltered(filtered);
-      setFilterApplying(false);
-      filterApplyingTimeoutRef.current = null;
-    }, 325);
+    triggerFilterApplying();
   }, [
     error,
-    filterSignature,
     filtered,
+    filterSignature,
     loading,
     results.length,
     resultsSignature,
+    triggerFilterApplying,
   ]);
 
   const updateMaxPrice = (value: number) => {
