@@ -129,6 +129,7 @@ export function HotelSearchBar({
   const [error, setError] = useState("");
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const datesWrapperRef = useRef<HTMLDivElement>(null);
   const guestsRoomsWrapperRef = useRef<HTMLDivElement>(null);
@@ -165,6 +166,11 @@ export function HotelSearchBar({
     return `${normalizedGuests} ${normalizedGuests === 1 ? "guest" : "guests"}, ${normalizedRooms} ${normalizedRooms === 1 ? "room" : "rooms"}`;
   }, [rooms, totalHotelGuests]);
 
+  const mobileSearchSummary = useMemo(() => {
+    const trimmedDestination = destination.trim() || "Destination";
+    return `${trimmedDestination} · ${dateSummary} · ${guestsRoomsSummary}`;
+  }, [dateSummary, destination, guestsRoomsSummary]);
+
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
   const normalizedRooms = String(clampCount(rooms, 1, 6));
@@ -188,10 +194,7 @@ export function HotelSearchBar({
         setDatesOpen(false);
       }
 
-      if (
-        guestsRoomsOpen &&
-        !guestsRoomsWrapperRef.current?.contains(target)
-      ) {
+      if (guestsRoomsOpen && !guestsRoomsWrapperRef.current?.contains(target)) {
         setGuestsRoomsOpen(false);
       }
     };
@@ -229,6 +232,7 @@ export function HotelSearchBar({
     setError("");
     setDatesOpen(false);
     setGuestsRoomsOpen(false);
+    setMobileSearchOpen(false);
     setHotelVisibleMonthDate(currentMonthStart());
   };
 
@@ -332,34 +336,87 @@ export function HotelSearchBar({
 
     setRooms(String(normalizedRooms));
     setError("");
+    setMobileSearchOpen(false);
     router.push(`/hotels/results?${params.toString()}`);
   };
 
   const fieldClassName = cn(
-    "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
-    compact ? "min-h-[46px] px-3 py-1" : "min-h-[54px] px-3 py-1.5",
+    "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40",
+    compact
+      ? "min-h-[46px] px-2 py-0.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+      : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
   );
   const valueControlClassName = cn(
-    "focus-ring w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors md:text-sm",
-    compact ? "h-7" : "h-8",
+    "focus-ring w-full rounded-md border-0 bg-transparent px-0 outline-none transition-colors",
+    compact
+      ? "h-6 text-[15px] font-semibold text-slate-950 placeholder:text-slate-400 md:text-[13px]"
+      : "h-8 text-[16px] text-slate-900 md:text-sm",
   );
   const fieldLabelClassName = cn(
-    "block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
-    compact ? "mb-0.5" : "mb-1",
+    "block font-semibold uppercase",
+    compact
+      ? "text-[10px] leading-4 tracking-[0.08em] text-slate-500"
+      : "mb-1 text-xs leading-4 tracking-wide text-slate-600",
   );
 
   return (
-    <section className={cn("mx-auto w-full", compact ? "max-w-none" : "max-w-[1040px] space-y-3")}>
-      {compact ? null : (
+    <section
+      className={cn(
+        "mx-auto w-full",
+        compact ? "max-w-3xl" : "max-w-[1040px] space-y-3",
+      )}
+    >
+      {compact ? (
+        <div className={cn("sm:hidden", mobileSearchOpen && "hidden")}>
+          <button
+            type="button"
+            onClick={() => setMobileSearchOpen(true)}
+            className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
+          >
+            <span className="block truncate text-sm font-semibold text-slate-950">
+              {mobileSearchSummary}
+            </span>
+          </button>
+        </div>
+      ) : (
         <p className="px-1 text-sm font-medium text-slate-600">{introLabel}</p>
       )}
-      <form onSubmit={handleSubmit} className={cn(compact ? "space-y-2" : "space-y-4")} noValidate>
-        <div className={cn("overflow-visible border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]", compact ? "rounded-xl" : "rounded-2xl")}>
-          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px] lg:gap-0">
+      <form
+        onSubmit={handleSubmit}
+        className={cn(
+          compact ? "space-y-2 sm:block" : "space-y-4",
+          compact && (mobileSearchOpen ? "block" : "hidden"),
+        )}
+        noValidate
+      >
+        {compact ? (
+          <button
+            type="button"
+            aria-label="Close search form"
+            onClick={() => setMobileSearchOpen(false)}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:hidden"
+          >
+            X
+          </button>
+        ) : null}
+        <div
+          className={cn(
+            "overflow-visible border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+            compact
+              ? "rounded-xl shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:p-1.5"
+              : "rounded-2xl",
+          )}
+        >
+          <div
+            className={cn(
+              "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0",
+              compact
+                ? "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)_minmax(0,1.1fr)_96px]"
+                : "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]",
+            )}
+          >
             <label className={cn(fieldClassName, "lg:rounded-l-xl")}>
-              <span className={fieldLabelClassName}>
-                Destination
-              </span>
+              <span className={fieldLabelClassName}>Destination</span>
               <span className="relative block">
                 <input
                   ref={destinationInputRef}
@@ -383,22 +440,26 @@ export function HotelSearchBar({
               </span>
             </label>
 
-            <div
-              ref={datesWrapperRef}
-              className={fieldClassName}
-            >
-              <span className={fieldLabelClassName}>
-                Travel dates
-              </span>
+            <div ref={datesWrapperRef} className={fieldClassName}>
+              <span className={fieldLabelClassName}>Travel dates</span>
               <button
                 type="button"
                 onClick={handleToggleDates}
                 aria-expanded={datesOpen}
                 aria-haspopup="dialog"
                 aria-label="Choose travel dates"
-                className={cn(valueControlClassName, "flex items-center gap-2 text-left")}
+                className={cn(
+                  valueControlClassName,
+                  "flex items-center gap-1.5 text-left",
+                )}
               >
-                <Calendar size={16} className="shrink-0 text-slate-500" />
+                <Calendar
+                  size={compact ? 14 : 16}
+                  className={cn(
+                    "shrink-0",
+                    compact ? "text-indigo-700" : "text-slate-500",
+                  )}
+                />
                 <span className="truncate">{dateSummary}</span>
               </button>
               {datesOpen ? (
@@ -534,20 +595,18 @@ export function HotelSearchBar({
               ) : null}
             </div>
 
-            <div
-              ref={guestsRoomsWrapperRef}
-              className={fieldClassName}
-            >
-              <span className={fieldLabelClassName}>
-                Guests
-              </span>
+            <div ref={guestsRoomsWrapperRef} className={fieldClassName}>
+              <span className={fieldLabelClassName}>Guests</span>
               <button
                 type="button"
                 onClick={handleToggleGuestsRooms}
                 aria-expanded={guestsRoomsOpen}
                 aria-haspopup="dialog"
                 aria-label="Choose guests and rooms"
-                className={cn(valueControlClassName, "flex items-center justify-between gap-2 text-left")}
+                className={cn(
+                  valueControlClassName,
+                  "flex items-center justify-between gap-1.5 text-left",
+                )}
               >
                 <span className="truncate">{guestsRoomsSummary}</span>
                 <ChevronDown
@@ -675,10 +734,20 @@ export function HotelSearchBar({
               ) : null}
             </div>
 
-            <div className={cn("sm:col-span-2 lg:col-span-1 lg:self-stretch", compact ? "lg:min-h-[46px]" : "lg:min-h-[54px]")}>
+            <div
+              className={cn(
+                "sm:col-span-2 lg:col-span-1 lg:self-stretch",
+                compact ? "lg:min-h-[38px]" : "lg:min-h-[54px]",
+              )}
+            >
               <button
                 type="submit"
-                className={cn("w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20", compact ? "h-11 lg:min-h-[46px]" : "h-12 lg:min-h-[54px]")}
+                className={cn(
+                  "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+                  compact
+                    ? "h-8 shadow-lg lg:min-h-[38px] lg:w-auto lg:min-w-[96px]"
+                    : "h-12 lg:min-h-[54px] lg:rounded-none",
+                )}
               >
                 Search
               </button>
@@ -687,7 +756,12 @@ export function HotelSearchBar({
         </div>
 
         {hasActiveHotelSearch ? (
-          <div className={cn("flex justify-end px-1", compact && "-mt-1")}>
+          <div
+            className={cn(
+              "flex justify-end px-1",
+              compact && "-mt-1 hidden sm:flex",
+            )}
+          >
             <button
               type="button"
               onClick={handleResetSearch}
