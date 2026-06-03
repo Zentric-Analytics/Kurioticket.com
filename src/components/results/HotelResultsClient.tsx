@@ -491,9 +491,9 @@ function HotelFilters({
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)] lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-      <h2 className="text-base font-bold text-indigo-950">Filters</h2>
-      <div className="mt-4 divide-y divide-indigo-100">
+    <div className="hotel-filter-panel rounded-[1.35rem] border border-slate-200/80 bg-white p-5 shadow-[0_18px_46px_-34px_rgba(15,23,42,0.38),0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-white/70 lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+      <h2 className="text-[0.95rem] font-extrabold tracking-[-0.01em] text-indigo-950">Filters</h2>
+      <div className="mt-5 divide-y divide-slate-200/70">
         <FilterSection title="Budget / price">
           <label className="block">
             <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
@@ -604,8 +604,8 @@ function FilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="py-4 first:pt-0 last:pb-0">
-      <h3 className="mb-3 text-sm font-bold text-indigo-950">{title}</h3>
+    <section className="py-[1.125rem] first:pt-0 last:pb-0">
+      <h3 className="mb-3.5 text-[0.82rem] font-extrabold uppercase tracking-[0.055em] text-slate-900">{title}</h3>
       {children}
     </section>
   );
@@ -633,25 +633,27 @@ function CheckboxFilterSection({
 
   return (
     <FilterSection title={title}>
-      <div className="grid gap-2">
+      <div className="grid gap-1.5">
         {visibleOptions.map((option) => {
           const checked = selected.includes(option.value);
           return (
             <label
               key={option.value}
               className={cn(
-                "grid cursor-pointer grid-cols-[auto_1fr_auto] items-center gap-2 text-sm",
-                checked ? "font-semibold text-violet-700" : "text-muted",
+                "group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2 text-sm transition-colors hover:border-violet-100 hover:bg-violet-50/55",
+                checked
+                  ? "border-violet-100 bg-violet-50/85 font-semibold text-violet-800"
+                  : "text-slate-700",
               )}
             >
               <input
                 type="checkbox"
-                className="h-4 w-4 rounded border-indigo-200 accent-violet-600"
+                className="h-4 w-4 rounded border-slate-300 accent-violet-600"
                 checked={checked}
                 onChange={() => onToggle(option.value)}
               />
-              <span className="min-w-0 truncate">{option.label}</span>
-              <span className="text-xs font-semibold text-muted/70">
+              <span className="min-w-0 truncate leading-5">{option.label}</span>
+              <span className="min-w-6 justify-self-end text-right text-xs font-semibold text-slate-400">
                 {option.count}
               </span>
             </label>
@@ -661,7 +663,7 @@ function CheckboxFilterSection({
       {hasMore ? (
         <button
           type="button"
-          className="mt-3 text-xs font-bold text-violet-700 hover:text-violet-800"
+          className="mt-3.5 text-xs font-bold text-violet-700 transition-colors hover:text-violet-900"
           onClick={() => setExpanded((current) => !current)}
         >
           {expanded
