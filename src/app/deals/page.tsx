@@ -340,6 +340,21 @@ export default function DealsPage() {
       : `${travelerCount} ${travelerLabel}`;
   }, [adults, cabinClass, children, includesFlight, includesHotel, rooms]);
 
+  const hasActiveDealsSearch =
+    packageMode !== "hotel-flight" ||
+    origin.trim() !== "" ||
+    destination.trim() !== "" ||
+    startDate !== "" ||
+    endDate !== "" ||
+    adults !== 1 ||
+    children !== 0 ||
+    rooms !== 1 ||
+    cabinClass !== "economy" ||
+    driverAge !== 30 ||
+    error !== "" ||
+    datesOpen ||
+    travelersOpen;
+
   const destinationIdeaHref = useMemo(() => {
     const baseDate = new Date();
     const defaultCheckIn = addDays(baseDate, 21);
@@ -1035,15 +1050,17 @@ export default function DealsPage() {
                   </div>
                 </div>
 
-                <div className="flex justify-end px-1">
-                  <button
-                    type="button"
-                    onClick={handleResetSearch}
-                    className="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-                  >
-                    {dictionary.clearAll}
-                  </button>
-                </div>
+                {hasActiveDealsSearch ? (
+                  <div className="flex justify-end px-1">
+                    <button
+                      type="button"
+                      onClick={handleResetSearch}
+                      className="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    >
+                      {dictionary.clearAll}
+                    </button>
+                  </div>
+                ) : null}
 
                 <div className="min-h-6" aria-live="polite">
                   {error ? (
