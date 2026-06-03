@@ -2217,43 +2217,45 @@ export function FlightResultsClient() {
         <section className="lg:col-span-2">
           <div
             className={cn(
-              "mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2 overflow-hidden sm:hidden",
+              "sticky top-0 z-30 -mx-4 bg-[#f6f8fb]/95 px-4 py-2 backdrop-blur sm:hidden",
               mobileSearchOpen && "hidden"
             )}
           >
-            <Button
-              type="button"
-              variant="secondary"
-              aria-label="Open filters"
-              className="h-[52px] w-[56px] shrink-0 rounded-xl border-slate-200 bg-white px-1.5 text-[10px] font-semibold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-              onClick={() => setFiltersOpen(true)}
-            >
-              <span className="flex flex-col items-center justify-center gap-0.5">
-                <SlidersHorizontal size={15} />
-                <span>Filters</span>
-              </span>
-            </Button>
-
-            <button
-              type="button"
-              onClick={() => setMobileSearchOpen(true)}
-              className="flex h-[58px] min-w-0 max-w-full flex-1 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-0 text-left shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 hover:shadow-[0_10px_22px_rgba(15,23,42,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-            >
-              <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-                <span className="block truncate text-[15px] font-semibold leading-5 text-slate-950">
-                  {mobileRouteSummary}
-                </span>
-                <span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-slate-600">
-                  {mobileTripTypeSummary} · {mobileDateSummary} · {mobileTravelerSummary}
-                </span>
-              </span>
-              <span
-                aria-hidden="true"
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
+            <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2 overflow-hidden">
+              <Button
+                type="button"
+                variant="secondary"
+                aria-label="Open filters"
+                className="h-[52px] w-[56px] shrink-0 rounded-xl border-slate-200 bg-white px-1.5 text-[10px] font-semibold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                onClick={() => setFiltersOpen(true)}
               >
-                <PencilLine size={16} />
-              </span>
-            </button>
+                <span className="flex flex-col items-center justify-center gap-0.5">
+                  <SlidersHorizontal size={15} />
+                  <span>Filters</span>
+                </span>
+              </Button>
+
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(true)}
+                className="flex h-[58px] min-w-0 max-w-full flex-1 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-0 text-left shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 hover:shadow-[0_10px_22px_rgba(15,23,42,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+              >
+                <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
+                  <span className="block truncate text-[15px] font-semibold leading-5 text-slate-950">
+                    {mobileRouteSummary}
+                  </span>
+                  <span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-slate-600">
+                    {mobileTripTypeSummary} · {mobileDateSummary} · {mobileTravelerSummary}
+                  </span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
+                >
+                  <PencilLine size={16} />
+                </span>
+              </button>
+            </div>
           </div>
 
           <form
