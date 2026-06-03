@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
+import {
+  isProtectedAdminEmail,
+  requireAdminApiSession,
+  writeAdminAuditLog,
+} from "@/lib/admin";
 import { getPrisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -23,18 +27,35 @@ export async function DELETE(request: Request, context: RouteContext) {
     select: { id: true, email: true, role: true, status: true },
   });
 
-  if (!target) return NextResponse.json({ error: "User not found." }, { status: 404 });
+  if (!target)
+    return NextResponse.json({ error: "User not found." }, { status: 404 });
 
   if (target.id === auth.session.user.id) {
-    return NextResponse.json({ error: "Admins cannot permanently delete their own account." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Admins cannot permanently delete their own account." },
+      { status: 400 },
+    );
+  }
+
+  if (isProtectedAdminEmail(target.email)) {
+    return NextResponse.json(
+      { error: "Protected admin users cannot be permanently deleted." },
+      { status: 400 },
+    );
   }
 
   if (target.role === "ADMIN") {
-    return NextResponse.json({ error: "Admin users cannot be permanently deleted." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Admin users cannot be permanently deleted." },
+      { status: 400 },
+    );
   }
 
   if (target.status !== "DELETED") {
-    return NextResponse.json({ error: "Only already soft-deleted users can be permanently deleted." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Only already soft-deleted users can be permanently deleted." },
+      { status: 400 },
+    );
   }
 
   const targetEmail = target.email?.trim() || null;
@@ -43,10 +64,18 @@ export async function DELETE(request: Request, context: RouteContext) {
   if (normalizedTargetEmail) {
     const confirmedEmail = body.confirmEmail?.trim().toLowerCase() || "";
     if (confirmedEmail !== normalizedTargetEmail) {
-      return NextResponse.json({ error: "Type the target user's email to confirm permanent deletion." }, { status: 400 });
+      return NextResponse.json(
+        {
+          error: "Type the target user's email to confirm permanent deletion.",
+        },
+        { status: 400 },
+      );
     }
   } else if (body.confirmUserId !== target.id) {
-    return NextResponse.json({ error: "Type the target user's id to confirm permanent deletion." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Type the target user's id to confirm permanent deletion." },
+      { status: 400 },
+    );
   }
 
   const cleanupCounts = await db.$transaction(async (tx) => {
@@ -56,14 +85,19 @@ export async function DELETE(request: Request, context: RouteContext) {
             `email-verification:${normalizedTargetEmail}`,
             `login-verification:${normalizedTargetEmail}`,
             `password-reset:${normalizedTargetEmail}`,
-          ].map((identifier) => tx.verificationToken.deleteMany({ where: { identifier } })),
+          ].map((identifier) =>
+            tx.verificationToken.deleteMany({ where: { identifier } }),
+          ),
         )
       : [];
 
     await tx.user.delete({ where: { id: target.id } });
 
     return {
-      verificationTokensDeleted: verificationTokenCounts.reduce((sum, result) => sum + result.count, 0),
+      verificationTokensDeleted: verificationTokenCounts.reduce(
+        (sum, result) => sum + result.count,
+        0,
+      ),
     };
   });
 
@@ -88,15 +122,20 @@ export async function DELETE(request: Request, context: RouteContext) {
   return NextResponse.json({ message: "User was permanently deleted." });
 }
 
-async function readPermanentDeleteBody(request: Request): Promise<PermanentDeleteBody> {
+async function readPermanentDeleteBody(
+  request: Request,
+): Promise<PermanentDeleteBody> {
   try {
     const parsed = await request.json();
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+      return {};
 
     const body = parsed as Record<string, unknown>;
     return {
-      confirmEmail: typeof body.confirmEmail === "string" ? body.confirmEmail : undefined,
-      confirmUserId: typeof body.confirmUserId === "string" ? body.confirmUserId : undefined,
+      confirmEmail:
+        typeof body.confirmEmail === "string" ? body.confirmEmail : undefined,
+      confirmUserId:
+        typeof body.confirmUserId === "string" ? body.confirmUserId : undefined,
     };
   } catch {
     return {};
