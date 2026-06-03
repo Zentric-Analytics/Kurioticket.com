@@ -106,6 +106,7 @@ export function AppHeader({
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState("");
   const [accountOpen, setAccountOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const {
     locale,
@@ -365,6 +366,20 @@ export function AppHeader({
     setLanguageQuery("");
   };
 
+  const handleSignOut = () => {
+    if (isSigningOut) {
+      return;
+    }
+
+    setIsSigningOut(true);
+    setAccountOpen(false);
+    setOpen(false);
+
+    void signOut({ callbackUrl: "/" }).catch(() => {
+      setIsSigningOut(false);
+    });
+  };
+
   return (
     <>
       <header className="relative z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
@@ -481,16 +496,15 @@ export function AppHeader({
                         <button
                           type="button"
                           role="menuitem"
-                          onClick={() => {
-                            setAccountOpen(false);
-                            signOut({ callbackUrl: "/" });
-                          }}
-                          className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                          onClick={handleSignOut}
+                          disabled={isSigningOut}
+                          aria-busy={isSigningOut}
+                          className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                         >
                           <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                             <LogOut size={17} aria-hidden="true" />
                           </span>
-                          {t.logout}
+                          {isSigningOut ? "Signing out…" : t.logout}
                         </button>
                       </div>
                     </div>
@@ -753,14 +767,13 @@ export function AppHeader({
 
                     <button
                       type="button"
-                      onClick={() => {
-                        setOpen(false);
-                        signOut({ callbackUrl: "/" });
-                      }}
-                      className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      onClick={handleSignOut}
+                      disabled={isSigningOut}
+                      aria-busy={isSigningOut}
+                      className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                     >
                       <LogOut size={16} aria-hidden="true" />
-                      {t.logout}
+                      {isSigningOut ? "Signing out…" : t.logout}
                     </button>
                   </div>
                 </section>
