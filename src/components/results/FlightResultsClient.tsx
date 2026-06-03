@@ -2528,7 +2528,7 @@ export function FlightResultsClient() {
         {renderMobileControlsRow()}
       </div>
 
-      <div className={cn("h-[82px] sm:hidden", mobileSearchOpen && "hidden")} />
+      <div className={cn("h-[132px] sm:hidden", mobileSearchOpen && "hidden")} />
 
       <div
         className={cn(
@@ -2539,7 +2539,7 @@ export function FlightResultsClient() {
         {mobileSearchOpen ? renderCompactSearchForm("mobile") : null}
       </div>
 
-      <div className="page-shell grid gap-5 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <section className="lg:col-span-2">
           {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
 
