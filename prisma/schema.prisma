@@ -99,6 +99,14 @@ enum FeatureFlagScope {
   ADMIN
 }
 
+enum HomepageFareSnapshotStatus {
+  ACTIVE
+  STALE
+  UNAVAILABLE
+  FAILED
+  DISABLED
+}
+
 model User {
   id                      String              @id @default(cuid())
   name                    String?
@@ -495,6 +503,32 @@ model FeatureFlag {
 
   @@index([enabled])
   @@index([scope])
+}
+
+model HomepageFareSnapshot {
+  id             String                     @id @default(cuid())
+  snapshotKey    String                     @unique
+  origin         String
+  destination    String
+  tripType       String
+  departureDate  DateTime
+  returnDate     DateTime?
+  cabinClass     String
+  travelers      Int                        @default(1)
+  currency       String                     @default("USD")
+  price          Decimal?                   @db.Decimal(12, 2)
+  provider       String
+  providerBacked Boolean                    @default(false)
+  searchedAt     DateTime
+  expiresAt      DateTime
+  status         HomepageFareSnapshotStatus @default(ACTIVE)
+  payload        Json?
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+
+  @@index([origin, destination])
+  @@index([status, expiresAt])
+  @@index([searchedAt])
 }
 
 model AnalyticsEvent {

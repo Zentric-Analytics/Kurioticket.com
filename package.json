@@ -16,7 +16,8 @@
     "postinstall": "prisma generate",
     "db:deploy:render": "prisma generate && prisma migrate deploy",
     "check:conflicts": "node scripts/check-conflicts.mjs",
-    "prebuild": "npm run check:conflicts"
+    "prebuild": "npm run check:conflicts",
+    "check:homepage-destination-prices": "node scripts/check-homepage-destination-prices.mjs"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
