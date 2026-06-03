@@ -3,7 +3,6 @@ import { trackAnalyticsEvent } from "@/services/analyticsService";
 
 export async function createPriceAlert(input: {
   userId: string;
-  isPremium: boolean;
   type: "FLIGHT" | "HOTEL";
   origin?: string;
   destination: string;
@@ -13,15 +12,6 @@ export async function createPriceAlert(input: {
 }) {
   return withOptionalDb<unknown>(
     async (db) => {
-      if (!input.isPremium) {
-        const activeCount = await db.priceAlert.count({
-          where: { userId: input.userId, status: "ACTIVE" },
-        });
-        if (activeCount >= 3) {
-          throw new Error("Free users can create up to 3 active price alerts.");
-        }
-      }
-
       const alert = await db.priceAlert.create({
         data: {
           userId: input.userId,
@@ -31,7 +21,7 @@ export async function createPriceAlert(input: {
           targetPrice: input.targetPrice,
           currency: input.currency,
           query: input.query as never,
-          nextCheckAt: new Date(Date.now() + (input.isPremium ? 1000 * 60 * 60 * 6 : 1000 * 60 * 60 * 24)),
+          nextCheckAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
         },
       });
 
@@ -39,7 +29,7 @@ export async function createPriceAlert(input: {
         userId: input.userId,
         type: "ALERT_CREATED",
         name: "price_alert_created",
-        metadata: { type: input.type, premium: input.isPremium },
+        metadata: { type: input.type },
       });
 
       return alert;
@@ -54,8 +44,6 @@ export async function createPriceAlert(input: {
   );
 }
 
-export function getAlertCadence(isPremium: boolean) {
-  return isPremium
-    ? "Premium alerts check more frequently and can include alternate airports, dates, trend signals, and AI savings insights."
-    : "Free alerts support up to 3 active watches with meaningful email notifications.";
+export function getAlertCadence() {
+  return "Standard account alerts check daily and send meaningful email notifications when prices change.";
 }

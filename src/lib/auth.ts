@@ -40,7 +40,6 @@ import { logAuthEvent } from "@/services/authService";
 
 type SessionAugmentedUser = {
   role?: string;
-  isPremium?: boolean;
   status?: string;
   emailVerified?: Date | string | null;
 };
@@ -156,8 +155,6 @@ const providers: NextAuthOptions["providers"] = [
           name: user.name,
           image: user.image,
           role: user.role,
-          isPremium:
-            user.isPremium,
           status: user.status,
           emailVerified:
             user.emailVerified,
@@ -271,8 +268,6 @@ const providers: NextAuthOptions["providers"] = [
         name: user.name,
         image: user.image,
         role: user.role,
-        isPremium:
-          user.isPremium,
         status: user.status,
         emailVerified:
           user.emailVerified,
@@ -490,11 +485,6 @@ export const authOptions: NextAuthOptions =
             authUser.role ||
             "USER";
 
-          token.isPremium =
-            Boolean(
-              authUser.isPremium
-            );
-
           token.status =
             authUser.status ||
             "ACTIVE";
@@ -526,9 +516,6 @@ export const authOptions: NextAuthOptions =
             token.role =
               dbUser.role;
 
-            token.isPremium =
-              dbUser.isPremium;
-
             token.status =
               dbUser.status;
 
@@ -556,11 +543,6 @@ export const authOptions: NextAuthOptions =
             String(
               token.role ||
                 "USER"
-            );
-
-          session.user.isPremium =
-            Boolean(
-              token.isPremium
             );
 
           session.user.status =

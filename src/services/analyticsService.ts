@@ -8,9 +8,6 @@ export async function trackAnalyticsEvent(input: {
     | "SAVE"
     | "ALERT_CREATED"
     | "SIGNUP"
-    | "PREMIUM_CLICK"
-    | "SUBSCRIPTION_CONVERSION"
-    | "AI_USAGE"
     | "SUPPORT_TICKET"
     | "PROVIDER_FAILURE";
   name: string;
