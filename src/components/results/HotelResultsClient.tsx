@@ -59,7 +59,11 @@ const MEAL_FILTERS = [
 ];
 
 const CANCELLATION_FILTERS = [
-  { value: "free-cancellation", label: "Free cancellation", terms: ["free cancellation"] },
+  {
+    value: "free-cancellation",
+    label: "Free cancellation",
+    terms: ["free cancellation"],
+  },
   {
     value: "flexible-cancellation",
     label: "Flexible cancellation",
@@ -125,7 +129,14 @@ const LOCATION_AREA_FILTERS = [
   {
     value: "city-centre",
     label: "City Centre",
-    terms: ["city centre", "city center", "central", "downtown", "centre", "center"],
+    terms: [
+      "city centre",
+      "city center",
+      "central",
+      "downtown",
+      "centre",
+      "center",
+    ],
   },
   {
     value: "airport-area",
@@ -315,7 +326,10 @@ export function HotelResultsClient() {
     return () => window.clearInterval(id);
   }, [loading]);
 
-  const filterOptions = useMemo(() => buildHotelFilterOptions(results), [results]);
+  const filterOptions = useMemo(
+    () => buildHotelFilterOptions(results),
+    [results],
+  );
   const filtered = useMemo(
     () =>
       results.filter((hotel) =>
@@ -369,7 +383,7 @@ export function HotelResultsClient() {
         </div>
       </div>
 
-      <div className="page-shell grid gap-4 py-4 lg:grid-cols-[290px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 py-4 lg:grid-cols-[220px_minmax(0,1fr)]">
         <aside className="hidden lg:block">
           <HotelFilters
             maxPrice={maxPrice}
@@ -412,7 +426,11 @@ export function HotelResultsClient() {
                 Try increasing the price range, lowering the star rating, or
                 clearing selected hotel filters to see more available options.
               </p>
-              <Button variant="secondary" className="mt-4" onClick={resetFilters}>
+              <Button
+                variant="secondary"
+                className="mt-4"
+                onClick={resetFilters}
+              >
                 Reset filters
               </Button>
             </div>
@@ -420,8 +438,8 @@ export function HotelResultsClient() {
             <>
               <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-white px-3.5 py-2 shadow-[0_12px_30px_-24px_rgba(30,27,75,0.45)]">
                 <p className="text-sm font-semibold text-muted">
-                  {filtered.length} stay option{filtered.length === 1 ? "" : "s"}{" "}
-                  found
+                  {filtered.length} stay option
+                  {filtered.length === 1 ? "" : "s"} found
                 </p>
               </div>
               {filtered.map((hotel) => (
@@ -490,116 +508,115 @@ function HotelFilters({
   selectedFilters: HotelFilterSelections;
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
 }) {
+  const filterRangeClass =
+    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
+
   return (
-    <div className="hotel-filter-panel overflow-hidden rounded-[1.35rem] border border-violet-100/90 bg-white shadow-[0_18px_48px_-32px_rgba(67,56,202,0.36),0_1px_3px_rgba(15,23,42,0.08)] ring-1 ring-white/80 lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-      <div className="rounded-t-[1.35rem] border-b border-violet-200/75 bg-[#EEE9FF] px-5 py-[1.125rem]">
-        <h2 className="text-base font-extrabold tracking-[-0.01em] text-indigo-950">
-          Filters
-        </h2>
-        <p className="mt-1 text-xs font-semibold leading-5 text-slate-600">
-          Refine your stay
-        </p>
-      </div>
-      <div className="px-5 pb-5">
-        <div className="divide-y divide-slate-200/80">
-          <FilterSection title="Budget / Price">
-            <label className="block">
-              <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
-                Total up to{" "}
-                <span className="font-mono text-indigo-950">
-                  {formatCurrency(maxPrice)}
-                </span>
-              </span>
-              <input
-                className="w-full accent-violet-600"
-                type="range"
-                min={100}
-                max={Math.max(resultMaxPrice, 300)}
-                step={25}
-                value={maxPrice}
-                onChange={(event) => setMaxPrice(Number(event.target.value))}
-              />
-            </label>
-          </FilterSection>
-
-          <CheckboxFilterSection
-            title="Popular Filters"
-            options={options.popular}
-            selected={selectedFilters.popular}
-            onToggle={(value) => toggleFilter("popular", value)}
-          />
-
-          <FilterSection title="Star Rating">
-            <label className="block">
-              <span className="mb-2 flex items-center justify-between text-sm font-semibold text-muted">
-                From{" "}
-                <span className="font-mono text-indigo-950">{minRating}+</span>
-              </span>
-              <input
-                className="w-full accent-violet-600"
-                type="range"
-                min={1}
-                max={5}
-                step={0.5}
-                value={minRating}
-                onChange={(event) => setMinRating(Number(event.target.value))}
-              />
-            </label>
-          </FilterSection>
-
-          <CheckboxFilterSection
-            title="Location / Area"
-            options={options.locations}
-            selected={selectedFilters.locations}
-            onToggle={(value) => toggleFilter("locations", value)}
-            collapsedCount={5}
-          />
-
-          <CheckboxFilterSection
-            title="Property Type"
-            options={options.propertyTypes}
-            selected={selectedFilters.propertyTypes}
-            onToggle={(value) => toggleFilter("propertyTypes", value)}
-          />
-
-          <CheckboxFilterSection
-            title="Room Type"
-            options={options.roomTypes}
-            selected={selectedFilters.roomTypes}
-            onToggle={(value) => toggleFilter("roomTypes", value)}
-            collapsedCount={5}
-          />
-
-          <CheckboxFilterSection
-            title="Bed Type"
-            options={options.bedTypes}
-            selected={selectedFilters.bedTypes}
-            onToggle={(value) => toggleFilter("bedTypes", value)}
-            collapsedCount={5}
-          />
-
-          <CheckboxFilterSection
-            title="Meals"
-            options={options.meals}
-            selected={selectedFilters.meals}
-            onToggle={(value) => toggleFilter("meals", value)}
-          />
-
-          <CheckboxFilterSection
-            title="Cancellation Policy"
-            options={options.cancellationPolicies}
-            selected={selectedFilters.cancellationPolicies}
-            onToggle={(value) => toggleFilter("cancellationPolicies", value)}
-          />
-
-          <CheckboxFilterSection
-            title="Facilities"
-            options={options.facilities}
-            selected={selectedFilters.facilities}
-            onToggle={(value) => toggleFilter("facilities", value)}
-            collapsedCount={6}
-          />
+    <div className="hotel-filter-panel bg-white lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
+        <div>
+          <h2 className="text-base font-bold text-white">Filter by</h2>
         </div>
+        <SlidersHorizontal className="text-white/90" size={18} />
+      </div>
+      <div className="space-y-4 bg-white px-3 py-3">
+        <FilterSection title="Budget / Price">
+          <label className="block">
+            <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
+              Total up to{" "}
+              <span className="font-mono text-indigo-950">
+                {formatCurrency(maxPrice)}
+              </span>
+            </span>
+            <input
+              className={filterRangeClass}
+              type="range"
+              min={100}
+              max={Math.max(resultMaxPrice, 300)}
+              step={25}
+              value={maxPrice}
+              onChange={(event) => setMaxPrice(Number(event.target.value))}
+            />
+          </label>
+        </FilterSection>
+
+        <CheckboxFilterSection
+          title="Popular Filters"
+          options={options.popular}
+          selected={selectedFilters.popular}
+          onToggle={(value) => toggleFilter("popular", value)}
+        />
+
+        <FilterSection title="Star Rating">
+          <label className="block">
+            <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
+              From{" "}
+              <span className="font-mono text-indigo-950">{minRating}+</span>
+            </span>
+            <input
+              className={filterRangeClass}
+              type="range"
+              min={1}
+              max={5}
+              step={0.5}
+              value={minRating}
+              onChange={(event) => setMinRating(Number(event.target.value))}
+            />
+          </label>
+        </FilterSection>
+
+        <CheckboxFilterSection
+          title="Location / Area"
+          options={options.locations}
+          selected={selectedFilters.locations}
+          onToggle={(value) => toggleFilter("locations", value)}
+          collapsedCount={5}
+        />
+
+        <CheckboxFilterSection
+          title="Property Type"
+          options={options.propertyTypes}
+          selected={selectedFilters.propertyTypes}
+          onToggle={(value) => toggleFilter("propertyTypes", value)}
+        />
+
+        <CheckboxFilterSection
+          title="Room Type"
+          options={options.roomTypes}
+          selected={selectedFilters.roomTypes}
+          onToggle={(value) => toggleFilter("roomTypes", value)}
+          collapsedCount={5}
+        />
+
+        <CheckboxFilterSection
+          title="Bed Type"
+          options={options.bedTypes}
+          selected={selectedFilters.bedTypes}
+          onToggle={(value) => toggleFilter("bedTypes", value)}
+          collapsedCount={5}
+        />
+
+        <CheckboxFilterSection
+          title="Meals"
+          options={options.meals}
+          selected={selectedFilters.meals}
+          onToggle={(value) => toggleFilter("meals", value)}
+        />
+
+        <CheckboxFilterSection
+          title="Cancellation Policy"
+          options={options.cancellationPolicies}
+          selected={selectedFilters.cancellationPolicies}
+          onToggle={(value) => toggleFilter("cancellationPolicies", value)}
+        />
+
+        <CheckboxFilterSection
+          title="Facilities"
+          options={options.facilities}
+          selected={selectedFilters.facilities}
+          onToggle={(value) => toggleFilter("facilities", value)}
+          collapsedCount={6}
+        />
       </div>
     </div>
   );
@@ -613,11 +630,11 @@ function FilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="py-[1.15rem] first:pt-5 last:pb-0">
-      <h3 className="mb-4 text-[0.84rem] font-extrabold uppercase tracking-[0.075em] text-indigo-950">
+    <section className="border-t border-slate-200/70 pt-3 first:border-t-0 first:pt-0">
+      <h3 className="mb-1.5 text-[13px] font-semibold leading-5 text-slate-800">
         {title}
       </h3>
-      {children}
+      <div className="grid gap-1">{children}</div>
     </section>
   );
 }
@@ -644,41 +661,31 @@ function CheckboxFilterSection({
 
   return (
     <FilterSection title={title}>
-      <div className="grid gap-2">
+      <div className="grid gap-1">
         {visibleOptions.map((option) => {
           const checked = selected.includes(option.value);
           return (
             <label
               key={option.value}
-              className={cn(
-                "group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-transparent px-2.5 py-2.5 text-sm transition-colors hover:border-violet-100 hover:bg-violet-50/65",
-                checked
-                  ? "border-violet-100 bg-violet-50/85 font-semibold text-violet-800"
-                  : "text-slate-700",
-              )}
+              className="flex cursor-pointer items-start justify-between gap-3 py-1.5 text-[13px] font-medium text-slate-700 transition hover:text-slate-950"
             >
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-slate-300 accent-violet-600"
-                checked={checked}
-                onChange={() => onToggle(option.value)}
-              />
-              <span
-                className={cn(
-                  "min-w-0 truncate leading-5",
-                  checked ? "font-semibold text-violet-900" : "text-slate-700",
-                )}
-              >
-                {option.label}
+              <span className="flex min-w-0 items-start gap-2">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                  checked={checked}
+                  onChange={() => onToggle(option.value)}
+                />
+                <span
+                  className={cn(
+                    "min-w-0 truncate",
+                    checked ? "font-semibold text-slate-950" : undefined,
+                  )}
+                >
+                  {option.label}
+                </span>
               </span>
-              <span
-                className={cn(
-                  "min-w-8 justify-self-end rounded-full px-2 py-0.5 text-right text-xs font-bold",
-                  checked
-                    ? "bg-white text-violet-700"
-                    : "bg-slate-50 text-slate-500",
-                )}
-              >
+              <span className="shrink-0 text-xs font-medium text-slate-500">
                 {option.count}
               </span>
             </label>
@@ -688,7 +695,7 @@ function CheckboxFilterSection({
       {hasMore ? (
         <button
           type="button"
-          className="mt-3.5 text-xs font-bold text-violet-700 transition-colors hover:text-violet-900"
+          className="mt-2 text-xs font-semibold text-indigo-700 transition-colors hover:text-indigo-900"
           onClick={() => setExpanded((current) => !current)}
         >
           {expanded
@@ -707,8 +714,10 @@ function buildHotelFilterOptions(hotels: PublicHotelResult[]) {
       [hotel.name, hotel.roomType].join(" "),
     ),
     meals: buildTermOptions(hotels, MEAL_FILTERS, getSearchableHotelText),
-    cancellationPolicies: buildTermOptions(hotels, CANCELLATION_FILTERS, (hotel) =>
-      [hotel.cancellationInfo, ...hotel.amenities].join(" "),
+    cancellationPolicies: buildTermOptions(
+      hotels,
+      CANCELLATION_FILTERS,
+      (hotel) => [hotel.cancellationInfo, ...hotel.amenities].join(" "),
     ),
     facilities: buildTermOptions(hotels, FACILITY_FILTERS, (hotel) =>
       hotel.amenities.join(" "),
@@ -716,11 +725,15 @@ function buildHotelFilterOptions(hotels: PublicHotelResult[]) {
     locations: buildTermOptions(hotels, LOCATION_AREA_FILTERS, (hotel) =>
       [hotel.location, hotel.distanceFromCenter, ...hotel.amenities].join(" "),
     ),
-    roomTypes: buildTermOptions(hotels, ROOM_TYPE_FILTERS, (hotel) =>
-      hotel.roomType,
+    roomTypes: buildTermOptions(
+      hotels,
+      ROOM_TYPE_FILTERS,
+      (hotel) => hotel.roomType,
     ),
-    bedTypes: buildTermOptions(hotels, BED_TYPE_FILTERS, (hotel) =>
-      hotel.roomType,
+    bedTypes: buildTermOptions(
+      hotels,
+      BED_TYPE_FILTERS,
+      (hotel) => hotel.roomType,
     ),
   };
 }
@@ -788,7 +801,8 @@ function hotelMatchesFilters(
       hotel,
       selectedFilters.locations,
       LOCATION_AREA_FILTERS,
-      (item) => [item.location, item.distanceFromCenter, ...item.amenities].join(" "),
+      (item) =>
+        [item.location, item.distanceFromCenter, ...item.amenities].join(" "),
     ) &&
     matchesTermGroup(
       hotel,
@@ -814,7 +828,9 @@ function matchesTermGroup(
   if (!selectedValues.length) return true;
   return selectedValues.some((value) => {
     const filter = filters.find((item) => item.value === value);
-    return filter ? textIncludesTerms(textForHotel(hotel), filter.terms) : false;
+    return filter
+      ? textIncludesTerms(textForHotel(hotel), filter.terms)
+      : false;
   });
 }
 
