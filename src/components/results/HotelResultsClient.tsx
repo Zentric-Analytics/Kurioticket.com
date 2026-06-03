@@ -270,6 +270,8 @@ export function HotelResultsClient() {
     [],
   );
   const filterApplyingTimeoutRef = useRef<number | null>(null);
+  const previousFilterSignatureRef = useRef<string | null>(null);
+  const previousResultsSignatureRef = useRef<string | null>(null);
   const body = useMemo(
     () => ({
       destination: params.get("destination") || "Tokyo",
@@ -347,6 +349,14 @@ export function HotelResultsClient() {
     [maxPrice, minRating, results, selectedFilters],
   );
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
+  const filterSignature = useMemo(
+    () => JSON.stringify({ maxPrice, minRating, selectedFilters }),
+    [maxPrice, minRating, selectedFilters],
+  );
+  const resultsSignature = useMemo(
+    () => results.map((hotel) => hotel.id).join("|"),
+    [results],
+  );
   const showFilteredEmptyState =
     !loading &&
     !error &&
@@ -368,30 +378,38 @@ export function HotelResultsClient() {
       filterApplyingTimeoutRef.current = null;
     }
 
-    if (!filterApplying) return;
+    const previousFilterSignature = previousFilterSignatureRef.current;
+    const previousResultsSignature = previousResultsSignatureRef.current;
+    const filtersChanged =
+      previousFilterSignature !== null &&
+      previousFilterSignature !== filterSignature &&
+      previousResultsSignature === resultsSignature;
+    const shouldDelayFilterUpdate =
+      !loading && !error && results.length > 0 && filtersChanged;
 
+    previousFilterSignatureRef.current = filterSignature;
+    previousResultsSignatureRef.current = resultsSignature;
+
+    if (!shouldDelayFilterUpdate) {
+      setVisibleFiltered(filtered);
+      setFilterApplying(false);
+      return;
+    }
+
+    setFilterApplying(true);
     filterApplyingTimeoutRef.current = window.setTimeout(() => {
       setVisibleFiltered(filtered);
       setFilterApplying(false);
       filterApplyingTimeoutRef.current = null;
     }, 325);
-  }, [filterApplying, filtered]);
-
-  const triggerFilterApplying = () => {
-    if (!loading && !error && results.length > 0) {
-      setFilterApplying(true);
-    }
-  };
-
-  const updateMaxPrice = (value: number) => {
-    setMaxPrice(value);
-    triggerFilterApplying();
-  };
-
-  const updateMinRating = (value: number) => {
-    setMinRating(value);
-    triggerFilterApplying();
-  };
+  }, [
+    error,
+    filterSignature,
+    filtered,
+    loading,
+    results.length,
+    resultsSignature,
+  ]);
 
   const resetFilters = () => {
     setMaxPrice(resultMaxPrice);

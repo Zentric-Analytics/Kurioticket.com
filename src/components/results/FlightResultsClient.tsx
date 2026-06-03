@@ -120,7 +120,7 @@ const discoveryById = new Map<string, HomeDiscoveryItem>(
   allDiscoveryItems.map((item) => [item.id, item])
 );
 
-const premiumBeachVacationKeywords = [
+const beachVacationKeywords = [
   "beach",
   "beaches",
   "beachfront",
@@ -239,7 +239,7 @@ function getBeachVacationVisual(item: HomeDiscoveryItem): BeachVacationVisual {
   );
 }
 
-const nonPremiumBeachImageKeywords = [
+const cityBeachImageKeywords = [
   "at dusk",
   "buildings",
   "city and",
@@ -256,7 +256,7 @@ const nonPremiumBeachImageKeywords = [
   "towers",
 ];
 
-const nonPremiumBeachRouteKeywords = [
+const cityBeachRouteKeywords = [
   "business",
   "city break",
   "city transit",
@@ -290,7 +290,7 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
   let imageScore = 0;
   let routeScore = 0;
 
-  for (const keyword of premiumBeachVacationKeywords) {
+  for (const keyword of beachVacationKeywords) {
     if (searchableText.includes(keyword)) score += 2;
     if (routeText.includes(keyword)) routeScore += 2;
     if (imageText.includes(keyword)) {
@@ -306,14 +306,14 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
     }
   }
 
-  for (const keyword of nonPremiumBeachImageKeywords) {
+  for (const keyword of cityBeachImageKeywords) {
     if (imageText.includes(keyword)) {
       score -= 9;
       imageScore -= 9;
     }
   }
 
-  for (const keyword of nonPremiumBeachRouteKeywords) {
+  for (const keyword of cityBeachRouteKeywords) {
     if (routeText.includes(keyword)) score -= 4;
   }
 
@@ -2221,14 +2221,19 @@ export function FlightResultsClient() {
         )}
       >
         <div className="flex flex-col gap-1">
-          <button
-            type="button"
-            aria-label="Close search form"
-            onClick={() => setMobileSearchOpen(false)}
-            className="inline-flex h-8 w-8 items-center justify-center self-start rounded-full text-sm font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:hidden"
-          >
-            X
-          </button>
+          <div className="flex items-center justify-between sm:hidden">
+            <span className="text-sm font-semibold text-slate-500">
+              Edit search
+            </span>
+            <button
+              type="button"
+              aria-label="Close search form"
+              onClick={() => setMobileSearchOpen(false)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+            >
+              ×
+            </button>
+          </div>
 
           <div
             className="inline-flex items-center gap-6 self-start"

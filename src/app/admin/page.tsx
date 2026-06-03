@@ -87,7 +87,7 @@ const adminModules = [
     title: "Settings",
     icon: Settings,
     body:
-      "Read-only operational settings and active/paused systems.",
+      "Read-only operational settings and platform systems.",
   },
 ];
 
@@ -202,7 +202,7 @@ export default async function AdminPage() {
 
       <Card className="mt-6 p-4">
         <h2 className="font-bold text-navy">
-          Active vs paused systems
+          Platform systems
         </h2>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -223,16 +223,7 @@ export default async function AdminPage() {
           </StatusPill>
 
           <StatusPill>
-            Paused: Stripe premium
-          </StatusPill>
-
-          <StatusPill>
             Paused: Resend alerts
-          </StatusPill>
-
-          <StatusPill>
-            Paused: OpenAI premium
-            features
           </StatusPill>
         </div>
       </Card>

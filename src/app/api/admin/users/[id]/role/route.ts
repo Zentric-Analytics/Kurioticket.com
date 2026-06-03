@@ -10,7 +10,7 @@ import { getPrisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const allowedRoles = ["USER", "PREMIUM", "SUPPORT"] as const;
+const allowedRoles = ["USER", "SUPPORT"] as const;
 
 type RouteContext = { params: Promise<{ id: string }> };
 type AllowedRole = (typeof allowedRoles)[number];
