@@ -244,11 +244,6 @@ export function AppHeader({
       ...(isSignedIn
         ? [
             {
-              href: "/pricing",
-              label: t.premium,
-              icon: undefined,
-            },
-            {
               href: "/dashboard",
               label: t.dashboard,
               icon: undefined,
@@ -322,7 +317,7 @@ export function AppHeader({
         "/destinations",
         "/explore",
         "/saved",
-        ...(isSignedIn ? ["/pricing", "/dashboard"] : []),
+        ...(isSignedIn ? ["/dashboard"] : []),
       ]),
     [isSignedIn]
   );
