@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 
+import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
@@ -147,6 +148,7 @@ export function SearchTabs({
   compactHero = false,
 }: SearchTabsProps) {
   const router = useRouter();
+  const { start: startRouteProgress } = useRouteProgress();
 
   const fromWrapRef =
     useRef<HTMLDivElement>(null);
@@ -166,6 +168,10 @@ export function SearchTabs({
 
   const [tab, setTab] =
     useState<TabMode>("flights");
+  const [isFlightSubmitting, setIsFlightSubmitting] =
+    useState(false);
+  const [isHotelSubmitting, setIsHotelSubmitting] =
+    useState(false);
 
   const [tripType, setTripType] =
     useState<TripType>(
@@ -1178,6 +1184,7 @@ export function SearchTabs({
   };
 
   const isFlightSearchDisabled =
+    isFlightSubmitting ||
     !from.trim() ||
     !to.trim() ||
     !departureDate ||
@@ -1261,10 +1268,13 @@ export function SearchTabs({
       // best effort only
     }
 
+    setIsFlightSubmitting(true);
+    startRouteProgress();
     router.push(href);
   };
 
   const isHotelSearchDisabled =
+    isHotelSubmitting ||
     !destination.trim() ||
     !checkIn ||
     !checkOut ||
@@ -1323,6 +1333,8 @@ export function SearchTabs({
       // best effort only
     }
 
+    setIsHotelSubmitting(true);
+    startRouteProgress();
     router.push(href);
   };
 
@@ -2081,10 +2093,13 @@ export function SearchTabs({
                   disabled={
                     isFlightSearchDisabled
                   }
+                  aria-busy={isFlightSubmitting}
                   className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
-                  {t.search ||
-                    "Search"}
+                  {isFlightSubmitting
+                    ? "Searching flights..."
+                    : t.search ||
+                      "Search"}
                 </Button>
               </div>
             </div>
@@ -2540,10 +2555,13 @@ export function SearchTabs({
                   disabled={
                     isHotelSearchDisabled
                   }
+                  aria-busy={isHotelSubmitting}
                   className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
-                  {t.search ||
-                    "Search"}
+                  {isHotelSubmitting
+                    ? "Searching hotels..."
+                    : t.search ||
+                      "Search"}
                 </Button>
               </div>
             </div>

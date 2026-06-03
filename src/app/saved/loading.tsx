@@ -1,0 +1,44 @@
+import { AppHeader } from "@/components/layout/AppHeader";
+import { Footer } from "@/components/layout/Footer";
+
+const savedCardSkeletons = Array.from({ length: 6 });
+
+export default function SavedLoading() {
+  return (
+    <>
+      <AppHeader />
+      <main
+        className="flex-1 bg-[radial-gradient(circle_at_top,rgba(244,244,255,0.9),rgba(255,255,255,1)_42%)] pb-14 pt-6 md:pb-20 md:pt-10"
+        role="status"
+        aria-live="polite"
+        aria-label="Loading saved trips and recent searches"
+      >
+        <section className="page-shell space-y-8" aria-hidden="true">
+          <div className="rounded-3xl border border-indigo-100 bg-white/90 p-6 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)] md:p-8">
+            <div className="h-4 w-36 animate-pulse rounded-full bg-violet-100 motion-reduce:animate-none" />
+            <div className="mt-4 h-9 w-80 max-w-full animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none" />
+            <div className="mt-3 h-4 w-full max-w-2xl animate-pulse rounded-full bg-slate-100 motion-reduce:animate-none" />
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {savedCardSkeletons.map((_, index) => (
+              <div
+                key={index}
+                className="rounded-3xl border border-indigo-100 bg-white p-4 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.45)]"
+              >
+                <div className="h-36 animate-pulse rounded-2xl bg-slate-200 motion-reduce:animate-none" />
+                <div className="mt-4 space-y-3">
+                  <div className="h-4 w-24 animate-pulse rounded-full bg-violet-100 motion-reduce:animate-none" />
+                  <div className="h-6 w-56 max-w-full animate-pulse rounded-xl bg-slate-200 motion-reduce:animate-none" />
+                  <div className="h-4 w-full animate-pulse rounded-full bg-slate-100 motion-reduce:animate-none" />
+                  <div className="h-4 w-3/4 animate-pulse rounded-full bg-slate-100 motion-reduce:animate-none" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
+}

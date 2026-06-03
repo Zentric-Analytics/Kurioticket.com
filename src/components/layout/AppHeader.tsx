@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
 } from "react";
 
 import {
@@ -34,6 +35,7 @@ import {
 
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 import { Button } from "@/components/ui/Button";
 
@@ -116,6 +118,7 @@ export function AppHeader({
   } = useLocale();
 
   const pathname = usePathname();
+  const { start: startRouteProgress } = useRouteProgress();
 
   const languageRef = useRef<HTMLDivElement | null>(null);
   const languageMenuRef = useRef<HTMLElement | null>(null);
@@ -355,6 +358,43 @@ export function AppHeader({
     </span>
   );
 
+
+  const handleRouteLinkClick = (
+    event: ReactMouseEvent<HTMLAnchorElement>,
+    href: string,
+    afterStart?: () => void
+  ) => {
+    if (
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.shiftKey
+    ) {
+      return;
+    }
+
+    const currentUrl = new URL(window.location.href);
+    const nextUrl = new URL(href, currentUrl.origin);
+
+    if (nextUrl.origin !== currentUrl.origin) {
+      return;
+    }
+
+    if (
+      nextUrl.pathname === currentUrl.pathname &&
+      nextUrl.search === currentUrl.search &&
+      nextUrl.hash === currentUrl.hash
+    ) {
+      afterStart?.();
+      return;
+    }
+
+    startRouteProgress();
+    afterStart?.();
+  };
+
   const handleLanguageSelect = (code: (typeof locales)[number]["code"]) => {
     setLocale(code);
     setLanguageOpen(false);
@@ -382,7 +422,12 @@ export function AppHeader({
     <>
       <header className="relative z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
-          <Link href="/" aria-label="Kurioticket home" className="shrink-0">
+          <Link
+            href="/"
+            aria-label="Kurioticket home"
+            onClick={(event) => handleRouteLinkClick(event, "/")}
+            className="shrink-0"
+          >
             <KurioticketLogo variant="full" tone="light" />
           </Link>
 
@@ -470,7 +515,9 @@ export function AppHeader({
                               key={item.href}
                               href={item.href}
                               role="menuitem"
-                              onClick={() => setAccountOpen(false)}
+                              onClick={(event) =>
+                                handleRouteLinkClick(event, item.href, () => setAccountOpen(false))
+                              }
                               className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
                               <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
@@ -512,6 +559,7 @@ export function AppHeader({
                 <>
                   <Link
                     href="/auth/signin"
+                    onClick={(event) => handleRouteLinkClick(event, "/auth/signin")}
                     className="inline-flex h-12 cursor-pointer items-center rounded-full px-4 text-sm font-semibold text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     {t.login}
@@ -519,6 +567,7 @@ export function AppHeader({
 
                   <Link
                     href="/auth/signup"
+                    onClick={(event) => handleRouteLinkClick(event, "/auth/signup")}
                     className="inline-flex h-12 cursor-pointer items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     {t.signUp}
@@ -536,6 +585,7 @@ export function AppHeader({
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={(event) => handleRouteLinkClick(event, item.href)}
                     className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3.5 py-2 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                       active
                         ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
@@ -574,6 +624,7 @@ export function AppHeader({
               <Link
                 href="/auth/signin"
                 aria-label="Sign in"
+                onClick={(event) => handleRouteLinkClick(event, "/auth/signin")}
                 className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               >
                 <UserCircle size={18} />
@@ -666,6 +717,7 @@ export function AppHeader({
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={(event) => handleRouteLinkClick(event, item.href)}
                     className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2.5 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                       active
                         ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
@@ -713,6 +765,7 @@ export function AppHeader({
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={(event) => handleRouteLinkClick(event, item.href, () => setOpen(false))}
                     className="inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-[15px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                   >
                     {Icon ? <Icon size={16} aria-hidden="true" /> : null}
@@ -754,7 +807,9 @@ export function AppHeader({
                         <Link
                           key={item.href}
                           href={item.href}
-                          onClick={() => setOpen(false)}
+                          onClick={(event) =>
+                            handleRouteLinkClick(event, item.href, () => setOpen(false))
+                          }
                           className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                         >
                           <Icon size={16} aria-hidden="true" />

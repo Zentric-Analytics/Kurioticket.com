@@ -27,6 +27,7 @@ import {
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { useRouteProgress } from "@/components/layout/RouteProgress";
 
 type CarsFormValues = {
   pickupLocation: string;
@@ -437,6 +438,7 @@ export default function CarsPage() {
 
 function CarsSearchPage() {
   const router = useRouter();
+  const { start: startRouteProgress } = useRouteProgress();
   const searchParams = useSearchParams();
   const initialValues = useMemo(
     () => getInitialValues(searchParams),
@@ -445,6 +447,7 @@ function CarsSearchPage() {
   const todayIso = useMemo(() => toIsoDate(new Date()), []);
   const [values, setValues] = useState<CarsFormValues>(initialValues);
   const [errors, setErrors] = useState<CarsFormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hasActiveSearch =
     values.pickupLocation.trim() ||
@@ -495,6 +498,10 @@ function CarsSearchPage() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
     const nextErrors = validateCarsForm(values, todayIso);
     setErrors(nextErrors);
 
@@ -517,6 +524,8 @@ function CarsSearchPage() {
       dropoffLocation,
     });
 
+    setIsSubmitting(true);
+    startRouteProgress();
     router.push(`/cars/results?${params.toString()}`);
   };
 
@@ -543,6 +552,7 @@ function CarsSearchPage() {
               hasActiveSearch={Boolean(hasActiveSearch)}
               onClearSearch={clearSearch}
               onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
               updateValue={updateValue}
               values={values}
             />
@@ -684,6 +694,7 @@ function CarsSearchBar({
   hasActiveSearch,
   onClearSearch,
   onSubmit,
+  isSubmitting,
   updateValue,
   values,
 }: {
@@ -691,6 +702,7 @@ function CarsSearchBar({
   hasActiveSearch: boolean;
   onClearSearch: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  isSubmitting: boolean;
   updateValue: <Key extends keyof CarsFormValues>(
     key: Key,
     value: CarsFormValues[Key],
@@ -941,9 +953,11 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-full min-h-12 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 lg:min-h-14"
+                className="focus-ring inline-flex h-full min-h-12 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-indigo-600 lg:min-h-14"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
               >
-                Search
+                {isSubmitting ? "Searching cars..." : "Search"}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>

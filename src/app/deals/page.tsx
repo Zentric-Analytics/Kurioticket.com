@@ -9,6 +9,7 @@ import { Calendar, ChevronDown, Minus, Plus, X } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useRouteProgress } from "@/components/layout/RouteProgress";
 
 type PackageMode =
   | "hotel-flight"
@@ -271,6 +272,7 @@ const clampCount = (value: number, minimum: number, maximum: number) => {
 export default function DealsPage() {
   const { locale } = useLocale();
   const router = useRouter();
+  const { start: startRouteProgress } = useRouteProgress();
   const lang = locale.startsWith("fr") ? "fr" : "en";
   const dictionary = copy[lang];
   const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight");
@@ -290,6 +292,7 @@ export default function DealsPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const originInputRef = useRef<HTMLInputElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const datesWrapperRef = useRef<HTMLDivElement>(null);
@@ -491,6 +494,10 @@ export default function DealsPage() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
     const trimmedOrigin = origin.trim();
     const trimmedDestination = destination.trim();
     const normalizedAdults = clampCount(adults, 1, 12);
@@ -565,6 +572,8 @@ export default function DealsPage() {
         cabinClass,
       });
 
+      setIsSubmitting(true);
+      startRouteProgress();
       router.push(`/flights/results?${params.toString()}`);
       return;
     }
@@ -578,6 +587,8 @@ export default function DealsPage() {
       rooms: String(normalizedRooms),
     });
 
+    setIsSubmitting(true);
+    startRouteProgress();
     router.push(`/hotels/results?${params.toString()}`);
   };
 
@@ -1042,9 +1053,15 @@ export default function DealsPage() {
                     <div className="flex min-h-[54px] items-stretch rounded-xl border border-slate-300 bg-white p-1.5 lg:rounded-none lg:rounded-e-xl lg:border-0">
                       <button
                         type="submit"
-                        className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-indigo-900/20 transition hover:from-indigo-500 hover:to-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                        className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-indigo-900/20 transition hover:from-indigo-500 hover:to-violet-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-75"
+                        disabled={isSubmitting}
+                        aria-busy={isSubmitting}
                       >
-                        {dictionary.search}
+                        {isSubmitting
+                          ? includesFlight
+                            ? "Searching flights..."
+                            : "Searching hotels..."
+                          : dictionary.search}
                       </button>
                     </div>
                   </div>
