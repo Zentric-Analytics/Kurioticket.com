@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
@@ -261,10 +261,15 @@ export function HotelResultsClient() {
   const [error, setError] = useState("");
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterApplying, setFilterApplying] = useState(false);
   const [maxPrice, setMaxPrice] = useState(1200);
   const [minRating, setMinRating] = useState(3);
   const [selectedFilters, setSelectedFilters] =
     useState<HotelFilterSelections>(emptySelections);
+  const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>(
+    [],
+  );
+  const filterApplyingTimeoutRef = useRef<number | null>(null);
   const body = useMemo(
     () => ({
       destination: params.get("destination") || "Tokyo",
@@ -299,6 +304,8 @@ export function HotelResultsClient() {
         if (!active) return;
         setResults(data.results);
         setWarnings(data.warnings || []);
+        setVisibleFiltered(data.results);
+        setFilterApplying(false);
         setMaxPrice(getResultMaxPrice(data.results));
         setSelectedFilters(emptySelections);
       })
@@ -341,13 +348,57 @@ export function HotelResultsClient() {
   );
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
   const showFilteredEmptyState =
-    !loading && !error && results.length > 0 && filtered.length === 0;
+    !loading &&
+    !error &&
+    !filterApplying &&
+    results.length > 0 &&
+    visibleFiltered.length === 0;
+
+  useEffect(() => {
+    return () => {
+      if (filterApplyingTimeoutRef.current !== null) {
+        window.clearTimeout(filterApplyingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (filterApplyingTimeoutRef.current !== null) {
+      window.clearTimeout(filterApplyingTimeoutRef.current);
+      filterApplyingTimeoutRef.current = null;
+    }
+
+    if (!filterApplying) return;
+
+    filterApplyingTimeoutRef.current = window.setTimeout(() => {
+      setVisibleFiltered(filtered);
+      setFilterApplying(false);
+      filterApplyingTimeoutRef.current = null;
+    }, 325);
+  }, [filterApplying, filtered]);
+
+  const triggerFilterApplying = () => {
+    if (!loading && !error && results.length > 0) {
+      setFilterApplying(true);
+    }
+  };
+
+  const updateMaxPrice = (value: number) => {
+    setMaxPrice(value);
+    triggerFilterApplying();
+  };
+
+  const updateMinRating = (value: number) => {
+    setMinRating(value);
+    triggerFilterApplying();
+  };
 
   const resetFilters = () => {
     setMaxPrice(resultMaxPrice);
     setMinRating(3);
     setSelectedFilters(emptySelections);
     setFiltersOpen(false);
+    triggerFilterApplying();
   };
 
   const toggleFilter = (group: keyof HotelFilterSelections, value: string) => {
@@ -357,6 +408,7 @@ export function HotelResultsClient() {
         ? current[group].filter((item) => item !== value)
         : [...current[group], value],
     }));
+    triggerFilterApplying();
   };
 
   return (
@@ -386,10 +438,10 @@ export function HotelResultsClient() {
         <aside className="hidden lg:block">
           <HotelFilters
             maxPrice={maxPrice}
-            setMaxPrice={setMaxPrice}
+            setMaxPrice={updateMaxPrice}
             resultMaxPrice={resultMaxPrice}
             minRating={minRating}
-            setMinRating={setMinRating}
+            setMinRating={updateMinRating}
             options={filterOptions}
             selectedFilters={selectedFilters}
             toggleFilter={toggleFilter}
@@ -417,33 +469,54 @@ export function HotelResultsClient() {
               {error}
             </div>
           ) : showFilteredEmptyState ? (
-            <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
-              <p className="text-lg font-bold text-indigo-950">
-                No stays match these filters
-              </p>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                Try increasing the price range, lowering the star rating, or
-                clearing selected hotel filters to see more available options.
-              </p>
-              <Button
-                variant="secondary"
-                className="mt-4"
-                onClick={resetFilters}
-              >
-                Reset filters
-              </Button>
+            <div className={hotelResultStackClass}>
+              <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
+                <p className="text-lg font-bold text-indigo-950">
+                  No stays match these filters
+                </p>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                  Try increasing the price range, lowering the star rating, or
+                  clearing selected hotel filters to see more available options.
+                </p>
+                <Button
+                  variant="secondary"
+                  className="mt-4"
+                  onClick={resetFilters}
+                >
+                  Reset filters
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className={cn(hotelResultStackClass, "space-y-4")}>
+            <div
+              className={cn(hotelResultStackClass, "min-h-[360px] space-y-4")}
+            >
               <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                 <p className="text-sm font-bold text-navy">
-                  {filtered.length} stay option
-                  {filtered.length === 1 ? "" : "s"} found
+                  {visibleFiltered.length} stay option
+                  {visibleFiltered.length === 1 ? "" : "s"} found
                 </p>
               </div>
-              {filtered.map((hotel) => (
-                <HotelCard key={hotel.id} hotel={hotel} />
-              ))}
+              {filterApplying ? (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="flex items-center gap-2 rounded-xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
+                >
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
+                  Applying filters...
+                </div>
+              ) : null}
+              <div
+                className={cn(
+                  "space-y-4 transition-opacity duration-200",
+                  filterApplying ? "opacity-60" : "opacity-100",
+                )}
+              >
+                {visibleFiltered.map((hotel) => (
+                  <HotelCard key={hotel.id} hotel={hotel} />
+                ))}
+              </div>
             </div>
           )}
         </section>
@@ -475,10 +548,10 @@ export function HotelResultsClient() {
         </div>
         <HotelFilters
           maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
+          setMaxPrice={updateMaxPrice}
           resultMaxPrice={resultMaxPrice}
           minRating={minRating}
-          setMinRating={setMinRating}
+          setMinRating={updateMinRating}
           options={filterOptions}
           selectedFilters={selectedFilters}
           toggleFilter={toggleFilter}
