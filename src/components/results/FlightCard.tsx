@@ -5,7 +5,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { formatCurrency, formatTime } from "@/lib/utils";
 
-export function FlightCard({ flight, premium = false }: { flight: PublicFlightResult; premium?: boolean }) {
+export function FlightCard({ flight }: { flight: PublicFlightResult }) {
   return (
     <Card className="mx-auto w-full max-w-[640px] overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       <div className="border-b border-indigo-200/70 bg-gradient-to-r from-indigo-600 to-violet-500 px-3 py-2">
@@ -64,12 +64,6 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
             </div>
           </div>
         </div>
-
-        {premium ? (
-          <div className="mt-2.5 rounded-md border border-teal/20 bg-teal/5 p-2.5 text-xs text-teal-dark">
-            Best Option For You signals can personalize this ranking using your saved airport, comfort, savings, and alert preferences.
-          </div>
-        ) : null}
       </div>
     </Card>
   );

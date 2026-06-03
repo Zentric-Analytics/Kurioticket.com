@@ -20,7 +20,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const session = await requireAdminSession("/admin/users");
   const params = await searchParams;
   const q = params?.q?.trim() || "";
-  const role = params?.role || "ALL";
+  const requestedRole = params?.role || "ALL";
+  const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(requestedRole)
+    ? requestedRole
+    : "ALL";
   const status = params?.status || "ALL";
   const where = {
     ...(q
@@ -44,7 +47,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       email: true,
       role: true,
       status: true,
-      isPremium: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -88,7 +90,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           >
             <option value="ALL">All roles</option>
             <option value="USER">User</option>
-            <option value="PREMIUM">Premium</option>
             <option value="SUPPORT">Support</option>
             <option value="ADMIN">Admin</option>
           </select>
@@ -118,7 +119,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                 <th className="p-3">Name</th>
                 <th className="p-3">Email</th>
                 <th className="p-3">Role</th>
-                <th className="p-3">Premium</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Created</th>
                 <th className="p-3">Updated</th>
@@ -156,9 +156,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                           </span>
                         ) : null}
                       </div>
-                    </td>
-                    <td className="p-3">
-                      {user.isPremium ? "Placeholder: Yes" : "Placeholder: No"}
                     </td>
                     <td className="p-3">
                       <StatusPill

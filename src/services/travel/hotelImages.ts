@@ -8,7 +8,7 @@ export type HotelImageContext = {
 // Unsplash Source License: https://unsplash.com/license. These curated hotel/travel
 // images are used only as generic metasearch fallbacks when a provider does not
 // return a validated property image.
-export const PREMIUM_HOTEL_FALLBACK_IMAGES = [
+export const CURATED_HOTEL_FALLBACK_IMAGES = [
   {
     url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=85",
     keywords: ["beach", "resort", "cancun", "miami", "honolulu", "dubai"],
@@ -41,7 +41,7 @@ export function normalizeHotelImageUrl(candidate: unknown, context: HotelImageCo
     if (isSafeHttpsImageUrl(trimmed)) return trimmed;
   }
 
-  return selectPremiumHotelFallbackImage(context);
+  return selectCuratedHotelFallbackImage(context);
 }
 
 export function isSafeHttpsImageUrl(candidate: string): boolean {
@@ -55,13 +55,13 @@ export function isSafeHttpsImageUrl(candidate: string): boolean {
   }
 }
 
-export function selectPremiumHotelFallbackImage(context: HotelImageContext = {}): string {
+export function selectCuratedHotelFallbackImage(context: HotelImageContext = {}): string {
   const lookupText = [context.destination, context.location, context.hotelName]
     .filter(Boolean)
     .join(" ")
     .toLowerCase();
 
-  const keywordMatch = PREMIUM_HOTEL_FALLBACK_IMAGES.find((image) =>
+  const keywordMatch = CURATED_HOTEL_FALLBACK_IMAGES.find((image) =>
     image.keywords.some((keyword) => lookupText.includes(keyword)),
   );
 
@@ -70,9 +70,9 @@ export function selectPremiumHotelFallbackImage(context: HotelImageContext = {})
   const stableKey = [context.destination, context.location, context.hotelName, context.providerId]
     .filter(Boolean)
     .join("|");
-  const index = stableKey ? stableHash(stableKey) % PREMIUM_HOTEL_FALLBACK_IMAGES.length : 0;
+  const index = stableKey ? stableHash(stableKey) % CURATED_HOTEL_FALLBACK_IMAGES.length : 0;
 
-  return PREMIUM_HOTEL_FALLBACK_IMAGES[index].url;
+  return CURATED_HOTEL_FALLBACK_IMAGES[index].url;
 }
 
 function stableHash(value: string): number {

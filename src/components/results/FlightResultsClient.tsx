@@ -120,7 +120,7 @@ const discoveryById = new Map<string, HomeDiscoveryItem>(
   allDiscoveryItems.map((item) => [item.id, item])
 );
 
-const premiumBeachVacationKeywords = [
+const beachVacationKeywords = [
   "beach",
   "beaches",
   "beachfront",
@@ -239,7 +239,7 @@ function getBeachVacationVisual(item: HomeDiscoveryItem): BeachVacationVisual {
   );
 }
 
-const nonPremiumBeachImageKeywords = [
+const cityBeachImageKeywords = [
   "at dusk",
   "buildings",
   "city and",
@@ -256,7 +256,7 @@ const nonPremiumBeachImageKeywords = [
   "towers",
 ];
 
-const nonPremiumBeachRouteKeywords = [
+const cityBeachRouteKeywords = [
   "business",
   "city break",
   "city transit",
@@ -290,7 +290,7 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
   let imageScore = 0;
   let routeScore = 0;
 
-  for (const keyword of premiumBeachVacationKeywords) {
+  for (const keyword of beachVacationKeywords) {
     if (searchableText.includes(keyword)) score += 2;
     if (routeText.includes(keyword)) routeScore += 2;
     if (imageText.includes(keyword)) {
@@ -306,14 +306,14 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
     }
   }
 
-  for (const keyword of nonPremiumBeachImageKeywords) {
+  for (const keyword of cityBeachImageKeywords) {
     if (imageText.includes(keyword)) {
       score -= 9;
       imageScore -= 9;
     }
   }
 
-  for (const keyword of nonPremiumBeachRouteKeywords) {
+  for (const keyword of cityBeachRouteKeywords) {
     if (routeText.includes(keyword)) score -= 4;
   }
 

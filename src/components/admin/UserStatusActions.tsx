@@ -12,7 +12,7 @@ type UserStatusActionsProps = {
   isProtectedAdmin: boolean;
 };
 
-const editableRoles = ["USER", "PREMIUM", "SUPPORT"] as const;
+const editableRoles = ["USER", "SUPPORT"] as const;
 
 export function UserStatusActions({
   userId,
@@ -66,7 +66,7 @@ export function UserStatusActions({
     window.location.reload();
   }
 
-  async function updateRole(nextRole: "USER" | "PREMIUM" | "SUPPORT") {
+  async function updateRole(nextRole: "USER" | "SUPPORT") {
     if (!window.confirm(`Confirm role change to ${nextRole} for this user?`))
       return;
 
