@@ -1517,54 +1517,56 @@ export function SearchTabs({
                   {t.origin ||
                     "Origin"}
                 </label>
-                <input
-                  type="text"
-                  value={from}
-                  onChange={(
-                    event
-                  ) => {
-                    setHasUserEditedOrigin(true);
-                    setFrom(
+                <div className="flex h-8 items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={from}
+                    onChange={(
                       event
-                        .target
-                        .value
-                    );
-                    setFromCode("");
-                    setFromOpen(
-                      true
-                    );
-                    setFromHighlight(
-                      0
-                    );
-                  }}
-                  onFocus={() =>
-                    setFromOpen(
-                      true
-                    )
-                  }
-                  onKeyDown={(
-                    event
-                  ) =>
-                    onKeyNav(
-                      event,
-                      true
-                    )
-                  }
-                  placeholder="From?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-10 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
-                  required
-                />
-                {from.trim() ? (
-                  <button
-                    type="button"
-                    onClick={onClearOrigin}
-                    onMouseDown={(event) => event.preventDefault()}
-                    aria-label="Clear origin"
-                    className="focus-ring absolute right-0 top-6 z-30 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
-                  >
-                    <X size={14} />
-                  </button>
-                ) : null}
+                    ) => {
+                      setHasUserEditedOrigin(true);
+                      setFrom(
+                        event
+                          .target
+                          .value
+                      );
+                      setFromCode("");
+                      setFromOpen(
+                        true
+                      );
+                      setFromHighlight(
+                        0
+                      );
+                    }}
+                    onFocus={() =>
+                      setFromOpen(
+                        true
+                      )
+                    }
+                    onKeyDown={(
+                      event
+                    ) =>
+                      onKeyNav(
+                        event,
+                        true
+                      )
+                    }
+                    placeholder="From?"
+                    className="focus-ring h-full min-w-0 flex-1 rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                    required
+                  />
+                  {from.trim() ? (
+                    <button
+                      type="button"
+                      onClick={onClearOrigin}
+                      onMouseDown={(event) => event.preventDefault()}
+                      aria-label="Clear origin"
+                      className="focus-ring relative z-30 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null}
+                </div>
                 {shouldShowFromSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {fromLoading ? (
@@ -1639,50 +1641,52 @@ export function SearchTabs({
                   {t.destination ||
                     "Destination"}
                 </label>
-                <input
-                  type="text"
-                  value={to}
-                  onChange={(
-                    event
-                  ) => {
-                    setTo(
-                      event.target
-                        .value
-                    );
-                    setToCode("");
-                    setToOpen(
-                      true
-                    );
-                    setToHighlight(
-                      0
-                    );
-                  }}
-                  onFocus={() =>
-                    setToOpen(true)
-                  }
-                  onKeyDown={(
-                    event
-                  ) =>
-                    onKeyNav(
-                      event,
-                      false
-                    )
-                  }
-                  placeholder="To?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-10 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
-                  required
-                />
-                {to.trim() ? (
-                  <button
-                    type="button"
-                    onClick={onClearDestination}
-                    onMouseDown={(event) => event.preventDefault()}
-                    aria-label="Clear destination"
-                    className="focus-ring absolute right-0 top-6 z-30 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
-                  >
-                    <X size={14} />
-                  </button>
-                ) : null}
+                <div className="flex h-8 items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={to}
+                    onChange={(
+                      event
+                    ) => {
+                      setTo(
+                        event.target
+                          .value
+                      );
+                      setToCode("");
+                      setToOpen(
+                        true
+                      );
+                      setToHighlight(
+                        0
+                      );
+                    }}
+                    onFocus={() =>
+                      setToOpen(true)
+                    }
+                    onKeyDown={(
+                      event
+                    ) =>
+                      onKeyNav(
+                        event,
+                        false
+                      )
+                    }
+                    placeholder="To?"
+                    className="focus-ring h-full min-w-0 flex-1 rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                    required
+                  />
+                  {to.trim() ? (
+                    <button
+                      type="button"
+                      onClick={onClearDestination}
+                      onMouseDown={(event) => event.preventDefault()}
+                      aria-label="Clear destination"
+                      className="focus-ring relative z-30 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null}
+                </div>
                 {shouldShowToSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {toLoading ? (
@@ -2086,15 +2090,17 @@ export function SearchTabs({
             </div>
           </div>
           {hasActiveFlightSearch ? (
-            <div className="flex justify-end px-1">
-              <button
-                type="button"
-                onClick={onResetFlightSearch}
-                className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-              >
-                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-                Clear all
-              </button>
+            <div className="grid w-full grid-cols-1 px-1 pt-0.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:px-0">
+              <div className="flex justify-end lg:col-start-4">
+                <button
+                  type="button"
+                  onClick={onResetFlightSearch}
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                  Clear all
+                </button>
+              </div>
             </div>
           ) : null}
         </form>
