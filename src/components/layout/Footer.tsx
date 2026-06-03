@@ -49,6 +49,10 @@ export function Footer() {
           label: "Destinations",
           href: "/destinations",
         },
+        {
+          label: "Saved & recent",
+          href: "/saved",
+        },
       ],
     },
     {
