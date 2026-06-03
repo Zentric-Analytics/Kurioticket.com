@@ -358,9 +358,9 @@ export function HotelResultsClient() {
   };
 
   return (
-    <main className="flex-1 pb-8">
-      <div className="sticky top-0 z-40 border-b border-border bg-white shadow-[0_12px_32px_-28px_rgba(15,23,42,0.45)]">
-        <div className="page-shell py-2">
+    <main className="flex-1 bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
+      <div className="page-shell grid gap-5 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <section className="lg:col-span-2">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
             initialDestination={body.destination}
@@ -380,10 +380,7 @@ export function HotelResultsClient() {
             <SlidersHorizontal size={17} />
             Filters
           </Button>
-        </div>
-      </div>
-
-      <div className="page-shell grid gap-5 py-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+        </section>
         <aside className="hidden lg:block">
           <HotelFilters
             maxPrice={maxPrice}
