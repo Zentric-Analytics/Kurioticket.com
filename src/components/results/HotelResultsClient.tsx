@@ -393,7 +393,7 @@ export function HotelResultsClient() {
             toggleFilter={toggleFilter}
           />
         </aside>
-        <section className="min-w-0 space-y-3">
+        <section className="min-w-0 space-y-4">
           {!loading && !error && warnings.length ? (
             <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
               Some provider checks may be limited for this hotel search. Review
