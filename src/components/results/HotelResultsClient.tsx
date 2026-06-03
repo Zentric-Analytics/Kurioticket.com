@@ -344,8 +344,8 @@ export function HotelResultsClient() {
   };
 
   return (
-    <main className="flex-1 pb-8 pt-3 sm:pt-4 lg:pt-4">
-      <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
+    <main className="flex-1 pb-8">
+      <div className="sticky top-0 z-40 border-b border-border bg-white shadow-[0_12px_32px_-28px_rgba(15,23,42,0.45)]">
         <div className="page-shell py-2">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
@@ -491,7 +491,7 @@ function HotelFilters({
   toggleFilter: (group: keyof HotelFilterSelections, value: string) => void;
 }) {
   return (
-    <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)] lg:sticky lg:top-36 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto">
+    <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)] lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
       <h2 className="text-base font-bold text-indigo-950">Filters</h2>
       <div className="mt-4 divide-y divide-indigo-100">
         <FilterSection title="Budget / price">
