@@ -3535,6 +3535,9 @@ function Filters({
   flexibleOnly: boolean;
   setFlexibleOnly: (value: boolean) => void;
 }) {
+  const filterRangeClass =
+    "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
+
   return (
     <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70">
       <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
@@ -3558,7 +3561,7 @@ function Filters({
             </span>
           </span>
           <input
-            className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            className={filterRangeClass}
             type="range"
             min={priceBounds.min || 0}
             max={priceBounds.max || 0}
@@ -3616,7 +3619,7 @@ function Filters({
                 </span>
               </div>
               <input
-                className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                className={filterRangeClass}
                 type="range"
                 min={timeBounds.takeoff?.min ?? 0}
                 max={timeBounds.takeoff?.max ?? 0}
@@ -3651,7 +3654,7 @@ function Filters({
                 </span>
               </div>
               <input
-                className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+                className={filterRangeClass}
                 type="range"
                 min={timeBounds.landing?.min ?? 0}
                 max={timeBounds.landing?.max ?? 0}
@@ -3689,7 +3692,7 @@ function Filters({
           </div>
 
           <input
-            className="w-full cursor-pointer accent-indigo-600 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            className={filterRangeClass}
             type="range"
             min={durationBounds?.min ?? 0}
             max={durationBounds?.max ?? 0}
