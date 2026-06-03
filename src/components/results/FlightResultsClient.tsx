@@ -571,6 +571,7 @@ export function FlightResultsClient() {
   const [loading, setLoading] = useState(true);
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterApplying, setFilterApplying] = useState(false);
   const [maxPrice, setMaxPrice] = useState(0);
   const [timeFilterMode, setTimeFilterMode] = useState<"takeoff" | "landing">(
     "takeoff"
@@ -666,6 +667,9 @@ export function FlightResultsClient() {
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
+  const filterApplyingTimeoutRef = useRef<ReturnType<
+    typeof window.setTimeout
+  > | null>(null);
 
   const originFallbackSuggestions = useMemo(
     () => filterAirportOptions(originInput),
@@ -721,6 +725,27 @@ export function FlightResultsClient() {
     setRecentSearches(readRecentSearches());
     setSavedTripIds(readSavedTripIds());
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (filterApplyingTimeoutRef.current) {
+        window.clearTimeout(filterApplyingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function triggerFilterApplying() {
+    setFilterApplying(true);
+
+    if (filterApplyingTimeoutRef.current) {
+      window.clearTimeout(filterApplyingTimeoutRef.current);
+    }
+
+    filterApplyingTimeoutRef.current = window.setTimeout(() => {
+      setFilterApplying(false);
+      filterApplyingTimeoutRef.current = null;
+    }, 350);
+  }
 
   function handleRemoveRecentSearch(id: string) {
     setRecentSearches(removeRecentSearch(id));
@@ -2601,6 +2626,7 @@ export function FlightResultsClient() {
             setBaggageIncludedOnly={setBaggageIncludedOnly}
             flexibleOnly={flexibleOnly}
             setFlexibleOnly={setFlexibleOnly}
+            onFilterChange={triggerFilterApplying}
           />
         </aside>
 
@@ -2620,79 +2646,86 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              {sortedResults.length ? (
-                <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                  <button
-                    type="button"
-                    onClick={() => setSortMode("cheapest")}
-                    className={cn(
-                      "relative px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
-                      sortMode === "cheapest"
-                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
-                        : "text-slate-600"
-                    )}
-                  >
-                    <span className="block text-[11px] font-semibold text-slate-600 sm:text-[12px]">
-                      Cheapest
-                    </span>
-                    <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-950 sm:text-[13px]">
-                      {sortSummaries.cheapest
-                        ? formatCurrency(
-                            sortSummaries.cheapest.price,
-                            selectedCurrency
-                          )
-                        : "—"}
-                    </span>
-                  </button>
+              <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerFilterApplying();
+                    setSortMode("cheapest");
+                  }}
+                  className={cn(
+                    "relative px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
+                    sortMode === "cheapest"
+                      ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
+                      : "text-slate-600"
+                  )}
+                >
+                  <span className="block text-[11px] font-semibold text-slate-600 sm:text-[12px]">
+                    Cheapest
+                  </span>
+                  <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-950 sm:text-[13px]">
+                    {sortSummaries.cheapest
+                      ? formatCurrency(
+                          sortSummaries.cheapest.price,
+                          selectedCurrency
+                        )
+                      : "—"}
+                  </span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setSortMode("best")}
-                    className={cn(
-                      "relative border-l border-slate-200 px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
-                      sortMode === "best"
-                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
-                        : "text-slate-600"
-                    )}
-                  >
-                    <span className="block text-[11px] font-semibold text-slate-600 sm:text-[12px]">
-                      Best
-                    </span>
-                    <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-950 sm:text-[13px]">
-                      {sortSummaries.best
-                        ? `${formatCurrency(
-                            sortSummaries.best.price,
-                            selectedCurrency
-                          )} · ${formatDurationFromMinutes(
-                            sortSummaries.best.durationMinutes
-                          )}`
-                        : "—"}
-                    </span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerFilterApplying();
+                    setSortMode("best");
+                  }}
+                  className={cn(
+                    "relative border-l border-slate-200 px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
+                    sortMode === "best"
+                      ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
+                      : "text-slate-600"
+                  )}
+                >
+                  <span className="block text-[11px] font-semibold text-slate-600 sm:text-[12px]">
+                    Best
+                  </span>
+                  <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-950 sm:text-[13px]">
+                    {sortSummaries.best
+                      ? `${formatCurrency(
+                          sortSummaries.best.price,
+                          selectedCurrency
+                        )} · ${formatDurationFromMinutes(
+                          sortSummaries.best.durationMinutes
+                        )}`
+                      : "—"}
+                  </span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setSortMode("fastest")}
-                    className={cn(
-                      "relative border-l border-slate-200 px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
-                      sortMode === "fastest"
-                        ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
-                        : "text-slate-600"
-                    )}
-                  >
-                    <span className="block text-[11px] font-semibold text-slate-600 sm:text-[12px]">
-                      Quickest
-                    </span>
-                    <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-950 sm:text-[13px]">
-                      {sortSummaries.fastest
-                        ? formatDurationFromMinutes(
-                            sortSummaries.fastest.durationMinutes
-                          )
-                        : "—"}
-                    </span>
-                  </button>
-                </div>
-              ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerFilterApplying();
+                    setSortMode("fastest");
+                  }}
+                  className={cn(
+                    "relative border-l border-slate-200 px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
+                    sortMode === "fastest"
+                      ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
+                      : "text-slate-600"
+                  )}
+                >
+                  <span className="block text-[11px] font-semibold text-slate-600 sm:text-[12px]">
+                    Quickest
+                  </span>
+                  <span className="mt-0.5 block truncate text-[12px] font-semibold text-slate-950 sm:text-[13px]">
+                    {sortSummaries.fastest
+                      ? formatDurationFromMinutes(
+                          sortSummaries.fastest.durationMinutes
+                        )
+                      : "—"}
+                  </span>
+                </button>
+              </div>
 
               <div className="flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
@@ -2715,14 +2748,26 @@ export function FlightResultsClient() {
                 </div>
               ) : null}
 
-              {sortedResults.length ? (
+              {filterApplying ? (
+                <div className="space-y-3">
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="rounded-xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
+                  >
+                    Updating results...
+                  </div>
+                  <FlightCardSkeleton />
+                  <FlightCardSkeleton />
+                </div>
+              ) : sortedResults.length ? (
                 sortedResults.map((flight) => (
                   <FlightCard key={flight.id} flight={flight} />
                 ))
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
-                  No flights match these filters. Widen your price or stops
-                  range to see more live options.
+                  No flights match these filters. Widen your filters to see more
+                  live options.
                 </div>
               )}
             </div>
@@ -2787,6 +2832,7 @@ export function FlightResultsClient() {
           setBaggageIncludedOnly={setBaggageIncludedOnly}
           flexibleOnly={flexibleOnly}
           setFlexibleOnly={setFlexibleOnly}
+          onFilterChange={triggerFilterApplying}
         />
       </aside>
     </main>
@@ -3520,6 +3566,7 @@ function Filters({
   setBaggageIncludedOnly,
   flexibleOnly,
   setFlexibleOnly,
+  onFilterChange,
 }: {
   maxPrice: number;
   setMaxPrice: (value: number) => void;
@@ -3551,6 +3598,7 @@ function Filters({
   setBaggageIncludedOnly: (value: boolean) => void;
   flexibleOnly: boolean;
   setFlexibleOnly: (value: boolean) => void;
+  onFilterChange: () => void;
 }) {
   const filterRangeClass =
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
@@ -3585,7 +3633,10 @@ function Filters({
             step={25}
             value={priceBounds.max ? Math.min(maxPrice, priceBounds.max) : 0}
             disabled={!priceBounds.max}
-            onChange={(event) => setMaxPrice(Number(event.target.value))}
+            onChange={(event) => {
+              onFilterChange();
+              setMaxPrice(Number(event.target.value));
+            }}
           />
           <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
             <span>
@@ -3643,9 +3694,10 @@ function Filters({
                 step={15}
                 value={maxTakeoffMinutes ?? timeBounds.takeoff?.max ?? 0}
                 disabled={!timeBounds.takeoff}
-                onChange={(event) =>
-                  setMaxTakeoffMinutes(Number(event.target.value))
-                }
+                onChange={(event) => {
+                  onFilterChange();
+                  setMaxTakeoffMinutes(Number(event.target.value));
+                }}
               />
               <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
                 <span>
@@ -3678,9 +3730,10 @@ function Filters({
                 step={15}
                 value={maxLandingMinutes ?? timeBounds.landing?.max ?? 0}
                 disabled={!timeBounds.landing}
-                onChange={(event) =>
-                  setMaxLandingMinutes(Number(event.target.value))
-                }
+                onChange={(event) => {
+                  onFilterChange();
+                  setMaxLandingMinutes(Number(event.target.value));
+                }}
               />
               <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
                 <span>
@@ -3716,9 +3769,10 @@ function Filters({
             step={15}
             value={maxDurationMinutes ?? durationBounds?.max ?? 0}
             disabled={!durationBounds}
-            onChange={(event) =>
-              setMaxDurationMinutes(Number(event.target.value))
-            }
+            onChange={(event) => {
+              onFilterChange();
+              setMaxDurationMinutes(Number(event.target.value));
+            }}
           />
 
           <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
@@ -3743,9 +3797,10 @@ function Filters({
                 label={option.label}
                 count={option.count}
                 checked={selectedFlightQuality.includes(option.value)}
-                onChange={() =>
-                  toggleFilterValue(option.value, setSelectedFlightQuality)
-                }
+                onChange={() => {
+                  onFilterChange();
+                  toggleFilterValue(option.value, setSelectedFlightQuality);
+                }}
               />
             ))}
           </FilterSection>
@@ -3763,7 +3818,10 @@ function Filters({
               secondaryLabel={option.secondaryLabel}
               rightLabel={option.rightLabel}
               checked={selectedStops.includes(option.value)}
-              onChange={() => toggleFilterValue(option.value, setSelectedStops)}
+              onChange={() => {
+                onFilterChange();
+                toggleFilterValue(option.value, setSelectedStops);
+              }}
             />
           ))}
         </FilterSection>
@@ -3778,9 +3836,10 @@ function Filters({
               label={option.label}
               count={option.count}
               checked={selectedAirlines.includes(option.value)}
-              onChange={() =>
-                toggleFilterValue(option.value, setSelectedAirlines)
-              }
+              onChange={() => {
+                onFilterChange();
+                toggleFilterValue(option.value, setSelectedAirlines);
+              }}
             />
           ))}
         </FilterSection>
@@ -3795,9 +3854,10 @@ function Filters({
               label={option.label}
               count={option.count}
               checked={selectedAirports.includes(option.value)}
-              onChange={() =>
-                toggleFilterValue(option.value, setSelectedAirports)
-              }
+              onChange={() => {
+                onFilterChange();
+                toggleFilterValue(option.value, setSelectedAirports);
+              }}
             />
           ))}
         </FilterSection>
@@ -3807,12 +3867,18 @@ function Filters({
           <FilterOptionRow
             label="Baggage included"
             checked={baggageIncludedOnly}
-            onChange={() => setBaggageIncludedOnly(!baggageIncludedOnly)}
+            onChange={() => {
+              onFilterChange();
+              setBaggageIncludedOnly(!baggageIncludedOnly);
+            }}
           />
           <FilterOptionRow
             label="Flexible/refundable"
             checked={flexibleOnly}
-            onChange={() => setFlexibleOnly(!flexibleOnly)}
+            onChange={() => {
+              onFilterChange();
+              setFlexibleOnly(!flexibleOnly);
+            }}
           />
         </FilterSection>
       </div>
