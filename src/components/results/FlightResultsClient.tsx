@@ -3547,7 +3547,7 @@ function Filters({
         <SlidersHorizontal className="text-white/90" size={18} />
       </div>
 
-      <div className="space-y-3 px-3 py-3">
+      <div className="space-y-4 bg-white px-4 py-4">
         <label className="block">
           <span className="mb-1.5 flex items-center justify-between gap-2 text-[13px] font-semibold leading-5 text-slate-800">
             Price
@@ -3570,7 +3570,7 @@ function Filters({
             disabled={!priceBounds.max}
             onChange={(event) => setMaxPrice(Number(event.target.value))}
           />
-          <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-400">
+          <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
             <span>
               {priceBounds.max ? formatCurrency(priceBounds.min, currency) : "—"}
             </span>
@@ -3581,15 +3581,15 @@ function Filters({
         </label>
 
         <FilterSection title="Times">
-          <div className="grid grid-cols-2 overflow-hidden rounded-md bg-slate-100 p-0.5">
+          <div className="grid grid-cols-2 border-b border-slate-200">
             <button
               type="button"
               onClick={() => setTimeFilterMode("takeoff")}
               className={cn(
-                "rounded px-2 py-1 text-xs font-bold transition",
+                "border-b-2 px-2 pb-1.5 pt-1 text-xs font-medium transition",
                 timeFilterMode === "takeoff"
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
+                  ? "border-indigo-600 text-indigo-700"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
               )}
             >
               Take-off
@@ -3598,10 +3598,10 @@ function Filters({
               type="button"
               onClick={() => setTimeFilterMode("landing")}
               className={cn(
-                "rounded px-2 py-1 text-xs font-bold transition",
+                "border-b-2 px-2 pb-1.5 pt-1 text-xs font-medium transition",
                 timeFilterMode === "landing"
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
+                  ? "border-indigo-600 text-indigo-700"
+                  : "border-transparent text-slate-600 hover:text-slate-900"
               )}
             >
               Landing
@@ -3610,7 +3610,7 @@ function Filters({
 
           {timeFilterMode === "takeoff" ? (
             <div className="mt-2">
-              <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-muted">
+              <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
                 <span>Take-off time from origin</span>
                 <span className="font-mono text-navy">
                   {timeBounds.takeoff && maxTakeoffMinutes !== null
@@ -3630,7 +3630,7 @@ function Filters({
                   setMaxTakeoffMinutes(Number(event.target.value))
                 }
               />
-              <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-400">
+              <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
                 <span>
                   {timeBounds.takeoff
                     ? formatTimeFromMinutes(timeBounds.takeoff.min)
@@ -3645,7 +3645,7 @@ function Filters({
             </div>
           ) : (
             <div className="mt-2">
-              <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-muted">
+              <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
                 <span>Landing time at destination</span>
                 <span className="font-mono text-navy">
                   {timeBounds.landing && maxLandingMinutes !== null
@@ -3665,7 +3665,7 @@ function Filters({
                   setMaxLandingMinutes(Number(event.target.value))
                 }
               />
-              <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-400">
+              <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
                 <span>
                   {timeBounds.landing
                     ? formatTimeFromMinutes(timeBounds.landing.min)
@@ -3682,7 +3682,7 @@ function Filters({
         </FilterSection>
 
         <FilterSection title="Duration">
-          <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-muted">
+          <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
             <span>Total trip time</span>
             <span className="font-mono text-navy">
               {durationBounds && maxDurationMinutes !== null
@@ -3704,7 +3704,7 @@ function Filters({
             }
           />
 
-          <div className="mt-1 flex justify-between text-[10px] font-semibold text-slate-400">
+          <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
             <span>
               {durationBounds
                 ? formatDurationFromMinutes(durationBounds.min)
@@ -3814,15 +3814,15 @@ function FilterSection({
     Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
   return (
-    <section className="border-t border-slate-200 pt-3 first:border-t-0 first:pt-0">
+    <section className="border-t border-slate-200 pt-4 first:border-t-0 first:pt-0">
       <h3 className="text-[13px] font-semibold leading-5 text-slate-800">
         {title}
       </h3>
-      <div className="mt-1.5 grid gap-0.5">
+      <div className="mt-2 grid gap-1">
         {hasOptions ? (
           children
         ) : (
-          <p className="py-1 text-xs font-medium text-slate-500">
+          <p className="py-1 text-xs font-normal text-slate-500">
             {emptyText}
           </p>
         )}
@@ -3843,7 +3843,7 @@ function FilterOptionRow({
   onChange: () => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-2 rounded-md py-1 text-[13px] font-medium text-slate-700 transition hover:bg-slate-50">
+    <label className="flex items-center justify-between gap-2 py-1.5 text-[13px] font-medium text-slate-700 transition hover:text-slate-950">
       <span className="flex min-w-0 items-center gap-1.5">
         <input
           type="checkbox"
