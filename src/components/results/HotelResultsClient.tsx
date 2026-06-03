@@ -12,6 +12,8 @@ import { cn, formatCurrency } from "@/lib/utils";
 
 const hotelResultStackClass = "w-full max-w-[704px] lg:ml-4 xl:ml-6";
 
+const FILTER_APPLYING_DELAY_MS = 700;
+
 const messages = [
   "Searching hotel partners...",
   "Comparing total stay prices...",
@@ -375,7 +377,7 @@ export function HotelResultsClient() {
       setVisibleFiltered(filtered);
       setFilterApplying(false);
       filterApplyingTimeoutRef.current = null;
-    }, 700);
+    }, FILTER_APPLYING_DELAY_MS);
   }, [filtered]);
 
   useEffect(() => {
