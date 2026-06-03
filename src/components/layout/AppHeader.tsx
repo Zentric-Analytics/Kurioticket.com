@@ -453,7 +453,7 @@ export function AppHeader({
                     href={item.href}
                     className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-base font-semibold transition-colors ${
                       active
-                        ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm"
+                        ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
                         : "text-indigo-50 hover:bg-white/10 hover:text-white"
                     }`}
                   >
@@ -562,7 +562,7 @@ export function AppHeader({
                     href={item.href}
                     className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2.5 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                       active
-                        ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm"
+                        ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
                         : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
                     }`}
                   >
