@@ -743,7 +743,7 @@ export function FlightResultsClient() {
     filterApplyingTimeoutRef.current = window.setTimeout(() => {
       setFilterApplying(false);
       filterApplyingTimeoutRef.current = null;
-    }, 350);
+    }, 700);
   }
 
   function handleRemoveRecentSearch(id: string) {
