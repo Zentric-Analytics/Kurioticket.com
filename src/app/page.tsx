@@ -207,20 +207,10 @@ export default function Home() {
         </section>
 
         <section className="page-shell py-5">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center">
             <h2 className="text-2xl font-bold tracking-normal text-slate-900">
               {t("homePopularDestinations")}
             </h2>
-
-            <LinkButton
-              href="/hotels/tokyo"
-              variant="ghost"
-              size="sm"
-              className="hidden text-violet-600 sm:inline-flex"
-            >
-              {t("homeViewAllDestinations")}
-              <ArrowRight size={16} />
-            </LinkButton>
           </div>
 
           <div className="relative mt-6">
