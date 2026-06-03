@@ -6,7 +6,8 @@ import {
   HOME_DISCOVERY_PRICE_CAP,
 } from "@/data/homeDiscovery";
 import { getOptionalPrisma } from "@/lib/prisma";
-import type { NormalizedFlightResult } from "@/lib/types";
+import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
+import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 
 const AIRPORT_OR_CITY_CODE_PATTERN = /^[A-Z]{3}$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
@@ -17,6 +18,7 @@ const DEFAULT_CURRENCY = "USD";
 const ACTIVE_SNAPSHOT_TTL_MS = 24 * 60 * 60 * 1000;
 const UNAVAILABLE_SNAPSHOT_TTL_MS = 6 * 60 * 60 * 1000;
 const FAILED_SNAPSHOT_TTL_MS = 60 * 60 * 1000;
+const PROVIDER_NAME = "Duffel";
 
 export const HOMEPAGE_FARE_DEFAULT_ORIGIN = "JFK";
 export const HOMEPAGE_FARE_DEFAULT_CURRENCY = DEFAULT_CURRENCY;
@@ -98,6 +100,23 @@ export type HomepageFareDateStrategy = {
   tripType: "one-way";
   departureDate: string;
   departureDateTime: Date;
+};
+
+export type HomepageFareRefreshCounts = {
+  refreshed: number;
+  unavailable: number;
+  failed: number;
+  skipped: number;
+};
+
+export type HomepageFareRefreshScope =
+  | "popular"
+  | "discover-first-6"
+  | "all-phase-3a";
+
+type HomepageRefreshRoute = {
+  origin: string;
+  destination: string;
 };
 
 type SnapshotKeyInput = {
@@ -224,6 +243,174 @@ export function getPhase3AHomepageFareRoutes(): HomepageFareRoute[] {
     }));
 
   return dedupeHomepageFareRoutes([...popularRoutes, ...discoverRoutes]);
+}
+
+export async function refreshPhase3AHomepageFareSnapshots({
+  scope = "all-phase-3a",
+  dateStrategy = getHomepageFareDateStrategy(),
+}: {
+  scope?: HomepageFareRefreshScope;
+  dateStrategy?: HomepageFareDateStrategy;
+} = {}): Promise<HomepageFareRefreshCounts> {
+  const counts: HomepageFareRefreshCounts = {
+    refreshed: 0,
+    unavailable: 0,
+    failed: 0,
+    skipped: 0,
+  };
+  const routes = getRefreshRoutes(scope);
+
+  for (const route of routes) {
+    await refreshHomepageFareRoute({
+      route,
+      departureDate: dateStrategy.departureDate,
+      counts,
+    });
+  }
+
+  return counts;
+}
+
+async function refreshHomepageFareRoute({
+  route,
+  departureDate,
+  counts,
+}: {
+  route: HomepageRefreshRoute;
+  departureDate: string;
+  counts: HomepageFareRefreshCounts;
+}) {
+  const { origin, destination } = route;
+
+  if (isSameHomepageFareRoute(origin, destination)) {
+    counts.skipped += 1;
+    return;
+  }
+
+  try {
+    const search = buildHomepageFareSearch({
+      origin,
+      destination,
+      departureDate,
+      currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+    });
+    const providerSearch: FlightSearchParams = {
+      ...search,
+      sort: "cheapest",
+    };
+    const providerResult = await searchDuffelFlights(providerSearch);
+    const result = selectProviderFare(providerResult.results, search.currency);
+
+    if (
+      providerResult.status === "success" &&
+      !providerResult.error &&
+      result
+    ) {
+      await upsertActiveHomepageFareSnapshot({
+        origin,
+        destination,
+        departureDate: search.departureDate,
+        currency: search.currency,
+        provider: providerResult.provider || PROVIDER_NAME,
+        result,
+      });
+      counts.refreshed += 1;
+      return;
+    }
+
+    if (providerResult.status === "failed") {
+      await upsertFailedHomepageFareSnapshot({
+        origin,
+        destination,
+        departureDate: search.departureDate,
+        currency: search.currency,
+        provider: providerResult.provider || PROVIDER_NAME,
+        reason: "provider_failed",
+      });
+      counts.failed += 1;
+      return;
+    }
+
+    await upsertUnavailableHomepageFareSnapshot({
+      origin,
+      destination,
+      departureDate: search.departureDate,
+      currency: search.currency,
+      provider: providerResult.provider || PROVIDER_NAME,
+      reason:
+        providerResult.status === "skipped"
+          ? "provider_skipped"
+          : "no_fare_returned",
+    });
+    counts.unavailable += 1;
+  } catch {
+    try {
+      await upsertFailedHomepageFareSnapshot({
+        origin,
+        destination,
+        departureDate,
+        currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+        provider: PROVIDER_NAME,
+        reason: "refresh_error",
+      });
+    } catch {
+      // Avoid returning provider or credential details from refresh endpoints.
+    }
+
+    counts.failed += 1;
+  }
+}
+
+function getRefreshRoutes(
+  scope: HomepageFareRefreshScope,
+): HomepageRefreshRoute[] {
+  const routes: HomepageRefreshRoute[] = [];
+
+  for (const route of getPhase3AHomepageFareRoutes()) {
+    const isPopularRoute = route.id.startsWith("popular-");
+    const isDiscoverRoute = route.id.startsWith("discover-");
+
+    if (
+      scope === "all-phase-3a" ||
+      (scope === "popular" && isPopularRoute) ||
+      (scope === "discover-first-6" && isDiscoverRoute)
+    ) {
+      routes.push({
+        origin: route.origin,
+        destination: route.destination,
+      });
+    }
+  }
+
+  return dedupeRefreshRoutes(routes);
+}
+
+function dedupeRefreshRoutes(routes: HomepageRefreshRoute[]) {
+  const seen = new Set<string>();
+  const deduped: HomepageRefreshRoute[] = [];
+
+  for (const route of routes) {
+    const key = `${route.origin}:${route.destination}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(route);
+  }
+
+  return deduped;
+}
+
+function selectProviderFare(
+  results: NormalizedFlightResult[],
+  currency: string,
+): NormalizedFlightResult | undefined {
+  return results
+    .filter(
+      (result) =>
+        result.currency?.toUpperCase() === currency &&
+        Number.isFinite(result.price) &&
+        result.price > 0,
+    )
+    .sort((first, second) => first.price - second.price)[0];
 }
 
 export async function readHomepageFareSnapshotResponseEntries({

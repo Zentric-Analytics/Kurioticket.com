@@ -1,60 +1,27 @@
 import { NextResponse } from "next/server";
 
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
-import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import {
-  buildHomepageFareSearch,
   getHomepageFareDateStrategy,
-  HOMEPAGE_FARE_DEFAULT_CURRENCY,
-  getPhase3AHomepageFareRoutes,
-  isSameHomepageFareRoute,
-  upsertActiveHomepageFareSnapshot,
-  upsertFailedHomepageFareSnapshot,
-  upsertUnavailableHomepageFareSnapshot,
+  refreshPhase3AHomepageFareSnapshots,
+  type HomepageFareRefreshScope,
 } from "@/services/homepageFareSnapshotService";
-import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 
 export const runtime = "nodejs";
 
-type RefreshCounts = {
-  refreshed: number;
-  unavailable: number;
-  failed: number;
-  skipped: number;
-};
-
-type RefreshScope = "popular" | "discover-first-6" | "all-phase-3a";
-
-type HomepageRefreshRoute = {
-  origin: string;
-  destination: string;
-};
-
-const DEFAULT_REFRESH_SCOPE: RefreshScope = "all-phase-3a";
+const DEFAULT_REFRESH_SCOPE: HomepageFareRefreshScope = "all-phase-3a";
 const AUDIT_TARGET_TYPE = "HomepageFareSnapshot";
-const PROVIDER_NAME = "Duffel";
 
 export async function POST(request: Request) {
   const auth = await requireAdminApiSession();
   if ("response" in auth) return auth.response;
 
   const scope = await readRefreshScope(request);
-  const counts: RefreshCounts = {
-    refreshed: 0,
-    unavailable: 0,
-    failed: 0,
-    skipped: 0,
-  };
   const dateStrategy = getHomepageFareDateStrategy();
-  const routes = getRefreshRoutes(scope);
-
-  for (const route of routes) {
-    await refreshHomepageFareRoute({
-      route,
-      departureDate: dateStrategy.departureDate,
-      counts,
-    });
-  }
+  const counts = await refreshPhase3AHomepageFareSnapshots({
+    scope,
+    dateStrategy,
+  });
 
   await writeAdminAuditLog({
     adminUserId: auth.session.user.id,
@@ -73,133 +40,9 @@ export async function POST(request: Request) {
   return NextResponse.json(counts);
 }
 
-async function refreshHomepageFareRoute({
-  route,
-  departureDate,
-  counts,
-}: {
-  route: HomepageRefreshRoute;
-  departureDate: string;
-  counts: RefreshCounts;
-}) {
-  const { origin, destination } = route;
-
-  if (isSameHomepageFareRoute(origin, destination)) {
-    counts.skipped += 1;
-    return;
-  }
-
-  try {
-    const search = buildHomepageFareSearch({
-      origin,
-      destination,
-      departureDate,
-      currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
-    });
-    const providerSearch: FlightSearchParams = {
-      ...search,
-      sort: "cheapest",
-    };
-    const providerResult = await searchDuffelFlights(providerSearch);
-    const result = selectProviderFare(providerResult.results, search.currency);
-
-    if (
-      providerResult.status === "success" &&
-      !providerResult.error &&
-      result
-    ) {
-      await upsertActiveHomepageFareSnapshot({
-        origin,
-        destination,
-        departureDate: search.departureDate,
-        currency: search.currency,
-        provider: providerResult.provider || PROVIDER_NAME,
-        result,
-      });
-      counts.refreshed += 1;
-      return;
-    }
-
-    if (providerResult.status === "failed") {
-      await upsertFailedHomepageFareSnapshot({
-        origin,
-        destination,
-        departureDate: search.departureDate,
-        currency: search.currency,
-        provider: providerResult.provider || PROVIDER_NAME,
-        reason: "provider_failed",
-      });
-      counts.failed += 1;
-      return;
-    }
-
-    await upsertUnavailableHomepageFareSnapshot({
-      origin,
-      destination,
-      departureDate: search.departureDate,
-      currency: search.currency,
-      provider: providerResult.provider || PROVIDER_NAME,
-      reason:
-        providerResult.status === "skipped"
-          ? "provider_skipped"
-          : "no_fare_returned",
-    });
-    counts.unavailable += 1;
-  } catch {
-    try {
-      await upsertFailedHomepageFareSnapshot({
-        origin,
-        destination,
-        departureDate,
-        currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
-        provider: PROVIDER_NAME,
-        reason: "refresh_error",
-      });
-    } catch {
-      // Avoid returning provider or credential details from the manual refresh endpoint.
-    }
-
-    counts.failed += 1;
-  }
-}
-
-function getRefreshRoutes(scope: RefreshScope): HomepageRefreshRoute[] {
-  const routes: HomepageRefreshRoute[] = [];
-
-  for (const route of getPhase3AHomepageFareRoutes()) {
-    const isPopularRoute = route.id.startsWith("popular-");
-    const isDiscoverRoute = route.id.startsWith("discover-");
-
-    if (
-      scope === "all-phase-3a" ||
-      (scope === "popular" && isPopularRoute) ||
-      (scope === "discover-first-6" && isDiscoverRoute)
-    ) {
-      routes.push({
-        origin: route.origin,
-        destination: route.destination,
-      });
-    }
-  }
-
-  return dedupeRefreshRoutes(routes);
-}
-
-function dedupeRefreshRoutes(routes: HomepageRefreshRoute[]) {
-  const seen = new Set<string>();
-  const deduped: HomepageRefreshRoute[] = [];
-
-  for (const route of routes) {
-    const key = `${route.origin}:${route.destination}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    deduped.push(route);
-  }
-
-  return deduped;
-}
-
-async function readRefreshScope(request: Request): Promise<RefreshScope> {
+async function readRefreshScope(
+  request: Request,
+): Promise<HomepageFareRefreshScope> {
   let payload: unknown;
 
   try {
@@ -217,18 +60,4 @@ async function readRefreshScope(request: Request): Promise<RefreshScope> {
     scope === "all-phase-3a"
     ? scope
     : DEFAULT_REFRESH_SCOPE;
-}
-
-function selectProviderFare(
-  results: NormalizedFlightResult[],
-  currency: string,
-): NormalizedFlightResult | undefined {
-  return results
-    .filter(
-      (result) =>
-        result.currency?.toUpperCase() === currency &&
-        Number.isFinite(result.price) &&
-        result.price > 0,
-    )
-    .sort((first, second) => first.price - second.price)[0];
 }
