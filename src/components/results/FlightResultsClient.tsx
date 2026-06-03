@@ -2736,14 +2736,33 @@ export function FlightResultsClient() {
                 </button>
               </div>
 
-              <div className="flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-3 sm:hidden">
+                <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-sm font-bold text-navy">
+                    {sortedResults.length} option
+                    {sortedResults.length === 1 ? "" : "s"} found
+                  </p>
+                </div>
+
+                <Button
+                  variant="secondary"
+                  className="h-12 w-full rounded-xl border-slate-300 bg-white text-base font-semibold shadow-sm transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 lg:hidden"
+                  onClick={() => setFiltersOpen(true)}
+                >
+                  <SlidersHorizontal size={18} />
+                  Filters
+                </Button>
+              </div>
+
+              <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
                   {sortedResults.length} option
                   {sortedResults.length === 1 ? "" : "s"} found
                 </p>
+
                 <Button
                   variant="secondary"
-                  className="h-10 w-full rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:w-auto lg:hidden"
+                  className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 lg:hidden"
                   onClick={() => setFiltersOpen(true)}
                 >
                   <SlidersHorizontal size={17} />
