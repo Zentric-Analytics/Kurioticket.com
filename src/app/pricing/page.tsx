@@ -27,7 +27,7 @@ export default function PricingPage() {
       <main className="page-shell flex-1 pt-24 pb-10 sm:pt-28 lg:pt-28">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-semibold text-teal-dark">Travel smarter, save more money, reduce stress</p>
-          <h1 className="mt-2 text-4xl font-bold text-navy">Curioticket Premium</h1>
+          <h1 className="mt-2 text-4xl font-bold text-navy">Kurioticket Premium</h1>
           <p className="mt-3 text-muted">
             Premium is an intelligent travel optimization membership. It is never required for basic flight or hotel search.
           </p>

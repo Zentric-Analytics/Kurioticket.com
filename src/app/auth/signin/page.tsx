@@ -26,7 +26,7 @@ function getSafeCallbackUrl(
   callbackUrl?: string
 ) {
   if (!callbackUrl) {
-    return "/dashboard";
+    return "/";
   }
 
   if (
@@ -47,16 +47,16 @@ function getSafeCallbackUrl(
     );
 
     if (parsed.origin !== appOrigin) {
-      return "/dashboard";
+      return "/";
     }
 
     const relative = `${parsed.pathname}${parsed.search}${parsed.hash}`;
 
     return relative.startsWith("/")
       ? relative
-      : "/dashboard";
+      : "/";
   } catch {
-    return "/dashboard";
+    return "/";
   }
 }
 

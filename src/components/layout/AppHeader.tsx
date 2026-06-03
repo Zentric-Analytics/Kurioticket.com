@@ -16,34 +16,41 @@ import { usePathname } from "next/navigation";
 
 import {
   Bed,
-  Bell,
+  Car,
   Check,
   ChevronDown,
   Compass,
+  LayoutDashboard,
   LogOut,
   MapPin,
   Menu,
   Plane,
   Search,
-  Sparkles,
+  Settings,
   Tag,
   UserCircle,
   X,
 } from "lucide-react";
 
+import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
-import {
-  Button,
-  LinkButton,
-} from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 
 
-function SavedHeartIcon({ className }: { className?: string }) {
+function SavedHeartIcon({
+  className,
+  size,
+}: {
+  className?: string;
+  size?: number;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
       className={className}
+      width={size}
+      height={size}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"
@@ -56,7 +63,41 @@ function SavedHeartIcon({ className }: { className?: string }) {
     </svg>
   );
 }
-export function AppHeader() {
+
+type AppHeaderProps = {
+  hideMobileSecondaryNavLinks?: boolean;
+};
+
+const signedInAccountMenuItems = [
+  {
+    href: "/dashboard",
+    label: "My account",
+    description: "Trips and travel tools",
+    icon: LayoutDashboard,
+  },
+  {
+    href: "/saved",
+    label: "Saved trips",
+    description: "Shortlisted stays and searches",
+    icon: SavedHeartIcon,
+  },
+  {
+    href: "/dashboard/alerts",
+    label: "Price alerts",
+    description: "Track fare changes",
+    icon: Tag,
+  },
+  {
+    href: "/dashboard/settings",
+    label: "Account settings",
+    description: "Profile and preferences",
+    icon: Settings,
+  },
+];
+
+export function AppHeader({
+  hideMobileSecondaryNavLinks = false,
+}: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
   const isSignedIn = Boolean(session?.user);
@@ -64,6 +105,7 @@ export function AppHeader() {
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState("");
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const {
     locale,
@@ -76,25 +118,34 @@ export function AppHeader() {
 
   const languageRef = useRef<HTMLDivElement | null>(null);
   const languageMenuRef = useRef<HTMLElement | null>(null);
+  const accountRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
-      if (!languageRef.current) {
-        return;
-      }
+      const target = event.target as Node;
 
       if (
-        !languageRef.current.contains(event.target as Node) &&
-        !languageMenuRef.current?.contains(event.target as Node)
+        languageRef.current &&
+        !languageRef.current.contains(target) &&
+        !languageMenuRef.current?.contains(target)
       ) {
         setLanguageOpen(false);
       }
+
+      if (
+        accountRef.current &&
+        !accountRef.current.contains(target)
+      ) {
+        setAccountOpen(false);
+      }
+
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setLanguageOpen(false);
         setOpen(false);
+        setAccountOpen(false);
       }
     };
 
@@ -112,6 +163,30 @@ export function AppHeader() {
       locales.find((option) => option.code === locale) ?? locales[0],
     [locale, locales]
   );
+
+  const accountDisplayName = useMemo(() => {
+    const rawName = session?.user?.name?.trim();
+
+    if (rawName) {
+      return rawName.split(/\s+/)[0] || "Account";
+    }
+
+    return session?.user?.email?.split("@")[0] || "Account";
+  }, [session?.user?.email, session?.user?.name]);
+
+  const accountInitials = useMemo(() => {
+    const source =
+      session?.user?.name?.trim() ||
+      session?.user?.email?.trim() ||
+      "Account";
+
+    return source
+      .split(/[\s@._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "A";
+  }, [session?.user?.email, session?.user?.name]);
 
   const filteredLanguages = useMemo(() => {
     const query = languageQuery.trim().toLowerCase();
@@ -139,6 +214,11 @@ export function AppHeader() {
         href: "/hotels",
         label: t.hotels,
         icon: Bed,
+      },
+      {
+        href: "/cars",
+        label: "Cars",
+        icon: Car,
       },
       {
         href: "/deals",
@@ -187,6 +267,10 @@ export function AppHeader() {
       return pathname.startsWith("/hotels");
     }
 
+    if (href.startsWith("/cars")) {
+      return pathname.startsWith("/cars");
+    }
+
     if (href === "/deals") {
       return pathname.startsWith("/deals");
     }
@@ -202,20 +286,49 @@ export function AppHeader() {
     return pathname === href;
   };
 
+  const desktopPrimaryNavItems = useMemo(() => {
+    const desktopPrimaryHrefs = new Set([
+      "/flights/results",
+      "/hotels",
+      "/cars",
+      "/deals",
+    ]);
+
+    return navItems.filter((item) => desktopPrimaryHrefs.has(item.href));
+  }, [navItems]);
+
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
       "/flights/results",
       "/hotels",
+      "/cars",
       "/deals",
-      "/destinations",
-      "/explore",
-      "/saved",
     ]);
 
     return navItems.filter(
       (item) => Boolean(item.icon) && mobilePrimaryHrefs.has(item.href)
     );
   }, [navItems]);
+
+  const visibleMobilePrimaryNavItems = useMemo(
+    () => mobilePrimaryNavItems,
+    [hideMobileSecondaryNavLinks, mobilePrimaryNavItems]
+  );
+
+  const mobileDrawerHrefs = useMemo(
+    () =>
+      new Set([
+        "/destinations",
+        "/explore",
+        "/saved",
+        ...(isSignedIn ? ["/pricing", "/dashboard"] : []),
+      ]),
+    [isSignedIn]
+  );
+
+  const mobileMenuNavItems = useMemo(() => {
+    return navItems.filter((item) => mobileDrawerHrefs.has(item.href));
+  }, [mobileDrawerHrefs, navItems]);
 
   const renderFlag = (
     countryCode: string | undefined,
@@ -254,59 +367,135 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-gradient-to-r from-indigo-950 via-indigo-900 to-violet-900 text-white shadow-[0_10px_30px_rgba(30,27,75,0.28)]">
+      <header className="relative z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
         <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
-          <Link
-            href="/"
-            className="flex items-center gap-3 text-xl font-bold text-white"
-          >
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6d28d9] text-white">
-              <Sparkles size={24} />
-            </span>
-
-            <span className="leading-none">Curioticket</span>
+          <Link href="/" aria-label="Kurioticket home" className="shrink-0">
+            <KurioticketLogo variant="full" tone="light" />
           </Link>
 
           <div className="hidden flex-1 flex-col gap-3 md:flex">
             <div className="flex items-center justify-end gap-3">
-              <CountryCurrencySelector />
+              <div className="inline-flex h-12 items-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
+                <CountryCurrencySelector variant="header" grouped />
 
-              <div className="relative" ref={languageRef}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setLanguageOpen((value) => !value)}
-                  aria-label={`Change language, current language ${selectedLanguage?.label}`}
-                  className="h-12 gap-2 rounded-full border border-white/30 bg-white/95 px-4 shadow-sm"
-                >
-                  {renderFlag(
-                    selectedLanguage?.countryCode,
-                    selectedLanguage?.fallbackText
-                  )}
+                <span className="pointer-events-none h-6 w-px bg-white/20" aria-hidden="true" />
 
-                  <ChevronDown size={14} className="text-slate-600" />
-                </Button>
+                <div className="relative" ref={languageRef}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setLanguageOpen((value) => !value)}
+                    aria-label={`Change language, current language ${selectedLanguage?.label}`}
+                    className="h-12 gap-2 rounded-none border-0 bg-transparent px-4 text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-white/60 focus-visible:ring-offset-indigo-700"
+                  >
+                    {renderFlag(
+                      selectedLanguage?.countryCode,
+                      selectedLanguage?.fallbackText
+                    )}
+
+                    <ChevronDown size={14} className="text-indigo-100" />
+                  </Button>
+                </div>
               </div>
 
               {isSignedIn ? (
-                <>
-                  <LinkButton
-                    href="/dashboard/alerts"
-                    variant="ghost"
-                    className="h-12 rounded-full px-4 text-indigo-50 hover:bg-white/10 hover:text-white"
-                  >
-                    <Bell size={16} />
-                  </LinkButton>
-
+                <div className="relative" ref={accountRef}>
                   <button
                     type="button"
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    className="inline-flex h-12 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 text-sm font-semibold text-indigo-50 shadow-sm hover:bg-white/15 hover:text-white"
+                    aria-haspopup="menu"
+                    aria-expanded={accountOpen}
+                    onClick={() => setAccountOpen((value) => !value)}
+                    className="inline-flex h-12 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-2.5 pr-3.5 text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
-                    <LogOut size={15} />
-                    {t.logout}
+                    <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white text-xs font-black text-indigo-700 shadow-sm">
+                      {session?.user?.image ? (
+                        <img
+                          src={session.user.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        accountInitials
+                      )}
+                    </span>
+
+                    <span className="max-w-[8rem] truncate">{accountDisplayName}</span>
+
+                    <ChevronDown
+                      size={14}
+                      className={`text-indigo-100 transition-transform ${accountOpen ? "rotate-180" : ""}`}
+                      aria-hidden="true"
+                    />
                   </button>
-                </>
+
+                  {accountOpen ? (
+                    <div
+                      role="menu"
+                      aria-label="Account menu"
+                      className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
+                    >
+                      <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
+                          Kurioticket account
+                        </p>
+                        <p className="mt-1 truncate text-sm font-black text-slate-950">
+                          {session?.user?.name || accountDisplayName}
+                        </p>
+                        {session?.user?.email ? (
+                          <p className="truncate text-xs font-semibold text-slate-500">
+                            {session.user.email}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <div className="grid gap-1 p-2">
+                        {signedInAccountMenuItems.map((item) => {
+                          const Icon = item.icon;
+
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              role="menuitem"
+                              onClick={() => setAccountOpen(false)}
+                              className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            >
+                              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
+                                <Icon size={17} aria-hidden="true" />
+                              </span>
+
+                              <span className="min-w-0">
+                                <span className="block text-sm font-bold text-slate-950">
+                                  {item.label}
+                                </span>
+                                <span className="block truncate text-xs font-medium text-slate-500">
+                                  {item.description}
+                                </span>
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+
+                      <div className="border-t border-slate-100 p-2">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setAccountOpen(false);
+                            signOut({ callbackUrl: "/" });
+                          }}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                            <LogOut size={17} aria-hidden="true" />
+                          </span>
+                          {t.logout}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               ) : (
                 <>
                   <Link
@@ -326,17 +515,22 @@ export function AppHeader() {
               )}
             </div>
 
-            <nav className="flex items-center gap-2">
-              {navItems.map((item) => {
+            <nav className="flex items-center gap-2.5">
+              {desktopPrimaryNavItems.map((item) => {
                 const Icon = item.icon;
+                const active = isNavItemActive(item.href);
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold text-indigo-50 hover:bg-white/10 hover:text-white"
+                    className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-base font-semibold transition-colors ${
+                      active
+                        ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
+                        : "text-indigo-50 hover:bg-white/10 hover:text-white"
+                    }`}
                   >
-                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                    {Icon ? <Icon size={17} aria-hidden="true" /> : null}
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -345,13 +539,34 @@ export function AppHeader() {
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
-            <Link
-              href={isSignedIn ? "/dashboard" : "/auth/signin"}
-              aria-label={isSignedIn ? "Open dashboard" : "Sign in"}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white hover:bg-white/15"
-            >
-              <UserCircle size={18} />
-            </Link>
+            {isSignedIn ? (
+              <button
+                type="button"
+                aria-label="Open account menu"
+                aria-expanded={open}
+                aria-haspopup="menu"
+                onClick={() => setOpen((value) => !value)}
+                className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-sm font-black text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+              >
+                {session?.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  accountInitials
+                )}
+              </button>
+            ) : (
+              <Link
+                href="/auth/signin"
+                aria-label="Sign in"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+              >
+                <UserCircle size={18} />
+              </Link>
+            )}
 
             <button
               type="button"
@@ -429,9 +644,9 @@ export function AppHeader() {
         </div>
 
         <nav className="bg-white/5 md:hidden">
-          <div className="page-shell overflow-x-auto py-2">
+          <div className="page-shell overflow-x-auto py-2.5">
             <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
-              {mobilePrimaryNavItems.map((item) => {
+              {visibleMobilePrimaryNavItems.map((item) => {
                 const Icon = item.icon;
                 const active = isNavItemActive(item.href);
 
@@ -439,13 +654,15 @@ export function AppHeader() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-[15px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900 ${
+                    className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2.5 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                       active
-                        ? "bg-white/15 text-white ring-2 ring-white/80 shadow-sm"
+                        ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
                         : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                    {Icon ? (
+                      <Icon size={17} className="shrink-0" aria-hidden="true" />
+                    ) : null}
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -477,7 +694,7 @@ export function AppHeader() {
                 <ChevronDown size={14} className="text-slate-500" />
               </button>
 
-              {navItems.map((item) => {
+              {mobileMenuNavItems.map((item) => {
                 const Icon = item.icon;
 
                 return (
@@ -493,24 +710,65 @@ export function AppHeader() {
               })}
 
               {isSignedIn ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    signOut({ callbackUrl: "/" });
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  <LogOut size={15} />
-                  {t.logout}
-                </button>
+                <section className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-3" aria-label="Account">
+                  <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
+                    <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-sm font-black text-white shadow-sm">
+                      {session?.user?.image ? (
+                        <img
+                          src={session.user.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        accountInitials
+                      )}
+                    </span>
+
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-black text-slate-950">
+                        {session?.user?.name || accountDisplayName}
+                      </span>
+                      <span className="block truncate text-xs font-semibold text-slate-500">
+                        {session?.user?.email || "Kurioticket account"}
+                      </span>
+                    </span>
+                  </div>
+
+                  <div className="mt-2 grid gap-1">
+                    {signedInAccountMenuItems.map((item) => {
+                      const Icon = item.icon;
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                          <Icon size={16} aria-hidden="true" />
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    >
+                      <LogOut size={16} aria-hidden="true" />
+                      {t.logout}
+                    </button>
+                  </div>
+                </section>
               ) : null}
             </nav>
           </div>
         ) : null}
       </header>
-
-      <div aria-hidden="true" className="h-[150px] shrink-0 md:h-[104px]" />
     </>
   );
 }

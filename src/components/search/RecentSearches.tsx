@@ -65,7 +65,7 @@ const GENERIC_FLIGHT_IMAGES = [
 ];
 const GENERIC_HOTEL_IMAGE =
   "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80";
-const SAVED_RECENT_SEARCHES_KEY = "curioticket_saved_recent_searches_v1";
+const SAVED_RECENT_SEARCHES_KEY = "kurioticket_saved_recent_searches_v1";
 
 const normalizeText = (value: string | undefined) =>
   (value || "").toLowerCase().trim().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ");

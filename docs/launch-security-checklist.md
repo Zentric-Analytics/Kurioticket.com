@@ -1,4 +1,4 @@
-# Curioticket Launch Security Checklist
+# Kurioticket Launch Security Checklist
 
 Use this before pushing, deploying, or going live.
 
@@ -66,7 +66,7 @@ Enable or expect GitHub Secret Protection and secret scanning for the repository
 - Hotel provider key works server-side.
 - Stripe is in the intended mode for launch.
 - Stripe webhook endpoint is configured to `/api/stripe/webhook`.
-- Resend sending domain is authenticated.
+- Resend sending domain is authenticated for Kurioticket / `kurioticket.com`, and `RESEND_FROM_EMAIL` is set to a verified sender on the active Kurioticket domain after DNS verification.
 - OpenAI key works server-side and premium AI features use provider data as truth.
 
 ## Client Exposure Check

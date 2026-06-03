@@ -18,8 +18,8 @@ import {
 
 export const metadata: Metadata = {
   title: {
-    default: "Curioticket | Find Cheap Flights Fast",
-    template: "%s | Curioticket",
+    default: "Kurioticket | Find Cheap Flights Fast",
+    template: "%s | Kurioticket",
   },
   description:
     "Compare affordable flights and hotels in seconds with a calmer travel decision platform.",
@@ -39,7 +39,7 @@ export default async function RootLayout({
   );
 
   const headerRegion = normalizeRegion(
-    headerStore.get("x-curioticket-region")
+    headerStore.get("x-kurioticket-region")
   );
 
   const ipRegion = countryToRegion(

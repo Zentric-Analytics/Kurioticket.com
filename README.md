@@ -1,8 +1,8 @@
-# Curioticket
+# Kurioticket
 
-Curioticket is an Intelligent Stress-Free Travel Confidence Platform. Phase 1 focuses on premium flight and hotel metasearch, normalized provider results, safe external provider redirects, account dashboards, price alerts, premium subscription plumbing, support, legal pages, admin foundations, and Render deployment readiness.
+Kurioticket is an Intelligent Stress-Free Travel Confidence Platform. Phase 1 focuses on premium flight and hotel metasearch, normalized provider results, safe external provider redirects, account dashboards, price alerts, premium subscription plumbing, support, legal pages, admin foundations, and Render deployment readiness.
 
-Curioticket is not an airline, OTA, or ticket issuer. Users compare options on Curioticket and continue externally to airlines, hotels, affiliate partners, or travel providers for current pricing, rules, availability, and purchase steps.
+Kurioticket is not an airline, OTA, or ticket issuer. Users compare options on Kurioticket and continue externally to airlines, hotels, affiliate partners, or travel providers for current pricing, rules, availability, and purchase steps.
 
 ## Tech Stack
 
@@ -52,10 +52,16 @@ Never commit `.env` or `.env.local`. Only `NEXT_PUBLIC_` values may be used in b
 
 Authentication uses NextAuth credentials plus optional Google OAuth. Set `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` to show the Google button on sign-in/sign-up. If either variable is missing, the Google button is hidden gracefully.
 
-Allowed Google OAuth callback URLs:
+Allowed Google OAuth callback URLs should match the active deployed domains in Google OAuth Console. Use Kurioticket callback URLs for staging and production.
 
-- Staging: `https://staging.curioticket.com/api/auth/callback/google`
-- Production: `https://www.curioticket.com/api/auth/callback/google`
+Staging:
+
+- `https://staging.kurioticket.com/api/auth/callback/google`
+
+Production:
+
+- `https://www.kurioticket.com/api/auth/callback/google`
+- `https://kurioticket.com/api/auth/callback/google`
 
 Admin access is controlled only by comma-separated `ADMIN_EMAILS` values. Emails are trimmed and normalized to lowercase, for example `ADMIN_EMAILS=admin@zentricresearch.com`.
 
@@ -97,7 +103,7 @@ Provider credentials missing, unavailable, or rate-limited never produce fake li
 
 ### Duffel Setup
 
-Set `DUFFEL_API_KEY` in Render and local `.env.local` when testing live searches. Duffel calls are made only from backend services with `Authorization: Bearer <token>` and the `Duffel-Version` header. Curioticket creates live offer requests and normalizes offers into the internal flight result shape for metasearch comparison.
+Set `DUFFEL_API_KEY` in Render and local `.env.local` when testing live searches. Duffel calls are made only from backend services with `Authorization: Bearer <token>` and the `Duffel-Version` header. Kurioticket creates live offer requests and normalizes offers into the internal flight result shape for metasearch comparison.
 
 ### Travelpayouts Setup
 
@@ -131,7 +137,7 @@ Webhook route:
 
 ## Resend Setup
 
-Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL`. Use a verified sender domain before production email traffic. Resend is used for support confirmations and future price alert emails.
+Set `RESEND_API_KEY` and `RESEND_FROM_EMAIL`. The production sender domain should be verified for Kurioticket / `kurioticket.com` before production email traffic. After DNS verification, set `RESEND_FROM_EMAIL` to a verified sender on the active Kurioticket domain. Resend is used for support confirmations and future price alert emails.
 
 ## OpenAI Setup
 
@@ -165,12 +171,15 @@ Select the GitHub repository, fill secret environment variables, apply the Bluep
 
 Production keys must be added in Render environment variables only. Local keys belong in `.env.local`, which is ignored by git.
 
-Production custom domains:
+Kurioticket is the forward-facing brand/domain.
 
-- `curioticket.com`
-- `www.curioticket.com`
+Primary production domains:
 
-Staging may use either the Render staging URL or `staging.curioticket.com`. If using `staging.curioticket.com`, add the domain to the staging Render service and create the DNS record GoDaddy/Render asks for.
+- `kurioticket.com`
+- `www.kurioticket.com`
+
+
+Staging may use either the Render staging URL or `staging.kurioticket.com`. If using a custom staging domain, add the domain to the staging Render service and create the DNS record GoDaddy/Render asks for.
 
 Use separate production and staging values for Stripe, Resend, OpenAI, Duffel, Travelpayouts, database, auth, and app URL environment variables. Staging must not share production payment webhooks unless intentionally configured by the infrastructure owner.
 
@@ -232,15 +241,15 @@ npx prisma generate
 - Enable or expect GitHub Secret Protection and secret scanning.
 - Passwords are hashed with bcrypt.
 - Expensive routes use basic rate limiting.
-- Curioticket does not store card numbers or passport data.
-- Curioticket does not scrape airline websites or auto-fill airline websites.
+- Kurioticket does not store card numbers or passport data.
+- Kurioticket does not scrape airline websites or auto-fill airline websites.
 - Revalidate authorization in server routes and components, not only via route interception.
 
 See [docs/launch-security-checklist.md](docs/launch-security-checklist.md) before public launch.
 
 ## Legal Note
 
-Legal documents are startup placeholders written for Curioticket’s free metasearch, affiliate redirects, premium subscription, Stripe, Resend, OpenAI, travel API, and external-provider model. They should be reviewed by qualified legal counsel before large-scale public launch.
+Legal documents are startup placeholders written for Kurioticket’s free metasearch, affiliate redirects, premium subscription, Stripe, Resend, OpenAI, travel API, and external-provider model. They should be reviewed by qualified legal counsel before large-scale public launch.
 
 ## Roadmap
 

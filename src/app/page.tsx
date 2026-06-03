@@ -21,18 +21,24 @@ import {
 } from "lucide-react";
 
 import { PriceText } from "@/components/currency/PriceText";
+import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
-import { RecentSearches } from "@/components/search/RecentSearches";
 import { LinkButton } from "@/components/ui/Button";
+import { validateDestinationImages } from "@/data/destinationImageValidation";
 import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
+import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
-import { readSavedTripIds, toggleSavedTripId, writeSavedTripIds } from "@/lib/saved-trips-local";
+import {
+  readSavedTripIds,
+  toggleSavedTripId,
+  writeSavedTripIds,
+} from "@/lib/saved-trips-local";
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
@@ -45,7 +51,7 @@ const destinations = [
     altKey: "homeDestinationDubaiAlt",
     amountUsd: 420,
     image:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1400&q=90",
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=92",
   },
   {
     id: "london",
@@ -54,7 +60,7 @@ const destinations = [
     altKey: "homeDestinationLondonAlt",
     amountUsd: 380,
     image:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1400&q=90",
+      "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=1600&q=92",
   },
   {
     id: "paris",
@@ -63,7 +69,7 @@ const destinations = [
     altKey: "homeDestinationParisAlt",
     amountUsd: 410,
     image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1400&q=90",
+      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=92",
   },
   {
     id: "bali",
@@ -72,7 +78,7 @@ const destinations = [
     altKey: "homeDestinationBaliAlt",
     amountUsd: 370,
     image:
-      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1400&q=90",
+      "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?auto=format&fit=crop&w=1600&q=92",
   },
   {
     id: "new-york",
@@ -81,12 +87,17 @@ const destinations = [
     altKey: "homeDestinationNewYorkAlt",
     amountUsd: 390,
     image:
-      "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1400&q=90",
+      "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1600&q=92",
   },
 ];
 
-
-
+validateDestinationImages(
+  "popular destination rail",
+  destinations.map((destination) => ({
+    id: destination.id,
+    image: destination.image,
+  })),
+);
 
 export default function Home() {
   const { locale } = useLocale();
@@ -111,7 +122,10 @@ export default function Home() {
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const discoveryItems = useMemo(() => getHomeDiscoveryByRegion(regionCode), [regionCode]);
+  const discoveryItems = useMemo(
+    () => getHomeDiscoveryByRegion(regionCode),
+    [regionCode],
+  );
   const mobileDiscoveryGroups = useMemo(() => {
     const groups = [];
 
@@ -134,10 +148,17 @@ export default function Home() {
   };
 
   useEffect(() => {
-    setSavedTripIds(readSavedTripIds());
+    const frameId = window.requestAnimationFrame(() => {
+      setSavedTripIds(readSavedTripIds());
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, []);
 
-  const handleSavedTripToggle = (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => {
+  const handleSavedTripToggle = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    itemId: string,
+  ) => {
     event.preventDefault();
     event.stopPropagation();
 
@@ -150,7 +171,7 @@ export default function Home() {
 
   return (
     <>
-      <AppHeader />
+      <AppHeader hideMobileSecondaryNavLinks />
 
       <main className="flex-1 bg-white">
         <section className="relative overflow-visible bg-[#f8f7ff]">
@@ -191,11 +212,6 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell py-4 sm:py-5">
-          <RecentSearches />
-        </section>
-
-
         <section className="page-shell py-5">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-bold tracking-normal text-slate-900">
@@ -206,7 +222,7 @@ export default function Home() {
               href="/hotels/tokyo"
               variant="ghost"
               size="sm"
-              className="hidden text-[#6d28d9] sm:inline-flex"
+              className="hidden text-violet-600 sm:inline-flex"
             >
               {t("homeViewAllDestinations")}
               <ArrowRight size={16} />
@@ -262,7 +278,8 @@ export default function Home() {
                 Discover your next adventure here
               </h2>
               <p className="text-sm font-normal leading-6 text-slate-600 sm:text-base">
-                Compare smart route ideas, flexible fares, and destinations picked for your region.
+                Compare smart route ideas, flexible fares, and destinations
+                picked for your region.
               </p>
             </div>
             <div className="flex items-center justify-end sm:hidden">
@@ -273,7 +290,10 @@ export default function Home() {
             </div>
             <div className="-mx-1.5 flex snap-x snap-mandatory gap-2.5 overflow-x-auto px-1.5 pb-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:hidden">
               {mobileDiscoveryGroups.map((group, groupIndex) => (
-                <div key={`group-${groupIndex}`} className="grid min-w-full snap-start grid-cols-2 gap-2.5">
+                <div
+                  key={`group-${groupIndex}`}
+                  className="grid min-w-full snap-start grid-cols-2 gap-2.5"
+                >
                   {group.map((item) => {
                     return (
                       <DiscoverySuggestionCard
@@ -339,7 +359,9 @@ export default function Home() {
                   <SearchCheck size={20} strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustCompareTitle")}</h3>
+                  <h3 className="text-base font-bold leading-6 text-slate-900">
+                    {t("homeTrustCompareTitle")}
+                  </h3>
                   <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
                     {t("homeTrustCompareBody")}
                   </p>
@@ -351,7 +373,9 @@ export default function Home() {
                   <BadgeDollarSign size={20} strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustPricingTitle")}</h3>
+                  <h3 className="text-base font-bold leading-6 text-slate-900">
+                    {t("homeTrustPricingTitle")}
+                  </h3>
                   <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
                     {t("homeTrustPricingBody")}
                   </p>
@@ -363,7 +387,9 @@ export default function Home() {
                   <ShieldCheck size={20} strokeWidth={2} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">{t("homeTrustHandoffTitle")}</h3>
+                  <h3 className="text-base font-bold leading-6 text-slate-900">
+                    {t("homeTrustHandoffTitle")}
+                  </h3>
                   <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
                     {t("homeTrustHandoffBody")}
                   </p>
@@ -399,74 +425,23 @@ export default function Home() {
               Frequently asked questions
             </h2>
             <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-              Learn how Curioticket helps you compare flights, hotels, and travel options before booking with trusted providers.
+              Learn how Kurioticket helps you compare flights, hotels, and
+              travel options before booking with trusted providers.
             </p>
           </div>
 
-          <div className="mt-5 grid gap-x-8 gap-y-1 md:grid-cols-2">
-              {[
-                {
-                  question: "How does Curioticket find flight and hotel options?",
-                  answer:
-                    "Curioticket searches live offers from travel providers and brings options together in one place so you can compare prices, routes, stays, and details before choosing.",
-                },
-                {
-                  question:
-                    "Does Curioticket sell tickets or hotel rooms directly?",
-                  answer:
-                    "Curioticket helps you compare travel options. When you choose an offer, you are sent to the selected provider to review details and complete the booking on that provider’s site.",
-                },
-                {
-                  question: "Why can prices change after I click an offer?",
-                  answer:
-                    "Prices and availability can change in real time because airlines, hotels, and travel providers update inventory frequently. Always review the final price on the provider’s checkout page before booking.",
-                },
-                {
-                  question:
-                    "Can I compare multiple providers for the same trip?",
-                  answer:
-                    "Yes. Curioticket is designed to help you compare options side by side so you can evaluate price, timing, route details, hotel details, and overall value.",
-                },
-                {
-                  question: "How do I complete my booking securely?",
-                  answer:
-                    "Booking and payment are completed on the provider’s checkout flow. You should always review the provider’s terms, cancellation policy, and final price before confirming.",
-                },
-                {
-                  question: "Can I set currency and language preferences?",
-                  answer:
-                    "Yes. Curioticket supports language and region preferences so the experience can feel more relevant based on how you prefer to search and compare travel options.",
-                },
-                {
-                  question: "Are search results live or cached?",
-                  answer:
-                    "Curioticket uses provider search results that can refresh as availability and prices change. This helps show current options, but final availability is confirmed by the provider.",
-                },
-                {
-                  question: "Where do I manage changes or cancellations?",
-                  answer:
-                    "Trip changes, cancellations, refunds, and booking support are usually handled by the provider where the booking was completed. Use the confirmation details from that provider for service requests.",
-                },
-              ].map((item) => (
-                <details
-                  key={item.question}
-                  className="group border-b border-slate-200 py-4"
-                >
-                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-slate-900 marker:hidden sm:text-base">
-                    <span>{item.question}</span>
-                    <span
-                      aria-hidden="true"
-                      className="mt-0.5 text-base leading-none text-slate-500 transition-transform duration-200 group-open:rotate-45"
-                    >
-                      +
-                    </span>
-                  </summary>
-                  <p className="mt-2 text-sm font-medium leading-6 text-slate-700 sm:text-base">
-                    {item.answer}
-                  </p>
-                </details>
-              ))}
-          </div>
+          <FaqAccordion
+            items={generalFaqs}
+            mobileLimit={homepageMobileFaqLimit}
+            className="mt-5"
+          />
+
+          <Link
+            href="/faq"
+            className="mt-4 inline-flex text-sm font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline sm:hidden"
+          >
+            View all FAQs
+          </Link>
         </section>
 
         <section className="page-shell pb-6 sm:pb-8">
@@ -592,7 +567,10 @@ function DiscoverySuggestionCard({
   priceFromUsd: number;
   compact?: boolean;
   isSaved: boolean;
-  onHeartToggle: (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => void;
+  onHeartToggle: (
+    event: React.MouseEvent<HTMLButtonElement>,
+    itemId: string,
+  ) => void;
 }) {
   return (
     <Link
@@ -609,7 +587,9 @@ function DiscoverySuggestionCard({
         <Heart size={15} className={isSaved ? "fill-current" : ""} />
       </button>
 
-      <div className={`relative w-full shrink-0 overflow-hidden rounded-lg ${compact ? "h-[98px]" : "h-[136px] md:h-[128px] lg:h-[136px]"}`}>
+      <div
+        className={`relative w-full shrink-0 overflow-hidden rounded-lg ${compact ? "h-[98px]" : "h-[136px] md:h-[128px] lg:h-[136px]"}`}
+      >
         <DiscoveryCardImage
           image={image}
           imageAlt={imageAlt}
@@ -617,26 +597,42 @@ function DiscoverySuggestionCard({
         />
       </div>
 
-      <div className={`min-w-0 flex-1 ${compact ? "space-y-1.5 pt-2" : "space-y-2 pt-2.5"}`}>
-        <p className={`line-clamp-2 break-words text-slate-900 ${compact ? "text-sm font-extrabold leading-5 pr-10" : "text-sm font-bold leading-5 md:text-[0.95rem] pr-10"}`}>
+      <div
+        className={`min-w-0 flex-1 ${compact ? "space-y-1.5 pt-2" : "space-y-2 pt-2.5"}`}
+      >
+        <p
+          className={`line-clamp-2 break-words text-slate-900 ${compact ? "text-sm font-extrabold leading-5 pr-10" : "text-sm font-bold leading-5 md:text-[0.95rem] pr-10"}`}
+        >
           {title}
         </p>
-        <p className={`line-clamp-2 text-slate-700 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}>
+        <p
+          className={`line-clamp-2 text-slate-700 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
+        >
           {originCode} → {destinationCodeLabel} · {routeNote}
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-0.5">
           <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
             Trending
           </span>
-          <p className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}>
+          <p
+            className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
+          >
             One way · Economy · 1 traveler
           </p>
         </div>
       </div>
 
-      <div className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}>
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">From</p>
-        <p className={`text-slate-950 ${compact ? "text-xl font-black leading-tight" : "text-[1.4rem] font-black leading-tight"}`}>${priceFromUsd}</p>
+      <div
+        className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+          From
+        </p>
+        <p
+          className={`text-slate-950 ${compact ? "text-xl font-black leading-tight" : "text-[1.4rem] font-black leading-tight"}`}
+        >
+          ${priceFromUsd}
+        </p>
       </div>
     </Link>
   );
@@ -663,7 +659,10 @@ function DestinationCard({
   saveLabelTemplate: string;
   destinationId: string;
   isSaved: boolean;
-  onHeartToggle: (event: React.MouseEvent<HTMLButtonElement>, itemId: string) => void;
+  onHeartToggle: (
+    event: React.MouseEvent<HTMLButtonElement>,
+    itemId: string,
+  ) => void;
 }) {
   return (
     <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
@@ -671,11 +670,12 @@ function DestinationCard({
         href={`/hotels/results?destination=${encodeURIComponent(city)}`}
         className="focus-ring block"
       >
-        <div className="relative h-56 sm:h-64">
+        <div className="relative h-72 sm:h-80">
           <Image
             src={image}
             alt={imageAlt}
             fill
+            quality={92}
             sizes="(min-width: 1280px) 22rem, (min-width: 640px) 22rem, 18.5rem"
             className="object-cover transition duration-500 group-hover:scale-105"
           />
@@ -755,7 +755,7 @@ function PromoPanel({
           size="md"
           className={`mt-5 font-semibold ${
             isViolet
-              ? "bg-[#5b21d6] hover:bg-[#4c1d95]"
+              ? "bg-violet-600 hover:bg-violet-700"
               : "bg-[#2563eb] hover:bg-[#1d4ed8]"
           }`}
         >
@@ -766,7 +766,9 @@ function PromoPanel({
 
       <div
         className={`absolute bottom-5 right-6 flex h-40 w-40 items-center justify-center rounded-full ${
-          isViolet ? "bg-white/55 text-[#6d28d9]" : "bg-white/70 text-[#2563eb]"
+          isViolet
+            ? "bg-white/55 text-violet-600"
+            : "bg-white/70 text-[#2563eb]"
         }`}
       >
         <Sparkles className="absolute left-5 top-5 opacity-40" size={24} />

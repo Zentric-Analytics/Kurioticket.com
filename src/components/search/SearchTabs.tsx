@@ -19,6 +19,7 @@ import {
   Minus,
   Plane,
   Plus,
+  RotateCcw,
   X,
 } from "lucide-react";
 
@@ -1006,6 +1007,19 @@ export function SearchTabs({
 
   const travelerCount = adultCount + childCount + infantCount;
 
+  const hasActiveFlightSearch =
+    from.trim() !== "" ||
+    fromCode.trim() !== "" ||
+    to.trim() !== "" ||
+    toCode.trim() !== "" ||
+    departureDate !== "" ||
+    returnDate !== "" ||
+    tripType !== "round-trip" ||
+    adultCount !== 1 ||
+    childCount !== 0 ||
+    infantCount !== 0 ||
+    cabinClass !== "economy";
+
   const normalizedCabinClass =
     normalizeCabinClass(cabinClass);
   const cabinClassLabel =
@@ -1132,11 +1146,13 @@ export function SearchTabs({
     setFrom("");
     setFromCode("");
     setFromOpen(false);
+    setFromHighlight(0);
   };
   const onClearDestination = () => {
     setTo("");
     setToCode("");
     setToOpen(false);
+    setToHighlight(0);
   };
   const onClearTravelDates = () => {
     setDepartureDate("");
@@ -1158,6 +1174,7 @@ export function SearchTabs({
     setDraftCabinClass("economy");
     travelersDraftRef.current = { adults: 1, children: 0, infants: 0, cabinClass: "economy" };
     setTravelersMenuOpen(false);
+    setTripTypeOpen(false);
   };
 
   const isFlightSearchDisabled =
@@ -1483,80 +1500,73 @@ export function SearchTabs({
                     className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-500"
                   >
                     Multi-city —
-                    Coming soon
+                    Use one-way or round-trip search
                   </button>
                 </div>
               )}
             </div>
-            {(from.trim() || to.trim() || departureDate || returnDate || travelerCount !== 1 || cabinClass !== "economy" || tripType !== "round-trip") ? (
-              <button
-                type="button"
-                onClick={onResetFlightSearch}
-                className="focus-ring rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800"
-              >
-                Clear all
-              </button>
-            ) : null}
           </div>
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
               <div
                 ref={fromWrapRef}
-                className="relative min-h-[54px] px-0 py-0 pr-2"
+                className="relative min-h-[54px] px-0 py-0 pr-3"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.origin ||
                     "Origin"}
                 </label>
-                <input
-                  type="text"
-                  value={from}
-                  onChange={(
-                    event
-                  ) => {
-                    setHasUserEditedOrigin(true);
-                    setFrom(
+                <div className="flex h-8 items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={from}
+                    onChange={(
                       event
-                        .target
-                        .value
-                    );
-                    setFromCode("");
-                    setFromOpen(
-                      true
-                    );
-                    setFromHighlight(
-                      0
-                    );
-                  }}
-                  onFocus={() =>
-                    setFromOpen(
-                      true
-                    )
-                  }
-                  onKeyDown={(
-                    event
-                  ) =>
-                    onKeyNav(
-                      event,
-                      true
-                    )
-                  }
-                  placeholder="From?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
-                  required
-                />
-                {from.trim() ? (
-                  <button
-                    type="button"
-                    onClick={onClearOrigin}
-                    onMouseDown={(event) => event.preventDefault()}
-                    aria-label="Clear origin"
-                    className="focus-ring absolute right-1 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
-                  >
-                    <X size={14} />
-                  </button>
-                ) : null}
+                    ) => {
+                      setHasUserEditedOrigin(true);
+                      setFrom(
+                        event
+                          .target
+                          .value
+                      );
+                      setFromCode("");
+                      setFromOpen(
+                        true
+                      );
+                      setFromHighlight(
+                        0
+                      );
+                    }}
+                    onFocus={() =>
+                      setFromOpen(
+                        true
+                      )
+                    }
+                    onKeyDown={(
+                      event
+                    ) =>
+                      onKeyNav(
+                        event,
+                        true
+                      )
+                    }
+                    placeholder="From?"
+                    className="focus-ring h-full min-w-0 flex-1 rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                    required
+                  />
+                  {from.trim() ? (
+                    <button
+                      type="button"
+                      onClick={onClearOrigin}
+                      onMouseDown={(event) => event.preventDefault()}
+                      aria-label="Clear origin"
+                      className="focus-ring relative z-30 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null}
+                </div>
                 {shouldShowFromSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {fromLoading ? (
@@ -1625,56 +1635,58 @@ export function SearchTabs({
 
               <div
                 ref={toWrapRef}
-                className="relative min-h-[54px] px-0 py-0 pl-2"
+                className="relative min-h-[54px] px-0 py-0 pl-3"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
                     "Destination"}
                 </label>
-                <input
-                  type="text"
-                  value={to}
-                  onChange={(
-                    event
-                  ) => {
-                    setTo(
-                      event.target
-                        .value
-                    );
-                    setToCode("");
-                    setToOpen(
-                      true
-                    );
-                    setToHighlight(
-                      0
-                    );
-                  }}
-                  onFocus={() =>
-                    setToOpen(true)
-                  }
-                  onKeyDown={(
-                    event
-                  ) =>
-                    onKeyNav(
-                      event,
-                      false
-                    )
-                  }
-                  placeholder="To?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
-                  required
-                />
-                {to.trim() ? (
-                  <button
-                    type="button"
-                    onClick={onClearDestination}
-                    onMouseDown={(event) => event.preventDefault()}
-                    aria-label="Clear destination"
-                    className="focus-ring absolute right-1 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
-                  >
-                    <X size={14} />
-                  </button>
-                ) : null}
+                <div className="flex h-8 items-center gap-1.5">
+                  <input
+                    type="text"
+                    value={to}
+                    onChange={(
+                      event
+                    ) => {
+                      setTo(
+                        event.target
+                          .value
+                      );
+                      setToCode("");
+                      setToOpen(
+                        true
+                      );
+                      setToHighlight(
+                        0
+                      );
+                    }}
+                    onFocus={() =>
+                      setToOpen(true)
+                    }
+                    onKeyDown={(
+                      event
+                    ) =>
+                      onKeyNav(
+                        event,
+                        false
+                      )
+                    }
+                    placeholder="To?"
+                    className="focus-ring h-full min-w-0 flex-1 rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                    required
+                  />
+                  {to.trim() ? (
+                    <button
+                      type="button"
+                      onClick={onClearDestination}
+                      onMouseDown={(event) => event.preventDefault()}
+                      aria-label="Clear destination"
+                      className="focus-ring relative z-30 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null}
+                </div>
                 {shouldShowToSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {toLoading ? (
@@ -2069,7 +2081,7 @@ export function SearchTabs({
                   disabled={
                     isFlightSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
                   {t.search ||
                     "Search"}
@@ -2077,6 +2089,20 @@ export function SearchTabs({
               </div>
             </div>
           </div>
+          {hasActiveFlightSearch ? (
+            <div className="grid w-full grid-cols-1 px-1 pt-0.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:px-0">
+              <div className="flex justify-end lg:col-start-4">
+                <button
+                  type="button"
+                  onClick={onResetFlightSearch}
+                  className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                >
+                  <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                  Clear all
+                </button>
+              </div>
+            </div>
+          ) : null}
         </form>
       ) : (
         <form
@@ -2514,7 +2540,7 @@ export function SearchTabs({
                   disabled={
                     isHotelSearchDisabled
                   }
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-950 to-violet-800 px-4 text-sm font-bold text-white shadow-md shadow-indigo-900/30 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-900/30"
+                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
                   {t.search ||
                     "Search"}

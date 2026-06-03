@@ -15,6 +15,34 @@ type HotelbedsAvailabilityResponse = {
   };
 };
 
+type HotelbedsContentImage = {
+  path?: string;
+  order?: string | number;
+  visualOrder?: string | number;
+  type?: {
+    code?: string;
+    description?: { content?: string } | string;
+  };
+};
+
+type HotelbedsContentHotel = {
+  code?: string | number;
+  images?: HotelbedsContentImage[];
+};
+
+type HotelbedsContentDetailsResponse = {
+  hotel?: HotelbedsContentHotel;
+};
+
+type HotelbedsImageEnrichment = {
+  imageUrl: string;
+  rawImagePath: string;
+  rawImageJsonPath: string;
+};
+
+const HOTELBEDS_GIATA_IMAGE_BASE_URL = "https://photos.hotelbeds.com/giata/bigger/";
+const hotelbedsContentImageCache = new Map<string, HotelbedsImageEnrichment | null>();
+
 const DESTINATION_CODES: Record<string, string> = {
   "new york": "NYC",
   london: "LON",
@@ -104,8 +132,7 @@ export function searchHotelbedsHotels(search: HotelSearchParams): Promise<Provid
     const apiKey = process.env.HOTELBEDS_API_KEY as string;
     const secret = process.env.HOTELBEDS_SECRET as string;
 
-    const timestamp = Math.floor(Date.now() / 1000).toString();
-    const signature = createHash("sha256").update(`${apiKey}${secret}${timestamp}`).digest("hex");
+    const headers = createHotelbedsHeaders(apiKey, secret);
 
     const payload = {
       stay: {
@@ -127,9 +154,7 @@ export function searchHotelbedsHotels(search: HotelSearchParams): Promise<Provid
       {
         method: "POST",
         headers: {
-          "Api-key": apiKey,
-          "X-Signature": signature,
-          Accept: "application/json",
+          ...headers,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
@@ -137,8 +162,144 @@ export function searchHotelbedsHotels(search: HotelSearchParams): Promise<Provid
       14000,
     );
 
-    return (data.hotels?.hotels || [])
-      .map((hotel) => normalizeHotelResult("Hotelbeds", hotel, search))
+    const availabilityHotels = data.hotels?.hotels || [];
+    const contentImageByHotelCode = await getHotelbedsContentImages(baseUrl, headers, availabilityHotels);
+
+    return availabilityHotels
+      .map((hotel) =>
+        normalizeHotelResult(
+          "Hotelbeds",
+          applyHotelbedsContentImage(hotel, contentImageByHotelCode),
+          search,
+        ),
+      )
       .filter(Boolean) as NormalizedHotelResult[];
   });
+}
+
+function createHotelbedsHeaders(apiKey: string, secret: string) {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const signature = createHash("sha256").update(`${apiKey}${secret}${timestamp}`).digest("hex");
+
+  return {
+    "Api-key": apiKey,
+    "X-Signature": signature,
+    Accept: "application/json",
+  };
+}
+
+async function getHotelbedsContentImages(
+  baseUrl: string,
+  headers: ReturnType<typeof createHotelbedsHeaders>,
+  availabilityHotels: unknown[],
+) {
+  const hotelCodes = [
+    ...new Set(
+      availabilityHotels
+        .map((hotel) => getHotelbedsHotelCode(hotel))
+        .filter((code): code is string => Boolean(code)),
+    ),
+  ];
+
+  const entries = await Promise.all(
+    hotelCodes.map(async (hotelCode) => [
+      hotelCode,
+      await getHotelbedsContentImage(baseUrl, headers, hotelCode),
+    ] as const),
+  );
+
+  return new Map(entries);
+}
+
+async function getHotelbedsContentImage(
+  baseUrl: string,
+  headers: ReturnType<typeof createHotelbedsHeaders>,
+  hotelCode: string,
+): Promise<HotelbedsImageEnrichment | null> {
+  if (hotelbedsContentImageCache.has(hotelCode)) {
+    return hotelbedsContentImageCache.get(hotelCode) ?? null;
+  }
+
+  const params = new URLSearchParams({
+    language: "ENG",
+    useSecondaryLanguage: "True",
+  });
+
+  try {
+    const data = await fetchJson<HotelbedsContentDetailsResponse>(
+      `${baseUrl}/hotel-content-api/1.0/hotels/${encodeURIComponent(hotelCode)}/details?${params.toString()}`,
+      { headers },
+      10000,
+    );
+    const image = selectHotelbedsContentImage(data.hotel?.images);
+    hotelbedsContentImageCache.set(hotelCode, image);
+    return image;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown Hotelbeds content image error";
+    console.warn(`[travel:Hotelbeds] Unable to hydrate image for hotel ${hotelCode}: ${message}`);
+    hotelbedsContentImageCache.set(hotelCode, null);
+    return null;
+  }
+}
+
+function selectHotelbedsContentImage(images: HotelbedsContentImage[] | undefined): HotelbedsImageEnrichment | null {
+  const rankedImages = (images || [])
+    .filter((image) => Boolean(normalizeHotelbedsImagePath(image.path)))
+    .sort((a, b) => imageRank(a) - imageRank(b));
+  const selected = rankedImages[0];
+  const rawImagePath = normalizeHotelbedsImagePath(selected?.path);
+
+  if (!rawImagePath) return null;
+
+  return {
+    imageUrl: `${HOTELBEDS_GIATA_IMAGE_BASE_URL}${rawImagePath}`,
+    rawImagePath,
+    rawImageJsonPath: "hotel.images[*].path",
+  };
+}
+
+function imageRank(image: HotelbedsContentImage) {
+  const visualOrder = numericOrder(image.visualOrder);
+  const order = numericOrder(image.order);
+  const typeRank = image.type?.code === "GEN" ? 0 : image.type?.code === "HAB" ? 2 : 1;
+
+  return (visualOrder === 0 ? -10000 : visualOrder * 100) + typeRank * 10 + order;
+}
+
+function numericOrder(value: string | number | undefined) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 9999;
+}
+
+function normalizeHotelbedsImagePath(path: string | undefined) {
+  const normalized = path?.trim().replace(/^\/+/, "");
+  if (!normalized || normalized.includes("\0") || normalized.includes("..")) return undefined;
+  return normalized;
+}
+
+function applyHotelbedsContentImage(
+  hotel: unknown,
+  contentImageByHotelCode: Map<string, HotelbedsImageEnrichment | null>,
+) {
+  const hotelCode = getHotelbedsHotelCode(hotel);
+  const contentImage = hotelCode ? contentImageByHotelCode.get(hotelCode) : null;
+
+  if (!contentImage || !isRecord(hotel)) return hotel;
+
+  return {
+    ...hotel,
+    imageUrl: contentImage.imageUrl,
+    rawSupplierImageField: contentImage.rawImageJsonPath,
+    rawSupplierImagePath: contentImage.rawImagePath,
+  };
+}
+
+function getHotelbedsHotelCode(hotel: unknown) {
+  if (!isRecord(hotel)) return undefined;
+  const code = hotel.code;
+  return typeof code === "string" || typeof code === "number" ? String(code) : undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

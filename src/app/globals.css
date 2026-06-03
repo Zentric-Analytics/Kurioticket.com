@@ -83,3 +83,25 @@ textarea {
     linear-gradient(#ffffff, #ffffff) padding-box,
     linear-gradient(180deg, rgba(15, 159, 154, 0.42), rgba(37, 99, 235, 0.18)) border-box;
 }
+
+.hotel-filter-panel {
+  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+  scrollbar-width: thin;
+}
+
+.hotel-filter-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.hotel-filter-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.hotel-filter-panel::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 999px;
+}
+
+.hotel-filter-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.38);
+}

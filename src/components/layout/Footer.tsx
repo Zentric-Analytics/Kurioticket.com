@@ -1,38 +1,28 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 
+import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
+
 export function Footer() {
-  const { data: session } =
-    useSession();
-
-  const isSignedIn = Boolean(
-    session?.user
-  );
-
   const currentYear =
     new Date().getFullYear();
 
   const footerSections = [
     {
-      heading: "Support",
+      heading: "Contact Us",
       links: [
         {
           label: "Customer support",
           href: "/support",
         },
         {
-          label: "Contact us",
-          href: "/support",
+          label: "Service Guarantee",
+          href: "/service-guarantee",
         },
         {
-          label: "Help Center",
-          href: "#",
-        },
-        {
-          label: "Manage your trips",
-          href: "#",
+          label: "More Service Info",
+          href: "/more-service-info",
         },
       ],
     },
@@ -48,6 +38,10 @@ export function Footer() {
           href: "/hotels/results",
         },
         {
+          label: "Cars",
+          href: "/cars",
+        },
+        {
           label: "Deals",
           href: "/deals",
         },
@@ -56,21 +50,13 @@ export function Footer() {
           href: "/destinations",
         },
         {
-          label: "Explore",
-          href: "/explore",
+          label: "Saved & recent",
+          href: "/saved",
         },
-        ...(isSignedIn
-          ? [
-              {
-                label: "Dashboard",
-                href: "/dashboard",
-              },
-            ]
-          : []),
       ],
     },
     {
-      heading: "Terms and settings",
+      heading: "Terms & Settings",
       links: [
         {
           label: "Privacy Policy",
@@ -86,61 +72,20 @@ export function Footer() {
         },
         {
           label: "Legal Center",
-          href: "/legal",
-        },
-        {
-          label: "Accessibility",
-          href: "#",
-        },
-        {
-          label: "Security",
-          href: "#",
+          href: "/legal-center",
         },
       ],
     },
     {
-      heading: "Partners",
+      heading: "About Kurioticket",
       links: [
         {
-          label: "Partner with us",
-          href: "#",
+          label: "About Us",
+          href: "/about",
         },
         {
-          label: "List your property",
-          href: "#",
-        },
-        {
-          label: "Affiliate program",
-          href: "#",
-        },
-        {
-          label: "Advertise with us",
-          href: "#",
-        },
-      ],
-    },
-    {
-      heading: "About Curioticket",
-      links: [
-        {
-          label: "About us",
-          href: "#",
-        },
-        {
-          label: "How Curioticket works",
-          href: "#",
-        },
-        {
-          label: "Careers",
-          href: "#",
-        },
-        {
-          label: "Press",
-          href: "#",
-        },
-        {
-          label: "Sustainability",
-          href: "#",
+          label: "How Kurioticket Works",
+          href: "/how-it-works",
         },
       ],
     },
@@ -152,7 +97,7 @@ export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-white text-slate-700">
       <div className="page-shell py-10 md:py-12">
-        <div className="hidden gap-8 lg:grid lg:grid-cols-5">
+        <div className="hidden gap-x-8 gap-y-8 lg:grid lg:grid-cols-[repeat(3,minmax(0,1fr))_minmax(0,0.85fr)] xl:gap-x-12">
           {footerSections.map(
             (section) => (
               <div key={section.heading}>
@@ -199,7 +144,7 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-6 gap-y-7 border-t border-slate-200 pt-6">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-6 border-t border-slate-200 pt-6 sm:grid-cols-3">
             {linkSections.map(
               (section) => (
                 <div key={section.heading} className="min-w-0">
@@ -229,9 +174,12 @@ export function Footer() {
         <div className="mt-10 border-t border-slate-200 pt-5">
           <div className="flex flex-col gap-3 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="font-semibold text-slate-900">
-                Curioticket
-              </p>
+              <KurioticketLogo
+                variant="full"
+                tone="dark"
+                markClassName="h-9 w-9"
+                textClassName="text-base"
+              />
 
               <p className="mt-1 text-xs text-slate-500">
                 Search flights, hotels, and travel deals with confidence.
@@ -240,7 +188,7 @@ export function Footer() {
 
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <p>
-                © {currentYear} Curioticket. All rights reserved.
+                © {currentYear} Kurioticket LLC. All rights reserved.
               </p>
 
               <Link href="/legal/privacy-policy" className="transition-colors hover:text-indigo-600">

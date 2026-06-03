@@ -21,7 +21,7 @@ export default async function VerifyLoginPage({ searchParams }: VerifyLoginPageP
   const callbackUrl =
     params?.callbackUrl?.startsWith("/") && !params.callbackUrl.startsWith("//")
       ? params.callbackUrl
-      : "/dashboard";
+      : "/";
 
   return (
     <>
