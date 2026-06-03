@@ -100,12 +100,29 @@ validateDestinationImages(
   })),
 );
 
+type DestinationPriceSearch = {
+  tripType: "one-way";
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  travelers: 1;
+  adults: 1;
+  children: 0;
+  infants: 0;
+  cabinClass: "economy";
+  currency: string;
+};
+
 type DestinationPrice = {
   id: string;
   code: string;
   price?: number;
   currency?: string;
   providerBacked: boolean;
+  searchedAt?: string;
+  expiresAt?: string;
+  search?: DestinationPriceSearch;
   unavailable?: boolean;
 };
 
@@ -120,14 +137,16 @@ export default function Home() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
-  const [destinationPriceState, setDestinationPriceState] = useState<DestinationPriceState>({
-    loading: true,
-    prices: {},
-  });
-  const [discoveryPriceState, setDiscoveryPriceState] = useState<DestinationPriceState>({
-    loading: true,
-    prices: {},
-  });
+  const [destinationPriceState, setDestinationPriceState] =
+    useState<DestinationPriceState>({
+      loading: true,
+      prices: {},
+    });
+  const [discoveryPriceState, setDiscoveryPriceState] =
+    useState<DestinationPriceState>({
+      loading: true,
+      prices: {},
+    });
   const destinationsRailRef = useRef<HTMLDivElement>(null);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
@@ -205,7 +224,9 @@ export default function Home() {
           throw new Error("Destination prices unavailable");
         }
 
-        const payload = (await response.json()) as { prices?: DestinationPrice[] };
+        const payload = (await response.json()) as {
+          prices?: DestinationPrice[];
+        };
         const prices = Object.fromEntries(
           (payload.prices ?? []).map((price) => [price.id, price]),
         );
@@ -238,15 +259,13 @@ export default function Home() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            destinations: pricedDiscoveryItems.map(({
-              id,
-              originCode,
-              destinationCode,
-            }) => ({
-              id,
-              originCode,
-              destinationCode,
-            })),
+            destinations: pricedDiscoveryItems.map(
+              ({ id, originCode, destinationCode }) => ({
+                id,
+                originCode,
+                destinationCode,
+              }),
+            ),
             currency: "USD",
           }),
           signal: controller.signal,
@@ -256,7 +275,9 @@ export default function Home() {
           throw new Error("Discovery prices unavailable");
         }
 
-        const payload = (await response.json()) as { prices?: DestinationPrice[] };
+        const payload = (await response.json()) as {
+          prices?: DestinationPrice[];
+        };
         const prices = Object.fromEntries(
           (payload.prices ?? []).map((price) => [price.id, price]),
         );
@@ -360,21 +381,29 @@ export default function Home() {
               ref={destinationsRailRef}
               className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {destinations.map((destination) => (
-                <DestinationCard
-                  key={destination.id}
-                  city={t(destination.cityKey)}
-                  country={t(destination.countryKey)}
-                  imageAlt={t(destination.altKey)}
-                  saveLabelTemplate={t("homeSaveDestination")}
-                  image={destination.image}
-                  destinationId={destination.id}
-                  price={destinationPriceState.prices[destination.id]}
-                  isPriceLoading={destinationPriceState.loading}
-                  isSaved={savedTripIds.includes(destination.id)}
-                  onHeartToggle={handleSavedTripToggle}
-                />
-              ))}
+              {destinations.map((destination) => {
+                const price = destinationPriceState.prices[destination.id];
+
+                return (
+                  <DestinationCard
+                    key={destination.id}
+                    city={t(destination.cityKey)}
+                    country={t(destination.countryKey)}
+                    imageAlt={t(destination.altKey)}
+                    saveLabelTemplate={t("homeSaveDestination")}
+                    image={destination.image}
+                    destinationId={destination.id}
+                    price={price}
+                    href={buildDestinationCardHref(
+                      price,
+                      t(destination.cityKey),
+                    )}
+                    isPriceLoading={destinationPriceState.loading}
+                    isSaved={savedTripIds.includes(destination.id)}
+                    onHeartToggle={handleSavedTripToggle}
+                  />
+                );
+              })}
             </div>
           </div>
         </section>
@@ -406,7 +435,10 @@ export default function Home() {
                     return (
                       <DiscoverySuggestionCard
                         key={item.id}
-                        href={buildDiscoveryLink(item)}
+                        href={buildDiscoveryCardHref(
+                          discoveryPriceState.prices[item.id],
+                          buildDiscoveryLink(item),
+                        )}
                         itemId={item.id}
                         image={item.image}
                         imageAlt={item.imageAlt}
@@ -435,7 +467,10 @@ export default function Home() {
                 return (
                   <DiscoverySuggestionCard
                     key={item.id}
-                    href={buildDiscoveryLink(item)}
+                    href={buildDiscoveryCardHref(
+                      discoveryPriceState.prices[item.id],
+                      buildDiscoveryLink(item),
+                    )}
                     itemId={item.id}
                     image={item.image}
                     imageAlt={item.imageAlt}
@@ -749,6 +784,75 @@ function DiscoverySuggestionCard({
   );
 }
 
+function hasFreshProviderPrice(
+  price?: DestinationPrice,
+): price is DestinationPrice & {
+  price: number;
+  currency: string;
+  search: DestinationPriceSearch;
+  expiresAt: string;
+} {
+  if (
+    price?.providerBacked !== true ||
+    typeof price.price !== "number" ||
+    !Number.isFinite(price.price) ||
+    !price.currency ||
+    !price.search ||
+    !price.expiresAt
+  ) {
+    return false;
+  }
+
+  if (price.search.currency !== price.currency) return false;
+
+  const expiresAtMs = Date.parse(price.expiresAt);
+  return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
+}
+
+function buildDestinationCardHref(
+  price: DestinationPrice | undefined,
+  fallbackCity: string,
+) {
+  const search = hasFreshProviderPrice(price) ? price?.search : undefined;
+
+  return search
+    ? buildFlightResultsHref(search)
+    : `/hotels/results?destination=${encodeURIComponent(fallbackCity)}`;
+}
+
+function buildDiscoveryCardHref(
+  price: DestinationPrice | undefined,
+  fallbackHref: ComponentProps<typeof Link>["href"],
+) {
+  const search = hasFreshProviderPrice(price) ? price?.search : undefined;
+
+  return search ? buildFlightResultsHref(search) : fallbackHref;
+}
+
+function buildFlightResultsHref(search: DestinationPriceSearch) {
+  const query: Record<string, string> = {
+    tripType: search.tripType,
+    origin: search.origin,
+    destination: search.destination,
+    departureDate: search.departureDate,
+    travelers: String(search.travelers),
+    adults: String(search.adults),
+    children: String(search.children),
+    infants: String(search.infants),
+    cabinClass: search.cabinClass,
+    currency: search.currency,
+  };
+
+  if (search.returnDate) {
+    query.returnDate = search.returnDate;
+  }
+
+  return {
+    pathname: "/flights/results",
+    query,
+  };
+}
+
 function DiscoveryPricePill({
   price,
   isLoading,
@@ -756,11 +860,7 @@ function DiscoveryPricePill({
   price?: DestinationPrice;
   isLoading: boolean;
 }) {
-  const hasProviderPrice =
-    price?.providerBacked === true &&
-    typeof price.price === "number" &&
-    Number.isFinite(price.price) &&
-    Boolean(price.currency);
+  const hasProviderPrice = hasFreshProviderPrice(price);
 
   if (isLoading) {
     return (
@@ -798,7 +898,7 @@ function DiscoveryPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-emerald-200 bg-emerald-50/95 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-800"
+      className="inline-flex rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-800 shadow-sm"
       aria-label={`Provider-backed route price from ${formattedPrice}`}
     >
       from {formattedPrice}
@@ -814,6 +914,7 @@ function DestinationCard({
   saveLabelTemplate,
   destinationId,
   price,
+  href,
   isPriceLoading,
   isSaved,
   onHeartToggle,
@@ -825,6 +926,7 @@ function DestinationCard({
   saveLabelTemplate: string;
   destinationId: string;
   price?: DestinationPrice;
+  href: ComponentProps<typeof Link>["href"];
   isPriceLoading: boolean;
   isSaved: boolean;
   onHeartToggle: (
@@ -834,10 +936,7 @@ function DestinationCard({
 }) {
   return (
     <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
-      <Link
-        href={`/hotels/results?destination=${encodeURIComponent(city)}`}
-        className="focus-ring block"
-      >
+      <Link href={href} className="focus-ring block">
         <div className="relative h-72 sm:h-80">
           <Image
             src={image}
@@ -882,7 +981,6 @@ function DestinationCard({
   );
 }
 
-
 function DestinationPricePill({
   price,
   isLoading,
@@ -890,11 +988,7 @@ function DestinationPricePill({
   price?: DestinationPrice;
   isLoading: boolean;
 }) {
-  const hasProviderPrice =
-    price?.providerBacked === true &&
-    typeof price.price === "number" &&
-    Number.isFinite(price.price) &&
-    Boolean(price.currency);
+  const hasProviderPrice = hasFreshProviderPrice(price);
 
   if (isLoading) {
     return (
@@ -932,7 +1026,7 @@ function DestinationPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-emerald-200 bg-emerald-50/95 px-3 py-1.5 text-sm font-semibold text-emerald-800"
+      className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm"
       aria-label={`Provider-backed fare estimate from ${formattedPrice}`}
     >
       from {formattedPrice}

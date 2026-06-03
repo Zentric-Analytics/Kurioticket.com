@@ -31,6 +31,20 @@ type PriceDestination = {
   origin: string;
 };
 
+type DestinationPriceSearch = {
+  tripType: "one-way";
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  travelers: 1;
+  adults: 1;
+  children: 0;
+  infants: 0;
+  cabinClass: "economy";
+  currency: string;
+};
+
 type DestinationPrice = {
   id: string;
   code: string;
@@ -39,6 +53,7 @@ type DestinationPrice = {
   providerBacked: boolean;
   searchedAt: string;
   expiresAt?: string;
+  search?: DestinationPriceSearch;
   unavailable?: boolean;
 };
 
@@ -55,13 +70,18 @@ export async function POST(request: Request) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid destination price request." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid destination price request." },
+      { status: 400 },
+    );
   }
 
   const originValidation = validateCode(readStringProperty(payload, "origin"));
   const origin = originValidation ?? DEFAULT_ORIGIN;
   const originSource = originValidation ? "request" : "default";
-  const currency = validateCurrency(readStringProperty(payload, "currency")) ?? DEFAULT_CURRENCY;
+  const currency =
+    validateCurrency(readStringProperty(payload, "currency")) ??
+    DEFAULT_CURRENCY;
   const destinations = readDestinations(payload, origin);
   const departureDate = getNextWeekendDateAroundDaysOut(45);
 
@@ -80,12 +100,15 @@ export async function POST(request: Request) {
     );
   }
 
-  const prices = await mapWithConcurrency(destinations, CONCURRENCY_LIMIT, (destination) =>
-    getDestinationPrice({
-      destination,
-      departureDate,
-      currency,
-    }),
+  const prices = await mapWithConcurrency(
+    destinations,
+    CONCURRENCY_LIMIT,
+    (destination) =>
+      getDestinationPrice({
+        destination,
+        departureDate,
+        currency,
+      }),
   );
 
   return NextResponse.json({
@@ -108,7 +131,15 @@ async function getDestinationPrice({
   departureDate: string;
   currency: string;
 }): Promise<DestinationPrice> {
-  const cacheKey = [destination.origin, destination.code, "one-way", departureDate, "economy", "1-0-0", currency].join(":");
+  const cacheKey = [
+    destination.origin,
+    destination.code,
+    "one-way",
+    departureDate,
+    "economy",
+    "1-0-0",
+    currency,
+  ].join(":");
   const cached = destinationPriceCache.get(cacheKey);
   const nowMs = Date.now();
 
@@ -119,26 +150,32 @@ async function getDestinationPrice({
   const searchedAt = new Date(nowMs).toISOString();
 
   try {
-    const search: FlightSearchParams = {
+    const resultSearch: DestinationPriceSearch = {
       tripType: "one-way",
       origin: destination.origin,
       destination: destination.code,
       departureDate,
+      travelers: 1,
       adults: 1,
       children: 0,
       infants: 0,
-      travelers: 1,
       cabinClass: "economy",
-      sort: "cheapest",
       currency,
     };
-    const providerResult = await searchDuffelFlights(search);
+    const providerSearch: FlightSearchParams = {
+      ...resultSearch,
+      sort: "cheapest",
+    };
+    const providerResult = await searchDuffelFlights(providerSearch);
     const hasProviderIssue =
       providerResult.status !== "success" ||
       Boolean(providerResult.error) ||
       providerResult.provider.toLowerCase().includes("fallback");
     const result = providerResult.results.find(
-      (flight) => Number.isFinite(flight.price) && flight.price > 0 && validateCurrency(flight.currency),
+      (flight) =>
+        Number.isFinite(flight.price) &&
+        flight.price > 0 &&
+        validateCurrency(flight.currency) === currency,
     );
 
     if (!hasProviderIssue && result) {
@@ -147,10 +184,11 @@ async function getDestinationPrice({
         id: destination.id,
         code: destination.code,
         price: result.price,
-        currency: result.currency,
+        currency,
         providerBacked: true,
         searchedAt,
         expiresAt: new Date(expiresAtMs).toISOString(),
+        search: resultSearch,
       };
 
       destinationPriceCache.set(cacheKey, { value, expiresAtMs });
@@ -188,7 +226,11 @@ function readDestinations(payload: unknown, defaultOrigin: string) {
     const discoveryDestination = readDiscoveryDestination(item);
 
     if (discoveryDestination) {
-      if (discoveryCount >= DISCOVER_PRICE_CAP || seen.has(discoveryDestination.id)) continue;
+      if (
+        discoveryCount >= DISCOVER_PRICE_CAP ||
+        seen.has(discoveryDestination.id)
+      )
+        continue;
 
       seen.add(discoveryDestination.id);
       destinations.push(discoveryDestination);
@@ -199,7 +241,11 @@ function readDestinations(payload: unknown, defaultOrigin: string) {
     const popularDestination = readPopularDestination(item, defaultOrigin);
 
     if (!popularDestination) continue;
-    if (popularCount >= MAX_POPULAR_DESTINATIONS || seen.has(popularDestination.id)) continue;
+    if (
+      popularCount >= MAX_POPULAR_DESTINATIONS ||
+      seen.has(popularDestination.id)
+    )
+      continue;
 
     seen.add(popularDestination.id);
     destinations.push(popularDestination);
@@ -209,18 +255,28 @@ function readDestinations(payload: unknown, defaultOrigin: string) {
   return destinations;
 }
 
-function readPopularDestination(item: Record<string, unknown>, defaultOrigin: string): PriceDestination | undefined {
+function readPopularDestination(
+  item: Record<string, unknown>,
+  defaultOrigin: string,
+): PriceDestination | undefined {
   const id = typeof item.id === "string" ? item.id : "";
-  const code = validateCode(typeof item.code === "string" ? item.code : undefined);
+  const code = validateCode(
+    typeof item.code === "string" ? item.code : undefined,
+  );
 
-  if (!isHomepageDestinationId(id) || code !== HOMEPAGE_DESTINATIONS[id]) return undefined;
+  if (!isHomepageDestinationId(id) || code !== HOMEPAGE_DESTINATIONS[id])
+    return undefined;
 
   return { id, code, origin: defaultOrigin };
 }
 
-function readDiscoveryDestination(item: Record<string, unknown>): PriceDestination | undefined {
+function readDiscoveryDestination(
+  item: Record<string, unknown>,
+): PriceDestination | undefined {
   const id = typeof item.id === "string" ? item.id : "";
-  const originCode = validateCode(typeof item.originCode === "string" ? item.originCode : undefined);
+  const originCode = validateCode(
+    typeof item.originCode === "string" ? item.originCode : undefined,
+  );
   const destinationCode = validateCode(
     typeof item.destinationCode === "string"
       ? item.destinationCode
@@ -231,7 +287,11 @@ function readDiscoveryDestination(item: Record<string, unknown>): PriceDestinati
   const allowedRoute = HOME_DISCOVERY_ROUTES.get(id);
 
   if (!allowedRoute || !originCode || !destinationCode) return undefined;
-  if (originCode !== allowedRoute.originCode || destinationCode !== allowedRoute.destinationCode) return undefined;
+  if (
+    originCode !== allowedRoute.originCode ||
+    destinationCode !== allowedRoute.destinationCode
+  )
+    return undefined;
 
   return { id, code: destinationCode, origin: originCode };
 }
@@ -244,15 +304,21 @@ function readStringProperty(payload: unknown, key: string) {
 
 function validateCode(value: string | undefined) {
   const normalized = value?.trim().toUpperCase();
-  return normalized && AIRPORT_OR_CITY_CODE_PATTERN.test(normalized) ? normalized : undefined;
+  return normalized && AIRPORT_OR_CITY_CODE_PATTERN.test(normalized)
+    ? normalized
+    : undefined;
 }
 
 function validateCurrency(value: string | undefined) {
   const normalized = value?.trim().toUpperCase();
-  return normalized && CURRENCY_PATTERN.test(normalized) ? normalized : undefined;
+  return normalized && CURRENCY_PATTERN.test(normalized)
+    ? normalized
+    : undefined;
 }
 
-function isHomepageDestinationId(value: string): value is HomepageDestinationId {
+function isHomepageDestinationId(
+  value: string,
+): value is HomepageDestinationId {
   return Object.prototype.hasOwnProperty.call(HOMEPAGE_DESTINATIONS, value);
 }
 
@@ -268,7 +334,8 @@ function getNextWeekendDateAroundDaysOut(daysOut: number) {
   const day = date.getUTCDay();
   const daysUntilFriday = (5 - day + 7) % 7;
   const daysUntilSaturday = (6 - day + 7) % 7;
-  const daysToAdd = daysUntilFriday <= daysUntilSaturday ? daysUntilFriday : daysUntilSaturday;
+  const daysToAdd =
+    daysUntilFriday <= daysUntilSaturday ? daysUntilFriday : daysUntilSaturday;
 
   date.setUTCDate(date.getUTCDate() + daysToAdd);
   return date.toISOString().slice(0, 10);
@@ -290,6 +357,8 @@ async function mapWithConcurrency<T, R>(
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, worker),
+  );
   return results;
 }
