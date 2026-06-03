@@ -366,7 +366,7 @@ export function AppHeader({
     setLanguageQuery("");
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     if (isSigningOut) {
       return;
     }
@@ -375,9 +375,12 @@ export function AppHeader({
     setAccountOpen(false);
     setOpen(false);
 
-    void signOut({ callbackUrl: "/" }).catch(() => {
+    try {
+      await signOut({ redirect: false, callbackUrl: "/" });
+      window.location.assign("/");
+    } catch {
       setIsSigningOut(false);
-    });
+    }
   };
 
   return (
