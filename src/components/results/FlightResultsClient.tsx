@@ -2481,7 +2481,7 @@ export function FlightResultsClient() {
     <main className="flex-1 overflow-x-hidden bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
       <div
         className={cn(
-          "sticky top-0 z-30 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur sm:hidden",
+          "bg-[#f6f8fb]/95 px-4 py-2 sm:hidden",
           mobileSearchOpen && "hidden"
         )}
       >
@@ -2524,7 +2524,7 @@ export function FlightResultsClient() {
 
       <div
         className={cn(
-          "bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden",
+          "bg-[#f6f8fb]/95 px-4 py-2 sm:hidden",
           mobileSearchOpen ? "block" : "hidden"
         )}
       >
