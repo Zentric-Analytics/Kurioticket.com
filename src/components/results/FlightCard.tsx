@@ -23,15 +23,15 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
               )}
             </div>
             <div className="min-w-0">
-              <h2 className="truncate text-sm font-black text-navy">{flight.airlineName}</h2>
-              <p className="text-xs font-semibold text-muted">{flight.flightNumber || flight.provider}</p>
+              <h2 className="truncate text-sm font-semibold text-slate-900">{flight.airlineName}</h2>
+              <p className="text-xs font-medium text-slate-500">{flight.flightNumber || flight.provider}</p>
             </div>
           </div>
 
           <div className="grid flex-1 grid-cols-[1fr_auto_1fr] items-center gap-2">
             <div>
-              <div className="text-lg font-extrabold text-navy">{formatTime(flight.departureTime)}</div>
-              <div className="text-xs font-semibold text-muted">{flight.originAirport}</div>
+              <div className="text-lg font-semibold tracking-[-0.01em] text-slate-950">{formatTime(flight.departureTime)}</div>
+              <div className="text-xs font-medium text-slate-500">{flight.originAirport}</div>
             </div>
             <div className="min-w-16 text-center">
               <div className="mx-auto mb-1 flex items-center">
@@ -39,26 +39,26 @@ export function FlightCard({ flight, premium = false }: { flight: PublicFlightRe
                 <PlaneTakeoff size={14} className="mx-1 text-teal" />
                 <span className="h-px flex-1 bg-slate-200" />
               </div>
-              <div className="text-xs font-bold text-navy">{flight.duration}</div>
-              <div className="text-xs font-semibold text-muted">{flight.stops === 0 ? "Nonstop" : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`}</div>
+              <div className="text-xs font-semibold text-slate-800">{flight.duration}</div>
+              <div className="text-xs font-medium text-slate-500">{flight.stops === 0 ? "Nonstop" : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`}</div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-extrabold text-navy">{formatTime(flight.arrivalTime)}</div>
-              <div className="text-xs font-semibold text-muted">{flight.destinationAirport}</div>
+              <div className="text-lg font-semibold tracking-[-0.01em] text-slate-950">{formatTime(flight.arrivalTime)}</div>
+              <div className="text-xs font-medium text-slate-500">{flight.destinationAirport}</div>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-2 lg:w-40 lg:flex-col lg:items-end">
             <div className="text-right">
-              <div className="text-xl font-extrabold text-navy">{formatCurrency(flight.price, flight.currency)}</div>
-              <div className="text-xs font-semibold text-muted">estimated total</div>
-              <div className="text-[11px] font-semibold leading-4 text-muted">Final price confirmed by provider</div>
+              <div className="text-xl font-semibold tracking-[-0.01em] text-slate-950">{formatCurrency(flight.price, flight.currency)}</div>
+              <div className="text-xs font-medium text-slate-500">estimated total</div>
+              <div className="text-[11px] font-medium leading-4 text-slate-500">Final price confirmed by provider</div>
             </div>
             <div className="text-right">
               <LinkButton href={`/flights/details/${encodeURIComponent(flight.id)}`} variant="primary" size="sm" className="whitespace-nowrap bg-navy px-2.5 hover:bg-navy-soft">
                 View Flight
               </LinkButton>
-              <p className="mt-1 max-w-36 text-[11px] font-semibold leading-4 text-muted">
+              <p className="mt-1 max-w-36 text-[11px] font-medium leading-4 text-slate-500">
                 Review final fare and rules with the provider before booking.
               </p>
             </div>
