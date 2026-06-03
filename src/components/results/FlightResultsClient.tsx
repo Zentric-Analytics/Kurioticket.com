@@ -2620,21 +2620,6 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm font-bold text-navy">
-                  {sortedResults.length} option
-                  {sortedResults.length === 1 ? "" : "s"} found
-                </p>
-                <Button
-                  variant="secondary"
-                  className="h-10 w-full rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:w-auto lg:hidden"
-                  onClick={() => setFiltersOpen(true)}
-                >
-                  <SlidersHorizontal size={17} />
-                  Filters
-                </Button>
-              </div>
-
               {sortedResults.length ? (
                 <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                   <button
@@ -2708,6 +2693,21 @@ export function FlightResultsClient() {
                   </button>
                 </div>
               ) : null}
+
+              <div className="flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm font-bold text-navy">
+                  {sortedResults.length} option
+                  {sortedResults.length === 1 ? "" : "s"} found
+                </p>
+                <Button
+                  variant="secondary"
+                  className="h-10 w-full rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:w-auto lg:hidden"
+                  onClick={() => setFiltersOpen(true)}
+                >
+                  <SlidersHorizontal size={17} />
+                  Filters
+                </Button>
+              </div>
 
               {warnings.length > 0 ? (
                 <div className="w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900 shadow-sm" role="status">
