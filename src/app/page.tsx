@@ -51,7 +51,7 @@ const destinations = [
     altKey: "homeDestinationDubaiAlt",
     amountUsd: 420,
     image:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=92",
+      "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
   {
     id: "london",
@@ -60,7 +60,7 @@ const destinations = [
     altKey: "homeDestinationLondonAlt",
     amountUsd: 380,
     image:
-      "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=1600&q=92",
+      "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
   {
     id: "paris",
@@ -69,7 +69,7 @@ const destinations = [
     altKey: "homeDestinationParisAlt",
     amountUsd: 410,
     image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=92",
+      "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
   {
     id: "bali",
@@ -78,7 +78,7 @@ const destinations = [
     altKey: "homeDestinationBaliAlt",
     amountUsd: 370,
     image:
-      "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?auto=format&fit=crop&w=1600&q=92",
+      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1600&q=92",
   },
   {
     id: "new-york",
@@ -87,7 +87,7 @@ const destinations = [
     altKey: "homeDestinationNewYorkAlt",
     amountUsd: 390,
     image:
-      "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1600&q=92",
+      "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
 ];
 
@@ -680,7 +680,7 @@ function DestinationCard({
             className="object-cover transition duration-500 group-hover:scale-105"
           />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-900/5" />
+          <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent" />
 
           <button
             type="button"
@@ -696,11 +696,13 @@ function DestinationCard({
             <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
 
-          <div className="absolute bottom-4 left-4 text-white">
+          <div className="absolute bottom-4 left-4 pr-4 text-white">
             <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">
               {city}
             </h3>
-            <p className="text-sm font-semibold text-white/95">{country}</p>
+            <p className="text-sm font-semibold text-white/95 drop-shadow-sm">
+              {country}
+            </p>
           </div>
         </div>
 
