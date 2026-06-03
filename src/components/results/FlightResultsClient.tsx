@@ -2217,7 +2217,7 @@ export function FlightResultsClient() {
         <section className="lg:col-span-2">
           <div
             className={cn(
-              "sticky top-0 z-30 -mx-4 bg-[#f6f8fb]/95 px-4 py-2 backdrop-blur sm:hidden",
+              "fixed left-0 right-0 top-0 z-40 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur sm:hidden",
               mobileSearchOpen && "hidden"
             )}
           >
@@ -2257,6 +2257,8 @@ export function FlightResultsClient() {
               </button>
             </div>
           </div>
+
+          <div className={cn("h-[74px] sm:hidden", mobileSearchOpen && "hidden")} />
 
           <form
             onSubmit={handleCompactSearchSubmit}
