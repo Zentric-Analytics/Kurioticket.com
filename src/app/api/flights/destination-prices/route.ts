@@ -22,6 +22,8 @@ const CONCURRENCY_LIMIT = 2;
 const AIRPORT_OR_CITY_CODE_PATTERN = /^[A-Z]{3}$/;
 const CURRENCY_PATTERN = /^[A-Z]{3}$/;
 const HOME_DISCOVERY_ROUTES = getHomeDiscoveryRouteAllowlist();
+const ENABLE_HOMEPAGE_LIVE_PRICES =
+  process.env.ENABLE_HOMEPAGE_LIVE_PRICES === "true";
 
 type HomepageDestinationId = keyof typeof HOMEPAGE_DESTINATIONS;
 
@@ -139,6 +141,7 @@ async function getDestinationPrice({
     "economy",
     "1-0-0",
     currency,
+    ENABLE_HOMEPAGE_LIVE_PRICES ? "live" : "unavailable",
   ].join(":");
   const cached = destinationPriceCache.get(cacheKey);
   const nowMs = Date.now();
@@ -149,19 +152,34 @@ async function getDestinationPrice({
 
   const searchedAt = new Date(nowMs).toISOString();
 
+  const resultSearch: DestinationPriceSearch = {
+    tripType: "one-way",
+    origin: destination.origin,
+    destination: destination.code,
+    departureDate,
+    travelers: 1,
+    adults: 1,
+    children: 0,
+    infants: 0,
+    cabinClass: "economy",
+    currency,
+  };
+
+  if (!ENABLE_HOMEPAGE_LIVE_PRICES) {
+    const value = createUnavailableDestinationPrice({
+      destination,
+      nowMs,
+      searchedAt,
+    });
+
+    destinationPriceCache.set(cacheKey, {
+      value,
+      expiresAtMs: nowMs + UNAVAILABLE_TTL_MS,
+    });
+    return value;
+  }
+
   try {
-    const resultSearch: DestinationPriceSearch = {
-      tripType: "one-way",
-      origin: destination.origin,
-      destination: destination.code,
-      departureDate,
-      travelers: 1,
-      adults: 1,
-      children: 0,
-      infants: 0,
-      cabinClass: "economy",
-      currency,
-    };
     const providerSearch: FlightSearchParams = {
       ...resultSearch,
       sort: "cheapest",
@@ -198,8 +216,31 @@ async function getDestinationPrice({
     // Keep passive homepage checks safe and partial. Provider details and credentials are never returned.
   }
 
+  const value = createUnavailableDestinationPrice({
+    destination,
+    nowMs,
+    searchedAt,
+  });
+
+  destinationPriceCache.set(cacheKey, {
+    value,
+    expiresAtMs: nowMs + UNAVAILABLE_TTL_MS,
+  });
+  return value;
+}
+
+function createUnavailableDestinationPrice({
+  destination,
+  nowMs,
+  searchedAt,
+}: {
+  destination: PriceDestination;
+  nowMs: number;
+  searchedAt: string;
+}): DestinationPrice {
   const expiresAtMs = nowMs + UNAVAILABLE_TTL_MS;
-  const value: DestinationPrice = {
+
+  return {
     id: destination.id,
     code: destination.code,
     providerBacked: false,
@@ -207,9 +248,6 @@ async function getDestinationPrice({
     expiresAt: new Date(expiresAtMs).toISOString(),
     unavailable: true,
   };
-
-  destinationPriceCache.set(cacheKey, { value, expiresAtMs });
-  return value;
 }
 
 function readDestinations(payload: unknown, defaultOrigin: string) {
