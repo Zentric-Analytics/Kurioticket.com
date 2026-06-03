@@ -65,7 +65,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                   <td className="p-3"><StatusPill tone={user.status === "ACTIVE" ? "good" : user.status === "SUSPENDED" ? "warn" : "bad"}>{user.status}</StatusPill></td>
                   <td className="p-3">{formatDate(user.createdAt)}</td>
                   <td className="p-3">{formatDate(user.updatedAt)}</td>
-                  <td className="p-3"><UserStatusActions userId={user.id} status={user.status} isSelf={user.id === session.user.id} /></td>
+                  <td className="p-3"><UserStatusActions userId={user.id} email={user.email} role={user.role} status={user.status} isSelf={user.id === session.user.id} /></td>
                 </tr>
               ))}
             </tbody>
