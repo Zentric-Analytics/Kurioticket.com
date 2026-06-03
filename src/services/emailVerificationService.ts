@@ -7,6 +7,10 @@ const verificationCodeTtlMinutes = 10;
 const resendCooldownMs = 60 * 1000;
 const resendCooldowns = new Map<string, number>();
 
+type SendCodeResult = {
+  cooldownSeconds: number;
+};
+
 export class EmailVerificationError extends Error {
   constructor(message = "Unable to verify email right now.") {
     super(message);
@@ -28,27 +32,28 @@ export function getEmailVerificationRedirect(email: string) {
   return `/auth/verify-email?email=${encodeURIComponent(email.toLowerCase().trim())}`;
 }
 
-export async function sendEmailVerificationCode(input: { email: string; name?: string | null; action?: string; enforceCooldown?: boolean }) {
+export async function sendEmailVerificationCode(input: { email: string; name?: string | null; action?: string; enforceCooldown?: boolean }): Promise<SendCodeResult> {
   const email = input.email.toLowerCase().trim();
-  const code = randomInt(100000, 1000000).toString();
+  const cooldownKey = getVerificationIdentifier(email);
   if (input.enforceCooldown) {
-    enforceResendCooldown(email);
+    reserveResendCooldown(cooldownKey);
   }
 
+  const code = randomInt(100000, 1000000).toString();
   const token = hashVerificationCode(email, code);
   const expires = new Date(Date.now() + verificationCodeTtlMinutes * 60 * 1000);
   const identifier = getVerificationIdentifier(email);
 
-  await getPrisma().verificationToken.deleteMany({ where: { identifier } });
-  await getPrisma().verificationToken.create({
-    data: {
-      identifier,
-      token,
-      expires,
-    },
-  });
-
   try {
+    await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+    await getPrisma().verificationToken.create({
+      data: {
+        identifier,
+        token,
+        expires,
+      },
+    });
+
     await sendTransactionalEmail({
       to: email,
       subject: "Kurioticket verification code",
@@ -57,15 +62,21 @@ export async function sendEmailVerificationCode(input: { email: string; name?: s
       requireConfigured: true,
     });
 
-    if (input.enforceCooldown) {
-      resendCooldowns.set(email, Date.now());
-    }
-
     console.info("[email-verification:sent]", {
       action: input.action || "email-verification",
       email,
     });
+
+    return {
+      cooldownSeconds: input.enforceCooldown
+        ? getRemainingCooldownSeconds(cooldownKey) || getCooldownSeconds()
+        : 0,
+    };
   } catch (error) {
+    if (input.enforceCooldown) {
+      clearResendCooldown(cooldownKey);
+    }
+
     console.error("[email-verification:failed]", {
       action: input.action || "email-verification",
       email,
@@ -127,15 +138,33 @@ export async function verifyEmailCode(input: { email: string; code: string }) {
   return verified;
 }
 
-function enforceResendCooldown(email: string) {
-  const lastSentAt = resendCooldowns.get(email);
+function reserveResendCooldown(key: string) {
+  const retryAfterSeconds = getRemainingCooldownSeconds(key);
+
+  if (retryAfterSeconds > 0) {
+    throw new EmailVerificationCooldownError(retryAfterSeconds);
+  }
+
+  resendCooldowns.set(key, Date.now());
+}
+
+function clearResendCooldown(key: string) {
+  resendCooldowns.delete(key);
+}
+
+function getRemainingCooldownSeconds(key: string) {
+  const lastSentAt = resendCooldowns.get(key);
   const now = Date.now();
 
-  if (lastSentAt && now - lastSentAt < resendCooldownMs) {
-    throw new EmailVerificationCooldownError(
-      Math.ceil((resendCooldownMs - (now - lastSentAt)) / 1000),
-    );
+  if (!lastSentAt || now - lastSentAt >= resendCooldownMs) {
+    return 0;
   }
+
+  return Math.ceil((resendCooldownMs - (now - lastSentAt)) / 1000);
+}
+
+function getCooldownSeconds() {
+  return Math.ceil(resendCooldownMs / 1000);
 }
 
 function getVerificationIdentifier(email: string) {
@@ -146,23 +175,25 @@ function hashVerificationCode(email: string, code: string) {
   return createHash("sha256").update(`${email.toLowerCase().trim()}:${code}`).digest("hex");
 }
 
-export async function sendLoginVerificationCode(input: { email: string; name?: string | null }) {
+export async function sendLoginVerificationCode(input: { email: string; name?: string | null }): Promise<SendCodeResult> {
   const email = input.email.toLowerCase().trim();
+  const identifier = getLoginVerificationIdentifier(email);
+  reserveResendCooldown(identifier);
+
   const code = randomInt(100000, 1000000).toString();
   const token = hashVerificationCode(email, code);
   const expires = new Date(Date.now() + verificationCodeTtlMinutes * 60 * 1000);
-  const identifier = getLoginVerificationIdentifier(email);
-
-  await getPrisma().verificationToken.deleteMany({ where: { identifier } });
-  await getPrisma().verificationToken.create({
-    data: {
-      identifier,
-      token,
-      expires,
-    },
-  });
 
   try {
+    await getPrisma().verificationToken.deleteMany({ where: { identifier } });
+    await getPrisma().verificationToken.create({
+      data: {
+        identifier,
+        token,
+        expires,
+      },
+    });
+
     await sendTransactionalEmail({
       to: email,
       subject: "Kurioticket login verification code",
@@ -176,7 +207,10 @@ export async function sendLoginVerificationCode(input: { email: string; name?: s
     });
 
     console.info("[login-verification:sent]", { email });
+    return { cooldownSeconds: getRemainingCooldownSeconds(identifier) || getCooldownSeconds() };
   } catch (error) {
+    clearResendCooldown(identifier);
+
     console.error("[login-verification:failed]", {
       email,
       message: error instanceof Error ? error.message : String(error),

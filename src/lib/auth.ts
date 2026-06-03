@@ -30,6 +30,7 @@ import {
 import { signinSchema } from "@/lib/validation";
 
 import {
+  EmailVerificationCooldownError,
   getEmailVerificationRedirect,
   sendEmailVerificationCode,
   verifyLoginCode,
@@ -244,12 +245,20 @@ const providers: NextAuthOptions["providers"] = [
           { email }
         );
 
-        await sendEmailVerificationCode(
-          {
-            email,
-            name: user.name,
+        try {
+          await sendEmailVerificationCode(
+            {
+              email,
+              name: user.name,
+              action: "credentials-unverified-email",
+              enforceCooldown: true,
+            }
+          );
+        } catch (error) {
+          if (!(error instanceof EmailVerificationCooldownError)) {
+            throw error;
           }
-        );
+        }
 
         throw new Error(
           "EmailVerificationRequired"
@@ -408,12 +417,20 @@ export const authOptions: NextAuthOptions =
               { email }
             );
 
-            await sendEmailVerificationCode(
-              {
-                email,
-                name: dbUser.name,
+            try {
+              await sendEmailVerificationCode(
+                {
+                  email,
+                  name: dbUser.name,
+                  action: "oauth-unverified-email",
+                  enforceCooldown: true,
+                }
+              );
+            } catch (error) {
+              if (!(error instanceof EmailVerificationCooldownError)) {
+                throw error;
               }
-            );
+            }
 
             return getEmailVerificationRedirect(
               email
