@@ -86,8 +86,8 @@ export async function POST(request: Request) {
 }
 
 function getSafeCallbackUrl(body: unknown) {
-  if (!body || typeof body !== "object") return "/dashboard";
+  if (!body || typeof body !== "object") return "/";
 
   const callbackUrl = String((body as Record<string, unknown>).callbackUrl || "");
-  return callbackUrl.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/dashboard";
+  return callbackUrl.startsWith("/") && !callbackUrl.startsWith("//") ? callbackUrl : "/";
 }

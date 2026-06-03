@@ -16,16 +16,17 @@ import { usePathname } from "next/navigation";
 
 import {
   Bed,
-  Bell,
   Car,
   Check,
   ChevronDown,
   Compass,
+  LayoutDashboard,
   LogOut,
   MapPin,
   Menu,
   Plane,
   Search,
+  Settings,
   Tag,
   UserCircle,
   X,
@@ -34,17 +35,22 @@ import {
 import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
-import {
-  Button,
-  LinkButton,
-} from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 
 
-function SavedHeartIcon({ className }: { className?: string }) {
+function SavedHeartIcon({
+  className,
+  size,
+}: {
+  className?: string;
+  size?: number;
+}) {
   return (
     <svg
       viewBox="0 0 24 24"
       className={className}
+      width={size}
+      height={size}
       fill="none"
       stroke="currentColor"
       strokeWidth="1.8"
@@ -62,6 +68,33 @@ type AppHeaderProps = {
   hideMobileSecondaryNavLinks?: boolean;
 };
 
+const signedInAccountMenuItems = [
+  {
+    href: "/dashboard",
+    label: "My account",
+    description: "Trips and travel tools",
+    icon: LayoutDashboard,
+  },
+  {
+    href: "/saved",
+    label: "Saved trips",
+    description: "Shortlisted stays and searches",
+    icon: SavedHeartIcon,
+  },
+  {
+    href: "/dashboard/alerts",
+    label: "Price alerts",
+    description: "Track fare changes",
+    icon: Tag,
+  },
+  {
+    href: "/dashboard/settings",
+    label: "Account settings",
+    description: "Profile and preferences",
+    icon: Settings,
+  },
+];
+
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
 }: AppHeaderProps = {}) {
@@ -72,6 +105,7 @@ export function AppHeader({
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState("");
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const {
     locale,
@@ -84,6 +118,7 @@ export function AppHeader({
 
   const languageRef = useRef<HTMLDivElement | null>(null);
   const languageMenuRef = useRef<HTMLElement | null>(null);
+  const accountRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
@@ -97,12 +132,20 @@ export function AppHeader({
         setLanguageOpen(false);
       }
 
+      if (
+        accountRef.current &&
+        !accountRef.current.contains(target)
+      ) {
+        setAccountOpen(false);
+      }
+
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setLanguageOpen(false);
         setOpen(false);
+        setAccountOpen(false);
       }
     };
 
@@ -120,6 +163,30 @@ export function AppHeader({
       locales.find((option) => option.code === locale) ?? locales[0],
     [locale, locales]
   );
+
+  const accountDisplayName = useMemo(() => {
+    const rawName = session?.user?.name?.trim();
+
+    if (rawName) {
+      return rawName.split(/\s+/)[0] || "Account";
+    }
+
+    return session?.user?.email?.split("@")[0] || "Account";
+  }, [session?.user?.email, session?.user?.name]);
+
+  const accountInitials = useMemo(() => {
+    const source =
+      session?.user?.name?.trim() ||
+      session?.user?.email?.trim() ||
+      "Account";
+
+    return source
+      .split(/[\s@._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "A";
+  }, [session?.user?.email, session?.user?.name]);
 
   const filteredLanguages = useMemo(() => {
     const query = languageQuery.trim().toLowerCase();
@@ -332,24 +399,103 @@ export function AppHeader({
               </div>
 
               {isSignedIn ? (
-                <>
-                  <LinkButton
-                    href="/dashboard/alerts"
-                    variant="ghost"
-                    className="h-12 rounded-full px-4 text-indigo-50 hover:bg-white/10 hover:text-white"
-                  >
-                    <Bell size={16} />
-                  </LinkButton>
-
+                <div className="relative" ref={accountRef}>
                   <button
                     type="button"
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                    className="inline-flex h-12 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-4 text-sm font-semibold text-indigo-50 shadow-sm hover:bg-white/15 hover:text-white"
+                    aria-haspopup="menu"
+                    aria-expanded={accountOpen}
+                    onClick={() => setAccountOpen((value) => !value)}
+                    className="inline-flex h-12 items-center gap-2 rounded-full border border-white/25 bg-white/10 px-2.5 pr-3.5 text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
-                    <LogOut size={15} />
-                    {t.logout}
+                    <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white text-xs font-black text-indigo-700 shadow-sm">
+                      {session?.user?.image ? (
+                        <img
+                          src={session.user.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        accountInitials
+                      )}
+                    </span>
+
+                    <span className="max-w-[8rem] truncate">{accountDisplayName}</span>
+
+                    <ChevronDown
+                      size={14}
+                      className={`text-indigo-100 transition-transform ${accountOpen ? "rotate-180" : ""}`}
+                      aria-hidden="true"
+                    />
                   </button>
-                </>
+
+                  {accountOpen ? (
+                    <div
+                      role="menu"
+                      aria-label="Account menu"
+                      className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
+                    >
+                      <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
+                          Kurioticket account
+                        </p>
+                        <p className="mt-1 truncate text-sm font-black text-slate-950">
+                          {session?.user?.name || accountDisplayName}
+                        </p>
+                        {session?.user?.email ? (
+                          <p className="truncate text-xs font-semibold text-slate-500">
+                            {session.user.email}
+                          </p>
+                        ) : null}
+                      </div>
+
+                      <div className="grid gap-1 p-2">
+                        {signedInAccountMenuItems.map((item) => {
+                          const Icon = item.icon;
+
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              role="menuitem"
+                              onClick={() => setAccountOpen(false)}
+                              className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            >
+                              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
+                                <Icon size={17} aria-hidden="true" />
+                              </span>
+
+                              <span className="min-w-0">
+                                <span className="block text-sm font-bold text-slate-950">
+                                  {item.label}
+                                </span>
+                                <span className="block truncate text-xs font-medium text-slate-500">
+                                  {item.description}
+                                </span>
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+
+                      <div className="border-t border-slate-100 p-2">
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setAccountOpen(false);
+                            signOut({ callbackUrl: "/" });
+                          }}
+                          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                            <LogOut size={17} aria-hidden="true" />
+                          </span>
+                          {t.logout}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               ) : (
                 <>
                   <Link
@@ -393,13 +539,34 @@ export function AppHeader({
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
-            <Link
-              href={isSignedIn ? "/dashboard" : "/auth/signin"}
-              aria-label={isSignedIn ? "Open dashboard" : "Sign in"}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white hover:bg-white/15"
-            >
-              <UserCircle size={18} />
-            </Link>
+            {isSignedIn ? (
+              <button
+                type="button"
+                aria-label="Open account menu"
+                aria-expanded={open}
+                aria-haspopup="menu"
+                onClick={() => setOpen((value) => !value)}
+                className="inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-sm font-black text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+              >
+                {session?.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  accountInitials
+                )}
+              </button>
+            ) : (
+              <Link
+                href="/auth/signin"
+                aria-label="Sign in"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+              >
+                <UserCircle size={18} />
+              </Link>
+            )}
 
             <button
               type="button"
@@ -543,17 +710,60 @@ export function AppHeader({
               })}
 
               {isSignedIn ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpen(false);
-                    signOut({ callbackUrl: "/" });
-                  }}
-                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  <LogOut size={15} />
-                  {t.logout}
-                </button>
+                <section className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-3" aria-label="Account">
+                  <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
+                    <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-sm font-black text-white shadow-sm">
+                      {session?.user?.image ? (
+                        <img
+                          src={session.user.image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        accountInitials
+                      )}
+                    </span>
+
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-black text-slate-950">
+                        {session?.user?.name || accountDisplayName}
+                      </span>
+                      <span className="block truncate text-xs font-semibold text-slate-500">
+                        {session?.user?.email || "Kurioticket account"}
+                      </span>
+                    </span>
+                  </div>
+
+                  <div className="mt-2 grid gap-1">
+                    {signedInAccountMenuItems.map((item) => {
+                      const Icon = item.icon;
+
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                          <Icon size={16} aria-hidden="true" />
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpen(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="inline-flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    >
+                      <LogOut size={16} aria-hidden="true" />
+                      {t.logout}
+                    </button>
+                  </div>
+                </section>
               ) : null}
             </nav>
           </div>
