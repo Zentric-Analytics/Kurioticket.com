@@ -2,9 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, Minus, Plus } from "lucide-react";
+import { Calendar, ChevronDown, Minus, Plus, X } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -117,8 +117,7 @@ const destinationIdeas = [
 const copy = {
   en: {
     title: "Find travel deals for your next trip",
-    subtitle:
-      "Search flights, stays, and cars together in one place.",
+    subtitle: "Search flights, stays, and cars together in one place.",
     modeLegend: "Choose package type",
     origin: "Where from?",
     destination: "Where to?",
@@ -133,6 +132,9 @@ const copy = {
     driverAge: "Driver age",
     cabinClass: "Cabin class",
     clear: "Clear",
+    clearAll: "Clear all",
+    clearOrigin: "Clear origin",
+    clearDestination: "Clear destination",
     done: "Done",
     next: "Next",
     previous: "Prev",
@@ -170,6 +172,9 @@ const copy = {
     driverAge: "Âge du conducteur",
     cabinClass: "Classe cabine",
     clear: "Effacer",
+    clearAll: "Tout effacer",
+    clearOrigin: "Effacer le point de départ",
+    clearDestination: "Effacer la destination",
     done: "Terminé",
     next: "Suiv.",
     previous: "Préc.",
@@ -285,6 +290,10 @@ export default function DealsPage() {
     return new Date(now.getFullYear(), now.getMonth(), 1);
   });
   const [error, setError] = useState("");
+  const originInputRef = useRef<HTMLInputElement>(null);
+  const destinationInputRef = useRef<HTMLInputElement>(null);
+  const datesWrapperRef = useRef<HTMLDivElement>(null);
+  const travelersWrapperRef = useRef<HTMLDivElement>(null);
 
   const selectedMode =
     packageModes.find((mode) => mode.value === packageMode) ?? packageModes[0];
@@ -355,6 +364,37 @@ export default function DealsPage() {
     [destinationIdeaHref],
   );
 
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Node)) return;
+
+      if (!datesWrapperRef.current?.contains(target)) {
+        setDatesOpen(false);
+      }
+
+      if (!travelersWrapperRef.current?.contains(target)) {
+        setTravelersOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      setDatesOpen(false);
+      setTravelersOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   const handleModeChange = (mode: PackageMode) => {
     setPackageMode(mode);
     setDatesOpen(false);
@@ -376,6 +416,22 @@ export default function DealsPage() {
       if (nextOpen) setDatesOpen(false);
       return nextOpen;
     });
+  };
+
+  const handleResetSearch = () => {
+    setPackageMode("hotel-flight");
+    setOrigin("");
+    setDestination("");
+    setStartDate("");
+    setEndDate("");
+    setAdults(1);
+    setChildren(0);
+    setRooms(1);
+    setDriverAge(30);
+    setCabinClass("economy");
+    setDatesOpen(false);
+    setTravelersOpen(false);
+    setError("");
   };
 
   const handleSelectDate = (date: Date) => {
@@ -630,40 +686,89 @@ export default function DealsPage() {
                     }`}
                   >
                     {includesFlight ? (
-                      <label className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
-                        <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
+                      <div className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                        <label
+                          htmlFor="package-origin"
+                          className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600"
+                        >
                           {dictionary.origin}
-                        </span>
-                        <input
-                          value={origin}
-                          onChange={(event) => setOrigin(event.target.value)}
-                          placeholder="City or airport"
-                          className="h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
-                          autoComplete="address-level2"
-                          required={includesFlight}
-                        />
-                      </label>
+                        </label>
+                        <div className="relative">
+                          <input
+                            ref={originInputRef}
+                            id="package-origin"
+                            value={origin}
+                            onChange={(event) => setOrigin(event.target.value)}
+                            placeholder="City or airport"
+                            className="h-8 w-full rounded-md border-0 bg-transparent px-0 pr-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
+                            autoComplete="address-level2"
+                            required={includesFlight}
+                          />
+                          {origin ? (
+                            <button
+                              type="button"
+                              aria-label={dictionary.clearOrigin}
+                              onPointerDown={(event) => event.stopPropagation()}
+                              onClick={() => {
+                                setOrigin("");
+                                setError("");
+                                originInputRef.current?.focus();
+                              }}
+                              className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                            >
+                              <X className="h-4 w-4" aria-hidden="true" />
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
                     ) : null}
 
-                    <label
+                    <div
                       className={`min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0 ${
                         includesFlight ? "" : "lg:rounded-s-xl"
                       }`}
                     >
-                      <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
+                      <label
+                        htmlFor="package-destination"
+                        className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600"
+                      >
                         {dictionary.destination}
-                      </span>
-                      <input
-                        value={destination}
-                        onChange={(event) => setDestination(event.target.value)}
-                        placeholder="City, airport, or area"
-                        className="h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
-                        autoComplete="address-level2"
-                        required
-                      />
-                    </label>
+                      </label>
+                      <div className="relative">
+                        <input
+                          ref={destinationInputRef}
+                          id="package-destination"
+                          value={destination}
+                          onChange={(event) =>
+                            setDestination(event.target.value)
+                          }
+                          placeholder="City, airport, or area"
+                          className="h-8 w-full rounded-md border-0 bg-transparent px-0 pr-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
+                          autoComplete="address-level2"
+                          required
+                        />
+                        {destination ? (
+                          <button
+                            type="button"
+                            aria-label={dictionary.clearDestination}
+                            onPointerDown={(event) => event.stopPropagation()}
+                            onClick={() => {
+                              setDestination("");
+                              setError("");
+                              destinationInputRef.current?.focus();
+                            }}
+                            className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                          >
+                            <X className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
 
-                    <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                    <div
+                      ref={datesWrapperRef}
+                      className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                    >
                       <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
                         {dictionary.dates}
                       </span>
@@ -814,7 +919,10 @@ export default function DealsPage() {
                       ) : null}
                     </div>
 
-                    <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                    <div
+                      ref={travelersWrapperRef}
+                      className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                    >
                       <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
                         {dictionary.travelersRooms}
                       </span>
@@ -925,6 +1033,16 @@ export default function DealsPage() {
                       </button>
                     </div>
                   </div>
+                </div>
+
+                <div className="flex justify-end px-1">
+                  <button
+                    type="button"
+                    onClick={handleResetSearch}
+                    className="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                  >
+                    {dictionary.clearAll}
+                  </button>
                 </div>
 
                 <div className="min-h-6" aria-live="polite">
