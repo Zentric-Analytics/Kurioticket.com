@@ -19,6 +19,7 @@ import {
   Minus,
   Plane,
   Plus,
+  RotateCcw,
   X,
 } from "lucide-react";
 
@@ -1145,11 +1146,13 @@ export function SearchTabs({
     setFrom("");
     setFromCode("");
     setFromOpen(false);
+    setFromHighlight(0);
   };
   const onClearDestination = () => {
     setTo("");
     setToCode("");
     setToOpen(false);
+    setToHighlight(0);
   };
   const onClearTravelDates = () => {
     setDepartureDate("");
@@ -1171,6 +1174,7 @@ export function SearchTabs({
     setDraftCabinClass("economy");
     travelersDraftRef.current = { adults: 1, children: 0, infants: 0, cabinClass: "economy" };
     setTravelersMenuOpen(false);
+    setTripTypeOpen(false);
   };
 
   const isFlightSearchDisabled =
@@ -1507,7 +1511,7 @@ export function SearchTabs({
               <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
               <div
                 ref={fromWrapRef}
-                className="relative min-h-[54px] px-0 py-0 pr-2"
+                className="relative min-h-[54px] px-0 py-0 pr-3"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.origin ||
@@ -1547,7 +1551,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="From?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-10 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
                 {from.trim() ? (
@@ -1556,7 +1560,7 @@ export function SearchTabs({
                     onClick={onClearOrigin}
                     onMouseDown={(event) => event.preventDefault()}
                     aria-label="Clear origin"
-                    className="focus-ring absolute right-1 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                    className="focus-ring absolute right-0 top-6 z-30 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
                   >
                     <X size={14} />
                   </button>
@@ -1629,7 +1633,7 @@ export function SearchTabs({
 
               <div
                 ref={toWrapRef}
-                className="relative min-h-[54px] px-0 py-0 pl-2"
+                className="relative min-h-[54px] px-0 py-0 pl-3"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
@@ -1665,7 +1669,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="To?"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-10 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                   required
                 />
                 {to.trim() ? (
@@ -1674,7 +1678,7 @@ export function SearchTabs({
                     onClick={onClearDestination}
                     onMouseDown={(event) => event.preventDefault()}
                     aria-label="Clear destination"
-                    className="focus-ring absolute right-1 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                    className="focus-ring absolute right-0 top-6 z-30 inline-flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
                   >
                     <X size={14} />
                   </button>
@@ -2086,8 +2090,9 @@ export function SearchTabs({
               <button
                 type="button"
                 onClick={onResetFlightSearch}
-                className="focus-ring inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
               >
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
                 Clear all
               </button>
             </div>
