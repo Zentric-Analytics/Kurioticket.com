@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { type FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, ChevronDown, Minus, Plus } from "lucide-react";
@@ -8,8 +9,6 @@ import { Calendar, ChevronDown, Minus, Plus } from "lucide-react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
-import { LinkButton } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 
 type PackageMode =
   | "hotel-flight"
@@ -64,26 +63,54 @@ const cabinClasses: Array<{ value: CabinClass; label: string }> = [
   { value: "first", label: "First" },
 ];
 
-const searchStarters = [
+const destinationIdeas = [
   {
-    route: "Houston → Tokyo",
-    note: "Long-haul route idea for flexible international planning",
-    href: "/flights/results?origin=Houston&destination=Tokyo",
+    city: "Tokyo",
+    country: "Japan",
+    destinationQuery: "Tokyo",
+    image:
+      "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Tokyo skyline with dense high-rise buildings in daylight",
   },
   {
-    route: "New York → London",
-    note: "Transatlantic search starter for comparing cabins and schedules",
-    href: "/flights/results?origin=New%20York&destination=London",
+    city: "London",
+    country: "United Kingdom",
+    destinationQuery: "London",
+    image:
+      "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Tower Bridge and the River Thames in London under a blue sky",
   },
   {
-    route: "Chicago → Cancun",
-    note: "Warm-weather route idea for date-flexible searches",
-    href: "/flights/results?origin=Chicago&destination=Cancun",
+    city: "Paris",
+    country: "France",
+    destinationQuery: "Paris",
+    image:
+      "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Eiffel Tower and the Seine River in Paris at golden hour",
   },
   {
-    route: "Los Angeles → Mexico City",
-    note: "Regional international route starter for provider comparison",
-    href: "/flights/results?origin=Los%20Angeles&destination=Mexico%20City",
+    city: "Dubai",
+    country: "United Arab Emirates",
+    destinationQuery: "Dubai",
+    image:
+      "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Dubai skyline with the Burj Khalifa rising above skyscrapers",
+  },
+  {
+    city: "Cancun",
+    country: "Mexico",
+    destinationQuery: "Cancun",
+    image:
+      "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
+    imageAlt: "Cancun beach with white sand and turquoise water",
+  },
+  {
+    city: "Rome",
+    country: "Italy",
+    destinationQuery: "Rome",
+    image:
+      "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "The Colosseum in Rome beneath a clear blue sky",
   },
 ];
 
@@ -121,10 +148,9 @@ const copy = {
       rooms: "At least one room is required.",
       guests: "At least one guest is required.",
     },
-    startersTitle: "Search starters",
-    startersSubtitle:
-      "Route ideas without displayed fares. Select one to begin a flight search.",
-    cta: "Search route",
+    destinationIdeasTitle: "Places to start your deal search",
+    destinationIdeasSubtitle:
+      "Choose a destination idea, then compare provider results when you continue.",
   },
   fr: {
     title: "Trouvez des offres voyage pour votre prochain trajet",
@@ -159,10 +185,9 @@ const copy = {
       rooms: "Au moins une chambre est requise.",
       guests: "Au moins un voyageur est requis.",
     },
-    startersTitle: "Points de départ",
-    startersSubtitle:
-      "Des idées d’itinéraires sans tarifs affichés. Sélectionnez-en une pour lancer une recherche de vol.",
-    cta: "Rechercher l’itinéraire",
+    destinationIdeasTitle: "Places to start your deal search",
+    destinationIdeasSubtitle:
+      "Choose a destination idea, then compare provider results when you continue.",
   },
 };
 
@@ -182,6 +207,12 @@ const toIsoDate = (date: Date) => {
   const day = String(date.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
+};
+
+const addDays = (date: Date, days: number) => {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return toIsoDate(nextDate);
 };
 
 const startOfLocalDay = (date: Date) =>
@@ -299,6 +330,30 @@ export default function DealsPage() {
       ? `${travelerCount} ${travelerLabel}, ${cabinLabel}`
       : `${travelerCount} ${travelerLabel}`;
   }, [adults, cabinClass, children, includesFlight, includesHotel, rooms]);
+
+  const destinationIdeaHref = useMemo(() => {
+    const baseDate = new Date();
+    const defaultCheckIn = addDays(baseDate, 21);
+    const defaultCheckOut = addDays(baseDate, 24);
+
+    return (destinationQuery: string) =>
+      `/hotels/results?${new URLSearchParams({
+        destination: destinationQuery,
+        checkIn: defaultCheckIn,
+        checkOut: defaultCheckOut,
+        guests: "2",
+        rooms: "1",
+      }).toString()}`;
+  }, []);
+
+  const destinationIdeaCards = useMemo(
+    () =>
+      destinationIdeas.map((idea) => ({
+        ...idea,
+        href: destinationIdeaHref(idea.destinationQuery),
+      })),
+    [destinationIdeaHref],
+  );
 
   const handleModeChange = (mode: PackageMode) => {
     setPackageMode(mode);
@@ -891,34 +946,39 @@ export default function DealsPage() {
           <div className="border-t border-slate-200/80 pt-8 sm:pt-10">
             <div className="max-w-2xl">
               <h2 className="text-2xl font-extrabold [letter-spacing:-0.025em] text-slate-950">
-                {dictionary.startersTitle}
+                {dictionary.destinationIdeasTitle}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                {dictionary.startersSubtitle}
+                {dictionary.destinationIdeasSubtitle}
               </p>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {searchStarters.map((starter) => (
-                <Card
-                  key={starter.route}
-                  className="flex h-full flex-col border-slate-200 p-5"
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+              {destinationIdeaCards.map((idea) => (
+                <Link
+                  key={idea.city}
+                  href={idea.href}
+                  aria-label={`Search trip ideas for ${idea.city}, ${idea.country}`}
+                  className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                 >
-                  <p className="text-lg font-extrabold text-slate-950">
-                    {starter.route}
-                  </p>
-                  <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">
-                    {starter.note}
-                  </p>
-
-                  <LinkButton
-                    href={starter.href}
-                    variant="secondary"
-                    className="mt-5"
-                  >
-                    {dictionary.cta}
-                  </LinkButton>
-                </Card>
+                  <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                    <Image
+                      src={idea.image}
+                      alt={idea.imageAlt}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 50vw"
+                      className="object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-3.5 sm:p-4">
+                    <p className="text-base font-extrabold text-slate-950 sm:text-lg">
+                      {idea.city}
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-600">
+                      {idea.country}
+                    </p>
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
