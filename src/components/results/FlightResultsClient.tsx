@@ -1206,22 +1206,37 @@ export function FlightResultsClient() {
   }
 
   const stopOptions = useMemo(() => {
-    const counts = new Map<string, number>();
+    const buckets = new Map<string, { count: number; minPrice: number }>();
 
     results.forEach((flight) => {
       const bucket = getStopBucket(flight.stops);
-      counts.set(bucket, (counts.get(bucket) ?? 0) + 1);
+      const current = buckets.get(bucket) ?? {
+        count: 0,
+        minPrice: Number.POSITIVE_INFINITY,
+      };
+
+      buckets.set(bucket, {
+        count: current.count + 1,
+        minPrice:
+          Number.isFinite(flight.price) && flight.price > 0
+            ? Math.min(current.minPrice, flight.price)
+            : current.minPrice,
+      });
     });
 
-    return Array.from(counts, ([value, count]) => ({
+    return Array.from(buckets, ([value, data]) => ({
       value,
       label: stopLabel(value),
-      count,
+      count: data.count,
+      secondaryLabel: `${data.count} option${data.count === 1 ? "" : "s"}`,
+      rightLabel: Number.isFinite(data.minPrice)
+        ? formatCurrency(data.minPrice, selectedCurrency)
+        : undefined,
     })).sort(
       (first, second) =>
         stopBucketSortValue(first.value) - stopBucketSortValue(second.value)
     );
-  }, [results]);
+  }, [results, selectedCurrency]);
 
   const airlineOptions = useMemo(
     () =>
@@ -3311,6 +3326,8 @@ type FilterOption = {
   value: string;
   label: string;
   count: number;
+  secondaryLabel?: string;
+  rightLabel?: string;
 };
 
 type TimeFilterMode = "takeoff" | "landing";
@@ -3743,6 +3760,8 @@ function Filters({
               key={option.value}
               label={option.label}
               count={option.count}
+              secondaryLabel={option.secondaryLabel}
+              rightLabel={option.rightLabel}
               checked={selectedStops.includes(option.value)}
               onChange={() => toggleFilterValue(option.value, setSelectedStops)}
             />
@@ -3834,27 +3853,43 @@ function FilterSection({
 function FilterOptionRow({
   label,
   count,
+  secondaryLabel,
+  rightLabel,
   checked,
   onChange,
 }: {
   label: string;
   count?: number;
+  secondaryLabel?: string;
+  rightLabel?: string;
   checked: boolean;
   onChange: () => void;
 }) {
+  const trailingLabel =
+    rightLabel ?? (typeof count === "number" ? String(count) : null);
+
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-[13px] font-medium text-slate-700 transition hover:text-slate-950">
-      <span className="flex min-w-0 items-center gap-2">
+    <label className="flex cursor-pointer items-start justify-between gap-3 py-1.5 text-[13px] font-medium text-slate-700 transition hover:text-slate-950">
+      <span className="flex min-w-0 items-start gap-2">
         <input
           type="checkbox"
-          className="h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
           checked={checked}
           onChange={onChange}
         />
-        <span className="truncate">{label}</span>
+        <span className="min-w-0">
+          <span className="block truncate">{label}</span>
+          {secondaryLabel ? (
+            <span className="block text-[11px] font-medium text-slate-400">
+              {secondaryLabel}
+            </span>
+          ) : null}
+        </span>
       </span>
-      {typeof count === "number" ? (
-        <span className="shrink-0 text-xs font-medium text-slate-400">{count}</span>
+      {trailingLabel ? (
+        <span className="shrink-0 text-xs font-medium text-slate-500">
+          {trailingLabel}
+        </span>
       ) : null}
     </label>
   );
