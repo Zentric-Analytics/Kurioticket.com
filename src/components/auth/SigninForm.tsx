@@ -284,7 +284,7 @@ export function SigninForm({
           </Field>
 
           <Link
-            className="text-sm font-semibold text-teal-dark"
+            className="cursor-pointer text-sm font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
             href="/auth/forgot-password"
           >
             Forgot password?
@@ -333,7 +333,7 @@ export function SigninForm({
           <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
             <button
               type="button"
-              className="font-semibold text-teal-dark disabled:cursor-not-allowed disabled:text-muted"
+              className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
               onClick={resendCode}
               disabled={busy || resending || cooldownSeconds > 0}
             >
@@ -346,7 +346,7 @@ export function SigninForm({
 
             <button
               type="button"
-              className="font-semibold text-teal-dark disabled:cursor-not-allowed disabled:text-muted"
+              className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 disabled:cursor-not-allowed disabled:text-muted disabled:no-underline"
               onClick={startOver}
               disabled={busy || resending}
             >
@@ -359,7 +359,7 @@ export function SigninForm({
       {googleEnabled && step === "credentials" ? (
         <Button
           variant="secondary"
-          className="mt-3 w-full"
+          className="mt-3 w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-violet-500"
           onClick={() =>
             signIn("google", {
               callbackUrl:
@@ -376,7 +376,7 @@ export function SigninForm({
 
       <p className="mt-4 text-sm text-muted">
         New to Kurioticket?{" "}
-        <Link className="font-semibold text-teal-dark" href="/auth/signup">
+        <Link className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2" href="/auth/signup">
           Create an account
         </Link>
       </p>

@@ -31,7 +31,7 @@ export function Button({ className, variant = "primary", size = "md", ...props }
   return (
     <button
       className={cn(
-        "focus-ring inline-flex items-center justify-center gap-2 rounded-md font-semibold transition disabled:pointer-events-none disabled:opacity-60",
+        "focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-md font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
         variants[variant],
         sizes[size],
         className,
@@ -46,7 +46,7 @@ export function LinkButton({ className, variant = "primary", size = "md", href, 
     <Link
       href={href}
       className={cn(
-        "focus-ring inline-flex items-center justify-center gap-2 rounded-md font-semibold transition",
+        "focus-ring inline-flex cursor-pointer items-center justify-center gap-2 rounded-md font-semibold transition",
         variants[variant],
         sizes[size],
         className,
