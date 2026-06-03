@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { getDefaultHomeDiscoveryPriceRoutes } from "@/data/homeDiscovery";
 import { requireAdminApiSession, writeAdminAuditLog } from "@/lib/admin";
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import {
   buildHomepageFareSearch,
   getHomepageFareDateStrategy,
   HOMEPAGE_FARE_DEFAULT_CURRENCY,
-  HOMEPAGE_FARE_DEFAULT_ORIGIN,
+  getPhase3AHomepageFareRoutes,
   isSameHomepageFareRoute,
-  PHASE_3A_POPULAR_HOMEPAGE_FARE_ROUTES,
   upsertActiveHomepageFareSnapshot,
   upsertFailedHomepageFareSnapshot,
   upsertUnavailableHomepageFareSnapshot,
@@ -168,22 +166,20 @@ async function refreshHomepageFareRoute({
 function getRefreshRoutes(scope: RefreshScope): HomepageRefreshRoute[] {
   const routes: HomepageRefreshRoute[] = [];
 
-  if (scope === "popular" || scope === "all-phase-3a") {
-    routes.push(
-      ...PHASE_3A_POPULAR_HOMEPAGE_FARE_ROUTES.map((route) => ({
-        origin: HOMEPAGE_FARE_DEFAULT_ORIGIN,
-        destination: route.destination,
-      })),
-    );
-  }
+  for (const route of getPhase3AHomepageFareRoutes()) {
+    const isPopularRoute = route.id.startsWith("popular-");
+    const isDiscoverRoute = route.id.startsWith("discover-");
 
-  if (scope === "discover-first-6" || scope === "all-phase-3a") {
-    routes.push(
-      ...getDefaultHomeDiscoveryPriceRoutes().map((route) => ({
-        origin: route.originCode,
-        destination: route.destinationCode,
-      })),
-    );
+    if (
+      scope === "all-phase-3a" ||
+      (scope === "popular" && isPopularRoute) ||
+      (scope === "discover-first-6" && isDiscoverRoute)
+    ) {
+      routes.push({
+        origin: route.origin,
+        destination: route.destination,
+      });
+    }
   }
 
   return dedupeRefreshRoutes(routes);
