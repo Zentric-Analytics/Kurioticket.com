@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
+import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
 import {
@@ -297,6 +297,18 @@ if (isGoogleAuthConfigured()) {
           response_type:
             "code",
         },
+      },
+
+      profile(profile: GoogleProfile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          emailVerified: profile.email_verified
+            ? new Date()
+            : null,
+        };
       },
 
       allowDangerousEmailAccountLinking:
