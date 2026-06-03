@@ -306,6 +306,8 @@ export function HotelResultsClient() {
         if (!active) return;
         setResults(data.results);
         setWarnings(data.warnings || []);
+        setVisibleFiltered(data.results);
+        setFilterApplying(false);
         setMaxPrice(getResultMaxPrice(data.results));
         setSelectedFilters(emptySelections);
       })
@@ -414,6 +416,7 @@ export function HotelResultsClient() {
     setMinRating(3);
     setSelectedFilters(emptySelections);
     setFiltersOpen(false);
+    triggerFilterApplying();
   };
 
   const toggleFilter = (group: keyof HotelFilterSelections, value: string) => {
@@ -423,6 +426,7 @@ export function HotelResultsClient() {
         ? current[group].filter((item) => item !== value)
         : [...current[group], value],
     }));
+    triggerFilterApplying();
   };
 
   return (
@@ -452,10 +456,10 @@ export function HotelResultsClient() {
         <aside className="hidden lg:block">
           <HotelFilters
             maxPrice={maxPrice}
-            setMaxPrice={setMaxPrice}
+            setMaxPrice={updateMaxPrice}
             resultMaxPrice={resultMaxPrice}
             minRating={minRating}
-            setMinRating={setMinRating}
+            setMinRating={updateMinRating}
             options={filterOptions}
             selectedFilters={selectedFilters}
             toggleFilter={toggleFilter}
@@ -562,10 +566,10 @@ export function HotelResultsClient() {
         </div>
         <HotelFilters
           maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
+          setMaxPrice={updateMaxPrice}
           resultMaxPrice={resultMaxPrice}
           minRating={minRating}
-          setMinRating={setMinRating}
+          setMinRating={updateMinRating}
           options={filterOptions}
           selectedFilters={selectedFilters}
           toggleFilter={toggleFilter}
