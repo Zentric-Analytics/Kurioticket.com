@@ -1,8 +1,8 @@
 "use client";
 
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, Minus, Plus } from "lucide-react";
+import { Calendar, ChevronDown, Minus, Plus, RotateCcw, X } from "lucide-react";
 
 const parseIsoDate = (value: string) => {
   if (!value) return null;
@@ -32,6 +32,11 @@ const isBeforeToday = (date: Date) =>
 
 const addMonths = (date: Date, offset: number) =>
   new Date(date.getFullYear(), date.getMonth() + offset, 1);
+
+const currentMonthStart = () => {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+};
 
 type MonthCell = {
   date: Date;
@@ -121,14 +126,16 @@ export function HotelSearchBar({
   const [error, setError] = useState("");
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
+  const destinationInputRef = useRef<HTMLInputElement>(null);
+  const datesWrapperRef = useRef<HTMLDivElement>(null);
+  const guestsRoomsWrapperRef = useRef<HTMLDivElement>(null);
   const [hotelVisibleMonthDate, setHotelVisibleMonthDate] = useState(() => {
     const parsedCheckIn = parseIsoDate(initialCheckIn);
     if (parsedCheckIn) {
       return new Date(parsedCheckIn.getFullYear(), parsedCheckIn.getMonth(), 1);
     }
 
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
+    return currentMonthStart();
   });
 
   const dateSummary = useMemo(() => {
@@ -157,6 +164,70 @@ export function HotelSearchBar({
 
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
+  const normalizedRooms = String(clampCount(rooms, 1, 6));
+  const hasActiveHotelSearch =
+    destination.trim() !== "" ||
+    checkIn !== "" ||
+    checkOut !== "" ||
+    hotelAdultCount !== 1 ||
+    hotelChildCount !== 0 ||
+    normalizedRooms !== "1" ||
+    hotelPetFriendly ||
+    error !== "";
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+
+      if (!(target instanceof Node)) return;
+
+      if (datesOpen && !datesWrapperRef.current?.contains(target)) {
+        setDatesOpen(false);
+      }
+
+      if (
+        guestsRoomsOpen &&
+        !guestsRoomsWrapperRef.current?.contains(target)
+      ) {
+        setGuestsRoomsOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+
+      setDatesOpen(false);
+      setGuestsRoomsOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [datesOpen, guestsRoomsOpen]);
+
+  const handleClearDestination = () => {
+    setDestination("");
+    setError("");
+    destinationInputRef.current?.focus();
+  };
+
+  const handleResetSearch = () => {
+    setDestination("");
+    setCheckIn("");
+    setCheckOut("");
+    setHotelAdultCount(1);
+    setHotelChildCount(0);
+    setRooms("1");
+    setHotelPetFriendly(false);
+    setError("");
+    setDatesOpen(false);
+    setGuestsRoomsOpen(false);
+    setHotelVisibleMonthDate(currentMonthStart());
+  };
 
   const handleToggleDates = () => {
     setDatesOpen((prev) => {
@@ -271,17 +342,33 @@ export function HotelSearchBar({
               <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
                 Destination
               </span>
-              <input
-                type="text"
-                value={destination}
-                onChange={(event) => setDestination(event.target.value)}
-                placeholder="City, area, or hotel"
-                className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
-                required
-              />
+              <span className="relative block">
+                <input
+                  ref={destinationInputRef}
+                  type="text"
+                  value={destination}
+                  onChange={(event) => setDestination(event.target.value)}
+                  placeholder="City, area, or hotel"
+                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                  required
+                />
+                {destination ? (
+                  <button
+                    type="button"
+                    onClick={handleClearDestination}
+                    aria-label="Clear destination"
+                    className="focus-ring absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </span>
             </label>
 
-            <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+            <div
+              ref={datesWrapperRef}
+              className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+            >
               <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
                 Travel dates
               </span>
@@ -429,7 +516,10 @@ export function HotelSearchBar({
               ) : null}
             </div>
 
-            <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+            <div
+              ref={guestsRoomsWrapperRef}
+              className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+            >
               <span className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
                 Guests
               </span>
@@ -577,6 +667,19 @@ export function HotelSearchBar({
             </div>
           </div>
         </div>
+
+        {hasActiveHotelSearch ? (
+          <div className="flex justify-end px-1">
+            <button
+              type="button"
+              onClick={handleResetSearch}
+              className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            >
+              <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+              Clear all
+            </button>
+          </div>
+        ) : null}
 
         {error ? (
           <p

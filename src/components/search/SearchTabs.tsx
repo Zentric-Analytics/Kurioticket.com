@@ -1006,6 +1006,19 @@ export function SearchTabs({
 
   const travelerCount = adultCount + childCount + infantCount;
 
+  const hasActiveFlightSearch =
+    from.trim() !== "" ||
+    fromCode.trim() !== "" ||
+    to.trim() !== "" ||
+    toCode.trim() !== "" ||
+    departureDate !== "" ||
+    returnDate !== "" ||
+    tripType !== "round-trip" ||
+    adultCount !== 1 ||
+    childCount !== 0 ||
+    infantCount !== 0 ||
+    cabinClass !== "economy";
+
   const normalizedCabinClass =
     normalizeCabinClass(cabinClass);
   const cabinClassLabel =
@@ -1488,15 +1501,6 @@ export function SearchTabs({
                 </div>
               )}
             </div>
-            {(from.trim() || to.trim() || departureDate || returnDate || travelerCount !== 1 || cabinClass !== "economy" || tripType !== "round-trip") ? (
-              <button
-                type="button"
-                onClick={onResetFlightSearch}
-                className="focus-ring rounded-md px-2 py-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-800"
-              >
-                Clear all
-              </button>
-            ) : null}
           </div>
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
@@ -2077,6 +2081,17 @@ export function SearchTabs({
               </div>
             </div>
           </div>
+          {hasActiveFlightSearch ? (
+            <div className="flex justify-end px-1">
+              <button
+                type="button"
+                onClick={onResetFlightSearch}
+                className="focus-ring inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+              >
+                Clear all
+              </button>
+            </div>
+          ) : null}
         </form>
       ) : (
         <form
