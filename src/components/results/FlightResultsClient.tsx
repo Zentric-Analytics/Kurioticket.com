@@ -667,9 +667,7 @@ export function FlightResultsClient() {
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
-  const filterApplyingTimeoutRef = useRef<ReturnType<
-    typeof window.setTimeout
-  > | null>(null);
+  const filterApplyingTimeoutRef = useRef<number | null>(null);
 
   const originFallbackSuggestions = useMemo(
     () => filterAirportOptions(originInput),
@@ -722,6 +720,7 @@ export function FlightResultsClient() {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrates client-only localStorage-backed recent searches after mount.
     setRecentSearches(readRecentSearches());
     setSavedTripIds(readSavedTripIds());
   }, []);
@@ -775,6 +774,7 @@ export function FlightResultsClient() {
     const language = navigator.language || "";
     const parts = language.split("-");
     if (parts.length > 1 && /^[A-Za-z]{2}$/.test(parts[1])) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Initializes a browser-only locale hint after mount.
       setCountryHint(parts[1].toUpperCase());
     }
   }, []);
@@ -782,6 +782,7 @@ export function FlightResultsClient() {
   useEffect(() => {
     const query = originInput.trim();
     if (query.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears stale suggestions when the search query becomes too short.
       setOriginSuggestions([]);
       return;
     }
@@ -815,6 +816,7 @@ export function FlightResultsClient() {
   useEffect(() => {
     const query = destinationInput.trim();
     if (query.length < 2) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears stale suggestions when the search query becomes too short.
       setDestinationSuggestions([]);
       return;
     }
