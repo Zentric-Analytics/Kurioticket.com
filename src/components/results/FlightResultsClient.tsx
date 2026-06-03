@@ -2258,17 +2258,17 @@ export function FlightResultsClient() {
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.08)] sm:p-2">
-                <div className="flex flex-col gap-1 lg:flex-row lg:items-stretch lg:gap-1.5">
-                  <div className="grid min-w-0 flex-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.36fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-1">
+              <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:p-1.5">
+                <div className="flex flex-col gap-0.5 lg:flex-row lg:items-stretch lg:gap-1">
+                  <div className="grid min-w-0 flex-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.36fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-0">
                     <div className="sm:col-span-2 lg:col-span-1">
                       <div className="grid min-w-0 grid-cols-1 overflow-visible bg-transparent sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch lg:border-r lg:border-slate-200">
                 <div
                   ref={originWrapRef}
-                  className="relative min-h-[54px] px-2.5 py-1 sm:pr-2"
+                  className="relative min-h-[46px] px-2 py-0.5 sm:pr-2"
                 >
                   <label
-                    className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500"
+                    className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500"
                     htmlFor="results-origin"
                   >
                     Origin
@@ -2300,7 +2300,7 @@ export function FlightResultsClient() {
                     }}
                     placeholder="From?"
                     autoComplete="off"
-                    className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[16px] font-bold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
+                    className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[15px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
                   />
 
                   {activeSuggest === "origin" && dropdownPosition ? (
@@ -2323,7 +2323,7 @@ export function FlightResultsClient() {
                     type="button"
                     aria-label="Swap origin and destination"
                     onClick={handleSwapLocations}
-                    className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                    className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                   >
                     <ArrowRightLeft size={14} />
                   </button>
@@ -2331,10 +2331,10 @@ export function FlightResultsClient() {
 
                 <div
                   ref={destinationWrapRef}
-                  className="relative min-h-[54px] px-2.5 py-1 sm:pl-2"
+                  className="relative min-h-[46px] px-2 py-0.5 sm:pl-2"
                 >
                   <label
-                    className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500"
+                    className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500"
                     htmlFor="results-destination"
                   >
                     Destination
@@ -2368,7 +2368,7 @@ export function FlightResultsClient() {
                     }}
                     placeholder="To?"
                     autoComplete="off"
-                    className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[16px] font-bold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
+                    className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[15px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
                   />
 
                   {activeSuggest === "destination" && dropdownPosition ? (
@@ -2395,11 +2395,11 @@ export function FlightResultsClient() {
                       setActiveDatePicker("departure");
                       setDatePickerPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[42px] w-full items-center gap-1.5 border-t border-slate-200 bg-transparent px-2.5 py-1 text-left transition hover:bg-slate-50 sm:border-l sm:border-t-0 lg:border-l-0"
+                    className="focus-ring flex h-full min-h-[38px] w-full items-center gap-1.5 border-t border-slate-200 bg-transparent px-2 py-0.5 text-left transition hover:bg-slate-50 sm:border-l sm:border-t-0 lg:border-l-0"
                   >
                     <Calendar className="h-3.5 w-3.5 shrink-0 text-indigo-700" />
                     <span className="min-w-0">
-                      <span className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500">
+                      <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Travel dates
                       </span>
                       <span className="block truncate text-[13px] font-semibold text-slate-950">
@@ -2420,10 +2420,10 @@ export function FlightResultsClient() {
                       setTravelerPopoverOpen(true);
                       setTravelerPopoverPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[42px] w-full items-center justify-between gap-1.5 border-t border-slate-200 bg-transparent px-2.5 py-1 text-left transition hover:bg-slate-50 sm:border-l sm:border-t-0"
+                    className="focus-ring flex h-full min-h-[38px] w-full items-center justify-between gap-1.5 border-t border-slate-200 bg-transparent px-2 py-0.5 text-left transition hover:bg-slate-50 sm:border-l sm:border-t-0"
                   >
                     <span className="min-w-0">
-                      <span className="block text-[0.6rem] font-black uppercase tracking-[0.14em] text-slate-500">
+                      <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Travelers
                       </span>
                       <span className="block truncate text-[13px] font-semibold text-slate-950">
@@ -2442,7 +2442,7 @@ export function FlightResultsClient() {
 
                   <Button
                     type="submit"
-                    className="h-9 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-black text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:h-[42px] lg:w-auto lg:min-w-[104px]"
+                    className="h-8 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:h-[38px] lg:w-auto lg:min-w-[96px]"
                   >
                     Search
                   </Button>
