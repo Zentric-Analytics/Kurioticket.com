@@ -119,9 +119,22 @@ export type HomeDiscoveryRoute = {
   destinationCode: string;
 };
 
+export const DEFAULT_HOME_DISCOVERY_REGION = "US";
+export const HOME_DISCOVERY_PRICE_CAP = 6;
+
 export function getHomeDiscoveryByRegion(regionCode?: string | null): HomeDiscoveryItem[] {
   if (!regionCode) return fallbackDiscovery;
   return homeDiscoveryByRegion[regionCode] ?? fallbackDiscovery;
+}
+
+export function getDefaultHomeDiscoveryPriceRoutes(): HomeDiscoveryRoute[] {
+  return getHomeDiscoveryByRegion(DEFAULT_HOME_DISCOVERY_REGION)
+    .slice(0, HOME_DISCOVERY_PRICE_CAP)
+    .map(({ id, originCode, destinationCode }) => ({
+      id,
+      originCode,
+      destinationCode,
+    }));
 }
 
 export function getHomeDiscoveryRouteAllowlist(): Map<string, HomeDiscoveryRoute> {
