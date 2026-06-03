@@ -698,6 +698,7 @@ function CarsSearchBar({
   values: CarsFormValues;
 }) {
   const pickupLocationRef = useRef<HTMLInputElement | null>(null);
+  const dropoffLocationRef = useRef<HTMLInputElement | null>(null);
   const dateWrapRef = useRef<HTMLDivElement | null>(null);
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
   const [datesOpen, setDatesOpen] = useState(false);
@@ -843,18 +844,35 @@ function CarsSearchBar({
                 </div>
 
                 {values.returnToDifferentLocation ? (
-                  <input
-                    id="dropoffLocation"
-                    name="dropoffLocation"
-                    type="text"
-                    value={values.dropoffLocation}
-                    onChange={(event) =>
-                      updateValue("dropoffLocation", event.target.value)
-                    }
-                    placeholder="Return city, airport, or address"
-                    className="h-7 w-full border-t border-slate-100 bg-transparent p-0 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8 lg:pt-2"
-                    autoComplete="off"
-                  />
+                  <div className="relative">
+                    <input
+                      ref={dropoffLocationRef}
+                      id="dropoffLocation"
+                      name="dropoffLocation"
+                      type="text"
+                      value={values.dropoffLocation}
+                      onChange={(event) =>
+                        updateValue("dropoffLocation", event.target.value)
+                      }
+                      placeholder="Return city, airport, or address"
+                      className="h-7 w-full border-t border-slate-100 bg-transparent py-0 pl-0 pr-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8 lg:pt-2"
+                      autoComplete="off"
+                    />
+
+                    {values.dropoffLocation ? (
+                      <button
+                        type="button"
+                        aria-label="Clear return location"
+                        onClick={() => {
+                          updateValue("dropoffLocation", "");
+                          dropoffLocationRef.current?.focus();
+                        }}
+                        className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    ) : null}
+                  </div>
                 ) : (
                   <p className="truncate border-t border-slate-100 pt-1.5 text-sm font-semibold text-slate-500 lg:pt-2">
                     Return to same location
