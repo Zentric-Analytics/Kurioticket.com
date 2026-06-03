@@ -25,9 +25,10 @@ const fallbackLocation = (ipDetected: boolean): LocationResponse => ({
 export async function GET(request: Request) {
   const visitorIp = extractVisitorIp(request.headers);
   const location = await resolveIpinfoLiteCountryContext(visitorIp);
+  const ipDetected = Boolean(visitorIp);
 
   if (!location) {
-    return NextResponse.json(fallbackLocation(Boolean(visitorIp)));
+    return NextResponse.json(fallbackLocation(ipDetected));
   }
 
   return NextResponse.json({
@@ -36,6 +37,6 @@ export async function GET(request: Request) {
     country: location.country,
     continentCode: location.continentCode ?? null,
     continent: location.continent ?? null,
-    ipDetected: true,
+    ipDetected,
   } satisfies LocationResponse);
 }
