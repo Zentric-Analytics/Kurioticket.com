@@ -2481,7 +2481,7 @@ export function FlightResultsClient() {
     <main className="flex-1 overflow-x-hidden bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
       <div
         className={cn(
-          "fixed left-0 right-0 top-0 z-40 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur sm:hidden",
+          "bg-[#f6f8fb]/95 px-4 py-2 sm:hidden",
           mobileSearchOpen && "hidden"
         )}
       >
@@ -2524,14 +2524,12 @@ export function FlightResultsClient() {
 
       <div
         className={cn(
-          "fixed left-0 right-0 top-0 z-50 max-h-[100dvh] overflow-y-auto bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden",
+          "bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden",
           mobileSearchOpen ? "block" : "hidden"
         )}
       >
         {mobileSearchOpen ? renderCompactSearchForm("mobile") : null}
       </div>
-
-      <div className={cn("h-[74px] sm:hidden", mobileSearchOpen && "hidden")} />
 
       <div className="page-shell grid gap-5 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <section className="lg:col-span-2">
