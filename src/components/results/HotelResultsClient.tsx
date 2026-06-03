@@ -323,20 +323,6 @@ export function HotelResultsClient() {
       ),
     [maxPrice, minRating, results, selectedFilters],
   );
-  const repeatedImageUrls = useMemo(() => {
-    const counts = new Map<string, number>();
-
-    for (const hotel of filtered) {
-      if (!hotel.imageUrl) continue;
-      counts.set(hotel.imageUrl, (counts.get(hotel.imageUrl) ?? 0) + 1);
-    }
-
-    return new Set(
-      Array.from(counts.entries())
-        .filter(([, count]) => count > 1)
-        .map(([imageUrl]) => imageUrl),
-    );
-  }, [filtered]);
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
   const showFilteredEmptyState =
     !loading && !error && results.length > 0 && filtered.length === 0;
@@ -439,13 +425,7 @@ export function HotelResultsClient() {
                 </p>
               </div>
               {filtered.map((hotel) => (
-                <HotelCard
-                  key={hotel.id}
-                  hotel={hotel}
-                  useImagePlaceholder={
-                    hotel.imageUrl ? repeatedImageUrls.has(hotel.imageUrl) : false
-                  }
-                />
+                <HotelCard key={hotel.id} hotel={hotel} />
               ))}
             </>
           )}

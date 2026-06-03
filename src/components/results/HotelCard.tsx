@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { Building2, ImageOff, MapPin } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Building2, MapPin } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -17,13 +18,43 @@ function formatHotelRating(rating: number) {
   return Number.isInteger(rating) ? String(rating) : rating.toFixed(1);
 }
 
+const fallbackHotelImages = [
+  "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=90",
+  "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=90",
+  "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=90",
+  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=90",
+  "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=90",
+  "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=1200&q=90",
+  "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=1200&q=90",
+  "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=90",
+];
+
+function getDeterministicFallbackImage(hotel: PublicHotelResult) {
+  const identity = `${hotel.id || ""}-${hotel.name || ""}-${hotel.location || ""}`;
+  let hash = 0;
+
+  for (let index = 0; index < identity.length; index += 1) {
+    hash = (hash * 31 + identity.charCodeAt(index)) >>> 0;
+  }
+
+  return fallbackHotelImages[hash % fallbackHotelImages.length];
+}
+
 type HotelCardProps = {
   hotel: PublicHotelResult;
-  useImagePlaceholder?: boolean;
 };
 
-export function HotelCard({ hotel, useImagePlaceholder = false }: HotelCardProps) {
+export function HotelCard({ hotel }: HotelCardProps) {
   const starRating = getHotelStarRating(hotel.rating);
+  const fallbackImageUrl = useMemo(() => getDeterministicFallbackImage(hotel), [hotel]);
+  const supplierImageUrl = hotel.imageUrl?.trim();
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(() => new Set());
+  const imageUrl =
+    supplierImageUrl && !failedImageUrls.has(supplierImageUrl)
+      ? supplierImageUrl
+      : failedImageUrls.has(fallbackImageUrl)
+        ? ""
+        : fallbackImageUrl;
 
   async function redirectToHotel() {
     const response = await fetch("/api/redirect", {
@@ -40,17 +71,20 @@ export function HotelCard({ hotel, useImagePlaceholder = false }: HotelCardProps
     <Card className="overflow-hidden">
       <div className="grid md:grid-cols-[260px_1fr]">
         <div className="relative aspect-[16/10] bg-surface-muted md:aspect-auto md:min-h-[236px]">
-          {hotel.imageUrl && !useImagePlaceholder ? (
+          {imageUrl ? (
             <Image
-              src={hotel.imageUrl}
+              src={imageUrl}
               alt={`${hotel.name} stay option${hotel.location ? ` near ${hotel.location}` : ""}`}
               fill
               className="object-cover"
               sizes="(min-width: 768px) 260px, 100vw"
+              onError={() => {
+                setFailedImageUrls((current) => new Set(current).add(imageUrl));
+              }}
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-indigo-50 via-white to-teal/10 px-5 text-center text-teal">
-              {useImagePlaceholder ? <ImageOff size={34} /> : <Building2 size={36} />}
+              <Building2 size={36} />
               <span className="max-w-[180px] text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Image unavailable
               </span>
