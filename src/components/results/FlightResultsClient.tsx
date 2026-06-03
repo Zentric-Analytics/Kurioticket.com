@@ -3539,19 +3539,19 @@ function Filters({
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200/70">
-      <div className="flex items-center justify-between gap-2 bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
+    <div className="bg-white">
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
           <h2 className="text-base font-bold text-white">Filter by</h2>
         </div>
         <SlidersHorizontal className="text-white/90" size={18} />
       </div>
 
-      <div className="space-y-4 bg-white px-4 py-4">
-        <label className="block">
-          <span className="mb-1.5 flex items-center justify-between gap-2 text-[13px] font-semibold leading-5 text-slate-800">
-            Price
-            <span className="text-xs font-medium text-navy">
+      <div className="space-y-4 bg-white px-3 py-3">
+        <section>
+          <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px] font-semibold leading-5 text-slate-800">
+            <span>Price</span>
+            <span className="shrink-0 text-xs font-medium text-navy">
               {priceBounds.max
                 ? `${formatCurrency(priceBounds.min, currency)} - ${formatCurrency(
                     Math.min(maxPrice, priceBounds.max),
@@ -3559,7 +3559,7 @@ function Filters({
                   )}`
                 : "Loading prices"}
             </span>
-          </span>
+          </div>
           <input
             className={filterRangeClass}
             type="range"
@@ -3578,15 +3578,15 @@ function Filters({
               {priceBounds.max ? formatCurrency(priceBounds.max, currency) : "—"}
             </span>
           </div>
-        </label>
+        </section>
 
         <FilterSection title="Times">
-          <div className="grid grid-cols-2 border-b border-slate-200">
+          <div className="grid grid-cols-2 border-b border-slate-200/70">
             <button
               type="button"
               onClick={() => setTimeFilterMode("takeoff")}
               className={cn(
-                "border-b-2 px-2 pb-1.5 pt-1 text-xs font-medium transition",
+                "border-b-2 px-2 pb-1.5 pt-1 text-[13px] font-medium transition",
                 timeFilterMode === "takeoff"
                   ? "border-indigo-600 text-indigo-700"
                   : "border-transparent text-slate-600 hover:text-slate-900"
@@ -3598,7 +3598,7 @@ function Filters({
               type="button"
               onClick={() => setTimeFilterMode("landing")}
               className={cn(
-                "border-b-2 px-2 pb-1.5 pt-1 text-xs font-medium transition",
+                "border-b-2 px-2 pb-1.5 pt-1 text-[13px] font-medium transition",
                 timeFilterMode === "landing"
                   ? "border-indigo-600 text-indigo-700"
                   : "border-transparent text-slate-600 hover:text-slate-900"
@@ -3814,11 +3814,11 @@ function FilterSection({
     Boolean(children) && (!Array.isArray(children) || children.length > 0);
 
   return (
-    <section className="border-t border-slate-200 pt-4 first:border-t-0 first:pt-0">
-      <h3 className="text-[13px] font-semibold leading-5 text-slate-800">
+    <section className="border-t border-slate-200/70 pt-3 first:border-t-0 first:pt-0">
+      <h3 className="mb-1.5 text-[13px] font-semibold leading-5 text-slate-800">
         {title}
       </h3>
-      <div className="mt-2 grid gap-1">
+      <div className="grid gap-1">
         {hasOptions ? (
           children
         ) : (
@@ -3843,8 +3843,8 @@ function FilterOptionRow({
   onChange: () => void;
 }) {
   return (
-    <label className="flex items-center justify-between gap-2 py-1.5 text-[13px] font-medium text-slate-700 transition hover:text-slate-950">
-      <span className="flex min-w-0 items-center gap-1.5">
+    <label className="flex cursor-pointer items-center justify-between gap-3 py-1 text-[13px] font-medium text-slate-700 transition hover:text-slate-950">
+      <span className="flex min-w-0 items-center gap-2">
         <input
           type="checkbox"
           className="h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
@@ -3854,7 +3854,7 @@ function FilterOptionRow({
         <span className="truncate">{label}</span>
       </span>
       {typeof count === "number" ? (
-        <span className="text-xs font-medium text-slate-400">{count}</span>
+        <span className="shrink-0 text-xs font-medium text-slate-400">{count}</span>
       ) : null}
     </label>
   );
