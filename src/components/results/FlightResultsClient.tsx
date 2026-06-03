@@ -2217,20 +2217,33 @@ export function FlightResultsClient() {
         <section className="lg:col-span-2">
           <div
             className={cn(
-              "mx-auto w-full max-w-3xl sm:hidden",
+              "mx-auto flex w-full max-w-3xl items-stretch gap-2 sm:hidden",
               mobileSearchOpen && "hidden"
             )}
           >
+            <Button
+              type="button"
+              variant="secondary"
+              aria-label="Open filters"
+              className="h-auto min-h-[64px] w-[72px] shrink-0 rounded-2xl border-slate-200 bg-white px-2 text-[12px] font-semibold text-slate-800 shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+              onClick={() => setFiltersOpen(true)}
+            >
+              <span className="flex flex-col items-center justify-center gap-1">
+                <SlidersHorizontal size={17} />
+                <span>Filters</span>
+              </span>
+            </Button>
+
             <button
               type="button"
               onClick={() => setMobileSearchOpen(true)}
-              className="flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 text-left shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:shadow-[0_12px_28px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+              className="flex h-[64px] min-w-0 flex-1 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-0 text-left shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:shadow-[0_12px_28px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
             >
-              <span className="min-w-0">
-                <span className="block truncate text-[15px] font-semibold leading-5 text-slate-950">
+              <span className="flex min-w-0 flex-1 flex-col justify-center">
+                <span className="block truncate text-[17px] font-semibold leading-5 text-slate-950">
                   {mobileRouteSummary}
                 </span>
-                <span className="mt-0.5 block truncate text-[12px] font-medium leading-4 text-slate-600">
+                <span className="mt-1 block truncate text-[13px] font-medium leading-4 text-slate-600">
                   {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
                   {mobileTravelerSummary}
                 </span>
@@ -2743,15 +2756,6 @@ export function FlightResultsClient() {
                     {sortedResults.length === 1 ? "" : "s"} found
                   </p>
                 </div>
-
-                <Button
-                  variant="secondary"
-                  className="h-12 w-full rounded-xl border-slate-300 bg-white text-base font-semibold shadow-sm transition hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 lg:hidden"
-                  onClick={() => setFiltersOpen(true)}
-                >
-                  <SlidersHorizontal size={18} />
-                  Filters
-                </Button>
               </div>
 
               <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
