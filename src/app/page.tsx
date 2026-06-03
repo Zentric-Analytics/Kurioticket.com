@@ -45,6 +45,7 @@ const heroImage =
 const destinations = [
   {
     id: "dubai",
+    code: "DXB",
     cityKey: "homeDestinationDubaiCity",
     countryKey: "homeDestinationDubaiCountry",
     altKey: "homeDestinationDubaiAlt",
@@ -53,6 +54,7 @@ const destinations = [
   },
   {
     id: "london",
+    code: "LHR",
     cityKey: "homeDestinationLondonCity",
     countryKey: "homeDestinationLondonCountry",
     altKey: "homeDestinationLondonAlt",
@@ -61,6 +63,7 @@ const destinations = [
   },
   {
     id: "paris",
+    code: "CDG",
     cityKey: "homeDestinationParisCity",
     countryKey: "homeDestinationParisCountry",
     altKey: "homeDestinationParisAlt",
@@ -69,6 +72,7 @@ const destinations = [
   },
   {
     id: "bali",
+    code: "DPS",
     cityKey: "homeDestinationBaliCity",
     countryKey: "homeDestinationBaliCountry",
     altKey: "homeDestinationBaliAlt",
@@ -77,6 +81,7 @@ const destinations = [
   },
   {
     id: "new-york",
+    code: "JFK",
     cityKey: "homeDestinationNewYorkCity",
     countryKey: "homeDestinationNewYorkCountry",
     altKey: "homeDestinationNewYorkAlt",
@@ -93,12 +98,30 @@ validateDestinationImages(
   })),
 );
 
+type DestinationPrice = {
+  id: string;
+  code: string;
+  price?: number;
+  currency?: string;
+  providerBacked: boolean;
+  unavailable?: boolean;
+};
+
+type DestinationPriceState = {
+  loading: boolean;
+  prices: Record<string, DestinationPrice>;
+};
+
 export default function Home() {
   const { locale } = useLocale();
   const { mode: regionCode } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
+  const [destinationPriceState, setDestinationPriceState] = useState<DestinationPriceState>({
+    loading: true,
+    prices: {},
+  });
   const destinationsRailRef = useRef<HTMLDivElement>(null);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
@@ -147,6 +170,42 @@ export default function Home() {
     });
 
     return () => window.cancelAnimationFrame(frameId);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchDestinationPrices() {
+      try {
+        const response = await fetch("/api/flights/destination-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            destinations: destinations.map(({ id, code }) => ({ id, code })),
+            currency: "USD",
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Destination prices unavailable");
+        }
+
+        const payload = (await response.json()) as { prices?: DestinationPrice[] };
+        const prices = Object.fromEntries(
+          (payload.prices ?? []).map((price) => [price.id, price]),
+        );
+
+        setDestinationPriceState({ loading: false, prices });
+      } catch {
+        if (controller.signal.aborted) return;
+        setDestinationPriceState({ loading: false, prices: {} });
+      }
+    }
+
+    void fetchDestinationPrices();
+
+    return () => controller.abort();
   }, []);
 
   const handleSavedTripToggle = (
@@ -245,6 +304,8 @@ export default function Home() {
                   saveLabelTemplate={t("homeSaveDestination")}
                   image={destination.image}
                   destinationId={destination.id}
+                  price={destinationPriceState.prices[destination.id]}
+                  isPriceLoading={destinationPriceState.loading}
                   isSaved={savedTripIds.includes(destination.id)}
                   onHeartToggle={handleSavedTripToggle}
                 />
@@ -618,6 +679,8 @@ function DestinationCard({
   image,
   saveLabelTemplate,
   destinationId,
+  price,
+  isPriceLoading,
   isSaved,
   onHeartToggle,
 }: {
@@ -627,6 +690,8 @@ function DestinationCard({
   image: string;
   saveLabelTemplate: string;
   destinationId: string;
+  price?: DestinationPrice;
+  isPriceLoading: boolean;
   isSaved: boolean;
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -676,12 +741,68 @@ function DestinationCard({
         </div>
 
         <div className="flex items-center p-4">
-          <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
-            Explore fares
-          </span>
+          <DestinationPricePill price={price} isLoading={isPriceLoading} />
         </div>
       </Link>
     </article>
+  );
+}
+
+
+function DestinationPricePill({
+  price,
+  isLoading,
+}: {
+  price?: DestinationPrice;
+  isLoading: boolean;
+}) {
+  const hasProviderPrice =
+    price?.providerBacked === true &&
+    typeof price.price === "number" &&
+    Number.isFinite(price.price) &&
+    Boolean(price.currency);
+
+  if (isLoading) {
+    return (
+      <span
+        className="inline-flex h-8 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
+        aria-label="Prices update with provider results"
+      />
+    );
+  }
+
+  if (!hasProviderPrice) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
+        Explore fares
+      </span>
+    );
+  }
+
+  const amount = price.price;
+  const currency = price.currency;
+
+  if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
+        Explore fares
+      </span>
+    );
+  }
+
+  const formattedPrice = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+
+  return (
+    <span
+      className="inline-flex rounded-full border border-emerald-200 bg-emerald-50/95 px-3 py-1.5 text-sm font-semibold text-emerald-800"
+      aria-label={`Provider-backed fare estimate from ${formattedPrice}`}
+    >
+      from {formattedPrice}
+    </span>
   );
 }
 
