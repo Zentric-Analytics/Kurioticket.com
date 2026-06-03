@@ -2521,18 +2521,18 @@ export function FlightResultsClient() {
     <main className="flex-1 overflow-x-hidden bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
       <div
         className={cn(
-          "fixed left-0 right-0 top-0 z-40 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur sm:hidden",
+          "fixed left-0 right-0 top-[168px] z-40 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur sm:hidden",
           mobileSearchOpen && "hidden"
         )}
       >
         {renderMobileControlsRow()}
       </div>
 
-      <div className={cn("h-[74px] sm:hidden", mobileSearchOpen && "hidden")} />
+      <div className={cn("h-[82px] sm:hidden", mobileSearchOpen && "hidden")} />
 
       <div
         className={cn(
-          "fixed left-0 right-0 top-0 z-50 max-h-[100dvh] overflow-y-auto bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden",
+          "fixed left-0 right-0 top-[168px] z-50 max-h-[calc(100dvh-168px)] overflow-y-auto bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden",
           mobileSearchOpen ? "block" : "hidden"
         )}
       >
