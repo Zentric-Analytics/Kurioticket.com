@@ -3,6 +3,8 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, ChevronDown, Minus, Plus, RotateCcw, X } from "lucide-react";
+
+import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { cn } from "@/lib/utils";
 
 const parseIsoDate = (value: string) => {
@@ -117,6 +119,7 @@ export function HotelSearchBar({
   compact = false,
 }: HotelSearchBarProps) {
   const router = useRouter();
+  const { start: startRouteProgress } = useRouteProgress();
   const [destination, setDestination] = useState(initialDestination);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
@@ -130,6 +133,7 @@ export function HotelSearchBar({
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const datesWrapperRef = useRef<HTMLDivElement>(null);
   const guestsRoomsWrapperRef = useRef<HTMLDivElement>(null);
@@ -285,6 +289,10 @@ export function HotelSearchBar({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
     const trimmedDestination = destination.trim();
     const parsedRooms = Number.parseInt(rooms, 10);
     const normalizedGuests = Math.max(1, Math.min(12, totalHotelGuests));
@@ -337,6 +345,8 @@ export function HotelSearchBar({
     setRooms(String(normalizedRooms));
     setError("");
     setMobileSearchOpen(false);
+    setIsSubmitting(true);
+    startRouteProgress();
     router.push(`/hotels/results?${params.toString()}`);
   };
 
@@ -743,13 +753,15 @@ export function HotelSearchBar({
               <button
                 type="submit"
                 className={cn(
-                  "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+                  "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 disabled:cursor-not-allowed disabled:opacity-75 lg:h-full lg:self-stretch lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
                   compact
                     ? "h-8 shadow-lg lg:min-h-[38px] lg:w-auto lg:min-w-[96px]"
                     : "h-12 lg:min-h-[54px] lg:rounded-none",
                 )}
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
               >
-                Search
+                {isSubmitting ? "Searching hotels..." : "Search"}
               </button>
             </div>
           </div>
