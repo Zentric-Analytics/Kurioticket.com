@@ -652,8 +652,6 @@ export function FlightResultsClient() {
   );
   const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const [showMobileFloatingControls, setShowMobileFloatingControls] =
-    useState(false);
   const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{
     top: number;
     left: number;
@@ -720,19 +718,6 @@ export function FlightResultsClient() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrates client-only localStorage-backed recent searches after mount.
     setRecentSearches(readRecentSearches());
     setSavedTripIds(readSavedTripIds());
-  }, []);
-
-  useEffect(() => {
-    function handleScroll() {
-      setShowMobileFloatingControls(window.scrollY > 180);
-    }
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
   }, []);
 
   useEffect(() => {
@@ -2510,12 +2495,7 @@ export function FlightResultsClient() {
 
         <button
           type="button"
-          onClick={() => {
-            setMobileSearchOpen(true);
-            if (typeof window !== "undefined") {
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-          }}
+          onClick={() => setMobileSearchOpen(true)}
           className="flex h-[58px] min-w-0 max-w-full flex-1 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-0 text-left shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 hover:shadow-[0_10px_22px_rgba(15,23,42,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
@@ -2541,16 +2521,18 @@ export function FlightResultsClient() {
     <main className="flex-1 overflow-x-hidden bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
       <div
         className={cn(
-          "bg-[#f6f8fb]/95 px-4 py-2 sm:hidden",
+          "fixed left-0 right-0 top-0 z-40 bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] backdrop-blur sm:hidden",
           mobileSearchOpen && "hidden"
         )}
       >
         {renderMobileControlsRow()}
       </div>
 
+      <div className={cn("h-[74px] sm:hidden", mobileSearchOpen && "hidden")} />
+
       <div
         className={cn(
-          "bg-[#f6f8fb]/95 px-4 py-2 sm:hidden",
+          "fixed left-0 right-0 top-0 z-50 max-h-[100dvh] overflow-y-auto bg-[#f6f8fb]/95 px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur sm:hidden",
           mobileSearchOpen ? "block" : "hidden"
         )}
       >
@@ -2853,17 +2835,6 @@ export function FlightResultsClient() {
             </div>
           )}
         </section>
-      </div>
-
-      <div
-        className={cn(
-          "fixed bottom-4 left-0 right-0 z-40 px-4 sm:hidden",
-          showMobileFloatingControls && !mobileSearchOpen ? "block" : "hidden"
-        )}
-      >
-        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-[#f6f8fb]/95 p-2 shadow-[0_16px_36px_rgba(15,23,42,0.18)] backdrop-blur">
-          {renderMobileControlsRow()}
-        </div>
       </div>
 
       <div
