@@ -42,6 +42,8 @@ import {
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
 
+const DISCOVER_PRICE_CAP = 6;
+
 const destinations = [
   {
     id: "dubai",
@@ -122,6 +124,10 @@ export default function Home() {
     loading: true,
     prices: {},
   });
+  const [discoveryPriceState, setDiscoveryPriceState] = useState<DestinationPriceState>({
+    loading: true,
+    prices: {},
+  });
   const destinationsRailRef = useRef<HTMLDivElement>(null);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
@@ -142,6 +148,14 @@ export default function Home() {
   const discoveryItems = useMemo(
     () => getHomeDiscoveryByRegion(regionCode),
     [regionCode],
+  );
+  const pricedDiscoveryItems = useMemo(
+    () => discoveryItems.slice(0, DISCOVER_PRICE_CAP),
+    [discoveryItems],
+  );
+  const pricedDiscoveryItemIds = useMemo(
+    () => new Set(pricedDiscoveryItems.map((item) => item.id)),
+    [pricedDiscoveryItems],
   );
   const mobileDiscoveryGroups = useMemo(() => {
     const groups = [];
@@ -207,6 +221,57 @@ export default function Home() {
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchDiscoveryPrices() {
+      setDiscoveryPriceState({ loading: true, prices: {} });
+
+      if (!pricedDiscoveryItems.length) {
+        setDiscoveryPriceState({ loading: false, prices: {} });
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/flights/destination-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            destinations: pricedDiscoveryItems.map(({
+              id,
+              originCode,
+              destinationCode,
+            }) => ({
+              id,
+              originCode,
+              destinationCode,
+            })),
+            currency: "USD",
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Discovery prices unavailable");
+        }
+
+        const payload = (await response.json()) as { prices?: DestinationPrice[] };
+        const prices = Object.fromEntries(
+          (payload.prices ?? []).map((price) => [price.id, price]),
+        );
+
+        setDiscoveryPriceState({ loading: false, prices });
+      } catch {
+        if (controller.signal.aborted) return;
+        setDiscoveryPriceState({ loading: false, prices: {} });
+      }
+    }
+
+    void fetchDiscoveryPrices();
+
+    return () => controller.abort();
+  }, [pricedDiscoveryItems]);
 
   const handleSavedTripToggle = (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -351,6 +416,11 @@ export default function Home() {
                         destinationCodeLabel={item.destinationCode}
                         routeNote={item.routeNote}
                         compact
+                        price={discoveryPriceState.prices[item.id]}
+                        isPriceLoading={
+                          pricedDiscoveryItemIds.has(item.id) &&
+                          discoveryPriceState.loading
+                        }
                         isSaved={savedTripIds.includes(item.id)}
                         onHeartToggle={handleSavedTripToggle}
                       />
@@ -374,6 +444,11 @@ export default function Home() {
                     originCode={item.originCode}
                     destinationCodeLabel={item.destinationCode}
                     routeNote={item.routeNote}
+                    price={discoveryPriceState.prices[item.id]}
+                    isPriceLoading={
+                      pricedDiscoveryItemIds.has(item.id) &&
+                      discoveryPriceState.loading
+                    }
                     isSaved={savedTripIds.includes(item.id)}
                     onHeartToggle={handleSavedTripToggle}
                   />
@@ -592,6 +667,8 @@ function DiscoverySuggestionCard({
   destinationCodeLabel,
   routeNote,
   compact,
+  price,
+  isPriceLoading,
   isSaved,
   onHeartToggle,
 }: {
@@ -605,6 +682,8 @@ function DiscoverySuggestionCard({
   destinationCodeLabel: string;
   routeNote: string;
   compact?: boolean;
+  price?: DestinationPrice;
+  isPriceLoading?: boolean;
   isSaved: boolean;
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -651,7 +730,7 @@ function DiscoverySuggestionCard({
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-0.5">
           <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
-            Trending
+            Route idea
           </span>
           <p
             className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
@@ -664,11 +743,66 @@ function DiscoverySuggestionCard({
       <div
         className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}
       >
-        <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
-          Compare options
-        </span>
+        <DiscoveryPricePill price={price} isLoading={Boolean(isPriceLoading)} />
       </div>
     </Link>
+  );
+}
+
+function DiscoveryPricePill({
+  price,
+  isLoading,
+}: {
+  price?: DestinationPrice;
+  isLoading: boolean;
+}) {
+  const hasProviderPrice =
+    price?.providerBacked === true &&
+    typeof price.price === "number" &&
+    Number.isFinite(price.price) &&
+    Boolean(price.currency);
+
+  if (isLoading) {
+    return (
+      <span
+        className="inline-flex h-7 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
+        aria-label="Checking provider-backed route pricing"
+      />
+    );
+  }
+
+  if (!hasProviderPrice) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+        Compare options
+      </span>
+    );
+  }
+
+  const amount = price.price;
+  const currency = price.currency;
+
+  if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+        Compare options
+      </span>
+    );
+  }
+
+  const formattedPrice = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+
+  return (
+    <span
+      className="inline-flex rounded-full border border-emerald-200 bg-emerald-50/95 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-emerald-800"
+      aria-label={`Provider-backed route price from ${formattedPrice}`}
+    >
+      from {formattedPrice}
+    </span>
   );
 }
 
