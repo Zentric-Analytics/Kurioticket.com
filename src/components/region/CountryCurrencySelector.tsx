@@ -66,6 +66,7 @@ export function CountryCurrencySelector({
   const closeTimerRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const reloadTimerRef = useRef<number | null>(null);
+  const scrollPositionRef = useRef(0);
 
   const dialogId = useId();
   const titleId = useId();
@@ -122,8 +123,19 @@ export function CountryCurrencySelector({
   useEffect(() => {
     if (!open) return;
 
-    const previousOverflow = document.body.style.overflow;
+    scrollPositionRef.current = window.scrollY;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyPosition = document.body.style.position;
+    const previousBodyTop = document.body.style.top;
+    const previousBodyWidth = document.body.style.width;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.documentElement.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollPositionRef.current}px`;
+    document.body.style.width = "100%";
 
     animationFrameRef.current = window.requestAnimationFrame(() => {
       setDialogEntered(true);
@@ -165,7 +177,12 @@ export function CountryCurrencySelector({
     document.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.position = previousBodyPosition;
+      document.body.style.top = previousBodyTop;
+      document.body.style.width = previousBodyWidth;
+      window.scrollTo(0, scrollPositionRef.current);
       document.removeEventListener("keydown", onKeyDown);
 
       if (animationFrameRef.current) {
@@ -311,9 +328,12 @@ export function CountryCurrencySelector({
 
       {open && typeof document !== "undefined"
         ? createPortal(
-            <>
+            <div
+              className="fixed inset-0 z-[1000] flex items-end justify-center overflow-hidden md:items-start md:px-4 md:pt-[max(80px,8vh)]"
+              aria-hidden={false}
+            >
               <div
-                className={`fixed inset-0 z-40 bg-slate-950/55 backdrop-blur-[2px] transition-opacity duration-200 ${
+                className={`absolute inset-0 bg-slate-950/55 backdrop-blur-[2px] transition-opacity duration-200 ${
                   dialogEntered ? "opacity-100" : "opacity-0"
                 }`}
                 onClick={closeDialog}
@@ -326,7 +346,7 @@ export function CountryCurrencySelector({
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={descriptionId}
-                className={`fixed inset-x-0 bottom-0 z-50 h-[min(88dvh,720px)] max-h-[88dvh] overflow-hidden rounded-none border border-slate-200 bg-white text-slate-900 shadow-2xl transition duration-200 ease-out md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:h-auto md:max-h-[86vh] md:w-[min(720px,94vw)] ${
+                className={`relative z-[1001] flex h-[85dvh] max-h-[85dvh] w-full max-w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white text-slate-900 shadow-2xl transition duration-200 ease-out md:h-auto md:max-h-[86vh] md:w-[min(720px,94vw)] md:rounded-3xl ${
                   dialogEntered
                     ? "translate-y-0 opacity-100"
                     : "translate-y-4 opacity-0 md:translate-y-0"
@@ -477,7 +497,7 @@ export function CountryCurrencySelector({
                   </div>
                 </div>
               </section>
-            </>,
+            </div>,
             document.body,
           )
         : null}
