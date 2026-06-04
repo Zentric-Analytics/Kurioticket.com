@@ -48,7 +48,7 @@ import {
 } from "@/lib/saved-trips-local";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 
 const resultStackClass = "w-full max-w-[760px] lg:ml-4 xl:ml-6";
 
@@ -1272,6 +1272,32 @@ export function FlightResultsClient() {
         : "Mixed provider currencies",
     [priceLabelCurrency, selectedCurrency]
   );
+
+  const buildSummaryDetails = (flight: PublicFlightResult | null, mode: SortMode) => {
+    if (!flight) return null;
+
+    const price = formatResultPriceLabel(flight.price, flight.currency);
+    const duration = formatDurationFromMinutes(flight.durationMinutes);
+    const stops = formatStopsLabel(flight.stops);
+    const airlineOrProvider = flight.airlineName || flight.provider;
+    const departure = formatTime(flight.departureTime);
+    const primary =
+      mode === "fastest"
+        ? `${duration} · ${price}`
+        : mode === "best"
+          ? `${price} · ${duration}`
+          : price;
+    const context = [airlineOrProvider, duration, stops].filter(Boolean).join(" · ");
+
+    return {
+      primary,
+      context,
+      departure: `Departs ${departure}`,
+      note: hasSpecificBaggageInfo(flight.baggageInfo)
+        ? "Review fare rules before booking"
+        : "Baggage varies by fare",
+    };
+  };
 
   const stopOptions = useMemo(() => {
     const buckets = new Map<
@@ -3077,85 +3103,38 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                <button
-                  type="button"
+              <div className="grid grid-cols-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:grid-cols-3">
+                <SummarySortButton
+                  label="Cheapest"
+                  details={buildSummaryDetails(sortSummaries.cheapest, "cheapest")}
+                  active={sortMode === "cheapest"}
                   onClick={() => {
                     triggerFilterApplying();
                     setSortMode("cheapest");
                   }}
-                  className={cn(
-                    "relative px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
-                    sortMode === "cheapest"
-                      ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
-                      : "text-slate-600"
-                  )}
-                >
-                  <span className="block text-[12px] font-semibold text-slate-600 sm:text-[13px]">
-                    Cheapest
-                  </span>
-                  <span className="mt-1 block truncate text-[14px] font-semibold leading-5 text-slate-950 sm:text-[15px]">
-                    {sortSummaries.cheapest
-                      ? formatResultPriceLabel(
-                          sortSummaries.cheapest.price,
-                          sortSummaries.cheapest.currency
-                        )
-                      : "—"}
-                  </span>
-                </button>
+                />
 
-                <button
-                  type="button"
+                <SummarySortButton
+                  label="Best"
+                  details={buildSummaryDetails(sortSummaries.best, "best")}
+                  active={sortMode === "best"}
+                  bordered
                   onClick={() => {
                     triggerFilterApplying();
                     setSortMode("best");
                   }}
-                  className={cn(
-                    "relative border-l border-slate-200 px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
-                    sortMode === "best"
-                      ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
-                      : "text-slate-600"
-                  )}
-                >
-                  <span className="block text-[12px] font-semibold text-slate-600 sm:text-[13px]">
-                    Best
-                  </span>
-                  <span className="mt-1 block truncate text-[14px] font-semibold leading-5 text-slate-950 sm:text-[15px]">
-                    {sortSummaries.best
-                      ? `${formatResultPriceLabel(
-                          sortSummaries.best.price,
-                          sortSummaries.best.currency
-                        )} · ${formatDurationFromMinutes(
-                          sortSummaries.best.durationMinutes
-                        )}`
-                      : "—"}
-                  </span>
-                </button>
+                />
 
-                <button
-                  type="button"
+                <SummarySortButton
+                  label="Quickest"
+                  details={buildSummaryDetails(sortSummaries.fastest, "fastest")}
+                  active={sortMode === "fastest"}
+                  bordered
                   onClick={() => {
                     triggerFilterApplying();
                     setSortMode("fastest");
                   }}
-                  className={cn(
-                    "relative border-l border-slate-200 px-2 py-2 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30 sm:px-3 sm:py-2.5",
-                    sortMode === "fastest"
-                      ? "bg-white text-navy after:absolute after:bottom-0 after:left-2 after:right-2 after:h-0.5 after:rounded-full after:bg-violet-600 sm:after:left-3 sm:after:right-3"
-                      : "text-slate-600"
-                  )}
-                >
-                  <span className="block text-[12px] font-semibold text-slate-600 sm:text-[13px]">
-                    Quickest
-                  </span>
-                  <span className="mt-1 block truncate text-[14px] font-semibold leading-5 text-slate-950 sm:text-[15px]">
-                    {sortSummaries.fastest
-                      ? formatDurationFromMinutes(
-                          sortSummaries.fastest.durationMinutes
-                        )
-                      : "—"}
-                  </span>
-                </button>
+                />
               </div>
 
               <div className="space-y-3 sm:hidden">
@@ -4371,6 +4350,71 @@ function Filters({
         </FilterSection>
       </div>
     </div>
+  );
+}
+
+function SummarySortButton({
+  label,
+  details,
+  active,
+  bordered = false,
+  onClick,
+}: {
+  label: string;
+  details: {
+    primary: string;
+    context: string;
+    departure: string;
+    note: string;
+  } | null;
+  active: boolean;
+  bordered?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
+        "border-t border-slate-200 first:border-t-0 sm:border-t-0",
+        bordered ? "sm:border-l sm:border-slate-200" : "",
+        active
+          ? "bg-white text-navy after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-violet-600"
+          : "text-slate-600"
+      )}
+    >
+      <span className="block text-[12px] font-semibold text-slate-600 sm:text-[13px]">
+        {label}
+      </span>
+      <span className="mt-0.5 block truncate text-[15px] font-semibold leading-5 text-slate-950">
+        {details?.primary ?? "—"}
+      </span>
+      {details ? (
+        <>
+          <span className="mt-0.5 block truncate text-[11px] font-semibold leading-4 text-slate-600">
+            {details.context}
+          </span>
+          <span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-slate-500">
+            {details.departure} · {details.note}
+          </span>
+        </>
+      ) : null}
+    </button>
+  );
+}
+
+function formatStopsLabel(stops: number) {
+  return stops === 0 ? "Nonstop" : `${stops} stop${stops > 1 ? "s" : ""}`;
+}
+
+function hasSpecificBaggageInfo(value?: string) {
+  if (!value) return false;
+  const normalized = value.toLowerCase();
+  return (
+    normalized.includes("included") ||
+    normalized.includes("carry-on") ||
+    normalized.includes("checked bag")
   );
 }
 

@@ -17,6 +17,7 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
     displayCurrency: selectedOption.currency,
     convertUsdEstimate: true,
   });
+  const detailChips = buildFlightDetailChips(flight);
 
   return (
     <Card className="w-full overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
@@ -52,7 +53,7 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
                 <span className="h-px flex-1 bg-slate-200" />
               </div>
               <div className="text-xs font-semibold text-slate-800">{flight.duration}</div>
-              <div className="text-xs font-medium text-slate-500">{flight.stops === 0 ? "Nonstop" : `${flight.stops} stop${flight.stops > 1 ? "s" : ""}`}</div>
+              <div className="text-xs font-medium text-slate-500">{formatStopsLabel(flight.stops)}</div>
             </div>
             <div className="text-right">
               <div className="text-lg font-semibold tracking-[-0.01em] text-slate-950">{formatTime(flight.arrivalTime)}</div>
@@ -69,6 +70,7 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
               >
                 {displayPrice.formatted}
               </div>
+              <p className="mt-1 text-xs font-medium text-slate-500">Estimated price.</p>
             </div>
             <div className="text-right">
               <LinkButton href={`/flights/details/${encodeURIComponent(flight.id)}`} variant="primary" size="sm" className="whitespace-nowrap bg-navy px-2.5 hover:bg-navy-soft">
@@ -80,7 +82,86 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
             </div>
           </div>
         </div>
+
+        <div className="mt-3 border-t border-slate-100 pt-3">
+          <div className="flex flex-wrap gap-1.5">
+            {detailChips.map((chip) => (
+              <span
+                key={chip}
+                className="max-w-full truncate rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold leading-4 text-slate-700"
+                title={chip}
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </Card>
+  );
+}
+
+function buildFlightDetailChips(flight: PublicFlightResult) {
+  const chips = [
+    `Cabin: ${formatCabinClass(flight.cabinClass)}`,
+    formatBaggageChip(flight.baggageInfo),
+    formatFareRulesChip(flight.refundInfo),
+    formatChangesChip(flight.refundInfo),
+    formatLayoverChip(flight),
+    "Seat selection: provider rules apply",
+    `Provider: ${flight.provider}`,
+  ];
+
+  return chips.filter(Boolean) as string[];
+}
+
+function formatStopsLabel(stops: number) {
+  return stops === 0 ? "Nonstop" : `${stops} stop${stops > 1 ? "s" : ""}`;
+}
+
+function formatCabinClass(value?: string) {
+  if (!value) return "check provider";
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function formatBaggageChip(value?: string) {
+  if (!value || isProviderReviewCopy(value)) return "Baggage: check provider";
+  return `Baggage: ${value}`;
+}
+
+function formatFareRulesChip(value?: string) {
+  if (!value || isProviderReviewCopy(value)) return "Fare rules: review before booking";
+  return `Fare rules: ${value}`;
+}
+
+function formatChangesChip(value?: string) {
+  if (!value || isProviderReviewCopy(value)) return "Changes: check fare terms";
+
+  const changeSentence = value
+    .split(".")
+    .map((part) => part.trim())
+    .find((part) => part.toLowerCase().startsWith("change"));
+
+  return changeSentence ? `Changes: ${changeSentence}` : "Changes: check fare terms";
+}
+
+function formatLayoverChip(flight: PublicFlightResult) {
+  if (!flight.layovers.length) return formatStopsLabel(flight.stops);
+
+  const firstLayover = flight.layovers[0];
+  const firstConnection = `${firstLayover.airport} ${firstLayover.duration}`;
+  const extraConnections = flight.layovers.length > 1 ? ` +${flight.layovers.length - 1} more` : "";
+  return `Layover: ${firstConnection}${extraConnections}`;
+}
+
+function isProviderReviewCopy(value: string) {
+  const normalized = value.toLowerCase();
+  return (
+    normalized.includes("reviewed on the external provider") ||
+    normalized.includes("shown by the external provider") ||
+    normalized.includes("rules vary") ||
+    normalized.includes("vary by fare")
   );
 }
