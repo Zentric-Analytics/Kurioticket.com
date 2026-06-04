@@ -2572,7 +2572,7 @@ export function FlightResultsClient() {
     <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
       <div
         className={cn(
-          "sticky top-0 z-40 bg-[#f6f8fb] px-4 pb-3 pt-2 sm:hidden",
+          "sticky top-0 z-40 bg-[#f6f8fb] px-4 pb-1 pt-2 sm:hidden",
           mobileSearchOpen && "hidden"
         )}
       >
@@ -2588,7 +2588,7 @@ export function FlightResultsClient() {
         {mobileSearchOpen ? renderCompactSearchForm("mobile") : null}
       </div>
 
-      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-3 sm:py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
         <section className="lg:col-span-2">
           {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
 
