@@ -27,8 +27,11 @@ function toTitleCase(value: string) {
   if (!normalized) return "";
 
   const shouldNormalizeCase =
-    normalized === normalized.toLocaleUpperCase() || normalized === normalized.toLocaleLowerCase();
-  const title = shouldNormalizeCase ? normalized.toLocaleLowerCase() : normalized;
+    normalized === normalized.toLocaleUpperCase() ||
+    normalized === normalized.toLocaleLowerCase();
+  const title = shouldNormalizeCase
+    ? normalized.toLocaleLowerCase()
+    : normalized;
 
   return title.replace(
     /(^|[\s/-])([\p{L}\p{N}])/gu,
@@ -43,10 +46,69 @@ function toSentenceCase(value: string) {
   if (!normalized) return "";
 
   const shouldNormalizeCase =
-    normalized === normalized.toLocaleUpperCase() || normalized === normalized.toLocaleLowerCase();
-  const sentence = shouldNormalizeCase ? normalized.toLocaleLowerCase() : normalized;
+    normalized === normalized.toLocaleUpperCase() ||
+    normalized === normalized.toLocaleLowerCase();
+  const sentence = shouldNormalizeCase
+    ? normalized.toLocaleLowerCase()
+    : normalized;
 
   return `${sentence.charAt(0).toLocaleUpperCase()}${sentence.slice(1)}`;
+}
+
+function isCancellationText(value: string) {
+  return /cancellation|cancel|policy/i.test(value);
+}
+
+function getCancellationDisplay(hotel: PublicHotelResult) {
+  const policyText = [hotel.cancellationInfo, ...hotel.amenities]
+    .map((value) => normalizeWhitespace(value || ""))
+    .filter(Boolean)
+    .join(" ");
+
+  if (!policyText) return null;
+
+  if (/\bfree cancellation\b/i.test(policyText)) {
+    return { label: "Free cancellation", positive: true };
+  }
+
+  if (/\bflexible cancellation\b/i.test(policyText)) {
+    return { label: "Flexible cancellation", positive: true };
+  }
+
+  if (
+    /cancellation policy available|policy shown|cancellation details|cancellation rules|rate comments/i.test(
+      policyText,
+    )
+  ) {
+    return { label: "Cancellation policy available", positive: false };
+  }
+
+  return isCancellationText(policyText)
+    ? { label: "Cancellation details available", positive: false }
+    : null;
+}
+
+function getAmenityDisplay(amenities: string[]) {
+  const seen = new Set<string>();
+
+  return amenities
+    .map((amenity) => toSentenceCase(amenity))
+    .filter((amenity) => {
+      if (
+        !amenity ||
+        isCancellationText(amenity) ||
+        /verified partner inventory/i.test(amenity)
+      ) {
+        return false;
+      }
+
+      const key = amenity.toLocaleLowerCase();
+      if (seen.has(key)) return false;
+
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 3);
 }
 
 const fallbackHotelImages = [
@@ -77,9 +139,14 @@ type HotelCardProps = {
 
 export function HotelCard({ hotel }: HotelCardProps) {
   const starRating = getHotelStarRating(hotel.rating);
-  const fallbackImageUrl = useMemo(() => getDeterministicFallbackImage(hotel), [hotel]);
+  const fallbackImageUrl = useMemo(
+    () => getDeterministicFallbackImage(hotel),
+    [hotel],
+  );
   const supplierImageUrl = hotel.imageUrl?.trim();
-  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(() => new Set());
+  const [failedImageUrls, setFailedImageUrls] = useState<Set<string>>(
+    () => new Set(),
+  );
   const imageUrl =
     supplierImageUrl && !failedImageUrls.has(supplierImageUrl)
       ? supplierImageUrl
@@ -87,15 +154,21 @@ export function HotelCard({ hotel }: HotelCardProps) {
         ? ""
         : fallbackImageUrl;
   const roomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
-  const roomBasisText = hotel.amenities
-    .map((amenity) => toSentenceCase(amenity))
-    .filter(Boolean);
+  const distanceAreaText = hotel.distanceFromCenter
+    ? toSentenceCase(hotel.distanceFromCenter)
+    : "";
+  const cancellationDisplay = getCancellationDisplay(hotel);
+  const amenityDisplay = getAmenityDisplay(hotel.amenities);
 
   async function redirectToHotel() {
     const response = await fetch("/api/redirect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: hotel.id, type: "hotel", sourcePage: "hotel_results" }),
+      body: JSON.stringify({
+        id: hotel.id,
+        type: "hotel",
+        sourcePage: "hotel_results",
+      }),
     });
     const data = (await response.json()) as { url?: string; error?: string };
     if (data.url) window.location.href = data.url;
@@ -141,20 +214,42 @@ export function HotelCard({ hotel }: HotelCardProps) {
                     </span>
                   </div>
                 ) : null}
-                <h2 className="text-sm font-semibold leading-5 text-slate-900">{hotel.name}</h2>
+                <h2 className="text-sm font-semibold leading-5 text-slate-900">
+                  {hotel.name}
+                </h2>
                 <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
                   <MapPin size={15} className="shrink-0 text-teal" />
                   <span>{hotel.location}</span>
                 </p>
               </div>
-              {roomTypeText || roomBasisText.length > 0 ? (
+              {distanceAreaText || cancellationDisplay ? (
+                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium leading-4">
+                  {distanceAreaText ? (
+                    <span className="text-slate-500">{distanceAreaText}</span>
+                  ) : null}
+                  {cancellationDisplay ? (
+                    <span
+                      className={
+                        cancellationDisplay.positive
+                          ? "rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 ring-1 ring-emerald-100"
+                          : "rounded-full bg-slate-50 px-2 py-0.5 text-slate-500 ring-1 ring-slate-100"
+                      }
+                    >
+                      {cancellationDisplay.label}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+              {roomTypeText || amenityDisplay.length > 0 ? (
                 <div className="space-y-0.5">
                   {roomTypeText ? (
-                    <p className="text-xs font-medium leading-4 text-slate-600">{roomTypeText}</p>
+                    <p className="text-xs font-medium leading-4 text-slate-600">
+                      {roomTypeText}
+                    </p>
                   ) : null}
-                  {roomBasisText.length > 0 ? (
-                    <p className="text-[11px] font-normal leading-4 text-slate-500">
-                      {roomBasisText.slice(0, 5).join(" · ")}
+                  {amenityDisplay.length > 0 ? (
+                    <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] font-normal leading-4 text-slate-500">
+                      {amenityDisplay.join(" · ")}
                     </p>
                   ) : null}
                 </div>
@@ -165,9 +260,12 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <div className="text-xl font-semibold tracking-[-0.01em] text-slate-950">
                   {formatCurrency(hotel.totalPrice, hotel.currency)}
                 </div>
-                <div className="text-xs font-medium text-slate-500">estimated stay total</div>
+                <div className="text-xs font-medium text-slate-500">
+                  estimated stay total
+                </div>
                 <div className="text-[11px] font-medium leading-4 text-slate-500">
-                  {formatCurrency(hotel.pricePerNight, hotel.currency)} per night
+                  {formatCurrency(hotel.pricePerNight, hotel.currency)} per
+                  night
                 </div>
               </div>
               <div className="text-right">
