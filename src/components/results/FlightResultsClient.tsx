@@ -2261,77 +2261,6 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="mb-2 flex items-center justify-between gap-2 px-1">
-            <div ref={tripTypeMenuRef} className="relative inline-flex">
-              <button
-                type="button"
-                aria-expanded={tripTypeMenuOpen}
-                aria-haspopup="listbox"
-                onClick={() => setTripTypeMenuOpen((open) => !open)}
-                className="focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-950"
-              >
-                {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
-                <ChevronDown
-                  aria-hidden="true"
-                  className={cn(
-                    "h-4 w-4 text-slate-500 transition-transform",
-                    tripTypeMenuOpen && "rotate-180",
-                  )}
-                />
-              </button>
-
-              {tripTypeMenuOpen ? (
-                <div
-                  role="listbox"
-                  aria-label="Trip type"
-                  className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
-                >
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={tripTypeInput === "round-trip"}
-                    onClick={() => {
-                      setTripTypeInput("round-trip");
-                      setTripTypeMenuOpen(false);
-                    }}
-                    className={cn(
-                      "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
-                      tripTypeInput === "round-trip"
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-100",
-                    )}
-                  >
-                    Round-trip
-                  </button>
-
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={tripTypeInput === "one-way"}
-                    onClick={() => {
-                      setTripTypeInput("one-way");
-                      setReturnDateInput("");
-                      setTripTypeMenuOpen(false);
-
-                      if (activeDatePicker === "return") {
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                      }
-                    }}
-                    className={cn(
-                      "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
-                      tripTypeInput === "one-way"
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-100",
-                    )}
-                  >
-                    One-way
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          </div>
-
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
@@ -2517,6 +2446,76 @@ export function FlightResultsClient() {
               >
                 Search
               </Button>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-start px-1">
+            <div ref={tripTypeMenuRef} className="relative inline-flex">
+              <button
+                type="button"
+                aria-expanded={tripTypeMenuOpen}
+                aria-haspopup="listbox"
+                onClick={() => setTripTypeMenuOpen((open) => !open)}
+                className="focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-950"
+              >
+                {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "h-4 w-4 text-slate-500 transition-transform",
+                    tripTypeMenuOpen && "rotate-180",
+                  )}
+                />
+              </button>
+
+              {tripTypeMenuOpen ? (
+                <div
+                  role="listbox"
+                  aria-label="Trip type"
+                  className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                >
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={tripTypeInput === "round-trip"}
+                    onClick={() => {
+                      setTripTypeInput("round-trip");
+                      setTripTypeMenuOpen(false);
+                    }}
+                    className={cn(
+                      "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                      tripTypeInput === "round-trip"
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-700 hover:bg-slate-100",
+                    )}
+                  >
+                    Round-trip
+                  </button>
+
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={tripTypeInput === "one-way"}
+                    onClick={() => {
+                      setTripTypeInput("one-way");
+                      setReturnDateInput("");
+                      setTripTypeMenuOpen(false);
+
+                      if (activeDatePicker === "return") {
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
+                      }
+                    }}
+                    className={cn(
+                      "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                      tripTypeInput === "one-way"
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-700 hover:bg-slate-100",
+                    )}
+                  >
+                    One-way
+                  </button>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
