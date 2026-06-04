@@ -67,6 +67,18 @@ const GENERIC_HOTEL_IMAGE =
   "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80";
 const SAVED_RECENT_SEARCHES_KEY = "kurioticket_saved_recent_searches_v1";
 
+const readSavedRecentSearchIds = () => {
+  try {
+    const rawSavedIds = window.localStorage.getItem(SAVED_RECENT_SEARCHES_KEY);
+    if (!rawSavedIds) return new Set<string>();
+    const parsedSavedIds = JSON.parse(rawSavedIds);
+    if (!Array.isArray(parsedSavedIds)) return new Set<string>();
+    return new Set(parsedSavedIds.filter((value): value is string => typeof value === "string"));
+  } catch {
+    return new Set<string>();
+  }
+};
+
 const normalizeText = (value: string | undefined) =>
   (value || "").toLowerCase().trim().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ");
 
@@ -112,16 +124,18 @@ export function RecentSearches() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setEntries(readRecentSearches());
-    try {
-      const rawSavedIds = window.localStorage.getItem(SAVED_RECENT_SEARCHES_KEY);
-      if (!rawSavedIds) return;
-      const parsedSavedIds = JSON.parse(rawSavedIds);
-      if (!Array.isArray(parsedSavedIds)) return;
-      setSavedIds(new Set(parsedSavedIds.filter((value): value is string => typeof value === "string")));
-    } catch {
-      setSavedIds(new Set());
-    }
+    let isMounted = true;
+
+    const timeoutId = window.setTimeout(() => {
+      if (!isMounted) return;
+      setEntries(readRecentSearches());
+      setSavedIds(readSavedRecentSearchIds());
+    }, 0);
+
+    return () => {
+      isMounted = false;
+      window.clearTimeout(timeoutId);
+    };
   }, []);
 
   const persistSavedIds = (nextSavedIds: Set<string>) => {
