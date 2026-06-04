@@ -4,12 +4,27 @@ import {
 } from "@/lib/currency/exchangeRates";
 
 const zeroDecimalCurrencies = new Set([
+  "BIF",
   "CLP",
   "COP",
+  "DJF",
+  "GNF",
   "HUF",
   "IDR",
+  "ISK",
   "JPY",
+  "KMF",
+  "KPW",
   "KRW",
+  "MGA",
+  "PYG",
+  "RWF",
+  "UGX",
+  "VND",
+  "VUV",
+  "XAF",
+  "XOF",
+  "XPF",
 ]);
 
 export function formatCurrency(

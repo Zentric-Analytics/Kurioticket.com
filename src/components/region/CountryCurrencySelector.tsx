@@ -191,7 +191,7 @@ export function CountryCurrencySelector({
       {open && typeof document !== "undefined"
         ? createPortal(
             <>
-              <div className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-[1px]" onClick={closeDialog} />
+              <div className="fixed inset-0 z-40 bg-slate-950/45" onClick={closeDialog} />
 
               <section
                 ref={dialogRef}
@@ -200,40 +200,36 @@ export function CountryCurrencySelector({
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={descriptionId}
-                className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-hidden rounded-t-[1.75rem] border border-slate-200 bg-white shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:w-[min(720px,94vw)] md:rounded-[1.75rem]"
+                className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-hidden rounded-none border border-slate-200 bg-white shadow-lg md:inset-x-0 md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:w-[min(720px,94vw)]"
               >
                 <div className="flex max-h-[88vh] flex-col">
-                  <div className="border-b border-slate-100 px-5 pb-4 pt-5 md:px-6 md:pt-6">
+                  <div className="border-b border-slate-200 px-5 pb-4 pt-5 md:px-6 md:pt-6">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="text-xs font-black uppercase tracking-[0.18em] text-violet-600">
-                          Market
-                        </p>
-
-                        <h2 id={titleId} className="mt-1 text-2xl font-black tracking-tight text-slate-950">
+                        <h2 id={titleId} className="text-xl font-semibold tracking-tight text-slate-950">
                           Choose country and currency
                         </h2>
 
-                        <p id={descriptionId} className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
-                          Select the market used for display prices; airport origin suggestions are unchanged.
+                        <p id={descriptionId} className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                          Select the market used for display prices. Airport origin suggestions stay based on your detected location.
                         </p>
                       </div>
 
                       <button
                         type="button"
                         onClick={closeDialog}
-                        className="cursor-pointer rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                        className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
                         aria-label="Close market selector"
                       >
                         <X size={18} aria-hidden="true" />
                       </button>
                     </div>
 
-                    <label htmlFor={marketSearchId} className="mt-5 block text-sm font-bold text-slate-900">
+                    <label htmlFor={marketSearchId} className="mt-5 block text-sm font-medium text-slate-800">
                       Search country or currency
                     </label>
 
-                    <div className="mt-2 flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm transition-colors focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-100">
+                    <div className="mt-2 flex items-center gap-2 rounded-none border border-slate-300 bg-white px-3.5 py-3 transition-colors focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-100">
                       <Search size={17} className="shrink-0 text-slate-500" aria-hidden="true" />
 
                       <input
@@ -242,7 +238,7 @@ export function CountryCurrencySelector({
                         value={marketQuery}
                         onChange={(event) => setMarketQuery(event.target.value)}
                         placeholder="Search country or currency"
-                        className="w-full min-w-0 border-0 bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-400"
+                        className="w-full min-w-0 border-0 bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400"
                         aria-controls={marketListId}
                       />
                     </div>
@@ -250,11 +246,11 @@ export function CountryCurrencySelector({
 
                   <div className="min-h-0 overflow-y-auto px-5 py-4 md:px-6">
                     <div className="mb-3 flex items-center justify-between gap-3">
-                      <h3 className="text-sm font-black uppercase tracking-[0.12em] text-slate-500">
+                      <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                         {marketListLabel}
                       </h3>
 
-                      <span className="text-xs font-bold text-slate-400">
+                      <span className="text-xs font-medium text-slate-500">
                         {filteredMarkets.length} {filteredMarkets.length === 1 ? "market" : "markets"}
                       </span>
                     </div>
@@ -276,24 +272,24 @@ export function CountryCurrencySelector({
                             aria-checked={isActive}
                             aria-label={`Select ${option.country}, ${option.code}, ${option.currency}`}
                             onClick={() => handleMarketSelect(option)}
-                            className={`group flex cursor-pointer items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                            className={`group flex cursor-pointer items-center justify-between gap-3 rounded-none border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                               isActive
-                                ? "border-violet-500 bg-violet-50 shadow-sm ring-2 ring-violet-100"
-                                : "border-slate-200 bg-white hover:border-violet-300 hover:bg-violet-50/70 hover:shadow-sm"
+                                ? "border-violet-600 bg-violet-50 ring-1 ring-violet-600"
+                                : "border-slate-200 bg-white hover:border-violet-300 hover:bg-slate-50"
                             }`}
                           >
                             <span className="min-w-0">
-                              <span className="block text-sm font-black text-slate-950">
+                              <span className="block text-sm font-semibold tracking-wide text-slate-950">
                                 {option.code} · {option.currency}
                               </span>
 
-                              <span className="mt-0.5 block truncate text-sm font-medium text-slate-600">
+                              <span className="mt-1 block truncate text-sm font-normal text-slate-700">
                                 {option.country}
                               </span>
                             </span>
 
                             <span
-                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-none border transition-colors ${
                                 isActive
                                   ? "border-violet-600 bg-violet-600 text-white"
                                   : "border-slate-200 text-transparent group-hover:border-violet-300"
@@ -308,8 +304,8 @@ export function CountryCurrencySelector({
                     </div>
 
                     {filteredMarkets.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-                        <p className="text-sm font-bold text-slate-900">No matching markets</p>
+                      <div className="rounded-none border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                        <p className="text-sm font-semibold text-slate-900">No matching markets</p>
                         <p className="mt-1 text-sm text-slate-500">Try a country name, country code, or currency code.</p>
                       </div>
                     ) : null}
@@ -318,7 +314,7 @@ export function CountryCurrencySelector({
                       <button
                         type="button"
                         onClick={() => setShowAllMarkets(true)}
-                        className="mt-4 flex w-full cursor-pointer items-center justify-center rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-black text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                        className="mt-4 flex w-full cursor-pointer items-center justify-center rounded-none border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
                       >
                         View more markets
                       </button>
