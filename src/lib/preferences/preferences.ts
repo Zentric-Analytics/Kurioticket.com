@@ -11,6 +11,7 @@ export const REGION_COOKIE_KEY = "kurioticket_region";
 export const CURRENCY_COOKIE_KEY = "kurioticket_currency";
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
+const VALID_CURRENCY_CODE_PATTERN = /^[A-Z]{3}$/;
 
 function getCookieValue(key: string): string | null {
   if (typeof document === "undefined") return null;
@@ -46,8 +47,19 @@ export function getStoredRegion(): string | null {
   const overrideCookie = getCookieValue(REGION_OVERRIDE_COOKIE_KEY);
   if (overrideCookie) return overrideCookie.toUpperCase();
 
+  const regionCookie = getCookieValue(REGION_COOKIE_KEY);
+  if (regionCookie) return regionCookie.toUpperCase();
+
+  const legacyRegionCookie = getCookieValue(SERVER_REGION_COOKIE_KEY);
+  if (legacyRegionCookie) return legacyRegionCookie.toUpperCase();
+
   if (typeof window !== "undefined") {
-    return window.localStorage.getItem(REGION_OVERRIDE_STORAGE_KEY)?.toUpperCase() ?? null;
+    return (
+      window.localStorage.getItem(REGION_OVERRIDE_STORAGE_KEY)?.toUpperCase() ??
+      window.localStorage.getItem(REGION_COOKIE_KEY)?.toUpperCase() ??
+      window.localStorage.getItem(SERVER_REGION_STORAGE_KEY)?.toUpperCase() ??
+      null
+    );
   }
 
   return null;
@@ -75,7 +87,9 @@ export function getStoredCurrency(): string | null {
 }
 
 export function setStoredCurrency(currency: string) {
-  const normalizedCurrency = currency.toUpperCase();
+  const normalizedCurrency = currency.trim().toUpperCase();
+  if (!VALID_CURRENCY_CODE_PATTERN.test(normalizedCurrency)) return;
+
   setCookieValue(CURRENCY_COOKIE_KEY, normalizedCurrency);
   if (typeof window !== "undefined") {
     window.localStorage.setItem(CURRENCY_COOKIE_KEY, normalizedCurrency);

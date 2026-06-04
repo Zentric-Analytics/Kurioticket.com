@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 import {
   getStoredCurrency,
@@ -90,7 +90,7 @@ export function RegionProvider({
     [currency, selectedCountry],
   );
 
-  const setMode = (nextMode: RegionCode) => {
+  const setMode = useCallback((nextMode: RegionCode) => {
     const nextOption = findSupportedRegion(nextMode) ?? fallbackRegion;
 
     setRegionState((currentState) => {
@@ -107,9 +107,9 @@ export function RegionProvider({
     });
 
     setStoredRegion(nextOption.code);
-  };
+  }, []);
 
-  const setCurrency = (nextCurrency: CurrencyCode) => {
+  const setCurrency = useCallback((nextCurrency: CurrencyCode) => {
     const supportedCurrency = findSupportedCurrency(nextCurrency) ?? fallbackCurrency;
 
     setRegionState((currentState) => ({
@@ -119,7 +119,7 @@ export function RegionProvider({
     }));
 
     setStoredCurrency(supportedCurrency);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -133,7 +133,7 @@ export function RegionProvider({
       options: supportedRegions,
       currencies: supportedCurrencies,
     }),
-    [mode, currency, selectedOption, detectedOption, hasUserSelectedRegion],
+    [mode, currency, setCurrency, setMode, selectedOption, detectedOption, hasUserSelectedRegion],
   );
 
   return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;
