@@ -67,25 +67,51 @@ function getCancellationDisplay(hotel: PublicHotelResult) {
 
   if (!policyText) return null;
 
+  if (/\bnon[-\s]?refundable\b|\bno refunds?\b/i.test(policyText)) {
+    return { label: "Non-refundable", positive: false };
+  }
+
   if (/\bfree cancellation\b/i.test(policyText)) {
     return { label: "Free cancellation", positive: true };
   }
 
-  if (/\bflexible cancellation\b/i.test(policyText)) {
-    return { label: "Flexible cancellation", positive: true };
-  }
-
   if (
-    /cancellation policy available|policy shown|cancellation details|cancellation rules|rate comments/i.test(
+    /cancellation policy available|policy shown|cancellation details|cancellation rules|rate comments|flexible cancellation/i.test(
       policyText,
     )
   ) {
-    return { label: "Cancellation policy available", positive: false };
+    return { label: "Cancellation details available", positive: false };
   }
 
   return isCancellationText(policyText)
     ? { label: "Cancellation details available", positive: false }
     : null;
+}
+
+function getAreaDisplay(distanceFromCenter?: string) {
+  const distanceText = distanceFromCenter
+    ? toSentenceCase(distanceFromCenter)
+    : "";
+
+  if (!distanceText) return "";
+
+  if (/^central or transit-friendly area$/i.test(distanceText)) {
+    return "";
+  }
+
+  if (/central/i.test(distanceText) && /transit/i.test(distanceText)) {
+    return "Central area";
+  }
+
+  if (/central/i.test(distanceText)) {
+    return "Central area";
+  }
+
+  if (/transit/i.test(distanceText)) {
+    return "Transit-friendly area";
+  }
+
+  return distanceText;
 }
 
 function getAmenityDisplay(amenities: string[]) {
@@ -154,9 +180,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
         ? ""
         : fallbackImageUrl;
   const roomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
-  const distanceAreaText = hotel.distanceFromCenter
-    ? toSentenceCase(hotel.distanceFromCenter)
-    : "";
+  const distanceAreaText = getAreaDisplay(hotel.distanceFromCenter);
   const cancellationDisplay = getCancellationDisplay(hotel);
   const amenityDisplay = getAmenityDisplay(hotel.amenities);
 
@@ -201,7 +225,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
         </div>
         <div className="px-3 py-3">
           <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0 space-y-2">
+            <div className="min-w-0">
               <div>
                 {starRating ? (
                   <div
@@ -217,22 +241,25 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <h2 className="text-sm font-semibold leading-5 text-slate-900">
                   {hotel.name}
                 </h2>
-                <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
-                  <MapPin size={15} className="shrink-0 text-teal" />
+                <p className="mt-1 flex items-center gap-1.5 text-xs font-normal text-slate-500">
+                  <MapPin size={14} className="shrink-0 text-slate-400" />
                   <span>{hotel.location}</span>
                 </p>
               </div>
               {distanceAreaText || cancellationDisplay ? (
-                <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-medium leading-4">
-                  {distanceAreaText ? (
-                    <span className="text-slate-500">{distanceAreaText}</span>
+                <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-normal leading-4 text-slate-500">
+                  {distanceAreaText ? <span>{distanceAreaText}</span> : null}
+                  {distanceAreaText && cancellationDisplay ? (
+                    <span className="text-slate-300" aria-hidden="true">
+                      ·
+                    </span>
                   ) : null}
                   {cancellationDisplay ? (
                     <span
                       className={
                         cancellationDisplay.positive
-                          ? "rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 ring-1 ring-emerald-100"
-                          : "rounded-full bg-slate-50 px-2 py-0.5 text-slate-500 ring-1 ring-slate-100"
+                          ? "font-medium text-emerald-700"
+                          : "text-slate-500"
                       }
                     >
                       {cancellationDisplay.label}
@@ -241,9 +268,9 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 </div>
               ) : null}
               {roomTypeText || amenityDisplay.length > 0 ? (
-                <div className="space-y-0.5">
+                <div className="mt-2 space-y-0.5">
                   {roomTypeText ? (
-                    <p className="text-xs font-medium leading-4 text-slate-600">
+                    <p className="text-xs font-medium leading-4 text-slate-700">
                       {roomTypeText}
                     </p>
                   ) : null}
@@ -277,8 +304,8 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 >
                   View Hotel
                 </Button>
-                <p className="mt-1 max-w-36 text-[10px] font-normal leading-3 text-slate-400">
-                  Final price confirmed by provider.
+                <p className="mt-1 max-w-36 text-[10px] font-normal leading-[1.15] text-slate-400">
+                  Provider confirms final price.
                 </p>
               </div>
             </div>
