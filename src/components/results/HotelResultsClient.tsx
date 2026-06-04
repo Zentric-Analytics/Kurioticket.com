@@ -477,7 +477,7 @@ export function HotelResultsClient() {
           />
         </section>
 
-        <aside className="hotel-filter-panel hidden lg:sticky lg:top-8 lg:block lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-x-hidden lg:overflow-y-auto">
+        <aside className="hotel-filter-panel hidden lg:sticky lg:top-32 lg:block lg:max-h-[calc(100vh-8rem)] lg:self-start lg:overflow-x-hidden lg:overflow-y-auto">
           <HotelFilters
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
