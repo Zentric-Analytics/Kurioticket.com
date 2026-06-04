@@ -519,7 +519,7 @@ export function HotelResultsClient() {
         />
       </div>
 
-      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:gap-4 lg:grid-cols-[240px_minmax(0,704px)_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,704px)_minmax(0,1fr)]">
+      <div className="page-shell grid gap-x-5 gap-y-3 pb-6 pt-3 sm:py-6 lg:gap-x-4 lg:gap-y-3 lg:grid-cols-[240px_minmax(0,704px)_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,704px)_minmax(0,1fr)]">
         <section className="hidden sm:block lg:col-span-3">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
@@ -572,7 +572,7 @@ export function HotelResultsClient() {
               {error}
             </div>
           ) : showFilteredEmptyState ? (
-            <div className={cn(hotelResultStackClass, "space-y-4")}>
+            <div className={cn(hotelResultStackClass, "space-y-3")}>
               <ActiveHotelFilterChips
                 chips={activeFilterChips}
                 onRemove={removeFilterChip}
@@ -596,7 +596,7 @@ export function HotelResultsClient() {
               </div>
             </div>
           ) : (
-            <div className={cn(hotelResultStackClass, "space-y-4")}>
+            <div className={cn(hotelResultStackClass, "space-y-3")}>
               <ActiveHotelFilterChips
                 chips={activeFilterChips}
                 onRemove={removeFilterChip}

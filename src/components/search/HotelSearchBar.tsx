@@ -1069,13 +1069,8 @@ export function HotelSearchBar({
           </div>
         </div>
 
-        {hasActiveHotelSearch ? (
-          <div
-            className={cn(
-              "flex justify-end px-1",
-              compact && "mt-2 hidden sm:flex",
-            )}
-          >
+        {!compact && hasActiveHotelSearch ? (
+          <div className="flex justify-end px-1">
             <button
               type="button"
               onClick={handleResetSearch}
