@@ -29,7 +29,7 @@ import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
 import { validateDestinationImages } from "@/data/destinationImageValidation";
 import {
-  getEligibleHomeDiscoveryFlightRoutes,
+  HOME_DISCOVERY_VISIBLE_CARD_COUNT,
   getHomeDiscoveryByRegion,
 } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
@@ -128,9 +128,34 @@ type DestinationPrice = {
   unavailable?: boolean;
 };
 
+type HomeDiscoveryCardItem = {
+  id: string;
+  title: string;
+  originCity: string;
+  originCode: string;
+  destinationCity: string;
+  destinationCode: string;
+  routeNote: string;
+  image: string;
+  imageAlt: string;
+};
+
+type HomepageFare = Omit<DestinationPrice, "id" | "code" | "unavailable">;
+
+type HomeDiscoveryFareCard = {
+  item: HomeDiscoveryCardItem;
+  fare?: HomepageFare;
+  priceState: "fresh" | "none";
+};
+
 type DestinationPriceState = {
   loading: boolean;
   prices: Record<string, DestinationPrice>;
+};
+
+type DiscoveryFareCardState = {
+  loading: boolean;
+  cards: HomeDiscoveryFareCard[];
 };
 
 export default function Home() {
@@ -144,10 +169,10 @@ export default function Home() {
       loading: true,
       prices: {},
     });
-  const [discoveryPriceState, setDiscoveryPriceState] =
-    useState<DestinationPriceState>({
+  const [discoveryFareCardState, setDiscoveryFareCardState] =
+    useState<DiscoveryFareCardState>({
       loading: true,
-      prices: {},
+      cards: [],
     });
   const destinationsRailRef = useRef<HTMLDivElement>(null);
 
@@ -166,30 +191,38 @@ export default function Home() {
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const discoveryItems = useMemo(
-    () => getHomeDiscoveryByRegion(regionCode),
+  const fallbackDiscoveryCards = useMemo<HomeDiscoveryFareCard[]>(
+    () =>
+      getHomeDiscoveryByRegion(regionCode)
+        .slice(0, HOME_DISCOVERY_VISIBLE_CARD_COUNT)
+        .map((item) => ({
+          item: {
+            id: item.id,
+            title: item.title,
+            originCity: item.originCity,
+            originCode: item.originCode,
+            destinationCity: item.destinationCity,
+            destinationCode: item.destinationCode,
+            routeNote: item.routeNote,
+            image: item.image,
+            imageAlt: item.imageAlt,
+          },
+          priceState: "none",
+        })),
     [regionCode],
   );
-  const pricedDiscoveryItems = useMemo(() => {
-    const eligibleRouteIds = new Set(
-      getEligibleHomeDiscoveryFlightRoutes(regionCode).map((route) => route.id),
-    );
-
-    return discoveryItems.filter((item) => eligibleRouteIds.has(item.id));
-  }, [discoveryItems, regionCode]);
-  const pricedDiscoveryItemIds = useMemo(
-    () => new Set(pricedDiscoveryItems.map((item) => item.id)),
-    [pricedDiscoveryItems],
-  );
+  const discoveryCards = discoveryFareCardState.cards.length
+    ? discoveryFareCardState.cards
+    : fallbackDiscoveryCards;
   const mobileDiscoveryGroups = useMemo(() => {
     const groups = [];
 
-    for (let index = 0; index < discoveryItems.length; index += 6) {
-      groups.push(discoveryItems.slice(index, index + 6));
+    for (let index = 0; index < discoveryCards.length; index += 6) {
+      groups.push(discoveryCards.slice(index, index + 6));
     }
 
     return groups;
-  }, [discoveryItems]);
+  }, [discoveryCards]);
 
   const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -251,53 +284,43 @@ export default function Home() {
   useEffect(() => {
     const controller = new AbortController();
 
-    async function fetchDiscoveryPrices() {
-      setDiscoveryPriceState({ loading: true, prices: {} });
-
-      if (!pricedDiscoveryItems.length) {
-        setDiscoveryPriceState({ loading: false, prices: {} });
-        return;
-      }
+    async function fetchDiscoveryFareCards() {
+      setDiscoveryFareCardState({ loading: true, cards: [] });
 
       try {
-        const response = await fetch("/api/flights/destination-prices", {
+        const response = await fetch("/api/flights/home-discovery-fares", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            destinations: pricedDiscoveryItems.map(
-              ({ id, originCode, destinationCode }) => ({
-                id,
-                originCode,
-                destinationCode,
-              }),
-            ),
+            regionCode,
+            limit: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
             currency: "USD",
           }),
           signal: controller.signal,
         });
 
         if (!response.ok) {
-          throw new Error("Discovery prices unavailable");
+          throw new Error("Discovery fare cards unavailable");
         }
 
         const payload = (await response.json()) as {
-          prices?: DestinationPrice[];
+          cards?: HomeDiscoveryFareCard[];
         };
-        const prices = Object.fromEntries(
-          (payload.prices ?? []).map((price) => [price.id, price]),
-        );
 
-        setDiscoveryPriceState({ loading: false, prices });
+        setDiscoveryFareCardState({
+          loading: false,
+          cards: Array.isArray(payload.cards) ? payload.cards : [],
+        });
       } catch {
         if (controller.signal.aborted) return;
-        setDiscoveryPriceState({ loading: false, prices: {} });
+        setDiscoveryFareCardState({ loading: false, cards: [] });
       }
     }
 
-    void fetchDiscoveryPrices();
+    void fetchDiscoveryFareCards();
 
     return () => controller.abort();
-  }, [pricedDiscoveryItems]);
+  }, [regionCode]);
 
   const handleSavedTripToggle = (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -437,30 +460,27 @@ export default function Home() {
                   key={`group-${groupIndex}`}
                   className="grid min-w-full snap-start grid-cols-2 gap-2.5"
                 >
-                  {group.map((item) => {
+                  {group.map((card) => {
                     return (
                       <DiscoverySuggestionCard
-                        key={item.id}
+                        key={card.item.id}
                         href={buildDiscoveryCardHref(
-                          discoveryPriceState.prices[item.id],
-                          buildDiscoveryLink(item),
+                          card.fare,
+                          buildDiscoveryLink(card.item),
                         )}
-                        itemId={item.id}
-                        image={item.image}
-                        imageAlt={item.imageAlt}
-                        destinationCode={item.destinationCode}
-                        title={item.title}
-                        originCode={item.originCode}
-                        destinationCodeLabel={item.destinationCode}
-                        routeNote={item.routeNote}
+                        itemId={card.item.id}
+                        image={card.item.image}
+                        imageAlt={card.item.imageAlt}
+                        destinationCode={card.item.destinationCode}
+                        title={card.item.title}
+                        originCode={card.item.originCode}
+                        destinationCodeLabel={card.item.destinationCode}
+                        routeNote={card.item.routeNote}
                         compact
-                        price={discoveryPriceState.prices[item.id]}
+                        price={card.fare}
                         displayCurrency={selectedOption.currency}
-                        isPriceLoading={
-                          pricedDiscoveryItemIds.has(item.id) &&
-                          discoveryPriceState.loading
-                        }
-                        isSaved={savedTripIds.includes(item.id)}
+                        isPriceLoading={discoveryFareCardState.loading}
+                        isSaved={savedTripIds.includes(card.item.id)}
                         onHeartToggle={handleSavedTripToggle}
                       />
                     );
@@ -470,29 +490,26 @@ export default function Home() {
             </div>
 
             <div className="hidden grid-cols-3 gap-3 sm:grid md:grid-cols-4 lg:grid-cols-4">
-              {discoveryItems.map((item) => {
+              {discoveryCards.map((card) => {
                 return (
                   <DiscoverySuggestionCard
-                    key={item.id}
+                    key={card.item.id}
                     href={buildDiscoveryCardHref(
-                      discoveryPriceState.prices[item.id],
-                      buildDiscoveryLink(item),
+                      card.fare,
+                      buildDiscoveryLink(card.item),
                     )}
-                    itemId={item.id}
-                    image={item.image}
-                    imageAlt={item.imageAlt}
-                    destinationCode={item.destinationCode}
-                    title={item.title}
-                    originCode={item.originCode}
-                    destinationCodeLabel={item.destinationCode}
-                    routeNote={item.routeNote}
-                    price={discoveryPriceState.prices[item.id]}
+                    itemId={card.item.id}
+                    image={card.item.image}
+                    imageAlt={card.item.imageAlt}
+                    destinationCode={card.item.destinationCode}
+                    title={card.item.title}
+                    originCode={card.item.originCode}
+                    destinationCodeLabel={card.item.destinationCode}
+                    routeNote={card.item.routeNote}
+                    price={card.fare}
                     displayCurrency={selectedOption.currency}
-                    isPriceLoading={
-                      pricedDiscoveryItemIds.has(item.id) &&
-                      discoveryPriceState.loading
-                    }
-                    isSaved={savedTripIds.includes(item.id)}
+                    isPriceLoading={discoveryFareCardState.loading}
+                    isSaved={savedTripIds.includes(card.item.id)}
                     onHeartToggle={handleSavedTripToggle}
                   />
                 );
@@ -726,7 +743,7 @@ function DiscoverySuggestionCard({
   destinationCodeLabel: string;
   routeNote: string;
   compact?: boolean;
-  price?: DestinationPrice;
+  price?: HomepageFare;
   displayCurrency: string;
   isPriceLoading?: boolean;
   isSaved: boolean;
@@ -798,14 +815,16 @@ function DiscoverySuggestionCard({
   );
 }
 
-function hasFreshProviderPrice(
-  price?: DestinationPrice,
-): price is DestinationPrice & {
+type ProviderBackedHomepageFare = HomepageFare & {
   price: number;
   currency: string;
   search: DestinationPriceSearch;
   expiresAt: string;
-} {
+};
+
+function hasFreshProviderPrice(
+  price?: HomepageFare,
+): price is ProviderBackedHomepageFare {
   if (
     price?.providerBacked !== true ||
     typeof price.price !== "number" ||
@@ -824,7 +843,7 @@ function hasFreshProviderPrice(
 }
 
 function buildDestinationCardHref(
-  price: DestinationPrice | undefined,
+  price: HomepageFare | undefined,
   fallbackCity: string,
 ) {
   const search = hasFreshProviderPrice(price) ? price?.search : undefined;
@@ -835,7 +854,7 @@ function buildDestinationCardHref(
 }
 
 function buildDiscoveryCardHref(
-  price: DestinationPrice | undefined,
+  price: HomepageFare | undefined,
   fallbackHref: ComponentProps<typeof Link>["href"],
 ) {
   const search = hasFreshProviderPrice(price) ? price?.search : undefined;
@@ -872,7 +891,7 @@ function DiscoveryPricePill({
   displayCurrency,
   isLoading,
 }: {
-  price?: DestinationPrice;
+  price?: HomepageFare;
   displayCurrency: string;
   isLoading: boolean;
 }) {

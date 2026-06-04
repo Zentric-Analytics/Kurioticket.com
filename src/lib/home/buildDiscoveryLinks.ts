@@ -1,6 +1,9 @@
-import type { HomeDiscoveryItem } from "@/data/homeDiscovery";
+type DiscoveryLinkItem = {
+  originCode: string;
+  destinationCode: string;
+};
 
-export function buildDiscoveryLink(item: HomeDiscoveryItem) {
+export function buildDiscoveryLink(item: DiscoveryLinkItem) {
   const departureDate = new Date();
   departureDate.setDate(departureDate.getDate() + 30);
 
