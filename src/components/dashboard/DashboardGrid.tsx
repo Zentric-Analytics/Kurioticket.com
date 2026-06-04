@@ -41,7 +41,7 @@ const overviewCards: DashboardCard[] = [
   {
     title: "Trips",
     eyebrow: "No trips yet",
-    body: "Start by searching flights, hotels, or cars. Trip details can be organized here when available.",
+    body: "Start by searching flights, hotels, or cars. Keep trip details organized from real saved activity.",
     href: "#travel-activity",
     icon: Route,
     cta: "Review trip tools",
@@ -57,10 +57,10 @@ const overviewCards: DashboardCard[] = [
   {
     title: "Price alerts",
     eyebrow: "No price alerts yet",
-    body: "Create alerts from search results when alert tools are available.",
+    body: "View saved alerts and tracked trips linked to your account.",
     href: "/dashboard/alerts",
     icon: Bell,
-    cta: "View alert settings",
+    cta: "View saved alerts",
   },
   {
     title: "Recent searches",
@@ -82,15 +82,15 @@ const savedCards: DashboardCard[] = [
   },
   {
     title: "Saved searches",
-    body: "Return to searches you want to compare again when saved-search tools are available.",
+    body: "Return to searches you save and want to compare again.",
     icon: Search,
-    eyebrow: "Coming soon",
+    eyebrow: "Account tool",
   },
   {
     title: "Watchlist",
     body: "Group planning ideas without claiming bookings, prices, or alerts exist.",
     icon: CheckCircle2,
-    eyebrow: "Coming soon",
+    eyebrow: "Account tool",
   },
 ];
 
@@ -111,9 +111,9 @@ const accountToolCards: DashboardCard[] = [
   },
   {
     title: "Travel preferences",
-    body: "Preference controls will help tailor planning tools when available.",
+    body: "Review account settings and keep planning preferences easy to find.",
     icon: Settings,
-    eyebrow: "Coming soon",
+    eyebrow: "Account tool",
   },
   {
     title: "Security and privacy",
@@ -129,13 +129,13 @@ const supportCards: DashboardCard[] = [
     title: "Help center",
     body: "Browse Kurioticket guidance, account information, and travel-planning help.",
     icon: LifeBuoy,
-    eyebrow: "Coming soon",
+    eyebrow: "Account tool",
   },
   {
     title: "Contact support",
-    body: "Support options will appear here as account servicing tools are added.",
+    body: "Contact Kurioticket for account questions and platform support.",
     icon: Headphones,
-    eyebrow: "Coming soon",
+    eyebrow: "Account tool",
   },
   {
     title: "Privacy and data",
@@ -223,7 +223,7 @@ export function FreeDashboardGrid() {
               id="overview-title"
               eyebrow="Overview"
               title="Your account at a glance"
-              body="A clear starting point for trips, saved ideas, alerts, and recent planning activity. Empty states stay honest until account data is connected."
+              body="A clear starting point for trips, saved ideas, alerts, and recent planning activity. Empty states stay honest and never show made-up account data."
             />
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -261,7 +261,7 @@ export function FreeDashboardGrid() {
               id="saved-watchlist-title"
               eyebrow="Saved and watchlist"
               title="Keep planning ideas easy to revisit"
-              body="Saved trips are linked when available. Saved-search and watchlist tools use clear upcoming states until they are connected to real account data."
+              body="Saved trips, searches, and watchlists keep planning ideas easy to revisit without showing made-up bookings, prices, or alerts."
             />
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-3">

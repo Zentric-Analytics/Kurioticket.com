@@ -87,7 +87,7 @@ const signedInAccountMenuItems = [
   {
     href: "/dashboard/alerts",
     label: "Price alerts",
-    description: "Track fare changes",
+    description: "View saved alerts",
     icon: Tag,
   },
   {
