@@ -17,6 +17,38 @@ function formatHotelRating(rating: number) {
   return Number.isInteger(rating) ? String(rating) : rating.toFixed(1);
 }
 
+function normalizeWhitespace(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function toTitleCase(value: string) {
+  const normalized = normalizeWhitespace(value);
+
+  if (!normalized) return "";
+
+  const shouldNormalizeCase =
+    normalized === normalized.toLocaleUpperCase() || normalized === normalized.toLocaleLowerCase();
+  const title = shouldNormalizeCase ? normalized.toLocaleLowerCase() : normalized;
+
+  return title.replace(
+    /(^|[\s/-])([\p{L}\p{N}])/gu,
+    (_match, separator: string, character: string) =>
+      `${separator}${character.toLocaleUpperCase()}`,
+  );
+}
+
+function toSentenceCase(value: string) {
+  const normalized = normalizeWhitespace(value);
+
+  if (!normalized) return "";
+
+  const shouldNormalizeCase =
+    normalized === normalized.toLocaleUpperCase() || normalized === normalized.toLocaleLowerCase();
+  const sentence = shouldNormalizeCase ? normalized.toLocaleLowerCase() : normalized;
+
+  return `${sentence.charAt(0).toLocaleUpperCase()}${sentence.slice(1)}`;
+}
+
 const fallbackHotelImages = [
   "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=90",
   "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=90",
@@ -54,6 +86,10 @@ export function HotelCard({ hotel }: HotelCardProps) {
       : failedImageUrls.has(fallbackImageUrl)
         ? ""
         : fallbackImageUrl;
+  const roomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
+  const roomBasisText = hotel.amenities
+    .map((amenity) => toSentenceCase(amenity))
+    .filter(Boolean);
 
   async function redirectToHotel() {
     const response = await fetch("/api/redirect", {
@@ -111,26 +147,15 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   <span>{hotel.location}</span>
                 </p>
               </div>
-              {hotel.roomType || hotel.amenities.length > 0 ? (
-                <div className="space-y-1.5">
-                  {hotel.roomType ? (
-                    <div className="flex flex-wrap gap-2">
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
-                        {hotel.roomType}
-                      </span>
-                    </div>
+              {roomTypeText || roomBasisText.length > 0 ? (
+                <div className="space-y-0.5">
+                  {roomTypeText ? (
+                    <p className="text-xs font-medium leading-4 text-slate-600">{roomTypeText}</p>
                   ) : null}
-                  {hotel.amenities.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {hotel.amenities.slice(0, 5).map((amenity) => (
-                        <span
-                          key={amenity}
-                          className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500"
-                        >
-                          {amenity}
-                        </span>
-                      ))}
-                    </div>
+                  {roomBasisText.length > 0 ? (
+                    <p className="text-[11px] font-normal leading-4 text-slate-500">
+                      {roomBasisText.slice(0, 5).join(" · ")}
+                    </p>
                   ) : null}
                 </div>
               ) : null}
@@ -154,7 +179,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 >
                   View Hotel
                 </Button>
-                <p className="mt-1 max-w-36 text-[11px] font-medium leading-4 text-slate-500">
+                <p className="mt-1 max-w-36 text-[10px] font-normal leading-3 text-slate-400">
                   Final price confirmed by provider.
                 </p>
               </div>
