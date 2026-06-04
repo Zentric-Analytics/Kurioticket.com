@@ -402,7 +402,7 @@ export function HotelResultsClient() {
     [maxPrice, minRating, resultCurrency, resultMaxPrice, selectedFilters],
   );
 
-  const displayedHotels = filterApplying ? visibleFiltered : filtered;
+  const visibleFilteredHotels = filterApplying ? visibleFiltered : filtered;
 
   const showFilteredEmptyState =
     !loading &&
@@ -625,9 +625,14 @@ export function HotelResultsClient() {
             </div>
           ) : (
             <div className={cn(hotelResultStackClass, "space-y-3")}>
-              <div className="space-y-2">
-                <h1 className="text-[15px] font-bold leading-tight text-slate-900 sm:text-lg">
-                  We found {displayedHotels.length} places to stay for you
+              <div className="space-y-2 pt-1">
+                <h1
+                  className={cn(
+                    "text-[15px] font-bold leading-tight text-slate-900 transition-opacity sm:text-lg",
+                    filterApplying ? "animate-pulse opacity-80" : undefined,
+                  )}
+                >
+                  We found {visibleFilteredHotels.length} places to stay for you
                 </h1>
                 <ActiveHotelFilterChips
                   chips={activeFilterChips}
@@ -648,8 +653,8 @@ export function HotelResultsClient() {
                   <HotelSkeleton />
                   <HotelSkeleton />
                 </div>
-              ) : displayedHotels.length ? (
-                displayedHotels.map((hotel) => (
+              ) : visibleFilteredHotels.length ? (
+                visibleFilteredHotels.map((hotel) => (
                   <HotelCard key={hotel.id} hotel={hotel} />
                 ))
               ) : (
