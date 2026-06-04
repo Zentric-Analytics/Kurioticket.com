@@ -39,7 +39,7 @@ export default async function DashboardPage() {
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-dark">My account</p>
                 <h1 className="mt-3 text-3xl font-bold tracking-tight text-navy sm:text-4xl">Plan smarter with your travel dashboard</h1>
                 <p className="mt-3 max-w-2xl text-base leading-7 text-muted">
-                  Log in to organize saved trip ideas, return to planning tools, manage alerts when available, and keep account settings in one clear place.
+                  Log in to organize saved trip ideas, return to planning tools, review saved alerts, and keep account settings in one clear place.
                 </p>
               </div>
               <div className="grid gap-5 px-6 py-6 sm:px-8 lg:grid-cols-[1fr_auto] lg:items-center">
