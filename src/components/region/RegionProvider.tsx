@@ -1,50 +1,71 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 
 import { getStoredRegion, setStoredCurrency, setStoredRegion } from "@/lib/preferences/preferences";
 import { supportedRegions } from "@/lib/region/supportedRegions";
 
 type RegionCode = (typeof supportedRegions)[number]["code"];
 
+type RegionOption = (typeof supportedRegions)[number];
+
 type RegionContextValue = {
   mode: RegionCode;
   setMode: (mode: RegionCode) => void;
-  selectedOption: (typeof supportedRegions)[number];
+  selectedOption: RegionOption;
+  detectedOption: RegionOption | null;
+  hasUserSelectedRegion: boolean;
   options: typeof supportedRegions;
 };
 
 const RegionContext = createContext<RegionContextValue | null>(null);
 
-export function RegionProvider({ initialMode, children }: { initialMode: string; children: React.ReactNode }) {
-  const [mode, setModeState] = useState<RegionCode>(() => {
+const findSupportedRegion = (code: string | null | undefined) =>
+  supportedRegions.find((option) => option.code === code) ?? null;
+
+export function RegionProvider({
+  initialMode,
+  detectedMode,
+  children,
+}: {
+  initialMode: string;
+  detectedMode?: string | null;
+  children: React.ReactNode;
+}) {
+  const detectedOption = findSupportedRegion(detectedMode) ?? findSupportedRegion(initialMode);
+  const [regionState, setRegionState] = useState(() => {
     const storedMode = getStoredRegion();
-    const validStoredMode = supportedRegions.some((option) => option.code === storedMode);
-    if (validStoredMode) return storedMode as RegionCode;
-    if (supportedRegions.some((option) => option.code === initialMode)) return initialMode as RegionCode;
-    return supportedRegions[0].code;
+    const storedOption = findSupportedRegion(storedMode);
+
+    return {
+      hasUserSelectedRegion: Boolean(storedOption),
+      mode: ((storedOption ?? detectedOption ?? supportedRegions[0]).code) as RegionCode,
+    };
   });
+  const { mode, hasUserSelectedRegion } = regionState;
 
   const selectedOption = useMemo(
-    () => supportedRegions.find((option) => option.code === mode) ?? supportedRegions[0],
-    [mode]
+    () => findSupportedRegion(mode) ?? supportedRegions[0],
+    [mode],
   );
 
   const setMode = (nextMode: RegionCode) => {
-    const nextOption = supportedRegions.find((option) => option.code === nextMode) ?? supportedRegions[0];
-    setModeState(nextOption.code as RegionCode);
+    const nextOption = findSupportedRegion(nextMode) ?? supportedRegions[0];
+    setRegionState({ mode: nextOption.code as RegionCode, hasUserSelectedRegion: true });
     setStoredRegion(nextOption.code);
     setStoredCurrency(nextOption.currency);
   };
 
-  useEffect(() => {
-    setStoredRegion(selectedOption.code);
-    setStoredCurrency(selectedOption.currency);
-  }, [selectedOption.code, selectedOption.currency]);
-
   const value = useMemo(
-    () => ({ mode, setMode, selectedOption, options: supportedRegions }),
-    [mode, selectedOption]
+    () => ({
+      mode,
+      setMode,
+      selectedOption,
+      detectedOption,
+      hasUserSelectedRegion,
+      options: supportedRegions,
+    }),
+    [mode, selectedOption, detectedOption, hasUserSelectedRegion],
   );
 
   return <RegionContext.Provider value={value}>{children}</RegionContext.Provider>;

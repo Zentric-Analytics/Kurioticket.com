@@ -1,4 +1,10 @@
 import { normalizeLanguage, type LanguageCode } from "@/lib/language";
+import {
+  REGION_COOKIE_KEY as SERVER_REGION_COOKIE_KEY,
+  REGION_OVERRIDE_COOKIE_KEY,
+  REGION_OVERRIDE_STORAGE_KEY,
+  REGION_STORAGE_KEY as SERVER_REGION_STORAGE_KEY,
+} from "@/config/regionConfig";
 
 export const LOCALE_COOKIE_KEY = "kurioticket_locale";
 export const REGION_COOKIE_KEY = "kurioticket_region";
@@ -36,18 +42,26 @@ export function setStoredLocale(locale: string) {
   }
 }
 
-export function getStoredRegion(): string {
-  const cookie = getCookieValue(REGION_COOKIE_KEY);
-  if (cookie) return cookie.toUpperCase();
-  if (typeof window !== "undefined") return (window.localStorage.getItem(REGION_COOKIE_KEY) ?? window.localStorage.getItem("ct_region") ?? "US").toUpperCase();
-  return "US";
+export function getStoredRegion(): string | null {
+  const overrideCookie = getCookieValue(REGION_OVERRIDE_COOKIE_KEY);
+  if (overrideCookie) return overrideCookie.toUpperCase();
+
+  if (typeof window !== "undefined") {
+    return window.localStorage.getItem(REGION_OVERRIDE_STORAGE_KEY)?.toUpperCase() ?? null;
+  }
+
+  return null;
 }
 
 export function setStoredRegion(regionCode: string) {
-  setCookieValue(REGION_COOKIE_KEY, regionCode);
+  const normalizedRegionCode = regionCode.toUpperCase();
+  setCookieValue(REGION_OVERRIDE_COOKIE_KEY, normalizedRegionCode);
+  setCookieValue(REGION_COOKIE_KEY, normalizedRegionCode);
+  setCookieValue(SERVER_REGION_COOKIE_KEY, normalizedRegionCode);
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(REGION_COOKIE_KEY, regionCode);
-    window.localStorage.setItem("ct_region", regionCode);
+    window.localStorage.setItem(REGION_OVERRIDE_STORAGE_KEY, normalizedRegionCode);
+    window.localStorage.setItem(REGION_COOKIE_KEY, normalizedRegionCode);
+    window.localStorage.setItem(SERVER_REGION_STORAGE_KEY, normalizedRegionCode);
   }
 }
 
