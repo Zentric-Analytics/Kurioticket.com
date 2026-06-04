@@ -223,7 +223,8 @@ const inferPlaceCountryCode = (place: DuffelPlaceSuggestion) => {
   const providerCountryCode = normalizeIsoCountryCode(countryNameToCountryCode(place.country));
   if (providerCountryCode) return providerCountryCode;
 
-  const curatedCountryCode = normalizeIsoCountryCode(curatedAirportsByCode.get(place.code.toUpperCase())?.country);
+  const curatedAirport = curatedAirportsByCode.get(place.code.toUpperCase());
+  const curatedCountryCode = normalizeIsoCountryCode(curatedAirport?.countryCode || countryNameToCountryCode(curatedAirport?.country));
   if (curatedCountryCode) return curatedCountryCode;
 
   return inferCountryCodeFromDuffelPlaceId(place.duffelPlaceId);
@@ -281,7 +282,7 @@ const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearch
 
 
 const airportMatchesQuery = (airport: AirportOption, normalizedQuery: string) => {
-  const haystack = [airport.code, airport.city, airport.airport, airport.country]
+  const haystack = [airport.code, airport.city, airport.airport]
     .filter(Boolean)
     .map((value) => normalizeSuggestionText(value || ""));
 
@@ -293,6 +294,7 @@ const curatedAirportToSuggestion = (airport: AirportOption): DuffelPlaceSuggesti
   city: airport.city,
   airport: airport.airport,
   country: airport.country,
+  countryCode: airport.countryCode,
   type: "airport",
   latitude: airport.lat,
   longitude: airport.lon,
@@ -314,9 +316,7 @@ const curatedQueryScore = (airport: AirportOption, normalizedQuery: string) => {
 
 export const searchCuratedPlaceSuggestions = (query: string, searchContext?: PlaceSearchContext) => {
   const normalizedQuery = normalizeSuggestionText(query);
-  const normalizedCountryCode = normalizeCountryCode(searchContext?.countryCode);
-
-  if (!normalizedQuery || !normalizedCountryCode) return [];
+  if (!normalizedQuery) return [];
 
   const matchingAirports = airports.filter((airport) => airportMatchesQuery(airport, normalizedQuery));
   const orderByCode = new Map(airports.map((airport, index) => [airport.code, index]));
@@ -397,7 +397,7 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
       seenCodes.add(code);
       seenNames.add(nameKey);
 
-      results.push({
+      const providerSuggestion: DuffelPlaceSuggestion = {
         code,
         city,
         airport,
@@ -406,6 +406,11 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
         type: item.type === "city" ? "city" : item.type === "airport" ? "airport" : item.type,
         latitude: toNumber(item.latitude),
         longitude: toNumber(item.longitude),
+      };
+
+      results.push({
+        ...providerSuggestion,
+        countryCode: inferPlaceCountryCode(providerSuggestion),
       });
     }
 
