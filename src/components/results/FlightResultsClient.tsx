@@ -2756,10 +2756,10 @@ export function FlightResultsClient() {
                       : "text-slate-600"
                   )}
                 >
-                  <span className="block text-[12px] font-extrabold text-slate-700 sm:text-[13px]">
+                  <span className="block text-[12px] font-semibold text-slate-600 sm:text-[13px]">
                     Cheapest
                   </span>
-                  <span className="mt-1 block truncate text-[14px] font-black leading-5 text-slate-950 sm:text-[15px]">
+                  <span className="mt-1 block truncate text-[14px] font-semibold leading-5 text-slate-950 sm:text-[15px]">
                     {sortSummaries.cheapest
                       ? formatCurrency(
                           sortSummaries.cheapest.price,
@@ -2782,10 +2782,10 @@ export function FlightResultsClient() {
                       : "text-slate-600"
                   )}
                 >
-                  <span className="block text-[12px] font-extrabold text-slate-700 sm:text-[13px]">
+                  <span className="block text-[12px] font-semibold text-slate-600 sm:text-[13px]">
                     Best
                   </span>
-                  <span className="mt-1 block truncate text-[14px] font-black leading-5 text-slate-950 sm:text-[15px]">
+                  <span className="mt-1 block truncate text-[14px] font-semibold leading-5 text-slate-950 sm:text-[15px]">
                     {sortSummaries.best
                       ? `${formatCurrency(
                           sortSummaries.best.price,
@@ -2810,10 +2810,10 @@ export function FlightResultsClient() {
                       : "text-slate-600"
                   )}
                 >
-                  <span className="block text-[12px] font-extrabold text-slate-700 sm:text-[13px]">
+                  <span className="block text-[12px] font-semibold text-slate-600 sm:text-[13px]">
                     Quickest
                   </span>
-                  <span className="mt-1 block truncate text-[14px] font-black leading-5 text-slate-950 sm:text-[15px]">
+                  <span className="mt-1 block truncate text-[14px] font-semibold leading-5 text-slate-950 sm:text-[15px]">
                     {sortSummaries.fastest
                       ? formatDurationFromMinutes(
                           sortSummaries.fastest.durationMinutes
