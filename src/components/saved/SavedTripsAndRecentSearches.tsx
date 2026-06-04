@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ExternalLink, Heart, Search, Trash2, X } from "lucide-react";
 
+import { PriceText } from "@/components/currency/PriceText";
+
 import {
   clearRecentSearches,
   readRecentSearches,
@@ -151,8 +153,12 @@ export function SavedTripsAndRecentSearches() {
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
 
   useEffect(() => {
-    setSavedIds(readSavedTripIds());
-    setRecentSearches(readRecentSearches());
+    const id = window.setTimeout(() => {
+      setSavedIds(readSavedTripIds());
+      setRecentSearches(readRecentSearches());
+    }, 0);
+
+    return () => window.clearTimeout(id);
   }, []);
 
   const savedTrips = useMemo(() => savedIds.map((id) => resolveSavedTrip(id)), [savedIds]);
@@ -247,7 +253,7 @@ export function SavedTripsAndRecentSearches() {
                       <div className="flex items-end justify-between gap-3">
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">From</p>
-                          <p className="text-[1.5rem] font-black leading-tight text-slate-950">{trip.price ? `$${trip.price}` : "Price unavailable"}</p>
+                          <p className="text-[1.5rem] font-black leading-tight text-slate-950">{trip.price ? <PriceText amountUsd={trip.price} /> : "Price unavailable"}</p>
                         </div>
                         <Link href={trip.href} className="inline-flex min-h-11 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900">
                           View trip

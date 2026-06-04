@@ -1253,6 +1253,11 @@ export function FlightResultsClient() {
     router.push(`/flights/results?${nextParams.toString()}`);
   }
 
+  const resultCurrency = useMemo(
+    () => getSingleResultCurrency(results, selectedCurrency),
+    [results, selectedCurrency],
+  );
+
   const stopOptions = useMemo(() => {
     const buckets = new Map<string, { count: number; minPrice: number }>();
 
@@ -1278,13 +1283,13 @@ export function FlightResultsClient() {
       count: data.count,
       secondaryLabel: `${data.count} option${data.count === 1 ? "" : "s"}`,
       rightLabel: Number.isFinite(data.minPrice)
-        ? formatCurrency(data.minPrice, selectedCurrency)
+        ? formatCurrency(data.minPrice, resultCurrency)
         : undefined,
     })).sort(
       (first, second) =>
         stopBucketSortValue(first.value) - stopBucketSortValue(second.value)
     );
-  }, [results, selectedCurrency]);
+  }, [resultCurrency, results]);
 
   const airlineOptions = useMemo(
     () =>
@@ -2695,7 +2700,7 @@ export function FlightResultsClient() {
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
             priceBounds={priceBounds}
-            currency={selectedCurrency}
+            currency={resultCurrency}
             timeFilterMode={timeFilterMode}
             setTimeFilterMode={setTimeFilterMode}
             timeBounds={timeBounds}
@@ -2763,7 +2768,7 @@ export function FlightResultsClient() {
                     {sortSummaries.cheapest
                       ? formatCurrency(
                           sortSummaries.cheapest.price,
-                          selectedCurrency
+                          sortSummaries.cheapest.currency
                         )
                       : "—"}
                   </span>
@@ -2789,7 +2794,7 @@ export function FlightResultsClient() {
                     {sortSummaries.best
                       ? `${formatCurrency(
                           sortSummaries.best.price,
-                          selectedCurrency
+                          sortSummaries.best.currency
                         )} · ${formatDurationFromMinutes(
                           sortSummaries.best.durationMinutes
                         )}`
@@ -2911,7 +2916,7 @@ export function FlightResultsClient() {
           maxPrice={maxPrice}
           setMaxPrice={setMaxPrice}
           priceBounds={priceBounds}
-          currency={selectedCurrency}
+          currency={resultCurrency}
           timeFilterMode={timeFilterMode}
           setTimeFilterMode={setTimeFilterMode}
           timeBounds={timeBounds}
@@ -3006,6 +3011,22 @@ function dedupeSuggestions(suggestions: AirportOption[]) {
 
 function airportInputValue(item: AirportOption) {
   return item.code;
+}
+
+function getSingleResultCurrency(
+  results: PublicFlightResult[],
+  fallbackCurrency: string,
+) {
+  const currencies = results
+    .map((result) => result.currency?.toUpperCase())
+    .filter(Boolean);
+  const [firstCurrency] = currencies;
+
+  if (firstCurrency) {
+    return firstCurrency;
+  }
+
+  return fallbackCurrency.toUpperCase();
 }
 
 function addDays(date: Date, amount: number): Date {
