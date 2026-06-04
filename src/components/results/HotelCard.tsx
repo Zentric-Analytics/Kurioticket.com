@@ -56,14 +56,17 @@ function toSentenceCase(value: string) {
 }
 
 function isCancellationText(value: string) {
-  return /cancellation|cancel|policy/i.test(value);
+  return /cancellation|cancel|policy|refund|prepayment/i.test(value);
 }
 
-function getCancellationDisplay(hotel: PublicHotelResult) {
-  const policyText = [hotel.cancellationInfo, ...hotel.amenities]
-    .map((value) => normalizeWhitespace(value || ""))
-    .filter(Boolean)
-    .join(" ");
+function isMealPlanText(value: string) {
+  return /breakfast|room only|accommodation only|half board|full board|all[-\s]?inclusive/i.test(
+    value,
+  );
+}
+
+function getCancellationDisplay(cancellationInfo: string) {
+  const policyText = normalizeWhitespace(cancellationInfo || "");
 
   if (!policyText) return null;
 
@@ -75,47 +78,50 @@ function getCancellationDisplay(hotel: PublicHotelResult) {
     return { label: "Free cancellation", positive: true };
   }
 
-  if (
-    /cancellation policy available|policy shown|cancellation details|cancellation rules|rate comments|flexible cancellation/i.test(
-      policyText,
-    )
-  ) {
-    return { label: "Cancellation details available", positive: false };
+  if (/\bpay (?:at|on) (?:the )?property\b|\bpay later\b/i.test(policyText)) {
+    return { label: toSentenceCase(policyText), positive: true };
   }
 
-  return isCancellationText(policyText)
-    ? { label: "Cancellation details available", positive: false }
-    : null;
+  if (/\bno prepayment\b/i.test(policyText)) {
+    return { label: toSentenceCase(policyText), positive: true };
+  }
+
+  if (/\brefundable\b/i.test(policyText)) {
+    return { label: toSentenceCase(policyText), positive: true };
+  }
+
+  return null;
 }
 
-function getAreaDisplay(distanceFromCenter?: string) {
+function getDistanceDisplay(distanceFromCenter?: string) {
   const distanceText = distanceFromCenter
     ? toSentenceCase(distanceFromCenter)
     : "";
 
   if (!distanceText) return "";
 
-  if (/^central or transit-friendly area$/i.test(distanceText)) {
+  if (
+    /^(central|transit-friendly area|central or transit-friendly area)$/i.test(
+      distanceText,
+    )
+  ) {
     return "";
-  }
-
-  if (/central/i.test(distanceText) && /transit/i.test(distanceText)) {
-    return "Central area";
-  }
-
-  if (/central/i.test(distanceText)) {
-    return "Central area";
-  }
-
-  if (/transit/i.test(distanceText)) {
-    return "Transit-friendly area";
   }
 
   return distanceText;
 }
 
-function getAmenityDisplay(amenities: string[]) {
+function getMealPlanDisplay(hotel: PublicHotelResult, roomTypeText: string) {
+  const mealText = [hotel.roomType, ...hotel.amenities]
+    .map((value) => toSentenceCase(value || ""))
+    .find((value) => value && isMealPlanText(value));
+
+  return mealText && toTitleCase(mealText) !== roomTypeText ? mealText : "";
+}
+
+function getAmenityDisplay(amenities: string[], mealPlanText: string) {
   const seen = new Set<string>();
+  const mealPlanKey = mealPlanText.toLocaleLowerCase();
 
   return amenities
     .map((amenity) => toSentenceCase(amenity))
@@ -123,12 +129,17 @@ function getAmenityDisplay(amenities: string[]) {
       if (
         !amenity ||
         isCancellationText(amenity) ||
-        /verified partner inventory/i.test(amenity)
+        isMealPlanText(amenity) ||
+        /verified partner inventory/i.test(amenity) ||
+        /^(central|transit-friendly area|central or transit-friendly area)$/i.test(
+          amenity,
+        )
       ) {
         return false;
       }
 
       const key = amenity.toLocaleLowerCase();
+      if (mealPlanKey && key === mealPlanKey) return false;
       if (seen.has(key)) return false;
 
       seen.add(key);
@@ -180,9 +191,10 @@ export function HotelCard({ hotel }: HotelCardProps) {
         ? ""
         : fallbackImageUrl;
   const roomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
-  const distanceAreaText = getAreaDisplay(hotel.distanceFromCenter);
-  const cancellationDisplay = getCancellationDisplay(hotel);
-  const amenityDisplay = getAmenityDisplay(hotel.amenities);
+  const distanceText = getDistanceDisplay(hotel.distanceFromCenter);
+  const mealPlanText = getMealPlanDisplay(hotel, roomTypeText);
+  const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo);
+  const amenityDisplay = getAmenityDisplay(hotel.amenities, mealPlanText);
 
   async function redirectToHotel() {
     const response = await fetch("/api/redirect", {
@@ -238,59 +250,59 @@ export function HotelCard({ hotel }: HotelCardProps) {
                     </span>
                   </div>
                 ) : null}
-                <h2 className="text-sm font-semibold leading-5 text-slate-900">
+                <h2 className="text-[17px] font-semibold leading-6 text-slate-900 lg:text-lg">
                   {hotel.name}
                 </h2>
-                <p className="mt-1 flex items-center gap-1.5 text-xs font-normal text-slate-500">
-                  <MapPin size={14} className="shrink-0 text-slate-400" />
+                <p className="mt-1 flex items-center gap-1.5 text-[13px] font-normal leading-5 text-slate-600 lg:text-sm">
+                  <MapPin size={15} className="shrink-0 text-slate-400" />
                   <span>{hotel.location}</span>
                 </p>
               </div>
-              {distanceAreaText || cancellationDisplay ? (
-                <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] font-normal leading-4 text-slate-500">
-                  {distanceAreaText ? <span>{distanceAreaText}</span> : null}
-                  {distanceAreaText && cancellationDisplay ? (
-                    <span className="text-slate-300" aria-hidden="true">
-                      ·
-                    </span>
-                  ) : null}
-                  {cancellationDisplay ? (
-                    <span
-                      className={
-                        cancellationDisplay.positive
-                          ? "font-medium text-emerald-700"
-                          : "text-slate-500"
-                      }
-                    >
-                      {cancellationDisplay.label}
-                    </span>
-                  ) : null}
-                </div>
+              {distanceText ? (
+                <p className="mt-1 text-[13px] font-normal leading-5 text-slate-600 lg:text-sm">
+                  {distanceText}
+                </p>
               ) : null}
-              {roomTypeText || amenityDisplay.length > 0 ? (
-                <div className="mt-2 space-y-0.5">
+              {roomTypeText || mealPlanText || amenityDisplay.length > 0 ? (
+                <div className="mt-2 space-y-1">
                   {roomTypeText ? (
-                    <p className="text-xs font-medium leading-4 text-slate-700">
+                    <p className="text-sm font-medium leading-5 text-slate-800">
                       {roomTypeText}
                     </p>
                   ) : null}
+                  {mealPlanText ? (
+                    <p className="text-[13px] font-normal leading-5 text-slate-600">
+                      {mealPlanText}
+                    </p>
+                  ) : null}
                   {amenityDisplay.length > 0 ? (
-                    <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] font-normal leading-4 text-slate-500">
+                    <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] font-normal leading-5 text-slate-600">
                       {amenityDisplay.join(" · ")}
                     </p>
                   ) : null}
                 </div>
               ) : null}
+              {cancellationDisplay ? (
+                <p
+                  className={
+                    cancellationDisplay.positive
+                      ? "mt-2 text-[13px] font-medium leading-5 text-emerald-700"
+                      : "mt-2 text-[13px] font-medium leading-5 text-slate-600"
+                  }
+                >
+                  {cancellationDisplay.label}
+                </p>
+              ) : null}
             </div>
             <div className="flex items-center justify-between gap-2 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-right">
               <div className="text-right">
-                <div className="text-xl font-semibold tracking-[-0.01em] text-slate-950">
+                <div className="text-[21px] font-bold tracking-[-0.01em] text-slate-950">
                   {formatCurrency(hotel.totalPrice, hotel.currency)}
                 </div>
-                <div className="text-xs font-medium text-slate-500">
+                <div className="text-xs font-medium leading-4 text-slate-500">
                   estimated stay total
                 </div>
-                <div className="text-[11px] font-medium leading-4 text-slate-500">
+                <div className="text-xs font-medium leading-4 text-slate-500">
                   {formatCurrency(hotel.pricePerNight, hotel.currency)} per
                   night
                 </div>
@@ -299,14 +311,11 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <Button
                   variant="primary"
                   size="sm"
-                  className="whitespace-nowrap bg-navy px-2.5 hover:bg-navy-soft"
+                  className="whitespace-nowrap bg-navy px-2.5 text-sm font-semibold hover:bg-navy-soft"
                   onClick={redirectToHotel}
                 >
                   View Hotel
                 </Button>
-                <p className="mt-1 max-w-36 text-[10px] font-normal leading-[1.15] text-slate-400">
-                  Provider confirms final price.
-                </p>
               </div>
             </div>
           </div>
