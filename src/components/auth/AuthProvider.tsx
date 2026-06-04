@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 function InactivitySignOut() {
   const { status } = useSession();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastActivityRef = useRef(Date.now());
+  const lastActivityRef = useRef(0);
   const lastActivityBroadcastRef = useRef(0);
   const isSigningOutRef = useRef(false);
 
@@ -77,7 +77,7 @@ function InactivitySignOut() {
     }
 
     timeoutRef.current = setTimeout(() => {
-      scheduleInactivityTimer();
+      void signOutForInactivity();
     }, remainingMs);
   }, [clearInactivityTimer, signOutForInactivity]);
 
