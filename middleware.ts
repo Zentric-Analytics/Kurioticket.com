@@ -12,7 +12,10 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  const country = request.headers.get("x-vercel-ip-country") || request.headers.get("cf-ipcountry");
+  const country =
+    request.headers.get("x-vercel-ip-country") ||
+    request.headers.get("cf-ipcountry") ||
+    request.headers.get("x-country");
   const detectedRegion = countryToRegion(country);
   const fallbackRegion = normalizeRegion(request.cookies.get(REGION_COOKIE_KEY)?.value);
   const region = detectedRegion || fallbackRegion;
@@ -26,6 +29,9 @@ export function middleware(request: NextRequest) {
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
   });
+  if (detectedRegion) {
+    response.headers.set("x-kurioticket-detected-region", detectedRegion);
+  }
   response.headers.set("x-kurioticket-region", region);
 
   return response;

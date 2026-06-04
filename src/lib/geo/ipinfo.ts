@@ -112,7 +112,7 @@ const isPublicIp = (value: string) => {
 
 const firstPublicIp = (value: string | null) => splitHeaderValues(value).map(isPublicIp).find(Boolean) || null;
 
-export const extractVisitorIp = (headers: Headers): string | null =>
+export const extractVisitorIp = (headers: Pick<Headers, "get">): string | null =>
   firstPublicIp(headers.get("cf-connecting-ip")) ||
   firstPublicIp(headers.get("x-real-ip")) ||
   firstPublicIp(headers.get("x-forwarded-for")) ||

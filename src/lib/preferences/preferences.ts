@@ -53,15 +53,22 @@ export function getStoredRegion(): string | null {
   return null;
 }
 
-export function setStoredRegion(regionCode: string) {
+export function setStoredDetectedRegion(regionCode: string) {
   const normalizedRegionCode = regionCode.toUpperCase();
-  setCookieValue(REGION_OVERRIDE_COOKIE_KEY, normalizedRegionCode);
   setCookieValue(REGION_COOKIE_KEY, normalizedRegionCode);
   setCookieValue(SERVER_REGION_COOKIE_KEY, normalizedRegionCode);
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(REGION_OVERRIDE_STORAGE_KEY, normalizedRegionCode);
     window.localStorage.setItem(REGION_COOKIE_KEY, normalizedRegionCode);
     window.localStorage.setItem(SERVER_REGION_STORAGE_KEY, normalizedRegionCode);
+  }
+}
+
+export function setStoredRegion(regionCode: string) {
+  const normalizedRegionCode = regionCode.toUpperCase();
+  setCookieValue(REGION_OVERRIDE_COOKIE_KEY, normalizedRegionCode);
+  setStoredDetectedRegion(normalizedRegionCode);
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(REGION_OVERRIDE_STORAGE_KEY, normalizedRegionCode);
   }
 }
 
