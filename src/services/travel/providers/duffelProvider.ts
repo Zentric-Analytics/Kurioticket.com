@@ -324,9 +324,6 @@ const filterIntentionalForeignPlaces = (
   const normalizedCountryCode = normalizeCountryCode(searchContext?.countryCode);
   if (searchContext?.context !== "origin" || !normalizedCountryCode) return places;
 
-  const hasSameCountryMatches = places.some((place) => placeCountryMatches(place, normalizedCountryCode));
-  if (!hasSameCountryMatches) return places;
-
   return places.filter((place) => {
     if (placeCountryMatches(place, normalizedCountryCode)) return true;
     if (placeExactlyMatchesIataCode(place, normalizedQuery)) return true;
