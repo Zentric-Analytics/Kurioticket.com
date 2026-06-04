@@ -36,11 +36,13 @@ const popularCountryCurrencyCodes = [
 type CountryCurrencySelectorProps = {
   variant?: "default" | "header" | "mobile";
   grouped?: boolean;
+  onBeforeOpen?: () => void;
 };
 
 export function CountryCurrencySelector({
   variant = "default",
   grouped = false,
+  onBeforeOpen,
 }: CountryCurrencySelectorProps) {
   const {
     mode,
@@ -96,6 +98,7 @@ export function CountryCurrencySelector({
       closeTimerRef.current = null;
     }
 
+    onBeforeOpen?.();
     setOpen(true);
   };
 
