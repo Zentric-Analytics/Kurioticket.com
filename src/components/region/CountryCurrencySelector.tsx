@@ -126,7 +126,7 @@ export function CountryCurrencySelector({
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
-  const listScrollRef = useRef<HTMLDivElement | null>(null);
+  const listScrollRef = useRef<HTMLElement | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const backdropRef = useRef<HTMLDivElement | null>(null);
   const countryCurrencySearchInputRef = useRef<HTMLInputElement | null>(null);
@@ -175,6 +175,26 @@ export function CountryCurrencySelector({
     ? "text-indigo-100"
     : "text-slate-500";
 
+  const setDialogElement = useCallback(
+    (element: HTMLElement | null) => {
+      dialogRef.current = element;
+
+      if (isMobileVariant) {
+        listScrollRef.current = element;
+      }
+    },
+    [isMobileVariant],
+  );
+
+  const setListScrollElement = useCallback(
+    (element: HTMLDivElement | null) => {
+      if (!isMobileVariant) {
+        listScrollRef.current = element;
+      }
+    },
+    [isMobileVariant],
+  );
+
   const readSelectorDebugSnapshot = useCallback(
     (point?: { clientX: number; clientY: number }) => {
       const list = listScrollRef.current;
@@ -198,8 +218,12 @@ export function CountryCurrencySelector({
         wheels: eventCounts.wheels,
         scrolls: eventCounts.scrolls,
         elementFromPoint: describeElementForSelectorDebug(elementAtPoint),
-        overlaySummary: summarizeComputedStyleForSelectorDebug(overlayRef.current),
-        backdropSummary: summarizeComputedStyleForSelectorDebug(backdropRef.current),
+        overlaySummary: summarizeComputedStyleForSelectorDebug(
+          overlayRef.current,
+        ),
+        backdropSummary: summarizeComputedStyleForSelectorDebug(
+          backdropRef.current,
+        ),
         sheetSummary: summarizeComputedStyleForSelectorDebug(dialogRef.current),
         listSummary: summarizeComputedStyleForSelectorDebug(list),
         triggerInsideAriaHidden: Boolean(
@@ -319,11 +343,14 @@ export function CountryCurrencySelector({
   useEffect(() => {
     if (!open) return;
 
+    const shouldLockDocumentScroll = !isMobileVariant;
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
 
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
+    if (shouldLockDocumentScroll) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    }
 
     animationFrameRef.current = window.requestAnimationFrame(() => {
       setDialogEntered(true);
@@ -365,8 +392,10 @@ export function CountryCurrencySelector({
     document.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      document.body.style.overflow = previousBodyOverflow;
+      if (shouldLockDocumentScroll) {
+        document.documentElement.style.overflow = previousHtmlOverflow;
+        document.body.style.overflow = previousBodyOverflow;
+      }
       document.removeEventListener("keydown", onKeyDown);
 
       if (animationFrameRef.current) {
@@ -374,7 +403,7 @@ export function CountryCurrencySelector({
         animationFrameRef.current = null;
       }
     };
-  }, [closeDialog, open]);
+  }, [closeDialog, isMobileVariant, open]);
 
   useEffect(() => {
     return () => {
@@ -528,13 +557,13 @@ export function CountryCurrencySelector({
               />
 
               <section
-                ref={dialogRef}
+                ref={setDialogElement}
                 id={dialogId}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={descriptionId}
-                className={`relative z-[1001] flex h-[85dvh] max-h-[85dvh] w-full max-w-full flex-col rounded-t-3xl border border-slate-200 bg-white text-slate-900 shadow-2xl transition duration-200 ease-out md:h-auto md:max-h-[86vh] md:w-[min(720px,94vw)] md:rounded-3xl ${
+                className={`relative z-[1001] h-[100dvh] max-h-[100dvh] w-full max-w-full overflow-y-auto overscroll-contain rounded-none bg-white text-slate-900 shadow-2xl transition duration-200 ease-out [-webkit-overflow-scrolling:touch] md:flex md:h-auto md:max-h-[86vh] md:w-[min(720px,94vw)] md:flex-col md:rounded-3xl md:border md:border-slate-200 md:overflow-hidden ${
                   dialogEntered
                     ? "translate-y-0 opacity-100"
                     : "translate-y-4 opacity-0 md:translate-y-0"
@@ -555,8 +584,8 @@ export function CountryCurrencySelector({
                         id={descriptionId}
                         className="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
                       >
-                        Select the country and currency used for display
-                        prices. Airport suggestions use your detected location.
+                        Select the country and currency used for display prices.
+                        Airport suggestions use your detected location.
                       </p>
                     </div>
 
@@ -599,12 +628,12 @@ export function CountryCurrencySelector({
                 </div>
 
                 <div
-                  ref={listScrollRef}
-                  tabIndex={0}
-                  className="min-h-0 flex-1 touch-pan-y scroll-smooth overflow-y-scroll overscroll-contain px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch] md:px-6"
+                  ref={setListScrollElement}
+                  tabIndex={isMobileVariant ? undefined : 0}
+                  className="px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:min-h-0 md:flex-1 md:touch-pan-y md:scroll-smooth md:overflow-y-scroll md:overscroll-contain md:px-6 md:[-webkit-overflow-scrolling:touch]"
                   data-selector-debug-scroll-area="true"
                 >
-                  {/* Mobile scroll boundary: this single list panel owns touch scrolling while the page behind it only has overflow disabled. */}
+                  {/* Mobile scroll boundary: the full-screen dialog owns touch scrolling; desktop keeps its established inner list scroller. */}
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                       {countryCurrencyListLabel}

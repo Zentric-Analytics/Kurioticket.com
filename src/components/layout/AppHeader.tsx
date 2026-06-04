@@ -146,7 +146,6 @@ useEffect(() => {
 const onClickOutside = (event: MouseEvent) => {
 const target = event.target as Node;
 
-```
   if (
     accountRef.current &&
     !accountRef.current.contains(target)
@@ -169,7 +168,6 @@ return () => {
   document.removeEventListener("mousedown", onClickOutside);
   document.removeEventListener("keydown", onKeyDown);
 };
-```
 
 }, []);
 
@@ -178,7 +176,6 @@ if (!languageOpen) {
 return;
 }
 
-```
 const previousOverflow = document.body.style.overflow;
 document.body.style.overflow = "hidden";
 
@@ -227,7 +224,6 @@ return () => {
   document.body.style.overflow = previousOverflow;
   document.removeEventListener("keydown", onKeyDown);
 };
-```
 
 }, [languageOpen]);
 
@@ -243,13 +239,11 @@ selectedLanguage.label;
 const accountDisplayName = useMemo(() => {
 const rawName = session?.user?.name?.trim();
 
-```
 if (rawName) {
   return rawName.split(/\s+/)[0] || "Account";
 }
 
 return session?.user?.email?.split("@")[0] || "Account";
-```
 
 }, [session?.user?.email, session?.user?.name]);
 
@@ -259,21 +253,18 @@ session?.user?.name?.trim() ||
 session?.user?.email?.trim() ||
 "Account";
 
-```
 return source
   .split(/[\s@._-]+/)
   .filter(Boolean)
   .slice(0, 2)
   .map((part) => part.charAt(0).toUpperCase())
   .join("") || "A";
-```
 
 }, [session?.user?.email, session?.user?.name]);
 
 const filteredLanguages = useMemo(() => {
 const query = languageQuery.trim().toLowerCase();
 
-```
 if (!query) {
   return locales;
 }
@@ -284,7 +275,6 @@ return locales.filter((option) => {
     option.code.toLowerCase().includes(query)
   );
 });
-```
 
 }, [languageQuery, locales]);
 
@@ -343,7 +333,6 @@ if (href.startsWith("/flights")) {
 return pathname.startsWith("/flights");
 }
 
-```
 if (href.startsWith("/hotels")) {
   return pathname.startsWith("/hotels");
 }
@@ -365,7 +354,6 @@ if (href === "/explore") {
 }
 
 return pathname === href;
-```
 
 };
 
@@ -377,9 +365,7 @@ const desktopPrimaryHrefs = new Set([
 "/deals",
 ]);
 
-```
 return navItems.filter((item) => desktopPrimaryHrefs.has(item.href));
-```
 
 }, [navItems]);
 
@@ -391,11 +377,9 @@ const mobilePrimaryHrefs = new Set([
 "/deals",
 ]);
 
-```
 return navItems.filter(
   (item) => Boolean(item.icon) && mobilePrimaryHrefs.has(item.href)
 );
-```
 
 }, [navItems]);
 
@@ -431,7 +415,6 @@ className="h-full w-full object-cover"
 onError={(event) => {
 event.currentTarget.style.display = "none";
 
-```
         const fallback = event.currentTarget
           .nextElementSibling as HTMLElement | null;
 
@@ -446,7 +429,6 @@ event.currentTarget.style.display = "none";
     {fallbackText ?? "US"}
   </span>
 </span>
-```
 
 );
 
@@ -466,7 +448,6 @@ event.shiftKey
 return;
 }
 
-```
 const currentUrl = new URL(window.location.href);
 const nextUrl = new URL(href, currentUrl.origin);
 
@@ -485,7 +466,6 @@ if (
 
 startRouteProgress();
 afterStart?.();
-```
 
 };
 
@@ -503,7 +483,6 @@ if (isSigningOut) {
 return;
 }
 
-```
 setIsSigningOut(true);
 setAccountOpen(false);
 setOpen(false);
@@ -514,7 +493,6 @@ try {
 } catch {
   setIsSigningOut(false);
 }
-```
 
 };
 
@@ -527,7 +505,6 @@ onClick={(event) => handleRouteLinkClick(event, "/")}
 className="shrink-0"
 > <KurioticketLogo variant="full" tone="light" /> </Link>
 
-```
       <div className="hidden flex-1 flex-col gap-3 md:flex">
         <div className="flex items-center justify-end gap-3">
           <div className="inline-flex h-12 items-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
@@ -991,7 +968,6 @@ className="shrink-0"
 
   </header>
 </>
-```
 
 );
 }
