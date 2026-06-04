@@ -14,6 +14,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 const hotelResultStackClass = "w-full max-w-[704px] lg:ml-4 xl:ml-6";
 
 const FILTER_APPLYING_DELAY_MS = 700;
+const DEFAULT_MIN_RATING = 3;
 
 const messages = [
   "Searching hotel partners...",
@@ -227,6 +228,14 @@ type TermFilter = {
   terms: string[];
 };
 
+type ActiveHotelFilterChip = {
+  key: string;
+  label: string;
+  group?: keyof HotelFilterSelections;
+  value?: string;
+  kind?: "maxPrice" | "minRating";
+};
+
 type HotelFilterSelections = {
   popular: string[];
   propertyTypes: string[];
@@ -270,7 +279,7 @@ export function HotelResultsClient() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterApplying, setFilterApplying] = useState(false);
   const [maxPrice, setMaxPrice] = useState(1200);
-  const [minRating, setMinRating] = useState(3);
+  const [minRating, setMinRating] = useState(DEFAULT_MIN_RATING);
   const [selectedFilters, setSelectedFilters] =
     useState<HotelFilterSelections>(emptySelections);
 
@@ -365,6 +374,17 @@ export function HotelResultsClient() {
 
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
 
+  const activeFilterChips = useMemo(
+    () =>
+      buildActiveFilterChips(
+        selectedFilters,
+        maxPrice,
+        resultMaxPrice,
+        minRating,
+      ),
+    [maxPrice, minRating, resultMaxPrice, selectedFilters],
+  );
+
   const displayedHotels = filterApplying ? visibleFiltered : filtered;
 
   const showFilteredEmptyState =
@@ -430,7 +450,7 @@ export function HotelResultsClient() {
   const resetFilters = () => {
     triggerFilterApplying();
     setMaxPrice(resultMaxPrice);
-    setMinRating(3);
+    setMinRating(DEFAULT_MIN_RATING);
     setSelectedFilters(emptySelections);
     setFiltersOpen(false);
   };
@@ -442,6 +462,29 @@ export function HotelResultsClient() {
       [group]: current[group].includes(value)
         ? current[group].filter((item) => item !== value)
         : [...current[group], value],
+    }));
+  };
+
+  const removeFilterChip = (chip: ActiveHotelFilterChip) => {
+    triggerFilterApplying();
+
+    if (chip.kind === "maxPrice") {
+      setMaxPrice(resultMaxPrice);
+      return;
+    }
+
+    if (chip.kind === "minRating") {
+      setMinRating(DEFAULT_MIN_RATING);
+      return;
+    }
+
+    const { group, value } = chip;
+
+    if (!group || !value) return;
+
+    setSelectedFilters((current) => ({
+      ...current,
+      [group]: current[group].filter((item) => item !== value),
     }));
   };
 
@@ -513,7 +556,12 @@ export function HotelResultsClient() {
               {error}
             </div>
           ) : showFilteredEmptyState ? (
-            <div className={hotelResultStackClass}>
+            <div className={cn(hotelResultStackClass, "space-y-4")}>
+              <ActiveHotelFilterChips
+                chips={activeFilterChips}
+                onRemove={removeFilterChip}
+                onClearAll={resetFilters}
+              />
               <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
                 <p className="text-lg font-bold text-indigo-950">
                   No stays match these filters
@@ -533,6 +581,11 @@ export function HotelResultsClient() {
             </div>
           ) : (
             <div className={cn(hotelResultStackClass, "space-y-4")}>
+              <ActiveHotelFilterChips
+                chips={activeFilterChips}
+                onRemove={removeFilterChip}
+                onClearAll={resetFilters}
+              />
               <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
                   {displayedHotels.length} stay option
@@ -605,6 +658,50 @@ export function HotelResultsClient() {
         />
       </aside>
     </main>
+  );
+}
+
+function ActiveHotelFilterChips({
+  chips,
+  onRemove,
+  onClearAll,
+}: {
+  chips: ActiveHotelFilterChip[];
+  onRemove: (chip: ActiveHotelFilterChip) => void;
+  onClearAll: () => void;
+}) {
+  if (!chips.length) return null;
+
+  return (
+    <div
+      className="flex max-w-full flex-wrap items-center gap-2 overflow-x-clip"
+      aria-label="Active hotel filters"
+    >
+      {chips.map((chip) => (
+        <button
+          key={chip.key}
+          type="button"
+          className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-indigo-950 transition-colors hover:border-violet-300 hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+          onClick={() => onRemove(chip)}
+          aria-label={`Remove ${chip.label} filter`}
+        >
+          <span className="truncate">{chip.label}</span>
+          <span
+            aria-hidden="true"
+            className="text-sm leading-none text-violet-700"
+          >
+            ×
+          </span>
+        </button>
+      ))}
+      <button
+        type="button"
+        className="rounded-full px-1.5 py-1 text-xs font-bold text-violet-700 transition-colors hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+        onClick={onClearAll}
+      >
+        Clear all
+      </button>
+    </div>
   );
 }
 
@@ -827,6 +924,59 @@ function CheckboxFilterSection({
       ) : null}
     </FilterSection>
   );
+}
+
+function buildActiveFilterChips(
+  selectedFilters: HotelFilterSelections,
+  maxPrice: number,
+  resultMaxPrice: number,
+  minRating: number,
+): ActiveHotelFilterChip[] {
+  const filterGroups: Array<{
+    group: keyof HotelFilterSelections;
+    filters: TermFilter[];
+  }> = [
+    { group: "popular", filters: POPULAR_FILTERS },
+    { group: "propertyTypes", filters: PROPERTY_TYPE_FILTERS },
+    { group: "meals", filters: MEAL_FILTERS },
+    { group: "cancellationPolicies", filters: CANCELLATION_FILTERS },
+    { group: "facilities", filters: FACILITY_FILTERS },
+    { group: "locations", filters: LOCATION_AREA_FILTERS },
+    { group: "roomTypes", filters: ROOM_TYPE_FILTERS },
+    { group: "bedTypes", filters: BED_TYPE_FILTERS },
+  ];
+
+  const chips: ActiveHotelFilterChip[] = filterGroups.flatMap(
+    ({ group, filters }) =>
+      selectedFilters[group].map((value) => {
+        const filter = filters.find((item) => item.value === value);
+
+        return {
+          key: `${group}-${value}`,
+          label: filter?.label ?? value,
+          group,
+          value,
+        };
+      }),
+  );
+
+  if (maxPrice < resultMaxPrice) {
+    chips.push({
+      key: "maxPrice",
+      label: `Up to ${formatCurrency(maxPrice)}`,
+      kind: "maxPrice",
+    });
+  }
+
+  if (minRating > DEFAULT_MIN_RATING) {
+    chips.push({
+      key: "minRating",
+      label: `${minRating}+ stars`,
+      kind: "minRating",
+    });
+  }
+
+  return chips;
 }
 
 function buildHotelFilterOptions(hotels: PublicHotelResult[]) {
