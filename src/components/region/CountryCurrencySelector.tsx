@@ -1,7 +1,14 @@
 "use client";
 
 import { Check, ChevronDown, Search, X } from "lucide-react";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { useRegion } from "@/components/region/RegionProvider";
@@ -44,12 +51,15 @@ export function CountryCurrencySelector({
   } = useRegion();
 
   const [open, setOpen] = useState(false);
+  const [dialogEntered, setDialogEntered] = useState(false);
   const [marketQuery, setMarketQuery] = useState("");
   const [showAllMarkets, setShowAllMarkets] = useState(false);
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const marketSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
 
   const dialogId = useId();
   const titleId = useId();
@@ -64,21 +74,44 @@ export function CountryCurrencySelector({
   const triggerClassName = isMobileVariant
     ? "flex h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-none border border-slate-200 bg-white px-4 text-left text-sm font-semibold text-slate-900 transition-colors hover:border-violet-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
     : isGroupedHeaderVariant
-    ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-none border-0 bg-transparent px-4 text-sm font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-    : isHeaderVariant
-      ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 text-sm font-semibold text-indigo-50 shadow-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
-      : "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500";
+      ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-none border-0 bg-transparent px-4 text-sm font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+      : isHeaderVariant
+        ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 text-sm font-semibold text-indigo-50 shadow-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
+        : "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500";
 
-  const chevronClassName = isHeaderVariant ? "text-indigo-100" : "text-slate-500";
+  const chevronClassName = isHeaderVariant
+    ? "text-indigo-100"
+    : "text-slate-500";
 
-  const closeDialog = () => {
-    setOpen(false);
+  const openDialog = () => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+
+    setOpen(true);
+  };
+
+  const closeDialog = useCallback(() => {
+    if (animationFrameRef.current) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+    }
+
+    setDialogEntered(false);
     setMarketQuery("");
     setShowAllMarkets(false);
-    window.setTimeout(() => {
+
+    closeTimerRef.current = window.setTimeout(() => {
+      setOpen(false);
+      closeTimerRef.current = null;
       triggerRef.current?.focus();
-    }, 0);
-  };
+    }, 180);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -86,9 +119,11 @@ export function CountryCurrencySelector({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    window.setTimeout(() => {
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      setDialogEntered(true);
       marketSearchInputRef.current?.focus();
-    }, 0);
+      animationFrameRef.current = null;
+    });
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -101,8 +136,8 @@ export function CountryCurrencySelector({
 
       const focusableElements = Array.from(
         dialogRef.current.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        )
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
       ).filter((element) => element.getClientRects().length > 0);
 
       const firstElement = focusableElements[0];
@@ -126,19 +161,40 @@ export function CountryCurrencySelector({
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
+
+      if (animationFrameRef.current) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
     };
-  }, [open]);
+  }, [closeDialog, open]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+
+      if (animationFrameRef.current) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
 
   const popularMarkets = useMemo(() => {
     const popularOptions = popularMarketCodes
       .map((code) => options.find((option) => option.code === code))
       .filter((option): option is (typeof options)[number] => Boolean(option));
 
-    const selectedPopularMarket = options.find((option) => option.code === mode);
+    const selectedPopularMarket = options.find(
+      (option) => option.code === mode,
+    );
 
     if (
       !selectedPopularMarket ||
-      popularOptions.some((option) => option.code === selectedPopularMarket.code)
+      popularOptions.some(
+        (option) => option.code === selectedPopularMarket.code,
+      )
     ) {
       return popularOptions;
     }
@@ -164,7 +220,17 @@ export function CountryCurrencySelector({
 
   const hasSearchQuery = marketQuery.trim().length > 0;
   const showingFullCatalog = showAllMarkets || hasSearchQuery;
-  const marketListLabel = showingFullCatalog ? "All markets" : "Popular markets";
+  const curatedMobileMarketCount = 8;
+  const displayedMarkets =
+    !showingFullCatalog && isMobileVariant
+      ? filteredMarkets.slice(0, curatedMobileMarketCount)
+      : filteredMarkets;
+  const marketListLabel = showingFullCatalog
+    ? "All markets"
+    : "Popular markets";
+  const marketCountLabel = showingFullCatalog
+    ? filteredMarkets.length
+    : displayedMarkets.length;
 
   const handleMarketSelect = (option: (typeof options)[number]) => {
     setMode(option.code);
@@ -177,7 +243,7 @@ export function CountryCurrencySelector({
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => (open ? closeDialog() : openDialog())}
         className={triggerClassName}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -199,13 +265,22 @@ export function CountryCurrencySelector({
           </span>
         )}
 
-        <ChevronDown size={14} className={`shrink-0 ${chevronClassName}`} aria-hidden="true" />
+        <ChevronDown
+          size={14}
+          className={`shrink-0 ${chevronClassName}`}
+          aria-hidden="true"
+        />
       </button>
 
       {open && typeof document !== "undefined"
         ? createPortal(
             <>
-              <div className="fixed inset-0 z-40 bg-slate-950/45" onClick={closeDialog} />
+              <div
+                className={`fixed inset-0 z-40 bg-slate-950/55 backdrop-blur-[2px] transition-opacity duration-200 ${
+                  dialogEntered ? "opacity-100" : "opacity-0"
+                }`}
+                onClick={closeDialog}
+              />
 
               <section
                 ref={dialogRef}
@@ -214,18 +289,29 @@ export function CountryCurrencySelector({
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={descriptionId}
-                className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-hidden rounded-none border border-slate-200 bg-white shadow-lg md:inset-x-0 md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:w-[min(720px,94vw)]"
+                className={`fixed inset-x-0 bottom-0 z-50 h-[min(88dvh,720px)] max-h-[88dvh] overflow-hidden rounded-none border border-slate-200 bg-white text-slate-900 shadow-2xl transition duration-200 ease-out md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:h-auto md:max-h-[86vh] md:w-[min(720px,94vw)] ${
+                  dialogEntered
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-4 opacity-0 md:translate-y-0"
+                }`}
               >
-                <div className="flex max-h-[88vh] flex-col">
-                  <div className="border-b border-slate-200 px-5 pb-4 pt-5 md:px-6 md:pt-6">
+                <div className="flex h-full min-h-0 flex-col md:max-h-[86vh]">
+                  <div className="shrink-0 border-b border-slate-200 px-5 pb-4 pt-5 md:px-6 md:pt-6">
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
-                        <h2 id={titleId} className="text-xl font-semibold tracking-tight text-slate-950">
+                        <h2
+                          id={titleId}
+                          className="text-xl font-semibold tracking-tight text-slate-950"
+                        >
                           Choose country and currency
                         </h2>
 
-                        <p id={descriptionId} className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                          Select the market used for display prices. Airport origin suggestions stay based on your detected location.
+                        <p
+                          id={descriptionId}
+                          className="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
+                        >
+                          Select the market used for display prices. Airport
+                          suggestions use your detected location.
                         </p>
                       </div>
 
@@ -239,12 +325,19 @@ export function CountryCurrencySelector({
                       </button>
                     </div>
 
-                    <label htmlFor={marketSearchId} className="mt-5 block text-sm font-medium text-slate-800">
+                    <label
+                      htmlFor={marketSearchId}
+                      className="mt-5 block text-sm font-medium text-slate-800"
+                    >
                       Search country or currency
                     </label>
 
                     <div className="mt-2 flex items-center gap-2 rounded-none border border-slate-300 bg-white px-3.5 py-3 transition-colors focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-100">
-                      <Search size={17} className="shrink-0 text-slate-500" aria-hidden="true" />
+                      <Search
+                        size={17}
+                        className="shrink-0 text-slate-500"
+                        aria-hidden="true"
+                      />
 
                       <input
                         ref={marketSearchInputRef}
@@ -252,20 +345,21 @@ export function CountryCurrencySelector({
                         value={marketQuery}
                         onChange={(event) => setMarketQuery(event.target.value)}
                         placeholder="Search country or currency"
-                        className="w-full min-w-0 border-0 bg-transparent text-sm font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400"
+                        className="h-6 w-full min-w-0 border-0 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 md:text-sm"
                         aria-controls={marketListId}
                       />
                     </div>
                   </div>
 
-                  <div className="min-h-0 overflow-y-auto px-5 py-4 md:px-6">
+                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:px-6">
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
                         {marketListLabel}
                       </h3>
 
                       <span className="text-xs font-medium text-slate-500">
-                        {filteredMarkets.length} {filteredMarkets.length === 1 ? "market" : "markets"}
+                        {marketCountLabel}{" "}
+                        {marketCountLabel === 1 ? "market" : "markets"}
                       </span>
                     </div>
 
@@ -275,8 +369,10 @@ export function CountryCurrencySelector({
                       aria-label={marketListLabel}
                       className="grid gap-2.5 sm:grid-cols-2"
                     >
-                      {filteredMarkets.map((option) => {
-                        const isActive = option.code === mode && option.currency === selectedCurrency;
+                      {displayedMarkets.map((option) => {
+                        const isActive =
+                          option.code === mode &&
+                          option.currency === selectedCurrency;
 
                         return (
                           <button
@@ -317,10 +413,14 @@ export function CountryCurrencySelector({
                       })}
                     </div>
 
-                    {filteredMarkets.length === 0 ? (
+                    {displayedMarkets.length === 0 ? (
                       <div className="rounded-none border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
-                        <p className="text-sm font-semibold text-slate-900">No matching markets</p>
-                        <p className="mt-1 text-sm text-slate-500">Try a country name, country code, or currency code.</p>
+                        <p className="text-sm font-semibold text-slate-900">
+                          No matching markets
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Try a country name, country code, or currency code.
+                        </p>
                       </div>
                     ) : null}
 
@@ -328,16 +428,16 @@ export function CountryCurrencySelector({
                       <button
                         type="button"
                         onClick={() => setShowAllMarkets(true)}
-                        className="mt-4 flex w-full cursor-pointer items-center justify-center rounded-none border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50 hover:text-violet-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                        className="mt-4 flex min-h-12 w-full cursor-pointer items-center justify-center rounded-none border border-slate-900 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-violet-700 hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
                       >
-                        View more markets
+                        Show more results
                       </button>
                     ) : null}
                   </div>
                 </div>
               </section>
             </>,
-            document.body
+            document.body,
           )
         : null}
     </>
