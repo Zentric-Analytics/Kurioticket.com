@@ -3024,6 +3024,7 @@ export function FlightResultsClient() {
 
         <aside className="hidden lg:block">
           <Filters
+            layout="desktop"
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
             priceBounds={priceBounds}
@@ -3242,6 +3243,7 @@ export function FlightResultsClient() {
           </div>
 
           <Filters
+            layout="mobile"
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
             priceBounds={priceBounds}
@@ -4003,6 +4005,7 @@ function toggleFilterValue(
 }
 
 function Filters({
+  layout,
   maxPrice,
   setMaxPrice,
   priceBounds,
@@ -4036,6 +4039,7 @@ function Filters({
   setFlexibleOnly,
   onFilterChange,
 }: {
+  layout: "desktop" | "mobile";
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   priceBounds: { min: number; max: number };
@@ -4092,18 +4096,33 @@ function Filters({
 
       <div className="space-y-4 bg-white px-3 py-3">
         <section>
-          <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px] font-semibold leading-5 text-slate-800">
-            <span>Price</span>
-            <span className="shrink-0 text-xs font-medium text-navy">
-              {priceBounds.max
-                ? priceLabelCurrency
-                  ? `${formatFilterPrice(priceBounds.min)} - ${formatFilterPrice(
-                      Math.min(maxPrice, priceBounds.max)
-                    )}`
-                  : "Mixed provider currencies"
-                : "Loading prices"}
-            </span>
-          </div>
+          {layout === "desktop" ? (
+            <div className="mb-3">
+              <h3 className="text-sm font-semibold text-slate-900">Price</h3>
+              <p className="mt-1 break-words text-xs font-medium leading-5 text-slate-500">
+                {priceBounds.max
+                  ? priceLabelCurrency
+                    ? `${formatFilterPrice(priceBounds.min)} – ${formatFilterPrice(
+                        Math.min(maxPrice, priceBounds.max)
+                      )}`
+                    : "Mixed provider currencies"
+                  : "Loading prices"}
+              </p>
+            </div>
+          ) : (
+            <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px] font-semibold leading-5 text-slate-800">
+              <span>Price</span>
+              <span className="shrink-0 text-xs font-medium text-navy">
+                {priceBounds.max
+                  ? priceLabelCurrency
+                    ? `${formatFilterPrice(priceBounds.min)} - ${formatFilterPrice(
+                        Math.min(maxPrice, priceBounds.max)
+                      )}`
+                    : "Mixed provider currencies"
+                  : "Loading prices"}
+              </span>
+            </div>
+          )}
           <input
             className={filterRangeClass}
             type="range"
