@@ -69,6 +69,7 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
               >
                 {displayPrice.formatted}
               </div>
+              <p className="mt-1 text-xs font-medium text-slate-500">Estimated price.</p>
             </div>
             <div className="text-right">
               <LinkButton href={`/flights/details/${encodeURIComponent(flight.id)}`} variant="primary" size="sm" className="whitespace-nowrap bg-navy px-2.5 hover:bg-navy-soft">
