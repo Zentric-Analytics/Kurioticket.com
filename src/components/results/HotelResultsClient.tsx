@@ -14,6 +14,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 const hotelResultStackClass = "w-full max-w-[800px]";
 
 const FILTER_APPLYING_DELAY_MS = 700;
+const FILTER_SCROLLBAR_HIDE_DELAY_MS = 700;
 const DEFAULT_MIN_RATING = 3;
 
 const messages = [
@@ -287,12 +288,14 @@ export function HotelResultsClient() {
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterApplying, setFilterApplying] = useState(false);
+  const [filterScrollbarVisible, setFilterScrollbarVisible] = useState(false);
   const [maxPrice, setMaxPrice] = useState(1200);
   const [minRating, setMinRating] = useState(DEFAULT_MIN_RATING);
   const [selectedFilters, setSelectedFilters] =
     useState<HotelFilterSelections>(emptySelections);
 
   const filterApplyingTimeoutRef = useRef<number | null>(null);
+  const filterScrollbarTimeoutRef = useRef<number | null>(null);
 
   const body = useMemo(
     () => ({
@@ -434,8 +437,25 @@ export function HotelResultsClient() {
       if (filterApplyingTimeoutRef.current !== null) {
         window.clearTimeout(filterApplyingTimeoutRef.current);
       }
+
+      if (filterScrollbarTimeoutRef.current !== null) {
+        window.clearTimeout(filterScrollbarTimeoutRef.current);
+      }
     };
   }, []);
+
+  function showFilterScrollbarWhileScrolling() {
+    setFilterScrollbarVisible(true);
+
+    if (filterScrollbarTimeoutRef.current !== null) {
+      window.clearTimeout(filterScrollbarTimeoutRef.current);
+    }
+
+    filterScrollbarTimeoutRef.current = window.setTimeout(() => {
+      setFilterScrollbarVisible(false);
+      filterScrollbarTimeoutRef.current = null;
+    }, FILTER_SCROLLBAR_HIDE_DELAY_MS);
+  }
 
   function triggerFilterApplying() {
     setVisibleFiltered((current) => {
@@ -535,7 +555,15 @@ export function HotelResultsClient() {
           />
         </section>
 
-        <aside className="hotel-filter-scrollbar hidden lg:sticky lg:top-8 lg:block lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-x-hidden lg:overflow-y-auto">
+        <aside
+          className={cn(
+            "hotel-filter-scrollbar hidden lg:sticky lg:top-8 lg:block lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-x-hidden lg:overflow-y-auto",
+            filterScrollbarVisible
+              ? "hotel-filter-scrollbar--visible"
+              : undefined,
+          )}
+          onScroll={showFilterScrollbarWhileScrolling}
+        >
           <HotelFilters
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
@@ -649,7 +677,15 @@ export function HotelResultsClient() {
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
-        <div className="flex-1 overflow-auto p-5 pb-3">
+        <div
+          className={cn(
+            "hotel-filter-scrollbar flex-1 overflow-auto p-5 pb-3",
+            filterScrollbarVisible
+              ? "hotel-filter-scrollbar--visible"
+              : undefined,
+          )}
+          onScroll={showFilterScrollbarWhileScrolling}
+        >
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-base font-bold text-navy">Filters</h2>
             <Button
