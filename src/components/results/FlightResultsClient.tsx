@@ -4085,6 +4085,32 @@ function Filters({
         }).formatted
       : "Mixed provider currencies";
 
+  function formatCompactFilterPrice(value: number) {
+    const absoluteValue = Math.abs(value);
+
+    if (absoluteValue >= 1_000_000) {
+      return `${selectedCurrency} ${(value / 1_000_000)
+        .toFixed(1)
+        .replace(/\.0$/, "")}M`;
+    }
+
+    if (absoluteValue >= 1_000) {
+      return `${selectedCurrency} ${(value / 1_000)
+        .toFixed(1)
+        .replace(/\.0$/, "")}K`;
+    }
+
+    return formatFilterPrice(value);
+  }
+
+  const compactPriceRange = priceBounds.max
+    ? priceLabelCurrency
+      ? `${formatCompactFilterPrice(
+          priceBounds.min
+        )} - ${formatCompactFilterPrice(Math.min(maxPrice, priceBounds.max))}`
+      : "Mixed provider currencies"
+    : "Loading prices";
+
   return (
     <div className="bg-white">
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
@@ -4097,16 +4123,12 @@ function Filters({
       <div className="space-y-4 bg-white px-3 py-3">
         <section>
           {layout === "desktop" ? (
-            <div className="mb-3">
-              <h3 className="text-sm font-semibold text-slate-900">Price</h3>
-              <p className="mt-1 break-words text-xs font-medium leading-5 text-slate-500">
-                {priceBounds.max
-                  ? priceLabelCurrency
-                    ? `${formatFilterPrice(priceBounds.min)} – ${formatFilterPrice(
-                        Math.min(maxPrice, priceBounds.max)
-                      )}`
-                    : "Mixed provider currencies"
-                  : "Loading prices"}
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="shrink-0 text-sm font-semibold text-slate-900">
+                Price
+              </h3>
+              <p className="min-w-0 truncate text-right text-[11px] font-medium leading-5 text-slate-500">
+                {compactPriceRange}
               </p>
             </div>
           ) : (
