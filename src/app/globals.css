@@ -84,25 +84,25 @@ textarea {
     linear-gradient(180deg, rgba(15, 159, 154, 0.42), rgba(37, 99, 235, 0.18)) border-box;
 }
 
-.hotel-filter-panel {
-  scrollbar-color: rgba(124, 58, 237, 0.35) transparent;
+.hotel-filter-scrollbar {
+  scrollbar-color: rgba(124, 58, 237, 0.28) transparent;
   scrollbar-width: thin;
 }
 
-.hotel-filter-panel::-webkit-scrollbar {
-  width: 6px;
+.hotel-filter-scrollbar::-webkit-scrollbar {
+  width: 4px;
   height: 0;
 }
 
-.hotel-filter-panel::-webkit-scrollbar-track {
+.hotel-filter-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.hotel-filter-panel::-webkit-scrollbar-thumb {
-  background: rgba(124, 58, 237, 0.28);
+.hotel-filter-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.22);
   border-radius: 999px;
 }
 
-.hotel-filter-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 58, 237, 0.45);
+.hotel-filter-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(124, 58, 237, 0.38);
 }
