@@ -144,6 +144,7 @@ export type HotelSearchBarProps = {
   errorRole?: "alert" | "status";
   compact?: boolean;
   onOpenFilters?: () => void;
+  className?: string;
 };
 
 export function HotelSearchBar({
@@ -157,6 +158,7 @@ export function HotelSearchBar({
   errorRole,
   compact = false,
   onOpenFilters,
+  className,
 }: HotelSearchBarProps) {
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
@@ -562,6 +564,7 @@ export function HotelSearchBar({
       className={cn(
         "mx-auto w-full",
         compact ? "max-w-full sm:max-w-5xl" : "max-w-[1040px] space-y-3",
+        className,
       )}
     >
       {compact ? (
