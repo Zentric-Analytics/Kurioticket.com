@@ -33,6 +33,69 @@ const popularCountryCurrencyCodes = [
   "BR",
 ] as const;
 
+type SelectorDebugSnapshot = {
+  activeElement: string;
+  bodyOverflow: string;
+  bodyPosition: string;
+  htmlOverflow: string;
+  listClientHeight: number;
+  listScrollHeight: number;
+  listScrollTop: number;
+  listCanScroll: boolean;
+  touchStarts: number;
+  touchMoves: number;
+  wheels: number;
+  scrolls: number;
+  elementFromPoint: string;
+  overlaySummary: string;
+  backdropSummary: string;
+  sheetSummary: string;
+  listSummary: string;
+  triggerInsideAriaHidden: boolean;
+};
+
+const emptySelectorDebugSnapshot: SelectorDebugSnapshot = {
+  activeElement: "unavailable",
+  bodyOverflow: "",
+  bodyPosition: "",
+  htmlOverflow: "",
+  listClientHeight: 0,
+  listScrollHeight: 0,
+  listScrollTop: 0,
+  listCanScroll: false,
+  touchStarts: 0,
+  touchMoves: 0,
+  wheels: 0,
+  scrolls: 0,
+  elementFromPoint: "unavailable",
+  overlaySummary: "unavailable",
+  backdropSummary: "unavailable",
+  sheetSummary: "unavailable",
+  listSummary: "unavailable",
+  triggerInsideAriaHidden: false,
+};
+
+const describeElementForSelectorDebug = (element: Element | null) => {
+  if (!element) return "none";
+
+  const htmlElement = element as HTMLElement;
+  const id = htmlElement.id ? `#${htmlElement.id}` : "";
+  const role = htmlElement.getAttribute("role");
+  const name = htmlElement.getAttribute("name");
+  const roleLabel = role ? `[role=${role}]` : "";
+  const nameLabel = name ? `[name=${name}]` : "";
+
+  return `${htmlElement.tagName.toLowerCase()}${id}${roleLabel}${nameLabel}`;
+};
+
+const summarizeComputedStyleForSelectorDebug = (element: Element | null) => {
+  if (!element || typeof window === "undefined") return "none";
+
+  const style = window.getComputedStyle(element);
+
+  return `z=${style.zIndex};pe=${style.pointerEvents};pos=${style.position};overflowY=${style.overflowY};display=${style.display};visibility=${style.visibility}`;
+};
+
 type CountryCurrencySelectorProps = {
   variant?: "default" | "header" | "mobile";
   grouped?: boolean;
@@ -64,10 +127,31 @@ export function CountryCurrencySelector({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   const listScrollRef = useRef<HTMLDivElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
+  const backdropRef = useRef<HTMLDivElement | null>(null);
   const countryCurrencySearchInputRef = useRef<HTMLInputElement | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
   const reloadTimerRef = useRef<number | null>(null);
+  const selectorDebugEventCountsRef = useRef({
+    touchStarts: 0,
+    touchMoves: 0,
+    wheels: 0,
+    scrolls: 0,
+  });
+  const [selectorDebugEnabled] = useState(() => {
+    if (typeof window === "undefined") return false;
+
+    const searchParams = new URLSearchParams(window.location.search);
+    const enabledByQuery = searchParams.get("selectorDebug") === "1";
+    const enabledByStorage =
+      window.localStorage.getItem("kurioticket_selector_debug") === "1";
+
+    return enabledByQuery || enabledByStorage;
+  });
+  const [selectorDebugSnapshot, setSelectorDebugSnapshot] = useState(
+    emptySelectorDebugSnapshot,
+  );
 
   const dialogId = useId();
   const titleId = useId();
@@ -90,6 +174,116 @@ export function CountryCurrencySelector({
   const chevronClassName = isHeaderVariant
     ? "text-indigo-100"
     : "text-slate-500";
+
+  const readSelectorDebugSnapshot = useCallback(
+    (point?: { clientX: number; clientY: number }) => {
+      const list = listScrollRef.current;
+      const activeElement = document.activeElement;
+      const elementAtPoint = point
+        ? document.elementFromPoint(point.clientX, point.clientY)
+        : null;
+      const eventCounts = selectorDebugEventCountsRef.current;
+
+      return {
+        activeElement: describeElementForSelectorDebug(activeElement),
+        bodyOverflow: document.body.style.overflow,
+        bodyPosition: document.body.style.position,
+        htmlOverflow: document.documentElement.style.overflow,
+        listClientHeight: list?.clientHeight ?? 0,
+        listScrollHeight: list?.scrollHeight ?? 0,
+        listScrollTop: list?.scrollTop ?? 0,
+        listCanScroll: Boolean(list && list.scrollHeight > list.clientHeight),
+        touchStarts: eventCounts.touchStarts,
+        touchMoves: eventCounts.touchMoves,
+        wheels: eventCounts.wheels,
+        scrolls: eventCounts.scrolls,
+        elementFromPoint: describeElementForSelectorDebug(elementAtPoint),
+        overlaySummary: summarizeComputedStyleForSelectorDebug(overlayRef.current),
+        backdropSummary: summarizeComputedStyleForSelectorDebug(backdropRef.current),
+        sheetSummary: summarizeComputedStyleForSelectorDebug(dialogRef.current),
+        listSummary: summarizeComputedStyleForSelectorDebug(list),
+        triggerInsideAriaHidden: Boolean(
+          triggerRef.current?.closest('[aria-hidden="true"]'),
+        ),
+      };
+    },
+    [],
+  );
+
+  const updateSelectorDebugSnapshot = useCallback(
+    (point?: { clientX: number; clientY: number }) => {
+      if (!selectorDebugEnabled) return;
+
+      const nextSnapshot = readSelectorDebugSnapshot(point);
+      setSelectorDebugSnapshot(nextSnapshot);
+      console.info("[kurioticket:selector-debug]", {
+        open,
+        isMobileVariant,
+        ...nextSnapshot,
+      });
+    },
+    [isMobileVariant, open, readSelectorDebugSnapshot, selectorDebugEnabled],
+  );
+
+  useEffect(() => {
+    if (!open || !selectorDebugEnabled) return;
+
+    selectorDebugEventCountsRef.current = {
+      touchStarts: 0,
+      touchMoves: 0,
+      wheels: 0,
+      scrolls: 0,
+    };
+
+    const list = listScrollRef.current;
+    if (!list) return;
+
+    const onTouchStart = (event: TouchEvent) => {
+      selectorDebugEventCountsRef.current.touchStarts += 1;
+      const touch = event.touches[0];
+      updateSelectorDebugSnapshot(
+        touch ? { clientX: touch.clientX, clientY: touch.clientY } : undefined,
+      );
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      selectorDebugEventCountsRef.current.touchMoves += 1;
+      const touch = event.touches[0];
+      updateSelectorDebugSnapshot(
+        touch ? { clientX: touch.clientX, clientY: touch.clientY } : undefined,
+      );
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      selectorDebugEventCountsRef.current.wheels += 1;
+      updateSelectorDebugSnapshot({
+        clientX: event.clientX,
+        clientY: event.clientY,
+      });
+    };
+
+    const onScroll = () => {
+      selectorDebugEventCountsRef.current.scrolls += 1;
+      updateSelectorDebugSnapshot();
+    };
+
+    list.addEventListener("touchstart", onTouchStart, { passive: true });
+    list.addEventListener("touchmove", onTouchMove, { passive: true });
+    list.addEventListener("wheel", onWheel, { passive: true });
+    list.addEventListener("scroll", onScroll, { passive: true });
+
+    const frame = window.requestAnimationFrame(() => {
+      updateSelectorDebugSnapshot();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      list.removeEventListener("touchstart", onTouchStart);
+      list.removeEventListener("touchmove", onTouchMove);
+      list.removeEventListener("wheel", onWheel);
+      list.removeEventListener("scroll", onScroll);
+    };
+  }, [open, selectorDebugEnabled, updateSelectorDebugSnapshot]);
 
   const openDialog = () => {
     if (closeTimerRef.current) {
@@ -319,14 +513,18 @@ export function CountryCurrencySelector({
       {open && typeof document !== "undefined"
         ? createPortal(
             <div
+              ref={overlayRef}
               className="fixed inset-0 z-[1000] flex items-end justify-center md:items-start md:px-4 md:pt-[max(80px,8vh)]"
               aria-hidden={false}
+              data-selector-debug-overlay="true"
             >
               <div
+                ref={backdropRef}
                 className={`absolute inset-0 bg-slate-950/55 backdrop-blur-[2px] transition-opacity duration-200 ${
                   dialogEntered ? "opacity-100" : "opacity-0"
                 }`}
                 onClick={closeDialog}
+                data-selector-debug-backdrop="true"
               />
 
               <section
@@ -341,6 +539,7 @@ export function CountryCurrencySelector({
                     ? "translate-y-0 opacity-100"
                     : "translate-y-4 opacity-0 md:translate-y-0"
                 }`}
+                data-selector-debug-sheet="true"
               >
                 <div className="shrink-0 border-b border-slate-200 px-5 pb-4 pt-5 md:px-6 md:pt-6">
                   <div className="flex items-start justify-between gap-4">
@@ -403,6 +602,7 @@ export function CountryCurrencySelector({
                   ref={listScrollRef}
                   tabIndex={0}
                   className="min-h-0 flex-1 touch-pan-y scroll-smooth overflow-y-scroll overscroll-contain px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch] md:px-6"
+                  data-selector-debug-scroll-area="true"
                 >
                   {/* Mobile scroll boundary: this single list panel owns touch scrolling while the page behind it only has overflow disabled. */}
                   <div className="mb-3 flex items-center justify-between gap-3">
@@ -484,6 +684,20 @@ export function CountryCurrencySelector({
                     </button>
                   ) : null}
                 </div>
+
+                {selectorDebugEnabled ? (
+                  <pre className="pointer-events-none fixed bottom-3 left-3 right-3 z-[1002] max-h-[42vh] overflow-auto rounded-lg bg-slate-950/90 p-3 text-[10px] leading-4 text-white shadow-2xl md:left-auto md:right-4 md:w-[28rem]">
+                    {JSON.stringify(
+                      {
+                        open,
+                        isMobileVariant,
+                        ...selectorDebugSnapshot,
+                      },
+                      null,
+                      2,
+                    )}
+                  </pre>
+                ) : null}
               </section>
             </div>,
             document.body,
