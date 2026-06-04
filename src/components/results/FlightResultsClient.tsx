@@ -2246,7 +2246,7 @@ export function FlightResultsClient() {
           placement === "desktop" && "hidden sm:block",
         )}
       >
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-0">
           <div className="flex items-center justify-between sm:hidden">
             <span className="text-sm font-semibold text-slate-500">
               Edit search
@@ -2261,7 +2261,7 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="flex items-center justify-between gap-2 px-1">
+          <div className="mb-2 flex items-center justify-between gap-2 px-1">
             <div ref={tripTypeMenuRef} className="relative inline-flex">
               <button
                 type="button"
