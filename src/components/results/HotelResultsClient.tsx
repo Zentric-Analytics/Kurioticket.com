@@ -504,7 +504,7 @@ export function HotelResultsClient() {
 
   return (
     <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
-      <div className="sticky top-0 z-40 bg-[#f6f8fb] px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] sm:hidden">
+      <div className="sticky top-0 z-40 bg-[#f6f8fb] px-4 pb-1 pt-2 sm:hidden">
         <HotelSearchBar
           key={`mobile-${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
           initialDestination={body.destination}
@@ -646,33 +646,48 @@ export function HotelResultsClient() {
 
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-2xl bg-white p-5 shadow-xl transition-transform lg:hidden",
+          "fixed bottom-0 left-0 right-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-navy">Filters</h2>
-          <Button
-            variant="ghost"
-            className="h-10 w-10 px-0"
-            aria-label="Close filters"
-            onClick={() => setFiltersOpen(false)}
-          >
-            <X size={20} />
-          </Button>
+        <div className="flex-1 overflow-auto p-5 pb-3">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-base font-bold text-navy">Filters</h2>
+            <Button
+              variant="ghost"
+              className="h-10 w-10 px-0"
+              aria-label="Close filters"
+              onClick={() => setFiltersOpen(false)}
+            >
+              <X size={20} />
+            </Button>
+          </div>
+
+          <HotelFilters
+            maxPrice={maxPrice}
+            setMaxPrice={updateMaxPrice}
+            resultMaxPrice={resultMaxPrice}
+            priceCurrency={resultCurrency}
+            minRating={minRating}
+            setMinRating={updateMinRating}
+            options={filterOptions}
+            selectedFilters={selectedFilters}
+            toggleFilter={toggleFilter}
+          />
         </div>
 
-        <HotelFilters
-          maxPrice={maxPrice}
-          setMaxPrice={updateMaxPrice}
-          resultMaxPrice={resultMaxPrice}
-          priceCurrency={resultCurrency}
-          minRating={minRating}
-          setMinRating={updateMinRating}
-          options={filterOptions}
-          selectedFilters={selectedFilters}
-          toggleFilter={toggleFilter}
-        />
+        <div className="border-t border-slate-200 bg-white p-4">
+          <Button
+            type="button"
+            className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
+            onClick={() => {
+              triggerFilterApplying();
+              setFiltersOpen(false);
+            }}
+          >
+            Done
+          </Button>
+        </div>
       </aside>
     </main>
   );
