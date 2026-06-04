@@ -505,7 +505,7 @@ export function HotelResultsClient() {
         />
       </div>
 
-      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:justify-center lg:gap-4 lg:grid-cols-[240px_minmax(0,704px)] xl:grid-cols-[250px_minmax(0,704px)]">
+      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:gap-4 lg:grid-cols-[240px_minmax(0,704px)] xl:grid-cols-[250px_minmax(0,704px)]">
         <section className="hidden sm:block lg:col-span-2">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
