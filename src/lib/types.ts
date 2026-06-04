@@ -63,7 +63,10 @@ export type NormalizedFlightResult = {
   rawProviderReference?: unknown;
 };
 
-export type PublicFlightResult = Omit<NormalizedFlightResult, "rawProviderReference">;
+export type PublicFlightResult = Omit<
+  NormalizedFlightResult,
+  "rawProviderReference"
+>;
 
 export type NormalizedHotelResult = {
   id: string;
@@ -89,7 +92,30 @@ export type NormalizedHotelResult = {
   rawProviderReference?: unknown;
 };
 
-export type PublicHotelResult = Omit<NormalizedHotelResult, "rawProviderReference">;
+export type PublicHotelResult = Omit<
+  NormalizedHotelResult,
+  "rawProviderReference"
+>;
+
+export type ProviderErrorCategory =
+  | "no_inventory"
+  | "route_unavailable"
+  | "timeout"
+  | "network"
+  | "auth"
+  | "server"
+  | "invalid_response"
+  | "failed";
+
+export type ProviderErrorReason =
+  | "provider_no_inventory"
+  | "provider_route_unavailable"
+  | "provider_timeout"
+  | "provider_network_error"
+  | "provider_auth_error"
+  | "provider_server_error"
+  | "provider_invalid_response"
+  | "provider_failed";
 
 export type ProviderResult<T> = {
   provider: string;
@@ -97,6 +123,8 @@ export type ProviderResult<T> = {
   status: "success" | "failed" | "skipped";
   latencyMs: number;
   error?: string;
+  errorCategory?: ProviderErrorCategory;
+  errorReason?: ProviderErrorReason;
 };
 
 export type AggregatedResult<T> = {
