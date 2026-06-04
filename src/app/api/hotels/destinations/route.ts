@@ -28,10 +28,10 @@ const normalizeLimit = (value: string | null) => {
 
 const readHeaderCountry = (headers: Headers) =>
   [
-    headers.get("cf-ipcountry"),
     headers.get("x-vercel-ip-country"),
+    headers.get("cf-ipcountry"),
     headers.get("x-country"),
-    headers.get("x-kurioticket-region"),
+    headers.get("x-kurioticket-detected-region"),
   ]
     .map((value) => normalizeCountryHint(value))
     .find(Boolean) || "";

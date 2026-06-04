@@ -9,6 +9,7 @@ import { RouteProgressProvider } from "@/components/layout/RouteProgress";
 
 import { REGION_COOKIE_KEY, REGION_OVERRIDE_COOKIE_KEY } from "@/config/regionConfig";
 
+import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import {
   countryToRegion,
   normalizeRegion,
@@ -40,12 +41,21 @@ export default async function RootLayout({
 
   const platformRegion = countryToRegion(
     headerStore.get("x-vercel-ip-country") ||
-      headerStore.get("cf-ipcountry")
+      headerStore.get("cf-ipcountry") ||
+      headerStore.get("x-country")
   );
 
-  const headerRegion = normalizeRegion(
-    headerStore.get("x-kurioticket-region")
+  const detectedHeaderRegion = normalizeRegion(
+    headerStore.get("x-kurioticket-detected-region")
   );
+
+  const visitorIp = extractVisitorIp(headerStore);
+  const ipinfoCountryContext = !platformRegion && !detectedHeaderRegion && visitorIp
+    ? await resolveIpinfoLiteCountryContext(visitorIp)
+    : null;
+  const ipinfoRegion = ipinfoCountryContext?.countryCode
+    ? countryToRegion(ipinfoCountryContext.countryCode)
+    : null;
 
   const cookieRegion = normalizeRegion(
     cookieStore.get(REGION_COOKIE_KEY)?.value
@@ -53,12 +63,13 @@ export default async function RootLayout({
 
   const detectedRegion = (
     platformRegion ||
-    headerRegion ||
+    detectedHeaderRegion ||
+    ipinfoRegion ||
     cookieRegion ||
-    "US"
-  ) as RegionMode;
+    null
+  ) as RegionMode | null;
 
-  const initialRegion = (selectedRegion || detectedRegion) as RegionMode;
+  const initialRegion = (selectedRegion || detectedRegion || "US") as RegionMode;
 
   return (
     <html

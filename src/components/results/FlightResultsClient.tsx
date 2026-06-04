@@ -2270,6 +2270,298 @@ export function FlightResultsClient() {
   }
 
   function renderCompactSearchForm(placement: "mobile" | "desktop") {
+    if (placement === "mobile") {
+      return (
+        <form
+          onSubmit={handleCompactSearchSubmit}
+          className="mx-auto w-full min-w-0"
+        >
+          <div className="rounded-t-2xl bg-white p-4 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  Edit flight search
+                </p>
+                <h2 className="text-lg font-bold text-slate-950">
+                  Update your trip
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                aria-label="Close search form"
+                onClick={() => setMobileSearchOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div ref={tripTypeMenuRef} className="relative">
+                <button
+                  type="button"
+                  aria-expanded={tripTypeMenuOpen}
+                  aria-haspopup="listbox"
+                  onClick={() => setTripTypeMenuOpen((open) => !open)}
+                  className="focus-ring flex min-h-[52px] w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition-colors hover:border-slate-300 hover:bg-white"
+                >
+                  <span>
+                    <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
+                      Trip type
+                    </span>
+                    <span className="block text-sm font-semibold text-slate-950">
+                      {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
+                    </span>
+                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={cn(
+                      "h-4 w-4 text-slate-500 transition-transform",
+                      tripTypeMenuOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+
+                {tripTypeMenuOpen ? (
+                  <div
+                    role="listbox"
+                    aria-label="Trip type"
+                    className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                  >
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={tripTypeInput === "round-trip"}
+                      onClick={() => {
+                        setTripTypeInput("round-trip");
+                        setTripTypeMenuOpen(false);
+                      }}
+                      className={cn(
+                        "focus-ring flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+                        tripTypeInput === "round-trip"
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      Round-trip
+                    </button>
+
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={tripTypeInput === "one-way"}
+                      onClick={() => {
+                        setTripTypeInput("one-way");
+                        setReturnDateInput("");
+                        setTripTypeMenuOpen(false);
+
+                        if (activeDatePicker === "return") {
+                          setActiveDatePicker(null);
+                          setDatePickerPosition(null);
+                        }
+                      }}
+                      className={cn(
+                        "focus-ring flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
+                        tripTypeInput === "one-way"
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      One-way
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="space-y-3">
+                <div
+                  ref={originWrapRef}
+                  className="relative rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 transition-colors focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/40"
+                >
+                  <label
+                    className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
+                    htmlFor="results-origin"
+                  >
+                    Origin
+                  </label>
+                  <input
+                    id="results-origin"
+                    name="origin"
+                    required
+                    value={originInput}
+                    onFocus={() => {
+                      if (originInput.trim().length >= 2)
+                        setActiveSuggest("origin");
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }
+                    }}
+                    onChange={(event) => {
+                      setOriginInput(event.target.value);
+                      setOriginCode("");
+
+                      if (event.target.value.trim().length >= 2) {
+                        setActiveSuggest("origin");
+                      } else {
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }
+                    }}
+                    placeholder="From?"
+                    autoComplete="off"
+                    className="h-8 w-full border-0 bg-transparent p-0 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                  />
+
+                  {activeSuggest === "origin" && dropdownPosition ? (
+                    <SuggestionList
+                      id="flight-airport-suggestions"
+                      position={dropdownPosition}
+                      suggestions={resolvedOriginSuggestions}
+                      onSelect={(value) => {
+                        setOriginInput(value);
+                        setOriginCode(value);
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }}
+                    />
+                  ) : null}
+                </div>
+
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    aria-label="Swap origin and destination"
+                    onClick={handleSwapLocations}
+                    className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                  >
+                    <ArrowRightLeft size={15} />
+                  </button>
+                </div>
+
+                <div
+                  ref={destinationWrapRef}
+                  className="relative rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 transition-colors focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/40"
+                >
+                  <label
+                    className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
+                    htmlFor="results-destination"
+                  >
+                    Destination
+                  </label>
+                  <input
+                    id="results-destination"
+                    name="destination"
+                    required
+                    value={destinationInput}
+                    onFocus={() => {
+                      if (destinationInput.trim().length >= 2) {
+                        setActiveSuggest("destination");
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Escape") {
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }
+                    }}
+                    onChange={(event) => {
+                      setDestinationInput(event.target.value);
+                      setDestinationCode("");
+
+                      if (event.target.value.trim().length >= 2) {
+                        setActiveSuggest("destination");
+                      } else {
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }
+                    }}
+                    placeholder="To?"
+                    autoComplete="off"
+                    className="h-8 w-full border-0 bg-transparent p-0 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                  />
+
+                  {activeSuggest === "destination" && dropdownPosition ? (
+                    <SuggestionList
+                      id="flight-airport-suggestions"
+                      position={dropdownPosition}
+                      suggestions={resolvedDestinationSuggestions}
+                      onSelect={(value) => {
+                        setDestinationInput(value);
+                        setDestinationCode(value);
+                        setActiveSuggest(null);
+                        setDropdownPosition(null);
+                      }}
+                    />
+                  ) : null}
+                </div>
+              </div>
+
+              <div ref={departureWrapRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveDatePicker("departure");
+                    setDatePickerPosition(null);
+                  }}
+                  className="focus-ring flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition-colors hover:border-slate-300 hover:bg-white"
+                >
+                  <Calendar className="h-5 w-5 shrink-0 text-indigo-700" />
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
+                      Travel dates
+                    </span>
+                    <span className="block truncate text-sm font-semibold text-slate-950">
+                      {departureDateInput
+                        ? tripTypeInput === "round-trip" && returnDateInput
+                          ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
+                          : formatDateLabel(departureDateInput)
+                        : "Travel dates"}
+                    </span>
+                  </span>
+                </button>
+              </div>
+
+              <div ref={travelerCabinWrapRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTravelerPopoverOpen(true);
+                    setTravelerPopoverPosition(null);
+                  }}
+                  className="focus-ring flex min-h-[56px] w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition-colors hover:border-slate-300 hover:bg-white"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
+                      Travelers
+                    </span>
+                    <span className="block truncate text-sm font-semibold text-slate-950">
+                      {buildTravelerCabinSummary(
+                        adultCount,
+                        childCount,
+                        infantCount,
+                        cabinClassInput,
+                      )}
+                    </span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                </button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
+            >
+              Search
+            </Button>
+          </div>
+        </form>
+      );
+    }
     return (
       <form
         onSubmit={handleCompactSearchSubmit}
@@ -2608,7 +2900,15 @@ export function FlightResultsClient() {
 
       <div
         className={cn(
-          "sticky top-0 z-50 bg-[#f6f8fb] px-4 pb-3 pt-2 sm:hidden",
+          "fixed inset-0 z-40 bg-navy/40 sm:hidden",
+          mobileSearchOpen ? "block" : "hidden"
+        )}
+        onClick={() => setMobileSearchOpen(false)}
+      />
+
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:hidden",
           mobileSearchOpen ? "block" : "hidden"
         )}
       >
@@ -2924,56 +3224,71 @@ export function FlightResultsClient() {
 
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-2xl bg-white p-5 shadow-xl transition-transform lg:hidden",
+          "fixed bottom-0 left-0 right-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full"
         )}
       >
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-navy">Filters</h2>
-          <Button
-            variant="ghost"
-            className="h-10 w-10 px-0"
-            aria-label="Close filters"
-            onClick={() => setFiltersOpen(false)}
-          >
-            <X size={20} />
-          </Button>
+        <div className="flex-1 overflow-auto p-5 pb-3">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-base font-bold text-navy">Filters</h2>
+            <Button
+              variant="ghost"
+              className="h-10 w-10 px-0"
+              aria-label="Close filters"
+              onClick={() => setFiltersOpen(false)}
+            >
+              <X size={20} />
+            </Button>
+          </div>
+
+          <Filters
+            maxPrice={maxPrice}
+            setMaxPrice={setMaxPrice}
+            priceBounds={priceBounds}
+            priceLabelCurrency={priceLabelCurrency}
+            selectedCurrency={selectedCurrency}
+            timeFilterMode={timeFilterMode}
+            setTimeFilterMode={setTimeFilterMode}
+            timeBounds={timeBounds}
+            maxTakeoffMinutes={maxTakeoffMinutes}
+            setMaxTakeoffMinutes={setMaxTakeoffMinutes}
+            maxLandingMinutes={maxLandingMinutes}
+            setMaxLandingMinutes={setMaxLandingMinutes}
+            durationBounds={durationBounds}
+            maxDurationMinutes={maxDurationMinutes}
+            setMaxDurationMinutes={setMaxDurationMinutes}
+            stopOptions={stopOptions}
+            selectedStops={selectedStops}
+            setSelectedStops={setSelectedStops}
+            airlineOptions={airlineOptions}
+            selectedAirlines={selectedAirlines}
+            setSelectedAirlines={setSelectedAirlines}
+            airportOptions={airportOptions}
+            selectedAirports={selectedAirports}
+            setSelectedAirports={setSelectedAirports}
+            flightQualityOptions={flightQualityOptions}
+            selectedFlightQuality={selectedFlightQuality}
+            setSelectedFlightQuality={setSelectedFlightQuality}
+            baggageIncludedOnly={baggageIncludedOnly}
+            setBaggageIncludedOnly={setBaggageIncludedOnly}
+            flexibleOnly={flexibleOnly}
+            setFlexibleOnly={setFlexibleOnly}
+            onFilterChange={triggerFilterApplying}
+          />
         </div>
 
-        <Filters
-          maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
-          priceBounds={priceBounds}
-          priceLabelCurrency={priceLabelCurrency}
-          selectedCurrency={selectedCurrency}
-          timeFilterMode={timeFilterMode}
-          setTimeFilterMode={setTimeFilterMode}
-          timeBounds={timeBounds}
-          maxTakeoffMinutes={maxTakeoffMinutes}
-          setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-          maxLandingMinutes={maxLandingMinutes}
-          setMaxLandingMinutes={setMaxLandingMinutes}
-          durationBounds={durationBounds}
-          maxDurationMinutes={maxDurationMinutes}
-          setMaxDurationMinutes={setMaxDurationMinutes}
-          stopOptions={stopOptions}
-          selectedStops={selectedStops}
-          setSelectedStops={setSelectedStops}
-          airlineOptions={airlineOptions}
-          selectedAirlines={selectedAirlines}
-          setSelectedAirlines={setSelectedAirlines}
-          airportOptions={airportOptions}
-          selectedAirports={selectedAirports}
-          setSelectedAirports={setSelectedAirports}
-          flightQualityOptions={flightQualityOptions}
-          selectedFlightQuality={selectedFlightQuality}
-          setSelectedFlightQuality={setSelectedFlightQuality}
-          baggageIncludedOnly={baggageIncludedOnly}
-          setBaggageIncludedOnly={setBaggageIncludedOnly}
-          flexibleOnly={flexibleOnly}
-          setFlexibleOnly={setFlexibleOnly}
-          onFilterChange={triggerFilterApplying}
-        />
+        <div className="border-t border-slate-200 bg-white p-4">
+          <Button
+            type="button"
+            className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
+            onClick={() => {
+              triggerFilterApplying();
+              setFiltersOpen(false);
+            }}
+          >
+            Done
+          </Button>
+        </div>
       </aside>
     </main>
   );

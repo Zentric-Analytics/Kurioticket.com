@@ -162,7 +162,7 @@ export function HotelSearchBar({
 }: HotelSearchBarProps) {
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
-  const { selectedOption, detectedOption, hasUserSelectedRegion } = useRegion();
+  const { selectedOption, selectedCountryCode, detectedCountryCode, hasUserSelectedRegion } = useRegion();
   const [destination, setDestination] = useState(initialDestination);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
@@ -227,8 +227,8 @@ export function HotelSearchBar({
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
   const normalizedRooms = String(clampCount(rooms, 1, 6));
-  const selectedCountryHint = hasUserSelectedRegion ? normalizeCountryHint(selectedOption.code) : "";
-  const detectedCountryHint = normalizeCountryHint(detectedOption?.code);
+  const selectedCountryHint = hasUserSelectedRegion ? normalizeCountryHint(selectedCountryCode ?? selectedOption.code) : "";
+  const detectedCountryHint = selectedCountryHint ? "" : normalizeCountryHint(detectedCountryCode);
   const activeCountryHint = selectedCountryHint || detectedCountryHint;
   const destinationQuery = destination.trim();
   const visibleDestinationSuggestions =
@@ -1069,13 +1069,8 @@ export function HotelSearchBar({
           </div>
         </div>
 
-        {hasActiveHotelSearch ? (
-          <div
-            className={cn(
-              "flex justify-end px-1",
-              compact && "mt-2 hidden sm:flex",
-            )}
-          >
+        {!compact && hasActiveHotelSearch ? (
+          <div className="flex justify-end px-1">
             <button
               type="button"
               onClick={handleResetSearch}
