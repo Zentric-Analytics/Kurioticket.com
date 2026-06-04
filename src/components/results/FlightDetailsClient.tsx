@@ -7,9 +7,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ScoreMeter } from "@/components/ui/ScoreMeter";
-import { formatCurrency, formatTime } from "@/lib/utils";
+import { useRegion } from "@/components/region/RegionProvider";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { formatTime } from "@/lib/utils";
 
 export function FlightDetailsClient({ id }: { id: string }) {
+  const { selectedOption } = useRegion();
   const [flight, setFlight] = useState<PublicFlightResult | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -56,6 +59,13 @@ export function FlightDetailsClient({ id }: { id: string }) {
     );
   }
 
+  const displayPrice = formatDisplayPrice({
+    amount: flight.price,
+    sourceCurrency: flight.currency,
+    displayCurrency: selectedOption.currency,
+    convertUsdEstimate: true,
+  });
+
   return (
     <main className="flex-1">
       <div className="border-b border-border bg-white">
@@ -71,8 +81,20 @@ export function FlightDetailsClient({ id }: { id: string }) {
               </p>
             </div>
             <div className="text-left lg:text-right">
-              <div className="text-3xl font-bold text-navy">{formatCurrency(flight.price, flight.currency)}</div>
-              <p className="text-sm text-muted">Final price, availability, and fare rules are confirmed by the provider.</p>
+              <div
+                className="text-3xl font-bold text-navy"
+                aria-label={displayPrice.ariaLabel}
+                title={displayPrice.title}
+              >
+                {displayPrice.formatted}
+              </div>
+              {displayPrice.isConvertedEstimate ? (
+                <p className="text-sm text-muted">
+                  Display estimate. Provider price: {displayPrice.providerFormatted}. Final price, availability, and fare rules are confirmed by the provider.
+                </p>
+              ) : (
+                <p className="text-sm text-muted">Final price, availability, and fare rules are confirmed by the provider.</p>
+              )}
             </div>
           </div>
         </div>

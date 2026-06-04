@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -13,6 +14,7 @@ import {
   useSession,
 } from "next-auth/react";
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 
 import {
@@ -37,7 +39,6 @@ import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
-import { Button } from "@/components/ui/Button";
 
 
 function SavedHeartIcon({
@@ -86,7 +87,7 @@ const signedInAccountMenuItems = [
   {
     href: "/dashboard/alerts",
     label: "Price alerts",
-    description: "Track fare changes",
+    description: "View saved alerts",
     icon: Tag,
   },
   {
@@ -121,20 +122,26 @@ export function AppHeader({
   const { start: startRouteProgress } = useRouteProgress();
 
   const languageRef = useRef<HTMLDivElement | null>(null);
+  const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageMenuRef = useRef<HTMLElement | null>(null);
+  const languageSearchInputRef = useRef<HTMLInputElement | null>(null);
   const accountRef = useRef<HTMLDivElement | null>(null);
+  const languageDialogId = useId();
+  const languageTitleId = useId();
+  const languageDescriptionId = useId();
+  const languageSearchId = useId();
+
+  const closeLanguageDialog = () => {
+    setLanguageOpen(false);
+    setLanguageQuery("");
+    window.setTimeout(() => {
+      languageTriggerRef.current?.focus();
+    }, 0);
+  };
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
-
-      if (
-        languageRef.current &&
-        !languageRef.current.contains(target) &&
-        !languageMenuRef.current?.contains(target)
-      ) {
-        setLanguageOpen(false);
-      }
 
       if (
         accountRef.current &&
@@ -147,7 +154,6 @@ export function AppHeader({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setLanguageOpen(false);
         setOpen(false);
         setAccountOpen(false);
       }
@@ -162,11 +168,69 @@ export function AppHeader({
     };
   }, []);
 
+  useEffect(() => {
+    if (!languageOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    window.setTimeout(() => {
+      languageSearchInputRef.current?.focus();
+    }, 0);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeLanguageDialog();
+        return;
+      }
+
+      if (event.key !== "Tab" || !languageMenuRef.current) {
+        return;
+      }
+
+      const focusableElements = Array.from(
+        languageMenuRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => element.getClientRects().length > 0);
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (!firstElement || !lastElement) {
+        return;
+      }
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      }
+
+      if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [languageOpen]);
+
   const selectedLanguage = useMemo(
     () =>
       locales.find((option) => option.code === locale) ?? locales[0],
     [locale, locales]
   );
+
+  const selectedLanguageDisplayName =
+    selectedLanguage.label;
 
   const accountDisplayName = useMemo(() => {
     const rawName = session?.user?.name?.trim();
@@ -397,8 +461,7 @@ export function AppHeader({
 
   const handleLanguageSelect = (code: (typeof locales)[number]["code"]) => {
     setLocale(code);
-    setLanguageOpen(false);
-    setLanguageQuery("");
+    closeLanguageDialog();
   };
 
   const handleSignOut = async () => {
@@ -439,20 +502,20 @@ export function AppHeader({
                 <span className="pointer-events-none h-6 w-px bg-white/20" aria-hidden="true" />
 
                 <div className="relative" ref={languageRef}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
+                    ref={languageTriggerRef}
+                    type="button"
                     onClick={() => setLanguageOpen((value) => !value)}
-                    aria-label={`Change language, current language ${selectedLanguage?.label}`}
-                    className="h-12 gap-2 rounded-none border-0 bg-transparent px-4 text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-white/60 focus-visible:ring-offset-indigo-700"
+                    aria-haspopup="dialog"
+                    aria-expanded={languageOpen}
+                    aria-controls={languageOpen ? languageDialogId : undefined}
+                    aria-label={`Open language preferences, current language ${selectedLanguageDisplayName}`}
+                    className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-none border-0 bg-transparent px-4 text-sm font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
-                    {renderFlag(
-                      selectedLanguage?.countryCode,
-                      selectedLanguage?.fallbackText
-                    )}
+                    <span>{selectedLanguageDisplayName}</span>
 
-                    <ChevronDown size={14} className="text-indigo-100" />
-                  </Button>
+                    <ChevronDown size={14} className="text-indigo-100" aria-hidden="true" />
+                  </button>
                 </div>
               </div>
 
@@ -640,70 +703,116 @@ export function AppHeader({
             </button>
           </div>
 
-          {languageOpen ? (
-            <>
-              <div
-                className="fixed inset-0 z-40 bg-slate-900/45"
-                onClick={() => setLanguageOpen(false)}
-              />
-
-              <section
-                role="menu"
-                ref={languageMenuRef}
-                className="fixed inset-x-4 top-[max(80px,8vh)] z-50 mx-auto max-h-[84vh] w-[min(980px,96vw)] overflow-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl md:inset-x-0 md:p-7"
-              >
-                <h2 className="text-base font-black text-slate-950">
-                  {t.selectLanguage}
-                </h2>
-
-                <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
-                  <Search size={16} className="text-slate-500" />
-
-                  <input
-                    value={languageQuery}
-                    onChange={(event) => setLanguageQuery(event.target.value)}
-                    placeholder={t.searchLanguage}
-                    className="w-full border-0 bg-transparent text-sm outline-none"
+          {languageOpen && typeof document !== "undefined"
+            ? createPortal(
+                <>
+                  <div
+                    className="fixed inset-0 z-40 bg-slate-900/45"
+                    onClick={closeLanguageDialog}
                   />
-                </div>
 
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                  {filteredLanguages.map((option) => {
-                    const active = option.code === locale;
+                  <section
+                    ref={languageMenuRef}
+                    id={languageDialogId}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby={languageTitleId}
+                    aria-describedby={languageDescriptionId}
+                    className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
+                  >
+                    <div className="mb-4 flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-600">
+                          Preferences
+                        </p>
+                        <h2
+                          id={languageTitleId}
+                          className="mt-1 text-2xl font-black text-slate-950"
+                        >
+                          Language
+                        </h2>
+                        <p
+                          id={languageDescriptionId}
+                          className="mt-1 text-sm text-slate-600"
+                        >
+                          Choose the language used across the site. This preference does not change airport suggestions.
+                        </p>
+                      </div>
 
-                    return (
                       <button
-                        key={option.code}
                         type="button"
-                        role="menuitemradio"
-                        aria-checked={active}
-                        onClick={() => handleLanguageSelect(option.code)}
-                        className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
-                          active
-                            ? "border-violet-300 bg-violet-50"
-                            : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
-                        }`}
+                        onClick={closeLanguageDialog}
+                        className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                        aria-label="Close preferences dialog"
                       >
-                        <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                          {renderFlag(option.countryCode, option.fallbackText)}
-
-                          <span>{option.label}</span>
-                        </span>
-
-                        <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-                          <span>{option.code}</span>
-
-                          {active ? (
-                            <Check size={16} className="text-violet-600" />
-                          ) : null}
-                        </span>
+                        <X size={18} aria-hidden="true" />
                       </button>
-                    );
-                  })}
-                </div>
-              </section>
-            </>
-          ) : null}
+                    </div>
+
+                    <label
+                      htmlFor={languageSearchId}
+                      className="mb-2 block text-sm font-bold text-slate-900"
+                    >
+                      Search language
+                    </label>
+
+                    <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
+                      <Search size={16} className="text-slate-500" aria-hidden="true" />
+
+                      <input
+                        ref={languageSearchInputRef}
+                        id={languageSearchId}
+                        value={languageQuery}
+                        onChange={(event) => setLanguageQuery(event.target.value)}
+                        placeholder="English (US) or English (UK)"
+                        className="w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                      />
+                    </div>
+
+                    <div
+                      role="radiogroup"
+                      aria-label="Language options"
+                      className="grid gap-2 sm:grid-cols-2"
+                    >
+                      {filteredLanguages.map((option) => {
+                        const active = option.code === locale;
+
+                        return (
+                          <button
+                            key={option.code}
+                            type="button"
+                            role="radio"
+                            aria-checked={active}
+                            aria-label={`Select ${option.label}`}
+                            onClick={() => handleLanguageSelect(option.code)}
+                            className={`flex cursor-pointer items-center justify-between rounded-none border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                              active
+                                ? "border-violet-500 bg-violet-50 ring-2 ring-violet-100"
+                                : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+                            }`}
+                          >
+                            <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                              {renderFlag(option.countryCode, option.fallbackText)}
+
+                              <span>{option.label}</span>
+                            </span>
+
+                            <span className="inline-flex items-center gap-2 text-xs text-slate-500">
+                              <span className="uppercase">{option.code}</span>
+
+                              {active ? (
+                                <Check size={16} className="text-violet-600" aria-hidden="true" />
+                              ) : null}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                </>,
+                document.body
+              )
+            : null}
         </div>
 
         <nav className="bg-white/5 md:hidden">
@@ -739,20 +848,25 @@ export function AppHeader({
           <div className="border-t border-slate-200 bg-white md:hidden">
             <nav className="page-shell grid gap-2 py-4">
               <div className="pb-2">
-                <CountryCurrencySelector />
+                <CountryCurrencySelector variant="mobile" />
               </div>
 
               <button
+                ref={languageTriggerRef}
                 type="button"
                 onClick={() => setLanguageOpen(true)}
-                className="inline-flex h-11 cursor-pointer items-center justify-between rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                aria-haspopup="dialog"
+                aria-expanded={languageOpen}
+                aria-controls={languageOpen ? languageDialogId : undefined}
+                aria-label={`Open language preferences, current language ${selectedLanguageDisplayName}`}
+                className="inline-flex h-12 cursor-pointer items-center justify-between rounded-none border border-slate-200 px-4 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
                 <span className="inline-flex items-center gap-2">
                   {renderFlag(
                     selectedLanguage?.countryCode,
                     selectedLanguage?.fallbackText
                   )}
-                  <span>{selectedLanguage.label}</span>
+                  <span>{selectedLanguageDisplayName}</span>
                 </span>
 
                 <ChevronDown size={14} className="text-slate-500" />

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { airports, getDefaultAirports, type AirportOption } from "@/data/airports";
-import { localeToCountryCode, normalizeCountryCode } from "@/lib/geo/context";
+import { normalizeCountryCode } from "@/lib/geo/context";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { searchCuratedPlaceSuggestions, searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 
@@ -90,11 +90,14 @@ export async function GET(request: Request) {
     .map((value) => normalizeCountryCode(value))
     .find(Boolean);
   const visitorIp = extractVisitorIp(request.headers);
-  const ipinfoCountryContext = !explicitCountryCode && !headerCountryCode && visitorIp
+  const shouldResolveIpinfoCountry = context === "origin" && !headerCountryCode && Boolean(visitorIp);
+  const ipinfoCountryContext = shouldResolveIpinfoCountry && visitorIp
     ? await resolveIpinfoLiteCountryContext(visitorIp)
     : null;
-  const localeCountryCode = localeToCountryCode(locale);
-  const countryCode = explicitCountryCode || headerCountryCode || ipinfoCountryContext?.countryCode || localeCountryCode;
+  const serverCountryCode = headerCountryCode || ipinfoCountryContext?.countryCode;
+  const countryCode = context === "origin"
+    ? serverCountryCode || explicitCountryCode
+    : undefined;
 
   if (defaultOriginRequested && context === "origin" && query.length === 0) {
     let recommended: AirportOption | undefined;

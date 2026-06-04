@@ -16,13 +16,13 @@ export default function SettingsPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">My account</p>
           <h1 className="mt-2 text-3xl font-bold text-navy">Account settings</h1>
           <p className="mt-3 text-sm leading-6 text-muted">
-            Manage account details and preferences as Kurioticket connects production account controls.
+            Manage account details and preferences from your Kurioticket account.
           </p>
         </div>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <Card className="p-5">
             <h2 className="font-bold text-navy">Notification preferences</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">Account email and alert controls will be shown here when they are ready.</p>
+            <p className="mt-2 text-sm leading-6 text-muted">Review account email information and keep preference details in one place.</p>
           </Card>
           <Card className="p-5">
             <h2 className="font-bold text-navy">Privacy controls</h2>

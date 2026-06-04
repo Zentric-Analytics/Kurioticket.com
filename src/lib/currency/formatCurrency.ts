@@ -3,15 +3,53 @@ import {
   resolveDisplayCurrency,
 } from "@/lib/currency/exchangeRates";
 
+const zeroDecimalCurrencies = new Set([
+  "BIF",
+  "CLP",
+  "COP",
+  "DJF",
+  "GNF",
+  "HUF",
+  "IDR",
+  "ISK",
+  "JPY",
+  "KMF",
+  "KPW",
+  "KRW",
+  "MGA",
+  "PYG",
+  "RWF",
+  "UGX",
+  "VND",
+  "VUV",
+  "XAF",
+  "XOF",
+  "XPF",
+]);
+
 export function formatCurrency(
   amount: number,
-  currency: string
+  currency: string,
+  options: { maximumFractionDigits?: number; minimumFractionDigits?: number } = {}
 ) {
+  const normalizedCurrency =
+    currency.toUpperCase();
+  const defaultFractionDigits =
+    zeroDecimalCurrencies.has(
+      normalizedCurrency
+    )
+      ? 0
+      : 2;
+  const maximumFractionDigits =
+    options.maximumFractionDigits ?? defaultFractionDigits;
+  const minimumFractionDigits =
+    options.minimumFractionDigits ?? maximumFractionDigits;
+
   return new Intl.NumberFormat(undefined, {
     style: "currency",
-    currency,
-    maximumFractionDigits:
-      currency === "JPY" ? 0 : 2,
+    currency: normalizedCurrency,
+    maximumFractionDigits,
+    minimumFractionDigits,
   }).format(amount);
 }
 
@@ -24,4 +62,66 @@ export function formatCurrencyFromUsd(
     convertCurrency(amountUsd, displayCurrency),
     displayCurrency
   );
+}
+
+
+export type DisplayPrice = {
+  formatted: string;
+  currency: string;
+  sourceCurrency: string;
+  providerFormatted: string;
+  isConvertedEstimate: boolean;
+  title?: string;
+  ariaLabel: string;
+  supportingText?: string;
+};
+
+export function formatDisplayPrice({
+  amount,
+  sourceCurrency,
+  displayCurrency,
+  convertUsdEstimate = false,
+  maximumFractionDigits,
+}: {
+  amount: number;
+  sourceCurrency: string;
+  displayCurrency: string;
+  convertUsdEstimate?: boolean;
+  maximumFractionDigits?: number;
+}): DisplayPrice {
+  const normalizedSourceCurrency = sourceCurrency.toUpperCase();
+  const normalizedDisplayCurrency = resolveDisplayCurrency(displayCurrency);
+  const shouldConvertUsdEstimate =
+    convertUsdEstimate &&
+    normalizedSourceCurrency === "USD" &&
+    normalizedDisplayCurrency !== normalizedSourceCurrency;
+  const displayAmount = shouldConvertUsdEstimate
+    ? convertCurrency(amount, normalizedDisplayCurrency)
+    : amount;
+  const currency = shouldConvertUsdEstimate
+    ? normalizedDisplayCurrency
+    : normalizedSourceCurrency;
+  const formatted = formatCurrency(displayAmount, currency, { maximumFractionDigits });
+  const providerFormatted = formatCurrency(amount, normalizedSourceCurrency, {
+    maximumFractionDigits,
+  });
+  const estimateCopy =
+    "Display estimate. Final provider price may differ.";
+
+  return {
+    formatted,
+    currency,
+    sourceCurrency: normalizedSourceCurrency,
+    providerFormatted,
+    isConvertedEstimate: shouldConvertUsdEstimate,
+    title: shouldConvertUsdEstimate
+      ? `Converted display estimate. Provider price: ${providerFormatted}. Final provider price may differ.`
+      : undefined,
+    ariaLabel: shouldConvertUsdEstimate
+      ? `${formatted}. Display estimate converted from ${providerFormatted}. Final provider price may differ.`
+      : providerFormatted,
+    supportingText: shouldConvertUsdEstimate
+      ? `${estimateCopy} Provider price: ${providerFormatted}.`
+      : undefined,
+  };
 }

@@ -1,9 +1,39 @@
 "use client";
 
 import { useRegion } from "@/components/region/RegionProvider";
-import { formatCurrencyFromUsd } from "@/lib/currency/formatCurrency";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 
-export function PriceText({ amountUsd, className }: { amountUsd: number; className?: string }) {
+type PriceTextProps = {
+  amountUsd: number;
+  className?: string;
+  sourceAmount?: number;
+  sourceCurrency?: string;
+  convertUsdEstimate?: boolean;
+  showEstimateTitle?: boolean;
+  maximumFractionDigits?: number;
+};
+
+export function PriceText({
+  amountUsd,
+  className,
+  sourceAmount,
+  sourceCurrency = "USD",
+  convertUsdEstimate = true,
+  showEstimateTitle = true,
+  maximumFractionDigits,
+}: PriceTextProps) {
   const { selectedOption } = useRegion();
-  return <span className={className}>{formatCurrencyFromUsd(amountUsd, selectedOption.currency)}</span>;
+  const price = formatDisplayPrice({
+    amount: sourceAmount ?? amountUsd,
+    sourceCurrency,
+    displayCurrency: selectedOption.currency,
+    convertUsdEstimate,
+    maximumFractionDigits,
+  });
+
+  return (
+    <span className={className} title={showEstimateTitle ? price.title : undefined}>
+      {price.formatted}
+    </span>
+  );
 }

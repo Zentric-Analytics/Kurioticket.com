@@ -1,25 +1,40 @@
 "use client";
 
+import { Check, ChevronDown, Search, X } from "lucide-react";
 import {
-  Check,
-  ChevronDown,
-  Search,
-  X,
-} from "lucide-react";
-
-import {
+  useCallback,
   useEffect,
+  useId,
   useMemo,
+  useRef,
   useState,
 } from "react";
-
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 
 import { useRegion } from "@/components/region/RegionProvider";
 
+const popularCountryCurrencyCodes = [
+  "US",
+  "GB",
+  "CA",
+  "AU",
+  "DE",
+  "FR",
+  "NL",
+  "ES",
+  "IT",
+  "JP",
+  "SG",
+  "AE",
+  "IN",
+  "NG",
+  "ZA",
+  "BR",
+] as const;
 
 type CountryCurrencySelectorProps = {
-  variant?: "default" | "header";
+  variant?: "default" | "header" | "mobile";
   grouped?: boolean;
 };
 
@@ -30,228 +45,460 @@ export function CountryCurrencySelector({
   const {
     mode,
     setMode,
+    selectedCurrency,
+    setCurrency,
     selectedOption,
     options,
   } = useRegion();
 
-  const [open, setOpen] =
+  const [open, setOpen] = useState(false);
+  const [dialogEntered, setDialogEntered] = useState(false);
+  const router = useRouter();
+
+  const [countryCurrencyQuery, setCountryCurrencyQuery] = useState("");
+  const [showAllCountryCurrencies, setShowAllCountryCurrencies] =
     useState(false);
 
-  const [query, setQuery] =
-    useState("");
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const listScrollRef = useRef<HTMLDivElement | null>(null);
+  const countryCurrencySearchInputRef = useRef<HTMLInputElement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const reloadTimerRef = useRef<number | null>(null);
+  const scrollPositionRef = useRef(0);
 
-  const [mounted, setMounted] =
-    useState(false);
+  const dialogId = useId();
+  const titleId = useId();
+  const descriptionId = useId();
+  const countryCurrencySearchId = useId();
+  const countryCurrencyListId = useId();
 
-  const isHeaderVariant =
-    variant === "header";
+  const isHeaderVariant = variant === "header";
+  const isMobileVariant = variant === "mobile";
+  const isGroupedHeaderVariant = isHeaderVariant && grouped;
 
-  const isGroupedHeaderVariant =
-    isHeaderVariant && grouped;
-
-  const triggerClassName = isGroupedHeaderVariant
-    ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-none border-0 bg-transparent px-4 text-sm font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-    : isHeaderVariant
-      ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 text-sm font-semibold text-indigo-50 shadow-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
-      : "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500";
+  const triggerClassName = isMobileVariant
+    ? "flex h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-none border border-slate-200 bg-white px-4 text-left text-sm font-semibold text-slate-900 transition-colors hover:border-violet-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+    : isGroupedHeaderVariant
+      ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-none border-0 bg-transparent px-4 text-sm font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+      : isHeaderVariant
+        ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 text-sm font-semibold text-indigo-50 shadow-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
+        : "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500";
 
   const chevronClassName = isHeaderVariant
     ? "text-indigo-100"
     : "text-slate-500";
 
-  useEffect(() => {
-    setMounted(true);
+  const openDialog = () => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
 
-    const onKeyDown = (
-      event: KeyboardEvent
-    ) => {
+    setOpen(true);
+  };
+
+  const closeDialog = useCallback(() => {
+    if (animationFrameRef.current) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+    }
+
+    setDialogEntered(false);
+    setCountryCurrencyQuery("");
+    setShowAllCountryCurrencies(false);
+
+    closeTimerRef.current = window.setTimeout(() => {
+      setOpen(false);
+      closeTimerRef.current = null;
+      triggerRef.current?.focus();
+    }, 180);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    scrollPositionRef.current = window.scrollY;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousBodyPosition = document.body.style.position;
+    const previousBodyTop = document.body.style.top;
+    const previousBodyWidth = document.body.style.width;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollPositionRef.current}px`;
+    document.body.style.width = "100%";
+
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      setDialogEntered(true);
+      countryCurrencySearchInputRef.current?.focus();
+      animationFrameRef.current = null;
+    });
+
+    const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpen(false);
+        event.preventDefault();
+        closeDialog();
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialogRef.current) return;
+
+      const focusableElements = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.getClientRects().length > 0);
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (!firstElement || !lastElement) return;
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      }
+
+      if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
       }
     };
 
-    document.addEventListener(
-      "keydown",
-      onKeyDown
-    );
+    document.addEventListener("keydown", onKeyDown);
 
     return () => {
-      document.removeEventListener(
-        "keydown",
-        onKeyDown
-      );
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.body.style.position = previousBodyPosition;
+      document.body.style.top = previousBodyTop;
+      document.body.style.width = previousBodyWidth;
+      window.scrollTo(0, scrollPositionRef.current);
+      document.removeEventListener("keydown", onKeyDown);
+
+      if (animationFrameRef.current) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    };
+  }, [closeDialog, open]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+
+      if (animationFrameRef.current) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+      }
+
+      if (reloadTimerRef.current) {
+        window.clearTimeout(reloadTimerRef.current);
+      }
     };
   }, []);
 
-  const filteredOptions =
-    useMemo(() => {
-      const normalizedQuery =
-        query
-          .trim()
-          .toLowerCase();
+  const popularCountryCurrencies = useMemo(() => {
+    const popularOptions = popularCountryCurrencyCodes
+      .map((code) => options.find((option) => option.code === code))
+      .filter((option): option is (typeof options)[number] => Boolean(option));
 
-      if (!normalizedQuery) {
-        return options;
-      }
+    const selectedPopularCountryCurrency = options.find(
+      (option) => option.code === mode,
+    );
 
-      return options.filter(
-        (option) => {
-          return (
-            option.country
-              .toLowerCase()
-              .includes(
-                normalizedQuery
-              ) ||
-            option.currency
-              .toLowerCase()
-              .includes(
-                normalizedQuery
-              )
-          );
-        }
+    if (
+      !selectedPopularCountryCurrency ||
+      popularOptions.some(
+        (option) => option.code === selectedPopularCountryCurrency.code,
+      )
+    ) {
+      return popularOptions;
+    }
+
+    return [selectedPopularCountryCurrency, ...popularOptions];
+  }, [mode, options]);
+
+  const filteredCountryCurrencies = useMemo(() => {
+    const normalizedQuery = countryCurrencyQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return showAllCountryCurrencies ? options : popularCountryCurrencies;
+    }
+
+    return options.filter((option) => {
+      return (
+        option.code.toLowerCase().includes(normalizedQuery) ||
+        option.country.toLowerCase().includes(normalizedQuery) ||
+        option.currency.toLowerCase().includes(normalizedQuery)
       );
-    }, [options, query]);
+    });
+  }, [
+    countryCurrencyQuery,
+    options,
+    popularCountryCurrencies,
+    showAllCountryCurrencies,
+  ]);
+
+  const hasSearchQuery = countryCurrencyQuery.trim().length > 0;
+  const showingFullCountryCurrencyCatalog =
+    showAllCountryCurrencies || hasSearchQuery;
+  const curatedMobileCountryCurrencyCount = 8;
+  const displayedCountryCurrencies =
+    !showingFullCountryCurrencyCatalog && isMobileVariant
+      ? filteredCountryCurrencies.slice(0, curatedMobileCountryCurrencyCount)
+      : filteredCountryCurrencies;
+  const countryCurrencyListLabel = showingFullCountryCurrencyCatalog
+    ? "All countries and currencies"
+    : "Popular country and currency";
+  const countryCurrencyCountLabel = showingFullCountryCurrencyCatalog
+    ? filteredCountryCurrencies.length
+    : displayedCountryCurrencies.length;
+
+  const handleCountryCurrencySelect = (option: (typeof options)[number]) => {
+    const isAlreadyActive =
+      option.code === mode && option.currency === selectedCurrency;
+
+    if (isAlreadyActive) {
+      closeDialog();
+      return;
+    }
+
+    setMode(option.code);
+    setCurrency(option.currency);
+    closeDialog();
+
+    reloadTimerRef.current = window.setTimeout(() => {
+      router.refresh();
+      window.location.reload();
+    }, 220);
+  };
+
+  const handleShowMoreCountryCurrencies = () => {
+    setShowAllCountryCurrencies(true);
+
+    window.requestAnimationFrame(() => {
+      listScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  };
 
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() =>
-          setOpen((value) => !value)
-        }
+        onClick={() => (open ? closeDialog() : openDialog())}
         className={triggerClassName}
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-controls={open ? dialogId : undefined}
+        aria-label={`Open country and currency selector, current selection ${selectedOption.code}, ${selectedCurrency}`}
       >
-        <span>
-          {
-            selectedOption.currency
-          }
-        </span>
+        {isMobileVariant ? (
+          <span className="min-w-0">
+            <span className="block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+              Country and currency
+            </span>
+            <span className="mt-0.5 block truncate text-sm font-black text-slate-950">
+              {selectedOption.code} · {selectedCurrency}
+            </span>
+          </span>
+        ) : (
+          <span>
+            {selectedOption.code} · {selectedCurrency}
+          </span>
+        )}
 
         <ChevronDown
           size={14}
-          className={chevronClassName}
+          className={`shrink-0 ${chevronClassName}`}
+          aria-hidden="true"
         />
       </button>
 
-      {open && mounted
+      {open && typeof document !== "undefined"
         ? createPortal(
-            <>
+            <div
+              className="fixed inset-0 z-[1000] flex items-end justify-center overflow-hidden md:items-start md:px-4 md:pt-[max(80px,8vh)]"
+              aria-hidden={false}
+            >
               <div
-                className="fixed inset-0 z-40 bg-slate-900/45"
-                onClick={() =>
-                  setOpen(false)
-                }
+                className={`absolute inset-0 bg-slate-950/55 backdrop-blur-[2px] transition-opacity duration-200 ${
+                  dialogEntered ? "opacity-100" : "opacity-0"
+                }`}
+                onClick={closeDialog}
               />
 
               <section
+                ref={dialogRef}
+                id={dialogId}
                 role="dialog"
                 aria-modal="true"
-                aria-label="Select your currency and country"
-                className="fixed inset-x-4 top-[max(80px,8vh)] z-50 mx-auto max-h-[84vh] w-[min(980px,96vw)] overflow-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl md:inset-x-0 md:p-7"
+                aria-labelledby={titleId}
+                aria-describedby={descriptionId}
+                className={`relative z-[1001] flex h-[85dvh] max-h-[85dvh] w-full max-w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white text-slate-900 shadow-2xl transition duration-200 ease-out md:h-auto md:max-h-[86vh] md:w-[min(720px,94vw)] md:rounded-3xl ${
+                  dialogEntered
+                    ? "translate-y-0 opacity-100"
+                    : "translate-y-4 opacity-0 md:translate-y-0"
+                }`}
               >
-                <div className="mb-4 flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-black text-slate-950">
-                      Select your currency and country
-                    </h2>
+                <div className="flex h-full min-h-0 flex-col md:max-h-[86vh]">
+                  <div className="shrink-0 border-b border-slate-200 px-5 pb-4 pt-5 md:px-6 md:pt-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <h2
+                          id={titleId}
+                          className="text-xl font-semibold tracking-tight text-slate-950"
+                        >
+                          Choose country and currency
+                        </h2>
 
-                    <p className="mt-1 text-sm text-slate-600">
-                      Choose how prices are displayed.
-                      Language preference is managed separately.
-                    </p>
+                        <p
+                          id={descriptionId}
+                          className="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
+                        >
+                          Select the country and currency used for display
+                          prices. Airport suggestions use your detected
+                          location.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={closeDialog}
+                        className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                        aria-label="Close country and currency selector"
+                      >
+                        <X size={18} aria-hidden="true" />
+                      </button>
+                    </div>
+
+                    <label
+                      htmlFor={countryCurrencySearchId}
+                      className="mt-5 block text-sm font-medium text-slate-800"
+                    >
+                      Search country or currency
+                    </label>
+
+                    <div className="mt-2 flex items-center gap-2 rounded-none border border-slate-300 bg-white px-3.5 py-3 transition-colors focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-100">
+                      <Search
+                        size={17}
+                        className="shrink-0 text-slate-500"
+                        aria-hidden="true"
+                      />
+
+                      <input
+                        ref={countryCurrencySearchInputRef}
+                        id={countryCurrencySearchId}
+                        value={countryCurrencyQuery}
+                        onChange={(event) =>
+                          setCountryCurrencyQuery(event.target.value)
+                        }
+                        placeholder="Search country or currency"
+                        className="h-6 w-full min-w-0 border-0 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 md:text-sm"
+                        aria-controls={countryCurrencyListId}
+                      />
+                    </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOpen(false)
-                    }
-                    className="cursor-pointer rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-                    aria-label="Close currency selector"
+                  <div
+                    ref={listScrollRef}
+                    tabIndex={0}
+                    className="min-h-0 flex-1 touch-pan-y scroll-smooth overflow-y-auto overscroll-contain px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch] md:px-6"
                   >
-                    <X size={18} />
-                  </button>
-                </div>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        {countryCurrencyListLabel}
+                      </h3>
 
-                <div className="mb-4 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2">
-                  <Search
-                    size={16}
-                    className="text-slate-500"
-                  />
+                      <span className="text-xs font-medium text-slate-500">
+                        {countryCurrencyCountLabel}{" "}
+                        {countryCurrencyCountLabel === 1 ? "option" : "options"}
+                      </span>
+                    </div>
 
-                  <input
-                    value={query}
-                    onChange={(
-                      event
-                    ) =>
-                      setQuery(
-                        event.target
-                          .value
-                      )
-                    }
-                    placeholder="Search country or currency"
-                    className="w-full border-0 bg-transparent text-sm outline-none"
-                  />
-                </div>
+                    <div
+                      id={countryCurrencyListId}
+                      role="radiogroup"
+                      aria-label={countryCurrencyListLabel}
+                      className="grid gap-2.5 sm:grid-cols-2"
+                    >
+                      {displayedCountryCurrencies.map((option) => {
+                        const isActive =
+                          option.code === mode &&
+                          option.currency === selectedCurrency;
 
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                  {filteredOptions.map(
-                    (option) => {
-                      const isActive =
-                        option.code ===
-                        mode;
+                        return (
+                          <button
+                            key={option.code}
+                            type="button"
+                            role="radio"
+                            aria-checked={isActive}
+                            aria-label={`Select ${option.country}, ${option.code}, ${option.currency}`}
+                            onClick={() => handleCountryCurrencySelect(option)}
+                            className={`group flex cursor-pointer items-center justify-between gap-3 rounded-none border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                              isActive
+                                ? "border-violet-600 bg-violet-50 ring-1 ring-violet-600"
+                                : "border-slate-200 bg-white hover:border-violet-300 hover:bg-slate-50"
+                            }`}
+                          >
+                            <span className="min-w-0">
+                              <span className="block text-sm font-semibold tracking-wide text-slate-950">
+                                {option.code} · {option.currency}
+                              </span>
 
-                      return (
-                        <button
-                          key={
-                            option.code
-                          }
-                          type="button"
-                          onClick={() => {
-                            setMode(
-                              option.code
-                            );
-
-                            setOpen(
-                              false
-                            );
-                          }}
-                          className={`cursor-pointer rounded-xl border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
-                            isActive
-                              ? "border-violet-300 bg-violet-50"
-                              : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-semibold text-slate-900">
-                              {
-                                option.country
-                              }
+                              <span className="mt-1 block truncate text-sm font-normal text-slate-700">
+                                {option.country}
+                              </span>
                             </span>
 
-                            {isActive ? (
-                              <Check
-                                size={16}
-                                className="text-violet-600"
-                              />
-                            ) : null}
-                          </div>
+                            <span
+                              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-none border transition-colors ${
+                                isActive
+                                  ? "border-violet-600 bg-violet-600 text-white"
+                                  : "border-slate-200 text-transparent group-hover:border-violet-300"
+                              }`}
+                              aria-hidden="true"
+                            >
+                              <Check size={14} />
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
 
-                          <div className="mt-1 text-xs font-semibold text-slate-500">
-                            {
-                              option.currency
-                            }
-                          </div>
-                        </button>
-                      );
-                    }
-                  )}
+                    {displayedCountryCurrencies.length === 0 ? (
+                      <div className="rounded-none border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
+                        <p className="text-sm font-semibold text-slate-900">
+                          No countries or currencies found
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {!showingFullCountryCurrencyCatalog ? (
+                      <button
+                        type="button"
+                        onClick={handleShowMoreCountryCurrencies}
+                        className="mt-4 flex min-h-12 w-full cursor-pointer items-center justify-center rounded-none border border-slate-900 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-violet-700 hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+                      >
+                        Show more results
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </section>
-            </>,
-            document.body
+            </div>,
+            document.body,
           )
         : null}
     </>

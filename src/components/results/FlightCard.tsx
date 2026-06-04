@@ -1,13 +1,25 @@
+"use client";
+
 import Image from "next/image";
 import { PlaneTakeoff } from "lucide-react";
 import type { PublicFlightResult } from "@/lib/types";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { formatCurrency, formatTime } from "@/lib/utils";
+import { useRegion } from "@/components/region/RegionProvider";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { formatTime } from "@/lib/utils";
 
 export function FlightCard({ flight }: { flight: PublicFlightResult }) {
+  const { selectedOption } = useRegion();
+  const displayPrice = formatDisplayPrice({
+    amount: flight.price,
+    sourceCurrency: flight.currency,
+    displayCurrency: selectedOption.currency,
+    convertUsdEstimate: true,
+  });
+
   return (
-    <Card className="mx-auto w-full max-w-[640px] overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    <Card className="w-full overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       <div className="border-b border-indigo-200/70 bg-gradient-to-r from-indigo-600 to-violet-500 px-3 py-2">
         <div aria-hidden="true" className="h-3" />
       </div>
@@ -50,9 +62,13 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
 
           <div className="flex items-center justify-between gap-2 lg:w-40 lg:flex-col lg:items-end">
             <div className="text-right">
-              <div className="text-xl font-semibold tracking-[-0.01em] text-slate-950">{formatCurrency(flight.price, flight.currency)}</div>
-              <div className="text-xs font-medium text-slate-500">estimated total</div>
-              <div className="text-[11px] font-medium leading-4 text-slate-500">Final price confirmed by provider</div>
+              <div
+                className="text-xl font-semibold tracking-[-0.01em] text-slate-950"
+                aria-label={displayPrice.ariaLabel}
+                title={displayPrice.title}
+              >
+                {displayPrice.formatted}
+              </div>
             </div>
             <div className="text-right">
               <LinkButton href={`/flights/details/${encodeURIComponent(flight.id)}`} variant="primary" size="sm" className="whitespace-nowrap bg-navy px-2.5 hover:bg-navy-soft">

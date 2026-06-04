@@ -7,8 +7,9 @@ import { LocaleProvider } from "@/components/layout/LocaleProvider";
 import { RegionProvider } from "@/components/region/RegionProvider";
 import { RouteProgressProvider } from "@/components/layout/RouteProgress";
 
-import { REGION_COOKIE_KEY } from "@/config/regionConfig";
+import { REGION_COOKIE_KEY, REGION_OVERRIDE_COOKIE_KEY } from "@/config/regionConfig";
 
+import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import {
   countryToRegion,
   normalizeRegion,
@@ -34,25 +35,41 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const headerStore = await headers();
 
+  const selectedRegion = normalizeRegion(
+    cookieStore.get(REGION_OVERRIDE_COOKIE_KEY)?.value
+  );
+
+  const platformRegion = countryToRegion(
+    headerStore.get("x-vercel-ip-country") ||
+      headerStore.get("cf-ipcountry") ||
+      headerStore.get("x-country")
+  );
+
+  const detectedHeaderRegion = normalizeRegion(
+    headerStore.get("x-kurioticket-detected-region")
+  );
+
+  const visitorIp = extractVisitorIp(headerStore);
+  const ipinfoCountryContext = !platformRegion && !detectedHeaderRegion && visitorIp
+    ? await resolveIpinfoLiteCountryContext(visitorIp)
+    : null;
+  const ipinfoRegion = ipinfoCountryContext?.countryCode
+    ? countryToRegion(ipinfoCountryContext.countryCode)
+    : null;
+
   const cookieRegion = normalizeRegion(
     cookieStore.get(REGION_COOKIE_KEY)?.value
   );
 
-  const headerRegion = normalizeRegion(
-    headerStore.get("x-kurioticket-region")
-  );
-
-  const ipRegion = countryToRegion(
-    headerStore.get("x-vercel-ip-country") ||
-      headerStore.get("cf-ipcountry")
-  );
-
-  const initialRegion = (
+  const detectedRegion = (
+    platformRegion ||
+    detectedHeaderRegion ||
+    ipinfoRegion ||
     cookieRegion ||
-    headerRegion ||
-    ipRegion ||
-    "US"
-  ) as RegionMode;
+    null
+  ) as RegionMode | null;
+
+  const initialRegion = (selectedRegion || detectedRegion || "US") as RegionMode;
 
   return (
     <html
@@ -65,7 +82,7 @@ export default async function RootLayout({
       >
         <AuthProvider>
           <LocaleProvider>
-            <RegionProvider initialMode={initialRegion}>
+            <RegionProvider initialMode={initialRegion} detectedMode={detectedRegion}>
               <RouteProgressProvider>{children}</RouteProgressProvider>
             </RegionProvider>
           </LocaleProvider>

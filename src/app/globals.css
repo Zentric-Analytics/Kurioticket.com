@@ -84,24 +84,37 @@ textarea {
     linear-gradient(180deg, rgba(15, 159, 154, 0.42), rgba(37, 99, 235, 0.18)) border-box;
 }
 
-.hotel-filter-panel {
-  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+.hotel-filter-scrollbar {
+  scrollbar-color: transparent transparent;
   scrollbar-width: thin;
 }
 
-.hotel-filter-panel::-webkit-scrollbar {
-  width: 6px;
+.hotel-filter-scrollbar:hover,
+.hotel-filter-scrollbar:focus-within,
+.hotel-filter-scrollbar.hotel-filter-scrollbar--visible {
+  scrollbar-color: rgba(124, 58, 237, 0.28) transparent;
 }
 
-.hotel-filter-panel::-webkit-scrollbar-track {
+.hotel-filter-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 0;
+}
+
+.hotel-filter-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.hotel-filter-panel::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
+.hotel-filter-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
   border-radius: 999px;
 }
 
-.hotel-filter-panel::-webkit-scrollbar-thumb:hover {
+.hotel-filter-scrollbar:hover::-webkit-scrollbar-thumb,
+.hotel-filter-scrollbar:focus-within::-webkit-scrollbar-thumb,
+.hotel-filter-scrollbar.hotel-filter-scrollbar--visible::-webkit-scrollbar-thumb {
+  background: rgba(124, 58, 237, 0.22);
+}
+
+.hotel-filter-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(124, 58, 237, 0.38);
 }

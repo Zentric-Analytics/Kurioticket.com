@@ -11,9 +11,11 @@ import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn, formatCurrency } from "@/lib/utils";
 
-const hotelResultStackClass = "w-full max-w-[704px] lg:ml-4 xl:ml-6";
+const hotelResultStackClass = "w-full max-w-[800px]";
 
 const FILTER_APPLYING_DELAY_MS = 700;
+const FILTER_SCROLLBAR_HIDE_DELAY_MS = 700;
+const DEFAULT_MIN_RATING = 3;
 
 const messages = [
   "Searching hotel partners...",
@@ -227,6 +229,14 @@ type TermFilter = {
   terms: string[];
 };
 
+type ActiveHotelFilterChip = {
+  key: string;
+  label: string;
+  group?: keyof HotelFilterSelections;
+  value?: string;
+  kind?: "maxPrice" | "minRating";
+};
+
 type HotelFilterSelections = {
   popular: string[];
   propertyTypes: string[];
@@ -249,6 +259,15 @@ const emptySelections: HotelFilterSelections = {
   bedTypes: [],
 };
 
+function getSingleHotelResultCurrency(results: PublicHotelResult[]) {
+  const currencies = results
+    .map((result) => result.currency?.toUpperCase())
+    .filter(Boolean);
+  const [firstCurrency] = currencies;
+
+  return firstCurrency ?? "USD";
+}
+
 const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
   Math.max(
     300,
@@ -260,19 +279,23 @@ export function HotelResultsClient() {
   const params = useSearchParams();
 
   const [results, setResults] = useState<PublicHotelResult[]>([]);
-  const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>([]);
+  const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>(
+    [],
+  );
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterApplying, setFilterApplying] = useState(false);
+  const [filterScrollbarVisible, setFilterScrollbarVisible] = useState(false);
   const [maxPrice, setMaxPrice] = useState(1200);
-  const [minRating, setMinRating] = useState(3);
+  const [minRating, setMinRating] = useState(DEFAULT_MIN_RATING);
   const [selectedFilters, setSelectedFilters] =
     useState<HotelFilterSelections>(emptySelections);
 
   const filterApplyingTimeoutRef = useRef<number | null>(null);
+  const filterScrollbarTimeoutRef = useRef<number | null>(null);
 
   const body = useMemo(
     () => ({
@@ -362,8 +385,24 @@ export function HotelResultsClient() {
   );
 
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
+  const resultCurrency = useMemo(
+    () => getSingleHotelResultCurrency(results),
+    [results],
+  );
 
-  const displayedHotels = filterApplying ? visibleFiltered : filtered;
+  const activeFilterChips = useMemo(
+    () =>
+      buildActiveFilterChips(
+        selectedFilters,
+        maxPrice,
+        resultMaxPrice,
+        minRating,
+        resultCurrency,
+      ),
+    [maxPrice, minRating, resultCurrency, resultMaxPrice, selectedFilters],
+  );
+
+  const visibleFilteredHotels = filterApplying ? visibleFiltered : filtered;
 
   const showFilteredEmptyState =
     !loading &&
@@ -398,8 +437,25 @@ export function HotelResultsClient() {
       if (filterApplyingTimeoutRef.current !== null) {
         window.clearTimeout(filterApplyingTimeoutRef.current);
       }
+
+      if (filterScrollbarTimeoutRef.current !== null) {
+        window.clearTimeout(filterScrollbarTimeoutRef.current);
+      }
     };
   }, []);
+
+  function showFilterScrollbarWhileScrolling() {
+    setFilterScrollbarVisible(true);
+
+    if (filterScrollbarTimeoutRef.current !== null) {
+      window.clearTimeout(filterScrollbarTimeoutRef.current);
+    }
+
+    filterScrollbarTimeoutRef.current = window.setTimeout(() => {
+      setFilterScrollbarVisible(false);
+      filterScrollbarTimeoutRef.current = null;
+    }, FILTER_SCROLLBAR_HIDE_DELAY_MS);
+  }
 
   function triggerFilterApplying() {
     setVisibleFiltered((current) => {
@@ -428,7 +484,7 @@ export function HotelResultsClient() {
   const resetFilters = () => {
     triggerFilterApplying();
     setMaxPrice(resultMaxPrice);
-    setMinRating(3);
+    setMinRating(DEFAULT_MIN_RATING);
     setSelectedFilters(emptySelections);
     setFiltersOpen(false);
   };
@@ -443,10 +499,48 @@ export function HotelResultsClient() {
     }));
   };
 
+  const removeFilterChip = (chip: ActiveHotelFilterChip) => {
+    triggerFilterApplying();
+
+    if (chip.kind === "maxPrice") {
+      setMaxPrice(resultMaxPrice);
+      return;
+    }
+
+    if (chip.kind === "minRating") {
+      setMinRating(DEFAULT_MIN_RATING);
+      return;
+    }
+
+    const { group, value } = chip;
+
+    if (!group || !value) return;
+
+    setSelectedFilters((current) => ({
+      ...current,
+      [group]: current[group].filter((item) => item !== value),
+    }));
+  };
+
   return (
-    <main className="flex-1 bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
-      <div className="page-shell grid gap-5 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <section className="lg:col-span-2">
+    <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
+      <div className="sticky top-0 z-40 bg-[#f6f8fb] px-4 pb-1 pt-2 sm:hidden">
+        <HotelSearchBar
+          key={`mobile-${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
+          initialDestination={body.destination}
+          initialCheckIn={body.checkIn}
+          initialCheckOut={body.checkOut}
+          initialGuests={body.guests}
+          initialRooms={body.rooms}
+          initialSort={body.sort}
+          errorRole="alert"
+          compact
+          onOpenFilters={() => setFiltersOpen(true)}
+        />
+      </div>
+
+      <div className="page-shell grid gap-x-5 gap-y-3 pb-6 pt-3 sm:py-6 lg:gap-x-3 lg:gap-y-3 lg:grid-cols-[240px_minmax(0,800px)_minmax(0,1fr)] xl:grid-cols-[248px_minmax(0,800px)_minmax(0,1fr)]">
+        <section className="hidden sm:block lg:col-span-3">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
             initialDestination={body.destination}
@@ -457,23 +551,24 @@ export function HotelResultsClient() {
             initialSort={body.sort}
             errorRole="alert"
             compact
+            className="min-w-0"
           />
-
-          <Button
-            variant="secondary"
-            className="mt-2 w-fit md:hidden"
-            onClick={() => setFiltersOpen(true)}
-          >
-            <SlidersHorizontal size={17} />
-            Filters
-          </Button>
         </section>
 
-        <aside className="hidden lg:block">
+        <aside
+          className={cn(
+            "hotel-filter-scrollbar hidden lg:sticky lg:top-8 lg:block lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-x-hidden lg:overflow-y-auto",
+            filterScrollbarVisible
+              ? "hotel-filter-scrollbar--visible"
+              : undefined,
+          )}
+          onScroll={showFilterScrollbarWhileScrolling}
+        >
           <HotelFilters
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
             resultMaxPrice={resultMaxPrice}
+            priceCurrency={resultCurrency}
             minRating={minRating}
             setMinRating={updateMinRating}
             options={filterOptions}
@@ -482,7 +577,7 @@ export function HotelResultsClient() {
           />
         </aside>
 
-        <section className="min-w-0 space-y-4">
+        <section className="min-w-0 space-y-4 lg:col-start-2">
           {!loading && !error && warnings.length ? (
             <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
               Some provider checks may be limited for this hotel search. Review
@@ -505,7 +600,12 @@ export function HotelResultsClient() {
               {error}
             </div>
           ) : showFilteredEmptyState ? (
-            <div className={hotelResultStackClass}>
+            <div className={cn(hotelResultStackClass, "space-y-3")}>
+              <ActiveHotelFilterChips
+                chips={activeFilterChips}
+                onRemove={removeFilterChip}
+                onClearAll={resetFilters}
+              />
               <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
                 <p className="text-lg font-bold text-indigo-950">
                   No stays match these filters
@@ -524,38 +624,48 @@ export function HotelResultsClient() {
               </div>
             </div>
           ) : (
-            <div
-              className={cn(hotelResultStackClass, "min-h-[360px] space-y-4")}
-            >
-              <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                <p className="text-sm font-bold text-navy">
-                  {displayedHotels.length} stay option
-                  {displayedHotels.length === 1 ? "" : "s"} found
-                </p>
-              </div>
+            <div className={cn(hotelResultStackClass, "space-y-3")}>
+              <div
+                className={cn(
+                  "space-y-3 transition-opacity",
+                  filterApplying ? "animate-pulse opacity-80" : undefined,
+                )}
+              >
+                <div className="space-y-2 pt-1">
+                  <h1 className="text-[15px] font-bold leading-tight text-slate-900 sm:text-lg">
+                    We found {visibleFilteredHotels.length} places to stay for
+                    you
+                  </h1>
+                  <ActiveHotelFilterChips
+                    chips={activeFilterChips}
+                    onRemove={removeFilterChip}
+                    onClearAll={resetFilters}
+                  />
+                </div>
 
-              {filterApplying ? (
-                <div className="space-y-3">
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="rounded-xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
-                  >
-                    Updating results...
+                {filterApplying ? (
+                  <div className="space-y-3">
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="rounded-xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
+                    >
+                      Updating results...
+                    </div>
+                    <HotelSkeleton />
+                    <HotelSkeleton />
                   </div>
-                  <HotelSkeleton />
-                  <HotelSkeleton />
-                </div>
-              ) : displayedHotels.length ? (
-                displayedHotels.map((hotel) => (
-                  <HotelCard key={hotel.id} hotel={hotel} />
-                ))
-              ) : (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
-                  No stays match these filters. Widen your filters to see more
-                  available options.
-                </div>
-              )}
+                ) : visibleFilteredHotels.length ? (
+                  visibleFilteredHotels.map((hotel) => (
+                    <HotelCard key={hotel.id} hotel={hotel} />
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
+                    No stays match these filters. Widen your filters to see more
+                    available options.
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>
@@ -563,7 +673,7 @@ export function HotelResultsClient() {
 
       <div
         className={cn(
-          "fixed inset-0 z-50 bg-indigo-950/45 lg:hidden",
+          "fixed inset-0 z-50 bg-navy/40 lg:hidden",
           filtersOpen ? "block" : "hidden",
         )}
         onClick={() => setFiltersOpen(false)}
@@ -571,34 +681,102 @@ export function HotelResultsClient() {
 
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-3xl bg-white p-5 shadow-2xl transition-transform lg:hidden",
+          "fixed bottom-0 left-0 right-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-bold text-indigo-950">Filters</h2>
-          <Button
-            variant="ghost"
-            className="h-10 w-10 px-0"
-            aria-label="Close filters"
-            onClick={() => setFiltersOpen(false)}
-          >
-            <X size={20} />
-          </Button>
+        <div
+          className={cn(
+            "hotel-filter-scrollbar flex-1 overflow-auto p-5 pb-3",
+            filterScrollbarVisible
+              ? "hotel-filter-scrollbar--visible"
+              : undefined,
+          )}
+          onScroll={showFilterScrollbarWhileScrolling}
+        >
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-base font-bold text-navy">Filters</h2>
+            <Button
+              variant="ghost"
+              className="h-10 w-10 px-0"
+              aria-label="Close filters"
+              onClick={() => setFiltersOpen(false)}
+            >
+              <X size={20} />
+            </Button>
+          </div>
+
+          <HotelFilters
+            maxPrice={maxPrice}
+            setMaxPrice={updateMaxPrice}
+            resultMaxPrice={resultMaxPrice}
+            priceCurrency={resultCurrency}
+            minRating={minRating}
+            setMinRating={updateMinRating}
+            options={filterOptions}
+            selectedFilters={selectedFilters}
+            toggleFilter={toggleFilter}
+          />
         </div>
 
-        <HotelFilters
-          maxPrice={maxPrice}
-          setMaxPrice={updateMaxPrice}
-          resultMaxPrice={resultMaxPrice}
-          minRating={minRating}
-          setMinRating={updateMinRating}
-          options={filterOptions}
-          selectedFilters={selectedFilters}
-          toggleFilter={toggleFilter}
-        />
+        <div className="border-t border-slate-200 bg-white p-4">
+          <Button
+            type="button"
+            className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
+            onClick={() => {
+              triggerFilterApplying();
+              setFiltersOpen(false);
+            }}
+          >
+            Done
+          </Button>
+        </div>
       </aside>
     </main>
+  );
+}
+
+function ActiveHotelFilterChips({
+  chips,
+  onRemove,
+  onClearAll,
+}: {
+  chips: ActiveHotelFilterChip[];
+  onRemove: (chip: ActiveHotelFilterChip) => void;
+  onClearAll: () => void;
+}) {
+  if (!chips.length) return null;
+
+  return (
+    <div
+      className="flex max-w-full flex-wrap items-center gap-2 overflow-x-clip"
+      aria-label="Active hotel filters"
+    >
+      {chips.map((chip) => (
+        <button
+          key={chip.key}
+          type="button"
+          className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-indigo-950 transition-colors hover:border-violet-300 hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+          onClick={() => onRemove(chip)}
+          aria-label={`Remove ${chip.label} filter`}
+        >
+          <span className="truncate">{chip.label}</span>
+          <span
+            aria-hidden="true"
+            className="text-sm leading-none text-violet-700"
+          >
+            ×
+          </span>
+        </button>
+      ))}
+      <button
+        type="button"
+        className="rounded-full px-1.5 py-1 text-xs font-bold text-violet-700 transition-colors hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
+        onClick={onClearAll}
+      >
+        Clear all
+      </button>
+    </div>
   );
 }
 
@@ -606,6 +784,7 @@ function HotelFilters({
   maxPrice,
   setMaxPrice,
   resultMaxPrice,
+  priceCurrency,
   minRating,
   setMinRating,
   options,
@@ -615,6 +794,7 @@ function HotelFilters({
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   resultMaxPrice: number;
+  priceCurrency: string;
   minRating: number;
   setMinRating: (value: number) => void;
   options: ReturnType<typeof buildHotelFilterOptions>;
@@ -639,7 +819,7 @@ function HotelFilters({
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
               Total up to{" "}
               <span className="font-mono text-indigo-950">
-                {formatCurrency(maxPrice)}
+                {formatCurrency(maxPrice, priceCurrency)}
               </span>
             </span>
             <input
@@ -823,6 +1003,60 @@ function CheckboxFilterSection({
   );
 }
 
+function buildActiveFilterChips(
+  selectedFilters: HotelFilterSelections,
+  maxPrice: number,
+  resultMaxPrice: number,
+  minRating: number,
+  priceCurrency: string,
+): ActiveHotelFilterChip[] {
+  const filterGroups: Array<{
+    group: keyof HotelFilterSelections;
+    filters: TermFilter[];
+  }> = [
+    { group: "popular", filters: POPULAR_FILTERS },
+    { group: "propertyTypes", filters: PROPERTY_TYPE_FILTERS },
+    { group: "meals", filters: MEAL_FILTERS },
+    { group: "cancellationPolicies", filters: CANCELLATION_FILTERS },
+    { group: "facilities", filters: FACILITY_FILTERS },
+    { group: "locations", filters: LOCATION_AREA_FILTERS },
+    { group: "roomTypes", filters: ROOM_TYPE_FILTERS },
+    { group: "bedTypes", filters: BED_TYPE_FILTERS },
+  ];
+
+  const chips: ActiveHotelFilterChip[] = filterGroups.flatMap(
+    ({ group, filters }) =>
+      selectedFilters[group].map((value) => {
+        const filter = filters.find((item) => item.value === value);
+
+        return {
+          key: `${group}-${value}`,
+          label: filter?.label ?? value,
+          group,
+          value,
+        };
+      }),
+  );
+
+  if (maxPrice < resultMaxPrice) {
+    chips.push({
+      key: "maxPrice",
+      label: `Up to ${formatCurrency(maxPrice, priceCurrency)}`,
+      kind: "maxPrice",
+    });
+  }
+
+  if (minRating > DEFAULT_MIN_RATING) {
+    chips.push({
+      key: "minRating",
+      label: `${minRating}+ stars`,
+      kind: "minRating",
+    });
+  }
+
+  return chips;
+}
+
 function buildHotelFilterOptions(hotels: PublicHotelResult[]) {
   return {
     popular: buildTermOptions(hotels, POPULAR_FILTERS, getSearchableHotelText),
@@ -945,7 +1179,9 @@ function matchesTermGroup(
 
   return selectedValues.some((value) => {
     const filter = filters.find((item) => item.value === value);
-    return filter ? textIncludesTerms(textForHotel(hotel), filter.terms) : false;
+    return filter
+      ? textIncludesTerms(textForHotel(hotel), filter.terms)
+      : false;
   });
 }
 

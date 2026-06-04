@@ -281,6 +281,57 @@ const rankPlaces = (places: DuffelPlaceSuggestion[], searchContext?: PlaceSearch
 };
 
 
+const normalizedWords = (value: string) =>
+  normalizeSuggestionText(value)
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(Boolean);
+
+const textStronglyMatchesQuery = (value: string | undefined, normalizedQuery: string) => {
+  const normalizedValue = normalizeSuggestionText(value || "");
+  if (!normalizedValue) return false;
+
+  return normalizedValue.startsWith(normalizedQuery) || normalizedWords(normalizedValue).some((word) => word.startsWith(normalizedQuery));
+};
+
+const codeStronglyMatchesQueryPrefix = (code: string | undefined, normalizedQuery: string) => {
+  const normalizedCode = normalizeSuggestionText(code || "");
+  if (!normalizedCode) return false;
+
+  return normalizedCode.startsWith(normalizedQuery) || normalizedQuery.startsWith(normalizedCode);
+};
+
+const placeCountryMatches = (place: DuffelPlaceSuggestion, normalizedCountryCode?: string) =>
+  Boolean(normalizedCountryCode && inferPlaceCountryCode(place) === normalizedCountryCode);
+
+const placeExactlyMatchesIataCode = (place: DuffelPlaceSuggestion, normalizedQuery: string) =>
+  normalizeSuggestionText(place.code) === normalizedQuery;
+
+const placeStronglyMatchesIntentionalForeignQuery = (place: DuffelPlaceSuggestion, normalizedQuery: string) => {
+  if (normalizedQuery.length < 4) return false;
+
+  return (
+    textStronglyMatchesQuery(place.city, normalizedQuery) ||
+    textStronglyMatchesQuery(place.airport, normalizedQuery) ||
+    codeStronglyMatchesQueryPrefix(place.code, normalizedQuery)
+  );
+};
+
+const filterIntentionalForeignPlaces = (
+  places: DuffelPlaceSuggestion[],
+  normalizedQuery: string,
+  searchContext?: PlaceSearchContext,
+) => {
+  const normalizedCountryCode = normalizeCountryCode(searchContext?.countryCode);
+  if (searchContext?.context !== "origin" || !normalizedCountryCode) return places;
+
+  return places.filter((place) => {
+    if (placeCountryMatches(place, normalizedCountryCode)) return true;
+    if (placeExactlyMatchesIataCode(place, normalizedQuery)) return true;
+
+    return placeStronglyMatchesIntentionalForeignQuery(place, normalizedQuery);
+  });
+};
+
 const airportMatchesQuery = (airport: AirportOption, normalizedQuery: string) => {
   const haystack = [airport.code, airport.city, airport.airport]
     .filter(Boolean)
@@ -321,7 +372,7 @@ export const searchCuratedPlaceSuggestions = (query: string, searchContext?: Pla
   const matchingAirports = airports.filter((airport) => airportMatchesQuery(airport, normalizedQuery));
   const orderByCode = new Map(airports.map((airport, index) => [airport.code, index]));
 
-  return rankPlaces(
+  const rankedPlaces = rankPlaces(
     matchingAirports
       .sort((a, b) => {
         const aScore = curatedQueryScore(a, normalizedQuery);
@@ -332,10 +383,13 @@ export const searchCuratedPlaceSuggestions = (query: string, searchContext?: Pla
       })
       .map(curatedAirportToSuggestion),
     searchContext,
-  ).slice(0, MAX_PLACE_SUGGESTIONS);
+  );
+
+  return filterIntentionalForeignPlaces(rankedPlaces, normalizedQuery, searchContext).slice(0, MAX_PLACE_SUGGESTIONS);
 };
 
 const mergeProviderAndCuratedPlaces = (
+  query: string,
   providerPlaces: DuffelPlaceSuggestion[],
   curatedPlaces: DuffelPlaceSuggestion[],
   searchContext?: PlaceSearchContext,
@@ -352,7 +406,13 @@ const mergeProviderAndCuratedPlaces = (
     }
   }
 
-  return rankPlaces([...placesByCode.values()], searchContext).slice(0, MAX_PLACE_SUGGESTIONS);
+  const normalizedQuery = normalizeSuggestionText(query);
+  const rankedPlaces = rankPlaces([...placesByCode.values()], searchContext);
+  const filteredPlaces = normalizedQuery
+    ? filterIntentionalForeignPlaces(rankedPlaces, normalizedQuery, searchContext)
+    : rankedPlaces;
+
+  return filteredPlaces.slice(0, MAX_PLACE_SUGGESTIONS);
 };
 
 export async function searchDuffelPlaces(query: string, searchContext?: PlaceSearchContext): Promise<ProviderResult<DuffelPlaceSuggestion>> {
@@ -414,6 +474,6 @@ export async function searchDuffelPlaces(query: string, searchContext?: PlaceSea
       });
     }
 
-    return mergeProviderAndCuratedPlaces(results, searchCuratedPlaceSuggestions(query, searchContext), searchContext);
+    return mergeProviderAndCuratedPlaces(query, results, searchCuratedPlaceSuggestions(query, searchContext), searchContext);
   });
 }
