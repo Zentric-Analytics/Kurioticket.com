@@ -117,7 +117,7 @@ type HotelDestinationSuggestion = {
 
 type HotelDestinationsApiResponse = {
   suggestions?: HotelDestinationSuggestion[];
-  source?: "curated";
+  source?: "curated-destinations";
 };
 
 const normalizeCountryHint = (value: string | null | undefined) => {
@@ -160,7 +160,7 @@ export function HotelSearchBar({
 }: HotelSearchBarProps) {
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
-  const { selectedOption } = useRegion();
+  const { selectedOption, detectedOption, hasUserSelectedRegion } = useRegion();
   const [destination, setDestination] = useState(initialDestination);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
@@ -176,6 +176,7 @@ export function HotelSearchBar({
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [destinationSuggestions, setDestinationSuggestions] = useState<HotelDestinationSuggestion[]>([]);
+  const [destinationSuggestionsCountryHint, setDestinationSuggestionsCountryHint] = useState("");
   const [destinationSuggestionsOpen, setDestinationSuggestionsOpen] = useState(false);
   const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] = useState(false);
   const [destinationHighlight, setDestinationHighlight] = useState(0);
@@ -224,11 +225,15 @@ export function HotelSearchBar({
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
   const normalizedRooms = String(clampCount(rooms, 1, 6));
-  const selectedCountryHint = normalizeCountryHint(selectedOption.code);
+  const selectedCountryHint = hasUserSelectedRegion ? normalizeCountryHint(selectedOption.code) : "";
+  const detectedCountryHint = normalizeCountryHint(detectedOption?.code);
+  const activeCountryHint = selectedCountryHint || detectedCountryHint;
   const destinationQuery = destination.trim();
+  const visibleDestinationSuggestions =
+    destinationSuggestionsCountryHint === activeCountryHint ? destinationSuggestions : [];
   const shouldShowDestinationSuggestions =
     destinationSuggestionsOpen &&
-    (destinationSuggestionsLoading || destinationSuggestions.length > 0 || destinationQuery.length >= 1);
+    (destinationSuggestionsLoading || visibleDestinationSuggestions.length > 0 || destinationQuery.length >= 1);
 
   const hasActiveHotelSearch =
     destination.trim() !== "" ||
@@ -298,6 +303,10 @@ export function HotelSearchBar({
           params.set("countryCode", selectedCountryHint);
         }
 
+        if (detectedCountryHint) {
+          params.set("detectedCountryCode", detectedCountryHint);
+        }
+
         if (typeof navigator !== "undefined" && navigator.language) {
           params.set("locale", navigator.language);
         }
@@ -321,10 +330,12 @@ export function HotelSearchBar({
           : [];
 
         setDestinationSuggestions(suggestions);
+        setDestinationSuggestionsCountryHint(activeCountryHint);
         setDestinationHighlight(0);
       } catch {
         if (!controller.signal.aborted) {
           setDestinationSuggestions([]);
+          setDestinationSuggestionsCountryHint(activeCountryHint);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -337,7 +348,8 @@ export function HotelSearchBar({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [destinationQuery, destinationSuggestionsOpen, selectedCountryHint]);
+  }, [activeCountryHint, destinationQuery, destinationSuggestionsOpen, selectedCountryHint, detectedCountryHint]);
+
 
   const selectDestinationSuggestion = (suggestion: HotelDestinationSuggestion) => {
     setDestination(suggestion.searchValue);
@@ -353,7 +365,7 @@ export function HotelSearchBar({
       return;
     }
 
-    if (!destinationSuggestions.length) {
+    if (!visibleDestinationSuggestions.length) {
       if (event.key === "ArrowDown") {
         setDestinationSuggestionsOpen(true);
       }
@@ -363,7 +375,7 @@ export function HotelSearchBar({
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setDestinationSuggestionsOpen(true);
-      setDestinationHighlight((current) => (current + 1) % destinationSuggestions.length);
+      setDestinationHighlight((current) => (current + 1) % visibleDestinationSuggestions.length);
       return;
     }
 
@@ -371,20 +383,24 @@ export function HotelSearchBar({
       event.preventDefault();
       setDestinationSuggestionsOpen(true);
       setDestinationHighlight(
-        (current) => (current - 1 + destinationSuggestions.length) % destinationSuggestions.length,
+        (current) => (current - 1 + visibleDestinationSuggestions.length) % visibleDestinationSuggestions.length,
       );
       return;
     }
 
     if (event.key === "Enter" && destinationSuggestionsOpen) {
+      const highlightedSuggestion = visibleDestinationSuggestions[destinationHighlight];
+      if (!highlightedSuggestion) return;
+
       event.preventDefault();
-      selectDestinationSuggestion(destinationSuggestions[destinationHighlight]);
+      selectDestinationSuggestion(highlightedSuggestion);
     }
   };
 
   const handleClearDestination = () => {
     setDestination("");
     setDestinationSuggestions([]);
+    setDestinationSuggestionsCountryHint(activeCountryHint);
     setDestinationSuggestionsOpen(true);
     setDestinationHighlight(0);
     setError("");
@@ -404,6 +420,7 @@ export function HotelSearchBar({
     setGuestsRoomsOpen(false);
     setMobileSearchOpen(false);
     setDestinationSuggestions([]);
+    setDestinationSuggestionsCountryHint(activeCountryHint);
     setDestinationSuggestionsOpen(false);
     setDestinationHighlight(0);
     setHotelVisibleMonthDate(currentMonthStart());
@@ -658,8 +675,8 @@ export function HotelSearchBar({
                   aria-expanded={shouldShowDestinationSuggestions}
                   aria-controls="hotel-destination-suggestions"
                   aria-activedescendant={
-                    shouldShowDestinationSuggestions && destinationSuggestions[destinationHighlight]
-                      ? `hotel-destination-suggestion-${destinationSuggestions[destinationHighlight].id}`
+                    shouldShowDestinationSuggestions && visibleDestinationSuggestions[destinationHighlight]
+                      ? `hotel-destination-suggestion-${visibleDestinationSuggestions[destinationHighlight].id}`
                       : undefined
                   }
                   placeholder="City, area, or landmark"
@@ -692,8 +709,8 @@ export function HotelSearchBar({
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
                       Finding destinations…
                     </div>
-                  ) : destinationSuggestions.length ? (
-                    destinationSuggestions.map((suggestion, index) => {
+                  ) : visibleDestinationSuggestions.length ? (
+                    visibleDestinationSuggestions.map((suggestion, index) => {
                       const isActive = destinationHighlight === index;
                       const detail = [suggestion.region, suggestion.country]
                         .filter(Boolean)

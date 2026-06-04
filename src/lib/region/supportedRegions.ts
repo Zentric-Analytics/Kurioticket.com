@@ -7,6 +7,11 @@ export type SupportedRegion = {
 export const supportedRegions: SupportedRegion[] = [
   { code: "US", country: "United States", currency: "USD" },
   { code: "GB", country: "United Kingdom", currency: "GBP" },
+  { code: "DE", country: "Germany", currency: "EUR" },
+  { code: "FR", country: "France", currency: "EUR" },
+  { code: "IT", country: "Italy", currency: "EUR" },
+  { code: "ES", country: "Spain", currency: "EUR" },
+  { code: "NL", country: "Netherlands", currency: "EUR" },
   { code: "EU", country: "European Union", currency: "EUR" },
   { code: "CA", country: "Canada", currency: "CAD" },
   { code: "AU", country: "Australia", currency: "AUD" },

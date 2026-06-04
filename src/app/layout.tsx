@@ -7,7 +7,7 @@ import { LocaleProvider } from "@/components/layout/LocaleProvider";
 import { RegionProvider } from "@/components/region/RegionProvider";
 import { RouteProgressProvider } from "@/components/layout/RouteProgress";
 
-import { REGION_COOKIE_KEY } from "@/config/regionConfig";
+import { REGION_COOKIE_KEY, REGION_OVERRIDE_COOKIE_KEY } from "@/config/regionConfig";
 
 import {
   countryToRegion,
@@ -34,25 +34,31 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const headerStore = await headers();
 
-  const cookieRegion = normalizeRegion(
-    cookieStore.get(REGION_COOKIE_KEY)?.value
+  const selectedRegion = normalizeRegion(
+    cookieStore.get(REGION_OVERRIDE_COOKIE_KEY)?.value
+  );
+
+  const platformRegion = countryToRegion(
+    headerStore.get("x-vercel-ip-country") ||
+      headerStore.get("cf-ipcountry")
   );
 
   const headerRegion = normalizeRegion(
     headerStore.get("x-kurioticket-region")
   );
 
-  const ipRegion = countryToRegion(
-    headerStore.get("x-vercel-ip-country") ||
-      headerStore.get("cf-ipcountry")
+  const cookieRegion = normalizeRegion(
+    cookieStore.get(REGION_COOKIE_KEY)?.value
   );
 
-  const initialRegion = (
-    cookieRegion ||
+  const detectedRegion = (
+    platformRegion ||
     headerRegion ||
-    ipRegion ||
+    cookieRegion ||
     "US"
   ) as RegionMode;
+
+  const initialRegion = (selectedRegion || detectedRegion) as RegionMode;
 
   return (
     <html
@@ -65,7 +71,7 @@ export default async function RootLayout({
       >
         <AuthProvider>
           <LocaleProvider>
-            <RegionProvider initialMode={initialRegion}>
+            <RegionProvider initialMode={initialRegion} detectedMode={detectedRegion}>
               <RouteProgressProvider>{children}</RouteProgressProvider>
             </RegionProvider>
           </LocaleProvider>

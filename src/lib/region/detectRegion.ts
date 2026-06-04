@@ -13,8 +13,8 @@ export function normalizeRegion(value: string | null | undefined): RegionMode | 
   return null;
 }
 
-export function countryToRegion(countryCode: string | null | undefined): RegionMode {
-  return normalizeRegion(countryCode) ?? "US";
+export function countryToRegion(countryCode: string | null | undefined): RegionMode | null {
+  return normalizeRegion(countryCode);
 }
 
 export function readCookieRegion(cookieHeader: string | null | undefined): RegionMode | null {
