@@ -24,6 +24,16 @@ const ACTIVE_SNAPSHOT_TTL_MS = 24 * 60 * 60 * 1000;
 const UNAVAILABLE_SNAPSHOT_TTL_MS = 6 * 60 * 60 * 1000;
 const FAILED_SNAPSHOT_TTL_MS = 60 * 60 * 1000;
 const PROVIDER_NAME = "Duffel";
+const NEAR_EXPIRY_REFRESH_WINDOW_MS = 6 * 60 * 60 * 1000;
+
+export const HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS = {
+  popularVisibleTarget: 5,
+  discoverVisibleTarget: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+  discoverBackupFreshTarget: 3,
+  maxRouteAttemptsPerRun: 28,
+  maxProviderCallsPerRun: 84,
+  maxDateCandidatesPerRoute: 3,
+} as const;
 
 const SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES = {
   provider_no_inventory: "no_inventory",
@@ -103,10 +113,34 @@ export type HomepageFareSnapshotHealth = {
   message: string;
 };
 
+export type HomepageFareDisplayReadiness = HomepageFareSnapshotHealth & {
+  popularFresh: number;
+  popularTarget: number;
+  discoverFresh: number;
+  discoverVisibleTarget: number;
+  discoverDisplayedFresh: number;
+  discoverBackupFresh: number;
+  publicFreshTarget: number;
+};
+
+export type HomepageFareCandidatePoolHealth = HomepageFareSnapshotStatusSummary;
+
+export type HomepageFareRefreshBudget = {
+  popularVisibleTarget: number;
+  discoverVisibleTarget: number;
+  discoverBackupFreshTarget: number;
+  maxRouteAttemptsPerRun: number;
+  maxProviderCallsPerRun: number;
+  maxDateCandidatesPerRoute: number;
+};
+
 export type HomepageFareSnapshotStatusResponse = {
   routes: HomepageFareSnapshotStatusRoute[];
   summary: HomepageFareSnapshotStatusSummary;
   health: HomepageFareSnapshotHealth;
+  displayReadiness: HomepageFareDisplayReadiness;
+  candidatePoolHealth: HomepageFareCandidatePoolHealth;
+  refreshBudget: HomepageFareRefreshBudget;
 };
 
 export type HomepageFareSearch = {
@@ -168,11 +202,33 @@ export type HomepageDiscoveryFareCardsResponse = {
   };
 };
 
+export type HomepageFareRefreshStoppedReason =
+  | "target_met"
+  | "route_budget_exhausted"
+  | "provider_budget_exhausted"
+  | "completed";
+
+export type HomepageFareRefreshReadiness = {
+  freshPopular: number;
+  freshDiscover: number;
+  freshDiscoverDisplayed: number;
+  freshDiscoverBackup: number;
+  publicFreshTarget: number;
+  operationalFreshTarget: number;
+};
+
 export type HomepageFareRefreshCounts = {
   refreshed: number;
   unavailable: number;
   failed: number;
   skipped: number;
+  retained: number;
+  routeAttempts: number;
+  providerCalls: number;
+  stoppedReason: HomepageFareRefreshStoppedReason;
+  readinessBefore: HomepageFareRefreshReadiness;
+  readinessAfter: HomepageFareRefreshReadiness;
+  refreshBudget: HomepageFareRefreshBudget;
 };
 
 export type HomepageFareRefreshScope =
@@ -182,9 +238,10 @@ export type HomepageFareRefreshScope =
   | "discover-first-6"
   | "all-phase-3a";
 
-type HomepageRefreshRoute = {
-  origin: string;
-  destination: string;
+type HomepageRefreshRoute = HomepageFareRoute & {
+  isPopular: boolean;
+  isDiscover: boolean;
+  priority: number;
 };
 
 type SnapshotKeyInput = {
@@ -346,44 +403,168 @@ export async function refreshPhase3AHomepageFareSnapshots({
   scope?: HomepageFareRefreshScope;
   dateStrategy?: HomepageFareDateStrategy;
 } = {}): Promise<HomepageFareRefreshCounts> {
+  const refreshBudget = getHomepageFareSmartRefreshBudget();
+  const now = new Date();
+  const allCandidateRoutes = getRefreshRoutes("all-phase-3a");
+  const refreshRoutes = getRefreshRoutes(scope);
+  const snapshotsByRouteId = await readHomepageFareSnapshotsForRoutes({
+    routes: allCandidateRoutes,
+    departureDate: dateStrategy.departureDate,
+    currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+  });
+  const freshRouteIds = new Set(
+    allCandidateRoutes
+      .filter((route) =>
+        isFreshHomepageFareSnapshotRecord({
+          snapshot: snapshotsByRouteId.get(route.id),
+          now,
+          currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+        }),
+      )
+      .map((route) => route.id),
+  );
+  const readinessBefore = computeHomepageFareRefreshReadiness(
+    allCandidateRoutes,
+    freshRouteIds,
+    refreshBudget,
+  );
   const counts: HomepageFareRefreshCounts = {
     refreshed: 0,
     unavailable: 0,
     failed: 0,
     skipped: 0,
+    retained: 0,
+    routeAttempts: 0,
+    providerCalls: 0,
+    stoppedReason: "completed",
+    readinessBefore,
+    readinessAfter: readinessBefore,
+    refreshBudget,
   };
-  const routes = getRefreshRoutes(scope);
 
-  for (const route of routes) {
-    await refreshHomepageFareRoute({
+  if (hasMetHomepageFareOperationalTarget(readinessBefore, refreshBudget)) {
+    counts.skipped = refreshRoutes.length;
+    counts.stoppedReason = "target_met";
+    return counts;
+  }
+
+  let providerIncidentDetected = false;
+  const prioritizedRoutes = prioritizeHomepageFareRefreshRoutes({
+    routes: refreshRoutes,
+    snapshotsByRouteId,
+    freshRouteIds,
+    now,
+  });
+
+  for (const route of prioritizedRoutes) {
+    counts.readinessAfter = computeHomepageFareRefreshReadiness(
+      allCandidateRoutes,
+      freshRouteIds,
+      refreshBudget,
+    );
+
+    if (hasMetHomepageFareOperationalTarget(counts.readinessAfter, refreshBudget)) {
+      counts.stoppedReason = "target_met";
+      break;
+    }
+
+    if (counts.routeAttempts >= refreshBudget.maxRouteAttemptsPerRun) {
+      counts.stoppedReason = "route_budget_exhausted";
+      break;
+    }
+
+    if (counts.providerCalls >= refreshBudget.maxProviderCallsPerRun) {
+      counts.stoppedReason = "provider_budget_exhausted";
+      break;
+    }
+
+    if (providerIncidentDetected) {
+      counts.stoppedReason = "completed";
+      break;
+    }
+
+    counts.routeAttempts += 1;
+    const result = await refreshHomepageFareRoute({
       route,
       departureDate: dateStrategy.departureDate,
       counts,
+      existingSnapshot: snapshotsByRouteId.get(route.id),
+      refreshBudget,
     });
+
+    if (result === "refreshed" || result === "retained") {
+      freshRouteIds.add(route.id);
+    }
+
+    if (result === "provider_incident") {
+      providerIncidentDetected = true;
+    }
+  }
+
+  counts.readinessAfter = computeHomepageFareRefreshReadiness(
+    allCandidateRoutes,
+    freshRouteIds,
+    refreshBudget,
+  );
+
+  if (counts.stoppedReason === "completed") {
+    if (hasMetHomepageFareOperationalTarget(counts.readinessAfter, refreshBudget)) {
+      counts.stoppedReason = "target_met";
+    } else if (counts.routeAttempts >= refreshBudget.maxRouteAttemptsPerRun) {
+      counts.stoppedReason = "route_budget_exhausted";
+    } else if (counts.providerCalls >= refreshBudget.maxProviderCallsPerRun) {
+      counts.stoppedReason = "provider_budget_exhausted";
+    }
+  }
+
+  const unattemptedRoutes = Math.max(
+    0,
+    refreshRoutes.length - counts.routeAttempts,
+  );
+  if (counts.stoppedReason !== "completed" || providerIncidentDetected) {
+    counts.skipped += unattemptedRoutes;
   }
 
   return counts;
 }
 
+type HomepageFareRefreshRouteResult =
+  | "refreshed"
+  | "unavailable"
+  | "failed"
+  | "retained"
+  | "skipped"
+  | "provider_incident";
+
 async function refreshHomepageFareRoute({
   route,
   departureDate,
   counts,
+  existingSnapshot,
+  refreshBudget,
 }: {
   route: HomepageRefreshRoute;
   departureDate: string;
   counts: HomepageFareRefreshCounts;
-}) {
+  existingSnapshot?: HomepageFareSnapshotRecord;
+  refreshBudget: HomepageFareRefreshBudget;
+}): Promise<HomepageFareRefreshRouteResult> {
   const { origin, destination } = route;
+  const existingFresh = isFreshHomepageFareSnapshotRecord({
+    snapshot: existingSnapshot,
+    now: new Date(),
+    currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+  });
 
   if (isSameHomepageFareRoute(origin, destination)) {
     counts.skipped += 1;
-    return;
+    return "skipped";
   }
 
   try {
-    const dateCandidates =
-      buildHomepageFareDepartureDateCandidates(departureDate);
+    const dateCandidates = buildHomepageFareDepartureDateCandidates(
+      departureDate,
+    ).slice(0, refreshBudget.maxDateCandidatesPerRoute);
     let terminalResult:
       | {
           status: HomepageFareSnapshotStatus;
@@ -393,6 +574,8 @@ async function refreshHomepageFareRoute({
       | undefined;
 
     for (const candidateDepartureDate of dateCandidates) {
+      if (counts.providerCalls >= refreshBudget.maxProviderCallsPerRun) break;
+
       const search = buildHomepageFareSearch({
         origin,
         destination,
@@ -403,11 +586,9 @@ async function refreshHomepageFareRoute({
         ...search,
         sort: "cheapest",
       };
+      counts.providerCalls += 1;
       const providerResult = await searchDuffelFlights(providerSearch);
-      const result = selectProviderFare(
-        providerResult.results,
-        search.currency,
-      );
+      const result = selectProviderFare(providerResult.results, search.currency);
       const provider = providerResult.provider || PROVIDER_NAME;
 
       if (
@@ -432,13 +613,18 @@ async function refreshHomepageFareRoute({
             : {}),
         });
         counts.refreshed += 1;
-        return;
+        return "refreshed";
       }
 
       const classification = classifyHomepageFareAttemptTerminalResult(
         providerResult,
         Boolean(result),
       );
+
+      if (isProviderWideHomepageFareIncident(classification.reason)) {
+        terminalResult = { ...classification, provider };
+        break;
+      }
 
       if (
         !terminalResult ||
@@ -453,6 +639,11 @@ async function refreshHomepageFareRoute({
     }
 
     if (terminalResult?.status === HomepageFareSnapshotStatus.UNAVAILABLE) {
+      if (existingFresh) {
+        counts.retained += 1;
+        return "retained";
+      }
+
       await upsertUnavailableHomepageFareSnapshot({
         origin,
         destination,
@@ -462,7 +653,14 @@ async function refreshHomepageFareRoute({
         reason: terminalResult.reason,
       });
       counts.unavailable += 1;
-      return;
+      return "unavailable";
+    }
+
+    if (existingFresh) {
+      counts.retained += 1;
+      return terminalResult && isProviderWideHomepageFareIncident(terminalResult.reason)
+        ? "provider_incident"
+        : "retained";
     }
 
     await upsertFailedHomepageFareSnapshot({
@@ -474,7 +672,16 @@ async function refreshHomepageFareRoute({
       reason: terminalResult?.reason || "provider_failed",
     });
     counts.failed += 1;
+
+    return terminalResult && isProviderWideHomepageFareIncident(terminalResult.reason)
+      ? "provider_incident"
+      : "failed";
   } catch {
+    if (existingFresh) {
+      counts.retained += 1;
+      return "retained";
+    }
+
     try {
       await upsertFailedHomepageFareSnapshot({
         origin,
@@ -489,6 +696,7 @@ async function refreshHomepageFareRoute({
     }
 
     counts.failed += 1;
+    return "failed";
   }
 }
 
@@ -568,7 +776,7 @@ function getRefreshRoutes(
 ): HomepageRefreshRoute[] {
   const routes: HomepageRefreshRoute[] = [];
 
-  for (const route of getPhase3AHomepageFareRoutes()) {
+  for (const [index, route] of getPhase3AHomepageFareRoutes().entries()) {
     const isPopularRoute = route.id.startsWith("popular-");
     const isDiscoverRoute = route.id.startsWith("discover-");
 
@@ -581,8 +789,10 @@ function getRefreshRoutes(
         isDiscoverRoute)
     ) {
       routes.push({
-        origin: route.origin,
-        destination: route.destination,
+        ...route,
+        isPopular: isPopularRoute,
+        isDiscover: isDiscoverRoute,
+        priority: index + 1,
       });
     }
   }
@@ -602,6 +812,150 @@ function dedupeRefreshRoutes(routes: HomepageRefreshRoute[]) {
   }
 
   return deduped;
+}
+
+function getHomepageFareSmartRefreshBudget(): HomepageFareRefreshBudget {
+  return { ...HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS };
+}
+
+function computeHomepageFareRefreshReadiness(
+  routes: HomepageRefreshRoute[],
+  freshRouteIds: Set<string>,
+  budget: HomepageFareRefreshBudget,
+): HomepageFareRefreshReadiness {
+  const freshPopular = routes.filter(
+    (route) => route.isPopular && freshRouteIds.has(route.id),
+  ).length;
+  const freshDiscover = routes.filter(
+    (route) => route.isDiscover && freshRouteIds.has(route.id),
+  ).length;
+  const publicFreshTarget =
+    budget.popularVisibleTarget + budget.discoverVisibleTarget;
+
+  return {
+    freshPopular,
+    freshDiscover,
+    freshDiscoverDisplayed: Math.min(freshDiscover, budget.discoverVisibleTarget),
+    freshDiscoverBackup: Math.max(0, freshDiscover - budget.discoverVisibleTarget),
+    publicFreshTarget,
+    operationalFreshTarget: publicFreshTarget + budget.discoverBackupFreshTarget,
+  };
+}
+
+function hasMetHomepageFareOperationalTarget(
+  readiness: HomepageFareRefreshReadiness,
+  budget: HomepageFareRefreshBudget,
+) {
+  return (
+    readiness.freshPopular >= budget.popularVisibleTarget &&
+    readiness.freshDiscover >=
+      budget.discoverVisibleTarget + budget.discoverBackupFreshTarget
+  );
+}
+
+function prioritizeHomepageFareRefreshRoutes({
+  routes,
+  snapshotsByRouteId,
+  freshRouteIds,
+  now,
+}: {
+  routes: HomepageRefreshRoute[];
+  snapshotsByRouteId: Map<string, HomepageFareSnapshotRecord>;
+  freshRouteIds: Set<string>;
+  now: Date;
+}) {
+  return [...routes]
+    .filter((route) => {
+      const snapshot = snapshotsByRouteId.get(route.id);
+
+      return !freshRouteIds.has(route.id) || isNearExpirySnapshot(snapshot, now);
+    })
+    .sort((first, second) => {
+      const firstScore = getHomepageFareRefreshPriorityScore({
+        route: first,
+        snapshot: snapshotsByRouteId.get(first.id),
+        now,
+      });
+      const secondScore = getHomepageFareRefreshPriorityScore({
+        route: second,
+        snapshot: snapshotsByRouteId.get(second.id),
+        now,
+      });
+
+      return firstScore - secondScore;
+    });
+}
+
+function getHomepageFareRefreshPriorityScore({
+  route,
+  snapshot,
+  now,
+}: {
+  route: HomepageRefreshRoute;
+  snapshot?: HomepageFareSnapshotRecord;
+  now: Date;
+}) {
+  const isFresh = isFreshHomepageFareSnapshotRecord({
+    snapshot,
+    now,
+    currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+  });
+  const status = getSnapshotPriorityStatus(snapshot, now);
+
+  if (route.isPopular && !isFresh) return 0;
+  if (route.isDiscover && hasSuccessfulActiveHomepageFareHistory(snapshot)) {
+    return status === "failed" ? 4 : 1;
+  }
+  if (route.isDiscover && getDiscoverRoutePriority(route) <= 16) return 2;
+  if (status === "unavailable") return 3;
+  if (status === "failed") return 4;
+  if (route.isPopular) return 5;
+
+  return 6;
+}
+
+function getDiscoverRoutePriority(route: HomepageRefreshRoute) {
+  if (!Number.isFinite(route.priority)) return Number.MAX_SAFE_INTEGER;
+
+  return Math.max(1, route.priority - PHASE_3A_POPULAR_HOMEPAGE_FARE_ROUTES.length);
+}
+
+function getSnapshotPriorityStatus(
+  snapshot: HomepageFareSnapshotRecord | undefined,
+  now: Date,
+): HomepageFareSnapshotStatusValue {
+  if (!snapshot) return "missing";
+
+  return getOperationalSnapshotStatus({
+    snapshotStatus: snapshot.status,
+    isExpired: snapshot.expiresAt.getTime() <= now.getTime(),
+    isFresh: isFreshHomepageFareSnapshotRecord({
+      snapshot,
+      now,
+      currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+    }),
+  });
+}
+
+function hasSuccessfulActiveHomepageFareHistory(
+  snapshot: HomepageFareSnapshotRecord | undefined,
+) {
+  return snapshot?.providerBacked === true && snapshot.status === HomepageFareSnapshotStatus.ACTIVE;
+}
+
+function isNearExpirySnapshot(
+  snapshot: HomepageFareSnapshotRecord | undefined,
+  now: Date,
+) {
+  return Boolean(
+    snapshot &&
+      snapshot.status === HomepageFareSnapshotStatus.ACTIVE &&
+      snapshot.expiresAt.getTime() - now.getTime() <= NEAR_EXPIRY_REFRESH_WINDOW_MS,
+  );
+}
+
+function isProviderWideHomepageFareIncident(reason: SafeHomepageFareErrorReason) {
+  return reason === "provider_auth_error" || reason === "provider_server_error";
 }
 
 function classifyHomepageFareAttemptTerminalResult(
@@ -643,6 +997,89 @@ function selectProviderFare(
         result.price > 0,
     )
     .sort((first, second) => first.price - second.price)[0];
+}
+
+async function readHomepageFareSnapshotsForRoutes({
+  routes,
+  departureDate,
+  currency,
+}: {
+  routes: HomepageFareRoute[];
+  departureDate: string;
+  currency: string;
+}) {
+  const snapshotsByRouteId = new Map<string, HomepageFareSnapshotRecord>();
+  const db = getOptionalPrisma();
+
+  if (!db || !routes.length) return snapshotsByRouteId;
+
+  const snapshotKeyByRouteId = new Map(
+    routes.map((route) => [
+      route.id,
+      buildHomepageFareSnapshotKey({
+        origin: route.origin,
+        destination: route.destination,
+        departureDate,
+        currency,
+      }),
+    ]),
+  );
+  const routeIdBySnapshotKey = new Map(
+    [...snapshotKeyByRouteId.entries()].map(([routeId, snapshotKey]) => [
+      snapshotKey,
+      routeId,
+    ]),
+  );
+
+  try {
+    const snapshots = await db.homepageFareSnapshot.findMany({
+      where: {
+        snapshotKey: { in: [...snapshotKeyByRouteId.values()] },
+      },
+      select: {
+        snapshotKey: true,
+        origin: true,
+        destination: true,
+        currency: true,
+        price: true,
+        providerBacked: true,
+        searchedAt: true,
+        expiresAt: true,
+        status: true,
+        payload: true,
+      },
+    });
+
+    for (const snapshot of snapshots) {
+      const routeId = routeIdBySnapshotKey.get(snapshot.snapshotKey);
+      if (routeId) snapshotsByRouteId.set(routeId, snapshot);
+    }
+  } catch (error) {
+    console.error("[homepage-fare-snapshots:read-refresh-status]", error);
+  }
+
+  return snapshotsByRouteId;
+}
+
+function isFreshHomepageFareSnapshotRecord({
+  snapshot,
+  now,
+  currency,
+}: {
+  snapshot?: HomepageFareSnapshotRecord;
+  now: Date;
+  currency: string;
+}) {
+  const price = readFinitePrice(snapshot?.price);
+
+  return Boolean(
+    snapshot &&
+      snapshot.providerBacked === true &&
+      snapshot.status === HomepageFareSnapshotStatus.ACTIVE &&
+      snapshot.expiresAt.getTime() > now.getTime() &&
+      price &&
+      normalizeHomepageFareCurrency(snapshot.currency) === currency,
+  );
 }
 
 export async function readHomepageFareSnapshotResponseEntries({
@@ -855,10 +1292,15 @@ export async function readHomepageFareSnapshotStatus({
   const summary = createEmptyHomepageFareSnapshotStatusSummary();
 
   if (!eligibleRoutes.length) {
+    const displayReadiness = classifyHomepageFareDisplayReadiness([], getHomepageFareSmartRefreshBudget());
+
     return {
       routes: [],
       summary,
-      health: classifyHomepageFareSnapshotHealth(summary),
+      health: displayReadiness,
+      displayReadiness,
+      candidatePoolHealth: summary,
+      refreshBudget: getHomepageFareSmartRefreshBudget(),
     };
   }
 
@@ -921,10 +1363,19 @@ export async function readHomepageFareSnapshotStatus({
     return statusRoute;
   });
 
+  const refreshBudget = getHomepageFareSmartRefreshBudget();
+  const displayReadiness = classifyHomepageFareDisplayReadiness(
+    statusRoutes,
+    refreshBudget,
+  );
+
   return {
     routes: statusRoutes,
     summary,
-    health: classifyHomepageFareSnapshotHealth(summary),
+    health: displayReadiness,
+    displayReadiness,
+    candidatePoolHealth: summary,
+    refreshBudget,
   };
 }
 
@@ -1191,55 +1642,75 @@ function createEmptyHomepageFareSnapshotStatusSummary(): HomepageFareSnapshotSta
   };
 }
 
-function classifyHomepageFareSnapshotHealth(
-  summary: HomepageFareSnapshotStatusSummary,
-): HomepageFareSnapshotHealth {
-  const total = summary.total;
-
-  if (total <= 0) {
-    return {
-      status: "attention",
-      label: "Needs attention",
-      message: "Homepage fare routes are not configured for the status panel.",
-    };
-  }
-
-  const freshRatio = summary.fresh / total;
-  const failedRatio = summary.failed / total;
-  const staleOrMissingRatio =
-    (summary.expired + summary.failed + summary.missing) / total;
-  const affectedRatio =
-    (summary.expired + summary.unavailable + summary.failed + summary.missing) /
-    total;
-  const lowFailedCount = summary.failed <= Math.max(1, Math.floor(total * 0.1));
+function classifyHomepageFareDisplayReadiness(
+  routes: HomepageFareSnapshotStatusRoute[],
+  budget: HomepageFareRefreshBudget,
+): HomepageFareDisplayReadiness {
+  const popularFresh = routes.filter(
+    (route) => route.id.startsWith("popular-") && route.status === "fresh",
+  ).length;
+  const discoverFresh = routes.filter(
+    (route) => route.id.startsWith("discover-") && route.status === "fresh",
+  ).length;
+  const discoverDisplayedFresh = Math.min(
+    discoverFresh,
+    budget.discoverVisibleTarget,
+  );
+  const discoverBackupFresh = Math.max(
+    0,
+    discoverFresh - budget.discoverVisibleTarget,
+  );
+  const publicFreshTarget =
+    budget.popularVisibleTarget + budget.discoverVisibleTarget;
+  const visibleFresh = popularFresh + discoverDisplayedFresh;
 
   if (
-    summary.fresh === 0 ||
-    staleOrMissingRatio > 0.5 ||
-    affectedRatio >= 0.7 ||
-    failedRatio >= 0.5
+    popularFresh >= budget.popularVisibleTarget &&
+    discoverDisplayedFresh >= budget.discoverVisibleTarget
   ) {
     return {
-      status: "attention",
-      label: "Needs attention",
+      status: "healthy",
+      label: "Homepage display ready",
       message:
-        "Homepage fares are missing or stale. Refresh fares before relying on homepage prices.",
+        "Enough fresh provider-backed fares exist to fill the visible homepage pricing slots.",
+      popularFresh,
+      popularTarget: budget.popularVisibleTarget,
+      discoverFresh,
+      discoverVisibleTarget: budget.discoverVisibleTarget,
+      discoverDisplayedFresh,
+      discoverBackupFresh,
+      publicFreshTarget,
     };
   }
 
-  if (freshRatio >= 0.7 && lowFailedCount) {
+  if (visibleFresh > 0) {
     return {
-      status: "healthy",
-      label: "Healthy",
-      message: "Most homepage fares are fresh and ready to display.",
+      status: "warning",
+      label: "Partial homepage pricing",
+      message:
+        "Some visible homepage pricing slots have fresh provider-backed fares, but the display target is not full yet.",
+      popularFresh,
+      popularTarget: budget.popularVisibleTarget,
+      discoverFresh,
+      discoverVisibleTarget: budget.discoverVisibleTarget,
+      discoverDisplayedFresh,
+      discoverBackupFresh,
+      publicFreshTarget,
     };
   }
 
   return {
-    status: "warning",
-    label: "Warning",
+    status: "attention",
+    label: "Homepage pricing needs attention",
     message:
-      "Some homepage fare snapshots need attention. Refresh fares or check provider status.",
+      "Fresh provider-backed fares are not available for the visible homepage pricing slots.",
+    popularFresh,
+    popularTarget: budget.popularVisibleTarget,
+    discoverFresh,
+    discoverVisibleTarget: budget.discoverVisibleTarget,
+    discoverDisplayedFresh,
+    discoverBackupFresh,
+    publicFreshTarget,
   };
 }
 
