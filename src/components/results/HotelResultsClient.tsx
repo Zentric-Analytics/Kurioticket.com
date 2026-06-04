@@ -11,7 +11,7 @@ import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn, formatCurrency } from "@/lib/utils";
 
-const hotelResultStackClass = "w-full max-w-[704px] lg:ml-4 xl:ml-6";
+const hotelResultStackClass = "w-full max-w-[704px]";
 
 const FILTER_APPLYING_DELAY_MS = 700;
 const DEFAULT_MIN_RATING = 3;
@@ -505,7 +505,7 @@ export function HotelResultsClient() {
         />
       </div>
 
-      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:justify-center lg:gap-4 lg:grid-cols-[240px_minmax(0,704px)] xl:grid-cols-[250px_minmax(0,704px)]">
         <section className="hidden sm:block lg:col-span-2">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
@@ -520,7 +520,7 @@ export function HotelResultsClient() {
           />
         </section>
 
-        <aside className="hotel-filter-panel hidden lg:sticky lg:top-8 lg:block lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-x-hidden lg:overflow-y-auto">
+        <aside className="hotel-filter-scrollbar hidden lg:sticky lg:top-8 lg:block lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-x-hidden lg:overflow-y-auto">
           <HotelFilters
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
