@@ -103,16 +103,16 @@ export function HotelCard({ hotel }: HotelCardProps) {
   }
 
   return (
-    <Card className="mx-auto w-full max-w-[720px] overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-      <div className="grid md:grid-cols-[196px_1fr]">
-        <div className="relative aspect-[16/10] bg-surface-muted md:aspect-auto md:min-h-[196px]">
+    <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+      <div className="grid md:grid-cols-[220px_1fr] lg:grid-cols-[236px_1fr]">
+        <div className="relative aspect-[16/10] bg-surface-muted md:aspect-auto md:min-h-[210px] lg:min-h-[220px]">
           {imageUrl ? (
             <Image
               src={imageUrl}
               alt={`${hotel.name} stay option${hotel.location ? ` near ${hotel.location}` : ""}`}
               fill
               className="object-cover"
-              sizes="(min-width: 768px) 196px, 100vw"
+              sizes="(min-width: 1024px) 236px, (min-width: 768px) 220px, 100vw"
               onError={() => {
                 setFailedImageUrls((current) => new Set(current).add(imageUrl));
               }}
