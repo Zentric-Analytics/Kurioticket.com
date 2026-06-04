@@ -5,7 +5,7 @@ export async function createNotification(input: {
   userId: string;
   title: string;
   body: string;
-  type?: "PRICE_ALERT" | "SUPPORT_UPDATE" | "SUBSCRIPTION" | "SYSTEM" | "TRAVEL_INSIGHT";
+  type?: "PRICE_ALERT" | "SUPPORT_UPDATE" | "SYSTEM" | "TRAVEL_INSIGHT";
   channel?: "EMAIL" | "IN_APP";
   toEmail?: string;
 }) {

@@ -53,7 +53,7 @@ export async function POST(request: Request) {
             price: "price" in target ? target.price : target.totalPrice,
             currency: target.currency,
             destinationUrl: url.toString(),
-            userType: session?.user?.isPremium ? "premium" : session?.user ? "free" : "guest",
+            userType: session?.user ? "user" : "guest",
             sourcePage: body.sourcePage || "unknown",
             metadata: { resultId: body.id } as never,
           },

@@ -134,6 +134,10 @@ export function canUseDevelopmentFallbacks() {
   );
 }
 
+export function getHomepageFaresCronSecret() {
+  return process.env.HOMEPAGE_FARES_CRON_SECRET?.trim() || "";
+}
+
 export function getAdminEmails() {
   return (
     process.env.ADMIN_EMAILS || ""

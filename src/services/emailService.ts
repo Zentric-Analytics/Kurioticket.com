@@ -76,7 +76,7 @@ export function supportTicketEmail(input: { ticketId: string; subject: string })
       <p>Your Kurioticket support ticket is open.</p>
       <p><strong>Ticket:</strong> ${input.ticketId}</p>
       <p><strong>Subject:</strong> ${input.subject}</p>
-      <p>Our team can help with Kurioticket searches, alerts, premium tools, and travel guidance. External providers handle purchases, check-in, changes, cancellations, and refunds.</p>
+      <p>Our team can help with Kurioticket searches, alerts, account tools, and travel guidance. External providers handle purchases, check-in, changes, cancellations, and refunds.</p>
     </div>
   `;
 }

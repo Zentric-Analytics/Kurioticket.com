@@ -19,7 +19,6 @@ export async function POST(request: Request) {
   try {
     const alert = await createPriceAlert({
       userId: session.user.id,
-      isPremium: session.user.isPremium,
       ...parsed.data,
     });
     return NextResponse.json({ alert }, { status: 201 });

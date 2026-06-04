@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { getPrisma } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
-import { isProtectedAdminEmail } from "@/lib/admin";
+import { getAdminEmails } from "@/lib/env";
 
 export const metadata = { title: "Admin Users" };
 
@@ -20,7 +20,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const session = await requireAdminSession("/admin/users");
   const params = await searchParams;
   const q = params?.q?.trim() || "";
-  const role = params?.role || "ALL";
+  const requestedRole = params?.role || "ALL";
+  const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(requestedRole)
+    ? requestedRole
+    : "ALL";
   const status = params?.status || "ALL";
   const where = {
     ...(q
@@ -44,10 +47,24 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       email: true,
       role: true,
       status: true,
-      isPremium: true,
       createdAt: true,
       updatedAt: true,
     },
+  });
+  const adminEmails = new Set(getAdminEmails());
+  const sortedUsers = [...users].sort((a, b) => {
+    const aProtected = a.email
+      ? adminEmails.has(a.email.toLowerCase().trim())
+      : false;
+    const bProtected = b.email
+      ? adminEmails.has(b.email.toLowerCase().trim())
+      : false;
+
+    if (aProtected !== bProtected) {
+      return aProtected ? -1 : 1;
+    }
+
+    return 0;
   });
 
   return (
@@ -73,7 +90,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           >
             <option value="ALL">All roles</option>
             <option value="USER">User</option>
-            <option value="PREMIUM">Premium</option>
             <option value="SUPPORT">Support</option>
             <option value="ADMIN">Admin</option>
           </select>
@@ -90,7 +106,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           <Button type="submit">Filter</Button>
         </form>
       </Card>
-      {users.length === 0 ? (
+      {sortedUsers.length === 0 ? (
         <div className="mt-4">
           <EmptyState message="No users match these filters." />
         </div>
@@ -103,7 +119,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                 <th className="p-3">Name</th>
                 <th className="p-3">Email</th>
                 <th className="p-3">Role</th>
-                <th className="p-3">Premium</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Created</th>
                 <th className="p-3">Updated</th>
@@ -111,8 +126,10 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
               </tr>
             </thead>
             <tbody>
-              {users.map((user) => {
-                const isProtectedAdmin = isProtectedAdminEmail(user.email);
+              {sortedUsers.map((user) => {
+                const isProtectedAdmin = user.email
+                  ? adminEmails.has(user.email.toLowerCase().trim())
+                  : false;
 
                 return (
                   <tr
@@ -139,9 +156,6 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                           </span>
                         ) : null}
                       </div>
-                    </td>
-                    <td className="p-3">
-                      {user.isPremium ? "Placeholder: Yes" : "Placeholder: No"}
                     </td>
                     <td className="p-3">
                       <StatusPill

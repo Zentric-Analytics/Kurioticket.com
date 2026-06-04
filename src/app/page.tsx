@@ -20,7 +20,6 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-import { PriceText } from "@/components/currency/PriceText";
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -43,51 +42,53 @@ import {
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
 
+const DISCOVER_PRICE_CAP = 6;
+
 const destinations = [
   {
     id: "dubai",
+    code: "DXB",
     cityKey: "homeDestinationDubaiCity",
     countryKey: "homeDestinationDubaiCountry",
     altKey: "homeDestinationDubaiAlt",
-    amountUsd: 420,
     image:
-      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=92",
+      "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
   {
     id: "london",
+    code: "LHR",
     cityKey: "homeDestinationLondonCity",
     countryKey: "homeDestinationLondonCountry",
     altKey: "homeDestinationLondonAlt",
-    amountUsd: 380,
     image:
-      "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?auto=format&fit=crop&w=1600&q=92",
+      "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
   {
     id: "paris",
+    code: "CDG",
     cityKey: "homeDestinationParisCity",
     countryKey: "homeDestinationParisCountry",
     altKey: "homeDestinationParisAlt",
-    amountUsd: 410,
     image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=92",
+      "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
   {
     id: "bali",
+    code: "DPS",
     cityKey: "homeDestinationBaliCity",
     countryKey: "homeDestinationBaliCountry",
     altKey: "homeDestinationBaliAlt",
-    amountUsd: 370,
     image:
-      "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?auto=format&fit=crop&w=1600&q=92",
+      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1600&q=92",
   },
   {
     id: "new-york",
+    code: "EWR",
     cityKey: "homeDestinationNewYorkCity",
     countryKey: "homeDestinationNewYorkCountry",
     altKey: "homeDestinationNewYorkAlt",
-    amountUsd: 390,
     image:
-      "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=1600&q=92",
+      "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1600",
   },
 ];
 
@@ -99,12 +100,53 @@ validateDestinationImages(
   })),
 );
 
+type DestinationPriceSearch = {
+  tripType: "one-way";
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  travelers: 1;
+  adults: 1;
+  children: 0;
+  infants: 0;
+  cabinClass: "economy";
+  currency: string;
+};
+
+type DestinationPrice = {
+  id: string;
+  code: string;
+  price?: number;
+  currency?: string;
+  providerBacked: boolean;
+  searchedAt?: string;
+  expiresAt?: string;
+  search?: DestinationPriceSearch;
+  unavailable?: boolean;
+};
+
+type DestinationPriceState = {
+  loading: boolean;
+  prices: Record<string, DestinationPrice>;
+};
+
 export default function Home() {
   const { locale } = useLocale();
   const { mode: regionCode } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
+  const [destinationPriceState, setDestinationPriceState] =
+    useState<DestinationPriceState>({
+      loading: true,
+      prices: {},
+    });
+  const [discoveryPriceState, setDiscoveryPriceState] =
+    useState<DestinationPriceState>({
+      loading: true,
+      prices: {},
+    });
   const destinationsRailRef = useRef<HTMLDivElement>(null);
 
   const scrollDestinationsRail = (direction: "left" | "right") => {
@@ -125,6 +167,14 @@ export default function Home() {
   const discoveryItems = useMemo(
     () => getHomeDiscoveryByRegion(regionCode),
     [regionCode],
+  );
+  const pricedDiscoveryItems = useMemo(
+    () => discoveryItems.slice(0, DISCOVER_PRICE_CAP),
+    [discoveryItems],
+  );
+  const pricedDiscoveryItemIds = useMemo(
+    () => new Set(pricedDiscoveryItems.map((item) => item.id)),
+    [pricedDiscoveryItems],
   );
   const mobileDiscoveryGroups = useMemo(() => {
     const groups = [];
@@ -154,6 +204,95 @@ export default function Home() {
 
     return () => window.cancelAnimationFrame(frameId);
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchDestinationPrices() {
+      try {
+        const response = await fetch("/api/flights/destination-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            destinations: destinations.map(({ id, code }) => ({ id, code })),
+            currency: "USD",
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Destination prices unavailable");
+        }
+
+        const payload = (await response.json()) as {
+          prices?: DestinationPrice[];
+        };
+        const prices = Object.fromEntries(
+          (payload.prices ?? []).map((price) => [price.id, price]),
+        );
+
+        setDestinationPriceState({ loading: false, prices });
+      } catch {
+        if (controller.signal.aborted) return;
+        setDestinationPriceState({ loading: false, prices: {} });
+      }
+    }
+
+    void fetchDestinationPrices();
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function fetchDiscoveryPrices() {
+      setDiscoveryPriceState({ loading: true, prices: {} });
+
+      if (!pricedDiscoveryItems.length) {
+        setDiscoveryPriceState({ loading: false, prices: {} });
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/flights/destination-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            destinations: pricedDiscoveryItems.map(
+              ({ id, originCode, destinationCode }) => ({
+                id,
+                originCode,
+                destinationCode,
+              }),
+            ),
+            currency: "USD",
+          }),
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Discovery prices unavailable");
+        }
+
+        const payload = (await response.json()) as {
+          prices?: DestinationPrice[];
+        };
+        const prices = Object.fromEntries(
+          (payload.prices ?? []).map((price) => [price.id, price]),
+        );
+
+        setDiscoveryPriceState({ loading: false, prices });
+      } catch {
+        if (controller.signal.aborted) return;
+        setDiscoveryPriceState({ loading: false, prices: {} });
+      }
+    }
+
+    void fetchDiscoveryPrices();
+
+    return () => controller.abort();
+  }, [pricedDiscoveryItems]);
 
   const handleSavedTripToggle = (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -193,7 +332,7 @@ export default function Home() {
           <div className="page-shell relative pb-5 pt-8 sm:pb-6 sm:pt-10 lg:pt-12">
             <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
               <div className="space-y-2.5 pt-1">
-                <h1 className="max-w-3xl text-4xl font-black leading-[1.03] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+                <h1 className="max-w-3xl text-[2rem] font-semibold leading-[1.08] tracking-[-0.025em] text-slate-900 sm:text-[2.4rem] lg:text-[3rem]">
                   {t("homeHeroTitle")}
                 </h1>
 
@@ -213,20 +352,10 @@ export default function Home() {
         </section>
 
         <section className="page-shell py-5">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center">
             <h2 className="text-2xl font-bold tracking-normal text-slate-900">
               {t("homePopularDestinations")}
             </h2>
-
-            <LinkButton
-              href="/hotels/tokyo"
-              variant="ghost"
-              size="sm"
-              className="hidden text-violet-600 sm:inline-flex"
-            >
-              {t("homeViewAllDestinations")}
-              <ArrowRight size={16} />
-            </LinkButton>
           </div>
 
           <div className="relative mt-6">
@@ -252,21 +381,29 @@ export default function Home() {
               ref={destinationsRailRef}
               className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {destinations.map((destination) => (
-                <DestinationCard
-                  key={destination.id}
-                  city={t(destination.cityKey)}
-                  country={t(destination.countryKey)}
-                  imageAlt={t(destination.altKey)}
-                  fromLabel={t("fromPrice")}
-                  saveLabelTemplate={t("homeSaveDestination")}
-                  amountUsd={destination.amountUsd}
-                  image={destination.image}
-                  destinationId={destination.id}
-                  isSaved={savedTripIds.includes(destination.id)}
-                  onHeartToggle={handleSavedTripToggle}
-                />
-              ))}
+              {destinations.map((destination) => {
+                const price = destinationPriceState.prices[destination.id];
+
+                return (
+                  <DestinationCard
+                    key={destination.id}
+                    city={t(destination.cityKey)}
+                    country={t(destination.countryKey)}
+                    imageAlt={t(destination.altKey)}
+                    saveLabelTemplate={t("homeSaveDestination")}
+                    image={destination.image}
+                    destinationId={destination.id}
+                    price={price}
+                    href={buildDestinationCardHref(
+                      price,
+                      t(destination.cityKey),
+                    )}
+                    isPriceLoading={destinationPriceState.loading}
+                    isSaved={savedTripIds.includes(destination.id)}
+                    onHeartToggle={handleSavedTripToggle}
+                  />
+                );
+              })}
             </div>
           </div>
         </section>
@@ -298,7 +435,10 @@ export default function Home() {
                     return (
                       <DiscoverySuggestionCard
                         key={item.id}
-                        href={buildDiscoveryLink(item)}
+                        href={buildDiscoveryCardHref(
+                          discoveryPriceState.prices[item.id],
+                          buildDiscoveryLink(item),
+                        )}
                         itemId={item.id}
                         image={item.image}
                         imageAlt={item.imageAlt}
@@ -307,8 +447,12 @@ export default function Home() {
                         originCode={item.originCode}
                         destinationCodeLabel={item.destinationCode}
                         routeNote={item.routeNote}
-                        priceFromUsd={item.priceFromUsd}
                         compact
+                        price={discoveryPriceState.prices[item.id]}
+                        isPriceLoading={
+                          pricedDiscoveryItemIds.has(item.id) &&
+                          discoveryPriceState.loading
+                        }
                         isSaved={savedTripIds.includes(item.id)}
                         onHeartToggle={handleSavedTripToggle}
                       />
@@ -323,7 +467,10 @@ export default function Home() {
                 return (
                   <DiscoverySuggestionCard
                     key={item.id}
-                    href={buildDiscoveryLink(item)}
+                    href={buildDiscoveryCardHref(
+                      discoveryPriceState.prices[item.id],
+                      buildDiscoveryLink(item),
+                    )}
                     itemId={item.id}
                     image={item.image}
                     imageAlt={item.imageAlt}
@@ -332,7 +479,11 @@ export default function Home() {
                     originCode={item.originCode}
                     destinationCodeLabel={item.destinationCode}
                     routeNote={item.routeNote}
-                    priceFromUsd={item.priceFromUsd}
+                    price={discoveryPriceState.prices[item.id]}
+                    isPriceLoading={
+                      pricedDiscoveryItemIds.has(item.id) &&
+                      discoveryPriceState.loading
+                    }
                     isSaved={savedTripIds.includes(item.id)}
                     onHeartToggle={handleSavedTripToggle}
                   />
@@ -345,7 +496,7 @@ export default function Home() {
         <section className="page-shell bg-transparent py-4 sm:py-5">
           <div className="space-y-3">
             <div className="max-w-3xl space-y-1.5">
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
+              <h2 className="text-2xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-3xl">
                 {t("homeTrustTitle")}
               </h2>
               <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
@@ -550,8 +701,9 @@ function DiscoverySuggestionCard({
   originCode,
   destinationCodeLabel,
   routeNote,
-  priceFromUsd,
   compact,
+  price,
+  isPriceLoading,
   isSaved,
   onHeartToggle,
 }: {
@@ -564,8 +716,9 @@ function DiscoverySuggestionCard({
   originCode: string;
   destinationCodeLabel: string;
   routeNote: string;
-  priceFromUsd: number;
   compact?: boolean;
+  price?: DestinationPrice;
+  isPriceLoading?: boolean;
   isSaved: boolean;
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -612,7 +765,7 @@ function DiscoverySuggestionCard({
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-0.5">
           <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
-            Trending
+            Route idea
           </span>
           <p
             className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
@@ -625,16 +778,131 @@ function DiscoverySuggestionCard({
       <div
         className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}
       >
-        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-          From
-        </p>
-        <p
-          className={`text-slate-950 ${compact ? "text-xl font-black leading-tight" : "text-[1.4rem] font-black leading-tight"}`}
-        >
-          ${priceFromUsd}
-        </p>
+        <DiscoveryPricePill price={price} isLoading={Boolean(isPriceLoading)} />
       </div>
     </Link>
+  );
+}
+
+function hasFreshProviderPrice(
+  price?: DestinationPrice,
+): price is DestinationPrice & {
+  price: number;
+  currency: string;
+  search: DestinationPriceSearch;
+  expiresAt: string;
+} {
+  if (
+    price?.providerBacked !== true ||
+    typeof price.price !== "number" ||
+    !Number.isFinite(price.price) ||
+    !price.currency ||
+    !price.search ||
+    !price.expiresAt
+  ) {
+    return false;
+  }
+
+  if (price.search.currency !== price.currency) return false;
+
+  const expiresAtMs = Date.parse(price.expiresAt);
+  return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
+}
+
+function buildDestinationCardHref(
+  price: DestinationPrice | undefined,
+  fallbackCity: string,
+) {
+  const search = hasFreshProviderPrice(price) ? price?.search : undefined;
+
+  return search
+    ? buildFlightResultsHref(search)
+    : `/hotels/results?destination=${encodeURIComponent(fallbackCity)}`;
+}
+
+function buildDiscoveryCardHref(
+  price: DestinationPrice | undefined,
+  fallbackHref: ComponentProps<typeof Link>["href"],
+) {
+  const search = hasFreshProviderPrice(price) ? price?.search : undefined;
+
+  return search ? buildFlightResultsHref(search) : fallbackHref;
+}
+
+function buildFlightResultsHref(search: DestinationPriceSearch) {
+  const query: Record<string, string> = {
+    tripType: search.tripType,
+    origin: search.origin,
+    destination: search.destination,
+    departureDate: search.departureDate,
+    travelers: String(search.travelers),
+    adults: String(search.adults),
+    children: String(search.children),
+    infants: String(search.infants),
+    cabinClass: search.cabinClass,
+    currency: search.currency,
+  };
+
+  if (search.returnDate) {
+    query.returnDate = search.returnDate;
+  }
+
+  return {
+    pathname: "/flights/results",
+    query,
+  };
+}
+
+function DiscoveryPricePill({
+  price,
+  isLoading,
+}: {
+  price?: DestinationPrice;
+  isLoading: boolean;
+}) {
+  const hasProviderPrice = hasFreshProviderPrice(price);
+
+  if (isLoading) {
+    return (
+      <span
+        className="inline-flex h-7 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
+        aria-label="Checking provider-backed route pricing"
+      />
+    );
+  }
+
+  if (!hasProviderPrice) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+        Compare options
+      </span>
+    );
+  }
+
+  const amount = price.price;
+  const currency = price.currency;
+
+  if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+        Compare options
+      </span>
+    );
+  }
+
+  const formattedPrice = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+
+  return (
+    <span
+      className="inline-flex rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-800 shadow-sm"
+      aria-label={`Provider-backed route price from ${formattedPrice}`}
+    >
+      from {formattedPrice}
+    </span>
   );
 }
 
@@ -642,22 +910,24 @@ function DestinationCard({
   city,
   country,
   imageAlt,
-  amountUsd,
   image,
-  fromLabel,
   saveLabelTemplate,
   destinationId,
+  price,
+  href,
+  isPriceLoading,
   isSaved,
   onHeartToggle,
 }: {
   city: string;
   country: string;
   imageAlt: string;
-  amountUsd: number;
   image: string;
-  fromLabel: string;
   saveLabelTemplate: string;
   destinationId: string;
+  price?: DestinationPrice;
+  href: ComponentProps<typeof Link>["href"];
+  isPriceLoading: boolean;
   isSaved: boolean;
   onHeartToggle: (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -666,10 +936,7 @@ function DestinationCard({
 }) {
   return (
     <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
-      <Link
-        href={`/hotels/results?destination=${encodeURIComponent(city)}`}
-        className="focus-ring block"
-      >
+      <Link href={href} className="focus-ring block">
         <div className="relative h-72 sm:h-80">
           <Image
             src={image}
@@ -680,7 +947,7 @@ function DestinationCard({
             className="object-cover transition duration-500 group-hover:scale-105"
           />
 
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-slate-950/45 to-slate-900/5" />
+          <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent" />
 
           <button
             type="button"
@@ -696,24 +963,74 @@ function DestinationCard({
             <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
 
-          <div className="absolute bottom-4 left-4 text-white">
+          <div className="absolute bottom-4 left-4 pr-4 text-white">
             <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">
               {city}
             </h3>
-            <p className="text-sm font-semibold text-white/95">{country}</p>
+            <p className="text-sm font-semibold text-white/95 drop-shadow-sm">
+              {country}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 p-4">
-          <span className="text-sm font-semibold text-slate-600">
-            {fromLabel}
-          </span>
-          <span className="text-xl font-semibold text-slate-800">
-            <PriceText amountUsd={amountUsd} />
-          </span>
+        <div className="flex items-center p-4">
+          <DestinationPricePill price={price} isLoading={isPriceLoading} />
         </div>
       </Link>
     </article>
+  );
+}
+
+function DestinationPricePill({
+  price,
+  isLoading,
+}: {
+  price?: DestinationPrice;
+  isLoading: boolean;
+}) {
+  const hasProviderPrice = hasFreshProviderPrice(price);
+
+  if (isLoading) {
+    return (
+      <span
+        className="inline-flex h-8 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
+        aria-label="Prices update with provider results"
+      />
+    );
+  }
+
+  if (!hasProviderPrice) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
+        Explore fares
+      </span>
+    );
+  }
+
+  const amount = price.price;
+  const currency = price.currency;
+
+  if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
+    return (
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
+        Explore fares
+      </span>
+    );
+  }
+
+  const formattedPrice = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(amount);
+
+  return (
+    <span
+      className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm"
+      aria-label={`Provider-backed fare estimate from ${formattedPrice}`}
+    >
+      from {formattedPrice}
+    </span>
   );
 }
 

@@ -3,9 +3,9 @@ import { NextResponse } from "next/server";
 import { airports, getDefaultAirports, type AirportOption } from "@/data/airports";
 import { localeToCountryCode, normalizeCountryCode } from "@/lib/geo/context";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
-import { searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
+import { searchCuratedPlaceSuggestions, searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 
-const MIN_QUERY_LENGTH = 2;
+const MIN_QUERY_LENGTH = 1;
 const MAX_QUERY_LENGTH = 80;
 const SAFE_QUERY = /^[\p{L}\p{N}\s'.,\-()]+$/u;
 const MAX_RADIUS_KM = 150;
@@ -132,7 +132,13 @@ export async function GET(request: Request) {
   if (isQueryValid) {
     const providerResult = await searchDuffelPlaces(query, { context, lat, lng, radiusKm, countryCode, locale });
     if (providerResult.status !== "success") {
-      return NextResponse.json({ suggestions: [], fallback: true, error: "Suggestions are temporarily unavailable." });
+      const fallbackSuggestions = searchCuratedPlaceSuggestions(query, { context, lat, lng, radiusKm, countryCode, locale });
+
+      return NextResponse.json({
+        suggestions: fallbackSuggestions,
+        fallback: true,
+        error: fallbackSuggestions.length > 0 ? undefined : "Suggestions are temporarily unavailable.",
+      });
     }
     return NextResponse.json({ suggestions: providerResult.results });
   }

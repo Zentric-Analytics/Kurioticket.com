@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
+
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { HotelCard } from "@/components/results/HotelCard";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn, formatCurrency } from "@/lib/utils";
+
+const hotelResultStackClass = "w-full max-w-[704px] lg:ml-4 xl:ml-6";
+
+const FILTER_APPLYING_DELAY_MS = 700;
 
 const messages = [
   "Searching hotel partners...",
@@ -253,16 +258,22 @@ const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
 
 export function HotelResultsClient() {
   const params = useSearchParams();
+
   const [results, setResults] = useState<PublicHotelResult[]>([]);
+  const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterApplying, setFilterApplying] = useState(false);
   const [maxPrice, setMaxPrice] = useState(1200);
   const [minRating, setMinRating] = useState(3);
   const [selectedFilters, setSelectedFilters] =
     useState<HotelFilterSelections>(emptySelections);
+
+  const filterApplyingTimeoutRef = useRef<number | null>(null);
+
   const body = useMemo(
     () => ({
       destination: params.get("destination") || "Tokyo",
@@ -277,6 +288,7 @@ export function HotelResultsClient() {
 
   useEffect(() => {
     let active = true;
+
     fetch("/api/hotels/search", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -284,24 +296,32 @@ export function HotelResultsClient() {
     })
       .then(async (response) => {
         const data = await response.json();
+
         if (data.warningCategory === "no_live_hotel_provider") {
           throw new Error(
             "Hotel search is temporarily unavailable for this request. We only show stay options when price, availability, fees, and rules can be reviewed with the provider. Please try again later or start a new search.",
           );
         }
-        if (!response.ok)
+
+        if (!response.ok) {
           throw new Error(data.error || "Unable to search hotels.");
+        }
+
         return data as { results: PublicHotelResult[]; warnings?: string[] };
       })
       .then((data) => {
         if (!active) return;
+
         setResults(data.results);
+        setVisibleFiltered(data.results);
         setWarnings(data.warnings || []);
+        setFilterApplying(false);
         setMaxPrice(getResultMaxPrice(data.results));
         setSelectedFilters(emptySelections);
       })
       .catch((searchError) => {
         if (!active) return;
+
         setError(
           searchError instanceof Error
             ? searchError.message
@@ -319,10 +339,12 @@ export function HotelResultsClient() {
 
   useEffect(() => {
     if (!loading) return;
+
     const id = window.setInterval(
       () => setMessageIndex((current) => (current + 1) % messages.length),
       1200,
     );
+
     return () => window.clearInterval(id);
   }, [loading]);
 
@@ -330,6 +352,7 @@ export function HotelResultsClient() {
     () => buildHotelFilterOptions(results),
     [results],
   );
+
   const filtered = useMemo(
     () =>
       results.filter((hotel) =>
@@ -337,11 +360,73 @@ export function HotelResultsClient() {
       ),
     [maxPrice, minRating, results, selectedFilters],
   );
+
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
+
+  const displayedHotels = filterApplying ? visibleFiltered : filtered;
+
   const showFilteredEmptyState =
-    !loading && !error && results.length > 0 && filtered.length === 0;
+    !loading &&
+    !error &&
+    !filterApplying &&
+    results.length > 0 &&
+    filtered.length === 0;
+
+  useEffect(() => {
+    if (!filterApplying || loading || error) return;
+
+    if (filterApplyingTimeoutRef.current !== null) {
+      window.clearTimeout(filterApplyingTimeoutRef.current);
+    }
+
+    filterApplyingTimeoutRef.current = window.setTimeout(() => {
+      setVisibleFiltered(filtered);
+      setFilterApplying(false);
+      filterApplyingTimeoutRef.current = null;
+    }, FILTER_APPLYING_DELAY_MS);
+
+    return () => {
+      if (filterApplyingTimeoutRef.current !== null) {
+        window.clearTimeout(filterApplyingTimeoutRef.current);
+        filterApplyingTimeoutRef.current = null;
+      }
+    };
+  }, [error, filtered, filterApplying, loading]);
+
+  useEffect(() => {
+    return () => {
+      if (filterApplyingTimeoutRef.current !== null) {
+        window.clearTimeout(filterApplyingTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function triggerFilterApplying() {
+    setVisibleFiltered((current) => {
+      if (filterApplying && current.length > 0) return current;
+      return filtered;
+    });
+
+    setFilterApplying(true);
+
+    if (filterApplyingTimeoutRef.current !== null) {
+      window.clearTimeout(filterApplyingTimeoutRef.current);
+      filterApplyingTimeoutRef.current = null;
+    }
+  }
+
+  const updateMaxPrice = (value: number) => {
+    triggerFilterApplying();
+    setMaxPrice(value);
+  };
+
+  const updateMinRating = (value: number) => {
+    triggerFilterApplying();
+    setMinRating(value);
+  };
 
   const resetFilters = () => {
+    triggerFilterApplying();
     setMaxPrice(resultMaxPrice);
     setMinRating(3);
     setSelectedFilters(emptySelections);
@@ -349,6 +434,7 @@ export function HotelResultsClient() {
   };
 
   const toggleFilter = (group: keyof HotelFilterSelections, value: string) => {
+    triggerFilterApplying();
     setSelectedFilters((current) => ({
       ...current,
       [group]: current[group].includes(value)
@@ -372,6 +458,7 @@ export function HotelResultsClient() {
             errorRole="alert"
             compact
           />
+
           <Button
             variant="secondary"
             className="mt-2 w-fit md:hidden"
@@ -381,19 +468,21 @@ export function HotelResultsClient() {
             Filters
           </Button>
         </section>
+
         <aside className="hidden lg:block">
           <HotelFilters
             maxPrice={maxPrice}
-            setMaxPrice={setMaxPrice}
+            setMaxPrice={updateMaxPrice}
             resultMaxPrice={resultMaxPrice}
             minRating={minRating}
-            setMinRating={setMinRating}
+            setMinRating={updateMinRating}
             options={filterOptions}
             selectedFilters={selectedFilters}
             toggleFilter={toggleFilter}
           />
         </aside>
-        <section className="min-w-0 space-y-3">
+
+        <section className="min-w-0 space-y-4">
           {!loading && !error && warnings.length ? (
             <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
               Some provider checks may be limited for this hotel search. Review
@@ -401,6 +490,7 @@ export function HotelResultsClient() {
               provider before booking.
             </div>
           ) : null}
+
           {loading ? (
             <div className="space-y-4">
               <div className="rounded-md border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-semibold text-violet-700">
@@ -415,34 +505,58 @@ export function HotelResultsClient() {
               {error}
             </div>
           ) : showFilteredEmptyState ? (
-            <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
-              <p className="text-lg font-bold text-indigo-950">
-                No stays match these filters
-              </p>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                Try increasing the price range, lowering the star rating, or
-                clearing selected hotel filters to see more available options.
-              </p>
-              <Button
-                variant="secondary"
-                className="mt-4"
-                onClick={resetFilters}
-              >
-                Reset filters
-              </Button>
+            <div className={hotelResultStackClass}>
+              <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
+                <p className="text-lg font-bold text-indigo-950">
+                  No stays match these filters
+                </p>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                  Try increasing the price range, lowering the star rating, or
+                  clearing selected hotel filters to see more available options.
+                </p>
+                <Button
+                  variant="secondary"
+                  className="mt-4"
+                  onClick={resetFilters}
+                >
+                  Reset filters
+                </Button>
+              </div>
             </div>
           ) : (
-            <>
-              <div className="flex items-center justify-between rounded-xl border border-indigo-100 bg-white px-3.5 py-2 shadow-[0_12px_30px_-24px_rgba(30,27,75,0.45)]">
-                <p className="text-sm font-semibold text-muted">
-                  {filtered.length} stay option
-                  {filtered.length === 1 ? "" : "s"} found
+            <div
+              className={cn(hotelResultStackClass, "min-h-[360px] space-y-4")}
+            >
+              <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-sm font-bold text-navy">
+                  {displayedHotels.length} stay option
+                  {displayedHotels.length === 1 ? "" : "s"} found
                 </p>
               </div>
-              {filtered.map((hotel) => (
-                <HotelCard key={hotel.id} hotel={hotel} />
-              ))}
-            </>
+
+              {filterApplying ? (
+                <div className="space-y-3">
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="rounded-xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
+                  >
+                    Updating results...
+                  </div>
+                  <HotelSkeleton />
+                  <HotelSkeleton />
+                </div>
+              ) : displayedHotels.length ? (
+                displayedHotels.map((hotel) => (
+                  <HotelCard key={hotel.id} hotel={hotel} />
+                ))
+              ) : (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
+                  No stays match these filters. Widen your filters to see more
+                  available options.
+                </div>
+              )}
+            </div>
           )}
         </section>
       </div>
@@ -454,6 +568,7 @@ export function HotelResultsClient() {
         )}
         onClick={() => setFiltersOpen(false)}
       />
+
       <aside
         className={cn(
           "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-3xl bg-white p-5 shadow-2xl transition-transform lg:hidden",
@@ -471,12 +586,13 @@ export function HotelResultsClient() {
             <X size={20} />
           </Button>
         </div>
+
         <HotelFilters
           maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
+          setMaxPrice={updateMaxPrice}
           resultMaxPrice={resultMaxPrice}
           minRating={minRating}
-          setMinRating={setMinRating}
+          setMinRating={updateMinRating}
           options={filterOptions}
           selectedFilters={selectedFilters}
           toggleFilter={toggleFilter}
@@ -509,13 +625,14 @@ function HotelFilters({
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
 
   return (
-    <div className="hotel-filter-panel bg-white lg:sticky lg:top-24 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+    <div className="bg-white">
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
           <h2 className="text-base font-bold text-white">Filter by</h2>
         </div>
         <SlidersHorizontal className="text-white/90" size={18} />
       </div>
+
       <div className="space-y-4 bg-white px-3 py-3">
         <FilterSection title="Budget / Price">
           <label className="block">
@@ -624,7 +741,7 @@ function FilterSection({
   children,
 }: {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section className="border-t border-slate-200/70 pt-3 first:border-t-0 first:pt-0">
@@ -661,6 +778,7 @@ function CheckboxFilterSection({
       <div className="grid gap-1">
         {visibleOptions.map((option) => {
           const checked = selected.includes(option.value);
+
           return (
             <label
               key={option.value}
@@ -689,6 +807,7 @@ function CheckboxFilterSection({
           );
         })}
       </div>
+
       {hasMore ? (
         <button
           type="button"
@@ -823,11 +942,10 @@ function matchesTermGroup(
   textForHotel: (hotel: PublicHotelResult) => string,
 ) {
   if (!selectedValues.length) return true;
+
   return selectedValues.some((value) => {
     const filter = filters.find((item) => item.value === value);
-    return filter
-      ? textIncludesTerms(textForHotel(hotel), filter.terms)
-      : false;
+    return filter ? textIncludesTerms(textForHotel(hotel), filter.terms) : false;
   });
 }
 

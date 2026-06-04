@@ -10,7 +10,10 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const q = url.searchParams.get("q")?.trim();
-  const role = url.searchParams.get("role") || "ALL";
+  const requestedRole = url.searchParams.get("role") || "ALL";
+  const role = ["ALL", "USER", "SUPPORT", "ADMIN"].includes(requestedRole)
+    ? requestedRole
+    : "ALL";
   const status = url.searchParams.get("status") || "ALL";
   const page = parsePositiveInt(url.searchParams.get("page"), 1, 1000);
   const take = parsePositiveInt(url.searchParams.get("take"), 25, 100);
@@ -41,7 +44,6 @@ export async function GET(request: Request) {
         email: true,
         role: true,
         status: true,
-        isPremium: true,
         createdAt: true,
         updatedAt: true,
       },

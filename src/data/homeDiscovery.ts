@@ -113,7 +113,42 @@ for (const [regionCode, destinations] of Object.entries(homeDiscoveryByRegion)) 
   validateDestinationImages(`${regionCode} home discovery destinations`, destinations);
 }
 
+export type HomeDiscoveryRoute = {
+  id: string;
+  originCode: string;
+  destinationCode: string;
+};
+
+export const DEFAULT_HOME_DISCOVERY_REGION = "US";
+export const HOME_DISCOVERY_PRICE_CAP = 6;
+
 export function getHomeDiscoveryByRegion(regionCode?: string | null): HomeDiscoveryItem[] {
   if (!regionCode) return fallbackDiscovery;
   return homeDiscoveryByRegion[regionCode] ?? fallbackDiscovery;
+}
+
+export function getDefaultHomeDiscoveryPriceRoutes(): HomeDiscoveryRoute[] {
+  return getHomeDiscoveryByRegion(DEFAULT_HOME_DISCOVERY_REGION)
+    .slice(0, HOME_DISCOVERY_PRICE_CAP)
+    .map(({ id, originCode, destinationCode }) => ({
+      id,
+      originCode,
+      destinationCode,
+    }));
+}
+
+export function getHomeDiscoveryRouteAllowlist(): Map<string, HomeDiscoveryRoute> {
+  const allowlist = new Map<string, HomeDiscoveryRoute>();
+
+  for (const item of [fallbackDiscovery, ...Object.values(homeDiscoveryByRegion)].flat()) {
+    if (allowlist.has(item.id)) continue;
+
+    allowlist.set(item.id, {
+      id: item.id,
+      originCode: item.originCode,
+      destinationCode: item.destinationCode,
+    });
+  }
+
+  return allowlist;
 }

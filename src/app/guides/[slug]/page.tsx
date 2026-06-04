@@ -14,7 +14,7 @@ export default async function GuidePage({ params }: { params: Promise<{ slug: st
       <AppHeader />
       <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
         <article className="mx-auto max-w-3xl">
-          <p className="text-sm font-semibold text-teal-dark">Travel intelligence article</p>
+          <p className="text-sm font-semibold text-teal-dark">Travel planning article</p>
           <h1 className="mt-2 text-3xl font-bold text-navy">{titleize(slug)}</h1>
           <Card className="mt-6 p-6">
             <p className="leading-7 text-muted">

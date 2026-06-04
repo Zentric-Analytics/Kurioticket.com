@@ -120,7 +120,7 @@ const discoveryById = new Map<string, HomeDiscoveryItem>(
   allDiscoveryItems.map((item) => [item.id, item])
 );
 
-const premiumBeachVacationKeywords = [
+const beachVacationKeywords = [
   "beach",
   "beaches",
   "beachfront",
@@ -239,7 +239,7 @@ function getBeachVacationVisual(item: HomeDiscoveryItem): BeachVacationVisual {
   );
 }
 
-const nonPremiumBeachImageKeywords = [
+const cityBeachImageKeywords = [
   "at dusk",
   "buildings",
   "city and",
@@ -256,7 +256,7 @@ const nonPremiumBeachImageKeywords = [
   "towers",
 ];
 
-const nonPremiumBeachRouteKeywords = [
+const cityBeachRouteKeywords = [
   "business",
   "city break",
   "city transit",
@@ -290,7 +290,7 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
   let imageScore = 0;
   let routeScore = 0;
 
-  for (const keyword of premiumBeachVacationKeywords) {
+  for (const keyword of beachVacationKeywords) {
     if (searchableText.includes(keyword)) score += 2;
     if (routeText.includes(keyword)) routeScore += 2;
     if (imageText.includes(keyword)) {
@@ -306,14 +306,14 @@ function getBeachVacationScore(item: HomeDiscoveryItem) {
     }
   }
 
-  for (const keyword of nonPremiumBeachImageKeywords) {
+  for (const keyword of cityBeachImageKeywords) {
     if (imageText.includes(keyword)) {
       score -= 9;
       imageScore -= 9;
     }
   }
 
-  for (const keyword of nonPremiumBeachRouteKeywords) {
+  for (const keyword of cityBeachRouteKeywords) {
     if (routeText.includes(keyword)) score -= 4;
   }
 
@@ -2211,244 +2211,206 @@ export function FlightResultsClient() {
     );
   }
 
-  return (
-    <main className="flex-1 bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
-      <div className="page-shell grid gap-5 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <section className="lg:col-span-2">
-          <div
-            className={cn(
-              "mx-auto flex w-full max-w-3xl items-stretch gap-2 sm:hidden",
-              mobileSearchOpen && "hidden"
-            )}
-          >
-            <Button
-              type="button"
-              variant="secondary"
-              aria-label="Open filters"
-              className="h-[52px] w-[56px] shrink-0 rounded-xl border-slate-200 bg-white px-1.5 text-[10px] font-semibold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-              onClick={() => setFiltersOpen(true)}
-            >
-              <span className="flex flex-col items-center justify-center gap-0.5">
-                <SlidersHorizontal size={15} />
-                <span>Filters</span>
-              </span>
-            </Button>
-
+  function renderCompactSearchForm(placement: "mobile" | "desktop") {
+    return (
+      <form
+        onSubmit={handleCompactSearchSubmit}
+        className={cn(
+          "mx-auto w-full min-w-0 max-w-full sm:max-w-3xl",
+          placement === "desktop" && "hidden sm:block",
+        )}
+      >
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center justify-between sm:hidden">
+            <span className="text-sm font-semibold text-slate-500">
+              Edit search
+            </span>
             <button
               type="button"
-              onClick={() => setMobileSearchOpen(true)}
-              className="flex h-[64px] min-w-0 flex-1 items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-0 text-left shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:shadow-[0_12px_28px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+              aria-label="Close search form"
+              onClick={() => setMobileSearchOpen(false)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
             >
-              <span className="flex min-w-0 flex-1 flex-col justify-center">
-                <span className="block truncate text-[17px] font-semibold leading-5 text-slate-950">
-                  {mobileRouteSummary}
-                </span>
-                <span className="mt-1 block truncate text-[13px] font-medium leading-4 text-slate-600">
-                  {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
-                  {mobileTravelerSummary}
-                </span>
-              </span>
-              <span
-                aria-hidden="true"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
-              >
-                <PencilLine size={17} />
-              </span>
+              ×
             </button>
           </div>
 
-          <form
-            onSubmit={handleCompactSearchSubmit}
-            className={cn(
-              "mx-auto w-full max-w-3xl sm:block",
-              mobileSearchOpen ? "block" : "hidden"
-            )}
+          <div
+            className="inline-flex items-center gap-6 self-start"
+            role="tablist"
+            aria-label="Trip type"
           >
-            <div className="flex flex-col gap-1">
-              <button
-                type="button"
-                aria-label="Close search form"
-                onClick={() => setMobileSearchOpen(false)}
-                className="inline-flex h-8 w-8 items-center justify-center self-start rounded-full text-sm font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:hidden"
-              >
-                X
-              </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tripTypeInput === "round-trip"}
+              onClick={() => {
+                setTripTypeInput("round-trip");
+              }}
+              className={cn(
+                "focus-ring border-b-2 pb-1 text-[13px] font-semibold outline-none transition-colors",
+                tripTypeInput === "round-trip"
+                  ? "border-violet-600 text-slate-950"
+                  : "border-transparent text-slate-500 hover:text-slate-900",
+              )}
+            >
+              Round-trip
+            </button>
 
-              <div
-                className="inline-flex items-center gap-6 self-start"
-                role="tablist"
-                aria-label="Trip type"
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={tripTypeInput === "round-trip"}
-                  onClick={() => {
-                    setTripTypeInput("round-trip");
-                  }}
-                  className={cn(
-                    "focus-ring border-b-2 pb-1 text-[13px] font-semibold outline-none transition-colors",
-                    tripTypeInput === "round-trip"
-                      ? "border-violet-600 text-slate-950"
-                      : "border-transparent text-slate-500 hover:text-slate-900"
-                  )}
-                >
-                  Round-trip
-                </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={tripTypeInput === "one-way"}
+              onClick={() => {
+                setTripTypeInput("one-way");
+                setReturnDateInput("");
 
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={tripTypeInput === "one-way"}
-                  onClick={() => {
-                    setTripTypeInput("one-way");
-                    setReturnDateInput("");
+                if (activeDatePicker === "return") {
+                  setActiveDatePicker(null);
+                  setDatePickerPosition(null);
+                }
+              }}
+              className={cn(
+                "focus-ring border-b-2 pb-1 text-[13px] font-semibold outline-none transition-colors",
+                tripTypeInput === "one-way"
+                  ? "border-violet-600 text-slate-950"
+                  : "border-transparent text-slate-500 hover:text-slate-900",
+              )}
+            >
+              One-way
+            </button>
+          </div>
 
-                    if (activeDatePicker === "return") {
-                      setActiveDatePicker(null);
-                      setDatePickerPosition(null);
-                    }
-                  }}
-                  className={cn(
-                    "focus-ring border-b-2 pb-1 text-[13px] font-semibold outline-none transition-colors",
-                    tripTypeInput === "one-way"
-                      ? "border-violet-600 text-slate-950"
-                      : "border-transparent text-slate-500 hover:text-slate-900"
-                  )}
-                >
-                  One-way
-                </button>
-              </div>
+          <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:p-1.5">
+            <div className="flex flex-col gap-0.5 lg:flex-row lg:items-stretch lg:gap-1">
+              <div className="grid min-w-0 flex-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.36fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-0">
+                <div className="sm:col-span-2 lg:col-span-1">
+                  <div className="grid min-w-0 grid-cols-1 overflow-visible bg-transparent sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch lg:border-r lg:border-slate-200">
+                    <div
+                      ref={originWrapRef}
+                      className="relative min-h-[46px] px-2 py-0.5 sm:pr-2"
+                    >
+                      <label
+                        className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500"
+                        htmlFor="results-origin"
+                      >
+                        Origin
+                      </label>
+                      <input
+                        id="results-origin"
+                        name="origin"
+                        required
+                        value={originInput}
+                        onFocus={() => {
+                          if (originInput.trim().length >= 2)
+                            setActiveSuggest("origin");
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
+                        }}
+                        onChange={(event) => {
+                          setOriginInput(event.target.value);
+                          setOriginCode("");
 
-              <div className="rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:p-1.5">
-                <div className="flex flex-col gap-0.5 lg:flex-row lg:items-stretch lg:gap-1">
-                  <div className="grid min-w-0 flex-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.36fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-0">
-                    <div className="sm:col-span-2 lg:col-span-1">
-                      <div className="grid min-w-0 grid-cols-1 overflow-visible bg-transparent sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch lg:border-r lg:border-slate-200">
-                <div
-                  ref={originWrapRef}
-                  className="relative min-h-[46px] px-2 py-0.5 sm:pr-2"
-                >
-                  <label
-                    className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500"
-                    htmlFor="results-origin"
-                  >
-                    Origin
-                  </label>
-                  <input
-                    id="results-origin"
-                    name="origin"
-                    required
-                    value={originInput}
-                    onFocus={() => {
-                      if (originInput.trim().length >= 2) setActiveSuggest("origin");
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    onChange={(event) => {
-                      setOriginInput(event.target.value);
-                      setOriginCode("");
+                          if (event.target.value.trim().length >= 2) {
+                            setActiveSuggest("origin");
+                          } else {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
+                        }}
+                        placeholder="From?"
+                        autoComplete="off"
+                        className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[15px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
+                      />
 
-                      if (event.target.value.trim().length >= 2) {
-                        setActiveSuggest("origin");
-                      } else {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    placeholder="From?"
-                    autoComplete="off"
-                    className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[15px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
-                  />
-
-                  {activeSuggest === "origin" && dropdownPosition ? (
-                    <SuggestionList
-                      id="flight-airport-suggestions"
-                      position={dropdownPosition}
-                      suggestions={resolvedOriginSuggestions}
-                      onSelect={(value) => {
-                        setOriginInput(value);
-                        setOriginCode(value);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }}
-                    />
-                  ) : null}
-                </div>
-
-                <div className="flex items-center justify-center border-y border-slate-200 py-1 sm:border-x sm:border-y-0 sm:py-0">
-                  <button
-                    type="button"
-                    aria-label="Swap origin and destination"
-                    onClick={handleSwapLocations}
-                    className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-                  >
-                    <ArrowRightLeft size={14} />
-                  </button>
-                </div>
-
-                <div
-                  ref={destinationWrapRef}
-                  className="relative min-h-[46px] px-2 py-0.5 sm:pl-2"
-                >
-                  <label
-                    className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500"
-                    htmlFor="results-destination"
-                  >
-                    Destination
-                  </label>
-                  <input
-                    id="results-destination"
-                    name="destination"
-                    required
-                    value={destinationInput}
-                    onFocus={() => {
-                      if (destinationInput.trim().length >= 2) {
-                        setActiveSuggest("destination");
-                      }
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    onChange={(event) => {
-                      setDestinationInput(event.target.value);
-                      setDestinationCode("");
-
-                      if (event.target.value.trim().length >= 2) {
-                        setActiveSuggest("destination");
-                      } else {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    placeholder="To?"
-                    autoComplete="off"
-                    className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[15px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
-                  />
-
-                  {activeSuggest === "destination" && dropdownPosition ? (
-                    <SuggestionList
-                      id="flight-airport-suggestions"
-                      position={dropdownPosition}
-                      suggestions={resolvedDestinationSuggestions}
-                      onSelect={(value) => {
-                        setDestinationInput(value);
-                        setDestinationCode(value);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }}
-                    />
-                  ) : null}
-                </div>
-                      </div>
+                      {activeSuggest === "origin" && dropdownPosition ? (
+                        <SuggestionList
+                          id="flight-airport-suggestions"
+                          position={dropdownPosition}
+                          suggestions={resolvedOriginSuggestions}
+                          onSelect={(value) => {
+                            setOriginInput(value);
+                            setOriginCode(value);
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }}
+                        />
+                      ) : null}
                     </div>
+
+                    <div className="flex items-center justify-center border-y border-slate-200 py-1 sm:border-x sm:border-y-0 sm:py-0">
+                      <button
+                        type="button"
+                        aria-label="Swap origin and destination"
+                        onClick={handleSwapLocations}
+                        className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                      >
+                        <ArrowRightLeft size={14} />
+                      </button>
+                    </div>
+
+                    <div
+                      ref={destinationWrapRef}
+                      className="relative min-h-[46px] px-2 py-0.5 sm:pl-2"
+                    >
+                      <label
+                        className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500"
+                        htmlFor="results-destination"
+                      >
+                        Destination
+                      </label>
+                      <input
+                        id="results-destination"
+                        name="destination"
+                        required
+                        value={destinationInput}
+                        onFocus={() => {
+                          if (destinationInput.trim().length >= 2) {
+                            setActiveSuggest("destination");
+                          }
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
+                        }}
+                        onChange={(event) => {
+                          setDestinationInput(event.target.value);
+                          setDestinationCode("");
+
+                          if (event.target.value.trim().length >= 2) {
+                            setActiveSuggest("destination");
+                          } else {
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }
+                        }}
+                        placeholder="To?"
+                        autoComplete="off"
+                        className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[15px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
+                      />
+
+                      {activeSuggest === "destination" && dropdownPosition ? (
+                        <SuggestionList
+                          id="flight-airport-suggestions"
+                          position={dropdownPosition}
+                          suggestions={resolvedDestinationSuggestions}
+                          onSelect={(value) => {
+                            setDestinationInput(value);
+                            setDestinationCode(value);
+                            setActiveSuggest(null);
+                            setDropdownPosition(null);
+                          }}
+                        />
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
 
                 <div ref={departureWrapRef}>
                   <button
@@ -2493,25 +2455,91 @@ export function FlightResultsClient() {
                           adultCount,
                           childCount,
                           infantCount,
-                          cabinClassInput
+                          cabinClassInput,
                         )}
                       </span>
                     </span>
                     <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
                   </button>
                 </div>
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="h-8 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:h-[38px] lg:w-auto lg:min-w-[96px]"
-                  >
-                    Search
-                  </Button>
-                </div>
               </div>
+
+              <Button
+                type="submit"
+                className="h-8 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:h-[38px] lg:w-auto lg:min-w-[96px]"
+              >
+                Search
+              </Button>
             </div>
-          </form>
+          </div>
+        </div>
+      </form>
+    );
+  }
+
+  function renderMobileControlsRow() {
+    return (
+      <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2 overflow-hidden">
+        <Button
+          type="button"
+          variant="secondary"
+          aria-label="Open filters"
+          className="h-[52px] w-[56px] shrink-0 rounded-xl border-slate-200 bg-white px-1.5 text-[10px] font-semibold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          onClick={() => setFiltersOpen(true)}
+        >
+          <span className="flex flex-col items-center justify-center gap-0.5">
+            <SlidersHorizontal size={15} />
+            <span>Filters</span>
+          </span>
+        </Button>
+
+        <button
+          type="button"
+          onClick={() => setMobileSearchOpen(true)}
+          className="flex h-[58px] min-w-0 max-w-full flex-1 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-0 text-left shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 hover:shadow-[0_10px_22px_rgba(15,23,42,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+        >
+          <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
+            <span className="block truncate text-[15px] font-semibold leading-5 text-slate-950">
+              {mobileRouteSummary}
+            </span>
+            <span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-slate-600">
+              {mobileTripTypeSummary} · {mobileDateSummary} · {mobileTravelerSummary}
+            </span>
+          </span>
+          <span
+            aria-hidden="true"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
+          >
+            <PencilLine size={16} />
+          </span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
+      <div
+        className={cn(
+          "sticky top-0 z-40 bg-[#f6f8fb] px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] sm:hidden",
+          mobileSearchOpen && "hidden"
+        )}
+      >
+        {renderMobileControlsRow()}
+      </div>
+
+      <div
+        className={cn(
+          "sticky top-0 z-50 bg-[#f6f8fb] px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08)] sm:hidden",
+          mobileSearchOpen ? "block" : "hidden"
+        )}
+      >
+        {mobileSearchOpen ? renderCompactSearchForm("mobile") : null}
+      </div>
+
+      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <section className="lg:col-span-2">
+          {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
 
           {activeDatePicker && datePickerPosition ? (
             <DatePickerPopover

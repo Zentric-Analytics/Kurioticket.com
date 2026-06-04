@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
+import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 
 import {
@@ -30,6 +30,7 @@ import {
 import { signinSchema } from "@/lib/validation";
 
 import {
+  EmailVerificationCooldownError,
   getEmailVerificationRedirect,
   sendEmailVerificationCode,
   verifyLoginCode,
@@ -39,7 +40,6 @@ import { logAuthEvent } from "@/services/authService";
 
 type SessionAugmentedUser = {
   role?: string;
-  isPremium?: boolean;
   status?: string;
   emailVerified?: Date | string | null;
 };
@@ -155,8 +155,6 @@ const providers: NextAuthOptions["providers"] = [
           name: user.name,
           image: user.image,
           role: user.role,
-          isPremium:
-            user.isPremium,
           status: user.status,
           emailVerified:
             user.emailVerified,
@@ -244,12 +242,20 @@ const providers: NextAuthOptions["providers"] = [
           { email }
         );
 
-        await sendEmailVerificationCode(
-          {
-            email,
-            name: user.name,
+        try {
+          await sendEmailVerificationCode(
+            {
+              email,
+              name: user.name,
+              action: "credentials-unverified-email",
+              enforceCooldown: true,
+            }
+          );
+        } catch (error) {
+          if (!(error instanceof EmailVerificationCooldownError)) {
+            throw error;
           }
-        );
+        }
 
         throw new Error(
           "EmailVerificationRequired"
@@ -262,8 +268,6 @@ const providers: NextAuthOptions["providers"] = [
         name: user.name,
         image: user.image,
         role: user.role,
-        isPremium:
-          user.isPremium,
         status: user.status,
         emailVerified:
           user.emailVerified,
@@ -288,6 +292,18 @@ if (isGoogleAuthConfigured()) {
           response_type:
             "code",
         },
+      },
+
+      profile(profile: GoogleProfile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          emailVerified: profile.email_verified
+            ? new Date()
+            : null,
+        };
       },
 
       allowDangerousEmailAccountLinking:
@@ -408,12 +424,20 @@ export const authOptions: NextAuthOptions =
               { email }
             );
 
-            await sendEmailVerificationCode(
-              {
-                email,
-                name: dbUser.name,
+            try {
+              await sendEmailVerificationCode(
+                {
+                  email,
+                  name: dbUser.name,
+                  action: "oauth-unverified-email",
+                  enforceCooldown: true,
+                }
+              );
+            } catch (error) {
+              if (!(error instanceof EmailVerificationCooldownError)) {
+                throw error;
               }
-            );
+            }
 
             return getEmailVerificationRedirect(
               email
@@ -461,11 +485,6 @@ export const authOptions: NextAuthOptions =
             authUser.role ||
             "USER";
 
-          token.isPremium =
-            Boolean(
-              authUser.isPremium
-            );
-
           token.status =
             authUser.status ||
             "ACTIVE";
@@ -497,9 +516,6 @@ export const authOptions: NextAuthOptions =
             token.role =
               dbUser.role;
 
-            token.isPremium =
-              dbUser.isPremium;
-
             token.status =
               dbUser.status;
 
@@ -527,11 +543,6 @@ export const authOptions: NextAuthOptions =
             String(
               token.role ||
                 "USER"
-            );
-
-          session.user.isPremium =
-            Boolean(
-              token.isPremium
             );
 
           session.user.status =

@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 
+import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
@@ -56,6 +57,11 @@ type PlacesApiResponse = {
   source?: string;
 };
 
+type LocationApiResponse = {
+  source?: "ipinfo-lite" | "fallback";
+  countryCode?: string | null;
+};
+
 type RecommendedOrigin = AirportOption & {
   confidence?: number;
 };
@@ -66,6 +72,18 @@ const normalizeSuggestionText = (value: string) =>
     .replace(/\p{M}/gu, "")
     .trim()
     .toLowerCase();
+
+const normalizeCountryHint = (value: string | null | undefined) => {
+  const countryCode = value?.trim().toUpperCase() || "";
+  return /^[A-Z]{2}$/.test(countryCode) ? countryCode : "";
+};
+
+const getBrowserCountryHint = () => {
+  if (typeof navigator === "undefined") return "";
+  const language = navigator.language || "";
+  const parts = language.split("-");
+  return normalizeCountryHint(parts.length > 1 ? parts[1] : "");
+};
 
 const dedupeSuggestions = (suggestions: AirportOption[]) => {
   const seenCodes = new Set<string>();
@@ -147,6 +165,7 @@ export function SearchTabs({
   compactHero = false,
 }: SearchTabsProps) {
   const router = useRouter();
+  const { start: startRouteProgress } = useRouteProgress();
 
   const fromWrapRef =
     useRef<HTMLDivElement>(null);
@@ -166,6 +185,10 @@ export function SearchTabs({
 
   const [tab, setTab] =
     useState<TabMode>("flights");
+  const [isFlightSubmitting, setIsFlightSubmitting] =
+    useState(false);
+  const [isHotelSubmitting, setIsHotelSubmitting] =
+    useState(false);
 
   const [tripType, setTripType] =
     useState<TripType>(
@@ -412,12 +435,40 @@ export function SearchTabs({
 
 
   useEffect(() => {
-    if (typeof navigator === "undefined") return;
-    const language = navigator.language || "";
-    const parts = language.split("-");
-    if (parts.length > 1 && /^[A-Za-z]{2}$/.test(parts[1])) {
-      setCountryHint(parts[1].toUpperCase());
-    }
+    const browserCountryHint = getBrowserCountryHint();
+    if (!browserCountryHint) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setCountryHint(browserCountryHint);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadLocationCountryHint = async () => {
+      try {
+        const response = await fetch("/api/location", {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as LocationApiResponse;
+        const detectedCountryHint = normalizeCountryHint(payload.countryCode);
+        if (detectedCountryHint) {
+          setCountryHint(detectedCountryHint);
+        }
+      } catch {
+        // Keep the browser-language country hint when server-side location is unavailable.
+      }
+    };
+
+    void loadLocationCountryHint();
+
+    return () => controller.abort();
   }, []);
 
 
@@ -1178,6 +1229,7 @@ export function SearchTabs({
   };
 
   const isFlightSearchDisabled =
+    isFlightSubmitting ||
     !from.trim() ||
     !to.trim() ||
     !departureDate ||
@@ -1261,10 +1313,13 @@ export function SearchTabs({
       // best effort only
     }
 
+    setIsFlightSubmitting(true);
+    startRouteProgress();
     router.push(href);
   };
 
   const isHotelSearchDisabled =
+    isHotelSubmitting ||
     !destination.trim() ||
     !checkIn ||
     !checkOut ||
@@ -1323,6 +1378,8 @@ export function SearchTabs({
       // best effort only
     }
 
+    setIsHotelSubmitting(true);
+    startRouteProgress();
     router.push(href);
   };
 
@@ -2081,10 +2138,13 @@ export function SearchTabs({
                   disabled={
                     isFlightSearchDisabled
                   }
+                  aria-busy={isFlightSubmitting}
                   className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
-                  {t.search ||
-                    "Search"}
+                  {isFlightSubmitting
+                    ? "Searching flights..."
+                    : t.search ||
+                      "Search"}
                 </Button>
               </div>
             </div>
@@ -2540,10 +2600,13 @@ export function SearchTabs({
                   disabled={
                     isHotelSearchDisabled
                   }
+                  aria-busy={isHotelSubmitting}
                   className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
-                  {t.search ||
-                    "Search"}
+                  {isHotelSubmitting
+                    ? "Searching hotels..."
+                    : t.search ||
+                      "Search"}
                 </Button>
               </div>
             </div>
