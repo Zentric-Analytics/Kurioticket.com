@@ -258,6 +258,15 @@ const emptySelections: HotelFilterSelections = {
   bedTypes: [],
 };
 
+function getSingleHotelResultCurrency(results: PublicHotelResult[]) {
+  const currencies = results
+    .map((result) => result.currency?.toUpperCase())
+    .filter(Boolean);
+  const [firstCurrency] = currencies;
+
+  return firstCurrency ?? "USD";
+}
+
 const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
   Math.max(
     300,
@@ -373,6 +382,10 @@ export function HotelResultsClient() {
   );
 
   const resultMaxPrice = useMemo(() => getResultMaxPrice(results), [results]);
+  const resultCurrency = useMemo(
+    () => getSingleHotelResultCurrency(results),
+    [results],
+  );
 
   const activeFilterChips = useMemo(
     () =>
@@ -381,8 +394,9 @@ export function HotelResultsClient() {
         maxPrice,
         resultMaxPrice,
         minRating,
+        resultCurrency,
       ),
-    [maxPrice, minRating, resultMaxPrice, selectedFilters],
+    [maxPrice, minRating, resultCurrency, resultMaxPrice, selectedFilters],
   );
 
   const displayedHotels = filterApplying ? visibleFiltered : filtered;
@@ -525,6 +539,7 @@ export function HotelResultsClient() {
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
             resultMaxPrice={resultMaxPrice}
+            priceCurrency={resultCurrency}
             minRating={minRating}
             setMinRating={updateMinRating}
             options={filterOptions}
@@ -650,6 +665,7 @@ export function HotelResultsClient() {
           maxPrice={maxPrice}
           setMaxPrice={updateMaxPrice}
           resultMaxPrice={resultMaxPrice}
+          priceCurrency={resultCurrency}
           minRating={minRating}
           setMinRating={updateMinRating}
           options={filterOptions}
@@ -709,6 +725,7 @@ function HotelFilters({
   maxPrice,
   setMaxPrice,
   resultMaxPrice,
+  priceCurrency,
   minRating,
   setMinRating,
   options,
@@ -718,6 +735,7 @@ function HotelFilters({
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   resultMaxPrice: number;
+  priceCurrency: string;
   minRating: number;
   setMinRating: (value: number) => void;
   options: ReturnType<typeof buildHotelFilterOptions>;
@@ -742,7 +760,7 @@ function HotelFilters({
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
               Total up to{" "}
               <span className="font-mono text-indigo-950">
-                {formatCurrency(maxPrice)}
+                {formatCurrency(maxPrice, priceCurrency)}
               </span>
             </span>
             <input
@@ -931,6 +949,7 @@ function buildActiveFilterChips(
   maxPrice: number,
   resultMaxPrice: number,
   minRating: number,
+  priceCurrency: string,
 ): ActiveHotelFilterChip[] {
   const filterGroups: Array<{
     group: keyof HotelFilterSelections;
@@ -963,7 +982,7 @@ function buildActiveFilterChips(
   if (maxPrice < resultMaxPrice) {
     chips.push({
       key: "maxPrice",
-      label: `Up to ${formatCurrency(maxPrice)}`,
+      label: `Up to ${formatCurrency(maxPrice, priceCurrency)}`,
       kind: "maxPrice",
     });
   }

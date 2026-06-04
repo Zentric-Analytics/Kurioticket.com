@@ -14,22 +14,27 @@ const zeroDecimalCurrencies = new Set([
 
 export function formatCurrency(
   amount: number,
-  currency: string
+  currency: string,
+  options: { maximumFractionDigits?: number; minimumFractionDigits?: number } = {}
 ) {
   const normalizedCurrency =
     currency.toUpperCase();
-  const fractionDigits =
+  const defaultFractionDigits =
     zeroDecimalCurrencies.has(
       normalizedCurrency
     )
       ? 0
       : 2;
+  const maximumFractionDigits =
+    options.maximumFractionDigits ?? defaultFractionDigits;
+  const minimumFractionDigits =
+    options.minimumFractionDigits ?? maximumFractionDigits;
 
   return new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: normalizedCurrency,
-    maximumFractionDigits: fractionDigits,
-    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits,
+    minimumFractionDigits,
   }).format(amount);
 }
 
@@ -42,4 +47,50 @@ export function formatCurrencyFromUsd(
     convertCurrency(amountUsd, displayCurrency),
     displayCurrency
   );
+}
+
+
+export type DisplayPrice = {
+  formatted: string;
+  currency: string;
+  sourceCurrency: string;
+  isConvertedEstimate: boolean;
+  title?: string;
+};
+
+export function formatDisplayPrice({
+  amount,
+  sourceCurrency,
+  displayCurrency,
+  convertUsdEstimate = false,
+  maximumFractionDigits,
+}: {
+  amount: number;
+  sourceCurrency: string;
+  displayCurrency: string;
+  convertUsdEstimate?: boolean;
+  maximumFractionDigits?: number;
+}): DisplayPrice {
+  const normalizedSourceCurrency = sourceCurrency.toUpperCase();
+  const normalizedDisplayCurrency = resolveDisplayCurrency(displayCurrency);
+  const shouldConvertUsdEstimate =
+    convertUsdEstimate &&
+    normalizedSourceCurrency === "USD" &&
+    normalizedDisplayCurrency !== normalizedSourceCurrency;
+  const displayAmount = shouldConvertUsdEstimate
+    ? convertCurrency(amount, normalizedDisplayCurrency)
+    : amount;
+  const currency = shouldConvertUsdEstimate
+    ? normalizedDisplayCurrency
+    : normalizedSourceCurrency;
+
+  return {
+    formatted: formatCurrency(displayAmount, currency, { maximumFractionDigits }),
+    currency,
+    sourceCurrency: normalizedSourceCurrency,
+    isConvertedEstimate: shouldConvertUsdEstimate,
+    title: shouldConvertUsdEstimate
+      ? `Display estimate converted from ${normalizedSourceCurrency}. Final provider price may differ.`
+      : undefined,
+  };
 }

@@ -34,7 +34,7 @@ import {
 } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
-import { formatCurrencyFromUsd } from "@/lib/currency/formatCurrency";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
@@ -906,21 +906,24 @@ function DiscoveryPricePill({
     );
   }
 
-  const formattedPrice =
-    currency.toUpperCase() === "USD"
-      ? formatCurrencyFromUsd(amount, displayCurrency)
-      : new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency,
-          maximumFractionDigits: 0,
-        }).format(amount);
+  const displayPrice = formatDisplayPrice({
+    amount,
+    sourceCurrency: currency,
+    displayCurrency,
+    convertUsdEstimate: true,
+    maximumFractionDigits: 0,
+  });
+  const estimateCopy = displayPrice.isConvertedEstimate
+    ? " Display estimate; final provider price may differ."
+    : " Final price confirmed by provider.";
 
   return (
     <span
       className="inline-flex rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-800 shadow-sm"
-      aria-label={`Provider-backed route price from ${formattedPrice}`}
+      aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
+      title={displayPrice.title}
     >
-      from {formattedPrice}
+      from {displayPrice.formatted}
     </span>
   );
 }
@@ -1045,21 +1048,24 @@ function DestinationPricePill({
     );
   }
 
-  const formattedPrice =
-    currency.toUpperCase() === "USD"
-      ? formatCurrencyFromUsd(amount, displayCurrency)
-      : new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency,
-          maximumFractionDigits: 0,
-        }).format(amount);
+  const displayPrice = formatDisplayPrice({
+    amount,
+    sourceCurrency: currency,
+    displayCurrency,
+    convertUsdEstimate: true,
+    maximumFractionDigits: 0,
+  });
+  const estimateCopy = displayPrice.isConvertedEstimate
+    ? " Display estimate; final provider price may differ."
+    : " Final price confirmed by provider.";
 
   return (
     <span
       className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm"
-      aria-label={`Provider-backed fare estimate from ${formattedPrice}`}
+      aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
+      title={displayPrice.title}
     >
-      from {formattedPrice}
+      from {displayPrice.formatted}
     </span>
   );
 }
