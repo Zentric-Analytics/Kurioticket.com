@@ -322,7 +322,7 @@ const filterIntentionalForeignPlaces = (
   searchContext?: PlaceSearchContext,
 ) => {
   const normalizedCountryCode = normalizeCountryCode(searchContext?.countryCode);
-  if (!normalizedCountryCode) return places;
+  if (searchContext?.context !== "origin" || !normalizedCountryCode) return places;
 
   const hasSameCountryMatches = places.some((place) => placeCountryMatches(place, normalizedCountryCode));
   if (!hasSameCountryMatches) return places;

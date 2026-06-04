@@ -88,6 +88,10 @@ const airportSeeds: AirportSeed[] = [
   ["FRA", "Frankfurt", "Frankfurt Airport", "DE", 50.0379, 8.5622],
   ["MUC", "Munich", "Munich Airport", "DE", 48.3538, 11.7861],
   ["BER", "Berlin", "Berlin Brandenburg Airport", "DE", 52.3667, 13.5033],
+  ["DUS", "Düsseldorf", "Düsseldorf Airport", "DE", 51.2895, 6.7668],
+  ["HAM", "Hamburg", "Hamburg Airport", "DE", 53.6304, 9.9882],
+  ["CGN", "Cologne", "Cologne Bonn Airport", "DE", 50.8659, 7.1427],
+  ["STR", "Stuttgart", "Stuttgart Airport", "DE", 48.6899, 9.2219],
   ["ZRH", "Zurich", "Zurich Airport", "CH", 47.4581, 8.5555],
   ["GVA", "Geneva", "Geneva Airport", "CH", 46.2381, 6.109],
   ["VIE", "Vienna", "Vienna International Airport", "AT", 48.1103, 16.5697],
@@ -99,6 +103,8 @@ const airportSeeds: AirportSeed[] = [
   ["MXP", "Milan", "Milan Malpensa Airport", "IT", 45.6306, 8.7281],
   ["ATH", "Athens", "Athens International Airport", "GR", 37.9364, 23.9445],
   ["SKG", "Thessaloniki", "Thessaloniki Airport", "GR", 40.5197, 22.9709],
+  ["LCA", "Larnaca", "Larnaca International Airport", "CY", 34.8751, 33.6249],
+  ["PFO", "Paphos", "Paphos International Airport", "CY", 34.718, 32.4857],
   ["CPH", "Copenhagen", "Copenhagen Airport", "DK", 55.618, 12.656],
   ["OSL", "Oslo", "Oslo Airport", "NO", 60.1939, 11.1004],
   ["ARN", "Stockholm", "Stockholm Arlanda Airport", "SE", 59.6519, 17.9186],
@@ -287,10 +293,14 @@ const airportCountryMatches = (airport: AirportOption, countryCode?: string) => 
 export const getDefaultAirports = (params: { context: "origin" | "destination"; countryCode?: string; lat?: number; lon?: number; limit?: number; }) => {
   const limit = params.limit ?? 8;
   const destinationOrder = new Map(destinationDefaults.map((code, index) => [code, index]));
+  const sameCountryAirports = params.countryCode
+    ? airports.filter((airport) => airportCountryMatches(airport, params.countryCode))
+    : [];
+  const sourceAirports = params.context === "origin" && sameCountryAirports.length > 0 ? sameCountryAirports : airports;
 
-  return [...airports]
+  return [...sourceAirports]
     .sort((a, b) => {
-      if (params.countryCode) {
+      if (params.context === "destination" && params.countryCode) {
         const aMatch = airportCountryMatches(a, params.countryCode) ? 1 : 0;
         const bMatch = airportCountryMatches(b, params.countryCode) ? 1 : 0;
         if (aMatch !== bMatch) return bMatch - aMatch;
