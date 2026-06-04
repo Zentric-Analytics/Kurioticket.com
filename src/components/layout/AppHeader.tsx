@@ -230,9 +230,7 @@ export function AppHeader({
   );
 
   const selectedLanguageDisplayName =
-    selectedLanguage.label.startsWith("English")
-      ? "English"
-      : selectedLanguage.label;
+    selectedLanguage.label;
 
   const accountDisplayName = useMemo(() => {
     const rawName = session?.user?.name?.trim();
@@ -766,7 +764,7 @@ export function AppHeader({
                         id={languageSearchId}
                         value={languageQuery}
                         onChange={(event) => setLanguageQuery(event.target.value)}
-                        placeholder="English, Français, Español"
+                        placeholder="English (US) or English (UK)"
                         className="w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                       />
                     </div>
@@ -785,6 +783,7 @@ export function AppHeader({
                             type="button"
                             role="radio"
                             aria-checked={active}
+                            aria-label={`Select ${option.label}`}
                             onClick={() => handleLanguageSelect(option.code)}
                             className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                               active

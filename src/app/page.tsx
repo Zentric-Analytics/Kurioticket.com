@@ -34,6 +34,7 @@ import {
 } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
+import { formatCurrencyFromUsd } from "@/lib/currency/formatCurrency";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
@@ -134,7 +135,7 @@ type DestinationPriceState = {
 
 export default function Home() {
   const { locale } = useLocale();
-  const { mode: regionCode } = useRegion();
+  const { mode: regionCode, selectedOption } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
@@ -398,6 +399,7 @@ export default function Home() {
                     image={destination.image}
                     destinationId={destination.id}
                     price={price}
+                    displayCurrency={selectedOption.currency}
                     href={buildDestinationCardHref(
                       price,
                       t(destination.cityKey),
@@ -453,6 +455,7 @@ export default function Home() {
                         routeNote={item.routeNote}
                         compact
                         price={discoveryPriceState.prices[item.id]}
+                        displayCurrency={selectedOption.currency}
                         isPriceLoading={
                           pricedDiscoveryItemIds.has(item.id) &&
                           discoveryPriceState.loading
@@ -484,6 +487,7 @@ export default function Home() {
                     destinationCodeLabel={item.destinationCode}
                     routeNote={item.routeNote}
                     price={discoveryPriceState.prices[item.id]}
+                    displayCurrency={selectedOption.currency}
                     isPriceLoading={
                       pricedDiscoveryItemIds.has(item.id) &&
                       discoveryPriceState.loading
@@ -707,6 +711,7 @@ function DiscoverySuggestionCard({
   routeNote,
   compact,
   price,
+  displayCurrency,
   isPriceLoading,
   isSaved,
   onHeartToggle,
@@ -722,6 +727,7 @@ function DiscoverySuggestionCard({
   routeNote: string;
   compact?: boolean;
   price?: DestinationPrice;
+  displayCurrency: string;
   isPriceLoading?: boolean;
   isSaved: boolean;
   onHeartToggle: (
@@ -782,7 +788,11 @@ function DiscoverySuggestionCard({
       <div
         className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}
       >
-        <DiscoveryPricePill price={price} isLoading={Boolean(isPriceLoading)} />
+        <DiscoveryPricePill
+          price={price}
+          displayCurrency={displayCurrency}
+          isLoading={Boolean(isPriceLoading)}
+        />
       </div>
     </Link>
   );
@@ -859,9 +869,11 @@ function buildFlightResultsHref(search: DestinationPriceSearch) {
 
 function DiscoveryPricePill({
   price,
+  displayCurrency,
   isLoading,
 }: {
   price?: DestinationPrice;
+  displayCurrency: string;
   isLoading: boolean;
 }) {
   const hasProviderPrice = hasFreshProviderPrice(price);
@@ -894,11 +906,14 @@ function DiscoveryPricePill({
     );
   }
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const formattedPrice =
+    currency.toUpperCase() === "USD"
+      ? formatCurrencyFromUsd(amount, displayCurrency)
+      : new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency,
+          maximumFractionDigits: 0,
+        }).format(amount);
 
   return (
     <span
@@ -918,6 +933,7 @@ function DestinationCard({
   saveLabelTemplate,
   destinationId,
   price,
+  displayCurrency,
   href,
   isPriceLoading,
   isSaved,
@@ -930,6 +946,7 @@ function DestinationCard({
   saveLabelTemplate: string;
   destinationId: string;
   price?: DestinationPrice;
+  displayCurrency: string;
   href: ComponentProps<typeof Link>["href"];
   isPriceLoading: boolean;
   isSaved: boolean;
@@ -978,7 +995,11 @@ function DestinationCard({
         </div>
 
         <div className="flex items-center p-4">
-          <DestinationPricePill price={price} isLoading={isPriceLoading} />
+          <DestinationPricePill
+            price={price}
+            displayCurrency={displayCurrency}
+            isLoading={isPriceLoading}
+          />
         </div>
       </Link>
     </article>
@@ -987,9 +1008,11 @@ function DestinationCard({
 
 function DestinationPricePill({
   price,
+  displayCurrency,
   isLoading,
 }: {
   price?: DestinationPrice;
+  displayCurrency: string;
   isLoading: boolean;
 }) {
   const hasProviderPrice = hasFreshProviderPrice(price);
@@ -1022,11 +1045,14 @@ function DestinationPricePill({
     );
   }
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(amount);
+  const formattedPrice =
+    currency.toUpperCase() === "USD"
+      ? formatCurrencyFromUsd(amount, displayCurrency)
+      : new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency,
+          maximumFractionDigits: 0,
+        }).format(amount);
 
   return (
     <span
