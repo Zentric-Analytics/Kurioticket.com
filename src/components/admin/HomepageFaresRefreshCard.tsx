@@ -29,6 +29,26 @@ const DEFAULT_HEALTH: HomepageFareHealth = {
     "Homepage fares are missing or stale. Refresh fares before relying on homepage prices.",
 };
 
+const SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES = {
+  provider_no_inventory: "no_inventory",
+  provider_route_unavailable: "route_unavailable",
+  provider_timeout: "timeout",
+  provider_network_error: "network",
+  provider_auth_error: "auth",
+  provider_server_error: "server",
+  provider_invalid_response: "invalid_response",
+  provider_failed: "failed",
+  provider_skipped: "skipped",
+  no_fare_returned: "unavailable",
+  refresh_error: "failed",
+} as const;
+
+type SafeHomepageFareErrorReason =
+  keyof typeof SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES;
+
+type SafeHomepageFareErrorCategory =
+  (typeof SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES)[SafeHomepageFareErrorReason];
+
 type RefreshCounts = {
   refreshed: number;
   unavailable: number;
@@ -60,6 +80,8 @@ type HomepageFareStatusRoute = {
   providerBacked: boolean;
   searchedAt?: string;
   expiresAt?: string;
+  errorReason?: SafeHomepageFareErrorReason;
+  errorCategory?: SafeHomepageFareErrorCategory;
 };
 
 type HomepageFareStatusSummary = Record<HomepageFareSnapshotStatus, number> & {
@@ -320,6 +342,7 @@ export function HomepageFaresRefreshCard() {
                         Expires {formatDateTime(route.expiresAt)}
                       </p>
                     ) : null}
+                    <SafeFailureReason route={route} />
                   </div>
                 </div>
               ))}
@@ -492,7 +515,73 @@ function normalizeStatusRoute(
     providerBacked: route.providerBacked === true,
     searchedAt: typeof route.searchedAt === "string" ? route.searchedAt : undefined,
     expiresAt: typeof route.expiresAt === "string" ? route.expiresAt : undefined,
+    ...readSafeHomepageFareStatusRouteError({
+      status,
+      errorReason: route.errorReason,
+      errorCategory: route.errorCategory,
+    }),
   };
+}
+
+function SafeFailureReason({ route }: { route: HomepageFareStatusRoute }) {
+  if (
+    (route.status !== "failed" && route.status !== "unavailable") ||
+    !route.errorReason ||
+    !route.errorCategory
+  ) {
+    return null;
+  }
+
+  return (
+    <p className="mt-1 text-xs font-semibold text-muted">
+      Reason: {route.errorReason} · Category: {route.errorCategory}
+    </p>
+  );
+}
+
+function readSafeHomepageFareStatusRouteError({
+  status,
+  errorReason,
+  errorCategory,
+}: {
+  status: HomepageFareSnapshotStatus;
+  errorReason: unknown;
+  errorCategory: unknown;
+}): Pick<HomepageFareStatusRoute, "errorReason" | "errorCategory"> {
+  if (status === "fresh") return {};
+  if (!isSafeHomepageFareErrorReason(errorReason)) return {};
+
+  const derivedCategory = SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES[errorReason];
+  const safeCategory =
+    isSafeHomepageFareErrorCategory(errorCategory) &&
+    errorCategory === derivedCategory
+      ? errorCategory
+      : derivedCategory;
+
+  return {
+    errorReason,
+    errorCategory: safeCategory,
+  };
+}
+
+function isSafeHomepageFareErrorCategory(
+  value: unknown,
+): value is SafeHomepageFareErrorCategory {
+  return (
+    typeof value === "string" &&
+    Object.values(SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES).includes(
+      value as SafeHomepageFareErrorCategory,
+    )
+  );
+}
+
+function isSafeHomepageFareErrorReason(
+  value: unknown,
+): value is SafeHomepageFareErrorReason {
+  return (
+    typeof value === "string" &&
+    value in SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES
+  );
 }
 
 function normalizeStatusSummary(

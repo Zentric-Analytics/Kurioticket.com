@@ -20,6 +20,26 @@ const UNAVAILABLE_SNAPSHOT_TTL_MS = 6 * 60 * 60 * 1000;
 const FAILED_SNAPSHOT_TTL_MS = 60 * 60 * 1000;
 const PROVIDER_NAME = "Duffel";
 
+const SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES = {
+  provider_no_inventory: "no_inventory",
+  provider_route_unavailable: "route_unavailable",
+  provider_timeout: "timeout",
+  provider_network_error: "network",
+  provider_auth_error: "auth",
+  provider_server_error: "server",
+  provider_invalid_response: "invalid_response",
+  provider_failed: "failed",
+  provider_skipped: "skipped",
+  no_fare_returned: "unavailable",
+  refresh_error: "failed",
+} as const;
+
+type SafeHomepageFareErrorReason =
+  keyof typeof SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES;
+
+type SafeHomepageFareErrorCategory =
+  (typeof SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES)[SafeHomepageFareErrorReason];
+
 export const HOMEPAGE_FARE_DEFAULT_ORIGIN = "JFK";
 export const HOMEPAGE_FARE_DEFAULT_CURRENCY = DEFAULT_CURRENCY;
 
@@ -56,6 +76,8 @@ export type HomepageFareSnapshotStatusRoute = {
   providerBacked: boolean;
   searchedAt?: string;
   expiresAt?: string;
+  errorReason?: SafeHomepageFareErrorReason;
+  errorCategory?: SafeHomepageFareErrorCategory;
 };
 
 export type HomepageFareSnapshotStatusSummary = Record<
@@ -646,6 +668,7 @@ export async function readHomepageFareSnapshotStatus({
           searchedAt: true,
           expiresAt: true,
           status: true,
+          payload: true,
         },
       });
 
@@ -911,6 +934,7 @@ type HomepageFareSnapshotRecord = {
   searchedAt: Date;
   expiresAt: Date;
   status: HomepageFareSnapshotStatus;
+  payload?: unknown;
 };
 
 function createEmptyHomepageFareSnapshotStatusSummary(): HomepageFareSnapshotStatusSummary {
@@ -1017,6 +1041,11 @@ function formatHomepageFareSnapshotStatusRoute({
     isFresh,
   });
 
+  const safeError =
+    status !== "fresh"
+      ? readSafeHomepageFareSnapshotError(snapshot.payload)
+      : undefined;
+
   return {
     ...base,
     ...(isFresh && price
@@ -1029,7 +1058,43 @@ function formatHomepageFareSnapshotStatusRoute({
     providerBacked: snapshot.providerBacked === true,
     searchedAt: snapshot.searchedAt.toISOString(),
     expiresAt: snapshot.expiresAt.toISOString(),
+    ...(safeError
+      ? {
+          errorReason: safeError.reason,
+          errorCategory: safeError.category,
+        }
+      : {}),
   };
+}
+
+function readSafeHomepageFareSnapshotError(
+  payload: unknown,
+):
+  | {
+      reason: SafeHomepageFareErrorReason;
+      category: SafeHomepageFareErrorCategory;
+    }
+  | undefined {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return undefined;
+  }
+
+  const reason = (payload as { reason?: unknown }).reason;
+  if (!isSafeHomepageFareErrorReason(reason)) return undefined;
+
+  return {
+    reason,
+    category: SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES[reason],
+  };
+}
+
+function isSafeHomepageFareErrorReason(
+  value: unknown,
+): value is SafeHomepageFareErrorReason {
+  return (
+    typeof value === "string" &&
+    value in SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES
+  );
 }
 
 function getOperationalSnapshotStatus({
