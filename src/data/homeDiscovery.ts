@@ -115,40 +115,81 @@ for (const [regionCode, destinations] of Object.entries(homeDiscoveryByRegion)) 
 
 export type HomeDiscoveryRoute = {
   id: string;
+  label?: string;
   originCode: string;
   destinationCode: string;
 };
 
 export const DEFAULT_HOME_DISCOVERY_REGION = "US";
-export const HOME_DISCOVERY_PRICE_CAP = 6;
+
+const DEFAULT_HOME_DISCOVERY_FLIGHT_ROUTE_IDS = [
+  "us-jfk-mia",
+  "us-ord-las",
+  "us-lax-sfo",
+  "us-atl-mco",
+  "us-dfw-sea",
+  "us-mia-cun",
+  "us-ord-pdx",
+  "us-sea-hnl",
+  "us-bos-sju",
+  "us-den-phx",
+  "us-iad-bna",
+  "us-lax-yvr",
+  "us-sea-anc",
+  "us-jfk-aus",
+  "us-dtw-msy",
+  "us-phl-san",
+] as const;
+
+export const DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT =
+  DEFAULT_HOME_DISCOVERY_FLIGHT_ROUTE_IDS.length;
+
+const DEFAULT_HOME_DISCOVERY_FLIGHT_ROUTE_ID_SET = new Set<string>(
+  DEFAULT_HOME_DISCOVERY_FLIGHT_ROUTE_IDS,
+);
 
 export function getHomeDiscoveryByRegion(regionCode?: string | null): HomeDiscoveryItem[] {
   if (!regionCode) return fallbackDiscovery;
   return homeDiscoveryByRegion[regionCode] ?? fallbackDiscovery;
 }
 
-export function getDefaultHomeDiscoveryPriceRoutes(): HomeDiscoveryRoute[] {
+export function getEligibleHomeDiscoveryFlightRoutes(
+  regionCode: string = DEFAULT_HOME_DISCOVERY_REGION,
+): HomeDiscoveryRoute[] {
+  if (regionCode !== DEFAULT_HOME_DISCOVERY_REGION) return [];
+
   return getHomeDiscoveryByRegion(DEFAULT_HOME_DISCOVERY_REGION)
-    .slice(0, HOME_DISCOVERY_PRICE_CAP)
-    .map(({ id, originCode, destinationCode }) => ({
+    .filter(({ id, originCode, destinationCode }) =>
+      Boolean(
+        DEFAULT_HOME_DISCOVERY_FLIGHT_ROUTE_ID_SET.has(id) &&
+          isValidDiscoveryRouteCode(originCode) &&
+          isValidDiscoveryRouteCode(destinationCode),
+      ),
+    )
+    .map(({ id, title, originCode, destinationCode }) => ({
       id,
+      label: title,
       originCode,
       destinationCode,
     }));
 }
 
+export function getDefaultHomeDiscoveryPriceRoutes(): HomeDiscoveryRoute[] {
+  return getEligibleHomeDiscoveryFlightRoutes(DEFAULT_HOME_DISCOVERY_REGION);
+}
+
 export function getHomeDiscoveryRouteAllowlist(): Map<string, HomeDiscoveryRoute> {
   const allowlist = new Map<string, HomeDiscoveryRoute>();
 
-  for (const item of [fallbackDiscovery, ...Object.values(homeDiscoveryByRegion)].flat()) {
-    if (allowlist.has(item.id)) continue;
-
-    allowlist.set(item.id, {
-      id: item.id,
-      originCode: item.originCode,
-      destinationCode: item.destinationCode,
-    });
+  for (const route of getEligibleHomeDiscoveryFlightRoutes(
+    DEFAULT_HOME_DISCOVERY_REGION,
+  )) {
+    allowlist.set(route.id, route);
   }
 
   return allowlist;
+}
+
+function isValidDiscoveryRouteCode(value: string | undefined | null) {
+  return /^[A-Z]{3}$/.test(value ?? "");
 }

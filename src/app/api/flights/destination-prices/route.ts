@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { getHomeDiscoveryRouteAllowlist } from "@/data/homeDiscovery";
+import {
+  DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT,
+  getHomeDiscoveryRouteAllowlist,
+} from "@/data/homeDiscovery";
 import {
   getHomepageFareDateStrategy,
   HOMEPAGE_FARE_DEFAULT_CURRENCY,
@@ -18,7 +21,7 @@ const HOMEPAGE_DESTINATIONS = Object.fromEntries(
   ]),
 ) as Record<string, string>;
 const MAX_POPULAR_DESTINATIONS = 5;
-const DISCOVER_PRICE_CAP = 6;
+const DISCOVER_PRICE_CAP = DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT;
 const HOME_DISCOVERY_ROUTES = getHomeDiscoveryRouteAllowlist();
 
 type PriceDestination = {

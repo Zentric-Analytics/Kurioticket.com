@@ -28,7 +28,10 @@ import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
 import { validateDestinationImages } from "@/data/destinationImageValidation";
-import { getHomeDiscoveryByRegion } from "@/data/homeDiscovery";
+import {
+  getEligibleHomeDiscoveryFlightRoutes,
+  getHomeDiscoveryByRegion,
+} from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { getTranslations } from "@/lib/i18n";
@@ -41,8 +44,6 @@ import {
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
-
-const DISCOVER_PRICE_CAP = 6;
 
 const destinations = [
   {
@@ -168,10 +169,13 @@ export default function Home() {
     () => getHomeDiscoveryByRegion(regionCode),
     [regionCode],
   );
-  const pricedDiscoveryItems = useMemo(
-    () => discoveryItems.slice(0, DISCOVER_PRICE_CAP),
-    [discoveryItems],
-  );
+  const pricedDiscoveryItems = useMemo(() => {
+    const eligibleRouteIds = new Set(
+      getEligibleHomeDiscoveryFlightRoutes(regionCode).map((route) => route.id),
+    );
+
+    return discoveryItems.filter((item) => eligibleRouteIds.has(item.id));
+  }, [discoveryItems, regionCode]);
   const pricedDiscoveryItemIds = useMemo(
     () => new Set(pricedDiscoveryItems.map((item) => item.id)),
     [pricedDiscoveryItems],

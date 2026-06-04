@@ -56,6 +56,8 @@ async function readRefreshScope(
   const scope = (payload as { scope?: unknown }).scope;
 
   return scope === "popular" ||
+    scope === "discover" ||
+    scope === "discover-default" ||
     scope === "discover-first-6" ||
     scope === "all-phase-3a"
     ? scope

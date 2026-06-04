@@ -1,10 +1,6 @@
 import { HomepageFareSnapshotStatus, Prisma } from "@/generated/prisma/client";
 
-import {
-  DEFAULT_HOME_DISCOVERY_REGION,
-  getHomeDiscoveryByRegion,
-  HOME_DISCOVERY_PRICE_CAP,
-} from "@/data/homeDiscovery";
+import { getDefaultHomeDiscoveryPriceRoutes } from "@/data/homeDiscovery";
 import { getOptionalPrisma } from "@/lib/prisma";
 import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
@@ -123,6 +119,8 @@ export type HomepageFareRefreshCounts = {
 
 export type HomepageFareRefreshScope =
   | "popular"
+  | "discover"
+  | "discover-default"
   | "discover-first-6"
   | "all-phase-3a";
 
@@ -159,7 +157,9 @@ export function normalizeHomepageFareCode(value: string | undefined | null) {
     : undefined;
 }
 
-export function normalizeHomepageFareCurrency(value: string | undefined | null) {
+export function normalizeHomepageFareCurrency(
+  value: string | undefined | null,
+) {
   const normalized = value?.trim().toUpperCase();
   return normalized && CURRENCY_PATTERN.test(normalized)
     ? normalized
@@ -172,8 +172,8 @@ export function isSameHomepageFareRoute(origin: string, destination: string) {
 
   return Boolean(
     normalizedOrigin &&
-      normalizedDestination &&
-      normalizedOrigin === normalizedDestination,
+    normalizedDestination &&
+    normalizedOrigin === normalizedDestination,
   );
 }
 
@@ -220,10 +220,14 @@ export function buildHomepageFareSnapshotKey(input: SnapshotKeyInput) {
   const currency =
     normalizeHomepageFareCurrency(input.currency) ?? DEFAULT_CURRENCY;
   const departureDate = formatDateKey(input.departureDate);
-  const returnDate = input.returnDate ? formatDateKey(input.returnDate) : "none";
+  const returnDate = input.returnDate
+    ? formatDateKey(input.returnDate)
+    : "none";
 
   if (!origin || !destination) {
-    throw new Error("Homepage fare snapshot routes require valid airport codes.");
+    throw new Error(
+      "Homepage fare snapshot routes require valid airport codes.",
+    );
   }
 
   return [
@@ -245,14 +249,12 @@ export function getPhase3AHomepageFareRoutes(): HomepageFareRoute[] {
     origin: HOMEPAGE_FARE_DEFAULT_ORIGIN,
     destination: route.destination,
   }));
-  const discoverRoutes = getHomeDiscoveryByRegion(DEFAULT_HOME_DISCOVERY_REGION)
-    .slice(0, HOME_DISCOVERY_PRICE_CAP)
-    .map((route) => ({
-      id: `discover-${route.id}`,
-      label: route.title,
-      origin: route.originCode,
-      destination: route.destinationCode,
-    }));
+  const discoverRoutes = getDefaultHomeDiscoveryPriceRoutes().map((route) => ({
+    id: `discover-${route.id}`,
+    label: route.label ?? route.id,
+    origin: route.originCode,
+    destination: route.destinationCode,
+  }));
 
   return dedupeHomepageFareRoutes([...popularRoutes, ...discoverRoutes]);
 }
@@ -385,7 +387,10 @@ function getRefreshRoutes(
     if (
       scope === "all-phase-3a" ||
       (scope === "popular" && isPopularRoute) ||
-      (scope === "discover-first-6" && isDiscoverRoute)
+      ((scope === "discover" ||
+        scope === "discover-default" ||
+        scope === "discover-first-6") &&
+        isDiscoverRoute)
     ) {
       routes.push({
         origin: route.origin,
@@ -618,7 +623,9 @@ export async function upsertActiveHomepageFareSnapshot({
     normalizeHomepageFareCurrency(result.currency) ?? currency;
 
   if (!price) {
-    throw new Error("Active homepage fare snapshots require a finite provider price.");
+    throw new Error(
+      "Active homepage fare snapshots require a finite provider price.",
+    );
   }
 
   return upsertHomepageFareSnapshot({
@@ -724,7 +731,9 @@ function dedupeHomepageFareRoutes(routes: HomepageFareRoute[]) {
   return deduped;
 }
 
-function normalizeRoute(route: HomepageFareRoute): HomepageFareRoute | undefined {
+function normalizeRoute(
+  route: HomepageFareRoute,
+): HomepageFareRoute | undefined {
   const origin = normalizeHomepageFareCode(route.origin);
   const destination = normalizeHomepageFareCode(route.destination);
 
@@ -753,7 +762,9 @@ async function upsertHomepageFareSnapshot(input: SnapshotWriteInput) {
     normalizeHomepageFareCurrency(input.currency) ?? DEFAULT_CURRENCY;
 
   if (!origin || !destination) {
-    throw new Error("Homepage fare snapshot writes require valid airport codes.");
+    throw new Error(
+      "Homepage fare snapshot writes require valid airport codes.",
+    );
   }
 
   if (origin === destination) {
