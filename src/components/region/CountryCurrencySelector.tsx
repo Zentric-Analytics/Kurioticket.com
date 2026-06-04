@@ -10,10 +10,11 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 
 import { useRegion } from "@/components/region/RegionProvider";
 
-const popularMarketCodes = [
+const popularCountryCurrencyCodes = [
   "US",
   "GB",
   "CA",
@@ -52,20 +53,25 @@ export function CountryCurrencySelector({
 
   const [open, setOpen] = useState(false);
   const [dialogEntered, setDialogEntered] = useState(false);
-  const [marketQuery, setMarketQuery] = useState("");
-  const [showAllMarkets, setShowAllMarkets] = useState(false);
+  const router = useRouter();
+
+  const [countryCurrencyQuery, setCountryCurrencyQuery] = useState("");
+  const [showAllCountryCurrencies, setShowAllCountryCurrencies] =
+    useState(false);
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
-  const marketSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const listScrollRef = useRef<HTMLDivElement | null>(null);
+  const countryCurrencySearchInputRef = useRef<HTMLInputElement | null>(null);
   const closeTimerRef = useRef<number | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const reloadTimerRef = useRef<number | null>(null);
 
   const dialogId = useId();
   const titleId = useId();
   const descriptionId = useId();
-  const marketSearchId = useId();
-  const marketListId = useId();
+  const countryCurrencySearchId = useId();
+  const countryCurrencyListId = useId();
 
   const isHeaderVariant = variant === "header";
   const isMobileVariant = variant === "mobile";
@@ -103,8 +109,8 @@ export function CountryCurrencySelector({
     }
 
     setDialogEntered(false);
-    setMarketQuery("");
-    setShowAllMarkets(false);
+    setCountryCurrencyQuery("");
+    setShowAllCountryCurrencies(false);
 
     closeTimerRef.current = window.setTimeout(() => {
       setOpen(false);
@@ -121,7 +127,7 @@ export function CountryCurrencySelector({
 
     animationFrameRef.current = window.requestAnimationFrame(() => {
       setDialogEntered(true);
-      marketSearchInputRef.current?.focus();
+      countryCurrencySearchInputRef.current?.focus();
       animationFrameRef.current = null;
     });
 
@@ -178,35 +184,39 @@ export function CountryCurrencySelector({
       if (animationFrameRef.current) {
         window.cancelAnimationFrame(animationFrameRef.current);
       }
+
+      if (reloadTimerRef.current) {
+        window.clearTimeout(reloadTimerRef.current);
+      }
     };
   }, []);
 
-  const popularMarkets = useMemo(() => {
-    const popularOptions = popularMarketCodes
+  const popularCountryCurrencies = useMemo(() => {
+    const popularOptions = popularCountryCurrencyCodes
       .map((code) => options.find((option) => option.code === code))
       .filter((option): option is (typeof options)[number] => Boolean(option));
 
-    const selectedPopularMarket = options.find(
+    const selectedPopularCountryCurrency = options.find(
       (option) => option.code === mode,
     );
 
     if (
-      !selectedPopularMarket ||
+      !selectedPopularCountryCurrency ||
       popularOptions.some(
-        (option) => option.code === selectedPopularMarket.code,
+        (option) => option.code === selectedPopularCountryCurrency.code,
       )
     ) {
       return popularOptions;
     }
 
-    return [selectedPopularMarket, ...popularOptions];
+    return [selectedPopularCountryCurrency, ...popularOptions];
   }, [mode, options]);
 
-  const filteredMarkets = useMemo(() => {
-    const normalizedQuery = marketQuery.trim().toLowerCase();
+  const filteredCountryCurrencies = useMemo(() => {
+    const normalizedQuery = countryCurrencyQuery.trim().toLowerCase();
 
     if (!normalizedQuery) {
-      return showAllMarkets ? options : popularMarkets;
+      return showAllCountryCurrencies ? options : popularCountryCurrencies;
     }
 
     return options.filter((option) => {
@@ -216,26 +226,53 @@ export function CountryCurrencySelector({
         option.currency.toLowerCase().includes(normalizedQuery)
       );
     });
-  }, [marketQuery, options, popularMarkets, showAllMarkets]);
+  }, [
+    countryCurrencyQuery,
+    options,
+    popularCountryCurrencies,
+    showAllCountryCurrencies,
+  ]);
 
-  const hasSearchQuery = marketQuery.trim().length > 0;
-  const showingFullCatalog = showAllMarkets || hasSearchQuery;
-  const curatedMobileMarketCount = 8;
-  const displayedMarkets =
-    !showingFullCatalog && isMobileVariant
-      ? filteredMarkets.slice(0, curatedMobileMarketCount)
-      : filteredMarkets;
-  const marketListLabel = showingFullCatalog
-    ? "All markets"
-    : "Popular markets";
-  const marketCountLabel = showingFullCatalog
-    ? filteredMarkets.length
-    : displayedMarkets.length;
+  const hasSearchQuery = countryCurrencyQuery.trim().length > 0;
+  const showingFullCountryCurrencyCatalog =
+    showAllCountryCurrencies || hasSearchQuery;
+  const curatedMobileCountryCurrencyCount = 8;
+  const displayedCountryCurrencies =
+    !showingFullCountryCurrencyCatalog && isMobileVariant
+      ? filteredCountryCurrencies.slice(0, curatedMobileCountryCurrencyCount)
+      : filteredCountryCurrencies;
+  const countryCurrencyListLabel = showingFullCountryCurrencyCatalog
+    ? "All countries and currencies"
+    : "Popular country and currency";
+  const countryCurrencyCountLabel = showingFullCountryCurrencyCatalog
+    ? filteredCountryCurrencies.length
+    : displayedCountryCurrencies.length;
 
-  const handleMarketSelect = (option: (typeof options)[number]) => {
+  const handleCountryCurrencySelect = (option: (typeof options)[number]) => {
+    const isAlreadyActive =
+      option.code === mode && option.currency === selectedCurrency;
+
+    if (isAlreadyActive) {
+      closeDialog();
+      return;
+    }
+
     setMode(option.code);
     setCurrency(option.currency);
     closeDialog();
+
+    reloadTimerRef.current = window.setTimeout(() => {
+      router.refresh();
+      window.location.reload();
+    }, 220);
+  };
+
+  const handleShowMoreCountryCurrencies = () => {
+    setShowAllCountryCurrencies(true);
+
+    window.requestAnimationFrame(() => {
+      listScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    });
   };
 
   return (
@@ -248,12 +285,12 @@ export function CountryCurrencySelector({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? dialogId : undefined}
-        aria-label={`Open market selector, current market ${selectedOption.code}, ${selectedCurrency}`}
+        aria-label={`Open country and currency selector, current selection ${selectedOption.code}, ${selectedCurrency}`}
       >
         {isMobileVariant ? (
           <span className="min-w-0">
             <span className="block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-              Market
+              Country and currency
             </span>
             <span className="mt-0.5 block truncate text-sm font-black text-slate-950">
               {selectedOption.code} · {selectedCurrency}
@@ -310,8 +347,9 @@ export function CountryCurrencySelector({
                           id={descriptionId}
                           className="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
                         >
-                          Select the market used for display prices. Airport
-                          suggestions use your detected location.
+                          Select the country and currency used for display
+                          prices. Airport suggestions use your detected
+                          location.
                         </p>
                       </div>
 
@@ -319,14 +357,14 @@ export function CountryCurrencySelector({
                         type="button"
                         onClick={closeDialog}
                         className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-                        aria-label="Close market selector"
+                        aria-label="Close country and currency selector"
                       >
                         <X size={18} aria-hidden="true" />
                       </button>
                     </div>
 
                     <label
-                      htmlFor={marketSearchId}
+                      htmlFor={countryCurrencySearchId}
                       className="mt-5 block text-sm font-medium text-slate-800"
                     >
                       Search country or currency
@@ -340,36 +378,42 @@ export function CountryCurrencySelector({
                       />
 
                       <input
-                        ref={marketSearchInputRef}
-                        id={marketSearchId}
-                        value={marketQuery}
-                        onChange={(event) => setMarketQuery(event.target.value)}
+                        ref={countryCurrencySearchInputRef}
+                        id={countryCurrencySearchId}
+                        value={countryCurrencyQuery}
+                        onChange={(event) =>
+                          setCountryCurrencyQuery(event.target.value)
+                        }
                         placeholder="Search country or currency"
                         className="h-6 w-full min-w-0 border-0 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 md:text-sm"
-                        aria-controls={marketListId}
+                        aria-controls={countryCurrencyListId}
                       />
                     </div>
                   </div>
 
-                  <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] md:px-6">
+                  <div
+                    ref={listScrollRef}
+                    tabIndex={0}
+                    className="min-h-0 flex-1 touch-pan-y scroll-smooth overflow-y-auto overscroll-contain px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch] md:px-6"
+                  >
                     <div className="mb-3 flex items-center justify-between gap-3">
                       <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                        {marketListLabel}
+                        {countryCurrencyListLabel}
                       </h3>
 
                       <span className="text-xs font-medium text-slate-500">
-                        {marketCountLabel}{" "}
-                        {marketCountLabel === 1 ? "market" : "markets"}
+                        {countryCurrencyCountLabel}{" "}
+                        {countryCurrencyCountLabel === 1 ? "option" : "options"}
                       </span>
                     </div>
 
                     <div
-                      id={marketListId}
+                      id={countryCurrencyListId}
                       role="radiogroup"
-                      aria-label={marketListLabel}
+                      aria-label={countryCurrencyListLabel}
                       className="grid gap-2.5 sm:grid-cols-2"
                     >
-                      {displayedMarkets.map((option) => {
+                      {displayedCountryCurrencies.map((option) => {
                         const isActive =
                           option.code === mode &&
                           option.currency === selectedCurrency;
@@ -381,7 +425,7 @@ export function CountryCurrencySelector({
                             role="radio"
                             aria-checked={isActive}
                             aria-label={`Select ${option.country}, ${option.code}, ${option.currency}`}
-                            onClick={() => handleMarketSelect(option)}
+                            onClick={() => handleCountryCurrencySelect(option)}
                             className={`group flex cursor-pointer items-center justify-between gap-3 rounded-none border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                               isActive
                                 ? "border-violet-600 bg-violet-50 ring-1 ring-violet-600"
@@ -413,21 +457,18 @@ export function CountryCurrencySelector({
                       })}
                     </div>
 
-                    {displayedMarkets.length === 0 ? (
+                    {displayedCountryCurrencies.length === 0 ? (
                       <div className="rounded-none border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
                         <p className="text-sm font-semibold text-slate-900">
-                          No matching markets
-                        </p>
-                        <p className="mt-1 text-sm text-slate-500">
-                          Try a country name, country code, or currency code.
+                          No countries or currencies found
                         </p>
                       </div>
                     ) : null}
 
-                    {!showingFullCatalog ? (
+                    {!showingFullCountryCurrencyCatalog ? (
                       <button
                         type="button"
-                        onClick={() => setShowAllMarkets(true)}
+                        onClick={handleShowMoreCountryCurrencies}
                         className="mt-4 flex min-h-12 w-full cursor-pointer items-center justify-center rounded-none border border-slate-900 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-violet-700 hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
                       >
                         Show more results
