@@ -46,8 +46,9 @@ import {
   toggleSavedTripId,
   writeSavedTripIds,
 } from "@/lib/saved-trips-local";
+import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 const resultStackClass = "w-full max-w-[760px] lg:ml-4 xl:ml-6";
 
@@ -1253,20 +1254,42 @@ export function FlightResultsClient() {
     router.push(`/flights/results?${nextParams.toString()}`);
   }
 
-  const resultCurrency = useMemo(
-    () => getSingleResultCurrency(results, selectedCurrency),
-    [results, selectedCurrency],
+  const priceLabelCurrency = useMemo(
+    () => getUniformResultCurrency(results),
+    [results]
+  );
+
+  const formatResultPriceLabel = useMemo(
+    () => (amount: number, sourceCurrency = priceLabelCurrency) =>
+      sourceCurrency
+        ? formatDisplayPrice({
+            amount,
+            sourceCurrency,
+            displayCurrency: selectedCurrency,
+            convertUsdEstimate: true,
+          }).formatted
+        : "Mixed provider currencies",
+    [priceLabelCurrency, selectedCurrency]
   );
 
   const stopOptions = useMemo(() => {
-    const buckets = new Map<string, { count: number; minPrice: number }>();
+    const buckets = new Map<
+      string,
+      { count: number; minPrice: number; currencies: Set<string> }
+    >();
 
     results.forEach((flight) => {
       const bucket = getStopBucket(flight.stops);
       const current = buckets.get(bucket) ?? {
         count: 0,
         minPrice: Number.POSITIVE_INFINITY,
+        currencies: new Set<string>(),
       };
+      const currencies = new Set(current.currencies);
+
+      if (flight.currency) {
+        currencies.add(flight.currency.toUpperCase());
+      }
 
       buckets.set(bucket, {
         count: current.count + 1,
@@ -1274,6 +1297,7 @@ export function FlightResultsClient() {
           Number.isFinite(flight.price) && flight.price > 0
             ? Math.min(current.minPrice, flight.price)
             : current.minPrice,
+        currencies,
       });
     });
 
@@ -1283,13 +1307,16 @@ export function FlightResultsClient() {
       count: data.count,
       secondaryLabel: `${data.count} option${data.count === 1 ? "" : "s"}`,
       rightLabel: Number.isFinite(data.minPrice)
-        ? formatCurrency(data.minPrice, resultCurrency)
+        ? formatResultPriceLabel(
+            data.minPrice,
+            data.currencies.size === 1 ? Array.from(data.currencies)[0] : null
+          )
         : undefined,
     })).sort(
       (first, second) =>
         stopBucketSortValue(first.value) - stopBucketSortValue(second.value)
     );
-  }, [resultCurrency, results]);
+  }, [formatResultPriceLabel, results]);
 
   const airlineOptions = useMemo(
     () =>
@@ -2700,7 +2727,8 @@ export function FlightResultsClient() {
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
             priceBounds={priceBounds}
-            currency={resultCurrency}
+            priceLabelCurrency={priceLabelCurrency}
+            selectedCurrency={selectedCurrency}
             timeFilterMode={timeFilterMode}
             setTimeFilterMode={setTimeFilterMode}
             timeBounds={timeBounds}
@@ -2766,7 +2794,7 @@ export function FlightResultsClient() {
                   </span>
                   <span className="mt-1 block truncate text-[14px] font-semibold leading-5 text-slate-950 sm:text-[15px]">
                     {sortSummaries.cheapest
-                      ? formatCurrency(
+                      ? formatResultPriceLabel(
                           sortSummaries.cheapest.price,
                           sortSummaries.cheapest.currency
                         )
@@ -2792,7 +2820,7 @@ export function FlightResultsClient() {
                   </span>
                   <span className="mt-1 block truncate text-[14px] font-semibold leading-5 text-slate-950 sm:text-[15px]">
                     {sortSummaries.best
-                      ? `${formatCurrency(
+                      ? `${formatResultPriceLabel(
                           sortSummaries.best.price,
                           sortSummaries.best.currency
                         )} · ${formatDurationFromMinutes(
@@ -2916,7 +2944,8 @@ export function FlightResultsClient() {
           maxPrice={maxPrice}
           setMaxPrice={setMaxPrice}
           priceBounds={priceBounds}
-          currency={resultCurrency}
+          priceLabelCurrency={priceLabelCurrency}
+          selectedCurrency={selectedCurrency}
           timeFilterMode={timeFilterMode}
           setTimeFilterMode={setTimeFilterMode}
           timeBounds={timeBounds}
@@ -3013,20 +3042,16 @@ function airportInputValue(item: AirportOption) {
   return item.code;
 }
 
-function getSingleResultCurrency(
-  results: PublicFlightResult[],
-  fallbackCurrency: string,
-) {
-  const currencies = results
-    .map((result) => result.currency?.toUpperCase())
-    .filter(Boolean);
-  const [firstCurrency] = currencies;
+function getUniformResultCurrency(results: PublicFlightResult[]) {
+  const currencies = new Set(
+    results.map((result) => result.currency?.toUpperCase()).filter(Boolean)
+  );
 
-  if (firstCurrency) {
-    return firstCurrency;
+  if (currencies.size === 1) {
+    return Array.from(currencies)[0];
   }
 
-  return fallbackCurrency.toUpperCase();
+  return null;
 }
 
 function addDays(date: Date, amount: number): Date {
@@ -3666,7 +3691,8 @@ function Filters({
   maxPrice,
   setMaxPrice,
   priceBounds,
-  currency,
+  priceLabelCurrency,
+  selectedCurrency,
   timeFilterMode,
   setTimeFilterMode,
   timeBounds,
@@ -3698,7 +3724,8 @@ function Filters({
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   priceBounds: { min: number; max: number };
-  currency: string;
+  priceLabelCurrency: string | null;
+  selectedCurrency: string;
   timeFilterMode: TimeFilterMode;
   setTimeFilterMode: Dispatch<SetStateAction<TimeFilterMode>>;
   timeBounds: TimeBounds;
@@ -3729,6 +3756,15 @@ function Filters({
 }) {
   const filterRangeClass =
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
+  const formatFilterPrice = (amount: number) =>
+    priceLabelCurrency
+      ? formatDisplayPrice({
+          amount,
+          sourceCurrency: priceLabelCurrency,
+          displayCurrency: selectedCurrency,
+          convertUsdEstimate: true,
+        }).formatted
+      : "Mixed provider currencies";
 
   return (
     <div className="bg-white">
@@ -3745,10 +3781,11 @@ function Filters({
             <span>Price</span>
             <span className="shrink-0 text-xs font-medium text-navy">
               {priceBounds.max
-                ? `${formatCurrency(priceBounds.min, currency)} - ${formatCurrency(
-                    Math.min(maxPrice, priceBounds.max),
-                    currency
-                  )}`
+                ? priceLabelCurrency
+                  ? `${formatFilterPrice(priceBounds.min)} - ${formatFilterPrice(
+                      Math.min(maxPrice, priceBounds.max)
+                    )}`
+                  : "Mixed provider currencies"
                 : "Loading prices"}
             </span>
           </div>
@@ -3767,10 +3804,14 @@ function Filters({
           />
           <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
             <span>
-              {priceBounds.max ? formatCurrency(priceBounds.min, currency) : "—"}
+              {priceBounds.max && priceLabelCurrency
+                ? formatFilterPrice(priceBounds.min)
+                : "—"}
             </span>
             <span>
-              {priceBounds.max ? formatCurrency(priceBounds.max, currency) : "—"}
+              {priceBounds.max && priceLabelCurrency
+                ? formatFilterPrice(priceBounds.max)
+                : "—"}
             </span>
           </div>
         </section>

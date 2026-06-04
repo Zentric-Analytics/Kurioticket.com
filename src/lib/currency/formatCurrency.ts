@@ -54,8 +54,11 @@ export type DisplayPrice = {
   formatted: string;
   currency: string;
   sourceCurrency: string;
+  providerFormatted: string;
   isConvertedEstimate: boolean;
   title?: string;
+  ariaLabel: string;
+  supportingText?: string;
 };
 
 export function formatDisplayPrice({
@@ -83,14 +86,27 @@ export function formatDisplayPrice({
   const currency = shouldConvertUsdEstimate
     ? normalizedDisplayCurrency
     : normalizedSourceCurrency;
+  const formatted = formatCurrency(displayAmount, currency, { maximumFractionDigits });
+  const providerFormatted = formatCurrency(amount, normalizedSourceCurrency, {
+    maximumFractionDigits,
+  });
+  const estimateCopy =
+    "Display estimate. Final provider price may differ.";
 
   return {
-    formatted: formatCurrency(displayAmount, currency, { maximumFractionDigits }),
+    formatted,
     currency,
     sourceCurrency: normalizedSourceCurrency,
+    providerFormatted,
     isConvertedEstimate: shouldConvertUsdEstimate,
     title: shouldConvertUsdEstimate
-      ? `Display estimate converted from ${normalizedSourceCurrency}. Final provider price may differ.`
+      ? `Converted display estimate. Provider price: ${providerFormatted}. Final provider price may differ.`
+      : undefined,
+    ariaLabel: shouldConvertUsdEstimate
+      ? `${formatted}. Display estimate converted from ${providerFormatted}. Final provider price may differ.`
+      : providerFormatted,
+    supportingText: shouldConvertUsdEstimate
+      ? `${estimateCopy} Provider price: ${providerFormatted}.`
       : undefined,
   };
 }
