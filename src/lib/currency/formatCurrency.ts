@@ -3,15 +3,33 @@ import {
   resolveDisplayCurrency,
 } from "@/lib/currency/exchangeRates";
 
+const zeroDecimalCurrencies = new Set([
+  "CLP",
+  "COP",
+  "HUF",
+  "IDR",
+  "JPY",
+  "KRW",
+]);
+
 export function formatCurrency(
   amount: number,
   currency: string
 ) {
+  const normalizedCurrency =
+    currency.toUpperCase();
+  const fractionDigits =
+    zeroDecimalCurrencies.has(
+      normalizedCurrency
+    )
+      ? 0
+      : 2;
+
   return new Intl.NumberFormat(undefined, {
     style: "currency",
-    currency,
-    maximumFractionDigits:
-      currency === "JPY" ? 0 : 2,
+    currency: normalizedCurrency,
+    maximumFractionDigits: fractionDigits,
+    minimumFractionDigits: fractionDigits,
   }).format(amount);
 }
 
