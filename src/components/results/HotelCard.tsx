@@ -253,8 +253,8 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 <h2 className="text-[17px] font-semibold leading-6 text-slate-900 lg:text-lg">
                   {hotel.name}
                 </h2>
-                <p className="mt-1 flex items-center gap-1.5 text-[13px] font-normal leading-5 text-slate-600 lg:text-sm">
-                  <MapPin size={15} className="shrink-0 text-slate-400" />
+                <p className="mt-1 flex items-center gap-1.5 text-[13px] font-normal leading-5 text-teal lg:text-sm">
+                  <MapPin size={15} className="shrink-0 text-teal" />
                   <span>{hotel.location}</span>
                 </p>
               </div>
@@ -309,9 +309,9 @@ export function HotelCard({ hotel }: HotelCardProps) {
               </div>
               <div className="text-right">
                 <Button
-                  variant="primary"
+                  variant="accent"
                   size="sm"
-                  className="whitespace-nowrap bg-navy px-2.5 text-sm font-semibold hover:bg-navy-soft"
+                  className="whitespace-nowrap border border-teal px-2.5 text-sm font-semibold hover:border-teal-dark"
                   onClick={redirectToHotel}
                 >
                   View Hotel
