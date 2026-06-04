@@ -364,19 +364,19 @@ export function HotelSearchBar({
   const fieldClassName = cn(
     "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40",
     compact
-      ? "min-h-[46px] px-2 py-0.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+      ? "min-h-[46px] px-2 py-0.5 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
       : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
   );
   const valueControlClassName = cn(
     "focus-ring w-full rounded-md border-0 bg-transparent px-0 outline-none transition-colors",
     compact
-      ? "h-6 text-[15px] font-semibold text-slate-950 placeholder:text-slate-400 md:text-[13px]"
+      ? "h-6 text-[15px] font-semibold text-slate-950 placeholder:text-slate-400 sm:h-8 sm:text-[16px] sm:font-normal md:text-sm"
       : "h-8 text-[16px] text-slate-900 md:text-sm",
   );
   const fieldLabelClassName = cn(
     "block font-semibold uppercase",
     compact
-      ? "text-[10px] leading-4 tracking-[0.08em] text-slate-500"
+      ? "text-[10px] leading-4 tracking-[0.08em] text-slate-500 sm:mb-1 sm:text-xs sm:tracking-wide sm:text-slate-600"
       : "mb-1 text-xs leading-4 tracking-wide text-slate-600",
   );
 
@@ -384,7 +384,7 @@ export function HotelSearchBar({
     <section
       className={cn(
         "mx-auto w-full",
-        compact ? "max-w-3xl" : "max-w-[1040px] space-y-3",
+        compact ? "max-w-3xl sm:max-w-[1040px]" : "max-w-[1040px] space-y-3",
       )}
     >
       {compact ? (
@@ -474,7 +474,7 @@ export function HotelSearchBar({
             className={cn(
               "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0",
               compact
-                ? "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)_minmax(0,1.1fr)_96px]"
+                ? "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]"
                 : "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]",
             )}
           >
@@ -803,7 +803,7 @@ export function HotelSearchBar({
             <div
               className={cn(
                 "sm:col-span-2 lg:col-span-1 lg:self-stretch",
-                compact ? "lg:min-h-[38px]" : "lg:min-h-[54px]",
+                compact ? "sm:min-h-[54px]" : "lg:min-h-[54px]",
               )}
             >
               <button
@@ -811,7 +811,7 @@ export function HotelSearchBar({
                 className={cn(
                   "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 disabled:cursor-not-allowed disabled:opacity-75 lg:h-full lg:self-stretch lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
                   compact
-                    ? "h-8 shadow-lg lg:min-h-[38px] lg:w-auto lg:min-w-[96px]"
+                    ? "h-8 shadow-lg sm:h-12 lg:min-h-[54px] lg:w-auto lg:min-w-[104px] lg:rounded-none"
                     : "h-12 lg:min-h-[54px] lg:rounded-none",
                 )}
                 disabled={isSubmitting}
