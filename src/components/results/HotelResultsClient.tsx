@@ -519,8 +519,8 @@ export function HotelResultsClient() {
         />
       </div>
 
-      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:gap-4 lg:grid-cols-[240px_minmax(0,704px)] xl:grid-cols-[250px_minmax(0,704px)]">
-        <section className="hidden sm:block lg:col-span-2">
+      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:gap-4 lg:grid-cols-[240px_minmax(0,704px)_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,704px)_minmax(0,1fr)]">
+        <section className="hidden sm:block lg:col-span-3">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
             initialDestination={body.destination}
@@ -531,6 +531,7 @@ export function HotelResultsClient() {
             initialSort={body.sort}
             errorRole="alert"
             compact
+            className="sm:mx-0"
           />
         </section>
 
@@ -548,7 +549,7 @@ export function HotelResultsClient() {
           />
         </aside>
 
-        <section className="min-w-0 space-y-4">
+        <section className="min-w-0 space-y-4 lg:col-start-2">
           {!loading && !error && warnings.length ? (
             <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
               Some provider checks may be limited for this hotel search. Review
