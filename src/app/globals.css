@@ -85,12 +85,13 @@ textarea {
 }
 
 .hotel-filter-panel {
-  scrollbar-color: rgba(148, 163, 184, 0.5) transparent;
+  scrollbar-color: rgba(124, 58, 237, 0.35) transparent;
   scrollbar-width: thin;
 }
 
 .hotel-filter-panel::-webkit-scrollbar {
   width: 6px;
+  height: 0;
 }
 
 .hotel-filter-panel::-webkit-scrollbar-track {
@@ -98,10 +99,10 @@ textarea {
 }
 
 .hotel-filter-panel::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.35);
+  background: rgba(124, 58, 237, 0.28);
   border-radius: 999px;
 }
 
 .hotel-filter-panel::-webkit-scrollbar-thumb:hover {
-  background: rgba(124, 58, 237, 0.38);
+  background: rgba(124, 58, 237, 0.45);
 }
