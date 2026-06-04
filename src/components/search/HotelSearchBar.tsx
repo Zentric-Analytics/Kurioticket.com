@@ -2,7 +2,16 @@
 
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Calendar, ChevronDown, Minus, Plus, RotateCcw, X } from "lucide-react";
+import {
+  Calendar,
+  ChevronDown,
+  Minus,
+  PencilLine,
+  Plus,
+  RotateCcw,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { cn } from "@/lib/utils";
@@ -105,6 +114,7 @@ export type HotelSearchBarProps = {
   introLabel?: string;
   errorRole?: "alert" | "status";
   compact?: boolean;
+  onOpenFilters?: () => void;
 };
 
 export function HotelSearchBar({
@@ -117,6 +127,7 @@ export function HotelSearchBar({
   introLabel = "Compare hotel options",
   errorRole,
   compact = false,
+  onOpenFilters,
 }: HotelSearchBarProps) {
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
@@ -378,15 +389,52 @@ export function HotelSearchBar({
     >
       {compact ? (
         <div className={cn("sm:hidden", mobileSearchOpen && "hidden")}>
-          <button
-            type="button"
-            onClick={() => setMobileSearchOpen(true)}
-            className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 text-left shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
-          >
-            <span className="block truncate text-sm font-semibold text-slate-950">
-              {mobileSearchSummary}
-            </span>
-          </button>
+          {onOpenFilters ? (
+            <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2 overflow-hidden">
+              <button
+                type="button"
+                aria-label="Open filters"
+                onClick={onOpenFilters}
+                className="focus-ring inline-flex h-[52px] w-[56px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-1.5 text-[10px] font-semibold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 hover:bg-slate-50"
+              >
+                <span className="flex flex-col items-center justify-center gap-0.5">
+                  <SlidersHorizontal size={15} />
+                  <span>Filters</span>
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen(true)}
+                className="focus-ring flex h-[58px] min-w-0 max-w-full flex-1 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-0 text-left shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 hover:shadow-[0_10px_22px_rgba(15,23,42,0.09)]"
+              >
+                <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
+                  <span className="block truncate text-[15px] font-semibold leading-5 text-slate-950">
+                    {destination.trim() || "Destination"}
+                  </span>
+                  <span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-slate-600">
+                    {dateSummary} · {guestsRoomsSummary}
+                  </span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
+                >
+                  <PencilLine size={16} />
+                </span>
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(true)}
+              className="focus-ring w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-left shadow-[0_8px_18px_rgba(15,23,42,0.07)]"
+            >
+              <span className="block truncate text-sm font-semibold text-slate-950">
+                {mobileSearchSummary}
+              </span>
+            </button>
+          )}
         </div>
       ) : (
         <p className="px-1 text-sm font-medium text-slate-600">{introLabel}</p>
@@ -400,14 +448,19 @@ export function HotelSearchBar({
         noValidate
       >
         {compact ? (
-          <button
-            type="button"
-            aria-label="Close search form"
-            onClick={() => setMobileSearchOpen(false)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 sm:hidden"
-          >
-            X
-          </button>
+          <div className="flex items-center justify-between sm:hidden">
+            <span className="text-sm font-semibold text-slate-500">
+              Edit search
+            </span>
+            <button
+              type="button"
+              aria-label="Close search form"
+              onClick={() => setMobileSearchOpen(false)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+            >
+              ×
+            </button>
+          </div>
         ) : null}
         <div
           className={cn(
@@ -434,7 +487,10 @@ export function HotelSearchBar({
                   value={destination}
                   onChange={(event) => setDestination(event.target.value)}
                   placeholder="City, area, or hotel"
-                  className={cn(valueControlClassName, "pr-9 placeholder:text-slate-400")}
+                  className={cn(
+                    valueControlClassName,
+                    "pr-9 placeholder:text-slate-400",
+                  )}
                   required
                 />
                 {destination ? (
@@ -771,7 +827,8 @@ export function HotelSearchBar({
           <div
             className={cn(
               "flex justify-end px-1",
-              compact && "-mt-1 hidden sm:flex lg:absolute lg:right-0 lg:top-0 lg:mt-0",
+              compact &&
+                "-mt-1 hidden sm:flex lg:absolute lg:right-0 lg:top-0 lg:mt-0",
             )}
           >
             <button
