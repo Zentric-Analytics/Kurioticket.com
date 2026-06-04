@@ -597,6 +597,7 @@ export function FlightResultsClient() {
   const [tripTypeInput, setTripTypeInput] = useState(
     params.get("tripType") || "round-trip"
   );
+  const [tripTypeMenuOpen, setTripTypeMenuOpen] = useState(false);
   const [originInput, setOriginInput] = useState(params.get("origin") || "");
   const [destinationInput, setDestinationInput] = useState(
     params.get("destination") || ""
@@ -663,6 +664,7 @@ export function FlightResultsClient() {
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
 
+  const tripTypeMenuRef = useRef<HTMLDivElement | null>(null);
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
@@ -961,6 +963,30 @@ export function FlightResultsClient() {
 
     return () => window.clearInterval(id);
   }, [loading]);
+
+  useEffect(() => {
+    if (!tripTypeMenuOpen) return;
+
+    function handleClose(event: MouseEvent) {
+      const target = event.target as Node;
+
+      if (tripTypeMenuRef.current?.contains(target)) return;
+
+      setTripTypeMenuOpen(false);
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setTripTypeMenuOpen(false);
+    }
+
+    document.addEventListener("mousedown", handleClose);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClose);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [tripTypeMenuOpen]);
 
   useEffect(() => {
     function updateDropdownPosition(target: "origin" | "destination") {
@@ -2216,7 +2242,7 @@ export function FlightResultsClient() {
       <form
         onSubmit={handleCompactSearchSubmit}
         className={cn(
-          "mx-auto w-full min-w-0 max-w-full sm:max-w-3xl",
+          "mx-auto w-full min-w-0 max-w-full sm:max-w-[880px]",
           placement === "desktop" && "hidden sm:block",
         )}
       >
@@ -2235,50 +2261,75 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div
-            className="inline-flex items-center gap-6 self-start"
-            role="tablist"
-            aria-label="Trip type"
-          >
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tripTypeInput === "round-trip"}
-              onClick={() => {
-                setTripTypeInput("round-trip");
-              }}
-              className={cn(
-                "focus-ring border-b-2 pb-1 text-[13px] font-semibold outline-none transition-colors",
-                tripTypeInput === "round-trip"
-                  ? "border-violet-600 text-slate-950"
-                  : "border-transparent text-slate-500 hover:text-slate-900",
-              )}
-            >
-              Round-trip
-            </button>
+          <div className="mb-2 flex items-center justify-between gap-2 px-1">
+            <div ref={tripTypeMenuRef} className="relative inline-flex">
+              <button
+                type="button"
+                aria-expanded={tripTypeMenuOpen}
+                aria-haspopup="listbox"
+                onClick={() => setTripTypeMenuOpen((open) => !open)}
+                className="focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-950"
+              >
+                {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
+                <ChevronDown
+                  aria-hidden="true"
+                  className={cn(
+                    "h-4 w-4 text-slate-500 transition-transform",
+                    tripTypeMenuOpen && "rotate-180",
+                  )}
+                />
+              </button>
 
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tripTypeInput === "one-way"}
-              onClick={() => {
-                setTripTypeInput("one-way");
-                setReturnDateInput("");
+              {tripTypeMenuOpen ? (
+                <div
+                  role="listbox"
+                  aria-label="Trip type"
+                  className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                >
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={tripTypeInput === "round-trip"}
+                    onClick={() => {
+                      setTripTypeInput("round-trip");
+                      setTripTypeMenuOpen(false);
+                    }}
+                    className={cn(
+                      "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                      tripTypeInput === "round-trip"
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-700 hover:bg-slate-100",
+                    )}
+                  >
+                    Round-trip
+                  </button>
 
-                if (activeDatePicker === "return") {
-                  setActiveDatePicker(null);
-                  setDatePickerPosition(null);
-                }
-              }}
-              className={cn(
-                "focus-ring border-b-2 pb-1 text-[13px] font-semibold outline-none transition-colors",
-                tripTypeInput === "one-way"
-                  ? "border-violet-600 text-slate-950"
-                  : "border-transparent text-slate-500 hover:text-slate-900",
-              )}
-            >
-              One-way
-            </button>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={tripTypeInput === "one-way"}
+                    onClick={() => {
+                      setTripTypeInput("one-way");
+                      setReturnDateInput("");
+                      setTripTypeMenuOpen(false);
+
+                      if (activeDatePicker === "return") {
+                        setActiveDatePicker(null);
+                        setDatePickerPosition(null);
+                      }
+                    }}
+                    className={cn(
+                      "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                      tripTypeInput === "one-way"
+                        ? "bg-slate-900 text-white"
+                        : "text-slate-700 hover:bg-slate-100",
+                    )}
+                  >
+                    One-way
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:p-1.5">
