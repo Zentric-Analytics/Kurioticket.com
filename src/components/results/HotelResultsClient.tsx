@@ -597,16 +597,15 @@ export function HotelResultsClient() {
             </div>
           ) : (
             <div className={cn(hotelResultStackClass, "space-y-3")}>
-              <ActiveHotelFilterChips
-                chips={activeFilterChips}
-                onRemove={removeFilterChip}
-                onClearAll={resetFilters}
-              />
-              <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
-                <p className="text-sm font-bold text-navy">
-                  {displayedHotels.length} stay option
-                  {displayedHotels.length === 1 ? "" : "s"} found
-                </p>
+              <div className="space-y-2">
+                <h1 className="text-[15px] font-bold leading-tight text-slate-900 sm:text-lg">
+                  We found {displayedHotels.length} places to stay for you
+                </h1>
+                <ActiveHotelFilterChips
+                  chips={activeFilterChips}
+                  onRemove={removeFilterChip}
+                  onClearAll={resetFilters}
+                />
               </div>
 
               {filterApplying ? (
