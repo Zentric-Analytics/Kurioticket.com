@@ -92,7 +92,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
         </div>
         <div className="px-3 py-3">
           <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0 space-y-2.5">
+            <div className="min-w-0 space-y-2">
               <div>
                 {starRating ? (
                   <div
@@ -111,15 +111,31 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   <span>{hotel.location}</span>
                 </p>
               </div>
-              {hotel.roomType ? (
-                <div className="flex flex-wrap gap-2">
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
-                    {hotel.roomType}
-                  </span>
+              {hotel.roomType || hotel.amenities.length > 0 ? (
+                <div className="space-y-1.5">
+                  {hotel.roomType ? (
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
+                        {hotel.roomType}
+                      </span>
+                    </div>
+                  ) : null}
+                  {hotel.amenities.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {hotel.amenities.slice(0, 5).map((amenity) => (
+                        <span
+                          key={amenity}
+                          className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500"
+                        >
+                          {amenity}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </div>
-            <div className="flex items-center justify-between gap-2 lg:w-40 lg:flex-col lg:items-end lg:text-right">
+            <div className="flex items-center justify-between gap-2 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-right">
               <div className="text-right">
                 <div className="text-xl font-semibold tracking-[-0.01em] text-slate-950">
                   {formatCurrency(hotel.totalPrice, hotel.currency)}
@@ -144,18 +160,6 @@ export function HotelCard({ hotel }: HotelCardProps) {
               </div>
             </div>
           </div>
-
-          {hotel.amenities.length > 0 ? (
-            <div className="mt-2.5 border-t border-slate-200/70 pt-2.5">
-              <div className="flex flex-wrap gap-2">
-                {hotel.amenities.slice(0, 5).map((amenity) => (
-                  <span key={amenity} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-500">
-                    {amenity}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </div>
       </div>
     </Card>
