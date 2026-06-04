@@ -718,7 +718,7 @@ export function AppHeader({
                     aria-modal="true"
                     aria-labelledby={languageTitleId}
                     aria-describedby={languageDescriptionId}
-                    className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-t-3xl border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
+                    className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
                   >
                     <div className="mb-4 flex items-start justify-between gap-4">
                       <div>
@@ -742,7 +742,7 @@ export function AppHeader({
                       <button
                         type="button"
                         onClick={closeLanguageDialog}
-                        className="cursor-pointer rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                        className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
                         aria-label="Close preferences dialog"
                       >
                         <X size={18} aria-hidden="true" />
@@ -756,7 +756,7 @@ export function AppHeader({
                       Search language
                     </label>
 
-                    <div className="mb-4 flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
+                    <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
                       <Search size={16} className="text-slate-500" aria-hidden="true" />
 
                       <input
@@ -785,7 +785,7 @@ export function AppHeader({
                             aria-checked={active}
                             aria-label={`Select ${option.label}`}
                             onClick={() => handleLanguageSelect(option.code)}
-                            className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                            className={`flex cursor-pointer items-center justify-between rounded-none border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                               active
                                 ? "border-violet-500 bg-violet-50 ring-2 ring-violet-100"
                                 : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
@@ -848,7 +848,7 @@ export function AppHeader({
           <div className="border-t border-slate-200 bg-white md:hidden">
             <nav className="page-shell grid gap-2 py-4">
               <div className="pb-2">
-                <CountryCurrencySelector />
+                <CountryCurrencySelector variant="mobile" />
               </div>
 
               <button
@@ -859,7 +859,7 @@ export function AppHeader({
                 aria-expanded={languageOpen}
                 aria-controls={languageOpen ? languageDialogId : undefined}
                 aria-label={`Open language preferences, current language ${selectedLanguageDisplayName}`}
-                className="inline-flex h-11 cursor-pointer items-center justify-between rounded-xl border border-slate-200 px-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                className="inline-flex h-12 cursor-pointer items-center justify-between rounded-none border border-slate-200 px-4 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
               >
                 <span className="inline-flex items-center gap-2">
                   {renderFlag(

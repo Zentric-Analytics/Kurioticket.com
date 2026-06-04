@@ -26,7 +26,7 @@ const popularMarketCodes = [
 ] as const;
 
 type CountryCurrencySelectorProps = {
-  variant?: "default" | "header";
+  variant?: "default" | "header" | "mobile";
   grouped?: boolean;
 };
 
@@ -58,9 +58,12 @@ export function CountryCurrencySelector({
   const marketListId = useId();
 
   const isHeaderVariant = variant === "header";
+  const isMobileVariant = variant === "mobile";
   const isGroupedHeaderVariant = isHeaderVariant && grouped;
 
-  const triggerClassName = isGroupedHeaderVariant
+  const triggerClassName = isMobileVariant
+    ? "flex h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-none border border-slate-200 bg-white px-4 text-left text-sm font-semibold text-slate-900 transition-colors hover:border-violet-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+    : isGroupedHeaderVariant
     ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-none border-0 bg-transparent px-4 text-sm font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
     : isHeaderVariant
       ? "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-white/20 bg-white/10 px-5 text-sm font-semibold text-indigo-50 shadow-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
@@ -181,11 +184,22 @@ export function CountryCurrencySelector({
         aria-controls={open ? dialogId : undefined}
         aria-label={`Open market selector, current market ${selectedOption.code}, ${selectedCurrency}`}
       >
-        <span>
-          {selectedOption.code} · {selectedCurrency}
-        </span>
+        {isMobileVariant ? (
+          <span className="min-w-0">
+            <span className="block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+              Market
+            </span>
+            <span className="mt-0.5 block truncate text-sm font-black text-slate-950">
+              {selectedOption.code} · {selectedCurrency}
+            </span>
+          </span>
+        ) : (
+          <span>
+            {selectedOption.code} · {selectedCurrency}
+          </span>
+        )}
 
-        <ChevronDown size={14} className={chevronClassName} aria-hidden="true" />
+        <ChevronDown size={14} className={`shrink-0 ${chevronClassName}`} aria-hidden="true" />
       </button>
 
       {open && typeof document !== "undefined"
