@@ -312,8 +312,6 @@ export function SearchTabs({
   const [checkOut, setCheckOut] =
     useState("");
 
-  const [guests, setGuests] =
-    useState("1");
   const [hotelAdultCount, setHotelAdultCount] = useState(1);
   const [hotelChildCount, setHotelChildCount] = useState(0);
 
@@ -336,10 +334,12 @@ export function SearchTabs({
     [compactHero, flightDatesOpen, hotelDatesOpen]
   );
 
-  const fromSuggestions = fromLiveSuggestions;
-  const toSuggestions = toLiveSuggestions;
   const fromQuery = from.trim();
   const toQuery = to.trim();
+  const fromSuggestions = fromQuery.length >= 2 ? fromLiveSuggestions : [];
+  const toSuggestions = toQuery.length >= 2 ? toLiveSuggestions : [];
+  const isFromLoadingVisible = fromQuery.length >= 2 && fromLoading;
+  const isToLoadingVisible = toQuery.length >= 2 && toLoading;
   const shouldShowFromSuggestionsPanel =
     fromOpen &&
     fromQuery.length >= 2 &&
@@ -348,7 +348,7 @@ export function SearchTabs({
     toOpen &&
     toQuery.length >= 2 &&
     (toLoading || toSuggestions.length > 0 || !toLoading);
-  const normalizePassengerDraft = (
+  const normalizePassengerDraft = useCallback((
     adults: number,
     children: number,
     infants: number
@@ -371,25 +371,25 @@ export function SearchTabs({
       children: normalizedChildren,
       infants: normalizedInfants,
     };
-  };
+  }, []);
 
-  const openTravelersMenu = () => {
+  const openTravelersMenu = useCallback(() => {
     setDraftAdultCount(adultCount);
     setDraftChildCount(childCount);
     setDraftInfantCount(infantCount);
     setDraftCabinClass(normalizeCabinClass(cabinClass));
     setTravelersMenuOpen(true);
-  };
+  }, [adultCount, childCount, infantCount, cabinClass]);
 
-  const cancelTravelersDraft = () => {
+  const cancelTravelersDraft = useCallback(() => {
     setDraftAdultCount(adultCount);
     setDraftChildCount(childCount);
     setDraftInfantCount(infantCount);
     setDraftCabinClass(normalizeCabinClass(cabinClass));
     setTravelersMenuOpen(false);
-  };
+  }, [adultCount, childCount, infantCount, cabinClass]);
 
-  const applyTravelersFromValues = (
+  const applyTravelersFromValues = useCallback((
     nextAdults: number,
     nextChildren: number,
     nextInfants: number,
@@ -405,16 +405,16 @@ export function SearchTabs({
     setInfantCount(normalized.infants);
     setCabinClass(normalizeCabinClass(nextCabinClass));
     setTravelersMenuOpen(false);
-  };
+  }, [normalizePassengerDraft]);
 
-  const applyTravelersDraft = () => {
+  const applyTravelersDraft = useCallback(() => {
     applyTravelersFromValues(
       draftAdultCount,
       draftChildCount,
       draftInfantCount,
       draftCabinClass
     );
-  };
+  }, [applyTravelersFromValues, draftAdultCount, draftChildCount, draftInfantCount, draftCabinClass]);
 
   const buildPlacesUrl = useCallback((query: string, context: "origin" | "destination") => {
     const params = new URLSearchParams();
@@ -456,8 +456,6 @@ export function SearchTabs({
   useEffect(() => {
     const query = from.trim();
     if (query.length < 2) {
-      setFromLoading(false);
-      setFromLiveSuggestions([]);
       return;
     }
 
@@ -523,8 +521,6 @@ export function SearchTabs({
   useEffect(() => {
     const query = to.trim();
     if (query.length < 2) {
-      setToLoading(false);
-      setToLiveSuggestions([]);
       return;
     }
 
@@ -734,44 +730,10 @@ export function SearchTabs({
           onEscape
         );
       };
-  }, [travelersMenuOpen, adultCount, childCount, infantCount, cabinClass]);
+  }, [applyTravelersFromValues, cancelTravelersDraft, travelersMenuOpen]);
 
+  const guests = String(hotelAdultCount + hotelChildCount);
   const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? "guest" : "guests"}, ${rooms} ${Number(rooms) === 1 ? "room" : "rooms"}`;
-
-  useEffect(() => {
-    const normalizedAdults = Math.max(1, Math.min(12, hotelAdultCount));
-    const maxChildrenAllowed = Math.max(0, 12 - normalizedAdults);
-    const normalizedChildren = Math.max(0, Math.min(maxChildrenAllowed, hotelChildCount));
-    const totalGuests = normalizedAdults + normalizedChildren;
-
-    if (normalizedAdults !== hotelAdultCount) {
-      setHotelAdultCount(normalizedAdults);
-      return;
-    }
-
-    if (normalizedChildren !== hotelChildCount) {
-      setHotelChildCount(normalizedChildren);
-      return;
-    }
-
-    const nextGuests = String(totalGuests);
-    if (guests !== nextGuests) {
-      setGuests(nextGuests);
-    }
-  }, [hotelAdultCount, hotelChildCount, guests]);
-
-  useEffect(() => {
-    const normalizedTotalGuests = Number(clampNumberInput(guests, 1, 12));
-    const currentTotal = hotelAdultCount + hotelChildCount;
-    if (normalizedTotalGuests === currentTotal) {
-      return;
-    }
-
-    const nextAdults = Math.max(1, Math.min(hotelAdultCount, normalizedTotalGuests));
-    const nextChildren = Math.max(0, normalizedTotalGuests - nextAdults);
-    setHotelAdultCount(nextAdults);
-    setHotelChildCount(nextChildren);
-  }, [guests, hotelAdultCount, hotelChildCount]);
 
   const formatShortDate = (
     isoDate: string
@@ -1176,12 +1138,16 @@ export function SearchTabs({
   const onClearOrigin = () => {
     setHasUserEditedOrigin(true);
     setFrom("");
+    setFromLoading(false);
+    setFromLiveSuggestions([]);
     setFromCode("");
     setFromOpen(false);
     setFromHighlight(0);
   };
   const onClearDestination = () => {
     setTo("");
+    setToLoading(false);
+    setToLiveSuggestions([]);
     setToCode("");
     setToOpen(false);
     setToHighlight(0);
@@ -1328,7 +1294,6 @@ export function SearchTabs({
         1,
         6
       );
-    setGuests(normalizedGuests);
     setRooms(normalizedRooms);
 
     const params =
@@ -1563,11 +1528,12 @@ export function SearchTabs({
                       event
                     ) => {
                       setHasUserEditedOrigin(true);
-                      setFrom(
-                        event
-                          .target
-                          .value
-                      );
+                      const nextValue = event.target.value;
+                      setFrom(nextValue);
+                      if (nextValue.trim().length < 2) {
+                        setFromLoading(false);
+                        setFromLiveSuggestions([]);
+                      }
                       setFromCode("");
                       setFromOpen(
                         true
@@ -1607,7 +1573,7 @@ export function SearchTabs({
                 </div>
                 {shouldShowFromSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {fromLoading ? (
+                    {isFromLoadingVisible ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
                       </div>
@@ -1686,10 +1652,12 @@ export function SearchTabs({
                     onChange={(
                       event
                     ) => {
-                      setTo(
-                        event.target
-                          .value
-                      );
+                      const nextValue = event.target.value;
+                      setTo(nextValue);
+                      if (nextValue.trim().length < 2) {
+                        setToLoading(false);
+                        setToLiveSuggestions([]);
+                      }
                       setToCode("");
                       setToOpen(
                         true
@@ -1727,7 +1695,7 @@ export function SearchTabs({
                 </div>
                 {shouldShowToSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                    {toLoading ? (
+                    {isToLoadingVisible ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
                         Searching airports and cities…
                       </div>
