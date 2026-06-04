@@ -90,11 +90,17 @@ export async function GET(request: Request) {
     .map((value) => normalizeCountryCode(value))
     .find(Boolean);
   const visitorIp = extractVisitorIp(request.headers);
-  const ipinfoCountryContext = !explicitCountryCode && !headerCountryCode && visitorIp
+  const shouldResolveIpinfoCountry = context === "origin"
+    ? !headerCountryCode && Boolean(visitorIp)
+    : !explicitCountryCode && !headerCountryCode && Boolean(visitorIp);
+  const ipinfoCountryContext = shouldResolveIpinfoCountry && visitorIp
     ? await resolveIpinfoLiteCountryContext(visitorIp)
     : null;
   const localeCountryCode = localeToCountryCode(locale);
-  const countryCode = explicitCountryCode || headerCountryCode || ipinfoCountryContext?.countryCode || localeCountryCode;
+  const serverCountryCode = headerCountryCode || ipinfoCountryContext?.countryCode;
+  const countryCode = context === "origin"
+    ? serverCountryCode || explicitCountryCode || localeCountryCode
+    : explicitCountryCode || serverCountryCode || localeCountryCode;
 
   if (defaultOriginRequested && context === "origin" && query.length === 0) {
     let recommended: AirportOption | undefined;
