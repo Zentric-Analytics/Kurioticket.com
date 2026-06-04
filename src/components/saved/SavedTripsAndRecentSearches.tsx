@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -428,12 +429,15 @@ export function SavedTripsAndRecentSearches() {
                     </button>
 
                     {trip.image ? (
-                      <img
-                        src={trip.image}
-                        alt={trip.imageAlt ?? trip.title}
-                        className="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                        loading="lazy"
-                      />
+                      <div className="relative h-48 w-full overflow-hidden">
+                        <Image
+                          src={trip.image}
+                          alt={trip.imageAlt ?? trip.title}
+                          fill
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                        />
+                      </div>
                     ) : (
                       <div className="flex h-48 w-full items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-bold uppercase tracking-[0.14em] text-slate-600">
                         Saved trip
@@ -559,12 +563,15 @@ export function SavedTripsAndRecentSearches() {
                     </button>
 
                     {visual?.image ? (
-                      <img
-                        src={visual.image}
-                        alt={visual.imageAlt}
-                        className="h-36 w-full object-cover transition duration-500 group-hover:scale-[1.02] sm:h-40"
-                        loading="lazy"
-                      />
+                      <div className="relative h-36 w-full overflow-hidden sm:h-40">
+                        <Image
+                          src={visual.image}
+                          alt={visual.imageAlt}
+                          fill
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover transition duration-500 group-hover:scale-[1.02]"
+                        />
+                      </div>
                     ) : (
                       <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-bold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
                         {entry.type === "flight"

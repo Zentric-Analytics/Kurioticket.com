@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Heart, X } from "lucide-react";
 
@@ -210,7 +211,15 @@ export function RecentSearches() {
               href={entry.href}
               className="focus-ring group relative flex h-full min-h-[172px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
             >
-              <img src={resolveCardImage(entry)} alt={entry.label} className="h-[74px] w-full object-cover" loading="lazy" />
+              <div className="relative h-[74px] w-full overflow-hidden">
+                <Image
+                  src={resolveCardImage(entry)}
+                  alt={entry.label}
+                  fill
+                  sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 220px"
+                  className="object-cover"
+                />
+              </div>
               <div className="absolute right-2 top-2 flex items-center gap-1.5">
                 <button
                   type="button"
