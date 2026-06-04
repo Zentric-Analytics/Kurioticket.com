@@ -1,6 +1,11 @@
 import { HomepageFareSnapshotStatus, Prisma } from "@/generated/prisma/client";
 
-import { getDefaultHomeDiscoveryPriceRoutes } from "@/data/homeDiscovery";
+import {
+  HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+  getDefaultHomeDiscoveryPriceRoutes,
+  getHomeDiscoveryFareCandidates,
+  type HomeDiscoveryFareCandidate,
+} from "@/data/homeDiscovery";
 import { getOptionalPrisma } from "@/lib/prisma";
 import type {
   FlightSearchParams,
@@ -134,6 +139,33 @@ export type HomepageFareDateStrategy = {
   tripType: "one-way";
   departureDate: string;
   departureDateTime: Date;
+};
+export type HomepageDiscoveryFareCardItem = Pick<
+  HomeDiscoveryFareCandidate,
+  | "id"
+  | "title"
+  | "originCity"
+  | "originCode"
+  | "destinationCity"
+  | "destinationCode"
+  | "routeNote"
+  | "image"
+  | "imageAlt"
+>;
+
+export type HomepageDiscoveryFareCard = {
+  item: HomepageDiscoveryFareCardItem;
+  fare?: Omit<HomepageFareSnapshotResponseEntry, "id" | "code" | "unavailable">;
+  priceState: "fresh" | "none";
+};
+
+export type HomepageDiscoveryFareCardsResponse = {
+  cards: HomepageDiscoveryFareCard[];
+  summary: {
+    requested: number;
+    fresh: number;
+    neutral: number;
+  };
 };
 
 export type HomepageFareRefreshCounts = {
@@ -691,6 +723,117 @@ export async function readHomepageFareSnapshotResponseEntries({
       departureDate,
     });
   });
+}
+
+export async function readHomepageDiscoveryFareCards({
+  regionCode,
+  limit = HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+  currency = DEFAULT_CURRENCY,
+}: {
+  regionCode: string;
+  limit?: number;
+  currency?: string;
+}): Promise<HomepageDiscoveryFareCardsResponse> {
+  const requested = Math.max(0, Math.min(Math.floor(limit), 48));
+  const normalizedCurrency =
+    normalizeHomepageFareCurrency(currency) ?? DEFAULT_CURRENCY;
+  const candidates = getHomeDiscoveryFareCandidates(regionCode);
+
+  if (requested <= 0 || !candidates.length) {
+    return {
+      cards: [],
+      summary: { requested, fresh: 0, neutral: 0 },
+    };
+  }
+
+  const dateStrategy = getHomepageFareDateStrategy();
+  const fares = await readHomepageFareSnapshotResponseEntries({
+    routes: candidates.map((candidate) => ({
+      id: candidate.id,
+      label: candidate.title,
+      origin: candidate.originCode,
+      destination: candidate.destinationCode,
+    })),
+    departureDate: dateStrategy.departureDate,
+    currency: normalizedCurrency,
+  });
+  const faresById = new Map(fares.map((fare) => [fare.id, fare]));
+  const freshCards: HomepageDiscoveryFareCard[] = [];
+  const neutralCards: HomepageDiscoveryFareCard[] = [];
+
+  for (const candidate of candidates) {
+    const fare = faresById.get(candidate.id);
+    const item = toPublicHomepageDiscoveryFareCardItem(candidate);
+
+    if (isFreshHomepageFareSnapshotResponseEntry(fare)) {
+      freshCards.push({
+        item,
+        fare: {
+          price: fare.price,
+          currency: fare.currency,
+          providerBacked: true,
+          searchedAt: fare.searchedAt,
+          expiresAt: fare.expiresAt,
+          search: fare.search,
+        },
+        priceState: "fresh",
+      });
+      continue;
+    }
+
+    neutralCards.push({
+      item,
+      priceState: "none",
+    });
+  }
+
+  const cards = [...freshCards, ...neutralCards].slice(0, requested);
+  const fresh = cards.filter((card) => card.priceState === "fresh").length;
+
+  return {
+    cards,
+    summary: {
+      requested,
+      fresh,
+      neutral: cards.length - fresh,
+    },
+  };
+}
+
+function toPublicHomepageDiscoveryFareCardItem(
+  candidate: HomeDiscoveryFareCandidate,
+): HomepageDiscoveryFareCardItem {
+  return {
+    id: candidate.id,
+    title: candidate.title,
+    originCity: candidate.originCity,
+    originCode: candidate.originCode,
+    destinationCity: candidate.destinationCity,
+    destinationCode: candidate.destinationCode,
+    routeNote: candidate.routeNote,
+    image: candidate.image,
+    imageAlt: candidate.imageAlt,
+  };
+}
+
+function isFreshHomepageFareSnapshotResponseEntry(
+  fare: HomepageFareSnapshotResponseEntry | undefined,
+): fare is HomepageFareSnapshotResponseEntry & {
+  price: number;
+  currency: string;
+  providerBacked: true;
+  expiresAt: string;
+  search: HomepageFareSearch;
+} {
+  return (
+    fare?.providerBacked === true &&
+    typeof fare.price === "number" &&
+    Number.isFinite(fare.price) &&
+    fare.price > 0 &&
+    Boolean(fare.currency) &&
+    Boolean(fare.expiresAt) &&
+    Boolean(fare.search)
+  );
 }
 
 export async function readHomepageFareSnapshotStatus({
