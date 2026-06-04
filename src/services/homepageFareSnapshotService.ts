@@ -2,7 +2,11 @@ import { HomepageFareSnapshotStatus, Prisma } from "@/generated/prisma/client";
 
 import { getDefaultHomeDiscoveryPriceRoutes } from "@/data/homeDiscovery";
 import { getOptionalPrisma } from "@/lib/prisma";
-import type { FlightSearchParams, NormalizedFlightResult } from "@/lib/types";
+import type {
+  FlightSearchParams,
+  NormalizedFlightResult,
+  ProviderResult,
+} from "@/lib/types";
 import { searchDuffelFlights } from "@/services/travel/providers/duffelProvider";
 
 const AIRPORT_OR_CITY_CODE_PATTERN = /^[A-Z]{3}$/;
@@ -333,13 +337,29 @@ async function refreshHomepageFareRoute({
     }
 
     if (providerResult.status === "failed") {
+      const classification =
+        classifyHomepageFareProviderFailure(providerResult);
+
+      if (classification.status === HomepageFareSnapshotStatus.UNAVAILABLE) {
+        await upsertUnavailableHomepageFareSnapshot({
+          origin,
+          destination,
+          departureDate: search.departureDate,
+          currency: search.currency,
+          provider: providerResult.provider || PROVIDER_NAME,
+          reason: classification.reason,
+        });
+        counts.unavailable += 1;
+        return;
+      }
+
       await upsertFailedHomepageFareSnapshot({
         origin,
         destination,
         departureDate: search.departureDate,
         currency: search.currency,
         provider: providerResult.provider || PROVIDER_NAME,
-        reason: "provider_failed",
+        reason: classification.reason,
       });
       counts.failed += 1;
       return;
@@ -373,6 +393,69 @@ async function refreshHomepageFareRoute({
 
     counts.failed += 1;
   }
+}
+
+type HomepageFareProviderFailureClassification = {
+  status: HomepageFareSnapshotStatus;
+  reason:
+    | "provider_no_inventory"
+    | "provider_route_unavailable"
+    | "provider_timeout"
+    | "provider_network_error"
+    | "provider_auth_error"
+    | "provider_server_error"
+    | "provider_failed";
+};
+
+export function classifyHomepageFareProviderFailure(
+  providerResult: ProviderResult<NormalizedFlightResult>,
+): HomepageFareProviderFailureClassification {
+  if (providerResult.errorReason === "provider_no_inventory") {
+    return {
+      status: HomepageFareSnapshotStatus.UNAVAILABLE,
+      reason: "provider_no_inventory",
+    };
+  }
+
+  if (providerResult.errorReason === "provider_route_unavailable") {
+    return {
+      status: HomepageFareSnapshotStatus.UNAVAILABLE,
+      reason: "provider_route_unavailable",
+    };
+  }
+
+  if (providerResult.errorReason === "provider_timeout") {
+    return {
+      status: HomepageFareSnapshotStatus.FAILED,
+      reason: "provider_timeout",
+    };
+  }
+
+  if (providerResult.errorReason === "provider_network_error") {
+    return {
+      status: HomepageFareSnapshotStatus.FAILED,
+      reason: "provider_network_error",
+    };
+  }
+
+  if (providerResult.errorReason === "provider_auth_error") {
+    return {
+      status: HomepageFareSnapshotStatus.FAILED,
+      reason: "provider_auth_error",
+    };
+  }
+
+  if (providerResult.errorReason === "provider_server_error") {
+    return {
+      status: HomepageFareSnapshotStatus.FAILED,
+      reason: "provider_server_error",
+    };
+  }
+
+  return {
+    status: HomepageFareSnapshotStatus.FAILED,
+    reason: "provider_failed",
+  };
 }
 
 function getRefreshRoutes(
