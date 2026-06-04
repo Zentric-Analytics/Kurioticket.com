@@ -260,7 +260,9 @@ export function HotelResultsClient() {
   const params = useSearchParams();
 
   const [results, setResults] = useState<PublicHotelResult[]>([]);
-  const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>([]);
+  const [visibleFiltered, setVisibleFiltered] = useState<PublicHotelResult[]>(
+    [],
+  );
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -444,9 +446,24 @@ export function HotelResultsClient() {
   };
 
   return (
-    <main className="flex-1 bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
-      <div className="page-shell grid gap-5 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <section className="lg:col-span-2">
+    <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
+      <div className="sticky top-0 z-40 bg-[#f6f8fb] px-4 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.06)] sm:hidden">
+        <HotelSearchBar
+          key={`mobile-${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
+          initialDestination={body.destination}
+          initialCheckIn={body.checkIn}
+          initialCheckOut={body.checkOut}
+          initialGuests={body.guests}
+          initialRooms={body.rooms}
+          initialSort={body.sort}
+          errorRole="alert"
+          compact
+          onOpenFilters={() => setFiltersOpen(true)}
+        />
+      </div>
+
+      <div className="page-shell grid gap-5 pb-6 pt-8 sm:py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <section className="hidden sm:block lg:col-span-2">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
             initialDestination={body.destination}
@@ -458,15 +475,6 @@ export function HotelResultsClient() {
             errorRole="alert"
             compact
           />
-
-          <Button
-            variant="secondary"
-            className="mt-2 w-fit md:hidden"
-            onClick={() => setFiltersOpen(true)}
-          >
-            <SlidersHorizontal size={17} />
-            Filters
-          </Button>
         </section>
 
         <aside className="hidden lg:block">
@@ -524,10 +532,8 @@ export function HotelResultsClient() {
               </div>
             </div>
           ) : (
-            <div
-              className={cn(hotelResultStackClass, "min-h-[360px] space-y-4")}
-            >
-              <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className={cn(hotelResultStackClass, "space-y-4")}>
+              <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
                   {displayedHotels.length} stay option
                   {displayedHotels.length === 1 ? "" : "s"} found
@@ -563,7 +569,7 @@ export function HotelResultsClient() {
 
       <div
         className={cn(
-          "fixed inset-0 z-50 bg-indigo-950/45 lg:hidden",
+          "fixed inset-0 z-50 bg-navy/40 lg:hidden",
           filtersOpen ? "block" : "hidden",
         )}
         onClick={() => setFiltersOpen(false)}
@@ -571,12 +577,12 @@ export function HotelResultsClient() {
 
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-3xl bg-white p-5 shadow-2xl transition-transform lg:hidden",
+          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-2xl bg-white p-5 shadow-xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-bold text-indigo-950">Filters</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-base font-bold text-navy">Filters</h2>
           <Button
             variant="ghost"
             className="h-10 w-10 px-0"
@@ -945,7 +951,9 @@ function matchesTermGroup(
 
   return selectedValues.some((value) => {
     const filter = filters.find((item) => item.value === value);
-    return filter ? textIncludesTerms(textForHotel(hotel), filter.terms) : false;
+    return filter
+      ? textIncludesTerms(textForHotel(hotel), filter.terms)
+      : false;
   });
 }
 
