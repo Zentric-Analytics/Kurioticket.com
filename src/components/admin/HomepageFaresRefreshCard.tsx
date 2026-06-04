@@ -6,11 +6,36 @@ import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
+const DEFAULT_REFRESH_BUDGET: RefreshBudget = {
+  popularVisibleTarget: 5,
+  discoverVisibleTarget: 16,
+  discoverBackupFreshTarget: 3,
+  maxRouteAttemptsPerRun: 28,
+  maxProviderCallsPerRun: 84,
+  maxDateCandidatesPerRoute: 3,
+};
+
+const DEFAULT_READINESS_COUNTS: RefreshReadinessCounts = {
+  freshPopular: 0,
+  freshDiscover: 0,
+  freshDiscoverDisplayed: 0,
+  freshDiscoverBackup: 0,
+  publicFreshTarget: 21,
+  operationalFreshTarget: 24,
+};
+
 const DEFAULT_COUNTS: RefreshCounts = {
   refreshed: 0,
   unavailable: 0,
   failed: 0,
   skipped: 0,
+  retained: 0,
+  routeAttempts: 0,
+  providerCalls: 0,
+  stoppedReason: "completed",
+  readinessBefore: DEFAULT_READINESS_COUNTS,
+  readinessAfter: DEFAULT_READINESS_COUNTS,
+  refreshBudget: DEFAULT_REFRESH_BUDGET,
 };
 
 const DEFAULT_STATUS_SUMMARY: HomepageFareStatusSummary = {
@@ -27,6 +52,17 @@ const DEFAULT_HEALTH: HomepageFareHealth = {
   label: "Needs attention",
   message:
     "Homepage fares are missing or stale. Refresh fares before relying on homepage prices.",
+};
+
+const DEFAULT_DISPLAY_READINESS: DisplayReadiness = {
+  ...DEFAULT_HEALTH,
+  popularFresh: 0,
+  popularTarget: 5,
+  discoverFresh: 0,
+  discoverVisibleTarget: 16,
+  discoverDisplayedFresh: 0,
+  discoverBackupFresh: 0,
+  publicFreshTarget: 21,
 };
 
 const SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES = {
@@ -49,11 +85,42 @@ type SafeHomepageFareErrorReason =
 type SafeHomepageFareErrorCategory =
   (typeof SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES)[SafeHomepageFareErrorReason];
 
+type RefreshStoppedReason =
+  | "target_met"
+  | "route_budget_exhausted"
+  | "provider_budget_exhausted"
+  | "completed";
+
+type RefreshReadinessCounts = {
+  freshPopular: number;
+  freshDiscover: number;
+  freshDiscoverDisplayed: number;
+  freshDiscoverBackup: number;
+  publicFreshTarget: number;
+  operationalFreshTarget: number;
+};
+
+type RefreshBudget = {
+  popularVisibleTarget: number;
+  discoverVisibleTarget: number;
+  discoverBackupFreshTarget: number;
+  maxRouteAttemptsPerRun: number;
+  maxProviderCallsPerRun: number;
+  maxDateCandidatesPerRoute: number;
+};
+
 type RefreshCounts = {
   refreshed: number;
   unavailable: number;
   failed: number;
   skipped: number;
+  retained: number;
+  routeAttempts: number;
+  providerCalls: number;
+  stoppedReason: RefreshStoppedReason;
+  readinessBefore: RefreshReadinessCounts;
+  readinessAfter: RefreshReadinessCounts;
+  refreshBudget: RefreshBudget;
 };
 
 type RefreshState = {
@@ -96,10 +163,23 @@ type HomepageFareHealth = {
   message: string;
 };
 
+type DisplayReadiness = HomepageFareHealth & {
+  popularFresh: number;
+  popularTarget: number;
+  discoverFresh: number;
+  discoverVisibleTarget: number;
+  discoverDisplayedFresh: number;
+  discoverBackupFresh: number;
+  publicFreshTarget: number;
+};
+
 type HomepageFareStatusPayload = {
   routes: HomepageFareStatusRoute[];
   summary: HomepageFareStatusSummary;
   health: HomepageFareHealth;
+  displayReadiness: DisplayReadiness;
+  candidatePoolHealth: HomepageFareStatusSummary;
+  refreshBudget: RefreshBudget;
 };
 
 type StatusLoadState = {
@@ -179,7 +259,7 @@ export function HomepageFaresRefreshCard() {
 
       setRefreshState({
         counts,
-        message: `Homepage fares refreshed. ${counts.refreshed} refreshed, ${counts.unavailable} unavailable, ${counts.failed} failed, ${counts.skipped} skipped.`,
+        message: `Homepage fares refreshed. ${counts.refreshed} refreshed, ${counts.unavailable} unavailable, ${counts.failed} failed, ${counts.retained} retained, ${counts.skipped} skipped. Provider calls used: ${counts.providerCalls}. Stopped: ${formatStoppedReason(counts.stoppedReason)}.`,
         status: "success",
       });
       await loadStatus();
@@ -199,6 +279,9 @@ export function HomepageFaresRefreshCard() {
     routes: [],
     summary: DEFAULT_STATUS_SUMMARY,
     health: DEFAULT_HEALTH,
+    displayReadiness: DEFAULT_DISPLAY_READINESS,
+    candidatePoolHealth: DEFAULT_STATUS_SUMMARY,
+    refreshBudget: DEFAULT_REFRESH_BUDGET,
   };
 
   return (
@@ -286,7 +369,45 @@ export function HomepageFaresRefreshCard() {
           </p>
         ) : null}
 
-        <HealthSummary health={statusPayload.health} />
+        <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
+
+        <dl className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricCard
+            label="Popular fresh"
+            value={`${statusPayload.displayReadiness.popularFresh} / ${statusPayload.displayReadiness.popularTarget}`}
+          />
+          <MetricCard
+            label="Discover displayed"
+            value={`${statusPayload.displayReadiness.discoverDisplayedFresh} / ${statusPayload.displayReadiness.discoverVisibleTarget}`}
+          />
+          <MetricCard
+            label="Discover backup fresh"
+            value={statusPayload.displayReadiness.discoverBackupFresh}
+          />
+          <MetricCard
+            label="Public fresh target"
+            value={statusPayload.displayReadiness.publicFreshTarget}
+          />
+        </dl>
+
+        <dl className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <MetricCard
+            label="Max route attempts"
+            value={statusPayload.refreshBudget.maxRouteAttemptsPerRun}
+          />
+          <MetricCard
+            label="Max provider calls"
+            value={statusPayload.refreshBudget.maxProviderCallsPerRun}
+          />
+          <MetricCard
+            label="Provider calls used"
+            value={refreshState.counts?.providerCalls ?? "—"}
+          />
+          <MetricCard
+            label="Stopped reason"
+            value={refreshState.counts ? formatStoppedReason(refreshState.counts.stoppedReason) : "—"}
+          />
+        </dl>
 
         <dl className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {STATUS_LABELS.map(({ key, label }) => (
@@ -308,6 +429,10 @@ export function HomepageFaresRefreshCard() {
             </dd>
           </div>
         </dl>
+
+        <p className="mt-3 text-xs font-semibold text-muted">
+          Candidate pool health: {statusPayload.candidatePoolHealth.failed} failed and {statusPayload.candidatePoolHealth.unavailable} unavailable routes remain visible here without forcing public display readiness to attention.
+        </p>
 
         <div className="mt-4 overflow-hidden rounded-xl border border-border">
           <div className="hidden grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr] gap-3 bg-slate-50 px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-muted md:grid">
@@ -360,10 +485,18 @@ export function HomepageFaresRefreshCard() {
   );
 }
 
-const COUNT_LABELS: Array<{ key: keyof RefreshCounts; label: string }> = [
+type RefreshCountMetricKey =
+  | "refreshed"
+  | "unavailable"
+  | "failed"
+  | "retained"
+  | "skipped";
+
+const COUNT_LABELS: Array<{ key: RefreshCountMetricKey; label: string }> = [
   { key: "refreshed", label: "Refreshed" },
   { key: "unavailable", label: "Unavailable" },
   { key: "failed", label: "Failed" },
+  { key: "retained", label: "Retained" },
   { key: "skipped", label: "Skipped" },
 ];
 
@@ -392,18 +525,37 @@ const HEALTH_SUMMARY_STYLES: Record<HomepageFareHealthStatus, string> = {
   attention: "border-red-100 bg-red-50 text-danger",
 };
 
-function HealthSummary({ health }: { health: HomepageFareHealth }) {
+function DisplayReadinessSummary({ readiness }: { readiness: DisplayReadiness }) {
   return (
     <div
-      className={`mt-4 rounded-xl border p-4 ${HEALTH_SUMMARY_STYLES[health.status]}`}
+      className={`mt-4 rounded-xl border p-4 ${HEALTH_SUMMARY_STYLES[readiness.status]}`}
       role="status"
       aria-live="polite"
     >
       <p className="text-xs font-extrabold uppercase tracking-wide opacity-80">
-        Fare snapshot health
+        Public homepage display readiness
       </p>
-      <p className="mt-1 text-2xl font-extrabold">{health.label}</p>
-      <p className="mt-2 text-sm font-semibold leading-6">{health.message}</p>
+      <p className="mt-1 text-2xl font-extrabold">{readiness.label}</p>
+      <p className="mt-2 text-sm font-semibold leading-6">
+        {readiness.message}
+      </p>
+    </div>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="rounded-lg bg-slate-50 p-3">
+      <dt className="text-xs font-bold uppercase tracking-wide text-muted">
+        {label}
+      </dt>
+      <dd className="mt-1 text-xl font-extrabold text-navy">{value}</dd>
     </div>
   );
 }
@@ -440,6 +592,13 @@ function normalizeRefreshCounts(payload: unknown): RefreshCounts {
     unavailable: readCount(counts.unavailable),
     failed: readCount(counts.failed),
     skipped: readCount(counts.skipped),
+    retained: readCount(counts.retained),
+    routeAttempts: readCount(counts.routeAttempts),
+    providerCalls: readCount(counts.providerCalls),
+    stoppedReason: readStoppedReason(counts.stoppedReason),
+    readinessBefore: normalizeRefreshReadiness(counts.readinessBefore),
+    readinessAfter: normalizeRefreshReadiness(counts.readinessAfter),
+    refreshBudget: normalizeRefreshBudget(counts.refreshBudget),
   };
 }
 
@@ -449,6 +608,9 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
       routes: [],
       summary: DEFAULT_STATUS_SUMMARY,
       health: DEFAULT_HEALTH,
+      displayReadiness: DEFAULT_DISPLAY_READINESS,
+      candidatePoolHealth: DEFAULT_STATUS_SUMMARY,
+      refreshBudget: DEFAULT_REFRESH_BUDGET,
     };
   }
 
@@ -456,6 +618,9 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     routes?: unknown;
     summary?: unknown;
     health?: unknown;
+    displayReadiness?: unknown;
+    candidatePoolHealth?: unknown;
+    refreshBudget?: unknown;
   };
   const routes = Array.isArray(candidate.routes)
     ? candidate.routes
@@ -463,10 +628,86 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
         .filter((route): route is HomepageFareStatusRoute => Boolean(route))
     : [];
 
+  const summary = normalizeStatusSummary(candidate.summary, routes.length);
+
   return {
     routes,
-    summary: normalizeStatusSummary(candidate.summary, routes.length),
+    summary,
     health: normalizeHealth(candidate.health),
+    displayReadiness: normalizeDisplayReadiness(candidate.displayReadiness),
+    candidatePoolHealth: normalizeStatusSummary(
+      candidate.candidatePoolHealth,
+      summary.total,
+    ),
+    refreshBudget: normalizeRefreshBudget(candidate.refreshBudget),
+  };
+}
+
+function normalizeDisplayReadiness(value: unknown): DisplayReadiness {
+  if (!value || typeof value !== "object") return DEFAULT_DISPLAY_READINESS;
+
+  const readiness = value as Partial<Record<keyof DisplayReadiness, unknown>>;
+  const health = normalizeHealth(value);
+
+  return {
+    ...health,
+    popularFresh: readCount(readiness.popularFresh),
+    popularTarget: readCount(readiness.popularTarget) || DEFAULT_DISPLAY_READINESS.popularTarget,
+    discoverFresh: readCount(readiness.discoverFresh),
+    discoverVisibleTarget:
+      readCount(readiness.discoverVisibleTarget) ||
+      DEFAULT_DISPLAY_READINESS.discoverVisibleTarget,
+    discoverDisplayedFresh: readCount(readiness.discoverDisplayedFresh),
+    discoverBackupFresh: readCount(readiness.discoverBackupFresh),
+    publicFreshTarget:
+      readCount(readiness.publicFreshTarget) ||
+      DEFAULT_DISPLAY_READINESS.publicFreshTarget,
+  };
+}
+
+function normalizeRefreshReadiness(value: unknown): RefreshReadinessCounts {
+  if (!value || typeof value !== "object") return DEFAULT_READINESS_COUNTS;
+
+  const readiness = value as Partial<Record<keyof RefreshReadinessCounts, unknown>>;
+
+  return {
+    freshPopular: readCount(readiness.freshPopular),
+    freshDiscover: readCount(readiness.freshDiscover),
+    freshDiscoverDisplayed: readCount(readiness.freshDiscoverDisplayed),
+    freshDiscoverBackup: readCount(readiness.freshDiscoverBackup),
+    publicFreshTarget:
+      readCount(readiness.publicFreshTarget) ||
+      DEFAULT_READINESS_COUNTS.publicFreshTarget,
+    operationalFreshTarget:
+      readCount(readiness.operationalFreshTarget) ||
+      DEFAULT_READINESS_COUNTS.operationalFreshTarget,
+  };
+}
+
+function normalizeRefreshBudget(value: unknown): RefreshBudget {
+  if (!value || typeof value !== "object") return DEFAULT_REFRESH_BUDGET;
+
+  const budget = value as Partial<Record<keyof RefreshBudget, unknown>>;
+
+  return {
+    popularVisibleTarget:
+      readCount(budget.popularVisibleTarget) ||
+      DEFAULT_REFRESH_BUDGET.popularVisibleTarget,
+    discoverVisibleTarget:
+      readCount(budget.discoverVisibleTarget) ||
+      DEFAULT_REFRESH_BUDGET.discoverVisibleTarget,
+    discoverBackupFreshTarget:
+      readCount(budget.discoverBackupFreshTarget) ||
+      DEFAULT_REFRESH_BUDGET.discoverBackupFreshTarget,
+    maxRouteAttemptsPerRun:
+      readCount(budget.maxRouteAttemptsPerRun) ||
+      DEFAULT_REFRESH_BUDGET.maxRouteAttemptsPerRun,
+    maxProviderCallsPerRun:
+      readCount(budget.maxProviderCallsPerRun) ||
+      DEFAULT_REFRESH_BUDGET.maxProviderCallsPerRun,
+    maxDateCandidatesPerRoute:
+      readCount(budget.maxDateCandidatesPerRoute) ||
+      DEFAULT_REFRESH_BUDGET.maxDateCandidatesPerRoute,
   };
 }
 
@@ -602,6 +843,28 @@ function normalizeStatusSummary(
     missing: readCount(summary.missing),
     total: readCount(summary.total) || fallbackTotal,
   };
+}
+
+function readStoppedReason(value: unknown): RefreshStoppedReason {
+  return value === "target_met" ||
+    value === "route_budget_exhausted" ||
+    value === "provider_budget_exhausted" ||
+    value === "completed"
+    ? value
+    : "completed";
+}
+
+function formatStoppedReason(reason: RefreshStoppedReason) {
+  switch (reason) {
+    case "target_met":
+      return "Target met";
+    case "route_budget_exhausted":
+      return "Route budget exhausted";
+    case "provider_budget_exhausted":
+      return "Provider budget exhausted";
+    case "completed":
+      return "Completed";
+  }
 }
 
 function readSnapshotStatus(
