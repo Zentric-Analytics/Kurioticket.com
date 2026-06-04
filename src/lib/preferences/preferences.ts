@@ -65,16 +65,19 @@ export function setStoredRegion(regionCode: string) {
   }
 }
 
-export function getStoredCurrency(): string {
+export function getStoredCurrency(): string | null {
   const cookie = getCookieValue(CURRENCY_COOKIE_KEY);
-  if (cookie) return cookie;
-  if (typeof window !== "undefined") return window.localStorage.getItem(CURRENCY_COOKIE_KEY) ?? "USD";
-  return "USD";
+  if (cookie) return cookie.toUpperCase();
+  if (typeof window !== "undefined") {
+    return window.localStorage.getItem(CURRENCY_COOKIE_KEY)?.toUpperCase() ?? null;
+  }
+  return null;
 }
 
 export function setStoredCurrency(currency: string) {
-  setCookieValue(CURRENCY_COOKIE_KEY, currency);
+  const normalizedCurrency = currency.toUpperCase();
+  setCookieValue(CURRENCY_COOKIE_KEY, normalizedCurrency);
   if (typeof window !== "undefined") {
-    window.localStorage.setItem(CURRENCY_COOKIE_KEY, currency);
+    window.localStorage.setItem(CURRENCY_COOKIE_KEY, normalizedCurrency);
   }
 }
