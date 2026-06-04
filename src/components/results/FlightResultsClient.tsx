@@ -2242,11 +2242,11 @@ export function FlightResultsClient() {
       <form
         onSubmit={handleCompactSearchSubmit}
         className={cn(
-          "mx-auto w-full min-w-0 max-w-full sm:max-w-[880px]",
+          "mx-auto w-full min-w-0 max-w-full sm:max-w-5xl",
           placement === "desktop" && "hidden sm:block",
         )}
       >
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between sm:hidden">
             <span className="text-sm font-semibold text-slate-500">
               Edit search
@@ -2261,7 +2261,7 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="mb-2 flex items-center justify-between gap-2 px-1">
+          <div className="flex items-center justify-between gap-2 px-1">
             <div ref={tripTypeMenuRef} className="relative inline-flex">
               <button
                 type="button"
@@ -2332,17 +2332,15 @@ export function FlightResultsClient() {
             </div>
           </div>
 
-          <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.07)] sm:p-1.5">
-            <div className="flex flex-col gap-0.5 lg:flex-row lg:items-stretch lg:gap-1">
-              <div className="grid min-w-0 flex-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.36fr)_minmax(0,0.92fr)_minmax(0,0.92fr)] lg:gap-0">
-                <div className="sm:col-span-2 lg:col-span-1">
-                  <div className="grid min-w-0 grid-cols-1 overflow-visible bg-transparent sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch lg:border-r lg:border-slate-200">
+          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                     <div
                       ref={originWrapRef}
-                      className="relative min-h-[46px] px-2 py-0.5 sm:pr-2"
+                      className="relative min-h-[54px] px-0 py-0 pr-3"
                     >
                       <label
-                        className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
                         htmlFor="results-origin"
                       >
                         Origin
@@ -2375,7 +2373,7 @@ export function FlightResultsClient() {
                         }}
                         placeholder="From?"
                         autoComplete="off"
-                        className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[15px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
+                        className="h-8 w-full border-0 bg-transparent p-0 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
                       />
 
                       {activeSuggest === "origin" && dropdownPosition ? (
@@ -2393,12 +2391,12 @@ export function FlightResultsClient() {
                       ) : null}
                     </div>
 
-                    <div className="flex items-center justify-center border-y border-slate-200 py-1 sm:border-x sm:border-y-0 sm:py-0">
+                    <div className="flex items-center justify-center">
                       <button
                         type="button"
                         aria-label="Swap origin and destination"
                         onClick={handleSwapLocations}
-                        className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                        className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                       >
                         <ArrowRightLeft size={14} />
                       </button>
@@ -2406,10 +2404,10 @@ export function FlightResultsClient() {
 
                     <div
                       ref={destinationWrapRef}
-                      className="relative min-h-[46px] px-2 py-0.5 sm:pl-2"
+                      className="relative min-h-[54px] px-0 py-0 pl-3"
                     >
                       <label
-                        className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500"
+                        className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
                         htmlFor="results-destination"
                       >
                         Destination
@@ -2443,7 +2441,7 @@ export function FlightResultsClient() {
                         }}
                         placeholder="To?"
                         autoComplete="off"
-                        className="mt-0.5 h-6 w-full border-0 bg-transparent p-0 text-[15px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-[13px]"
+                        className="h-8 w-full border-0 bg-transparent p-0 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
                       />
 
                       {activeSuggest === "destination" && dropdownPosition ? (
@@ -2461,7 +2459,6 @@ export function FlightResultsClient() {
                       ) : null}
                     </div>
                   </div>
-                </div>
 
                 <div ref={departureWrapRef}>
                   <button
@@ -2470,14 +2467,14 @@ export function FlightResultsClient() {
                       setActiveDatePicker("departure");
                       setDatePickerPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[38px] w-full items-center gap-1.5 border-t border-slate-200 bg-transparent px-2 py-0.5 text-left transition hover:bg-slate-50 sm:border-l sm:border-t-0 lg:border-l-0"
+                    className="focus-ring flex h-full min-h-[54px] w-full items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200"
                   >
-                    <Calendar className="h-3.5 w-3.5 shrink-0 text-indigo-700" />
+                    <Calendar className="h-4 w-4 shrink-0 text-indigo-700" />
                     <span className="min-w-0">
-                      <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
                         Travel dates
                       </span>
-                      <span className="block truncate text-[13px] font-semibold text-slate-950">
+                      <span className="block truncate text-sm font-semibold text-slate-950">
                         {departureDateInput
                           ? tripTypeInput === "round-trip" && returnDateInput
                             ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
@@ -2495,13 +2492,13 @@ export function FlightResultsClient() {
                       setTravelerPopoverOpen(true);
                       setTravelerPopoverPosition(null);
                     }}
-                    className="focus-ring flex h-full min-h-[38px] w-full items-center justify-between gap-1.5 border-t border-slate-200 bg-transparent px-2 py-0.5 text-left transition hover:bg-slate-50 sm:border-l sm:border-t-0"
+                    className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200"
                   >
                     <span className="min-w-0">
-                      <span className="block text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
                         Travelers
                       </span>
-                      <span className="block truncate text-[13px] font-semibold text-slate-950">
+                      <span className="block truncate text-sm font-semibold text-slate-950">
                         {buildTravelerCabinSummary(
                           adultCount,
                           childCount,
@@ -2513,11 +2510,10 @@ export function FlightResultsClient() {
                     <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
                   </button>
                 </div>
-              </div>
 
               <Button
                 type="submit"
-                className="h-8 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:h-[38px] lg:w-auto lg:min-w-[96px]"
+                className="h-full min-h-[54px] w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:min-w-[112px] lg:rounded-l-none lg:rounded-r-xl"
               >
                 Search
               </Button>
