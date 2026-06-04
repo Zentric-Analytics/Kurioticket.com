@@ -22,6 +22,13 @@ const DEFAULT_STATUS_SUMMARY: HomepageFareStatusSummary = {
   total: 0,
 };
 
+const DEFAULT_HEALTH: HomepageFareHealth = {
+  status: "attention",
+  label: "Needs attention",
+  message:
+    "Homepage fares are missing or stale. Refresh fares before relying on homepage prices.",
+};
+
 type RefreshCounts = {
   refreshed: number;
   unavailable: number;
@@ -59,9 +66,18 @@ type HomepageFareStatusSummary = Record<HomepageFareSnapshotStatus, number> & {
   total: number;
 };
 
+type HomepageFareHealthStatus = "healthy" | "warning" | "attention";
+
+type HomepageFareHealth = {
+  status: HomepageFareHealthStatus;
+  label: string;
+  message: string;
+};
+
 type HomepageFareStatusPayload = {
   routes: HomepageFareStatusRoute[];
   summary: HomepageFareStatusSummary;
+  health: HomepageFareHealth;
 };
 
 type StatusLoadState = {
@@ -160,6 +176,7 @@ export function HomepageFaresRefreshCard() {
   const statusPayload = statusState.data ?? {
     routes: [],
     summary: DEFAULT_STATUS_SUMMARY,
+    health: DEFAULT_HEALTH,
   };
 
   return (
@@ -246,6 +263,8 @@ export function HomepageFaresRefreshCard() {
             {statusState.error}
           </p>
         ) : null}
+
+        <HealthSummary health={statusPayload.health} />
 
         <dl className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
           {STATUS_LABELS.map(({ key, label }) => (
@@ -344,6 +363,28 @@ const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
   missing: "bg-slate-100 text-muted",
 };
 
+const HEALTH_SUMMARY_STYLES: Record<HomepageFareHealthStatus, string> = {
+  healthy: "border-teal/20 bg-teal/10 text-teal-dark",
+  warning: "border-amber/20 bg-amber/10 text-amber",
+  attention: "border-red-100 bg-red-50 text-danger",
+};
+
+function HealthSummary({ health }: { health: HomepageFareHealth }) {
+  return (
+    <div
+      className={`mt-4 rounded-xl border p-4 ${HEALTH_SUMMARY_STYLES[health.status]}`}
+      role="status"
+      aria-live="polite"
+    >
+      <p className="text-xs font-extrabold uppercase tracking-wide opacity-80">
+        Fare snapshot health
+      </p>
+      <p className="mt-1 text-2xl font-extrabold">{health.label}</p>
+      <p className="mt-2 text-sm font-semibold leading-6">{health.message}</p>
+    </div>
+  );
+}
+
 function StatusBadge({ status }: { status: HomepageFareSnapshotStatus }) {
   return (
     <span
@@ -381,12 +422,17 @@ function normalizeRefreshCounts(payload: unknown): RefreshCounts {
 
 function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
   if (!payload || typeof payload !== "object") {
-    return { routes: [], summary: DEFAULT_STATUS_SUMMARY };
+    return {
+      routes: [],
+      summary: DEFAULT_STATUS_SUMMARY,
+      health: DEFAULT_HEALTH,
+    };
   }
 
   const candidate = payload as {
     routes?: unknown;
     summary?: unknown;
+    health?: unknown;
   };
   const routes = Array.isArray(candidate.routes)
     ? candidate.routes
@@ -397,7 +443,28 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
   return {
     routes,
     summary: normalizeStatusSummary(candidate.summary, routes.length),
+    health: normalizeHealth(candidate.health),
   };
+}
+
+function normalizeHealth(value: unknown): HomepageFareHealth {
+  if (!value || typeof value !== "object") return DEFAULT_HEALTH;
+
+  const health = value as Partial<Record<keyof HomepageFareHealth, unknown>>;
+  const status = readHealthStatus(health.status);
+  const label = typeof health.label === "string" ? health.label.trim() : "";
+  const message =
+    typeof health.message === "string" ? health.message.trim() : "";
+
+  if (!status || !label || !message) return DEFAULT_HEALTH;
+
+  return { status, label, message };
+}
+
+function readHealthStatus(value: unknown): HomepageFareHealthStatus | undefined {
+  return value === "healthy" || value === "warning" || value === "attention"
+    ? value
+    : undefined;
 }
 
 function normalizeStatusRoute(

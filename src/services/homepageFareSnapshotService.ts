@@ -65,9 +65,21 @@ export type HomepageFareSnapshotStatusSummary = Record<
   total: number;
 };
 
+export type HomepageFareSnapshotHealthStatus =
+  | "healthy"
+  | "warning"
+  | "attention";
+
+export type HomepageFareSnapshotHealth = {
+  status: HomepageFareSnapshotHealthStatus;
+  label: string;
+  message: string;
+};
+
 export type HomepageFareSnapshotStatusResponse = {
   routes: HomepageFareSnapshotStatusRoute[];
   summary: HomepageFareSnapshotStatusSummary;
+  health: HomepageFareSnapshotHealth;
 };
 
 export type HomepageFareSearch = {
@@ -511,7 +523,13 @@ export async function readHomepageFareSnapshotStatus({
     .filter((route): route is HomepageFareRoute => Boolean(route));
   const summary = createEmptyHomepageFareSnapshotStatusSummary();
 
-  if (!eligibleRoutes.length) return { routes: [], summary };
+  if (!eligibleRoutes.length) {
+    return {
+      routes: [],
+      summary,
+      health: classifyHomepageFareSnapshotHealth(summary),
+    };
+  }
 
   const snapshotKeys = eligibleRoutes.map((route) =>
     buildHomepageFareSnapshotKey({
@@ -571,7 +589,11 @@ export async function readHomepageFareSnapshotStatus({
     return statusRoute;
   });
 
-  return { routes: statusRoutes, summary };
+  return {
+    routes: statusRoutes,
+    summary,
+    health: classifyHomepageFareSnapshotHealth(summary),
+  };
 }
 
 export async function upsertActiveHomepageFareSnapshot({
@@ -805,6 +827,58 @@ function createEmptyHomepageFareSnapshotStatusSummary(): HomepageFareSnapshotSta
     failed: 0,
     missing: 0,
     total: 0,
+  };
+}
+
+function classifyHomepageFareSnapshotHealth(
+  summary: HomepageFareSnapshotStatusSummary,
+): HomepageFareSnapshotHealth {
+  const total = summary.total;
+
+  if (total <= 0) {
+    return {
+      status: "attention",
+      label: "Needs attention",
+      message: "Homepage fare routes are not configured for the status panel.",
+    };
+  }
+
+  const freshRatio = summary.fresh / total;
+  const failedRatio = summary.failed / total;
+  const staleOrMissingRatio =
+    (summary.expired + summary.failed + summary.missing) / total;
+  const affectedRatio =
+    (summary.expired + summary.unavailable + summary.failed + summary.missing) /
+    total;
+  const lowFailedCount = summary.failed <= Math.max(1, Math.floor(total * 0.1));
+
+  if (
+    summary.fresh === 0 ||
+    staleOrMissingRatio > 0.5 ||
+    affectedRatio >= 0.7 ||
+    failedRatio >= 0.5
+  ) {
+    return {
+      status: "attention",
+      label: "Needs attention",
+      message:
+        "Homepage fares are missing or stale. Refresh fares before relying on homepage prices.",
+    };
+  }
+
+  if (freshRatio >= 0.7 && lowFailedCount) {
+    return {
+      status: "healthy",
+      label: "Healthy",
+      message: "Most homepage fares are fresh and ready to display.",
+    };
+  }
+
+  return {
+    status: "warning",
+    label: "Warning",
+    message:
+      "Some homepage fare snapshots need attention. Refresh fares or check provider status.",
   };
 }
 
