@@ -531,7 +531,7 @@ export function HotelResultsClient() {
             initialSort={body.sort}
             errorRole="alert"
             compact
-            className="sm:mx-0"
+            className="min-w-0"
           />
         </section>
 
