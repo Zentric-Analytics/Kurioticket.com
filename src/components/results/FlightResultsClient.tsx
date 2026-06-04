@@ -370,12 +370,11 @@ function RecentSearchCard({
     <>
       <div className="relative h-24 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-sky-400">
         {entry.image ? (
-          <Image
+          <img
             src={entry.image}
             alt={entry.imageAlt || entry.label}
-            fill
-            sizes="(min-width: 768px) 320px, 100vw"
-            className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
         ) : (
           <div className="flex h-full items-center justify-between p-4 text-white">
@@ -3351,6 +3350,12 @@ function getUniformResultCurrency(results: PublicFlightResult[]) {
   return null;
 }
 
+function addDays(date: Date, amount: number): Date {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + amount);
+
+  return nextDate;
+}
 
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
