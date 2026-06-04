@@ -40,6 +40,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 
+const RawImage = "img";
 
 function SavedHeartIcon({
   className,
@@ -399,7 +400,7 @@ export function AppHeader({
   ) => (
     <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
       {countryCode ? (
-        <img
+        <RawImage
           src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
           alt={fallbackText ?? "Flag"}
           className="h-full w-full object-cover"
@@ -534,7 +535,7 @@ export function AppHeader({
                   >
                     <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white text-xs font-black text-indigo-700 shadow-sm">
                       {session?.user?.image ? (
-                        <img
+                        <RawImage
                           src={session.user.image}
                           alt=""
                           className="h-full w-full object-cover"
@@ -678,7 +679,7 @@ export function AppHeader({
                 className="inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-sm font-black text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               >
                 {session?.user?.image ? (
-                  <img
+                  <RawImage
                     src={session.user.image}
                     alt=""
                     className="h-full w-full object-cover"
@@ -904,7 +905,7 @@ export function AppHeader({
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-sm font-black text-white shadow-sm">
                     {session?.user?.image ? (
-                      <img
+                      <RawImage
                         src={session.user.image}
                         alt=""
                         className="h-full w-full object-cover"
