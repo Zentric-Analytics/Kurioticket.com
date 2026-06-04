@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   type FormEvent,
   useMemo,
@@ -76,13 +77,6 @@ const normalizeSuggestionText = (value: string) =>
 const normalizeCountryHint = (value: string | null | undefined) => {
   const countryCode = value?.trim().toUpperCase() || "";
   return /^[A-Z]{2}$/.test(countryCode) ? countryCode : "";
-};
-
-const getBrowserCountryHint = () => {
-  if (typeof navigator === "undefined") return "";
-  const language = navigator.language || "";
-  const parts = language.split("-");
-  return normalizeCountryHint(parts.length > 1 ? parts[1] : "");
 };
 
 const dedupeSuggestions = (suggestions: AirportOption[]) => {
@@ -422,28 +416,15 @@ export function SearchTabs({
     );
   };
 
-  const buildPlacesUrl = (query: string, context: "origin" | "destination") => {
+  const buildPlacesUrl = useCallback((query: string, context: "origin" | "destination") => {
     const params = new URLSearchParams();
     if (query.length >= 2) params.set("q", query);
     params.set("context", context);
-    if (countryHint) params.set("countryCode", countryHint);
+    if (context === "origin" && countryHint) params.set("countryCode", countryHint);
     if (typeof navigator !== "undefined" && navigator.language) params.set("locale", navigator.language);
 
-
     return `/api/flights/places?${params.toString()}`;
-  };
-
-
-  useEffect(() => {
-    const browserCountryHint = getBrowserCountryHint();
-    if (!browserCountryHint) return;
-
-    const timeoutId = window.setTimeout(() => {
-      setCountryHint(browserCountryHint);
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [countryHint]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -457,12 +438,12 @@ export function SearchTabs({
         if (!response.ok) return;
 
         const payload = (await response.json()) as LocationApiResponse;
-        const detectedCountryHint = normalizeCountryHint(payload.countryCode);
-        if (detectedCountryHint) {
-          setCountryHint(detectedCountryHint);
-        }
+        const detectedCountryHint = payload.source === "ipinfo-lite"
+          ? normalizeCountryHint(payload.countryCode)
+          : "";
+        setCountryHint(detectedCountryHint);
       } catch {
-        // Keep the browser-language country hint when server-side location is unavailable.
+        // Leave airport country empty when IP country detection is unavailable.
       }
     };
 
@@ -537,7 +518,7 @@ export function SearchTabs({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [from, countryHint]);
+  }, [from, buildPlacesUrl]);
 
   useEffect(() => {
     const query = to.trim();
@@ -604,7 +585,7 @@ export function SearchTabs({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [to, countryHint]);
+  }, [to, buildPlacesUrl]);
 
   useEffect(() => {
     if (originPrefillAttempted || hasUserEditedOrigin || from.trim()) return;
@@ -636,7 +617,7 @@ export function SearchTabs({
     void loadRecommendedOrigin();
 
     return () => controller.abort();
-  }, [originPrefillAttempted, hasUserEditedOrigin, from, countryHint]);
+  }, [originPrefillAttempted, hasUserEditedOrigin, from, buildPlacesUrl]);
 
   useEffect(() => {
     travelersDraftRef.current = {
