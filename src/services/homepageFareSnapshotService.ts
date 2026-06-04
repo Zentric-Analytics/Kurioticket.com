@@ -167,6 +167,7 @@ type SnapshotKeyInput = {
 };
 
 type SnapshotWriteInput = SnapshotKeyInput & {
+  snapshotKeyDepartureDate?: string | Date;
   price?: number | null;
   provider: string;
   providerBacked: boolean;
@@ -238,6 +239,27 @@ export function buildHomepageFareSearch({
     cabinClass: DEFAULT_CABIN_CLASS,
     currency,
   };
+}
+
+export function buildHomepageFareDepartureDateCandidates(
+  primaryDepartureDate: string,
+  now = new Date(),
+) {
+  const today = getUtcDateStart(now);
+  const candidates: string[] = [];
+  const seen = new Set<string>();
+
+  for (const offsetDays of [0, 1, -1, 7, -7]) {
+    const candidate = addUtcDaysToDateKey(primaryDepartureDate, offsetDays);
+
+    if (!candidate || seen.has(candidate)) continue;
+    if (parseDateKey(candidate).getTime() < today.getTime()) continue;
+
+    seen.add(candidate);
+    candidates.push(candidate);
+  }
+
+  return candidates;
 }
 
 export function buildHomepageFareSnapshotKey(input: SnapshotKeyInput) {
@@ -328,77 +350,98 @@ async function refreshHomepageFareRoute({
   }
 
   try {
-    const search = buildHomepageFareSearch({
+    const dateCandidates =
+      buildHomepageFareDepartureDateCandidates(departureDate);
+    let terminalResult:
+      | {
+          status: HomepageFareSnapshotStatus;
+          reason: SafeHomepageFareErrorReason;
+          provider: string;
+        }
+      | undefined;
+
+    for (const candidateDepartureDate of dateCandidates) {
+      const search = buildHomepageFareSearch({
+        origin,
+        destination,
+        departureDate: candidateDepartureDate,
+        currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+      });
+      const providerSearch: FlightSearchParams = {
+        ...search,
+        sort: "cheapest",
+      };
+      const providerResult = await searchDuffelFlights(providerSearch);
+      const result = selectProviderFare(
+        providerResult.results,
+        search.currency,
+      );
+      const provider = providerResult.provider || PROVIDER_NAME;
+
+      if (
+        providerResult.status === "success" &&
+        !providerResult.error &&
+        result
+      ) {
+        await upsertActiveHomepageFareSnapshot({
+          origin,
+          destination,
+          snapshotKeyDepartureDate: departureDate,
+          departureDate: search.departureDate,
+          currency: search.currency,
+          provider,
+          result,
+          ...(search.departureDate !== departureDate
+            ? {
+                dateFallbackUsed: true,
+                primaryDepartureDate: departureDate,
+                actualProviderDepartureDate: search.departureDate,
+              }
+            : {}),
+        });
+        counts.refreshed += 1;
+        return;
+      }
+
+      const classification = classifyHomepageFareAttemptTerminalResult(
+        providerResult,
+        Boolean(result),
+      );
+
+      if (
+        !terminalResult ||
+        (terminalResult.status !== HomepageFareSnapshotStatus.UNAVAILABLE &&
+          classification.status === HomepageFareSnapshotStatus.UNAVAILABLE)
+      ) {
+        terminalResult = {
+          ...classification,
+          provider,
+        };
+      }
+    }
+
+    if (terminalResult?.status === HomepageFareSnapshotStatus.UNAVAILABLE) {
+      await upsertUnavailableHomepageFareSnapshot({
+        origin,
+        destination,
+        departureDate,
+        currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+        provider: terminalResult.provider,
+        reason: terminalResult.reason,
+      });
+      counts.unavailable += 1;
+      return;
+    }
+
+    await upsertFailedHomepageFareSnapshot({
       origin,
       destination,
       departureDate,
       currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+      provider: terminalResult?.provider || PROVIDER_NAME,
+      reason: terminalResult?.reason || "provider_failed",
     });
-    const providerSearch: FlightSearchParams = {
-      ...search,
-      sort: "cheapest",
-    };
-    const providerResult = await searchDuffelFlights(providerSearch);
-    const result = selectProviderFare(providerResult.results, search.currency);
-
-    if (
-      providerResult.status === "success" &&
-      !providerResult.error &&
-      result
-    ) {
-      await upsertActiveHomepageFareSnapshot({
-        origin,
-        destination,
-        departureDate: search.departureDate,
-        currency: search.currency,
-        provider: providerResult.provider || PROVIDER_NAME,
-        result,
-      });
-      counts.refreshed += 1;
-      return;
-    }
-
-    if (providerResult.status === "failed") {
-      const classification =
-        classifyHomepageFareProviderFailure(providerResult);
-
-      if (classification.status === HomepageFareSnapshotStatus.UNAVAILABLE) {
-        await upsertUnavailableHomepageFareSnapshot({
-          origin,
-          destination,
-          departureDate: search.departureDate,
-          currency: search.currency,
-          provider: providerResult.provider || PROVIDER_NAME,
-          reason: classification.reason,
-        });
-        counts.unavailable += 1;
-        return;
-      }
-
-      await upsertFailedHomepageFareSnapshot({
-        origin,
-        destination,
-        departureDate: search.departureDate,
-        currency: search.currency,
-        provider: providerResult.provider || PROVIDER_NAME,
-        reason: classification.reason,
-      });
-      counts.failed += 1;
-      return;
-    }
-
-    await upsertUnavailableHomepageFareSnapshot({
-      origin,
-      destination,
-      departureDate: search.departureDate,
-      currency: search.currency,
-      provider: providerResult.provider || PROVIDER_NAME,
-      reason:
-        providerResult.status === "skipped"
-          ? "provider_skipped"
-          : "no_fare_returned",
-    });
-    counts.unavailable += 1;
+    counts.failed += 1;
   } catch {
     try {
       await upsertFailedHomepageFareSnapshot({
@@ -426,6 +469,7 @@ type HomepageFareProviderFailureClassification = {
     | "provider_network_error"
     | "provider_auth_error"
     | "provider_server_error"
+    | "provider_invalid_response"
     | "provider_failed";
 };
 
@@ -474,6 +518,13 @@ export function classifyHomepageFareProviderFailure(
     };
   }
 
+  if (providerResult.errorReason === "provider_invalid_response") {
+    return {
+      status: HomepageFareSnapshotStatus.FAILED,
+      reason: "provider_invalid_response",
+    };
+  }
+
   return {
     status: HomepageFareSnapshotStatus.FAILED,
     reason: "provider_failed",
@@ -519,6 +570,33 @@ function dedupeRefreshRoutes(routes: HomepageRefreshRoute[]) {
   }
 
   return deduped;
+}
+
+function classifyHomepageFareAttemptTerminalResult(
+  providerResult: ProviderResult<NormalizedFlightResult>,
+  hasProviderFare: boolean,
+): {
+  status: HomepageFareSnapshotStatus;
+  reason: SafeHomepageFareErrorReason;
+} {
+  if (providerResult.status === "failed") {
+    return classifyHomepageFareProviderFailure(providerResult);
+  }
+
+  if (hasProviderFare) {
+    return {
+      status: HomepageFareSnapshotStatus.FAILED,
+      reason: "provider_failed",
+    };
+  }
+
+  return {
+    status: HomepageFareSnapshotStatus.UNAVAILABLE,
+    reason:
+      providerResult.status === "skipped"
+        ? "provider_skipped"
+        : "no_fare_returned",
+  };
 }
 
 function selectProviderFare(
@@ -710,19 +788,27 @@ export async function readHomepageFareSnapshotStatus({
 export async function upsertActiveHomepageFareSnapshot({
   origin,
   destination,
+  snapshotKeyDepartureDate,
   departureDate,
   currency = DEFAULT_CURRENCY,
   provider,
   result,
   searchedAt = new Date(),
+  dateFallbackUsed = false,
+  primaryDepartureDate,
+  actualProviderDepartureDate,
 }: {
   origin: string;
   destination: string;
+  snapshotKeyDepartureDate?: string;
   departureDate: string;
   currency?: string;
   provider: string;
   result: NormalizedFlightResult;
   searchedAt?: Date;
+  dateFallbackUsed?: boolean;
+  primaryDepartureDate?: string;
+  actualProviderDepartureDate?: string;
 }) {
   const price = readFinitePrice(result.price);
   const normalizedCurrency =
@@ -737,6 +823,7 @@ export async function upsertActiveHomepageFareSnapshot({
   return upsertHomepageFareSnapshot({
     origin,
     destination,
+    snapshotKeyDepartureDate,
     departureDate,
     currency: normalizedCurrency,
     provider,
@@ -751,6 +838,16 @@ export async function upsertActiveHomepageFareSnapshot({
       airlineName: result.airlineName,
       stops: result.stops,
       durationMinutes: result.durationMinutes,
+      ...(dateFallbackUsed &&
+      primaryDepartureDate &&
+      actualProviderDepartureDate
+        ? {
+            dateFallbackUsed: true,
+            primaryDepartureDate,
+            searchPayloadDepartureDate: actualProviderDepartureDate,
+            actualProviderDepartureDate,
+          }
+        : {}),
     },
   });
 }
@@ -881,11 +978,14 @@ async function upsertHomepageFareSnapshot(input: SnapshotWriteInput) {
 
   const departureDate = parseDateKey(input.departureDate);
   const returnDate = input.returnDate ? parseDateKey(input.returnDate) : null;
+  const snapshotKeyDepartureDate = input.snapshotKeyDepartureDate
+    ? parseDateKey(input.snapshotKeyDepartureDate)
+    : departureDate;
   const snapshotKey = buildHomepageFareSnapshotKey({
     origin,
     destination,
     tripType: input.tripType,
-    departureDate,
+    departureDate: snapshotKeyDepartureDate,
     returnDate,
     cabinClass: input.cabinClass,
     travelers: input.travelers,
@@ -1067,9 +1167,7 @@ function formatHomepageFareSnapshotStatusRoute({
   };
 }
 
-function readSafeHomepageFareSnapshotError(
-  payload: unknown,
-):
+function readSafeHomepageFareSnapshotError(payload: unknown):
   | {
       reason: SafeHomepageFareErrorReason;
       category: SafeHomepageFareErrorCategory;
@@ -1092,8 +1190,7 @@ function isSafeHomepageFareErrorReason(
   value: unknown,
 ): value is SafeHomepageFareErrorReason {
   return (
-    typeof value === "string" &&
-    value in SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES
+    typeof value === "string" && value in SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES
   );
 }
 
@@ -1211,6 +1308,27 @@ function getNextWeekendDateAroundDaysOut(daysOut: number, now: Date) {
     daysUntilFriday <= daysUntilSaturday ? daysUntilFriday : daysUntilSaturday;
 
   date.setUTCDate(date.getUTCDate() + daysToAdd);
+  return date;
+}
+
+function addUtcDaysToDateKey(dateKey: string, days: number) {
+  if (!isValidDateKey(dateKey)) return undefined;
+
+  const date = parseDateKey(dateKey);
+  date.setUTCDate(date.getUTCDate() + days);
+
+  return formatDateKey(date);
+}
+
+function isValidDateKey(value: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  return formatDateKey(parseDateKey(value)) === value;
+}
+
+function getUtcDateStart(value: Date) {
+  const date = new Date(value);
+  date.setUTCHours(0, 0, 0, 0);
   return date;
 }
 
