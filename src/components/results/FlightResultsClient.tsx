@@ -3281,7 +3281,10 @@ export function FlightResultsClient() {
           <Button
             type="button"
             className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
-            onClick={() => setFiltersOpen(false)}
+            onClick={() => {
+              triggerFilterApplying();
+              setFiltersOpen(false);
+            }}
           >
             Done
           </Button>
