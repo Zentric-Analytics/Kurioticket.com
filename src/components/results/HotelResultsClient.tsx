@@ -625,44 +625,47 @@ export function HotelResultsClient() {
             </div>
           ) : (
             <div className={cn(hotelResultStackClass, "space-y-3")}>
-              <div className="space-y-2 pt-1">
-                <h1
-                  className={cn(
-                    "text-[15px] font-bold leading-tight text-slate-900 transition-opacity sm:text-lg",
-                    filterApplying ? "animate-pulse opacity-80" : undefined,
-                  )}
-                >
-                  We found {visibleFilteredHotels.length} places to stay for you
-                </h1>
-                <ActiveHotelFilterChips
-                  chips={activeFilterChips}
-                  onRemove={removeFilterChip}
-                  onClearAll={resetFilters}
-                />
-              </div>
+              <div
+                className={cn(
+                  "space-y-3 transition-opacity",
+                  filterApplying ? "animate-pulse opacity-80" : undefined,
+                )}
+              >
+                <div className="space-y-2 pt-1">
+                  <h1 className="text-[15px] font-bold leading-tight text-slate-900 sm:text-lg">
+                    We found {visibleFilteredHotels.length} places to stay for
+                    you
+                  </h1>
+                  <ActiveHotelFilterChips
+                    chips={activeFilterChips}
+                    onRemove={removeFilterChip}
+                    onClearAll={resetFilters}
+                  />
+                </div>
 
-              {filterApplying ? (
-                <div className="space-y-3">
-                  <div
-                    role="status"
-                    aria-live="polite"
-                    className="rounded-xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
-                  >
-                    Updating results...
+                {filterApplying ? (
+                  <div className="space-y-3">
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="rounded-xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
+                    >
+                      Updating results...
+                    </div>
+                    <HotelSkeleton />
+                    <HotelSkeleton />
                   </div>
-                  <HotelSkeleton />
-                  <HotelSkeleton />
-                </div>
-              ) : visibleFilteredHotels.length ? (
-                visibleFilteredHotels.map((hotel) => (
-                  <HotelCard key={hotel.id} hotel={hotel} />
-                ))
-              ) : (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
-                  No stays match these filters. Widen your filters to see more
-                  available options.
-                </div>
-              )}
+                ) : visibleFilteredHotels.length ? (
+                  visibleFilteredHotels.map((hotel) => (
+                    <HotelCard key={hotel.id} hotel={hotel} />
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
+                    No stays match these filters. Widen your filters to see more
+                    available options.
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </section>
