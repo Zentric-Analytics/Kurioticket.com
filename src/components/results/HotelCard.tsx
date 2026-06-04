@@ -68,10 +68,6 @@ export function HotelCard({ hotel }: HotelCardProps) {
 
   return (
     <Card className="mx-auto w-full max-w-[704px] overflow-hidden border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
-      <div className="border-b border-indigo-200/70 bg-gradient-to-r from-indigo-600 to-violet-500 px-3 py-2">
-        <div aria-hidden="true" className="h-3" />
-      </div>
-
       <div className="grid md:grid-cols-[180px_1fr]">
         <div className="relative aspect-[16/10] bg-surface-muted md:aspect-auto md:min-h-[188px]">
           {imageUrl ? (
