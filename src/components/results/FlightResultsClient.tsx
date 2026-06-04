@@ -3224,56 +3224,68 @@ export function FlightResultsClient() {
 
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 max-h-[86dvh] overflow-auto rounded-t-2xl bg-white p-5 shadow-xl transition-transform lg:hidden",
+          "fixed bottom-0 left-0 right-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full"
         )}
       >
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-base font-bold text-navy">Filters</h2>
-          <Button
-            variant="ghost"
-            className="h-10 w-10 px-0"
-            aria-label="Close filters"
-            onClick={() => setFiltersOpen(false)}
-          >
-            <X size={20} />
-          </Button>
+        <div className="flex-1 overflow-auto p-5 pb-3">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-base font-bold text-navy">Filters</h2>
+            <Button
+              variant="ghost"
+              className="h-10 w-10 px-0"
+              aria-label="Close filters"
+              onClick={() => setFiltersOpen(false)}
+            >
+              <X size={20} />
+            </Button>
+          </div>
+
+          <Filters
+            maxPrice={maxPrice}
+            setMaxPrice={setMaxPrice}
+            priceBounds={priceBounds}
+            priceLabelCurrency={priceLabelCurrency}
+            selectedCurrency={selectedCurrency}
+            timeFilterMode={timeFilterMode}
+            setTimeFilterMode={setTimeFilterMode}
+            timeBounds={timeBounds}
+            maxTakeoffMinutes={maxTakeoffMinutes}
+            setMaxTakeoffMinutes={setMaxTakeoffMinutes}
+            maxLandingMinutes={maxLandingMinutes}
+            setMaxLandingMinutes={setMaxLandingMinutes}
+            durationBounds={durationBounds}
+            maxDurationMinutes={maxDurationMinutes}
+            setMaxDurationMinutes={setMaxDurationMinutes}
+            stopOptions={stopOptions}
+            selectedStops={selectedStops}
+            setSelectedStops={setSelectedStops}
+            airlineOptions={airlineOptions}
+            selectedAirlines={selectedAirlines}
+            setSelectedAirlines={setSelectedAirlines}
+            airportOptions={airportOptions}
+            selectedAirports={selectedAirports}
+            setSelectedAirports={setSelectedAirports}
+            flightQualityOptions={flightQualityOptions}
+            selectedFlightQuality={selectedFlightQuality}
+            setSelectedFlightQuality={setSelectedFlightQuality}
+            baggageIncludedOnly={baggageIncludedOnly}
+            setBaggageIncludedOnly={setBaggageIncludedOnly}
+            flexibleOnly={flexibleOnly}
+            setFlexibleOnly={setFlexibleOnly}
+            onFilterChange={triggerFilterApplying}
+          />
         </div>
 
-        <Filters
-          maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
-          priceBounds={priceBounds}
-          priceLabelCurrency={priceLabelCurrency}
-          selectedCurrency={selectedCurrency}
-          timeFilterMode={timeFilterMode}
-          setTimeFilterMode={setTimeFilterMode}
-          timeBounds={timeBounds}
-          maxTakeoffMinutes={maxTakeoffMinutes}
-          setMaxTakeoffMinutes={setMaxTakeoffMinutes}
-          maxLandingMinutes={maxLandingMinutes}
-          setMaxLandingMinutes={setMaxLandingMinutes}
-          durationBounds={durationBounds}
-          maxDurationMinutes={maxDurationMinutes}
-          setMaxDurationMinutes={setMaxDurationMinutes}
-          stopOptions={stopOptions}
-          selectedStops={selectedStops}
-          setSelectedStops={setSelectedStops}
-          airlineOptions={airlineOptions}
-          selectedAirlines={selectedAirlines}
-          setSelectedAirlines={setSelectedAirlines}
-          airportOptions={airportOptions}
-          selectedAirports={selectedAirports}
-          setSelectedAirports={setSelectedAirports}
-          flightQualityOptions={flightQualityOptions}
-          selectedFlightQuality={selectedFlightQuality}
-          setSelectedFlightQuality={setSelectedFlightQuality}
-          baggageIncludedOnly={baggageIncludedOnly}
-          setBaggageIncludedOnly={setBaggageIncludedOnly}
-          flexibleOnly={flexibleOnly}
-          setFlexibleOnly={setFlexibleOnly}
-          onFilterChange={triggerFilterApplying}
-        />
+        <div className="border-t border-slate-200 bg-white p-4">
+          <Button
+            type="button"
+            className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
+            onClick={() => setFiltersOpen(false)}
+          >
+            Done
+          </Button>
+        </div>
       </aside>
     </main>
   );
