@@ -69,14 +69,6 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
               >
                 {displayPrice.formatted}
               </div>
-              <div className="text-xs font-medium text-slate-500">
-                {displayPrice.isConvertedEstimate ? "display estimate" : "estimated total"}
-              </div>
-              <div className="text-[11px] font-medium leading-4 text-slate-500">
-                {displayPrice.isConvertedEstimate
-                  ? `Provider price: ${displayPrice.providerFormatted}`
-                  : "Final price confirmed by provider"}
-              </div>
             </div>
             <div className="text-right">
               <LinkButton href={`/flights/details/${encodeURIComponent(flight.id)}`} variant="primary" size="sm" className="whitespace-nowrap bg-navy px-2.5 hover:bg-navy-soft">
