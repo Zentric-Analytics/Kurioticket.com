@@ -1,9 +1,42 @@
 import { z } from "zod";
 
+const isoDatePattern = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseIsoDateValue(value: string) {
+  if (!isoDatePattern.test(value)) return null;
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function isTodayOrFutureDate(value: string) {
+  const date = parseIsoDateValue(value);
+  if (!date) return false;
+
+  const today = new Date();
+  const startOfToday = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+  );
+
+  return date >= startOfToday;
+}
+
 const futureDate = z
   .string()
   .min(1)
-  .refine((value) => !Number.isNaN(Date.parse(value)), "Use a valid date.");
+  .refine(isTodayOrFutureDate, "Choose today or a future date.");
 
 export const flightSearchSchema = z
   .object({
@@ -11,7 +44,10 @@ export const flightSearchSchema = z
     origin: z.string().trim().min(3, "Enter a departure airport or city.").max(80),
     destination: z.string().trim().min(3, "Enter an arrival airport or city.").max(80),
     departureDate: futureDate,
-    returnDate: z.string().optional(),
+    returnDate: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      futureDate.optional(),
+    ),
     travelers: z.coerce.number().int().min(1).max(9).default(1),
     adults: z.coerce.number().int().min(1).max(9).optional(),
     children: z.coerce.number().int().min(0).max(8).optional(),
@@ -42,6 +78,16 @@ export const flightSearchSchema = z
     message: "Choose a return date for round trips.",
     path: ["returnDate"],
   })
+  .refine(
+    (data) =>
+      data.tripType !== "round-trip" ||
+      !data.returnDate ||
+      data.returnDate >= data.departureDate,
+    {
+      message: "Return date must be the same as or after departure.",
+      path: ["returnDate"],
+    },
+  )
   .refine((data) => data.infants <= data.adults, {
     message: "Infants on lap cannot exceed adults.",
     path: ["infants"],
