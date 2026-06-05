@@ -20,7 +20,6 @@ import type { FlightLeg, PublicFlightResult } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ScoreMeter } from "@/components/ui/ScoreMeter";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -330,18 +329,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
               </div>
             ) : null}
           </Card>
-
-          <Card className="p-5">
-            <h2 className="text-lg font-bold text-navy">Trip quality insights</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">A friendlier view of the same value, risk, comfort, confidence, and effort scores from this live result.</p>
-            <div className="mt-4 grid gap-4">
-              <ScoreInsight label="Value" helper="Price and itinerary balance" score={flight.valueScore} />
-              <ScoreInsight label="Risk" helper="Lower is better" score={flight.riskScore} invert />
-              <ScoreInsight label="Comfort" helper="Cabin and connection comfort" score={flight.comfortScore} />
-              <ScoreInsight label="Travel confidence" helper="Overall booking confidence" score={flight.travelConfidenceScore} />
-              <ScoreInsight label="Travel effort" helper="Lower effort is better" score={flight.travelEffortScore} invert />
-            </div>
-          </Card>
         </aside>
       </div>
     </main>
@@ -433,15 +420,6 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: strin
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
         <p className="mt-1 break-words text-sm font-semibold leading-5 text-navy">{value}</p>
       </div>
-    </div>
-  );
-}
-
-function ScoreInsight({ label, helper, score, invert = false }: { label: string; helper: string; score: number; invert?: boolean }) {
-  return (
-    <div className="rounded-xl border border-border bg-surface-muted/50 p-3">
-      <ScoreMeter label={label} score={score} invert={invert} />
-      <p className="mt-2 text-xs leading-5 text-muted">{helper}</p>
     </div>
   );
 }
