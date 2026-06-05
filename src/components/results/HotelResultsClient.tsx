@@ -277,6 +277,12 @@ const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
       100,
   );
 
+type HotelSummaryItem = {
+  label: string;
+  value: string;
+  context: string;
+};
+
 export function HotelResultsClient() {
   const params = useSearchParams();
 
@@ -405,6 +411,10 @@ export function HotelResultsClient() {
   );
 
   const visibleFilteredHotels = filterApplying ? visibleFiltered : filtered;
+  const hotelSummaryItems = useMemo(
+    () => buildHotelSummaryItems(visibleFilteredHotels),
+    [visibleFilteredHotels],
+  );
 
   const showFilteredEmptyState =
     !loading &&
@@ -650,6 +660,8 @@ export function HotelResultsClient() {
                   />
                 </div>
 
+                <HotelSummaryRow items={hotelSummaryItems} />
+
                 {filterApplying ? (
                   <div className="space-y-3">
                     <div
@@ -741,6 +753,108 @@ export function HotelResultsClient() {
       </aside>
     </main>
   );
+}
+
+function HotelSummaryRow({ items }: { items: HotelSummaryItem[] }) {
+  if (!items.length) return null;
+
+  return (
+    <div
+      className="-mx-1 max-w-full overflow-x-auto px-1 pb-1"
+      aria-label="Hotel result summary"
+    >
+      <div className="flex min-w-0 snap-x gap-2 sm:grid sm:grid-cols-3">
+        {items.map((item) => (
+          <div
+            key={item.label}
+            className="min-w-[156px] snap-start rounded-2xl border border-slate-200/80 bg-white px-3.5 py-3 text-left shadow-sm shadow-slate-900/[0.03] sm:min-w-0"
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-700">
+              {item.label}
+            </p>
+            <p className="mt-1.5 truncate text-base font-semibold leading-6 tracking-[-0.02em] text-slate-900">
+              {item.value}
+            </p>
+            <p className="mt-1 truncate text-xs font-medium leading-4 text-slate-500">
+              {item.context}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function buildHotelSummaryItems(
+  hotels: PublicHotelResult[],
+): HotelSummaryItem[] {
+  if (!hotels.length) return [];
+
+  const cheapest = hotels.reduce((best, hotel) =>
+    hotel.totalPrice < best.totalPrice ? hotel : best,
+  );
+  const bestValue = hotels.reduce((best, hotel) => {
+    const hotelScore = getHotelValueSummaryScore(hotel);
+    const bestScore = getHotelValueSummaryScore(best);
+
+    return hotelScore > bestScore ||
+      (hotelScore === bestScore && hotel.totalPrice < best.totalPrice)
+      ? hotel
+      : best;
+  });
+  const topRated = hotels.reduce((best, hotel) =>
+    hotel.rating > best.rating ||
+    (hotel.rating === best.rating && hotel.totalPrice < best.totalPrice)
+      ? hotel
+      : best,
+  );
+
+  return [
+    {
+      label: "Cheapest",
+      value: formatCurrency(cheapest.totalPrice, cheapest.currency),
+      context: cheapest.name,
+    },
+    {
+      label: "Best value",
+      value: formatHotelValueSummary(bestValue),
+      context: bestValue.name,
+    },
+    {
+      label: "Top rated",
+      value: formatHotelRating(topRated.rating),
+      context: topRated.name,
+    },
+  ];
+}
+
+function getHotelValueSummaryScore(hotel: PublicHotelResult) {
+  return (
+    hotel.valueScore +
+    hotel.travelConfidenceScore +
+    hotel.arrivalSuitabilityScore +
+    hotel.rating
+  );
+}
+
+function formatHotelValueSummary(hotel: PublicHotelResult) {
+  if (hotel.badges.some((badge) => /recommended/i.test(badge))) {
+    return "Recommended";
+  }
+
+  if (Number.isFinite(hotel.valueScore)) {
+    return `${Math.round(hotel.valueScore)} value score`;
+  }
+
+  return formatCurrency(hotel.totalPrice, hotel.currency);
+}
+
+function formatHotelRating(rating: number) {
+  const formatted = Number.isInteger(rating)
+    ? String(rating)
+    : rating.toFixed(1);
+
+  return `${formatted} star${rating === 1 ? "" : "s"}`;
 }
 
 function ActiveHotelFilterChips({
