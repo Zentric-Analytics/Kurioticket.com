@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   CalendarDays,
+  CheckCircle2,
   Clock3,
   MapPin,
   Search,
@@ -24,15 +25,9 @@ type CarsResultsValues = {
   driverAge: string;
 };
 
-type SearchField = {
-  label: string;
-  value: string;
-  icon: typeof MapPin;
-};
-
-type PendingFilterGroup = {
+type CarFilterGroup = {
   title: string;
-  description: string;
+  options: string[];
 };
 
 const defaultDriverAge = "18-70";
@@ -43,50 +38,44 @@ const driverAgeOptions = [
   ...Array.from({ length: 58 }, (_, index) => String(index + 18)),
 ];
 
-const pendingFilterGroups: PendingFilterGroup[] = [
+const carFilterGroups: CarFilterGroup[] = [
   {
     title: "Vehicle type",
-    description: "Vehicle classes will load from live rental inventory.",
-  },
-  {
-    title: "Rental company",
-    description: "Rental company options will appear after providers connect.",
+    options: ["Small cars", "Medium cars", "SUVs"],
   },
   {
     title: "Transmission",
-    description: "Transmission choices will be based on provider vehicles.",
+    options: ["Automatic", "Manual"],
   },
   {
     title: "Seats",
-    description: "Seat capacity filters will unlock with vehicle details.",
+    options: ["4+ seats", "5+ seats", "7+ seats"],
   },
   {
     title: "Bags",
-    description: "Luggage capacity filters will unlock with vehicle details.",
-  },
-  {
-    title: "Mileage policy",
-    description: "Mileage terms will display from provider rules.",
+    options: ["2+ bags", "3+ bags", "4+ bags"],
   },
   {
     title: "Fuel policy",
-    description: "Fuel policy filters will display from provider rules.",
+    options: ["Full-to-full", "Same-to-same"],
+  },
+  {
+    title: "Mileage policy",
+    options: ["Unlimited mileage", "Limited mileage"],
   },
   {
     title: "Cancellation",
-    description: "Cancellation filters will display from provider terms.",
+    options: ["Free cancellation", "Pay at pickup"],
   },
   {
     title: "Pickup location type",
-    description: "Airport, shuttle, and counter details will load from providers.",
+    options: ["Airport counter", "Shuttle pickup", "City location"],
   },
 ];
 
-const displayValue = (value: string) => value || "Not selected";
-
 const formatDate = (date: string) => {
   if (!date) {
-    return "Not selected";
+    return "Select date";
   }
 
   const [year, month, day] = date.split("-").map(Number);
@@ -100,61 +89,25 @@ const formatDate = (date: string) => {
     : date;
 };
 
-const formatDriverAge = (driverAge: string) => {
-  if (!driverAge) {
-    return driverAgeRangeLabel;
-  }
-
-  if (driverAge === defaultDriverAge || driverAge === "18–70") {
-    return driverAgeRangeLabel;
-  }
-
-  const numericDriverAge = Number.parseInt(driverAge, 10);
-
-  return !Number.isNaN(numericDriverAge) &&
-    String(numericDriverAge) === driverAge
-    ? `${numericDriverAge} years old`
-    : driverAge;
-};
-
 const getDriverAgeOptionLabel = (age: string) =>
   age === defaultDriverAge ? driverAgeRangeLabel : `${age} years old`;
+
+const fieldShellClass =
+  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
+
+const fieldLabelClass =
+  "mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600";
+
+const fieldInputClass =
+  "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
 
 export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const resolvedDropoffLocation = values.dropoffLocation || values.pickupLocation;
   const driverAge = values.driverAge || defaultDriverAge;
-
-  const searchFields: SearchField[] = [
-    {
-      label: "Pickup location",
-      value: displayValue(values.pickupLocation),
-      icon: MapPin,
-    },
-    {
-      label: "Return location",
-      value: displayValue(resolvedDropoffLocation),
-      icon: MapPin,
-    },
-    {
-      label: "Rental dates",
-      value:
-        values.pickupDate || values.dropoffDate
-          ? `${formatDate(values.pickupDate)} – ${formatDate(values.dropoffDate)}`
-          : "Not selected",
-      icon: CalendarDays,
-    },
-    {
-      label: "Pickup / return time",
-      value: `${displayValue(values.pickupTime)} – ${displayValue(values.dropoffTime)}`,
-      icon: Clock3,
-    },
-    {
-      label: "Driver age",
-      value: formatDriverAge(driverAge),
-      icon: Users,
-    },
-  ];
+  const hasSearchContext = Boolean(
+    values.pickupLocation || values.pickupDate || values.dropoffDate,
+  );
 
   return (
     <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8">
@@ -179,14 +132,15 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           </div>
 
           <form action="/cars/results" method="get" className="min-w-0">
-            <div className="border border-slate-200 bg-white p-1 shadow-[0_12px_30px_rgba(15,23,42,0.08)]">
-              <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1.35fr)_minmax(0,1.35fr)_minmax(0,1.25fr)_minmax(7rem,0.72fr)_112px] lg:gap-0">
+            <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1.35fr)_minmax(0,1.55fr)_minmax(0,1.35fr)_minmax(8rem,0.8fr)_112px] lg:gap-0">
                 <SearchInputCell
                   icon={MapPin}
                   label="Pickup location"
                   name="pickupLocation"
                   placeholder="Airport, city, or address"
                   value={values.pickupLocation}
+                  className="lg:rounded-l-xl"
                 />
                 <SearchInputCell
                   icon={MapPin}
@@ -203,79 +157,43 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                   dropoffTime={values.dropoffTime}
                   pickupTime={values.pickupTime}
                 />
-                <div className="min-w-0 border-slate-200 px-3 py-2 lg:border-r">
-                  <label
-                    htmlFor="driverAge"
-                    className="flex items-center gap-1.5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-slate-500"
-                  >
-                    <Users className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
-                    Driver age
-                  </label>
-                  <select
-                    id="driverAge"
-                    name="driverAge"
-                    defaultValue={driverAge}
-                    className="mt-1 h-8 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
-                  >
-                    {driverAgeOptions.map((age) => (
-                      <option key={age} value={age}>
-                        {getDriverAgeOptionLabel(age)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
+                <DriverAgeCell driverAge={driverAge} />
+                <Button
                   type="submit"
-                  className="focus-ring inline-flex min-h-12 w-full items-center justify-center gap-2 bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 transition hover:from-indigo-600 hover:to-violet-500 lg:min-h-[58px]"
+                  className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 sm:mt-3 lg:mt-0 lg:h-auto lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
                   Search
-                </button>
+                </Button>
               </div>
             </div>
           </form>
-
-          <dl className="mt-2 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-5">
-            {searchFields.map((field) => {
-              const Icon = field.icon;
-
-              return (
-                <div
-                  key={field.label}
-                  className="min-w-0 border border-slate-200/80 bg-white/75 px-3 py-2 shadow-sm shadow-slate-900/[0.03]"
-                >
-                  <dt className="flex items-center gap-1.5 font-bold uppercase tracking-[0.14em] text-slate-500">
-                    <Icon className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
-                    {field.label}
-                  </dt>
-                  <dd className="mt-1 truncate text-sm font-semibold text-slate-950">
-                    {field.value}
-                  </dd>
-                </div>
-              );
-            })}
-          </dl>
         </div>
       </section>
 
       <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="hidden lg:block lg:self-start lg:sticky lg:top-44 lg:max-h-[calc(100vh-11rem)] lg:overflow-y-auto">
+        <aside className="hidden lg:block lg:self-start lg:sticky lg:top-36 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto">
           <CarFilters />
         </aside>
 
         <section className="min-w-0 space-y-4" aria-label="Car results">
-          <div className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-900/[0.04] sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-900/[0.04] sm:flex-row sm:items-center sm:justify-between">
             <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
+                Car rentals
+              </p>
               <h1
                 id="cars-results-heading"
-                className="text-lg font-black tracking-[-0.02em] text-slate-950"
+                className="mt-1 text-lg font-black tracking-[-0.02em] text-slate-950 sm:text-xl"
               >
                 {values.pickupLocation
                   ? `Cars from ${values.pickupLocation}`
-                  : "Car rental results"}
+                  : "Search car rentals"}
               </h1>
               <p className="mt-1 text-sm text-muted">
-                Search intent is saved. Live inventory will appear here when the car rental provider connection is available.
+                {hasSearchContext
+                  ? "We could not find cars for these details right now. Adjust your dates or location and search again."
+                  : "Enter your pickup details to start a car rental search."}
               </p>
             </div>
             <Button
@@ -289,12 +207,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             </Button>
           </div>
 
-          <div
-            className="rounded-md border border-danger/30 bg-red-50 p-4 text-danger"
-            role="status"
-          >
-            Live car rental search is temporarily unavailable. Please try again shortly.
-          </div>
+          <EmptyCarsState hasSearchContext={hasSearchContext} />
         </section>
       </div>
 
@@ -318,7 +231,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             <div>
               <h2 className="text-base font-semibold text-slate-900">Filters</h2>
               <p className="mt-1 text-xs font-semibold text-slate-500">
-                Available when providers connect
+                Available with matching results
               </p>
             </div>
             <Button
@@ -353,19 +266,18 @@ function SearchInputCell({
   name,
   placeholder,
   value,
+  className,
 }: {
   icon: typeof MapPin;
   label: string;
   name: keyof Pick<CarsResultsValues, "pickupLocation" | "dropoffLocation">;
   placeholder: string;
   value: string;
+  className?: string;
 }) {
   return (
-    <div className="min-w-0 border-slate-200 px-3 py-2 lg:border-r">
-      <label
-        htmlFor={name}
-        className="flex items-center gap-1.5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-slate-500"
-      >
+    <div className={cn(fieldShellClass, className)}>
+      <label htmlFor={name} className={fieldLabelClass}>
         <Icon className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
         {label}
       </label>
@@ -375,7 +287,7 @@ function SearchInputCell({
         type="text"
         defaultValue={value}
         placeholder={placeholder}
-        className="mt-1 h-8 w-full border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm"
+        className={fieldInputClass}
         autoComplete="off"
       />
     </div>
@@ -390,12 +302,12 @@ function SearchDateCell({
   pickupDate: string;
 }) {
   return (
-    <div className="min-w-0 border-slate-200 px-3 py-2 lg:border-r">
-      <div className="flex items-center gap-1.5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-slate-500">
+    <div className={fieldShellClass}>
+      <div className={fieldLabelClass}>
         <CalendarDays className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
         Rental dates
       </div>
-      <div className="mt-1 grid grid-cols-2 gap-2">
+      <div className="grid h-8 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
         <label className="sr-only" htmlFor="pickupDate">
           Pickup date
         </label>
@@ -404,8 +316,12 @@ function SearchDateCell({
           name="pickupDate"
           type="date"
           defaultValue={pickupDate}
-          className="h-8 min-w-0 border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+          aria-label={`Pickup date, ${formatDate(pickupDate)}`}
+          className={cn(fieldInputClass, "min-w-0")}
         />
+        <span className="text-slate-300" aria-hidden="true">
+          —
+        </span>
         <label className="sr-only" htmlFor="dropoffDate">
           Return date
         </label>
@@ -414,7 +330,8 @@ function SearchDateCell({
           name="dropoffDate"
           type="date"
           defaultValue={dropoffDate}
-          className="h-8 min-w-0 border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+          aria-label={`Return date, ${formatDate(dropoffDate)}`}
+          className={cn(fieldInputClass, "min-w-0")}
         />
       </div>
     </div>
@@ -429,12 +346,12 @@ function SearchTimeCell({
   pickupTime: string;
 }) {
   return (
-    <div className="min-w-0 border-slate-200 px-3 py-2 lg:border-r">
-      <div className="flex items-center gap-1.5 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-slate-500">
+    <div className={fieldShellClass}>
+      <div className={fieldLabelClass}>
         <Clock3 className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
         Pickup / return time
       </div>
-      <div className="mt-1 grid grid-cols-2 gap-2">
+      <div className="grid h-8 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
         <label className="sr-only" htmlFor="pickupTime">
           Pickup time
         </label>
@@ -443,8 +360,11 @@ function SearchTimeCell({
           name="pickupTime"
           type="time"
           defaultValue={pickupTime || "10:00"}
-          className="h-8 min-w-0 border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+          className={cn(fieldInputClass, "min-w-0")}
         />
+        <span className="text-slate-300" aria-hidden="true">
+          —
+        </span>
         <label className="sr-only" htmlFor="dropoffTime">
           Return time
         </label>
@@ -453,8 +373,80 @@ function SearchTimeCell({
           name="dropoffTime"
           type="time"
           defaultValue={dropoffTime || "10:00"}
-          className="h-8 min-w-0 border-none bg-transparent p-0 text-[16px] font-semibold text-slate-950 focus:outline-none md:text-sm"
+          className={cn(fieldInputClass, "min-w-0")}
         />
+      </div>
+    </div>
+  );
+}
+
+function DriverAgeCell({ driverAge }: { driverAge: string }) {
+  return (
+    <div className={fieldShellClass}>
+      <label htmlFor="driverAge" className={fieldLabelClass}>
+        <Users className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
+        Driver age
+      </label>
+      <select
+        id="driverAge"
+        name="driverAge"
+        defaultValue={driverAge}
+        className={cn(fieldInputClass, "appearance-none pr-4")}
+      >
+        {driverAgeOptions.map((age) => (
+          <option key={age} value={age}>
+            {getDriverAgeOptionLabel(age)}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function EmptyCarsState({ hasSearchContext }: { hasSearchContext: boolean }) {
+  return (
+    <div
+      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/[0.04]"
+      role="status"
+    >
+      <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/70 px-5 py-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
+              No cars found
+            </p>
+            <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] text-slate-950">
+              Try adjusting your search details
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {hasSearchContext
+                ? "We saved this search, but there are no car rental options to show for these details right now. Try different dates, times, or a nearby pickup location."
+                : "Add a pickup location and rental dates above to look for car rental options that fit your trip."}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-indigo-100 bg-white p-3 text-indigo-700 shadow-sm shadow-indigo-900/[0.04]">
+            <Search className="h-6 w-6" aria-hidden="true" />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-3 px-5 py-5 sm:grid-cols-3">
+        {[
+          "Check nearby pickup locations",
+          "Try different rental dates",
+          "Adjust pickup or return times",
+        ].map((tip) => (
+          <div
+            key={tip}
+            className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-sm font-semibold text-slate-700"
+          >
+            <CheckCircle2
+              className="mt-0.5 h-4 w-4 shrink-0 text-violet-600"
+              aria-hidden="true"
+            />
+            <span>{tip}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -463,47 +455,49 @@ function SearchTimeCell({
 function CarFilters() {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-900/[0.04]">
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-white px-4 py-4">
         <div>
-          <h2 className="text-base font-semibold text-white/95">Filter by</h2>
-          <p className="mt-0.5 text-xs font-medium text-white/75">
-            Reserved for live rental inventory
+          <h2 className="text-base font-bold text-slate-950">Filters</h2>
+          <p className="mt-1 text-xs font-semibold text-slate-500">
+            Available with matching results
           </p>
         </div>
-        <SlidersHorizontal className="text-white/90" size={18} aria-hidden="true" />
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">
+          <SlidersHorizontal size={18} aria-hidden="true" />
+        </span>
       </div>
 
-      <div className="space-y-4 bg-white px-3 py-3">
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50/70 p-3 text-xs font-semibold leading-5 text-indigo-900">
-          Filter controls are intentionally disabled until provider inventory is connected. No live counts, prices, companies, or availability are shown.
+      <div className="space-y-4 bg-white px-4 py-4">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-sm font-medium leading-6 text-slate-600">
+          Filters will become available when results are available.
         </div>
-        {pendingFilterGroups.map((group) => (
-          <PendingFilterSection key={group.title} group={group} />
+        {carFilterGroups.map((group) => (
+          <FilterSection key={group.title} group={group} />
         ))}
       </div>
     </div>
   );
 }
 
-function PendingFilterSection({ group }: { group: PendingFilterGroup }) {
+function FilterSection({ group }: { group: CarFilterGroup }) {
   return (
     <section className="border-t border-slate-200/70 pt-4 first:border-t-0 first:pt-0">
-      <h3 className="text-sm font-semibold text-slate-900">{group.title}</h3>
-      <label className="mt-2 grid cursor-not-allowed grid-cols-[auto_1fr] gap-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-sm text-slate-500">
-        <input
-          type="checkbox"
-          className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600"
-          disabled
-        />
-        <span>
-          <span className="block font-semibold text-slate-600">
-            Available when providers connect
-          </span>
-          <span className="mt-0.5 block text-xs leading-5 text-slate-500">
-            {group.description}
-          </span>
-        </span>
-      </label>
+      <h3 className="text-sm font-bold text-slate-950">{group.title}</h3>
+      <div className="mt-2 space-y-2" aria-disabled="true">
+        {group.options.map((option) => (
+          <label
+            key={option}
+            className="grid cursor-not-allowed grid-cols-[auto_1fr] items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-sm font-semibold text-slate-500 opacity-75"
+          >
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600"
+              disabled
+            />
+            <span>{option}</span>
+          </label>
+        ))}
+      </div>
     </section>
   );
 }
