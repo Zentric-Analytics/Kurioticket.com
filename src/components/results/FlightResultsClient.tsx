@@ -50,7 +50,7 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
 
-const resultStackClass = "w-full max-w-[760px] lg:ml-4 xl:ml-6";
+const resultStackClass = "w-full max-w-[680px] lg:ml-4 xl:ml-6";
 
 const loadingMessages = [
   "Searching airlines...",
