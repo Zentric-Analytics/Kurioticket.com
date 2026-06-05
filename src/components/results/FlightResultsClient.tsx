@@ -62,14 +62,18 @@ const loadingMessages = [
   "Comparing baggage-inclusive fares...",
 ];
 
-type CabinClassValue = "economy" | "premium-economy" | "business" | "first";
+type CabinClassValue = "economy" | "business" | "first";
 
 const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
   { label: "Economy", value: "economy" },
-  { label: "Premium Economy", value: "premium-economy" },
   { label: "Business", value: "business" },
   { label: "First", value: "first" },
 ];
+
+const normalizeCabinClassValue = (
+  value: string | null | undefined,
+): CabinClassValue =>
+  value === "business" || value === "first" ? value : "economy";
 
 const flightFaqItems: Array<{ question: string; answer: string }> = [
   {
@@ -642,8 +646,8 @@ export function FlightResultsClient() {
 
     return Number.isFinite(value) ? Math.max(0, value) : 0;
   });
-  const [cabinClassInput, setCabinClassInput] = useState<CabinClassValue>(
-    (params.get("cabinClass") as CabinClassValue) || "economy",
+  const [cabinClassInput, setCabinClassInput] = useState<CabinClassValue>(() =>
+    normalizeCabinClassValue(params.get("cabinClass")),
   );
   const [activeSuggest, setActiveSuggest] = useState<
     "origin" | "destination" | null
@@ -806,21 +810,6 @@ export function FlightResultsClient() {
     focusDestinationInput();
   }
 
-  function clearFlightSearchForm() {
-    setOriginInput("");
-    setOriginCode("");
-    setDestinationInput("");
-    setDestinationCode("");
-    setDepartureDateInput("");
-    setReturnDateInput("");
-    setAdultCount(1);
-    setChildCount(0);
-    setInfantCount(0);
-    setCabinClassInput("economy");
-    setTripTypeInput("round-trip");
-    closeFlightSearchPopovers();
-  }
-
   function handleSavedRouteToggle(
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string,
@@ -865,11 +854,9 @@ export function FlightResultsClient() {
     const nextInfants = Number.isFinite(infantsParam)
       ? Math.max(0, infantsParam)
       : 0;
-    const nextCabinClass = cabinClassOptions.some(
-      (option) => option.value === searchValues.get("cabinClass"),
-    )
-      ? (searchValues.get("cabinClass") as CabinClassValue)
-      : "economy";
+    const nextCabinClass = normalizeCabinClassValue(
+      searchValues.get("cabinClass"),
+    );
 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Keeps the editable search form in sync with URL-backed result searches.
     setTripTypeInput(nextTripType);
@@ -965,17 +952,6 @@ export function FlightResultsClient() {
       controller.abort();
     };
   }, [destinationInput, countryHint]);
-
-  const isFormDirty =
-    Boolean(originInput.trim()) ||
-    Boolean(destinationInput.trim()) ||
-    Boolean(departureDateInput) ||
-    Boolean(returnDateInput) ||
-    tripTypeInput !== "round-trip" ||
-    adultCount !== 1 ||
-    childCount !== 0 ||
-    infantCount !== 0 ||
-    cabinClassInput !== "economy";
 
   const body = useMemo(() => {
     const origin = params.get("origin")?.trim() || "";
@@ -1780,26 +1756,42 @@ export function FlightResultsClient() {
               </div>
             </div>
 
-            {isFormDirty ? (
-              <div className="mt-1 flex justify-end">
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    clearFlightSearchForm();
-                  }}
-                  className="focus-ring inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                >
-                  <X size={12} />
-                  Clear all
-                </button>
-              </div>
-            ) : null}
-
             <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
-                <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
+                <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                  <label
+                    className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600"
+                    htmlFor="tripType"
+                  >
+                    Trip type
+                  </label>
+                  <select
+                    id="tripType"
+                    name="tripType"
+                    value={tripTypeInput}
+                    onChange={(event) => {
+                      const nextTripType = event.target.value;
+                      setTripTypeInput(nextTripType);
+                      if (nextTripType !== "round-trip") {
+                        setReturnDateInput("");
+                        if (activeDatePicker === "return") {
+                          setActiveDatePicker(null);
+                          setDatePickerPosition(null);
+                        }
+                      }
+                    }}
+                    className="focus-ring h-8 w-full appearance-none rounded-md border-0 bg-transparent px-0 pr-6 text-[16px] font-medium text-slate-900 outline-none transition-colors md:text-sm"
+                  >
+                    <option value="round-trip">Round-trip</option>
+                    <option value="one-way">One-way</option>
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="pointer-events-none absolute bottom-3.5 right-3 text-slate-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                   <div
                     className="relative min-h-[54px] px-0 py-0 pr-2"
                     ref={originWrapRef}
@@ -2043,70 +2035,12 @@ export function FlightResultsClient() {
                     />
                   </button>
                 </div>
-
-                <div className="mt-2 flex items-center lg:hidden">
-                  <div className="relative inline-flex items-center">
-                    <select
-                      id="tripTypeMobile"
-                      name="tripTypeMobile"
-                      value={tripTypeInput}
-                      onChange={(event) => {
-                        const nextTripType = event.target.value;
-                        setTripTypeInput(nextTripType);
-                        if (nextTripType !== "round-trip") {
-                          setReturnDateInput("");
-                          if (activeDatePicker === "return") {
-                            setActiveDatePicker(null);
-                            setDatePickerPosition(null);
-                          }
-                        }
-                      }}
-                      className="min-h-10 appearance-none border-0 bg-transparent py-1 pl-0 pr-6 text-base font-medium text-slate-700 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-0"
-                    >
-                      <option value="round-trip">Round-trip</option>
-                      <option value="one-way">One-way</option>
-                    </select>
-                    <ChevronDown
-                      size={14}
-                      className="pointer-events-none absolute right-0 text-slate-500"
-                    />
-                  </div>
-                </div>
-
                 <Button
                   type="submit"
                   className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 sm:mt-3 lg:mt-0 lg:h-auto lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
                   Search
                 </Button>
-              </div>
-            </div>
-            <div className="mt-1 hidden items-center lg:flex lg:pl-1">
-              <div className="relative inline-flex items-center">
-                <select
-                  id="tripType"
-                  name="tripType"
-                  value={tripTypeInput}
-                  onChange={(event) => {
-                    const nextTripType = event.target.value;
-                    setTripTypeInput(nextTripType);
-                    if (nextTripType !== "round-trip") {
-                      setReturnDateInput("");
-                      if (activeDatePicker === "return") {
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                      }
-                    }
-                  }}
-                  className="min-h-10 appearance-none border-0 bg-transparent py-1 pl-0 pr-6 text-base font-medium text-slate-700 transition-colors hover:text-slate-900 focus-visible:outline-none focus-visible:ring-0"
-                >
-                  <option value="round-trip">Round-trip</option>
-                  <option value="one-way">One-way</option>
-                </select>
-                <ChevronDown
-                  size={14}
-                  className="pointer-events-none absolute right-0 text-slate-500"
-                />
               </div>
             </div>
           </form>
@@ -2769,22 +2703,6 @@ export function FlightResultsClient() {
             >
               Search
             </Button>
-
-            {isFormDirty ? (
-              <div className="mt-3 flex justify-end">
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    clearFlightSearchForm();
-                  }}
-                  className="focus-ring inline-flex items-center gap-1.5 px-2 py-1 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
-                >
-                  <X className="h-3.5 w-3.5" aria-hidden="true" />
-                  Clear all
-                </button>
-              </div>
-            ) : null}
           </div>
         </form>
       );
@@ -2813,8 +2731,84 @@ export function FlightResultsClient() {
           </div>
 
           <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
+              <div ref={tripTypeMenuRef} className="relative">
+                <button
+                  type="button"
+                  aria-expanded={tripTypeMenuOpen}
+                  aria-haspopup="listbox"
+                  onClick={() => setTripTypeMenuOpen((open) => !open)}
+                  className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
+                      Trip type
+                    </span>
+                    <span className="block truncate text-sm font-semibold text-slate-950">
+                      {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
+                    </span>
+                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={cn(
+                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
+                      tripTypeMenuOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+
+                {tripTypeMenuOpen ? (
+                  <div
+                    role="listbox"
+                    aria-label="Trip type"
+                    className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                  >
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={tripTypeInput === "round-trip"}
+                      onClick={() => {
+                        setTripTypeInput("round-trip");
+                        setTripTypeMenuOpen(false);
+                      }}
+                      className={cn(
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                        tripTypeInput === "round-trip"
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      Round-trip
+                    </button>
+
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={tripTypeInput === "one-way"}
+                      onClick={() => {
+                        setTripTypeInput("one-way");
+                        setReturnDateInput("");
+                        setTripTypeMenuOpen(false);
+
+                        if (activeDatePicker === "return") {
+                          setActiveDatePicker(null);
+                          setDatePickerPosition(null);
+                        }
+                      }}
+                      className={cn(
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                        tripTypeInput === "one-way"
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      One-way
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                 <div
                   ref={originWrapRef}
                   className="relative min-h-[54px] px-0 py-0 pr-3"
@@ -3038,89 +3032,6 @@ export function FlightResultsClient() {
                 Search
               </Button>
             </div>
-          </div>
-          <div className="mt-2 flex items-center justify-start px-1">
-            <div ref={tripTypeMenuRef} className="relative inline-flex">
-              <button
-                type="button"
-                aria-expanded={tripTypeMenuOpen}
-                aria-haspopup="listbox"
-                onClick={() => setTripTypeMenuOpen((open) => !open)}
-                className="focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-950"
-              >
-                {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
-                <ChevronDown
-                  aria-hidden="true"
-                  className={cn(
-                    "h-4 w-4 text-slate-500 transition-transform",
-                    tripTypeMenuOpen && "rotate-180",
-                  )}
-                />
-              </button>
-
-              {tripTypeMenuOpen ? (
-                <div
-                  role="listbox"
-                  aria-label="Trip type"
-                  className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
-                >
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={tripTypeInput === "round-trip"}
-                    onClick={() => {
-                      setTripTypeInput("round-trip");
-                      setTripTypeMenuOpen(false);
-                    }}
-                    className={cn(
-                      "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
-                      tripTypeInput === "round-trip"
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-100",
-                    )}
-                  >
-                    Round-trip
-                  </button>
-
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={tripTypeInput === "one-way"}
-                    onClick={() => {
-                      setTripTypeInput("one-way");
-                      setReturnDateInput("");
-                      setTripTypeMenuOpen(false);
-
-                      if (activeDatePicker === "return") {
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                      }
-                    }}
-                    className={cn(
-                      "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
-                      tripTypeInput === "one-way"
-                        ? "bg-slate-900 text-white"
-                        : "text-slate-700 hover:bg-slate-100",
-                    )}
-                  >
-                    One-way
-                  </button>
-                </div>
-              ) : null}
-            </div>
-            {isFormDirty ? (
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.preventDefault();
-                  clearFlightSearchForm();
-                }}
-                className="focus-ring ml-auto inline-flex items-center gap-1.5 px-2 py-1 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
-              >
-                <X className="h-3.5 w-3.5" aria-hidden="true" />
-                Clear all
-              </button>
-            ) : null}
           </div>
         </div>
       </form>

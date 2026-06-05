@@ -17,7 +17,11 @@ export const flightSearchSchema = z
     children: z.coerce.number().int().min(0).max(8).optional(),
     infants: z.coerce.number().int().min(0).max(8).optional(),
     cabinClass: z
-      .enum(["economy", "premium-economy", "business", "first"])
+      .preprocess(
+        (value) => (value === "premium-economy" ? "economy" : value),
+        z.enum(["economy", "business", "first"]),
+      )
+      .catch("economy")
       .default("economy"),
     sort: z.enum(["cheapest", "best", "fastest", "stops"]).optional(),
     currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/).catch("USD").default("USD"),

@@ -42,7 +42,7 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
   return (
     <Card className="w-full overflow-hidden border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.065)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.095)]">
       <div className="p-3 sm:p-3.5">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_148px] lg:items-start">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px] lg:items-stretch">
           <div className="min-w-0 space-y-2">
             <div className="flex min-w-0 items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
               <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
@@ -68,7 +68,7 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
             <FlightDetailLines details={details} />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[112px] lg:shrink-0 lg:flex-col lg:items-end lg:justify-start lg:text-right">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[132px] lg:shrink-0 lg:flex-col lg:items-end lg:justify-between lg:self-stretch lg:border-0 lg:bg-transparent lg:px-0 lg:pb-2 lg:pt-10 lg:text-right">
             <div className="min-w-0 lg:text-right">
               <div
                 className="text-xl font-semibold tracking-[-0.025em] text-slate-950 sm:text-[1.35rem]"
