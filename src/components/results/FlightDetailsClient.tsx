@@ -3,13 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  CalendarClock,
   Clock3,
   Info,
   Luggage,
   Plane,
-  PlaneLanding,
-  PlaneTakeoff,
   Sparkles,
   Ticket,
 } from "lucide-react";
@@ -63,7 +60,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
     if (data.error) setError(data.error);
   }
 
-  const timelineLegs = useMemo(() => {
+  const itineraryLegs = useMemo(() => {
     if (!flight) return [];
     if (flight.legs?.length) return flight.legs;
     return [
@@ -81,6 +78,12 @@ export function FlightDetailsClient({ id }: { id: string }) {
       } satisfies FlightLeg,
     ];
   }, [flight]);
+
+  const connectionAirports = useMemo(() => {
+    return itineraryLegs.flatMap((leg) =>
+      leg.layovers.map((layover) => layover.airport),
+    );
+  }, [itineraryLegs]);
 
   if (loading) {
     return (
@@ -218,223 +221,206 @@ export function FlightDetailsClient({ id }: { id: string }) {
       </section>
 
       <div className="page-shell py-6">
-        <section>
-          <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-sm shadow-indigo-950/5">
-            <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-teal-dark">
-                    Flight summary
-                  </p>
-                  <h2 className="text-xl font-bold text-navy">
-                    Your selected itinerary
-                  </h2>
-                </div>
-                <p className="text-sm font-semibold text-muted">
-                  {flight.airlineName}
-                  {flight.flightNumber ? ` • ${flight.flightNumber}` : ""}
-                </p>
-              </div>
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-indigo-950/5 sm:p-6">
+          <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-teal-dark">
+                Selected flight
+              </p>
+              <h2 className="mt-1 truncate text-xl font-bold text-navy">
+                {flight.airlineName}
+                {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
+              </h2>
             </div>
-
-            <div className="p-5 sm:p-6">
-              <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_180px_minmax(0,1fr)] md:items-center">
-                <AirportTimeBlock
-                  label="Departure"
-                  time={formatTime(flight.departureTime)}
-                  airport={flight.originAirport}
-                  icon={<PlaneTakeoff size={20} />}
-                />
-                <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 text-center shadow-sm">
-                  <div className="flex items-center justify-center gap-2 text-sm font-semibold text-muted">
-                    <span className="h-px flex-1 bg-indigo-200" />
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-teal shadow-sm">
-                      <Plane size={18} />
-                    </span>
-                    <span className="h-px flex-1 bg-indigo-200" />
-                  </div>
-                  <p className="mt-3 text-lg font-bold text-navy">
-                    {flight.duration}
-                  </p>
-                  <p className="text-sm font-semibold text-muted">
-                    {stopLabel}
-                  </p>
-                </div>
-                <AirportTimeBlock
-                  label="Arrival"
-                  time={formatTime(flight.arrivalTime)}
-                  airport={flight.destinationAirport}
-                  icon={<PlaneLanding size={20} />}
-                  align="right"
-                />
-              </div>
-
-              <div className="mt-5 border-t border-slate-200 pt-5">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-teal-dark">
-                      Travel timeline
-                    </p>
-                    <h3 className="text-lg font-bold text-navy">
-                      Route details
-                    </h3>
-                  </div>
-                  <Badge variant={flight.stops === 0 ? "teal" : "blue"}>
-                    {stopLabel}
-                  </Badge>
-                </div>
-
-                <div className="mt-4 space-y-4">
-                  {timelineLegs.map((leg, legIndex) => (
-                    <div
-                      key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
-                      className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
-                    >
-                      {shouldShowLegLabel(leg, timelineLegs.length) ? (
-                        <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-muted">
-                          {formatLegDirection(leg.direction, legIndex)}
-                        </p>
-                      ) : null}
-                      <div className="space-y-0">
-                        <TimelineItem
-                          icon={<PlaneTakeoff size={16} />}
-                          title="Departure"
-                          eyebrow={leg.originAirport}
-                          body={`${leg.originAirport} at ${formatTime(leg.departureTime)}`}
-                        />
-                        {leg.layovers.map((layover, layoverIndex) => (
-                          <TimelineItem
-                            key={`${layover.airport}-${layover.duration}-${layoverIndex}`}
-                            icon={<CalendarClock size={16} />}
-                            title={`Layover in ${layover.airport}`}
-                            eyebrow={layover.duration}
-                            body={`${layover.duration}${layover.quality !== "unknown" ? ` • ${layover.quality} connection` : ""}`}
-                          />
-                        ))}
-                        <TimelineItem
-                          icon={<PlaneLanding size={16} />}
-                          title="Arrival"
-                          eyebrow={leg.destinationAirport}
-                          body={`${leg.destinationAirport} at ${formatTime(leg.arrivalTime)}`}
-                          isLast
-                        />
-                      </div>
-                      {leg.segments.length ? (
-                        <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
-                          <p className="text-sm font-bold text-navy">
-                            Flight segments
-                          </p>
-                          <div className="mt-3 grid gap-2">
-                            {leg.segments.map((segment, segmentIndex) => (
-                              <div
-                                key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
-                                className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-sm"
-                              >
-                                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
-                                  <span className="font-semibold text-navy">
-                                    {segment.originAirport}{" "}
-                                    {formatTime(segment.departureTime)}
-                                  </span>
-                                  <span className="hidden rounded-full bg-white px-2 py-1 text-xs font-bold text-muted shadow-sm ring-1 ring-slate-100 sm:block">
-                                    →
-                                  </span>
-                                  <span className="font-semibold text-navy sm:text-right">
-                                    {segment.destinationAirport}{" "}
-                                    {formatTime(segment.arrivalTime)}
-                                  </span>
-                                </div>
-                                {segment.airlineName || segment.flightNumber ? (
-                                  <p className="mt-1 text-muted">
-                                    {[segment.airlineName, segment.flightNumber]
-                                      .filter(Boolean)
-                                      .join(" • ")}
-                                  </p>
-                                ) : null}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+              <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-bold text-indigo-800">
+                {flight.duration}
+              </span>
+              <Badge variant={flight.stops === 0 ? "teal" : "blue"}>
+                {stopLabel}
+              </Badge>
             </div>
-          </Card>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-teal/10 p-4">
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+              <CompactAirportTime
+                airport={flight.originAirport}
+                time={formatTime(flight.departureTime)}
+              />
+              <div className="flex min-w-0 items-center justify-center gap-2 text-center text-sm font-bold text-slate-600">
+                <span className="hidden h-px w-10 bg-indigo-200 sm:block" />
+                <span className="rounded-full border border-indigo-100 bg-white px-3 py-1 shadow-sm">
+                  {connectionAirports.length
+                    ? `${flight.duration} · ${connectionAirports.join(" · ")}`
+                    : `${flight.duration} · ${stopLabel}`}
+                </span>
+                <ArrowRight size={16} className="shrink-0 text-teal" />
+                <span className="hidden h-px w-10 bg-indigo-200 sm:block" />
+              </div>
+              <CompactAirportTime
+                airport={flight.destinationAirport}
+                time={formatTime(flight.arrivalTime)}
+                align="right"
+              />
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4">
+            {itineraryLegs.map((leg, legIndex) => (
+              <CompactLegSection
+                key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
+                leg={leg}
+                legIndex={legIndex}
+                legCount={itineraryLegs.length}
+                fallbackAirlineName={flight.airlineName}
+                fallbackFlightNumber={flight.flightNumber}
+              />
+            ))}
+          </div>
         </section>
       </div>
     </main>
   );
 }
 
-function AirportTimeBlock({
-  label,
-  time,
+function CompactAirportTime({
   airport,
-  icon,
+  time,
   align = "left",
 }: {
-  label: string;
-  time: string;
   airport: string;
-  icon: React.ReactNode;
+  time: string;
   align?: "left" | "right";
 }) {
   return (
-    <div
-      className={
-        align === "right"
-          ? "rounded-2xl bg-white text-left md:text-right"
-          : "rounded-2xl bg-white text-left"
-      }
-    >
-      <p className="inline-flex items-center gap-2 text-sm font-semibold text-muted">
-        <span className="text-teal">{icon}</span>
-        {label}
-      </p>
-      <div className="mt-2 text-3xl font-black tracking-tight text-navy">
-        {time}
+    <div className={align === "right" ? "sm:text-right" : ""}>
+      <p className="text-2xl font-black tracking-tight text-navy">{airport}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-600">{time}</p>
+    </div>
+  );
+}
+
+function CompactLegSection({
+  leg,
+  legIndex,
+  legCount,
+  fallbackAirlineName,
+  fallbackFlightNumber,
+}: {
+  leg: FlightLeg;
+  legIndex: number;
+  legCount: number;
+  fallbackAirlineName: string;
+  fallbackFlightNumber?: string;
+}) {
+  const segments = leg.segments.length
+    ? leg.segments
+    : [
+        {
+          originAirport: leg.originAirport,
+          destinationAirport: leg.destinationAirport,
+          departureTime: leg.departureTime,
+          arrivalTime: leg.arrivalTime,
+          airlineName: fallbackAirlineName,
+          flightNumber: fallbackFlightNumber,
+        },
+      ];
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4">
+      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+          {formatLegDirection(leg.direction, legIndex, legCount)} · {leg.originAirport} to{" "}
+          {leg.destinationAirport}
+        </p>
+        <p className="text-xs font-semibold text-slate-500">
+          {leg.duration} · {formatStops(leg.stops)}
+        </p>
       </div>
-      <div className="mt-1 text-base font-semibold text-slate-700">
-        {airport}
+      <div className="grid gap-2">
+        {segments.map((segment, segmentIndex) => (
+          <div
+            key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
+          >
+            <CompactFlightRow
+              originAirport={segment.originAirport}
+              destinationAirport={segment.destinationAirport}
+              departureTime={segment.departureTime}
+              arrivalTime={segment.arrivalTime}
+              airlineName={segment.airlineName || fallbackAirlineName}
+              flightNumber={segment.flightNumber || fallbackFlightNumber}
+            />
+            {leg.layovers[segmentIndex] ? (
+              <LayoverSeparator layover={leg.layovers[segmentIndex]} />
+            ) : null}
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-function TimelineItem({
-  icon,
-  title,
-  eyebrow,
-  body,
-  isLast = false,
+function CompactFlightRow({
+  originAirport,
+  destinationAirport,
+  departureTime,
+  arrivalTime,
+  airlineName,
+  flightNumber,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  eyebrow: string;
-  body: string;
-  isLast?: boolean;
+  originAirport: string;
+  destinationAirport: string;
+  departureTime: string;
+  arrivalTime: string;
+  airlineName?: string;
+  flightNumber?: string;
 }) {
   return (
-    <div className="relative grid grid-cols-[34px_1fr] gap-3 pb-3 last:pb-0">
-      {!isLast ? (
-        <span
-          className="absolute left-4 top-8 h-[calc(100%-2rem)] w-px bg-slate-200"
-          aria-hidden="true"
-        />
-      ) : null}
-      <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border border-teal/20 bg-white text-teal shadow-sm">
-        {icon}
-      </div>
-      <div className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-[0_10px_24px_-22px_rgba(30,27,75,0.45)]">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div className="text-sm font-semibold text-navy">{title}</div>
-          <div className="text-xs font-semibold uppercase tracking-wide text-muted">
-            {eyebrow}
-          </div>
+    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-[0_10px_24px_-24px_rgba(30,27,75,0.55)] sm:p-4">
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+        <div>
+          <p className="text-lg font-black tracking-tight text-navy">
+            {originAirport}{" "}
+            <span className="text-base font-bold text-slate-700">
+              {formatTime(departureTime)}
+            </span>
+          </p>
         </div>
-        <div className="mt-1 text-sm leading-5 text-slate-700">{body}</div>
+        <div className="flex items-center gap-2 text-teal sm:justify-center">
+          <span className="h-px w-8 bg-teal/30" />
+          <ArrowRight size={17} aria-hidden="true" />
+          <span className="hidden h-px w-8 bg-teal/30 sm:block" />
+        </div>
+        <div className="sm:text-right">
+          <p className="text-lg font-black tracking-tight text-navy">
+            {destinationAirport}{" "}
+            <span className="text-base font-bold text-slate-700">
+              {formatTime(arrivalTime)}
+            </span>
+          </p>
+        </div>
       </div>
+      {airlineName || flightNumber ? (
+        <p className="mt-2 text-sm font-semibold text-slate-600">
+          {[airlineName, flightNumber].filter(Boolean).join(" · ")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function LayoverSeparator({
+  layover,
+}: {
+  layover: FlightLeg["layovers"][number];
+}) {
+  return (
+    <div className="px-2 py-2 text-sm font-semibold text-slate-500 sm:px-4">
+      Layover in {layover.airport} · {layover.duration}
+      {layover.quality !== "unknown"
+        ? ` · ${layover.quality} connection`
+        : ""}
     </div>
   );
 }
@@ -469,14 +455,12 @@ function formatStops(stops: number) {
   return `${stops} stop${stops > 1 ? "s" : ""}`;
 }
 
-function shouldShowLegLabel(leg: FlightLeg, legCount: number) {
-  return (
-    legCount > 1 || leg.direction === "outbound" || leg.direction === "return"
-  );
-}
-
-function formatLegDirection(direction: FlightLeg["direction"], index: number) {
+function formatLegDirection(
+  direction: FlightLeg["direction"],
+  index: number,
+  legCount: number,
+) {
   if (direction === "outbound") return "Outbound";
   if (direction === "return") return "Return";
-  return `Leg ${index + 1}`;
+  return legCount > 1 ? `Leg ${index + 1}` : "Itinerary";
 }
