@@ -1,9 +1,7 @@
 "use client";
 
-import Image from "next/image";
 import {
   Armchair,
-  Building2,
   Luggage,
   PlaneTakeoff,
   Settings,
@@ -35,38 +33,27 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
   const showsProviderBackedReturn = visibleLegs.some((leg) => leg.direction === "return");
 
   return (
-    <Card className="w-full overflow-hidden border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_55px_rgba(15,23,42,0.12)]">
-      <div className="border-b border-indigo-100 bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-500 px-4 py-2.5">
-        <div className="flex items-center justify-between gap-3 text-[11px] font-black uppercase tracking-[0.18em] text-white/90">
+    <Card className="w-full overflow-hidden border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(15,23,42,0.1)]">
+      <div className="border-b border-indigo-100 bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-500 px-3.5 py-2 sm:px-4">
+        <div className="flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/90">
           <span>Flight option</span>
           <span className="truncate normal-case tracking-normal text-white/80">{flight.provider}</span>
         </div>
       </div>
 
-      <div className="p-4 sm:p-5">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
-          <div className="min-w-0 space-y-4">
-            <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ring-4 ring-slate-50">
-                {flight.airlineLogo ? (
-                  <Image
-                    src={flight.airlineLogo}
-                    alt=""
-                    width={34}
-                    height={34}
-                    className="h-8 w-8 object-contain"
-                    unoptimized
-                  />
-                ) : (
-                  <PlaneTakeoff size={20} className="text-teal" />
-                )}
+      <div className="p-3.5 sm:p-4">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_max-content] lg:items-start">
+          <div className="min-w-0 space-y-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50/80 text-indigo-700 shadow-sm">
+                <PlaneTakeoff className="h-4 w-4" aria-hidden="true" />
               </div>
               <div className="min-w-0">
-                <h2 className="truncate text-base font-black tracking-[-0.01em] text-slate-950">
+                <h2 className="truncate text-[15px] font-semibold tracking-[-0.01em] text-slate-950 sm:text-base">
                   {flight.airlineName}
                 </h2>
-                <p className="mt-0.5 truncate text-xs font-bold text-slate-500">
-                  {[flight.flightNumber, flight.provider].filter(Boolean).join(" · ")}
+                <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+                  {flight.flightNumber || "Flight itinerary"}
                 </p>
               </div>
             </div>
@@ -82,25 +69,25 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 lg:w-44 lg:flex-col lg:items-stretch lg:text-right">
-            <div className="text-right lg:text-left">
+          <div className="flex items-end justify-between gap-3 border-t border-slate-100 pt-3 lg:min-w-36 lg:flex-col lg:items-end lg:border-t-0 lg:pt-0 lg:text-right">
+            <div className="text-right">
               <div
-                className="text-2xl font-black tracking-[-0.03em] text-slate-950"
+                className="text-xl font-semibold tracking-[-0.025em] text-slate-950 sm:text-2xl"
                 aria-label={displayPrice.ariaLabel}
                 title={displayPrice.title}
               >
                 {displayPrice.formatted}
               </div>
-              <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">
                 Estimated price
               </p>
             </div>
-            <div className="text-right lg:text-left">
+            <div className="text-right">
               <LinkButton
                 href={`/flights/details/${encodeURIComponent(flight.id)}`}
                 variant="primary"
                 size="sm"
-                className="whitespace-nowrap rounded-full bg-navy px-4 hover:bg-navy-soft"
+                className="whitespace-nowrap rounded-full bg-navy px-3.5 text-xs font-semibold hover:bg-navy-soft"
               >
                 View Flight
               </LinkButton>
@@ -108,13 +95,13 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2 border-t border-slate-100 pt-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-3 grid gap-2 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-4">
           {details.map((detail) => (
             <FlightDetailCard key={detail.label} detail={detail} />
           ))}
         </div>
 
-        <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 px-3 py-2.5 text-xs font-semibold leading-5 text-slate-600">
+        <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2 text-[11px] font-medium leading-5 text-slate-600">
           {showsProviderBackedReturn
             ? "Outbound and return details are shown from provider-normalized itinerary data. Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking."
             : "Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking."}
@@ -129,51 +116,51 @@ function FlightLegRow({ leg, compact }: { leg: FlightLeg; compact: boolean }) {
     <section
       aria-label={formatLegTitle(leg)}
       className={cn(
-        "rounded-2xl border border-slate-200 bg-white p-3 shadow-sm",
-        compact ? "sm:p-3" : "sm:p-4"
+        "rounded-xl border border-slate-200 bg-white p-3 shadow-sm",
+        compact ? "sm:p-3" : "sm:p-3.5"
       )}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-indigo-700">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
           {formatLegTitle(leg)}
         </p>
-        <p className="truncate text-[11px] font-bold text-slate-500">
+        <p className="truncate text-[11px] font-medium text-slate-500">
           {leg.originAirport} → {leg.destinationAirport}
         </p>
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-4">
         <div className="min-w-0">
-          <div className="text-xl font-black tracking-[-0.02em] text-slate-950 sm:text-2xl">
+          <div className="text-lg font-semibold tracking-[-0.02em] text-slate-950 sm:text-xl">
             {formatTime(leg.departureTime)}
           </div>
-          <div className="mt-0.5 truncate text-xs font-bold text-slate-500">
+          <div className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
             {leg.originAirport}
           </div>
         </div>
 
-        <div className="min-w-[86px] text-center sm:min-w-32">
+        <div className="min-w-[74px] text-center sm:min-w-28">
           <div className="flex items-center justify-center text-teal">
             <span className="h-px flex-1 bg-slate-200" />
-            <PlaneTakeoff className="mx-1.5 h-4 w-4" />
+            <PlaneTakeoff className="mx-1.5 h-3.5 w-3.5" />
             <span className="h-px flex-1 bg-slate-200" />
           </div>
-          <div className="mt-1 text-xs font-black text-slate-800">{leg.duration}</div>
-          <div className="text-[11px] font-bold text-slate-500">{formatStopsLabel(leg.stops)}</div>
+          <div className="mt-1 text-[11px] font-semibold text-slate-800">{leg.duration}</div>
+          <div className="text-[10px] font-medium text-slate-500">{formatStopsLabel(leg.stops)}</div>
         </div>
 
         <div className="min-w-0 text-right">
-          <div className="text-xl font-black tracking-[-0.02em] text-slate-950 sm:text-2xl">
+          <div className="text-lg font-semibold tracking-[-0.02em] text-slate-950 sm:text-xl">
             {formatTime(leg.arrivalTime)}
           </div>
-          <div className="mt-0.5 truncate text-xs font-bold text-slate-500">
+          <div className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
             {leg.destinationAirport}
           </div>
         </div>
       </div>
 
       {leg.layovers.length ? (
-        <p className="mt-2 truncate text-[11px] font-semibold text-slate-500" title={formatLayoverText(leg)}>
+        <p className="mt-2 truncate text-[11px] font-medium text-slate-500" title={formatLayoverText(leg)}>
           {formatLayoverText(leg)}
         </p>
       ) : null}
@@ -185,16 +172,16 @@ function FlightDetailCard({ detail }: { detail: DetailItem }) {
   const Icon = detail.icon;
 
   return (
-    <div className="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-b from-white to-slate-50 px-3 py-2.5">
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm shadow-slate-900/[0.02]">
       <div className="flex items-start gap-2">
-        <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
-          <Icon className="h-3.5 w-3.5" />
+        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+          <Icon className="h-3 w-3" aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
+          <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
             {detail.label}
           </p>
-          <p className="mt-0.5 line-clamp-2 text-xs font-bold leading-5 text-slate-800" title={detail.value}>
+          <p className="mt-0.5 line-clamp-2 text-[11px] font-semibold leading-4 text-slate-800" title={detail.value}>
             {detail.value}
           </p>
         </div>
@@ -230,11 +217,6 @@ function buildFlightDetails(flight: PublicFlightResult): DetailItem[] {
       icon: Luggage,
     },
     {
-      label: "Fare rules",
-      value: formatFareRulesValue(flight.refundInfo),
-      icon: ShieldCheck,
-    },
-    {
       label: "Cabin",
       value: formatCabinClass(flight.cabinClass),
       icon: Armchair,
@@ -245,9 +227,9 @@ function buildFlightDetails(flight: PublicFlightResult): DetailItem[] {
       icon: Settings,
     },
     {
-      label: "Provider",
-      value: flight.provider,
-      icon: Building2,
+      label: "Fare rules",
+      value: formatFareRulesValue(flight.refundInfo),
+      icon: ShieldCheck,
     },
   ];
 }
