@@ -9,7 +9,7 @@ import type {
   ReactNode,
   SetStateAction,
 } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRightLeft,
@@ -681,6 +681,11 @@ export function FlightResultsClient() {
   );
   const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
+  const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
+    useState(false);
+  const [hasInteractedWithExpandedSearch, setHasInteractedWithExpandedSearch] =
+    useState(false);
   const [travelerPopoverPosition, setTravelerPopoverPosition] = useState<{
     top: number;
     left: number;
@@ -704,6 +709,9 @@ export function FlightResultsClient() {
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
+  const stickySentinelRef = useRef<HTMLDivElement | null>(null);
+  const searchFormRef = useRef<HTMLFormElement | null>(null);
+  const expandedSearchScrollYRef = useRef(0);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const filtersHydratedFromUrlRef = useRef(false);
   const hydratedFilterQueryStringRef = useRef<string | null>(null);
@@ -752,6 +760,23 @@ export function FlightResultsClient() {
     mobileTravelerTotal === 1 && adultCount === 1
       ? "1 adult"
       : `${mobileTravelerTotal} travelers`;
+  const travelerCabinSummary = buildTravelerCabinSummary(
+    adultCount,
+    childCount,
+    infantCount,
+    cabinClassInput,
+  );
+  const showCompactSearchSummary =
+    isSearchBarCompact && !isSearchExpandedWhileSticky;
+  const isExpandedStickySearchActive =
+    isSearchBarCompact && isSearchExpandedWhileSticky;
+  const canAutoCollapseExpandedSearch =
+    isExpandedStickySearchActive &&
+    !hasInteractedWithExpandedSearch &&
+    !tripTypeMenuOpen &&
+    !activeSuggest &&
+    !activeDatePicker &&
+    !travelerPopoverOpen;
   const savedRoutes = useMemo(
     () =>
       savedTripIds
@@ -759,6 +784,98 @@ export function FlightResultsClient() {
         .filter((item): item is HomeDiscoveryItem => Boolean(item)),
     [savedTripIds],
   );
+
+  const markExpandedSearchInteraction = useCallback(() => {
+    if (isExpandedStickySearchActive) {
+      setHasInteractedWithExpandedSearch(true);
+    }
+  }, [isExpandedStickySearchActive]);
+
+  const expandStickySearch = useCallback(() => {
+    expandedSearchScrollYRef.current = window.scrollY;
+    setHasInteractedWithExpandedSearch(false);
+    setIsSearchExpandedWhileSticky(true);
+  }, []);
+
+  const collapseStickySearch = useCallback(() => {
+    setIsSearchExpandedWhileSticky(false);
+    setHasInteractedWithExpandedSearch(false);
+    setTripTypeMenuOpen(false);
+    setActiveSuggest(null);
+    setDropdownPosition(null);
+    setActiveDatePicker(null);
+    setDatePickerPosition(null);
+    setTravelerPopoverOpen(false);
+    setTravelerPopoverPosition(null);
+  }, [
+    setActiveDatePicker,
+    setActiveSuggest,
+    setDatePickerPosition,
+    setDropdownPosition,
+    setTravelerPopoverOpen,
+    setTravelerPopoverPosition,
+    setTripTypeMenuOpen,
+  ]);
+
+  useEffect(() => {
+    const sentinel = stickySentinelRef.current;
+
+    if (!sentinel || typeof IntersectionObserver === "undefined") {
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const shouldCompact = !entry.isIntersecting;
+        setIsSearchBarCompact(shouldCompact);
+
+        if (!shouldCompact) {
+          setIsSearchExpandedWhileSticky(false);
+          setHasInteractedWithExpandedSearch(false);
+        }
+      },
+      { threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!canAutoCollapseExpandedSearch) {
+      return undefined;
+    }
+
+    let animationFrame = 0;
+
+    const onScroll = () => {
+      if (animationFrame) return;
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        const focusedElement = document.activeElement;
+        const isFocusInsideSearch = Boolean(
+          focusedElement && searchFormRef.current?.contains(focusedElement),
+        );
+        const hasContinuedScrolling =
+          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
+
+        if (hasContinuedScrolling && !isFocusInsideSearch) {
+          collapseStickySearch();
+        }
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrates client-only localStorage-backed recent searches after mount.
@@ -3148,8 +3265,60 @@ export function FlightResultsClient() {
         </form>
       );
     }
+    if (placement === "desktop" && showCompactSearchSummary) {
+      return (
+        <div className="mx-auto w-full min-w-0 max-w-full sm:block sm:max-w-5xl">
+          <div className="overflow-visible rounded-sm border border-slate-300 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.12)]">
+            <button
+              type="button"
+              aria-label="Edit flight search"
+              onClick={expandStickySearch}
+              className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-left transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+            >
+              <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,0.8fr)] lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-3">
+                <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
+                  <ArrowRightLeft
+                    className="h-4 w-4 shrink-0 text-violet-600"
+                    aria-hidden="true"
+                  />
+                  <span className="flex min-w-0 items-center gap-1.5 truncate">
+                    <span className="min-w-0 truncate">
+                      {mobileOriginSummary}
+                    </span>
+                    <span
+                      className="shrink-0 text-slate-400"
+                      aria-hidden="true"
+                    >
+                      →
+                    </span>
+                    <span className="min-w-0 truncate">
+                      {mobileDestinationSummary}
+                    </span>
+                  </span>
+                </span>
+                <span className="min-w-0 truncate text-sm font-medium text-slate-600">
+                  {mobileTripTypeSummary}
+                </span>
+                <span className="min-w-0 truncate text-sm font-medium text-slate-600">
+                  {mobileDateSummary}
+                </span>
+                <span className="min-w-0 truncate text-sm font-medium text-slate-600">
+                  {travelerCabinSummary}
+                </span>
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-[2px] border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 shadow-sm transition group-hover:border-indigo-200 group-hover:bg-white sm:self-center">
+                <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
+                Edit
+              </span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <form
+        ref={placement === "desktop" ? searchFormRef : undefined}
         onSubmit={handleCompactSearchSubmit}
         className={cn(
           "mx-auto w-full min-w-0 max-w-full sm:max-w-5xl",
@@ -3171,7 +3340,10 @@ export function FlightResultsClient() {
             </button>
           </div>
 
-          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+          <div
+            className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]"
+            onPointerDown={markExpandedSearchInteraction}
+          >
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div ref={tripTypeMenuRef} className="relative">
                 <button
@@ -3547,7 +3719,15 @@ export function FlightResultsClient() {
 
       {mobileSearchOpen ? renderCompactSearchPopovers("mobile") : null}
 
-      <section className="sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 py-3 shadow-sm shadow-slate-900/5 backdrop-blur sm:block">
+      <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
+      <section
+        className={cn(
+          "sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
+          showCompactSearchSummary
+            ? "py-1.5 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
+            : "py-3 shadow-sm shadow-slate-900/5",
+        )}
+      >
         <div className="page-shell">
           {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
 
