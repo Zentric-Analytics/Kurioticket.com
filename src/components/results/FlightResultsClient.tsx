@@ -381,7 +381,7 @@ function RecentSearchCard({
 }) {
   const cardContent = (
     <>
-      <div className="relative h-24 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-sky-400">
+      <div className="relative h-full min-h-[118px] w-24 shrink-0 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-sky-400 sm:w-28">
         {entry.image ? (
           <img
             src={entry.image}
@@ -390,52 +390,47 @@ function RecentSearchCard({
             className="h-full w-full object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-between p-4 text-white">
-            <div>
-              <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-white/70">
-                Kurioticket
-              </p>
-              <p className="mt-1 max-w-[9rem] text-lg font-black leading-tight">
-                {entry.type === "flight" ? "Flight search" : "Hotel search"}
-              </p>
-            </div>
-            <ArrowRightLeft className="h-8 w-8 text-white/50" />
+          <div className="flex h-full flex-col justify-between p-3 text-white">
+            <p className="text-[0.6rem] font-black uppercase tracking-[0.16em] text-white/75">
+              Kurioticket
+            </p>
+            <ArrowRightLeft className="h-6 w-6 text-white/55" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-transparent" />
-        <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.16em] text-slate-950 shadow-sm">
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-transparent" />
+        <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.12em] text-slate-900 shadow-sm">
           {entry.type === "flight" ? "Flight" : "Hotel"}
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col p-4">
-        <p className="line-clamp-1 text-base font-black leading-tight text-slate-950">
-          {entry.label}
-        </p>
-        <p className="mt-1 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
-          {entry.subtitle}
-        </p>
-        <span className="mt-3 inline-flex items-center justify-between rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white transition group-hover:bg-indigo-700 group-focus-visible:bg-indigo-700">
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 p-3 pr-11">
+        <div className="min-w-0">
+          <p className="line-clamp-1 text-sm font-bold leading-snug text-slate-950">
+            {entry.label}
+          </p>
+          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+            {entry.subtitle}
+          </p>
+        </div>
+        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-700 group-focus-visible:border-indigo-200 group-focus-visible:bg-indigo-50 group-focus-visible:text-indigo-700">
           Resume search
-          <ArrowRightLeft size={14} />
+          <ArrowRightLeft size={13} />
         </span>
       </div>
     </>
   );
 
+  const cardClassName =
+    "focus-ring group flex h-full min-h-[118px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg";
+
   return (
-    <article className="relative h-full min-w-0">
+    <article className="relative min-w-[280px] max-w-[300px] flex-1 snap-start sm:min-w-[300px] md:min-w-[260px] md:flex-none lg:min-w-[270px]">
       {entry.href ? (
-        <Link
-          href={entry.href}
-          className="focus-ring group flex h-full min-h-[220px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl"
-        >
+        <Link href={entry.href} className={cardClassName}>
           {cardContent}
         </Link>
       ) : (
-        <div className="flex h-full min-h-[220px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          {cardContent}
-        </div>
+        <div className={cardClassName}>{cardContent}</div>
       )}
 
       <button
@@ -446,7 +441,7 @@ function RecentSearchCard({
           event.stopPropagation();
           onRemove(entry.id);
         }}
-        className="focus-ring absolute right-3 top-3 rounded-full border border-white/70 bg-white/95 p-2 text-slate-600 shadow-sm transition hover:bg-white hover:text-rose-600"
+        className="focus-ring absolute right-2.5 top-2.5 inline-flex min-h-8 min-w-8 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-500 shadow-sm transition hover:bg-white hover:text-rose-600"
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -2151,30 +2146,26 @@ export function FlightResultsClient() {
           ) : null}
 
           {recentSearches.length > 0 ? (
-            <section className="mx-auto mt-7 w-full max-w-6xl rounded-[1.75rem] border border-white/80 bg-white/90 p-4 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur sm:p-5">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">
+            <section className="mx-auto mt-5 w-full max-w-6xl rounded-2xl border border-slate-200/70 bg-white/75 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur sm:p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-indigo-600">
                     Recent searches
                   </p>
-                  <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+                  <h2 className="mt-0.5 text-base font-bold tracking-tight text-slate-950 sm:text-lg">
                     Continue where you left off
                   </h2>
-                  <p className="mt-1 text-sm leading-6 text-slate-600 sm:text-base">
-                    Pick up a recent flight or hotel search stored on this
-                    device.
-                  </p>
                 </div>
                 <button
                   type="button"
                   onClick={handleClearRecentSearches}
-                  className="focus-ring inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 shadow-sm transition hover:border-rose-200 hover:text-rose-700"
+                  className="focus-ring inline-flex min-h-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-bold text-slate-500 shadow-sm transition hover:border-rose-200 hover:text-rose-700"
                 >
                   Clear all
                 </button>
               </div>
 
-              <div className="mt-4 grid auto-cols-[240px] grid-flow-col gap-3 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] sm:auto-cols-[260px] md:grid-flow-row md:grid-cols-3 md:overflow-visible lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
+              <div className="mt-3 flex snap-x gap-3 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {recentSearches.slice(0, 4).map((entry) => (
                   <RecentSearchCard
                     key={entry.id}
