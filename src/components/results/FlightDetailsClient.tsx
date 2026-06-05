@@ -1,15 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowRight,
-  Clock3,
-  Info,
-  Luggage,
-  Plane,
-  Sparkles,
-  Ticket,
-} from "lucide-react";
+import { ArrowRight, Info, Sparkles } from "lucide-react";
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -158,30 +150,40 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     </span>
                     <span>{flight.destinationAirport}</span>
                   </h1>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    <DetailChip
-                      icon={<Plane size={14} />}
-                      label="Stops"
-                      value={stopLabel}
-                    />
-                    <DetailChip
-                      icon={<Clock3 size={14} />}
-                      label="Duration"
-                      value={flight.duration}
-                    />
+                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium leading-5 text-slate-600">
+                    <span>
+                      <span className="font-semibold text-slate-800">Stops:</span>{" "}
+                      {stopLabel}
+                    </span>
+                    <span className="text-slate-300" aria-hidden="true">
+                      •
+                    </span>
+                    <span>
+                      <span className="font-semibold text-slate-800">
+                        Duration:
+                      </span>{" "}
+                      {flight.duration}
+                    </span>
                     {flight.cabinClass ? (
-                      <DetailChip
-                        icon={<Ticket size={14} />}
-                        label="Cabin"
-                        value={flight.cabinClass}
-                      />
+                      <>
+                        <span className="text-slate-300" aria-hidden="true">
+                          •
+                        </span>
+                        <span>
+                          <span className="font-semibold text-slate-800">
+                            Cabin:
+                          </span>{" "}
+                          {flight.cabinClass}
+                        </span>
+                      </>
                     ) : null}
-                    <DetailChip
-                      icon={<Luggage size={14} />}
-                      label="Baggage"
-                      value={flight.baggageInfo || "Confirmed by provider"}
-                      maxWidthClassName="max-w-full sm:max-w-[360px]"
-                    />
+                    <span className="text-slate-300" aria-hidden="true">
+                      •
+                    </span>
+                    <span className="min-w-0">
+                      <span className="font-semibold text-slate-800">Baggage:</span>{" "}
+                      {flight.baggageInfo || "Confirmed by provider"}
+                    </span>
                   </div>
                 </div>
 
@@ -425,32 +427,6 @@ function LayoverSeparator({
       {layover.quality !== "unknown"
         ? ` · ${layover.quality} connection`
         : ""}
-    </div>
-  );
-}
-
-function DetailChip({
-  icon,
-  label,
-  value,
-  maxWidthClassName = "max-w-full",
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  maxWidthClassName?: string;
-}) {
-  return (
-    <div
-      className={`inline-flex ${maxWidthClassName} items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold leading-5 text-slate-700 shadow-sm`}
-    >
-      <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-indigo-700">
-        {icon}
-      </span>
-      <span className="min-w-0 truncate">
-        <span className="text-slate-500">{label}:</span>{" "}
-        <span className="text-slate-800">{value}</span>
-      </span>
     </div>
   );
 }
