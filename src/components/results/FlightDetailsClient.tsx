@@ -257,13 +257,13 @@ export function FlightDetailsClient({ id }: { id: string }) {
 
       <div className="page-shell py-6">
         <div className="mx-auto w-full max-w-3xl">
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-indigo-950/5 sm:p-6">
-            <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-indigo-950/5 sm:p-5">
+            <div className="flex flex-col gap-2 border-b border-slate-200 pb-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-teal-dark">
                   Selected flight
                 </p>
-                <h2 className="mt-1 truncate text-xl font-bold text-navy">
+                <h2 className="mt-0.5 truncate text-xl font-bold text-navy">
                   {flight.airlineName}
                   {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
                 </h2>
@@ -278,8 +278,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
               </div>
             </div>
 
-            <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-teal/10 p-4">
-              <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+            <div className="mt-3 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-teal/10 p-3">
+              <div className="grid gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
                 <CompactAirportTime
                   airport={flight.originAirport}
                   time={formatTime(flight.departureTime)}
@@ -302,7 +302,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4">
+            <div className="mt-3 grid gap-3">
               {itineraryLegs.map((leg, legIndex) => (
                 <CompactLegSection
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
@@ -332,8 +332,8 @@ function CompactAirportTime({
 }) {
   return (
     <div className={align === "right" ? "sm:text-right" : ""}>
-      <p className="text-2xl font-black tracking-tight text-navy">{airport}</p>
-      <p className="mt-1 text-sm font-semibold text-slate-600">{time}</p>
+      <p className="text-xl font-black tracking-tight text-navy">{airport}</p>
+      <p className="mt-0.5 text-sm font-semibold text-slate-600">{time}</p>
     </div>
   );
 }
@@ -365,8 +365,8 @@ function CompactLegSection({
       ];
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4">
-      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+      <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
           {formatLegDirection(leg.direction, legIndex, legCount)} · {leg.originAirport} to{" "}
           {leg.destinationAirport}
@@ -414,8 +414,8 @@ function CompactFlightRow({
   flightNumber?: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-[0_10px_24px_-24px_rgba(30,27,75,0.55)] sm:p-4">
-      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-[0_10px_24px_-24px_rgba(30,27,75,0.55)] sm:p-3">
+      <div className="grid gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
         <div>
           <p className="text-lg font-black tracking-tight text-navy">
             {originAirport}{" "}
@@ -439,7 +439,7 @@ function CompactFlightRow({
         </div>
       </div>
       {airlineName || flightNumber ? (
-        <p className="mt-2 text-sm font-semibold text-slate-600">
+        <p className="mt-1 text-sm font-semibold text-slate-600">
           {[airlineName, flightNumber].filter(Boolean).join(" · ")}
         </p>
       ) : null}
@@ -453,7 +453,7 @@ function LayoverSeparator({
   layover: FlightLeg["layovers"][number];
 }) {
   return (
-    <div className="px-2 py-2 text-sm font-semibold text-slate-500 sm:px-4">
+    <div className="px-2 py-1.5 text-sm font-semibold text-slate-500 sm:px-3">
       Layover in {layover.airport} · {layover.duration}
       {layover.quality !== "unknown"
         ? ` · ${layover.quality} connection`
