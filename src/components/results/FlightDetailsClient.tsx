@@ -4,14 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   CalendarClock,
-  CheckCircle2,
   Clock3,
   Info,
   Luggage,
   Plane,
   PlaneLanding,
   PlaneTakeoff,
-  ShieldCheck,
   Sparkles,
   Ticket,
 } from "lucide-react";
@@ -356,52 +354,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   ) : null}
                 </div>
               ))}
-            </div>
-          </Card>
-
-          <Card className="p-5 sm:p-6">
-            <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal/10 text-teal">
-                <CheckCircle2 size={20} />
-              </span>
-              <h2 className="text-xl font-bold text-navy">
-                Why this option is highlighted
-              </h2>
-            </div>
-            <div className="mt-4 grid gap-3">
-              {flight.recommendationReasons.length ? (
-                flight.recommendationReasons.map((reason) => (
-                  <p
-                    key={reason}
-                    className="rounded-xl border border-border bg-white p-3 text-sm leading-6 text-slate-700 shadow-sm"
-                  >
-                    {reason}
-                  </p>
-                ))
-              ) : (
-                <p className="rounded-xl border border-border bg-white p-3 text-sm leading-6 text-slate-700 shadow-sm">
-                  This option is shown from the selected live flight result.
-                </p>
-              )}
-            </div>
-          </Card>
-
-          <Card className="border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-teal/10 p-5 sm:p-6">
-            <div className="flex gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-blue shadow-sm ring-1 ring-indigo-100">
-                <ShieldCheck size={20} />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-navy">
-                  Provider transparency
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  Kurioticket helps you compare flight options.{" "}
-                  {flight.provider} confirms booking, payment, final price,
-                  availability, and fare rules before you complete your
-                  purchase.
-                </p>
-              </div>
             </div>
           </Card>
         </section>
