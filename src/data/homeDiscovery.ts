@@ -1155,6 +1155,7 @@ export type HomeDiscoveryRoute = {
 };
 
 export const DEFAULT_HOME_DISCOVERY_REGION = "US";
+export const GLOBAL_HOME_DISCOVERY_REGION = "GLOBAL";
 
 const DEFAULT_HOME_DISCOVERY_FLIGHT_ROUTE_IDS = [
   "us-jfk-mia",
@@ -1720,7 +1721,11 @@ export function getHomeDiscoveryFareCandidates(
         return undefined;
       }
 
-      return toHomeDiscoveryFareCandidate(item, normalizedRegionCode, index + 1);
+      return toHomeDiscoveryFareCandidate(
+        item,
+        normalizedRegionCode,
+        index + 1,
+      );
     })
     .filter((candidate): candidate is HomeDiscoveryFareCandidate =>
       Boolean(candidate),
@@ -1732,6 +1737,22 @@ export function getHomeDiscoveryFareCandidates(
       : visibleCandidates;
 
   return candidates
+    .filter(isEnabledValidHomeDiscoveryFareCandidate)
+    .sort((first, second) => first.priority - second.priority);
+}
+
+export function getGlobalHomeDiscoveryFareCandidates(): HomeDiscoveryFareCandidate[] {
+  return fallbackDiscovery
+    .map((item, index) =>
+      toHomeDiscoveryFareCandidate(
+        item,
+        GLOBAL_HOME_DISCOVERY_REGION,
+        index + 1,
+      ),
+    )
+    .filter((candidate): candidate is HomeDiscoveryFareCandidate =>
+      Boolean(candidate),
+    )
     .filter(isEnabledValidHomeDiscoveryFareCandidate)
     .sort((first, second) => first.priority - second.priority);
 }
@@ -1753,6 +1774,17 @@ export function getDefaultHomeDiscoveryPriceRoutes(): HomeDiscoveryRoute[] {
   return getEligibleHomeDiscoveryFlightRoutes(DEFAULT_HOME_DISCOVERY_REGION);
 }
 
+export function getGlobalHomeDiscoveryPriceRoutes(): HomeDiscoveryRoute[] {
+  return getGlobalHomeDiscoveryFareCandidates().map(
+    ({ id, title, originCode, destinationCode }) => ({
+      id,
+      label: title,
+      originCode,
+      destinationCode,
+    }),
+  );
+}
+
 export function getHomeDiscoveryRouteAllowlist(): Map<
   string,
   HomeDiscoveryRoute
@@ -1768,7 +1800,9 @@ export function getHomeDiscoveryRouteAllowlist(): Map<
   return allowlist;
 }
 
-function normalizeHomeDiscoveryRegionCode(regionCode: string | undefined | null) {
+function normalizeHomeDiscoveryRegionCode(
+  regionCode: string | undefined | null,
+) {
   const normalized = regionCode?.trim().toUpperCase();
 
   return normalized && /^[A-Z]{2}$/.test(normalized)
