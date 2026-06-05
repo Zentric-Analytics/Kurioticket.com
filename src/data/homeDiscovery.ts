@@ -1710,48 +1710,29 @@ export function getHomeDiscoveryByRegion(
 export function getHomeDiscoveryFareCandidates(
   regionCode: string = DEFAULT_HOME_DISCOVERY_REGION,
 ): HomeDiscoveryFareCandidate[] {
-  if (regionCode !== DEFAULT_HOME_DISCOVERY_REGION) return [];
-
-  const visibleCandidates = getHomeDiscoveryByRegion(
-    DEFAULT_HOME_DISCOVERY_REGION,
-  )
+  const normalizedRegionCode = normalizeHomeDiscoveryRegionCode(regionCode);
+  const visibleCandidates = getHomeDiscoveryByRegion(normalizedRegionCode)
     .map<HomeDiscoveryFareCandidate | undefined>((item, index) => {
-      if (!DEFAULT_HOME_DISCOVERY_FLIGHT_ROUTE_ID_SET.has(item.id))
-        return undefined;
       if (
-        !isValidDiscoveryRouteCode(item.originCode) ||
-        !isValidDiscoveryRouteCode(item.destinationCode)
+        normalizedRegionCode === DEFAULT_HOME_DISCOVERY_REGION &&
+        !DEFAULT_HOME_DISCOVERY_FLIGHT_ROUTE_ID_SET.has(item.id)
       ) {
         return undefined;
       }
 
-      return {
-        id: item.id,
-        regionCode: DEFAULT_HOME_DISCOVERY_REGION,
-        title: item.title,
-        originCity: item.originCity,
-        originCode: item.originCode,
-        destinationCity: item.destinationCity,
-        destinationCode: item.destinationCode,
-        routeNote: item.routeNote,
-        image: item.image,
-        imageAlt: item.imageAlt,
-        priority: index + 1,
-        enabled: true,
-      };
+      return toHomeDiscoveryFareCandidate(item, normalizedRegionCode, index + 1);
     })
     .filter((candidate): candidate is HomeDiscoveryFareCandidate =>
       Boolean(candidate),
     );
 
-  return [...visibleCandidates, ...ADDITIONAL_US_DISCOVERY_FARE_CANDIDATES]
-    .filter(
-      ({ enabled, originCode, destinationCode }) =>
-        enabled &&
-        isValidDiscoveryRouteCode(originCode) &&
-        isValidDiscoveryRouteCode(destinationCode) &&
-        originCode !== destinationCode,
-    )
+  const candidates =
+    normalizedRegionCode === DEFAULT_HOME_DISCOVERY_REGION
+      ? [...visibleCandidates, ...ADDITIONAL_US_DISCOVERY_FARE_CANDIDATES]
+      : visibleCandidates;
+
+  return candidates
+    .filter(isEnabledValidHomeDiscoveryFareCandidate)
     .sort((first, second) => first.priority - second.priority);
 }
 
@@ -1785,6 +1766,56 @@ export function getHomeDiscoveryRouteAllowlist(): Map<
   }
 
   return allowlist;
+}
+
+function normalizeHomeDiscoveryRegionCode(regionCode: string | undefined | null) {
+  const normalized = regionCode?.trim().toUpperCase();
+
+  return normalized && /^[A-Z]{2}$/.test(normalized)
+    ? normalized
+    : DEFAULT_HOME_DISCOVERY_REGION;
+}
+
+function toHomeDiscoveryFareCandidate(
+  item: HomeDiscoveryItem,
+  regionCode: string,
+  priority: number,
+): HomeDiscoveryFareCandidate | undefined {
+  if (
+    !isValidDiscoveryRouteCode(item.originCode) ||
+    !isValidDiscoveryRouteCode(item.destinationCode) ||
+    item.originCode === item.destinationCode
+  ) {
+    return undefined;
+  }
+
+  return {
+    id: item.id,
+    regionCode,
+    title: item.title,
+    originCity: item.originCity,
+    originCode: item.originCode,
+    destinationCity: item.destinationCity,
+    destinationCode: item.destinationCode,
+    routeNote: item.routeNote,
+    image: item.image,
+    imageAlt: item.imageAlt,
+    priority,
+    enabled: true,
+  };
+}
+
+function isEnabledValidHomeDiscoveryFareCandidate({
+  enabled,
+  originCode,
+  destinationCode,
+}: HomeDiscoveryFareCandidate) {
+  return (
+    enabled &&
+    isValidDiscoveryRouteCode(originCode) &&
+    isValidDiscoveryRouteCode(destinationCode) &&
+    originCode !== destinationCode
+  );
 }
 
 function isValidDiscoveryRouteCode(value: string | undefined | null) {

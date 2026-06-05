@@ -1,6 +1,7 @@
 import { HomepageFareSnapshotStatus, Prisma } from "@/generated/prisma/client";
 
 import {
+  DEFAULT_HOME_DISCOVERY_REGION,
   HOME_DISCOVERY_VISIBLE_CARD_COUNT,
   getDefaultHomeDiscoveryPriceRoutes,
   getHomeDiscoveryFareCandidates,
@@ -193,6 +194,24 @@ export type HomepageDiscoveryFareCard = {
   priceState: "fresh" | "none";
 };
 
+export type HomepageDiscoveryFareFallbackReason =
+  | "none"
+  | "requested_region_no_candidates"
+  | "requested_region_no_fresh_fares"
+  | "default_region_no_fresh_fares";
+
+export type HomepageDiscoveryFareCardsMetadata = {
+  requestedRegionCode: string;
+  effectiveRegionCode: string;
+  candidateCount: number;
+  freshCount: number;
+  neutralCount: number;
+  fallbackUsed: boolean;
+  fallbackReason: HomepageDiscoveryFareFallbackReason;
+  currencyRequested: string;
+  snapshotCurrency: string;
+};
+
 export type HomepageDiscoveryFareCardsResponse = {
   cards: HomepageDiscoveryFareCard[];
   summary: {
@@ -200,6 +219,7 @@ export type HomepageDiscoveryFareCardsResponse = {
     fresh: number;
     neutral: number;
   };
+  metadata: HomepageDiscoveryFareCardsMetadata;
 };
 
 export type HomepageFareRefreshStoppedReason =
@@ -1174,13 +1194,101 @@ export async function readHomepageDiscoveryFareCards({
   const requested = Math.max(0, Math.min(Math.floor(limit), 48));
   const normalizedCurrency =
     normalizeHomepageFareCurrency(currency) ?? DEFAULT_CURRENCY;
-  const candidates = getHomeDiscoveryFareCandidates(regionCode);
+  const requestedRegionCode = normalizeHomepageDiscoveryRegionCode(regionCode);
+  const requestedCandidates = getHomeDiscoveryFareCandidates(requestedRegionCode);
 
-  if (requested <= 0 || !candidates.length) {
-    return {
+  if (requested <= 0) {
+    return buildHomepageDiscoveryFareCardsResponse({
       cards: [],
-      summary: { requested, fresh: 0, neutral: 0 },
-    };
+      requested,
+      requestedRegionCode,
+      effectiveRegionCode: requestedRegionCode,
+      candidateCount: requestedCandidates.length,
+      fallbackUsed: false,
+      fallbackReason: "none",
+      currencyRequested: normalizedCurrency,
+      snapshotCurrency: normalizedCurrency,
+    });
+  }
+
+  const requestedResult = await buildHomepageDiscoveryFareCardsForCandidates({
+    candidates: requestedCandidates,
+    requested,
+    currency: normalizedCurrency,
+  });
+
+  if (requestedResult.freshCount > 0) {
+    return buildHomepageDiscoveryFareCardsResponse({
+      ...requestedResult,
+      requested,
+      requestedRegionCode,
+      effectiveRegionCode: requestedRegionCode,
+      fallbackUsed: false,
+      fallbackReason: "none",
+      currencyRequested: normalizedCurrency,
+      snapshotCurrency: normalizedCurrency,
+    });
+  }
+
+  const shouldTryDefaultFallback =
+    requestedRegionCode !== DEFAULT_HOME_DISCOVERY_REGION;
+
+  if (shouldTryDefaultFallback) {
+    const defaultCandidates = getHomeDiscoveryFareCandidates(
+      DEFAULT_HOME_DISCOVERY_REGION,
+    );
+    const defaultResult = await buildHomepageDiscoveryFareCardsForCandidates({
+      candidates: defaultCandidates,
+      requested,
+      currency: normalizedCurrency,
+    });
+
+    if (defaultResult.freshCount > 0) {
+      return buildHomepageDiscoveryFareCardsResponse({
+        ...defaultResult,
+        requested,
+        requestedRegionCode,
+        effectiveRegionCode: DEFAULT_HOME_DISCOVERY_REGION,
+        fallbackUsed: true,
+        fallbackReason: requestedCandidates.length
+          ? "requested_region_no_fresh_fares"
+          : "requested_region_no_candidates",
+        currencyRequested: normalizedCurrency,
+        snapshotCurrency: normalizedCurrency,
+      });
+    }
+  }
+
+  return buildHomepageDiscoveryFareCardsResponse({
+    ...requestedResult,
+    requested,
+    requestedRegionCode,
+    effectiveRegionCode: requestedRegionCode,
+    fallbackUsed: false,
+    fallbackReason:
+      requestedResult.freshCount > 0 ? "none" : "default_region_no_fresh_fares",
+    currencyRequested: normalizedCurrency,
+    snapshotCurrency: normalizedCurrency,
+  });
+}
+
+type HomepageDiscoveryFareCandidateBuildResult = {
+  cards: HomepageDiscoveryFareCard[];
+  candidateCount: number;
+  freshCount: number;
+};
+
+async function buildHomepageDiscoveryFareCardsForCandidates({
+  candidates,
+  requested,
+  currency,
+}: {
+  candidates: HomeDiscoveryFareCandidate[];
+  requested: number;
+  currency: string;
+}): Promise<HomepageDiscoveryFareCandidateBuildResult> {
+  if (!candidates.length) {
+    return { cards: [], candidateCount: 0, freshCount: 0 };
   }
 
   const dateStrategy = getHomepageFareDateStrategy();
@@ -1192,7 +1300,7 @@ export async function readHomepageDiscoveryFareCards({
       destination: candidate.destinationCode,
     })),
     departureDate: dateStrategy.departureDate,
-    currency: normalizedCurrency,
+    currency,
   });
   const faresById = new Map(fares.map((fare) => [fare.id, fare]));
   const freshCards: HomepageDiscoveryFareCard[] = [];
@@ -1202,7 +1310,7 @@ export async function readHomepageDiscoveryFareCards({
     const fare = faresById.get(candidate.id);
     const item = toPublicHomepageDiscoveryFareCardItem(candidate);
 
-    if (isFreshHomepageFareSnapshotResponseEntry(fare)) {
+    if (isFreshHomepageDiscoveryFareForCandidate(candidate, fare)) {
       freshCards.push({
         item,
         fare: {
@@ -1225,16 +1333,82 @@ export async function readHomepageDiscoveryFareCards({
   }
 
   const cards = [...freshCards, ...neutralCards].slice(0, requested);
-  const fresh = cards.filter((card) => card.priceState === "fresh").length;
+
+  return {
+    cards,
+    candidateCount: candidates.length,
+    freshCount: cards.filter((card) => card.priceState === "fresh").length,
+  };
+}
+
+function buildHomepageDiscoveryFareCardsResponse({
+  cards,
+  requested,
+  requestedRegionCode,
+  effectiveRegionCode,
+  candidateCount,
+  fallbackUsed,
+  fallbackReason,
+  currencyRequested,
+  snapshotCurrency,
+}: Pick<HomepageDiscoveryFareCandidateBuildResult, "cards" | "candidateCount"> & {
+  requested: number;
+  requestedRegionCode: string;
+  effectiveRegionCode: string;
+  fallbackUsed: boolean;
+  fallbackReason: HomepageDiscoveryFareFallbackReason;
+  currencyRequested: string;
+  snapshotCurrency: string;
+}): HomepageDiscoveryFareCardsResponse {
+  const freshCount = cards.filter((card) => card.priceState === "fresh").length;
+  const neutralCount = cards.length - freshCount;
 
   return {
     cards,
     summary: {
       requested,
-      fresh,
-      neutral: cards.length - fresh,
+      fresh: freshCount,
+      neutral: neutralCount,
+    },
+    metadata: {
+      requestedRegionCode,
+      effectiveRegionCode,
+      candidateCount,
+      freshCount,
+      neutralCount,
+      fallbackUsed,
+      fallbackReason,
+      currencyRequested,
+      snapshotCurrency,
     },
   };
+}
+
+function normalizeHomepageDiscoveryRegionCode(regionCode: string) {
+  const normalized = regionCode.trim().toUpperCase();
+
+  return /^[A-Z]{2}$/.test(normalized)
+    ? normalized
+    : DEFAULT_HOME_DISCOVERY_REGION;
+}
+
+function isFreshHomepageDiscoveryFareForCandidate(
+  candidate: HomeDiscoveryFareCandidate,
+  fare: HomepageFareSnapshotResponseEntry | undefined,
+): fare is HomepageFareSnapshotResponseEntry & {
+  price: number;
+  currency: string;
+  providerBacked: true;
+  expiresAt: string;
+  search: HomepageFareSearch;
+} {
+  return (
+    isFreshHomepageFareSnapshotResponseEntry(fare) &&
+    fare.search.origin === candidate.originCode &&
+    fare.search.destination === candidate.destinationCode &&
+    fare.search.currency === fare.currency &&
+    Date.parse(fare.expiresAt) > Date.now()
+  );
 }
 
 function toPublicHomepageDiscoveryFareCardItem(
