@@ -208,6 +208,8 @@ export function HotelSearchBar({
   const destinationWrapperRef = useRef<HTMLLabelElement>(null);
   const datesWrapperRef = useRef<HTMLDivElement>(null);
   const guestsRoomsWrapperRef = useRef<HTMLDivElement>(null);
+  const mobileSearchPanelRef = useRef<HTMLFormElement>(null);
+  const mobileSearchContentRef = useRef<HTMLDivElement>(null);
   const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
@@ -315,6 +317,19 @@ export function HotelSearchBar({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [datesOpen, guestsRoomsOpen]);
+
+  useEffect(() => {
+    if (!mobileSearchOpen) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      mobileSearchPanelRef.current?.scrollTo({ top: 0, left: 0 });
+      mobileSearchContentRef.current?.scrollTo({ top: 0, left: 0 });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [mobileSearchOpen]);
 
   useEffect(() => {
     const releaseExistingLock = () => {
@@ -763,14 +778,12 @@ export function HotelSearchBar({
       )}
       <form
         onSubmit={handleSubmit}
+        ref={mobileSearchPanelRef}
         className={cn(
           compact
-            ? cn(
-                "sm:block sm:space-y-2",
-                mobileSearchOpen
-                  ? "fixed inset-0 z-[10000] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:static sm:h-auto sm:w-auto sm:overflow-visible sm:bg-transparent"
-                  : "hidden",
-              )
+            ? mobileSearchOpen
+              ? "fixed inset-0 z-[900] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
+              : "hidden sm:block sm:space-y-2"
             : "space-y-4",
         )}
         noValidate
@@ -793,6 +806,7 @@ export function HotelSearchBar({
           </div>
         ) : null}
         <div
+          ref={mobileSearchContentRef}
           className={cn(
             "overflow-visible",
             compact
