@@ -3247,7 +3247,7 @@ export function FlightResultsClient() {
 
   function renderMobileControlsRow() {
     return (
-      <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-2 overflow-hidden">
+      <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
         <Button
           type="button"
           variant="secondary"
@@ -3256,15 +3256,15 @@ export function FlightResultsClient() {
               ? `Open filters, ${activeFilterLabel}`
               : "Open filters"
           }
-          className="relative h-[52px] w-[62px] shrink-0 rounded-xl border-slate-200 bg-white px-1.5 text-[10px] font-semibold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          className="relative h-16 w-[72px] shrink-0 rounded-2xl border-slate-200 bg-white px-2 text-[11px] font-bold text-slate-800 shadow-[0_10px_22px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
           onClick={() => setFiltersOpen(true)}
         >
-          <span className="flex flex-col items-center justify-center gap-0.5">
-            <SlidersHorizontal size={15} />
+          <span className="flex flex-col items-center justify-center gap-1 leading-none">
+            <SlidersHorizontal size={17} strokeWidth={2.3} />
             <span>Filters</span>
           </span>
           {activeFilterCount > 0 ? (
-            <span className="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-700 px-1 text-[10px] font-black leading-none text-white shadow-sm ring-2 ring-[#f6f8fb]">
+            <span className="absolute right-1.5 top-1.5 inline-flex h-[23px] min-w-[23px] items-center justify-center rounded-full bg-indigo-700 px-1.5 text-[11px] font-black leading-none text-white shadow-sm ring-2 ring-white">
               {activeFilterCount}
             </span>
           ) : null}
@@ -3273,22 +3273,22 @@ export function FlightResultsClient() {
         <button
           type="button"
           onClick={openMobileSearchDrawer}
-          className="flex h-[58px] min-w-0 max-w-full flex-1 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-0 text-left shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 hover:shadow-[0_10px_22px_rgba(15,23,42,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-0 text-left shadow-[0_10px_22px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-            <span className="block truncate text-[15px] font-semibold leading-5 text-slate-950">
+            <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
               {mobileRouteSummary}
             </span>
-            <span className="mt-0.5 block truncate text-xs font-medium leading-4 text-slate-600">
+            <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-600">
               {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
               {mobileTravelerSummary}
             </span>
           </span>
           <span
             aria-hidden="true"
-            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
           >
-            <PencilLine size={16} />
+            <PencilLine size={17} />
           </span>
         </button>
       </div>
