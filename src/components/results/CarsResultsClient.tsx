@@ -18,7 +18,6 @@ import {
   MapPin,
   PencilLine,
   Search,
-  SlidersHorizontal,
   Users,
   X,
 } from "lucide-react";
@@ -35,14 +34,6 @@ type CarsResultsValues = {
   dropoffTime: string;
   driverAge: string;
 };
-
-type CarFilterGroup = {
-  id: string;
-  title: string;
-  options: string[];
-};
-
-type SelectedCarFilters = Record<string, string[]>;
 
 const defaultDriverAge = "18-70";
 const driverAgeRangeLabel = "Any driver age 18–70";
@@ -63,49 +54,6 @@ const driverAgeOptions = [
     { length: maximumDriverAge - minimumDriverAge + 1 },
     (_, index) => String(index + minimumDriverAge),
   ),
-];
-
-const carFilterGroups: CarFilterGroup[] = [
-  {
-    id: "vehicleType",
-    title: "Vehicle type",
-    options: ["Small cars", "Medium cars", "SUVs"],
-  },
-  {
-    id: "transmission",
-    title: "Transmission",
-    options: ["Automatic", "Manual"],
-  },
-  {
-    id: "seats",
-    title: "Seats",
-    options: ["4+ seats", "5+ seats", "7+ seats"],
-  },
-  {
-    id: "bags",
-    title: "Bags",
-    options: ["2+ bags", "3+ bags", "4+ bags"],
-  },
-  {
-    id: "fuelPolicy",
-    title: "Fuel policy",
-    options: ["Full-to-full", "Same-to-same"],
-  },
-  {
-    id: "mileagePolicy",
-    title: "Mileage policy",
-    options: ["Unlimited mileage", "Limited mileage"],
-  },
-  {
-    id: "cancellation",
-    title: "Cancellation",
-    options: ["Free cancellation", "Pay at pickup"],
-  },
-  {
-    id: "pickupLocationType",
-    title: "Pickup location type",
-    options: ["Airport counter", "Shuttle pickup", "City location"],
-  },
 ];
 
 const formatCompactDate = (date: string) => {
@@ -227,9 +175,6 @@ const fieldInputClass =
   "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
 
 export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [selectedCarFilters, setSelectedCarFilters] =
-    useState<SelectedCarFilters>({});
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
@@ -273,15 +218,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       ? `${pickupLocation.trim()} to ${dropoffLocation.trim()}`
       : pickupLocation.trim()
     : "Pickup location needed";
-  const activeFilterCount = useMemo(
-    () =>
-      Object.values(selectedCarFilters).reduce(
-        (count, selectedOptions) => count + selectedOptions.length,
-        0,
-      ),
-    [selectedCarFilters],
-  );
-  const activeFilterLabel = `${activeFilterCount} active`;
   const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
@@ -325,27 +261,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     setTimesOpen(false);
     setDriverAgeOpen(false);
   }, []);
-
-  const toggleCarFilter = (groupId: string, option: string) => {
-    setSelectedCarFilters((current) => {
-      const currentGroupSelections = current[groupId] ?? [];
-      const isSelected = currentGroupSelections.includes(option);
-      const nextGroupSelections = isSelected
-        ? currentGroupSelections.filter((selected) => selected !== option)
-        : [...currentGroupSelections, option];
-      const nextFilters = { ...current };
-
-      if (nextGroupSelections.length > 0) {
-        nextFilters[groupId] = nextGroupSelections;
-      } else {
-        delete nextFilters[groupId];
-      }
-
-      return nextFilters;
-    });
-  };
-
-  const clearCarFilters = () => setSelectedCarFilters({});
 
   useEffect(() => {
     const sentinel = stickySentinelRef.current;
@@ -466,6 +381,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     setDropoffDate(selectedIso);
   };
 
+  const focusSearchForEditing = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setIsSearchExpandedWhileSticky(true);
+    window.setTimeout(() => pickupInputRef.current?.focus(), 120);
+  };
+
   return (
     <main className="flex-1 bg-[#f6f8fb] pb-8">
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
@@ -488,25 +409,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
               Cars results
             </p>
-            <Button
-              type="button"
-              variant="secondary"
-              aria-label={
-                activeFilterCount > 0
-                  ? `Open filters, ${activeFilterLabel}`
-                  : "Open filters"
-              }
-              className="relative h-10 rounded-md border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
-              onClick={() => setFiltersOpen(true)}
-            >
-              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-              Filters
-              {activeFilterCount > 0 ? (
-                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-bold leading-none text-indigo-700 ring-1 ring-indigo-100">
-                  {activeFilterCount}
-                </span>
-              ) : null}
-            </Button>
           </div>
 
           <form
@@ -711,18 +613,11 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)]">
-        <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:max-h-[calc(100vh-8.5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
-          <CarFilters
-            activeFilterCount={activeFilterCount}
-            layout="desktop"
-            onClear={clearCarFilters}
-            onToggle={toggleCarFilter}
-            selectedFilters={selectedCarFilters}
-          />
-        </aside>
-
-        <section className="min-w-0 space-y-4" aria-label="Car results">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-1">
+        <section
+          className="mx-auto min-w-0 max-w-5xl space-y-4"
+          aria-label="Car results"
+        >
           <h1 id="cars-results-heading" className="sr-only">
             Cars results for {locationSummary}
           </h1>
@@ -736,18 +631,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
               </p>
             </div>
-
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:hidden"
-              onClick={() => setFiltersOpen(true)}
-            >
-              <SlidersHorizontal size={17} aria-hidden="true" />
-              {activeFilterCount > 0
-                ? `Filters · ${activeFilterCount}`
-                : "Filters"}
-            </Button>
           </div>
 
           <div className="space-y-3 sm:hidden">
@@ -761,75 +644,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             </div>
           </div>
 
-          <CarsResultsShell hasSearchContext={hasSearchContext} />
+          <CarsResultsShell
+            hasSearchContext={hasSearchContext}
+            onEditSearch={focusSearchForEditing}
+          />
         </section>
       </div>
-
-      <div
-        className={cn(
-          "fixed inset-0 z-50 bg-navy/40 lg:hidden",
-          filtersOpen ? "block" : "hidden",
-        )}
-        onClick={() => setFiltersOpen(false)}
-      />
-
-      <aside
-        className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
-          filtersOpen ? "translate-y-0" : "translate-y-full",
-        )}
-        aria-label="Car filters"
-      >
-        <div className="flex-1 overflow-auto p-5 pb-3">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-base font-semibold text-slate-900">
-                Filters
-              </h2>
-              {activeFilterCount > 0 ? (
-                <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
-                  {activeFilterLabel}
-                </p>
-              ) : null}
-            </div>
-            <Button
-              variant="ghost"
-              className="h-10 w-10 px-0"
-              aria-label="Close filters"
-              onClick={() => setFiltersOpen(false)}
-            >
-              <X size={20} />
-            </Button>
-          </div>
-          <CarFilters
-            activeFilterCount={activeFilterCount}
-            layout="mobile"
-            onClear={clearCarFilters}
-            onToggle={toggleCarFilter}
-            selectedFilters={selectedCarFilters}
-          />
-        </div>
-
-        <div className="grid gap-2 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-          {activeFilterCount > 0 ? (
-            <Button
-              type="button"
-              variant="secondary"
-              className="h-11 w-full rounded-xl border-slate-300 text-sm font-bold text-slate-700"
-              onClick={clearCarFilters}
-            >
-              Reset filters
-            </Button>
-          ) : null}
-          <Button
-            type="button"
-            className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
-            onClick={() => setFiltersOpen(false)}
-          >
-            Done{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""}
-          </Button>
-        </div>
-      </aside>
     </main>
   );
 }
@@ -1268,129 +1088,44 @@ function DriverAgeCell({
   );
 }
 
-function CarsResultsShell({ hasSearchContext }: { hasSearchContext: boolean }) {
-  return (
-    <div
-      className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"
-      role="status"
-    >
-      {hasSearchContext
-        ? "Live car inventory is not available to display for this search yet. Update the search details above or check again later."
-        : "Enter pickup details above to prepare a car search."}
-    </div>
-  );
-}
-
-function CarFilters({
-  activeFilterCount,
-  layout,
-  onClear,
-  onToggle,
-  selectedFilters,
+function CarsResultsShell({
+  hasSearchContext,
+  onEditSearch,
 }: {
-  activeFilterCount: number;
-  layout: "desktop" | "mobile";
-  onClear: () => void;
-  onToggle: (groupId: string, option: string) => void;
-  selectedFilters: SelectedCarFilters;
+  hasSearchContext: boolean;
+  onEditSearch: () => void;
 }) {
   return (
-    <div
-      className={cn(
-        "overflow-hidden",
-        layout === "desktop"
-          ? "rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-900/[0.04]"
-          : "bg-white",
-      )}
-    >
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
-        <h2 className="text-base font-semibold text-white/95">Filter by</h2>
-        <div className="flex shrink-0 items-center gap-2">
-          {activeFilterCount > 0 ? (
-            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-white/70">
-              {activeFilterCount} active
-            </span>
-          ) : null}
-          <SlidersHorizontal
-            className="text-white/90"
-            size={18}
-            aria-hidden="true"
-          />
+    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.08)]">
+      <div className="relative isolate px-5 py-8 text-center sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+        <div
+          className="pointer-events-none absolute inset-x-8 top-0 -z-10 h-28 rounded-full bg-indigo-50/80 blur-3xl"
+          aria-hidden="true"
+        />
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100 sm:h-16 sm:w-16">
+          <Search className="h-7 w-7" aria-hidden="true" />
+        </div>
+        <h2 className="mt-5 text-xl font-black tracking-[-0.02em] text-slate-950 sm:text-2xl">
+          {hasSearchContext
+            ? "No cars found for this search"
+            : "Start a car search"}
+        </h2>
+        <p className="mx-auto mt-2 max-w-xl text-sm font-medium leading-6 text-slate-600 sm:text-base">
+          {hasSearchContext
+            ? "Try adjusting your pickup location, dates, times, or driver age."
+            : "Enter your pickup location, rental dates, times, and driver age to search for cars."}
+        </p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button
+            type="button"
+            className="h-11 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 sm:w-auto"
+            onClick={onEditSearch}
+          >
+            <PencilLine className="h-4 w-4" aria-hidden="true" />
+            Edit search
+          </Button>
         </div>
       </div>
-
-      <div className="space-y-3 bg-white px-3 py-3">
-        {activeFilterCount > 0 ? (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2.5">
-            <span className="text-sm font-semibold text-indigo-950">
-              {activeFilterCount} selected
-            </span>
-            <button
-              type="button"
-              className="focus-ring rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-50"
-              onClick={onClear}
-            >
-              Reset
-            </button>
-          </div>
-        ) : null}
-
-        {carFilterGroups.map((group) => (
-          <FilterSection
-            key={group.id}
-            group={group}
-            onToggle={onToggle}
-            selectedOptions={selectedFilters[group.id] ?? []}
-          />
-        ))}
-      </div>
     </div>
-  );
-}
-
-function FilterSection({
-  group,
-  onToggle,
-  selectedOptions,
-}: {
-  group: CarFilterGroup;
-  onToggle: (groupId: string, option: string) => void;
-  selectedOptions: string[];
-}) {
-  return (
-    <section className="rounded-xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
-      <h3 className="text-sm font-semibold text-slate-900">{group.title}</h3>
-      <div className="mt-2 space-y-1.5">
-        {group.options.map((option) => {
-          const isSelected = selectedOptions.includes(option);
-
-          return (
-            <label
-              key={option}
-              className={cn(
-                "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
-                isSelected
-                  ? "border-indigo-200 bg-indigo-50 text-indigo-900 shadow-sm shadow-indigo-900/[0.03]"
-                  : "border-slate-200/70 bg-white text-slate-700 hover:border-indigo-100 hover:bg-indigo-50/40 hover:text-slate-950",
-              )}
-            >
-              <input
-                type="checkbox"
-                className="h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-                checked={isSelected}
-                onChange={() => onToggle(group.id, option)}
-              />
-              <span className="min-w-0 flex-1 truncate">{option}</span>
-              {isSelected ? (
-                <CheckCircle2
-                  className="h-4 w-4 shrink-0 text-indigo-700"
-                  aria-hidden="true"
-                />
-              ) : null}
-            </label>
-          );
-        })}
-      </div>
-    </section>
   );
 }
