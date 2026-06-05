@@ -132,48 +132,52 @@ export function FlightDetailsClient({ id }: { id: string }) {
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3.5 sm:p-4 lg:p-5">
-                  <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-dark">
-                    <Sparkles size={14} /> Flight details
+                  <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
+                    <Sparkles size={14} aria-hidden="true" /> Flight details
                   </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm font-semibold text-slate-600">
-                    <span className="text-navy">{flight.airlineName}</span>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                    <span className="text-sm font-semibold text-slate-700">
+                      {flight.airlineName}
+                    </span>
                     {flight.flightNumber ? (
                       <>
                         <span
                           className="h-1 w-1 rounded-full bg-slate-300"
                           aria-hidden="true"
                         />
-                        <span>Flight {flight.flightNumber}</span>
+                        <span className="text-sm font-medium text-slate-500">
+                          Flight {flight.flightNumber}
+                        </span>
                       </>
                     ) : null}
                   </div>
-                  <h1 className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2.5 text-3xl font-black tracking-tight text-navy sm:text-4xl lg:text-5xl">
+                  <h1 className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2.5 text-4xl font-bold tracking-tight text-slate-950">
                     <span>{flight.originAirport}</span>
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-blue shadow-sm ring-1 ring-indigo-100 sm:h-9 sm:w-9">
-                      <ArrowRight size={20} />
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-9 sm:w-9">
+                      <ArrowRight size={18} aria-hidden="true" />
                     </span>
                     <span>{flight.destinationAirport}</span>
                   </h1>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     <DetailChip
-                      icon={<Plane size={12} />}
+                      icon={<Plane size={14} />}
                       label="Stops"
                       value={stopLabel}
                     />
                     <DetailChip
-                      icon={<Clock3 size={12} />}
+                      icon={<Clock3 size={14} />}
                       label="Duration"
                       value={flight.duration}
                     />
                     {flight.cabinClass ? (
                       <DetailChip
-                        icon={<Ticket size={12} />}
+                        icon={<Ticket size={14} />}
                         label="Cabin"
                         value={flight.cabinClass}
                       />
                     ) : null}
                     <DetailChip
-                      icon={<Luggage size={12} />}
+                      icon={<Luggage size={14} />}
                       label="Baggage"
                       value={flight.baggageInfo || "Confirmed by provider"}
                       maxWidthClassName="max-w-full sm:max-w-[360px]"
@@ -183,18 +187,18 @@ export function FlightDetailsClient({ id }: { id: string }) {
 
                 <aside className="border-t border-indigo-100 bg-white p-3.5 sm:p-4 lg:border-l lg:border-t-0 lg:p-5">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                       From
                     </p>
                     <div
-                      className="mt-1 text-3xl font-black tracking-tight text-navy sm:text-4xl lg:text-right"
+                      className="mt-1 text-3xl font-bold tracking-tight text-slate-950 lg:text-right"
                       aria-label={displayPrice.ariaLabel}
                       title={displayPrice.title}
                     >
                       {displayPrice.formatted}
                     </div>
                     {displayPrice.isConvertedEstimate ? (
-                      <p className="mt-1.5 text-xs leading-5 text-muted lg:text-right">
+                      <p className="mt-1.5 text-xs font-medium leading-5 text-slate-600 lg:text-right">
                         Estimate shown. Provider price:{" "}
                         {displayPrice.providerFormatted}.
                       </p>
@@ -203,13 +207,13 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   <Button
                     variant="accent"
                     size="lg"
-                    className="mt-2.5 w-full rounded-xl px-6"
+                    className="mt-2.5 w-full rounded-xl px-6 text-sm font-semibold sm:text-base"
                     onClick={continueToProvider}
                     disabled={!hasProviderLink}
                   >
                     Continue to Provider <ArrowRight size={18} />
                   </Button>
-                  <p className="mt-2 flex gap-2 text-xs leading-5 text-slate-600">
+                  <p className="mt-2 flex gap-2 text-xs font-medium leading-5 text-slate-600">
                     <Info size={16} className="mt-0.5 shrink-0 text-blue" />
                     <span>{providerDisclaimer}</span>
                   </p>
@@ -438,13 +442,14 @@ function DetailChip({
 }) {
   return (
     <div
-      className={`inline-flex ${maxWidthClassName} items-center gap-1.5 rounded-full border border-indigo-100 bg-white/90 px-2.5 py-1 text-xs font-semibold leading-5 text-slate-700 shadow-sm`}
+      className={`inline-flex ${maxWidthClassName} items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold leading-5 text-slate-700 shadow-sm`}
     >
-      <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">
+      <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center text-indigo-700">
         {icon}
       </span>
       <span className="min-w-0 truncate">
-        <span className="text-slate-500">{label}:</span> {value}
+        <span className="text-slate-500">{label}:</span>{" "}
+        <span className="text-slate-800">{value}</span>
       </span>
     </div>
   );
