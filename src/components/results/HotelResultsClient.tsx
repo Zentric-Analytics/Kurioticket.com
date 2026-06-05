@@ -636,11 +636,13 @@ export function HotelResultsClient() {
                   filterApplying ? "animate-pulse opacity-80" : undefined,
                 )}
               >
-                <div className="space-y-2 pt-1">
-                  <h1 className="text-[15px] font-bold leading-tight text-slate-900 sm:text-lg">
-                    We found {visibleFilteredHotels.length} places to stay for
-                    you
-                  </h1>
+                <div className="space-y-2">
+                  <div className="w-full rounded-xl border border-indigo-100 bg-white px-4 py-3 shadow-sm shadow-slate-900/5">
+                    <h1 className="text-[15px] font-bold leading-tight text-slate-900 sm:text-[17px] lg:text-lg">
+                      We found {visibleFilteredHotels.length} places to stay for
+                      you
+                    </h1>
+                  </div>
                   <ActiveHotelFilterChips
                     chips={activeFilterChips}
                     onRemove={removeFilterChip}
