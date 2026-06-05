@@ -666,12 +666,15 @@ export function FlightResultsClient() {
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
 
   const tripTypeMenuRef = useRef<HTMLDivElement | null>(null);
+  const originInputRef = useRef<HTMLInputElement | null>(null);
+  const destinationInputRef = useRef<HTMLInputElement | null>(null);
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
+  const queryString = params.toString();
 
   const originFallbackSuggestions = useMemo(
     () => filterAirportOptions(originInput),
@@ -753,6 +756,53 @@ export function FlightResultsClient() {
     setRecentSearches([]);
   }
 
+  function closeFlightSearchPopovers() {
+    setActiveSuggest(null);
+    setDropdownPosition(null);
+    setActiveDatePicker(null);
+    setDatePickerPosition(null);
+    setTravelerPopoverOpen(false);
+    setTravelerPopoverPosition(null);
+    setTripTypeMenuOpen(false);
+  }
+
+  function focusOriginInput() {
+    window.requestAnimationFrame(() => originInputRef.current?.focus());
+  }
+
+  function focusDestinationInput() {
+    window.requestAnimationFrame(() => destinationInputRef.current?.focus());
+  }
+
+  function clearOriginField() {
+    setOriginInput("");
+    setOriginCode("");
+    closeFlightSearchPopovers();
+    focusOriginInput();
+  }
+
+  function clearDestinationField() {
+    setDestinationInput("");
+    setDestinationCode("");
+    closeFlightSearchPopovers();
+    focusDestinationInput();
+  }
+
+  function clearFlightSearchForm() {
+    setOriginInput("");
+    setOriginCode("");
+    setDestinationInput("");
+    setDestinationCode("");
+    setDepartureDateInput("");
+    setReturnDateInput("");
+    setAdultCount(1);
+    setChildCount(0);
+    setInfantCount(0);
+    setCabinClassInput("economy");
+    setTripTypeInput("round-trip");
+    closeFlightSearchPopovers();
+  }
+
   function handleSavedRouteToggle(
     event: ReactMouseEvent<HTMLButtonElement>,
     itemId: string
@@ -776,6 +826,50 @@ export function FlightResultsClient() {
       setCountryHint(parts[1].toUpperCase());
     }
   }, []);
+
+  useEffect(() => {
+    const searchValues = new URLSearchParams(queryString);
+    const nextTripType = searchValues.get("tripType") || "round-trip";
+    const nextOrigin = searchValues.get("origin")?.trim() || "";
+    const nextDestination = searchValues.get("destination")?.trim() || "";
+    const nextDepartureDate = searchValues.get("departureDate")?.trim() || "";
+    const nextReturnDate = searchValues.get("returnDate")?.trim() || "";
+    const adultsParam = Number(searchValues.get("adults"));
+    const childrenParam = Number(searchValues.get("children"));
+    const infantsParam = Number(searchValues.get("infants"));
+    const legacyTravelers = Number(searchValues.get("travelers") || 1);
+    const nextAdults = Number.isFinite(adultsParam)
+      ? Math.max(1, adultsParam)
+      : Math.max(1, legacyTravelers);
+    const nextChildren = Number.isFinite(childrenParam)
+      ? Math.max(0, childrenParam)
+      : 0;
+    const nextInfants = Number.isFinite(infantsParam)
+      ? Math.max(0, infantsParam)
+      : 0;
+    const nextCabinClass = cabinClassOptions.some(
+      (option) => option.value === searchValues.get("cabinClass")
+    )
+      ? (searchValues.get("cabinClass") as CabinClassValue)
+      : "economy";
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Keeps the editable search form in sync with URL-backed result searches.
+    setTripTypeInput(nextTripType);
+    setOriginInput(nextOrigin);
+    setOriginCode(nextOrigin);
+    setDestinationInput(nextDestination);
+    setDestinationCode(nextDestination);
+    setDepartureDateInput(nextDepartureDate);
+    setReturnDateInput(nextTripType === "round-trip" ? nextReturnDate : "");
+    if (isValidFutureOrTodayDateValue(nextDepartureDate)) {
+      setCalendarMonth(startOfMonth(parseDateValue(nextDepartureDate) ?? new Date()));
+    }
+    setAdultCount(Math.min(9, nextAdults));
+    setChildCount(Math.min(8, nextChildren));
+    setInfantCount(Math.min(Math.min(9, nextAdults), nextInfants));
+    setCabinClassInput(nextCabinClass);
+    closeFlightSearchPopovers();
+  }, [queryString]);
 
   useEffect(() => {
     const query = originInput.trim();
@@ -865,11 +959,17 @@ export function FlightResultsClient() {
     const departureDate = params.get("departureDate")?.trim() || "";
     const tripType = params.get("tripType") || "round-trip";
     const returnDate = params.get("returnDate")?.trim() || "";
+    const hasValidDepartureDate = isValidFutureOrTodayDateValue(departureDate);
+    const hasValidReturnDate =
+      tripType !== "round-trip" ||
+      (isValidFutureOrTodayDateValue(returnDate) &&
+        !isDateValueBefore(returnDate, departureDate));
     const hasSearch = Boolean(
       origin &&
         destination &&
         departureDate &&
-        (tripType !== "round-trip" || returnDate)
+        hasValidDepartureDate &&
+        hasValidReturnDate
     );
 
     if (!hasSearch) return null;
@@ -1206,12 +1306,17 @@ export function FlightResultsClient() {
     const nextDestination = destinationCode || destinationInput.trim();
     const nextDepartureDate = departureDateInput.trim();
     const nextReturnDate = returnDateInput.trim();
+    const hasValidDepartureDate = isValidFutureOrTodayDateValue(nextDepartureDate);
+    const hasValidReturnDate =
+      tripTypeInput !== "round-trip" ||
+      (isValidFutureOrTodayDateValue(nextReturnDate) &&
+        !isDateValueBefore(nextReturnDate, nextDepartureDate));
 
     if (
       !nextOrigin ||
       !nextDestination ||
-      !nextDepartureDate ||
-      (tripTypeInput === "round-trip" && !nextReturnDate)
+      !hasValidDepartureDate ||
+      !hasValidReturnDate
     ) {
       return;
     }
@@ -1568,10 +1673,16 @@ export function FlightResultsClient() {
               onSubmit={(event) => {
                 event.preventDefault();
 
-                    if (
-                      !departureDateInput ||
-                      (tripTypeInput === "round-trip" && !returnDateInput)
-                    ) {
+                    const nextDepartureDate = departureDateInput.trim();
+                    const nextReturnDate = returnDateInput.trim();
+                    const hasValidDepartureDate =
+                      isValidFutureOrTodayDateValue(nextDepartureDate);
+                    const hasValidReturnDate =
+                      tripTypeInput !== "round-trip" ||
+                      (isValidFutureOrTodayDateValue(nextReturnDate) &&
+                        !isDateValueBefore(nextReturnDate, nextDepartureDate));
+
+                    if (!hasValidDepartureDate || !hasValidReturnDate) {
                       return;
                     }
 
@@ -1586,12 +1697,8 @@ export function FlightResultsClient() {
                         destinationCode ||
                         destinationInput.trim() ||
                         String(formData.get("destination") || ""),
-                      departureDate:
-                        departureDateInput ||
-                        String(formData.get("departureDate") || ""),
-                      returnDate:
-                        returnDateInput ||
-                        String(formData.get("returnDate") || ""),
+                      departureDate: nextDepartureDate,
+                      returnDate: nextReturnDate,
                       adults: String(adultCount),
                       children: String(childCount),
                       infants: String(infantCount),
@@ -1654,23 +1761,7 @@ export function FlightResultsClient() {
                       onClick={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
-                        setOriginInput("");
-                        setOriginCode("");
-                        setDestinationInput("");
-                        setDestinationCode("");
-                        setDepartureDateInput("");
-                        setReturnDateInput("");
-                        setAdultCount(1);
-                        setChildCount(0);
-                        setInfantCount(0);
-                        setCabinClassInput("economy");
-                        setTripTypeInput("round-trip");
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                        setActiveDatePicker(null);
-                        setDatePickerPosition(null);
-                        setTravelerPopoverOpen(false);
-                        setTravelerPopoverPosition(null);
+                        clearFlightSearchForm();
                       }}
                       className="focus-ring inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
                     >
@@ -1689,6 +1780,7 @@ export function FlightResultsClient() {
                       </label>
                       <input
                         id="origin"
+                        ref={originInputRef}
                         name="origin"
                         required
                         value={originInput}
@@ -1726,10 +1818,7 @@ export function FlightResultsClient() {
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            setOriginInput("");
-                            setOriginCode("");
-                            setActiveSuggest(null);
-                            setDropdownPosition(null);
+                            clearOriginField();
                           }}
                           className="focus-ring absolute right-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                         >
@@ -1769,6 +1858,7 @@ export function FlightResultsClient() {
                       </label>
                       <input
                         id="destination"
+                        ref={destinationInputRef}
                         name="destination"
                         required
                         value={destinationInput}
@@ -1808,10 +1898,7 @@ export function FlightResultsClient() {
                           onClick={(event) => {
                             event.preventDefault();
                             event.stopPropagation();
-                            setDestinationInput("");
-                            setDestinationCode("");
-                            setActiveSuggest(null);
-                            setDropdownPosition(null);
+                            clearDestinationField();
                           }}
                           className="focus-ring absolute right-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                         >
@@ -1985,6 +2072,9 @@ export function FlightResultsClient() {
 
                       if (activeDatePicker === "departure") {
                         setDepartureDateInput(value);
+                        setReturnDateInput((current) =>
+                          current && isDateValueBefore(current, value) ? "" : current
+                        );
 
                         if (tripTypeInput === "round-trip") {
                           setActiveDatePicker("return");
@@ -1996,6 +2086,8 @@ export function FlightResultsClient() {
                         return;
                       }
 
+                      if (isDateValueBefore(value, departureDateInput)) return;
+
                       setReturnDateInput(value);
                       setActiveDatePicker(null);
                       setDatePickerPosition(null);
@@ -2003,6 +2095,7 @@ export function FlightResultsClient() {
                     onClear={() => {
                       if (activeDatePicker === "departure") {
                         setDepartureDateInput("");
+                        setReturnDateInput("");
                       }
 
                       if (activeDatePicker === "return") {
@@ -2015,12 +2108,16 @@ export function FlightResultsClient() {
 
                       if (activeDatePicker === "departure") {
                         setDepartureDateInput(value);
+                        setReturnDateInput((current) =>
+                          current && isDateValueBefore(current, value) ? "" : current
+                        );
 
                         if (tripTypeInput === "round-trip") {
                           setActiveDatePicker("return");
                           return;
                         }
                       } else {
+                        if (isDateValueBefore(value, departureDateInput)) return;
                         setReturnDateInput(value);
                       }
 
@@ -2410,6 +2507,7 @@ export function FlightResultsClient() {
                   </label>
                   <input
                     id="results-origin"
+                    ref={originInputRef}
                     name="origin"
                     required
                     value={originInput}
@@ -2436,8 +2534,27 @@ export function FlightResultsClient() {
                     }}
                     placeholder="From?"
                     autoComplete="off"
-                    className="h-8 w-full border-0 bg-transparent p-0 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                    className="h-8 w-full border-0 bg-transparent p-0 pr-8 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400"
                   />
+
+                  {originInput ? (
+                    <button
+                      type="button"
+                      aria-label="Clear origin"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        clearOriginField();
+                      }}
+                      className="focus-ring absolute right-3 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null}
 
                   {activeSuggest === "origin" && dropdownPosition ? (
                     <SuggestionList
@@ -2477,6 +2594,7 @@ export function FlightResultsClient() {
                   </label>
                   <input
                     id="results-destination"
+                    ref={destinationInputRef}
                     name="destination"
                     required
                     value={destinationInput}
@@ -2504,8 +2622,27 @@ export function FlightResultsClient() {
                     }}
                     placeholder="To?"
                     autoComplete="off"
-                    className="h-8 w-full border-0 bg-transparent p-0 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                    className="h-8 w-full border-0 bg-transparent p-0 pr-8 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400"
                   />
+
+                  {destinationInput ? (
+                    <button
+                      type="button"
+                      aria-label="Clear destination"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                      }}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        clearDestinationField();
+                      }}
+                      className="focus-ring absolute right-3 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null}
 
                   {activeSuggest === "destination" && dropdownPosition ? (
                     <SuggestionList
@@ -2581,6 +2718,22 @@ export function FlightResultsClient() {
             >
               Search
             </Button>
+
+            {isFormDirty ? (
+              <div className="mt-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    clearFlightSearchForm();
+                  }}
+                  className="focus-ring inline-flex items-center gap-1.5 px-2 py-1 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  Clear all
+                </button>
+              </div>
+            ) : null}
           </div>
         </form>
       );
@@ -2623,6 +2776,7 @@ export function FlightResultsClient() {
                       </label>
                       <input
                         id="results-origin"
+                        ref={originInputRef}
                         name="origin"
                         required
                         value={originInput}
@@ -2649,8 +2803,27 @@ export function FlightResultsClient() {
                         }}
                         placeholder="From?"
                         autoComplete="off"
-                        className="h-8 w-full border-0 bg-transparent p-0 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
+                        className="h-8 w-full border-0 bg-transparent p-0 pr-7 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
                       />
+
+                      {originInput ? (
+                        <button
+                          type="button"
+                          aria-label="Clear origin"
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            clearOriginField();
+                          }}
+                          className="focus-ring absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <X size={14} />
+                        </button>
+                      ) : null}
 
                       {activeSuggest === "origin" && dropdownPosition ? (
                         <SuggestionList
@@ -2690,6 +2863,7 @@ export function FlightResultsClient() {
                       </label>
                       <input
                         id="results-destination"
+                        ref={destinationInputRef}
                         name="destination"
                         required
                         value={destinationInput}
@@ -2717,8 +2891,27 @@ export function FlightResultsClient() {
                         }}
                         placeholder="To?"
                         autoComplete="off"
-                        className="h-8 w-full border-0 bg-transparent p-0 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
+                        className="h-8 w-full border-0 bg-transparent p-0 pr-7 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
                       />
+
+                      {destinationInput ? (
+                        <button
+                          type="button"
+                          aria-label="Clear destination"
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                          }}
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            clearDestinationField();
+                          }}
+                          className="focus-ring absolute right-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        >
+                          <X size={14} />
+                        </button>
+                      ) : null}
 
                       {activeSuggest === "destination" && dropdownPosition ? (
                         <SuggestionList
@@ -2864,6 +3057,19 @@ export function FlightResultsClient() {
                 </div>
               ) : null}
             </div>
+            {isFormDirty ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  clearFlightSearchForm();
+                }}
+                className="focus-ring ml-auto inline-flex items-center gap-1.5 px-2 py-1 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+              >
+                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                Clear all
+              </button>
+            ) : null}
           </div>
         </div>
       </form>
@@ -2939,7 +3145,7 @@ export function FlightResultsClient() {
       </div>
 
       <div className="page-shell grid gap-5 pb-6 pt-3 sm:py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <section className="lg:col-span-2">
+        <section className="lg:sticky lg:top-20 lg:z-30 lg:col-span-2 lg:-mx-2 lg:rounded-3xl lg:bg-[#f6f8fb]/95 lg:px-2 lg:pb-3 lg:pt-1 lg:backdrop-blur">
           {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
 
           {activeDatePicker && datePickerPosition ? (
@@ -2957,6 +3163,9 @@ export function FlightResultsClient() {
 
                 if (activeDatePicker === "departure") {
                   setDepartureDateInput(value);
+                  setReturnDateInput((current) =>
+                    current && isDateValueBefore(current, value) ? "" : current
+                  );
 
                   if (tripTypeInput === "round-trip") {
                     setActiveDatePicker("return");
@@ -2968,6 +3177,8 @@ export function FlightResultsClient() {
                   return;
                 }
 
+                if (isDateValueBefore(value, departureDateInput)) return;
+
                 setReturnDateInput(value);
                 setActiveDatePicker(null);
                 setDatePickerPosition(null);
@@ -2975,6 +3186,7 @@ export function FlightResultsClient() {
               onClear={() => {
                 if (activeDatePicker === "departure") {
                   setDepartureDateInput("");
+                  setReturnDateInput("");
                 }
 
                 if (activeDatePicker === "return") {
@@ -2987,12 +3199,16 @@ export function FlightResultsClient() {
 
                 if (activeDatePicker === "departure") {
                   setDepartureDateInput(value);
+                  setReturnDateInput((current) =>
+                    current && isDateValueBefore(current, value) ? "" : current
+                  );
 
                   if (tripTypeInput === "round-trip") {
                     setActiveDatePicker("return");
                     return;
                   }
                 } else {
+                  if (isDateValueBefore(value, departureDateInput)) return;
                   setReturnDateInput(value);
                 }
 
@@ -3382,13 +3598,6 @@ function getUniformResultCurrency(results: PublicFlightResult[]) {
   return null;
 }
 
-function addDays(date: Date, amount: number): Date {
-  const nextDate = new Date(date);
-  nextDate.setDate(nextDate.getDate() + amount);
-
-  return nextDate;
-}
-
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
@@ -3430,6 +3639,43 @@ function formatCompactDateLabel(value: string): string {
     day: "2-digit",
     month: "short",
   }).format(date);
+}
+
+function parseDateValue(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+
+  const date = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(date.getTime()) || formatDateValue(date) !== value) {
+    return null;
+  }
+
+  return date;
+}
+
+function isDateBeforeValue(date: Date, value: string): boolean {
+  const comparisonDate = parseDateValue(value);
+
+  if (!comparisonDate) return false;
+
+  return date < comparisonDate;
+}
+
+function isDateValueBefore(value: string, comparisonValue: string): boolean {
+  const date = parseDateValue(value);
+  const comparisonDate = parseDateValue(comparisonValue);
+
+  if (!date || !comparisonDate) return false;
+
+  return date < comparisonDate;
+}
+
+function isValidFutureOrTodayDateValue(value: string): boolean {
+  const date = parseDateValue(value);
+
+  if (!date) return false;
+
+  return !isBeforeToday(date);
 }
 
 function buildMonthDays(month: Date): Array<Date | null> {
@@ -3554,25 +3800,30 @@ function DatePickerPopover({
           const selectedReturn = isSameDateValue(date, returnValue);
           const isToday = isSameDateValue(date, formatDateValue(today));
           const disabledPastDate = isBeforeToday(date);
+          const disabledBeforeDeparture =
+            activePicker === "return" &&
+            Boolean(departureValue) &&
+            isDateBeforeValue(date, departureValue);
+          const disabledDate = disabledPastDate || disabledBeforeDeparture;
 
           return (
             <button
               key={date.toISOString()}
               type="button"
-              disabled={disabledPastDate}
-              aria-disabled={disabledPastDate}
+              disabled={disabledDate}
+              aria-disabled={disabledDate}
               onClick={() => {
-                if (disabledPastDate) return;
+                if (disabledDate) return;
                 onSelect(date);
               }}
               className={cn(
                 "h-9 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:h-10 sm:text-sm",
                 selectedDeparture || selectedReturn
                   ? "bg-[#0a66c2] text-white hover:bg-[#085aa9] focus:bg-[#085aa9]"
-                  : disabledPastDate
+                  : disabledDate
                   ? "cursor-not-allowed text-slate-300 hover:bg-transparent"
                   : "text-slate-800",
-                isToday && !(selectedDeparture || selectedReturn) && !disabledPastDate
+                isToday && !(selectedDeparture || selectedReturn) && !disabledDate
                   ? "ring-1 ring-slate-300"
                   : ""
               )}
