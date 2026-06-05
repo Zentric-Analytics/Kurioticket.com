@@ -877,6 +877,14 @@ export function SearchTabs({
     ).getTime() <
     todayLocal.getTime();
 
+  // Flight date selection intentionally shares one enabled-day rule across
+  // one-way and round-trip calendars: only past local days are disabled. When
+  // selecting a round-trip return, a future date before departure resets the
+  // departure and clears the return instead of creating an invalid range.
+  const isSelectableFlightDate = (
+    date: Date
+  ) => !isBeforeToday(date);
+
   const addMonths = (
     date: Date,
     offset: number
@@ -958,7 +966,7 @@ export function SearchTabs({
   const onSelectDate = (
     date: Date
   ) => {
-    if (isBeforeToday(date)) {
+    if (!isSelectableFlightDate(date)) {
       return;
     }
 
@@ -1930,22 +1938,10 @@ export function SearchTabs({
                                     const isReturn =
                                       iso ===
                                       returnDate;
-                                    const isPastDate =
-                                      isBeforeToday(
+                                    const isDisabledDate =
+                                      !isSelectableFlightDate(
                                         day
                                       );
-                                    const isInvalidReturnDate =
-                                      tripType ===
-                                        "round-trip" &&
-                                      Boolean(
-                                        departureDate
-                                      ) &&
-                                      !returnDate &&
-                                      iso <
-                                        departureDate;
-                                    const isDisabledDate =
-                                      isPastDate ||
-                                      isInvalidReturnDate;
                                     const isInRange =
                                       !!(
                                         departureParsed &&
@@ -1983,11 +1979,20 @@ export function SearchTabs({
                                             year: "numeric",
                                           }
                                         )}`}
-                                        onClick={() =>
+                                        onClick={() => {
+                                          if (
+                                            isDisabledDate ||
+                                            !isSelectableFlightDate(
+                                              day
+                                            )
+                                          ) {
+                                            return;
+                                          }
+
                                           onSelectDate(
                                             day
-                                          )
-                                        }
+                                          );
+                                        }}
                                         disabled={
                                           isDisabledDate
                                         }
