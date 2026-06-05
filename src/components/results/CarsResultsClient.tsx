@@ -16,8 +16,8 @@ import {
   ChevronRight,
   Clock3,
   MapPin,
-  PencilLine,
   Search,
+  SquarePen,
   SlidersHorizontal,
   Users,
   X,
@@ -228,6 +228,7 @@ const fieldInputClass =
 
 export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [selectedCarFilters, setSelectedCarFilters] =
     useState<SelectedCarFilters>({});
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
@@ -466,12 +467,322 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     setDropoffDate(selectedIso);
   };
 
+  const openMobileSearchDrawer = useCallback(() => {
+    setMobileSearchOpen(true);
+    setIsSearchExpandedWhileSticky(false);
+    setHasInteractedWithExpandedSearch(false);
+    setDatesOpen(false);
+    setTimesOpen(false);
+    setDriverAgeOpen(false);
+  }, []);
+
+  const closeMobileSearchDrawer = useCallback(() => {
+    setMobileSearchOpen(false);
+    setDatesOpen(false);
+    setTimesOpen(false);
+    setDriverAgeOpen(false);
+  }, []);
+
+  const renderMobileControlsRow = () => (
+    <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
+      <Button
+        type="button"
+        variant="secondary"
+        aria-label={
+          activeFilterCount > 0
+            ? `Open filters, ${activeFilterLabel}`
+            : "Open filters"
+        }
+        className="relative h-16 w-[72px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+        onClick={() => setFiltersOpen(true)}
+      >
+        <span className="flex flex-col items-center justify-center gap-1 leading-none">
+          <SlidersHorizontal size={17} strokeWidth={2.3} aria-hidden="true" />
+          <span>Filters</span>
+        </span>
+        {activeFilterCount > 0 ? (
+          <span className="absolute right-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
+            {activeFilterCount}
+          </span>
+        ) : null}
+      </Button>
+
+      <button
+        type="button"
+        onClick={openMobileSearchDrawer}
+        className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+      >
+        <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
+          <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
+            {pickupSummary} → {returnSummary}
+          </span>
+          <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-600">
+            {rentalDateSummary} · {driverAgeSummary}
+          </span>
+        </span>
+        <span
+          aria-hidden="true"
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
+        >
+          <SquarePen size={16} strokeWidth={2.1} />
+        </span>
+      </button>
+    </div>
+  );
+
+  const renderCarsSearchForm = (placement: "desktop" | "mobile") => {
+    const compactSummaryVisible =
+      placement === "desktop" && showCompactSearchSummary;
+    const fullFormVisible = placement === "mobile" || showFullSearchForm;
+    const isCompactSearch =
+      placement === "desktop" &&
+      isSearchBarCompact &&
+      !isSearchExpandedWhileSticky;
+
+    return (
+      <form
+        ref={searchFormRef}
+        action="/cars/results"
+        method="get"
+        className={cn(
+          "mx-auto w-full min-w-0 max-w-[72rem]",
+          compactSummaryVisible && "max-w-[54rem]",
+        )}
+        onFocusCapture={markExpandedSearchInteraction}
+        onChangeCapture={markExpandedSearchInteraction}
+        onSubmit={() => {
+          closeMobileSearchDrawer();
+          setIsSearchExpandedWhileSticky(false);
+          setHasInteractedWithExpandedSearch(false);
+        }}
+      >
+        <input type="hidden" name="pickupDate" value={pickupDate} />
+        <input type="hidden" name="dropoffDate" value={dropoffDate} />
+        <input type="hidden" name="pickupTime" value={pickupTime} />
+        <input type="hidden" name="dropoffTime" value={dropoffTime} />
+        <input type="hidden" name="driverAge" value={driverAge} />
+        <div
+          className={cn(
+            "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.075)] transition-[padding,border-color,box-shadow,border-radius] duration-200",
+            compactSummaryVisible
+              ? "rounded-sm border-slate-300 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.12)]"
+              : "p-1",
+          )}
+        >
+          {compactSummaryVisible ? (
+            <button
+              type="button"
+              aria-label="Edit car search"
+              onClick={expandStickySearch}
+              className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-left transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+            >
+              <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,0.8fr)] lg:items-center lg:gap-3">
+                <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
+                  <MapPin
+                    className="h-4 w-4 shrink-0 text-violet-600"
+                    aria-hidden="true"
+                  />
+                  <span className="flex min-w-0 items-center gap-1.5 truncate">
+                    <span className="min-w-0 truncate">{pickupSummary}</span>
+                    <span
+                      className="shrink-0 text-slate-400"
+                      aria-hidden="true"
+                    >
+                      →
+                    </span>
+                    <span className="min-w-0 truncate">{returnSummary}</span>
+                  </span>
+                </span>
+                <span className="min-w-0 truncate text-sm font-medium text-slate-600">
+                  {rentalDateSummary}
+                </span>
+                <span className="min-w-0 truncate text-sm font-medium text-slate-600">
+                  {timeSummary}
+                </span>
+                <span className="min-w-0 truncate text-sm font-medium text-slate-600">
+                  {driverAgeSummary}
+                </span>
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-[2px] border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 shadow-sm transition group-hover:border-indigo-200 group-hover:bg-white sm:self-center">
+                <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
+                Edit
+              </span>
+            </button>
+          ) : null}
+
+          {fullFormVisible ? (
+            <div className={searchFormGridClass}>
+              <SearchInputCell
+                icon={MapPin}
+                inputRef={pickupInputRef}
+                isCompact={isCompactSearch}
+                label="Pickup location"
+                name="pickupLocation"
+                onChange={(nextValue) => {
+                  markExpandedSearchInteraction();
+                  setPickupLocation(nextValue);
+                }}
+                onClear={() => {
+                  markExpandedSearchInteraction();
+                  setPickupLocation("");
+                  pickupInputRef.current?.focus();
+                }}
+                placeholder="Airport, city, or address"
+                value={pickupLocation}
+                clearLabel="Clear pickup location"
+                className="lg:rounded-l-xl"
+              />
+              <SearchInputCell
+                icon={MapPin}
+                inputRef={dropoffInputRef}
+                isCompact={isCompactSearch}
+                label="Return location"
+                name="dropoffLocation"
+                onChange={(nextValue) => {
+                  markExpandedSearchInteraction();
+                  setDropoffLocation(nextValue);
+                }}
+                onClear={() => {
+                  markExpandedSearchInteraction();
+                  setDropoffLocation("");
+                  dropoffInputRef.current?.focus();
+                }}
+                placeholder="Same as pickup"
+                value={dropoffLocation}
+                clearLabel="Clear return location"
+              />
+              <SearchDateCell
+                dropoffDate={dropoffDate}
+                isCompact={isCompactSearch}
+                isOpen={datesOpen}
+                onClear={() => {
+                  markExpandedSearchInteraction();
+                  setPickupDate("");
+                  setDropoffDate("");
+                }}
+                onDone={() => {
+                  markExpandedSearchInteraction();
+                  setDatesOpen(false);
+                }}
+                onNextMonth={() => {
+                  markExpandedSearchInteraction();
+                  setVisibleMonthDate((current) => addMonths(current, 1));
+                }}
+                onPreviousMonth={() => {
+                  markExpandedSearchInteraction();
+                  setVisibleMonthDate((current) => addMonths(current, -1));
+                }}
+                onSelectDate={selectRentalDate}
+                onToggle={() => {
+                  markExpandedSearchInteraction();
+                  setDatesOpen((current) => !current);
+                  setTimesOpen(false);
+                  setDriverAgeOpen(false);
+                }}
+                pickupDate={pickupDate}
+                visibleMonthDate={visibleMonthDate}
+                wrapRef={dateWrapRef}
+              />
+              <SearchTimeCell
+                dropoffTime={dropoffTime}
+                isCompact={isCompactSearch}
+                isOpen={timesOpen}
+                onToggle={() => {
+                  markExpandedSearchInteraction();
+                  setTimesOpen((current) => !current);
+                  setDatesOpen(false);
+                  setDriverAgeOpen(false);
+                }}
+                pickupTime={pickupTime}
+                setDropoffTime={(nextTime) => {
+                  markExpandedSearchInteraction();
+                  setDropoffTime(nextTime);
+                }}
+                setPickupTime={(nextTime) => {
+                  markExpandedSearchInteraction();
+                  setPickupTime(nextTime);
+                }}
+                wrapRef={timeWrapRef}
+              />
+              <DriverAgeCell
+                driverAge={driverAge}
+                isCompact={isCompactSearch}
+                isOpen={driverAgeOpen}
+                onSelect={(age) => {
+                  markExpandedSearchInteraction();
+                  setDriverAge(age);
+                  setDriverAgeOpen(false);
+                }}
+                onToggle={() => {
+                  markExpandedSearchInteraction();
+                  setDriverAgeOpen((current) => !current);
+                  setDatesOpen(false);
+                  setTimesOpen(false);
+                }}
+                wrapRef={driverAgeWrapRef}
+              />
+              <Button
+                type="submit"
+                className={cn(
+                  "mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-[min-height,height,box-shadow] duration-200 sm:mt-3 lg:mt-0 lg:h-auto lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+                  isCompactSearch ? "lg:min-h-[46px]" : "lg:min-h-[54px]",
+                )}
+              >
+                <Search className="h-4 w-4" aria-hidden="true" />
+                Search
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      </form>
+    );
+  };
+
   return (
     <main className="flex-1 bg-[#f6f8fb] pb-8">
+      <div
+        className={cn(
+          "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
+          mobileSearchOpen && "hidden",
+        )}
+      >
+        {renderMobileControlsRow()}
+      </div>
+
+      <div
+        className={cn(
+          "fixed inset-0 z-[10000] min-h-[100dvh] overflow-y-auto bg-slate-50 px-4 py-4 sm:hidden",
+          mobileSearchOpen ? "block" : "hidden",
+        )}
+      >
+        <div className="mx-auto flex min-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col gap-4 pb-[env(safe-area-inset-bottom)]">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
+                Edit search
+              </p>
+              <h2 className="mt-1 text-lg font-bold text-slate-950">
+                Car rental search
+              </h2>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              aria-label="Close edit search"
+              className="h-10 w-10 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-sm"
+              onClick={closeMobileSearchDrawer}
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </Button>
+          </div>
+          {mobileSearchOpen ? renderCarsSearchForm("mobile") : null}
+        </div>
+      </div>
+
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
         className={cn(
-          "sticky top-0 z-40 border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200",
+          "sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
           showCompactSearchSummary
             ? "py-1.5 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
             : "py-2.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
@@ -509,209 +820,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             </Button>
           </div>
 
-          <form
-            ref={searchFormRef}
-            action="/cars/results"
-            method="get"
-            className={cn(
-              "mx-auto w-full min-w-0 max-w-[72rem]",
-              showCompactSearchSummary && "max-w-[54rem]",
-            )}
-            onFocusCapture={markExpandedSearchInteraction}
-            onChangeCapture={markExpandedSearchInteraction}
-            onSubmit={() => {
-              setIsSearchExpandedWhileSticky(false);
-              setHasInteractedWithExpandedSearch(false);
-            }}
-          >
-            <input type="hidden" name="pickupDate" value={pickupDate} />
-            <input type="hidden" name="dropoffDate" value={dropoffDate} />
-            <input type="hidden" name="pickupTime" value={pickupTime} />
-            <input type="hidden" name="dropoffTime" value={dropoffTime} />
-            <input type="hidden" name="driverAge" value={driverAge} />
-            <div
-              className={cn(
-                "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.075)] transition-[padding,border-color,box-shadow,border-radius] duration-200",
-                showCompactSearchSummary
-                  ? "rounded-sm border-slate-300 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.12)]"
-                  : "p-1",
-              )}
-            >
-              {showCompactSearchSummary ? (
-                <button
-                  type="button"
-                  aria-label="Edit car search"
-                  onClick={expandStickySearch}
-                  className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-left transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
-                >
-                  <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,0.8fr)] lg:items-center lg:gap-3">
-                    <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
-                      <MapPin
-                        className="h-4 w-4 shrink-0 text-violet-600"
-                        aria-hidden="true"
-                      />
-                      <span className="flex min-w-0 items-center gap-1.5 truncate">
-                        <span className="min-w-0 truncate">{pickupSummary}</span>
-                        <span className="shrink-0 text-slate-400" aria-hidden="true">
-                          →
-                        </span>
-                        <span className="min-w-0 truncate">{returnSummary}</span>
-                      </span>
-                    </span>
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
-                      {rentalDateSummary}
-                    </span>
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
-                      {timeSummary}
-                    </span>
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
-                      {driverAgeSummary}
-                    </span>
-                  </span>
-                  <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-[2px] border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 shadow-sm transition group-hover:border-indigo-200 group-hover:bg-white sm:self-center">
-                    <PencilLine className="h-3.5 w-3.5" aria-hidden="true" />
-                    Edit
-                  </span>
-                </button>
-              ) : null}
-
-              {showFullSearchForm ? (
-                <div className={searchFormGridClass}>
-                  <SearchInputCell
-                    icon={MapPin}
-                    inputRef={pickupInputRef}
-                    isCompact={
-                      isSearchBarCompact && !isSearchExpandedWhileSticky
-                    }
-                    label="Pickup location"
-                    name="pickupLocation"
-                    onChange={(nextValue) => {
-                      markExpandedSearchInteraction();
-                      setPickupLocation(nextValue);
-                    }}
-                    onClear={() => {
-                      markExpandedSearchInteraction();
-                      setPickupLocation("");
-                      pickupInputRef.current?.focus();
-                    }}
-                    placeholder="Airport, city, or address"
-                    value={pickupLocation}
-                    clearLabel="Clear pickup location"
-                    className="lg:rounded-l-xl"
-                  />
-                  <SearchInputCell
-                    icon={MapPin}
-                    inputRef={dropoffInputRef}
-                    isCompact={
-                      isSearchBarCompact && !isSearchExpandedWhileSticky
-                    }
-                    label="Return location"
-                    name="dropoffLocation"
-                    onChange={(nextValue) => {
-                      markExpandedSearchInteraction();
-                      setDropoffLocation(nextValue);
-                    }}
-                    onClear={() => {
-                      markExpandedSearchInteraction();
-                      setDropoffLocation("");
-                      dropoffInputRef.current?.focus();
-                    }}
-                    placeholder="Same as pickup"
-                    value={dropoffLocation}
-                    clearLabel="Clear return location"
-                  />
-                  <SearchDateCell
-                    dropoffDate={dropoffDate}
-                    isCompact={
-                      isSearchBarCompact && !isSearchExpandedWhileSticky
-                    }
-                    isOpen={datesOpen}
-                    onClear={() => {
-                      markExpandedSearchInteraction();
-                      setPickupDate("");
-                      setDropoffDate("");
-                    }}
-                    onDone={() => {
-                      markExpandedSearchInteraction();
-                      setDatesOpen(false);
-                    }}
-                    onNextMonth={() => {
-                      markExpandedSearchInteraction();
-                      setVisibleMonthDate((current) => addMonths(current, 1));
-                    }}
-                    onPreviousMonth={() => {
-                      markExpandedSearchInteraction();
-                      setVisibleMonthDate((current) => addMonths(current, -1));
-                    }}
-                    onSelectDate={selectRentalDate}
-                    onToggle={() => {
-                      markExpandedSearchInteraction();
-                      setDatesOpen((current) => !current);
-                      setTimesOpen(false);
-                      setDriverAgeOpen(false);
-                    }}
-                    pickupDate={pickupDate}
-                    visibleMonthDate={visibleMonthDate}
-                    wrapRef={dateWrapRef}
-                  />
-                  <SearchTimeCell
-                    dropoffTime={dropoffTime}
-                    isCompact={
-                      isSearchBarCompact && !isSearchExpandedWhileSticky
-                    }
-                    isOpen={timesOpen}
-                    onToggle={() => {
-                      markExpandedSearchInteraction();
-                      setTimesOpen((current) => !current);
-                      setDatesOpen(false);
-                      setDriverAgeOpen(false);
-                    }}
-                    pickupTime={pickupTime}
-                    setDropoffTime={(nextTime) => {
-                      markExpandedSearchInteraction();
-                      setDropoffTime(nextTime);
-                    }}
-                    setPickupTime={(nextTime) => {
-                      markExpandedSearchInteraction();
-                      setPickupTime(nextTime);
-                    }}
-                    wrapRef={timeWrapRef}
-                  />
-                  <DriverAgeCell
-                    driverAge={driverAge}
-                    isCompact={
-                      isSearchBarCompact && !isSearchExpandedWhileSticky
-                    }
-                    isOpen={driverAgeOpen}
-                    onSelect={(age) => {
-                      markExpandedSearchInteraction();
-                      setDriverAge(age);
-                      setDriverAgeOpen(false);
-                    }}
-                    onToggle={() => {
-                      markExpandedSearchInteraction();
-                      setDriverAgeOpen((current) => !current);
-                      setDatesOpen(false);
-                      setTimesOpen(false);
-                    }}
-                    wrapRef={driverAgeWrapRef}
-                  />
-                  <Button
-                    type="submit"
-                    className={cn(
-                      "mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-[min-height,height,box-shadow] duration-200 sm:mt-3 lg:mt-0 lg:h-auto lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
-                      isSearchBarCompact && !isSearchExpandedWhileSticky
-                        ? "lg:min-h-[46px]"
-                        : "lg:min-h-[54px]",
-                    )}
-                  >
-                    <Search className="h-4 w-4" aria-hidden="true" />
-                    Search
-                  </Button>
-                </div>
-              ) : null}
-            </div>
-          </form>
+          {!mobileSearchOpen ? renderCarsSearchForm("desktop") : null}
         </div>
       </section>
 
@@ -752,17 +861,6 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 ? `Filters · ${activeFilterCount}`
                 : "Filters"}
             </Button>
-          </div>
-
-          <div className="space-y-3 sm:hidden">
-            <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-              <h2 className="text-sm font-bold text-navy">
-                Cars results for {locationSummary}
-              </h2>
-              <p className="mt-1 text-xs font-semibold text-slate-500">
-                {rentalDateSummary} · {timeSummary}
-              </p>
-            </div>
           </div>
 
           <CarsResultsShell hasSearchContext={hasSearchContext} />
