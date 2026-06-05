@@ -7,12 +7,14 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ScoreMeter } from "@/components/ui/ScoreMeter";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { formatTime } from "@/lib/utils";
 
 export function FlightDetailsClient({ id }: { id: string }) {
   const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const [flight, setFlight] = useState<PublicFlightResult | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
     sourceCurrency: flight.currency,
     displayCurrency: selectedOption.currency,
     convertUsdEstimate: true,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
   });
 
   return (

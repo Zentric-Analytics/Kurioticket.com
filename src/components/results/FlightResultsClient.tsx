@@ -27,6 +27,7 @@ import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { FlightCard } from "@/components/results/FlightCard";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { airports, type AirportOption } from "@/data/airports";
 import {
@@ -528,6 +529,7 @@ export function FlightResultsClient() {
   const params = useSearchParams();
   const router = useRouter();
   const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const selectedCurrency = selectedOption.currency;
   const discoveryCards = useMemo(
     () => getHomeDiscoveryByRegion(selectedOption.code).slice(0, 4),
@@ -1267,9 +1269,11 @@ export function FlightResultsClient() {
             sourceCurrency,
             displayCurrency: selectedCurrency,
             convertUsdEstimate: true,
+            rates: currencyRates.rates,
+            isFallbackRate: currencyRates.isFallback,
           }).formatted
         : "Mixed provider currencies",
-    [priceLabelCurrency, selectedCurrency]
+    [currencyRates.isFallback, currencyRates.rates, priceLabelCurrency, selectedCurrency]
   );
 
   const buildSummaryDetails = (flight: PublicFlightResult | null, mode: SortMode) => {
@@ -4084,6 +4088,7 @@ function Filters({
   setFlexibleOnly: (value: boolean) => void;
   onFilterChange: () => void;
 }) {
+  const currencyRates = useCurrencyRates();
   const filterRangeClass =
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
   const formatFilterPrice = (amount: number) =>
@@ -4093,6 +4098,8 @@ function Filters({
           sourceCurrency: priceLabelCurrency,
           displayCurrency: selectedCurrency,
           convertUsdEstimate: true,
+          rates: currencyRates.rates,
+          isFallbackRate: currencyRates.isFallback,
         }).formatted
       : "Mixed provider currencies";
 

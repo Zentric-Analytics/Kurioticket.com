@@ -23,6 +23,7 @@ import {
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
@@ -895,6 +896,7 @@ function DiscoveryPricePill({
   displayCurrency: string;
   isLoading: boolean;
 }) {
+  const currencyRates = useCurrencyRates();
   const hasProviderPrice = hasFreshProviderPrice(price);
 
   if (isLoading) {
@@ -931,6 +933,8 @@ function DiscoveryPricePill({
     displayCurrency,
     convertUsdEstimate: true,
     maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
   });
   const estimateCopy = displayPrice.isConvertedEstimate
     ? " Display estimate; final provider price may differ."
@@ -1037,6 +1041,7 @@ function DestinationPricePill({
   displayCurrency: string;
   isLoading: boolean;
 }) {
+  const currencyRates = useCurrencyRates();
   const hasProviderPrice = hasFreshProviderPrice(price);
 
   if (isLoading) {
@@ -1073,6 +1078,8 @@ function DestinationPricePill({
     displayCurrency,
     convertUsdEstimate: true,
     maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
   });
   const estimateCopy = displayPrice.isConvertedEstimate
     ? " Display estimate; final provider price may differ."

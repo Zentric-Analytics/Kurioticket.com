@@ -11,6 +11,7 @@ import {
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { cn, formatTime } from "@/lib/utils";
@@ -23,11 +24,14 @@ type DetailItem = {
 
 export function FlightCard({ flight }: { flight: PublicFlightResult }) {
   const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const displayPrice = formatDisplayPrice({
     amount: flight.price,
     sourceCurrency: flight.currency,
     displayCurrency: selectedOption.currency,
     convertUsdEstimate: true,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
   });
   const details = buildFlightDetails(flight);
   const visibleLegs = getVisibleLegs(flight);
