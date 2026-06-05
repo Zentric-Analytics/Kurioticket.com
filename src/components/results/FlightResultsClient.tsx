@@ -692,7 +692,9 @@ export function FlightResultsClient() {
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
-  const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(null);
+  const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
   const queryString = params.toString();
 
   const originFallbackSuggestions = useMemo(
@@ -836,6 +838,34 @@ export function FlightResultsClient() {
   function handleClearRecentSearches() {
     clearRecentSearches();
     setRecentSearches([]);
+  }
+
+  function handleTripTypeChange(nextTripType: string) {
+    const normalizedTripType =
+      nextTripType === "one-way" ? "one-way" : "round-trip";
+
+    setTripTypeInput(normalizedTripType);
+    setTripTypeMenuOpen(false);
+
+    if (normalizedTripType === "one-way") {
+      setReturnDateInput("");
+
+      if (activeDatePicker === "return") {
+        setActiveDatePicker(null);
+        setDatePickerPosition(null);
+      }
+
+      return;
+    }
+
+    if (
+      returnDateInput &&
+      (!isValidFutureOrTodayDateValue(returnDateInput) ||
+        (departureDateInput &&
+          isDateValueBefore(returnDateInput, departureDateInput)))
+    ) {
+      setReturnDateInput("");
+    }
   }
 
   function closeFlightSearchPopovers() {
@@ -1205,10 +1235,20 @@ export function FlightResultsClient() {
       setDropdownPosition({ top, left, width });
     }
 
-    if (activeSuggest) updateDropdownPosition(activeSuggest);
+    const useInlineMobileSuggestions =
+      mobileSearchOpen && window.matchMedia("(max-width: 639px)").matches;
+
+    if (activeSuggest && !useInlineMobileSuggestions) {
+      updateDropdownPosition(activeSuggest);
+    }
 
     function handleViewportChange() {
       if (!activeSuggest) return;
+
+      if (useInlineMobileSuggestions) {
+        setDropdownPosition(null);
+        return;
+      }
 
       updateDropdownPosition(activeSuggest);
     }
@@ -1248,7 +1288,7 @@ export function FlightResultsClient() {
       window.removeEventListener("resize", handleViewportChange);
       window.removeEventListener("scroll", handleViewportChange, true);
     };
-  }, [activeSuggest]);
+  }, [activeSuggest, mobileSearchOpen]);
 
   useEffect(() => {
     function updateDatePickerPosition(target: "departure" | "return") {
@@ -1474,6 +1514,7 @@ export function FlightResultsClient() {
       nextParams.set("returnDate", nextReturnDate);
     }
 
+    closeMobileSearchDrawer();
     router.push(`/flights/results?${nextParams.toString()}`);
   }
 
@@ -2590,27 +2631,26 @@ export function FlightResultsClient() {
   function renderCompactSearchForm(placement: "mobile" | "desktop") {
     if (placement === "mobile") {
       const mobileFieldClass =
-        "relative rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm shadow-slate-900/[0.03] transition-colors focus-within:border-indigo-300 focus-within:bg-indigo-50/20 focus-within:ring-2 focus-within:ring-indigo-500/10";
+        "rounded-3xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] transition-colors focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/10";
       const mobileLabelClass =
-        "mb-1 block text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500";
+        "mb-1.5 block text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500";
       const mobileInputClass =
-        "h-8 w-full border-0 bg-transparent p-0 pr-8 text-[16px] font-bold leading-8 text-slate-950 outline-none placeholder:text-slate-400";
+        "h-9 w-full border-0 bg-transparent p-0 pr-9 text-[16px] font-bold leading-9 text-slate-950 outline-none placeholder:text-slate-400";
+      const mobileTripTypeOptions = [
+        { label: "Round-trip", value: "round-trip" },
+        { label: "One-way", value: "one-way" },
+      ];
 
       return (
         <form
           onSubmit={handleCompactSearchSubmit}
-          className="mx-auto flex w-full min-w-0 flex-col"
+          className="flex h-full min-h-0 w-full min-w-0 flex-col bg-slate-50"
         >
-          <div className="rounded-t-[1.5rem] bg-slate-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_42px_rgba(15,23,42,0.16)]">
-            <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
-              <div className="min-w-0">
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">
-                  Edit search
-                </p>
-                <h2 className="mt-0.5 truncate text-lg font-black tracking-tight text-slate-950">
-                  {mobileRouteSummary}
-                </h2>
-              </div>
+          <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))]">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-black tracking-tight text-slate-950">
+                Edit flight search
+              </h2>
 
               <button
                 type="button"
@@ -2621,90 +2661,15 @@ export function FlightResultsClient() {
                 ×
               </button>
             </div>
+          </div>
 
-            <div className="space-y-2.5">
-              <div ref={tripTypeMenuRef} className="relative">
-                <button
-                  type="button"
-                  aria-expanded={tripTypeMenuOpen}
-                  aria-haspopup="listbox"
-                  onClick={() => setTripTypeMenuOpen((open) => !open)}
-                  className={cn(
-                    mobileFieldClass,
-                    "flex min-h-[58px] w-full items-center justify-between gap-3 text-left",
-                  )}
-                >
-                  <span className="min-w-0">
-                    <span className={mobileLabelClass}>Trip type</span>
-                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
-                    </span>
-                  </span>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
-                      tripTypeMenuOpen && "rotate-180",
-                    )}
-                  />
-                </button>
-
-                {tripTypeMenuOpen ? (
-                  <div
-                    role="listbox"
-                    aria-label="Trip type"
-                    className="absolute left-3 right-3 top-full z-30 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
-                  >
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={tripTypeInput === "round-trip"}
-                      onClick={() => {
-                        setTripTypeInput("round-trip");
-                        setTripTypeMenuOpen(false);
-                      }}
-                      className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
-                        tripTypeInput === "round-trip"
-                          ? "bg-slate-900 text-white"
-                          : "text-slate-700 hover:bg-slate-100",
-                      )}
-                    >
-                      Round-trip
-                    </button>
-
-                    <button
-                      type="button"
-                      role="option"
-                      aria-selected={tripTypeInput === "one-way"}
-                      onClick={() => {
-                        setTripTypeInput("one-way");
-                        setReturnDateInput("");
-                        setTripTypeMenuOpen(false);
-
-                        if (activeDatePicker === "return") {
-                          setActiveDatePicker(null);
-                          setDatePickerPosition(null);
-                        }
-                      }}
-                      className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors",
-                        tripTypeInput === "one-way"
-                          ? "bg-slate-900 text-white"
-                          : "text-slate-700 hover:bg-slate-100",
-                      )}
-                    >
-                      One-way
-                    </button>
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="grid grid-cols-1 gap-2.5">
-                <div ref={originWrapRef} className={mobileFieldClass}>
-                  <label className={mobileLabelClass} htmlFor="results-origin">
-                    Origin
-                  </label>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+            <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
+              <div ref={originWrapRef} className={mobileFieldClass}>
+                <label className={mobileLabelClass} htmlFor="results-origin">
+                  Origin
+                </label>
+                <div className="relative">
                   <input
                     id="results-origin"
                     ref={originInputRef}
@@ -2751,43 +2716,36 @@ export function FlightResultsClient() {
                         event.stopPropagation();
                         clearOriginField();
                       }}
-                      className="focus-ring absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      className="focus-ring absolute right-0 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                     >
                       <X size={14} />
                     </button>
                   ) : null}
-
-                  {activeSuggest === "origin" && dropdownPosition ? (
-                    <SuggestionList
-                      id="flight-airport-suggestions"
-                      position={dropdownPosition}
-                      suggestions={resolvedOriginSuggestions}
-                      onSelect={(value) => {
-                        setOriginInput(value);
-                        setOriginCode(value);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }}
-                    />
-                  ) : null}
                 </div>
 
-                <button
-                  type="button"
-                  aria-label="Swap origin and destination"
-                  onClick={handleSwapLocations}
-                  className="focus-ring mx-auto -my-1 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-                >
-                  <ArrowRightLeft size={15} />
-                </button>
+                {activeSuggest === "origin" &&
+                originInput.trim().length >= 2 ? (
+                  <InlineSuggestionList
+                    id="flight-airport-suggestions"
+                    suggestions={resolvedOriginSuggestions}
+                    onSelect={(value) => {
+                      setOriginInput(value);
+                      setOriginCode(value);
+                      setActiveSuggest(null);
+                      setDropdownPosition(null);
+                    }}
+                  />
+                ) : null}
+              </div>
 
-                <div ref={destinationWrapRef} className={mobileFieldClass}>
-                  <label
-                    className={mobileLabelClass}
-                    htmlFor="results-destination"
-                  >
-                    Destination
-                  </label>
+              <div ref={destinationWrapRef} className={mobileFieldClass}>
+                <label
+                  className={mobileLabelClass}
+                  htmlFor="results-destination"
+                >
+                  Destination
+                </label>
+                <div className="relative">
                   <input
                     id="results-destination"
                     ref={destinationInputRef}
@@ -2834,98 +2792,128 @@ export function FlightResultsClient() {
                         event.stopPropagation();
                         clearDestinationField();
                       }}
-                      className="focus-ring absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      className="focus-ring absolute right-0 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                     >
                       <X size={14} />
                     </button>
                   ) : null}
-
-                  {activeSuggest === "destination" && dropdownPosition ? (
-                    <SuggestionList
-                      id="flight-airport-suggestions"
-                      position={dropdownPosition}
-                      suggestions={resolvedDestinationSuggestions}
-                      onSelect={(value) => {
-                        setDestinationInput(value);
-                        setDestinationCode(value);
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }}
-                    />
-                  ) : null}
                 </div>
+
+                {activeSuggest === "destination" &&
+                destinationInput.trim().length >= 2 ? (
+                  <InlineSuggestionList
+                    id="flight-airport-suggestions"
+                    suggestions={resolvedDestinationSuggestions}
+                    onSelect={(value) => {
+                      setDestinationInput(value);
+                      setDestinationCode(value);
+                      setActiveSuggest(null);
+                      setDropdownPosition(null);
+                    }}
+                  />
+                ) : null}
               </div>
 
-              <div className="grid grid-cols-1 gap-2.5 min-[430px]:grid-cols-2">
-                <div ref={departureWrapRef}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveSuggest(null);
-                      setDropdownPosition(null);
-                      setTravelerPopoverOpen(false);
-                      setTravelerPopoverPosition(null);
-                      setActiveDatePicker("departure");
-                      setDatePickerPosition(null);
-                    }}
-                    className={cn(
-                      mobileFieldClass,
-                      "flex min-h-[64px] w-full items-center gap-3 text-left",
-                    )}
-                  >
-                    <Calendar className="h-5 w-5 shrink-0 text-indigo-700" />
-                    <span className="min-w-0">
-                      <span className={mobileLabelClass}>Travel dates</span>
-                      <span className="block truncate text-sm font-bold leading-5 text-slate-950">
-                        {departureDateInput
-                          ? tripTypeInput === "round-trip" && returnDateInput
-                            ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
-                            : formatDateLabel(departureDateInput)
-                          : "Travel dates"}
-                      </span>
+              <div ref={departureWrapRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSuggest(null);
+                    setDropdownPosition(null);
+                    setTravelerPopoverOpen(false);
+                    setTravelerPopoverPosition(null);
+                    setActiveDatePicker("departure");
+                    setDatePickerPosition(null);
+                  }}
+                  className={cn(
+                    mobileFieldClass,
+                    "flex min-h-[68px] w-full items-center gap-3 text-left",
+                  )}
+                >
+                  <Calendar className="h-5 w-5 shrink-0 text-indigo-700" />
+                  <span className="min-w-0">
+                    <span className={mobileLabelClass}>Travel dates</span>
+                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
+                      {departureDateInput
+                        ? tripTypeInput === "round-trip" && returnDateInput
+                          ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
+                          : formatDateLabel(departureDateInput)
+                        : "Travel dates"}
                     </span>
-                  </button>
-                </div>
+                  </span>
+                </button>
+              </div>
 
-                <div ref={travelerCabinWrapRef}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveSuggest(null);
-                      setDropdownPosition(null);
-                      setActiveDatePicker(null);
-                      setDatePickerPosition(null);
-                      setTravelerPopoverOpen(true);
-                      setTravelerPopoverPosition(null);
-                    }}
-                    className={cn(
-                      mobileFieldClass,
-                      "flex min-h-[64px] w-full items-center justify-between gap-3 text-left",
-                    )}
-                  >
-                    <span className="min-w-0">
-                      <span className={mobileLabelClass}>Travelers</span>
-                      <span className="block truncate text-sm font-bold leading-5 text-slate-950">
-                        {buildTravelerCabinSummary(
-                          adultCount,
-                          childCount,
-                          infantCount,
-                          cabinClassInput,
+              <div ref={travelerCabinWrapRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveSuggest(null);
+                    setDropdownPosition(null);
+                    setActiveDatePicker(null);
+                    setDatePickerPosition(null);
+                    setTravelerPopoverOpen(true);
+                    setTravelerPopoverPosition(null);
+                  }}
+                  className={cn(
+                    mobileFieldClass,
+                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-left",
+                  )}
+                >
+                  <span className="min-w-0">
+                    <span className={mobileLabelClass}>Travelers / cabin</span>
+                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
+                      {buildTravelerCabinSummary(
+                        adultCount,
+                        childCount,
+                        infantCount,
+                        cabinClassInput,
+                      )}
+                    </span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                </button>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/[0.03]">
+                <span className="mb-2 block px-2 text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500">
+                  Trip type
+                </span>
+                <div
+                  className="grid grid-cols-2 gap-1.5"
+                  role="group"
+                  aria-label="Trip type"
+                >
+                  {mobileTripTypeOptions.map((option) => {
+                    const selected = tripTypeInput === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => handleTripTypeChange(option.value)}
+                        className={cn(
+                          "focus-ring min-h-11 rounded-2xl px-3 py-2 text-sm font-black transition-colors",
+                          selected
+                            ? "bg-slate-950 text-white shadow-sm"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200",
                         )}
-                      </span>
-                    </span>
-                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                  </button>
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              className="mt-3 h-12 w-full rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20"
-            >
-              Search
-            </Button>
+              <Button
+                type="submit"
+                className="mt-1 h-[52px] w-full rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20"
+              >
+                Search
+              </Button>
+            </div>
           </div>
         </form>
       );
@@ -2990,10 +2978,7 @@ export function FlightResultsClient() {
                       type="button"
                       role="option"
                       aria-selected={tripTypeInput === "round-trip"}
-                      onClick={() => {
-                        setTripTypeInput("round-trip");
-                        setTripTypeMenuOpen(false);
-                      }}
+                      onClick={() => handleTripTypeChange("round-trip")}
                       className={cn(
                         "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
                         tripTypeInput === "round-trip"
@@ -3008,16 +2993,7 @@ export function FlightResultsClient() {
                       type="button"
                       role="option"
                       aria-selected={tripTypeInput === "one-way"}
-                      onClick={() => {
-                        setTripTypeInput("one-way");
-                        setReturnDateInput("");
-                        setTripTypeMenuOpen(false);
-
-                        if (activeDatePicker === "return") {
-                          setActiveDatePicker(null);
-                          setDatePickerPosition(null);
-                        }
-                      }}
+                      onClick={() => handleTripTypeChange("one-way")}
                       className={cn(
                         "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
                         tripTypeInput === "one-way"
@@ -3332,15 +3308,7 @@ export function FlightResultsClient() {
 
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-navy/40 sm:hidden",
-          mobileSearchOpen ? "block" : "hidden",
-        )}
-        onClick={closeMobileSearchDrawer}
-      />
-
-      <div
-        className={cn(
-          "fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto overscroll-contain rounded-t-[1.5rem] bg-white shadow-2xl sm:hidden",
+          "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden",
           mobileSearchOpen ? "block" : "hidden",
         )}
       >
@@ -4378,6 +4346,50 @@ function CounterRow({
           <Plus className="h-3.5 w-3.5" />
         </button>
       </div>
+    </div>
+  );
+}
+
+function InlineSuggestionList({
+  id,
+  suggestions,
+  onSelect,
+}: {
+  id: string;
+  suggestions: AirportOption[];
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <div
+      id={id}
+      className="mt-3 max-h-[38dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white py-1 shadow-sm shadow-slate-900/[0.04]"
+    >
+      {suggestions.length ? (
+        suggestions.map((item) => (
+          <button
+            key={`${item.code}-${item.airport}`}
+            type="button"
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            onClick={() => onSelect(airportInputValue(item))}
+            className="block w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30"
+          >
+            <p className="text-sm font-bold text-slate-950">
+              {item.city} ({item.code})
+            </p>
+            <p className="text-xs leading-5 text-slate-600">
+              {item.airport}
+              {item.country ? ` · ${item.country}` : ""}
+            </p>
+          </button>
+        ))
+      ) : (
+        <p className="px-4 py-4 text-sm font-semibold text-slate-500">
+          No matching airports found
+        </p>
+      )}
     </div>
   );
 }
