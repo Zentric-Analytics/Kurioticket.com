@@ -215,6 +215,9 @@ const getDriverAgeOptionLabel = (age: string) =>
 const fieldShellClass =
   "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
 
+const searchFormGridClass =
+  "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.16fr)_minmax(0,1.08fr)_minmax(0,1.28fr)_minmax(0,1.08fr)_minmax(7rem,0.62fr)_104px] lg:gap-0";
+
 const compactFieldShellClass = "min-h-[48px] py-1 lg:min-h-[46px]";
 
 const fieldLabelClass =
@@ -265,6 +268,11 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const hasSearchContext = Boolean(pickupLocation || pickupDate || dropoffDate);
+  const locationSummary = pickupLocation.trim()
+    ? dropoffLocation.trim() && dropoffLocation.trim() !== pickupLocation.trim()
+      ? `${pickupLocation.trim()} to ${dropoffLocation.trim()}`
+      : pickupLocation.trim()
+    : "Pickup location needed";
   const activeFilterCount = useMemo(
     () =>
       Object.values(selectedCarFilters).reduce(
@@ -478,7 +486,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             )}
           >
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
-              Car rental results
+              Cars results
             </p>
             <Button
               type="button"
@@ -506,9 +514,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             action="/cars/results"
             method="get"
             className={cn(
-              "min-w-0",
-              showCompactSearchSummary &&
-                "mx-auto w-full max-w-[58rem] sm:max-w-[60rem]",
+              "mx-auto w-full min-w-0 max-w-[72rem]",
+              showCompactSearchSummary && "max-w-[54rem]",
             )}
             onFocusCapture={markExpandedSearchInteraction}
             onChangeCapture={markExpandedSearchInteraction}
@@ -524,9 +531,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             <input type="hidden" name="driverAge" value={driverAge} />
             <div
               className={cn(
-                "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-[padding,box-shadow] duration-200",
+                "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.075)] transition-[padding,box-shadow] duration-200",
                 showCompactSearchSummary
-                  ? "border-slate-200/80 bg-white/95 p-1 shadow-[0_8px_22px_rgba(15,23,42,0.08)]"
+                  ? "border-slate-200/80 bg-white/95 p-1 shadow-[0_8px_20px_rgba(15,23,42,0.07)]"
                   : "p-1",
               )}
             >
@@ -535,7 +542,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                   type="button"
                   aria-label="Edit car search"
                   onClick={expandStickySearch}
-                  className="focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-gradient-to-r from-white via-white to-indigo-50/40 px-3 py-2.5 text-left transition hover:bg-indigo-50/60 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+                  className="focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-gradient-to-r from-white via-white to-indigo-50/35 px-3 py-2.5 text-left transition hover:bg-indigo-50/55 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
                 >
                   <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,0.8fr)] lg:items-center lg:gap-3">
                     <span className="flex min-w-0 items-center gap-2 text-sm font-black text-slate-950">
@@ -565,7 +572,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               ) : null}
 
               {showFullSearchForm ? (
-                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1.15fr)_minmax(0,1.35fr)_minmax(0,1.15fr)_minmax(7.5rem,0.68fr)_108px] lg:gap-0">
+                <div className={searchFormGridClass}>
                   <SearchInputCell
                     icon={MapPin}
                     inputRef={pickupInputRef}
@@ -704,8 +711,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="hidden lg:sticky lg:top-[7.75rem] lg:block lg:max-h-[calc(100vh-8.75rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)]">
+        <aside className="hidden lg:sticky lg:top-[7.5rem] lg:block lg:max-h-[calc(100vh-8.5rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain">
           <CarFilters
             activeFilterCount={activeFilterCount}
             layout="desktop"
@@ -716,29 +723,24 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         </aside>
 
         <section className="min-w-0 space-y-4" aria-label="Car results">
-          <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm shadow-slate-900/[0.04] sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
-                Car rentals
-              </p>
-              <h1
-                id="cars-results-heading"
-                className="mt-1 text-lg font-black tracking-[-0.02em] text-slate-950 sm:text-xl"
-              >
-                {pickupLocation
-                  ? `Cars from ${pickupLocation}`
-                  : "Search car rentals"}
-              </h1>
-              <p className="mt-1 text-sm text-muted">
-                {hasSearchContext
-                  ? "We could not find cars for these details right now. Adjust your dates or location and search again."
-                  : "Enter your pickup details to start a car rental search."}
+          <h1 id="cars-results-heading" className="sr-only">
+            Cars results for {locationSummary}
+          </h1>
+
+          <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="truncate text-sm font-bold text-navy">
+                Cars results for {locationSummary}
+              </h2>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
               </p>
             </div>
+
             <Button
               type="button"
               variant="secondary"
-              className="h-10 rounded-md border-slate-300 text-sm font-bold lg:hidden"
+              className="h-10 rounded-xl border-slate-300 text-sm font-bold transition hover:border-slate-400 focus-visible:border-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:hidden"
               onClick={() => setFiltersOpen(true)}
             >
               <SlidersHorizontal size={17} aria-hidden="true" />
@@ -748,7 +750,18 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             </Button>
           </div>
 
-          <EmptyCarsState hasSearchContext={hasSearchContext} />
+          <div className="space-y-3 sm:hidden">
+            <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+              <h2 className="text-sm font-bold text-navy">
+                Cars results for {locationSummary}
+              </h2>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                {rentalDateSummary} · {timeSummary}
+              </p>
+            </div>
+          </div>
+
+          <CarsResultsShell hasSearchContext={hasSearchContext} />
         </section>
       </div>
 
@@ -777,11 +790,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
                   {activeFilterLabel}
                 </p>
-              ) : (
-                <p className="mt-1 text-xs font-semibold text-slate-500">
-                  Refine your car search
-                </p>
-              )}
+              ) : null}
             </div>
             <Button
               variant="ghost"
@@ -1259,51 +1268,15 @@ function DriverAgeCell({
   );
 }
 
-function EmptyCarsState({ hasSearchContext }: { hasSearchContext: boolean }) {
+function CarsResultsShell({ hasSearchContext }: { hasSearchContext: boolean }) {
   return (
     <div
-      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/[0.04]"
+      className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"
       role="status"
     >
-      <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-indigo-50/70 px-5 py-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
-              No cars found
-            </p>
-            <h2 className="mt-2 text-2xl font-black tracking-[-0.03em] text-slate-950">
-              Try adjusting your search details
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {hasSearchContext
-                ? "We saved this search, but there are no car rental options to show for these details right now. Try different dates, times, or a nearby pickup location."
-                : "Add a pickup location and rental dates above to look for car rental options that fit your trip."}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-indigo-100 bg-white p-3 text-indigo-700 shadow-sm shadow-indigo-900/[0.04]">
-            <Search className="h-6 w-6" aria-hidden="true" />
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-3 px-5 py-5 sm:grid-cols-3">
-        {[
-          "Check nearby pickup locations",
-          "Try different rental dates",
-          "Adjust pickup or return times",
-        ].map((tip) => (
-          <div
-            key={tip}
-            className="flex items-start gap-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-sm font-semibold text-slate-700"
-          >
-            <CheckCircle2
-              className="mt-0.5 h-4 w-4 shrink-0 text-violet-600"
-              aria-hidden="true"
-            />
-            <span>{tip}</span>
-          </div>
-        ))}
-      </div>
+      {hasSearchContext
+        ? "Live car inventory is not available to display for this search yet. Update the search details above or check again later."
+        : "Enter pickup details above to prepare a car search."}
     </div>
   );
 }
@@ -1326,49 +1299,38 @@ function CarFilters({
       className={cn(
         "overflow-hidden",
         layout === "desktop"
-          ? "rounded-[1.35rem] border border-slate-200/80 bg-white/95 shadow-[0_16px_38px_rgba(15,23,42,0.07)] backdrop-blur"
+          ? "rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-900/[0.04]"
           : "bg-white",
       )}
     >
-      <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 bg-gradient-to-br from-white via-white to-indigo-50/70 px-4 py-4">
-        <div>
-          <h2 className="text-base font-black tracking-[-0.01em] text-slate-950">
-            Filter by
-          </h2>
-          {activeFilterCount > 0 ? (
-            <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-indigo-100">
-              {activeFilterCount} active
-            </p>
-          ) : null}
-        </div>
+      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
+        <h2 className="text-base font-semibold text-white/95">Filter by</h2>
         <div className="flex shrink-0 items-center gap-2">
           {activeFilterCount > 0 ? (
-            <button
-              type="button"
-              className="focus-ring rounded-full border border-indigo-100 bg-white px-3 py-1.5 text-xs font-black text-indigo-700 shadow-sm transition hover:bg-indigo-50"
-              onClick={onClear}
-            >
-              Clear
-            </button>
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-white/70">
+              {activeFilterCount} active
+            </span>
           ) : null}
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-indigo-700 shadow-sm">
-            <SlidersHorizontal size={17} aria-hidden="true" />
-          </span>
+          <SlidersHorizontal
+            className="text-white/90"
+            size={18}
+            aria-hidden="true"
+          />
         </div>
       </div>
 
-      <div className="space-y-1 bg-slate-50/70 px-3 py-3">
+      <div className="space-y-3 bg-white px-3 py-3">
         {activeFilterCount > 0 ? (
-          <div className="mb-2 flex items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-white px-3 py-2.5 shadow-sm shadow-indigo-900/[0.03]">
-            <span className="text-sm font-bold text-indigo-950">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2.5">
+            <span className="text-sm font-semibold text-indigo-950">
               {activeFilterCount} selected
             </span>
             <button
               type="button"
-              className="focus-ring rounded-lg px-2 py-1 text-sm font-black text-indigo-700 transition hover:bg-indigo-50"
+              className="focus-ring rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-50"
               onClick={onClear}
             >
-              Reset filters
+              Reset
             </button>
           </div>
         ) : null}
@@ -1396,10 +1358,8 @@ function FilterSection({
   selectedOptions: string[];
 }) {
   return (
-    <section className="rounded-2xl border border-slate-200/70 bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
-      <h3 className="text-sm font-black tracking-[-0.01em] text-slate-950">
-        {group.title}
-      </h3>
+    <section className="rounded-xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
+      <h3 className="text-sm font-semibold text-slate-900">{group.title}</h3>
       <div className="mt-2 space-y-1.5">
         {group.options.map((option) => {
           const isSelected = selectedOptions.includes(option);
@@ -1408,10 +1368,10 @@ function FilterSection({
             <label
               key={option}
               className={cn(
-                "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors",
+                "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
                 isSelected
-                  ? "border-indigo-200 bg-indigo-50/90 text-indigo-900 shadow-sm shadow-indigo-900/[0.03]"
-                  : "border-transparent bg-slate-50/80 text-slate-700 hover:border-slate-200 hover:bg-white hover:text-slate-950",
+                  ? "border-indigo-200 bg-indigo-50 text-indigo-900 shadow-sm shadow-indigo-900/[0.03]"
+                  : "border-slate-200/70 bg-white text-slate-700 hover:border-indigo-100 hover:bg-indigo-50/40 hover:text-slate-950",
               )}
             >
               <input
