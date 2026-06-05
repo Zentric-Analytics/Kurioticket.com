@@ -214,7 +214,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
   return (
     <Card className="mx-auto w-full max-w-[800px] overflow-hidden border-indigo-100 bg-white shadow-[0_16px_38px_-26px_rgba(30,27,75,0.5)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_44px_-24px_rgba(30,27,75,0.55)]">
       <div className="grid md:grid-cols-[40%_minmax(0,1fr)]">
-        <div className="relative aspect-[4/3] bg-surface-muted md:aspect-auto md:min-h-[230px] lg:min-h-[240px]">
+        <div className="relative h-[clamp(280px,78vw,340px)] bg-surface-muted md:aspect-auto md:h-auto md:min-h-[230px] lg:min-h-[240px]">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -235,8 +235,8 @@ export function HotelCard({ hotel }: HotelCardProps) {
             </div>
           )}
         </div>
-        <div className="px-3 py-3">
-          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-h-[220px] flex-col px-4 py-4 md:min-h-0 md:px-3 md:py-3">
+          <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <div>
                 {starRating ? (
@@ -294,8 +294,8 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 </p>
               ) : null}
             </div>
-            <div className="flex items-center justify-between gap-2 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-right">
-              <div className="text-right">
+            <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-right">
+              <div className="text-left min-[380px]:text-right lg:text-right">
                 <div className="text-[21px] font-bold tracking-[-0.01em] text-slate-950">
                   {formatCurrency(hotel.totalPrice, hotel.currency)}
                 </div>
@@ -307,11 +307,11 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   night
                 </div>
               </div>
-              <div className="text-right">
+              <div className="min-[380px]:text-right">
                 <Button
                   variant="accent"
                   size="sm"
-                  className="whitespace-nowrap rounded-lg border border-indigo-700 bg-indigo-700 px-3 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 hover:border-indigo-800 hover:bg-indigo-800"
+                  className="w-full whitespace-nowrap rounded-lg border border-indigo-700 bg-indigo-700 px-3 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 hover:border-indigo-800 hover:bg-indigo-800 min-[380px]:w-auto"
                   onClick={redirectToHotel}
                 >
                   View Hotel
