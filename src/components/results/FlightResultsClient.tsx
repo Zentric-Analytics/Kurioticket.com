@@ -55,6 +55,19 @@ const resultStackClass = "w-full max-w-[680px] lg:ml-4 xl:ml-6";
 const desktopFilterStickyTopClass =
   "lg:sticky lg:top-[7.25rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:overscroll-contain";
 
+const filterQueryParamKeys = [
+  "fPrice",
+  "fTakeoff",
+  "fLanding",
+  "fDuration",
+  "fStop",
+  "fAirline",
+  "fAirport",
+  "fQuality",
+  "fBaggage",
+  "fFlexible",
+] as const;
+
 const loadingMessages = [
   "Searching airlines...",
   "Comparing prices...",
@@ -692,10 +705,12 @@ export function FlightResultsClient() {
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
+  const filtersHydratedFromUrlRef = useRef(false);
   const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
   const queryString = params.toString();
+  const searchQueryString = getSearchQueryString(params);
 
   const originFallbackSuggestions = useMemo(
     () => filterAirportOptions(originInput),
@@ -936,7 +951,7 @@ export function FlightResultsClient() {
   }, []);
 
   useEffect(() => {
-    const searchValues = new URLSearchParams(queryString);
+    const searchValues = new URLSearchParams(searchQueryString);
     const normalizedSearchValues =
       normalizeFlightDateSearchParams(searchValues);
 
@@ -996,7 +1011,7 @@ export function FlightResultsClient() {
     setInfantCount(Math.min(Math.min(9, nextAdults), nextInfants));
     setCabinClassInput(nextCabinClass);
     closeFlightSearchPopovers();
-  }, [queryString, router]);
+  }, [router, searchQueryString]);
 
   useEffect(() => {
     const query = originInput.trim();
@@ -1074,11 +1089,12 @@ export function FlightResultsClient() {
   }, [destinationInput, countryHint]);
 
   const body = useMemo(() => {
-    const origin = params.get("origin")?.trim() || "";
-    const destination = params.get("destination")?.trim() || "";
-    const departureDate = params.get("departureDate")?.trim() || "";
-    const tripType = params.get("tripType") || "round-trip";
-    const returnDate = params.get("returnDate")?.trim() || "";
+    const searchParams = new URLSearchParams(searchQueryString);
+    const origin = searchParams.get("origin")?.trim() || "";
+    const destination = searchParams.get("destination")?.trim() || "";
+    const departureDate = searchParams.get("departureDate")?.trim() || "";
+    const tripType = searchParams.get("tripType") || "round-trip";
+    const returnDate = searchParams.get("returnDate")?.trim() || "";
     const hasValidDepartureDate = isValidFutureOrTodayDateValue(departureDate);
     const hasValidReturnDate =
       tripType !== "round-trip" ||
@@ -1094,10 +1110,10 @@ export function FlightResultsClient() {
 
     if (!hasSearch) return null;
 
-    const adultsParam = Number(params.get("adults"));
-    const childrenParam = Number(params.get("children"));
-    const infantsParam = Number(params.get("infants"));
-    const legacyTravelers = Number(params.get("travelers") || 1);
+    const adultsParam = Number(searchParams.get("adults"));
+    const childrenParam = Number(searchParams.get("children"));
+    const infantsParam = Number(searchParams.get("infants"));
+    const legacyTravelers = Number(searchParams.get("travelers") || 1);
     const adults = Number.isFinite(adultsParam)
       ? Math.max(1, adultsParam)
       : Math.max(1, legacyTravelers);
@@ -1119,11 +1135,11 @@ export function FlightResultsClient() {
       children,
       infants,
       travelers,
-      cabinClass: params.get("cabinClass") || "economy",
-      sort: (params.get("sort") as SortMode) || "cheapest",
+      cabinClass: searchParams.get("cabinClass") || "economy",
+      sort: (searchParams.get("sort") as SortMode) || "cheapest",
       currency: selectedCurrency,
     };
-  }, [params, selectedCurrency]);
+  }, [searchQueryString, selectedCurrency]);
 
   useEffect(() => {
     if (!body) return;
@@ -1727,6 +1743,158 @@ export function FlightResultsClient() {
     setMaxDurationMinutes(durationBounds?.max ?? null);
   }, [durationBounds?.max]);
 
+  useEffect(() => {
+    if (loading) return;
+
+    const filterParams = new URLSearchParams(queryString);
+    const allowedStops = new Set(stopOptions.map((option) => option.value));
+    const allowedAirlines = new Set(
+      airlineOptions.map((option) => option.value),
+    );
+    const allowedAirports = new Set(
+      airportOptions.map((option) => option.value),
+    );
+    const allowedQuality = new Set(
+      flightQualityOptions.map((option) => option.value),
+    );
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrates client-only filter controls from shareable URL params after result-derived bounds/options load.
+    setMaxPrice(
+      parseBoundedFilterNumber(
+        filterParams.get("fPrice"),
+        priceBounds.min,
+        priceBounds.max,
+      ) ?? priceBounds.max,
+    );
+    setMaxTakeoffMinutes(
+      parseBoundedFilterNumber(
+        filterParams.get("fTakeoff"),
+        timeBounds.takeoff?.min ?? null,
+        timeBounds.takeoff?.max ?? null,
+      ) ?? timeBounds.takeoff?.max ?? null,
+    );
+    setMaxLandingMinutes(
+      parseBoundedFilterNumber(
+        filterParams.get("fLanding"),
+        timeBounds.landing?.min ?? null,
+        timeBounds.landing?.max ?? null,
+      ) ?? timeBounds.landing?.max ?? null,
+    );
+    setMaxDurationMinutes(
+      parseBoundedFilterNumber(
+        filterParams.get("fDuration"),
+        durationBounds?.min ?? null,
+        durationBounds?.max ?? null,
+      ) ?? durationBounds?.max ?? null,
+    );
+    setSelectedStops(readFilterList(filterParams, "fStop", allowedStops));
+    setSelectedAirlines(
+      readFilterList(filterParams, "fAirline", allowedAirlines),
+    );
+    setSelectedAirports(
+      readFilterList(filterParams, "fAirport", allowedAirports),
+    );
+    setSelectedFlightQuality(
+      readFilterList(filterParams, "fQuality", allowedQuality),
+    );
+    setBaggageIncludedOnly(filterParams.get("fBaggage") !== "0");
+    setFlexibleOnly(filterParams.get("fFlexible") === "1");
+    filtersHydratedFromUrlRef.current = true;
+  }, [
+    airlineOptions,
+    airportOptions,
+    durationBounds?.max,
+    durationBounds?.min,
+    flightQualityOptions,
+    loading,
+    priceBounds.max,
+    priceBounds.min,
+    queryString,
+    stopOptions,
+    timeBounds.landing?.max,
+    timeBounds.landing?.min,
+    timeBounds.takeoff?.max,
+    timeBounds.takeoff?.min,
+  ]);
+
+  useEffect(() => {
+    if (!filtersHydratedFromUrlRef.current || loading) return;
+
+    const currentParams = new URLSearchParams(queryString);
+    const nextParams = new URLSearchParams(queryString);
+
+    clearFilterSearchParams(nextParams);
+
+    if (priceBounds.max > 0 && maxPrice > 0 && maxPrice < priceBounds.max) {
+      nextParams.set("fPrice", String(Math.round(maxPrice)));
+    }
+
+    if (
+      timeBounds.takeoff &&
+      maxTakeoffMinutes !== null &&
+      maxTakeoffMinutes < timeBounds.takeoff.max
+    ) {
+      nextParams.set("fTakeoff", String(Math.round(maxTakeoffMinutes)));
+    }
+
+    if (
+      timeBounds.landing &&
+      maxLandingMinutes !== null &&
+      maxLandingMinutes < timeBounds.landing.max
+    ) {
+      nextParams.set("fLanding", String(Math.round(maxLandingMinutes)));
+    }
+
+    if (
+      durationBounds &&
+      maxDurationMinutes !== null &&
+      maxDurationMinutes < durationBounds.max
+    ) {
+      nextParams.set("fDuration", String(Math.round(maxDurationMinutes)));
+    }
+
+    appendFilterList(nextParams, "fStop", selectedStops);
+    appendFilterList(nextParams, "fAirline", selectedAirlines);
+    appendFilterList(nextParams, "fAirport", selectedAirports);
+    appendFilterList(nextParams, "fQuality", selectedFlightQuality);
+
+    if (!baggageIncludedOnly) {
+      nextParams.set("fBaggage", "0");
+    }
+
+    if (flexibleOnly) {
+      nextParams.set("fFlexible", "1");
+    }
+
+    if (nextParams.toString() === currentParams.toString()) return;
+
+    const nextQuery = nextParams.toString();
+    router.replace(
+      nextQuery ? `/flights/results?${nextQuery}` : "/flights/results",
+      {
+        scroll: false,
+      },
+    );
+  }, [
+    baggageIncludedOnly,
+    durationBounds,
+    flexibleOnly,
+    loading,
+    maxDurationMinutes,
+    maxLandingMinutes,
+    maxPrice,
+    maxTakeoffMinutes,
+    priceBounds.max,
+    queryString,
+    router,
+    selectedAirlines,
+    selectedAirports,
+    selectedFlightQuality,
+    selectedStops,
+    timeBounds.landing,
+    timeBounds.takeoff,
+  ]);
+
   const activeFilterCount = useMemo(() => {
     let count = 0;
 
@@ -1984,17 +2152,7 @@ export function FlightResultsClient() {
                     id="tripType"
                     name="tripType"
                     value={tripTypeInput}
-                    onChange={(event) => {
-                      const nextTripType = event.target.value;
-                      setTripTypeInput(nextTripType);
-                      if (nextTripType !== "round-trip") {
-                        setReturnDateInput("");
-                        if (activeDatePicker === "return") {
-                          setActiveDatePicker(null);
-                          setDatePickerPosition(null);
-                        }
-                      }
-                    }}
+                    onChange={(event) => handleTripTypeChange(event.target.value)}
                     className="focus-ring h-8 w-full appearance-none rounded-md border-0 bg-transparent px-0 pr-6 text-[16px] font-medium text-slate-900 outline-none transition-colors md:text-sm"
                   >
                     <option value="round-trip">Round-trip</option>
@@ -3256,7 +3414,7 @@ export function FlightResultsClient() {
               ? `Open filters, ${activeFilterLabel}`
               : "Open filters"
           }
-          className="relative h-16 w-[72px] shrink-0 rounded-2xl border-slate-200 bg-white px-2 text-[11px] font-bold text-slate-800 shadow-[0_10px_22px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          className="relative h-16 w-[72px] shrink-0 rounded-2xl border-slate-200 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_10px_22px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_12px_24px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
           onClick={() => setFiltersOpen(true)}
         >
           <span className="flex flex-col items-center justify-center gap-1 leading-none">
@@ -3264,7 +3422,7 @@ export function FlightResultsClient() {
             <span>Filters</span>
           </span>
           {activeFilterCount > 0 ? (
-            <span className="absolute right-1.5 top-1.5 inline-flex h-[23px] min-w-[23px] items-center justify-center rounded-full bg-indigo-700 px-1.5 text-[11px] font-black leading-none text-white shadow-sm ring-2 ring-white">
+            <span className="absolute right-1.5 top-1.5 inline-flex h-[23px] min-w-[23px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
               {activeFilterCount}
             </span>
           ) : null}
@@ -3548,9 +3706,9 @@ export function FlightResultsClient() {
         <div className="flex-1 overflow-auto p-5 pb-3">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold text-navy">Filters</h2>
+              <h2 className="text-base font-semibold text-slate-900">Filters</h2>
               {activeFilterCount > 0 ? (
-                <p className="mt-0.5 text-xs font-bold text-indigo-700">
+                <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
                   {activeFilterLabel}
                 </p>
               ) : null}
@@ -3816,13 +3974,7 @@ function getNextFlightDateSelection({
     };
   }
 
-  if (isDateValueBefore(value, departureDate)) {
-    return {
-      activePicker: "return",
-      departureDate: value,
-      returnDate: "",
-    };
-  }
+  if (isDateValueBefore(value, departureDate)) return null;
 
   return {
     activePicker: null,
@@ -3859,6 +4011,64 @@ function normalizeFlightDateSearchParams(
   }
 
   return nextParams;
+}
+
+function clearFilterSearchParams(params: URLSearchParams) {
+  for (const key of filterQueryParamKeys) {
+    params.delete(key);
+  }
+}
+
+function getSearchQueryString(params: Pick<URLSearchParams, "toString">) {
+  const searchParams = new URLSearchParams(params.toString());
+  clearFilterSearchParams(searchParams);
+
+  return searchParams.toString();
+}
+
+function parseBoundedFilterNumber(
+  value: string | null,
+  min: number | null,
+  max: number | null,
+) {
+  if (!value || min === null || max === null || max <= min) return null;
+
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed) || parsed < min || parsed > max) return null;
+
+  return parsed;
+}
+
+function isSafeFilterValue(value: string) {
+  return value.length > 0 && value.length <= 120;
+}
+
+function readFilterList(
+  params: URLSearchParams,
+  key: string,
+  allowedValues: Set<string>,
+) {
+  const values = params
+    .getAll(key)
+    .map((value) => value.trim())
+    .filter(isSafeFilterValue);
+
+  const uniqueValues = Array.from(new Set(values));
+
+  if (!allowedValues.size) return uniqueValues.slice(0, 30);
+
+  return uniqueValues.filter((value) => allowedValues.has(value)).slice(0, 30);
+}
+
+function appendFilterList(
+  params: URLSearchParams,
+  key: string,
+  values: string[],
+) {
+  for (const value of Array.from(new Set(values)).filter(isSafeFilterValue)) {
+    params.append(key, value);
+  }
 }
 
 function buildMonthDays(month: Date): Array<Date | null> {
@@ -4710,11 +4920,11 @@ function Filters({
     >
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
-          <h2 className="text-base font-bold text-white">Filter by</h2>
+          <h2 className="text-base font-semibold text-white/95">Filter by</h2>
         </div>
         <div className="flex items-center gap-2">
           {activeFilterCount > 0 ? (
-            <span className="rounded-full bg-white/95 px-2.5 py-1 text-xs font-black text-indigo-700 shadow-sm">
+            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-white/70">
               {activeFilterCount} active
             </span>
           ) : null}
