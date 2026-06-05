@@ -1686,6 +1686,65 @@ export function FlightResultsClient() {
     setMaxDurationMinutes(durationBounds?.max ?? null);
   }, [durationBounds?.max]);
 
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+
+    if (priceBounds.max > 0 && maxPrice > 0 && maxPrice < priceBounds.max) {
+      count += 1;
+    }
+
+    if (
+      timeBounds.takeoff &&
+      maxTakeoffMinutes !== null &&
+      maxTakeoffMinutes < timeBounds.takeoff.max
+    ) {
+      count += 1;
+    }
+
+    if (
+      timeBounds.landing &&
+      maxLandingMinutes !== null &&
+      maxLandingMinutes < timeBounds.landing.max
+    ) {
+      count += 1;
+    }
+
+    if (
+      durationBounds &&
+      maxDurationMinutes !== null &&
+      maxDurationMinutes < durationBounds.max
+    ) {
+      count += 1;
+    }
+
+    count += selectedStops.length;
+    count += selectedAirlines.length;
+    count += selectedAirports.length;
+    count += selectedFlightQuality.length;
+
+    if (flexibleOnly) {
+      count += 1;
+    }
+
+    return count;
+  }, [
+    durationBounds,
+    flexibleOnly,
+    maxDurationMinutes,
+    maxLandingMinutes,
+    maxPrice,
+    maxTakeoffMinutes,
+    priceBounds.max,
+    selectedAirlines.length,
+    selectedAirports.length,
+    selectedFlightQuality.length,
+    selectedStops.length,
+    timeBounds.landing,
+    timeBounds.takeoff,
+  ]);
+
+  const activeFilterLabel = `${activeFilterCount} active`;
+
   const filtered = results.filter((flight) => {
     const matchesPrice = flight.price <= maxPrice;
     const matchesSelectedStops =
@@ -2530,49 +2589,61 @@ export function FlightResultsClient() {
 
   function renderCompactSearchForm(placement: "mobile" | "desktop") {
     if (placement === "mobile") {
+      const mobileFieldClass =
+        "relative rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm shadow-slate-900/[0.03] transition-colors focus-within:border-indigo-300 focus-within:bg-indigo-50/20 focus-within:ring-2 focus-within:ring-indigo-500/10";
+      const mobileLabelClass =
+        "mb-1 block text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500";
+      const mobileInputClass =
+        "h-8 w-full border-0 bg-transparent p-0 pr-8 text-[16px] font-bold leading-8 text-slate-950 outline-none placeholder:text-slate-400";
+
       return (
         <form
           onSubmit={handleCompactSearchSubmit}
           className="mx-auto flex w-full min-w-0 flex-col"
         >
-          <div className="rounded-t-[1.5rem] bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_42px_rgba(15,23,42,0.16)]">
-            <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-lg font-bold tracking-tight text-slate-950">
-                Edit flight search
-              </h2>
+          <div className="rounded-t-[1.5rem] bg-slate-50 px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_42px_rgba(15,23,42,0.16)]">
+            <div className="mb-3 flex items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">
+                  Edit search
+                </p>
+                <h2 className="mt-0.5 truncate text-lg font-black tracking-tight text-slate-950">
+                  {mobileRouteSummary}
+                </h2>
+              </div>
 
               <button
                 type="button"
                 aria-label="Close search form"
                 onClick={closeMobileSearchDrawer}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
               >
                 ×
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/[0.03]">
-                <div ref={tripTypeMenuRef} className="relative border-b border-slate-100">
+            <div className="space-y-2.5">
+              <div ref={tripTypeMenuRef} className="relative">
                 <button
                   type="button"
                   aria-expanded={tripTypeMenuOpen}
                   aria-haspopup="listbox"
                   onClick={() => setTripTypeMenuOpen((open) => !open)}
-                  className="focus-ring flex min-h-[54px] w-full items-center justify-between bg-white px-3.5 py-2.5 text-left transition-colors hover:bg-slate-50"
+                  className={cn(
+                    mobileFieldClass,
+                    "flex min-h-[58px] w-full items-center justify-between gap-3 text-left",
+                  )}
                 >
-                  <span>
-                    <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
-                      Trip type
-                    </span>
-                    <span className="block text-sm font-semibold text-slate-950">
+                  <span className="min-w-0">
+                    <span className={mobileLabelClass}>Trip type</span>
+                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
                       {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
                     </span>
                   </span>
                   <ChevronDown
                     aria-hidden="true"
                     className={cn(
-                      "h-4 w-4 text-slate-500 transition-transform",
+                      "h-4 w-4 shrink-0 text-slate-500 transition-transform",
                       tripTypeMenuOpen && "rotate-180",
                     )}
                   />
@@ -2627,17 +2698,11 @@ export function FlightResultsClient() {
                     </button>
                   </div>
                 ) : null}
-                </div>
+              </div>
 
-                <div className="space-y-0 divide-y divide-slate-100">
-                <div
-                  ref={originWrapRef}
-                  className="relative bg-white px-3.5 py-2.5 transition-colors focus-within:bg-slate-50"
-                >
-                  <label
-                    className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
-                    htmlFor="results-origin"
-                  >
+              <div className="grid grid-cols-1 gap-2.5">
+                <div ref={originWrapRef} className={mobileFieldClass}>
+                  <label className={mobileLabelClass} htmlFor="results-origin">
                     Origin
                   </label>
                   <input
@@ -2647,8 +2712,9 @@ export function FlightResultsClient() {
                     required
                     value={originInput}
                     onFocus={() => {
-                      if (originInput.trim().length >= 2)
+                      if (originInput.trim().length >= 2) {
                         setActiveSuggest("origin");
+                      }
                     }}
                     onKeyDown={(event) => {
                       if (event.key === "Escape") {
@@ -2669,7 +2735,7 @@ export function FlightResultsClient() {
                     }}
                     placeholder="From?"
                     autoComplete="off"
-                    className="h-8 w-full border-0 bg-transparent p-0 pr-8 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                    className={mobileInputClass}
                   />
 
                   {originInput ? (
@@ -2685,7 +2751,7 @@ export function FlightResultsClient() {
                         event.stopPropagation();
                         clearOriginField();
                       }}
-                      className="focus-ring absolute right-3 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      className="focus-ring absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                     >
                       <X size={14} />
                     </button>
@@ -2706,23 +2772,18 @@ export function FlightResultsClient() {
                   ) : null}
                 </div>
 
-                <div className="flex justify-center">
-                  <button
-                    type="button"
-                    aria-label="Swap origin and destination"
-                    onClick={handleSwapLocations}
-                    className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-                  >
-                    <ArrowRightLeft size={15} />
-                  </button>
-                </div>
-
-                <div
-                  ref={destinationWrapRef}
-                  className="relative bg-white px-3.5 py-2.5 transition-colors focus-within:bg-slate-50"
+                <button
+                  type="button"
+                  aria-label="Swap origin and destination"
+                  onClick={handleSwapLocations}
+                  className="focus-ring mx-auto -my-1 inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                 >
+                  <ArrowRightLeft size={15} />
+                </button>
+
+                <div ref={destinationWrapRef} className={mobileFieldClass}>
                   <label
-                    className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
+                    className={mobileLabelClass}
                     htmlFor="results-destination"
                   >
                     Destination
@@ -2757,7 +2818,7 @@ export function FlightResultsClient() {
                     }}
                     placeholder="To?"
                     autoComplete="off"
-                    className="h-8 w-full border-0 bg-transparent p-0 pr-8 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+                    className={mobileInputClass}
                   />
 
                   {destinationInput ? (
@@ -2773,7 +2834,7 @@ export function FlightResultsClient() {
                         event.stopPropagation();
                         clearDestinationField();
                       }}
-                      className="focus-ring absolute right-3 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      className="focus-ring absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                     >
                       <X size={14} />
                     </button>
@@ -2793,68 +2854,71 @@ export function FlightResultsClient() {
                     />
                   ) : null}
                 </div>
-
-                <div ref={departureWrapRef}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSuggest(null);
-                    setDropdownPosition(null);
-                    setTravelerPopoverOpen(false);
-                    setTravelerPopoverPosition(null);
-                    setActiveDatePicker("departure");
-                    setDatePickerPosition(null);
-                  }}
-                  className="focus-ring flex min-h-[56px] w-full items-center gap-3 bg-white px-3.5 py-2.5 text-left transition-colors hover:bg-slate-50"
-                >
-                  <Calendar className="h-5 w-5 shrink-0 text-indigo-700" />
-                  <span className="min-w-0">
-                    <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
-                      Travel dates
-                    </span>
-                    <span className="block truncate text-sm font-semibold text-slate-950">
-                      {departureDateInput
-                        ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
-                        : "Travel dates"}
-                    </span>
-                  </span>
-                </button>
               </div>
 
-              <div ref={travelerCabinWrapRef}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveSuggest(null);
-                    setDropdownPosition(null);
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                    setTravelerPopoverOpen(true);
-                    setTravelerPopoverPosition(null);
-                  }}
-                  className="focus-ring flex min-h-[56px] w-full items-center justify-between gap-3 bg-white px-3.5 py-2.5 text-left transition-colors hover:bg-slate-50"
-                >
-                  <span className="min-w-0">
-                    <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
-                      Travelers
+              <div className="grid grid-cols-1 gap-2.5 min-[430px]:grid-cols-2">
+                <div ref={departureWrapRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSuggest(null);
+                      setDropdownPosition(null);
+                      setTravelerPopoverOpen(false);
+                      setTravelerPopoverPosition(null);
+                      setActiveDatePicker("departure");
+                      setDatePickerPosition(null);
+                    }}
+                    className={cn(
+                      mobileFieldClass,
+                      "flex min-h-[64px] w-full items-center gap-3 text-left",
+                    )}
+                  >
+                    <Calendar className="h-5 w-5 shrink-0 text-indigo-700" />
+                    <span className="min-w-0">
+                      <span className={mobileLabelClass}>Travel dates</span>
+                      <span className="block truncate text-sm font-bold leading-5 text-slate-950">
+                        {departureDateInput
+                          ? tripTypeInput === "round-trip" && returnDateInput
+                            ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
+                            : formatDateLabel(departureDateInput)
+                          : "Travel dates"}
+                      </span>
                     </span>
-                    <span className="block truncate text-sm font-semibold text-slate-950">
-                      {buildTravelerCabinSummary(
-                        adultCount,
-                        childCount,
-                        infantCount,
-                        cabinClassInput,
-                      )}
+                  </button>
+                </div>
+
+                <div ref={travelerCabinWrapRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSuggest(null);
+                      setDropdownPosition(null);
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                      setTravelerPopoverOpen(true);
+                      setTravelerPopoverPosition(null);
+                    }}
+                    className={cn(
+                      mobileFieldClass,
+                      "flex min-h-[64px] w-full items-center justify-between gap-3 text-left",
+                    )}
+                  >
+                    <span className="min-w-0">
+                      <span className={mobileLabelClass}>Travelers</span>
+                      <span className="block truncate text-sm font-bold leading-5 text-slate-950">
+                        {buildTravelerCabinSummary(
+                          adultCount,
+                          childCount,
+                          infantCount,
+                          cabinClassInput,
+                        )}
+                      </span>
                     </span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
-                </button>
+                    <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                  </button>
                 </div>
               </div>
             </div>
-          </div>
 
             <Button
               type="submit"
@@ -3211,14 +3275,23 @@ export function FlightResultsClient() {
         <Button
           type="button"
           variant="secondary"
-          aria-label="Open filters"
-          className="h-[52px] w-[56px] shrink-0 rounded-xl border-slate-200 bg-white px-1.5 text-[10px] font-semibold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          aria-label={
+            activeFilterCount > 0
+              ? `Open filters, ${activeFilterLabel}`
+              : "Open filters"
+          }
+          className="relative h-[52px] w-[62px] shrink-0 rounded-xl border-slate-200 bg-white px-1.5 text-[10px] font-semibold text-slate-800 shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
           onClick={() => setFiltersOpen(true)}
         >
           <span className="flex flex-col items-center justify-center gap-0.5">
             <SlidersHorizontal size={15} />
             <span>Filters</span>
           </span>
+          {activeFilterCount > 0 ? (
+            <span className="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-700 px-1 text-[10px] font-black leading-none text-white shadow-sm ring-2 ring-[#f6f8fb]">
+              {activeFilterCount}
+            </span>
+          ) : null}
         </Button>
 
         <button
@@ -3288,6 +3361,7 @@ export function FlightResultsClient() {
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <Filters
             layout="desktop"
+            activeFilterCount={activeFilterCount}
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
             priceBounds={priceBounds}
@@ -3441,7 +3515,9 @@ export function FlightResultsClient() {
                   onClick={() => setFiltersOpen(true)}
                 >
                   <SlidersHorizontal size={17} />
-                  Filters
+                  {activeFilterCount > 0
+                    ? `Filters · ${activeFilterCount}`
+                    : "Filters"}
                 </Button>
               </div>
 
@@ -3502,8 +3578,15 @@ export function FlightResultsClient() {
         )}
       >
         <div className="flex-1 overflow-auto p-5 pb-3">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-bold text-navy">Filters</h2>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-bold text-navy">Filters</h2>
+              {activeFilterCount > 0 ? (
+                <p className="mt-0.5 text-xs font-bold text-indigo-700">
+                  {activeFilterLabel}
+                </p>
+              ) : null}
+            </div>
             <Button
               variant="ghost"
               className="h-10 w-10 px-0"
@@ -3516,6 +3599,7 @@ export function FlightResultsClient() {
 
           <Filters
             layout="mobile"
+            activeFilterCount={activeFilterCount}
             maxPrice={maxPrice}
             setMaxPrice={setMaxPrice}
             priceBounds={priceBounds}
@@ -4520,6 +4604,7 @@ function toggleFilterValue(
 
 function Filters({
   layout,
+  activeFilterCount,
   maxPrice,
   setMaxPrice,
   priceBounds,
@@ -4554,6 +4639,7 @@ function Filters({
   onFilterChange,
 }: {
   layout: "desktop" | "mobile";
+  activeFilterCount: number;
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   priceBounds: { min: number; max: number };
@@ -4614,7 +4700,14 @@ function Filters({
         <div>
           <h2 className="text-base font-bold text-white">Filter by</h2>
         </div>
-        <SlidersHorizontal className="text-white/90" size={18} />
+        <div className="flex items-center gap-2">
+          {activeFilterCount > 0 ? (
+            <span className="rounded-full bg-white/95 px-2.5 py-1 text-xs font-black text-indigo-700 shadow-sm">
+              {activeFilterCount} active
+            </span>
+          ) : null}
+          <SlidersHorizontal className="text-white/90" size={18} />
+        </div>
       </div>
 
       <div className="space-y-4 bg-white px-3 py-3">
