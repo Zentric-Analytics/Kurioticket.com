@@ -382,7 +382,7 @@ function RecentSearchCard({
 }) {
   const cardContent = (
     <>
-      <div className="relative h-full min-h-[118px] w-24 shrink-0 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-sky-400 sm:w-28">
+      <div className="relative h-full min-h-[112px] w-20 shrink-0 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-sky-400 sm:w-24">
         {entry.image ? (
           <img
             src={entry.image}
@@ -399,22 +399,22 @@ function RecentSearchCard({
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-transparent" />
-        <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-[0.12em] text-slate-900 shadow-sm">
+        <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-900 shadow-sm">
           {entry.type === "flight" ? "Flight" : "Hotel"}
         </span>
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 p-3 pr-11">
         <div className="min-w-0">
-          <p className="line-clamp-1 text-sm font-bold leading-snug text-slate-950">
+          <p className="line-clamp-1 text-[0.95rem] font-bold leading-snug text-slate-950">
             {entry.label}
           </p>
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+          <p className="mt-1 line-clamp-2 text-[13px] leading-5 text-slate-600">
             {entry.subtitle}
           </p>
         </div>
-        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-700 group-focus-visible:border-indigo-200 group-focus-visible:bg-indigo-50 group-focus-visible:text-indigo-700">
-          Resume search
+        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/75 px-2.5 py-1 text-xs font-bold text-slate-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-700 group-focus-visible:border-indigo-200 group-focus-visible:bg-indigo-50 group-focus-visible:text-indigo-700">
+          Search again
           <ArrowRightLeft size={13} />
         </span>
       </div>
@@ -422,10 +422,10 @@ function RecentSearchCard({
   );
 
   const cardClassName =
-    "focus-ring group flex h-full min-h-[118px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg";
+    "focus-ring group flex h-full min-h-[112px] overflow-hidden rounded-2xl border border-slate-200/70 bg-white/70 shadow-none backdrop-blur transition hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white/90";
 
   return (
-    <article className="relative min-w-[280px] max-w-[300px] flex-1 snap-start sm:min-w-[300px] md:min-w-[260px] md:flex-none lg:min-w-[270px]">
+    <article className="relative min-w-[260px] max-w-[286px] flex-1 snap-start sm:min-w-[280px] md:min-w-[250px] md:flex-none lg:min-w-[260px]">
       {entry.href ? (
         <Link href={entry.href} className={cardClassName}>
           {cardContent}
@@ -2175,26 +2175,26 @@ export function FlightResultsClient() {
           ) : null}
 
           {recentSearches.length > 0 ? (
-            <section className="mx-auto mt-5 w-full max-w-6xl rounded-2xl border border-slate-200/70 bg-white/75 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur sm:p-4">
+            <section className="mx-auto mt-5 w-full max-w-6xl px-1">
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[0.65rem] font-bold uppercase tracking-[0.18em] text-indigo-600">
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
                     Recent searches
                   </p>
                   <h2 className="mt-0.5 text-base font-bold tracking-tight text-slate-950 sm:text-lg">
-                    Continue where you left off
+                    Quick routes from your latest searches
                   </h2>
                 </div>
                 <button
                   type="button"
                   onClick={handleClearRecentSearches}
-                  className="focus-ring inline-flex min-h-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-xs font-bold text-slate-500 shadow-sm transition hover:border-rose-200 hover:text-rose-700"
+                  className="focus-ring inline-flex min-h-9 shrink-0 items-center justify-center rounded-full px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:bg-white/70 hover:text-rose-700"
                 >
                   Clear all
                 </button>
               </div>
 
-              <div className="mt-3 flex snap-x gap-3 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              <div className="mt-3 flex snap-x gap-2.5 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 {recentSearches.slice(0, 4).map((entry) => (
                   <RecentSearchCard
                     key={entry.id}
@@ -3240,7 +3240,7 @@ export function FlightResultsClient() {
             <span className="block truncate text-[15px] font-semibold leading-5 text-slate-950">
               {mobileRouteSummary}
             </span>
-            <span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-slate-600">
+            <span className="mt-0.5 block truncate text-xs font-medium leading-4 text-slate-600">
               {mobileTripTypeSummary} · {mobileDateSummary} ·{" "}
               {mobileTravelerSummary}
             </span>
@@ -4574,7 +4574,7 @@ function Filters({
               <h3 className="text-sm font-semibold text-slate-900">Price</h3>
             </div>
           ) : (
-            <div className="mb-1.5 flex items-center justify-between gap-3 text-[13px] font-semibold leading-5 text-slate-800">
+            <div className="mb-1.5 flex items-center justify-between gap-3 text-sm font-semibold leading-5 text-slate-800">
               <span>Price</span>
               <span className="shrink-0 text-xs font-medium text-navy">
                 {priceBounds.max
@@ -4600,7 +4600,7 @@ function Filters({
               setMaxPrice(Number(event.target.value));
             }}
           />
-          <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
+          <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
             <span>
               {priceBounds.max && priceLabelCurrency
                 ? formatFilterPrice(priceBounds.min)
@@ -4620,7 +4620,7 @@ function Filters({
               type="button"
               onClick={() => setTimeFilterMode("takeoff")}
               className={cn(
-                "border-b-2 px-2 pb-1.5 pt-1 text-[13px] font-medium transition",
+                "border-b-2 px-2 pb-1.5 pt-1 text-sm font-medium transition",
                 timeFilterMode === "takeoff"
                   ? "border-indigo-600 text-indigo-700"
                   : "border-transparent text-slate-600 hover:text-slate-900",
@@ -4632,7 +4632,7 @@ function Filters({
               type="button"
               onClick={() => setTimeFilterMode("landing")}
               className={cn(
-                "border-b-2 px-2 pb-1.5 pt-1 text-[13px] font-medium transition",
+                "border-b-2 px-2 pb-1.5 pt-1 text-sm font-medium transition",
                 timeFilterMode === "landing"
                   ? "border-indigo-600 text-indigo-700"
                   : "border-transparent text-slate-600 hover:text-slate-900",
@@ -4644,7 +4644,7 @@ function Filters({
 
           {timeFilterMode === "takeoff" ? (
             <div className="mt-2">
-              <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
+              <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
                 <span>Take-off time from origin</span>
                 <span className="font-mono text-navy">
                   {timeBounds.takeoff && maxTakeoffMinutes !== null
@@ -4665,7 +4665,7 @@ function Filters({
                   setMaxTakeoffMinutes(Number(event.target.value));
                 }}
               />
-              <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
+              <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
                 <span>
                   {timeBounds.takeoff
                     ? formatTimeFromMinutes(timeBounds.takeoff.min)
@@ -4680,7 +4680,7 @@ function Filters({
             </div>
           ) : (
             <div className="mt-2">
-              <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
+              <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
                 <span>Landing time at destination</span>
                 <span className="font-mono text-navy">
                   {timeBounds.landing && maxLandingMinutes !== null
@@ -4701,7 +4701,7 @@ function Filters({
                   setMaxLandingMinutes(Number(event.target.value));
                 }}
               />
-              <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
+              <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
                 <span>
                   {timeBounds.landing
                     ? formatTimeFromMinutes(timeBounds.landing.min)
@@ -4718,7 +4718,7 @@ function Filters({
         </FilterSection>
 
         <FilterSection title="Duration">
-          <div className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
+          <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
             <span>Total trip time</span>
             <span className="font-mono text-navy">
               {durationBounds && maxDurationMinutes !== null
@@ -4741,7 +4741,7 @@ function Filters({
             }}
           />
 
-          <div className="mt-1.5 flex justify-between text-[10px] font-medium text-slate-400">
+          <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
             <span>
               {durationBounds
                 ? formatDurationFromMinutes(durationBounds.min)
@@ -4884,7 +4884,7 @@ function SummarySortButton({
     >
       <span
         className={cn(
-          "inline-flex w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em]",
+          "inline-flex w-fit rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em]",
           active
             ? "bg-indigo-100 text-indigo-700"
             : "bg-slate-100 text-slate-500",
@@ -4897,10 +4897,10 @@ function SummarySortButton({
       </span>
       {details ? (
         <span className="mt-1.5 flex min-h-0 flex-1 flex-col justify-end gap-1">
-          <span className="block truncate text-[11px] font-medium leading-4 text-slate-600">
+          <span className="block truncate text-xs font-medium leading-4 text-slate-600">
             {details.context}
           </span>
-          <span className="block truncate text-[10px] font-normal leading-4 text-slate-500">
+          <span className="block truncate text-[11px] font-normal leading-4 text-slate-500">
             {details.departure}
           </span>
         </span>
@@ -4927,7 +4927,7 @@ function FilterSection({
 
   return (
     <section className="border-t border-slate-200/70 pt-3 first:border-t-0 first:pt-0">
-      <h3 className="mb-1.5 text-[13px] font-semibold leading-5 text-slate-800">
+      <h3 className="mb-1.5 text-sm font-semibold leading-5 text-slate-800">
         {title}
       </h3>
       <div className="grid gap-1">
@@ -4960,7 +4960,7 @@ function FilterOptionRow({
     rightLabel ?? (typeof count === "number" ? String(count) : null);
 
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-3 py-1.5 text-[13px] font-medium text-slate-700 transition hover:text-slate-950">
+    <label className="flex cursor-pointer items-start justify-between gap-3 py-1.5 text-sm font-medium text-slate-700 transition hover:text-slate-950">
       <span className="flex min-w-0 items-start gap-2">
         <input
           type="checkbox"
@@ -4971,7 +4971,7 @@ function FilterOptionRow({
         <span className="min-w-0">
           <span className="block truncate">{label}</span>
           {secondaryLabel ? (
-            <span className="block text-[11px] font-medium text-slate-400">
+            <span className="block text-xs font-medium text-slate-500">
               {secondaryLabel}
             </span>
           ) : null}

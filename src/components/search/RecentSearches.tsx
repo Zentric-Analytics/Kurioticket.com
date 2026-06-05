@@ -189,28 +189,28 @@ export function RecentSearches() {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-1">
-      <div className="mb-2.5 flex items-start justify-between gap-3">
+      <div className="mb-2 flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-semibold leading-tight text-slate-900 md:text-[0.95rem]">Recent searches</h2>
-          <p className="text-xs leading-tight text-slate-600 md:text-[0.8rem]">Pick up where you left off.</p>
+          <h2 className="text-sm font-semibold leading-tight text-slate-900 md:text-base">Recent searches</h2>
+          <p className="text-[13px] leading-5 text-slate-600">Quick routes from your latest searches.</p>
         </div>
         <button
           type="button"
           onClick={handleClearAll}
-          className="focus-ring text-xs font-medium text-slate-500 transition-colors hover:text-slate-700"
+          className="focus-ring rounded-full px-2 py-1 text-xs font-semibold text-slate-500 transition-colors hover:bg-white/70 hover:text-slate-800"
         >
           Clear all
         </button>
       </div>
 
-      <div className="grid auto-cols-[220px] grid-flow-col gap-3 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:grid-flow-row md:grid-cols-3 md:auto-cols-auto md:overflow-visible lg:grid-cols-4">
+      <div className="grid auto-cols-[206px] grid-flow-col gap-2.5 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden md:grid-flow-row md:grid-cols-3 md:auto-cols-auto md:overflow-visible lg:grid-cols-4">
         {entries.map((entry) => (
           <article key={entry.id} className="h-full min-w-0">
             <Link
               href={entry.href}
-              className="focus-ring group relative flex h-full min-h-[172px] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+              className="focus-ring group relative flex h-full min-h-[150px] flex-col overflow-hidden rounded-xl border border-slate-200/70 bg-white/65 shadow-none backdrop-blur transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-white/85"
             >
-              <img src={resolveCardImage(entry)} alt={entry.label} className="h-[74px] w-full object-cover" loading="lazy" />
+              <img src={resolveCardImage(entry)} alt={entry.label} className="h-14 w-full object-cover opacity-90 transition group-hover:opacity-100" loading="lazy" />
               <div className="absolute right-2 top-2 flex items-center gap-1.5">
                 <button
                   type="button"
@@ -241,12 +241,12 @@ export function RecentSearches() {
                   <X className="h-3.5 w-3.5" />
                 </button>
               </div>
-              <div className="flex flex-1 flex-col gap-1.5 p-3">
-                <span className="inline-flex w-fit rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+              <div className="flex flex-1 flex-col gap-1.5 p-2.5">
+                <span className="inline-flex w-fit rounded-full border border-slate-200/80 bg-white/70 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
                   {entry.type === "flight" ? "Flight" : "Hotel"}
                 </span>
-                <p className="line-clamp-1 text-[0.92rem] font-semibold leading-tight text-slate-900">{entry.label}</p>
-                <p className="line-clamp-2 text-xs leading-relaxed text-slate-600">{entry.subtitle}</p>
+                <p className="line-clamp-1 text-[0.95rem] font-semibold leading-snug text-slate-950">{entry.label}</p>
+                <p className="line-clamp-2 text-[13px] leading-5 text-slate-600">{entry.subtitle}</p>
               </div>
             </Link>
           </article>
