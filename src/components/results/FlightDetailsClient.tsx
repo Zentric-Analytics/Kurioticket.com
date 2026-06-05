@@ -110,7 +110,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
     <main className="flex-1 bg-surface-muted/40">
       <section className="border-b border-border bg-white">
         <div className="page-shell py-6 sm:py-8">
-          <div className="grid gap-5 lg:grid-cols-[1fr_360px] lg:items-stretch">
+          <div className="grid gap-5">
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_20px_50px_-28px_rgba(49,46,129,0.65)]">
               <div className="border-b border-border bg-gradient-to-r from-indigo-50 via-white to-teal/10 px-5 py-4 sm:px-6">
                 <p className="flex items-center gap-2 text-sm font-semibold text-teal-dark">
@@ -163,16 +163,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </div>
               </div>
             </Card>
-
-            <CtaCard
-              displayPrice={displayPrice.formatted}
-              priceAriaLabel={displayPrice.ariaLabel}
-              priceTitle={displayPrice.title}
-              provider={flight.provider}
-              providerPrice={displayPrice.isConvertedEstimate ? displayPrice.providerFormatted : undefined}
-              onContinue={continueToProvider}
-              disabled={!hasProviderLink}
-            />
           </div>
         </div>
       </section>
@@ -300,17 +290,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
         </section>
 
         <aside className="space-y-4 lg:sticky lg:top-6">
-          <CtaCard
-            displayPrice={displayPrice.formatted}
-            priceAriaLabel={displayPrice.ariaLabel}
-            priceTitle={displayPrice.title}
-            provider={flight.provider}
-            providerPrice={displayPrice.isConvertedEstimate ? displayPrice.providerFormatted : undefined}
-            onContinue={continueToProvider}
-            disabled={!hasProviderLink}
-            compact
-          />
-
           <Card className="p-5">
             <h2 className="text-lg font-bold text-navy">Trip details</h2>
             <div className="mt-4 grid gap-3">
@@ -332,45 +311,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
         </aside>
       </div>
     </main>
-  );
-}
-
-function CtaCard({
-  displayPrice,
-  priceAriaLabel,
-  priceTitle,
-  provider,
-  providerPrice,
-  onContinue,
-  disabled,
-  compact = false,
-}: {
-  displayPrice: string;
-  priceAriaLabel: string;
-  priceTitle?: string;
-  provider: string;
-  providerPrice?: string;
-  onContinue: () => void;
-  disabled: boolean;
-  compact?: boolean;
-}) {
-  return (
-    <Card className={compact ? "p-5" : "hidden p-5 lg:block"}>
-      <p className="text-sm font-semibold text-teal-dark">Ready to book?</p>
-      <div className="mt-2 flex items-end justify-between gap-3 lg:block">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Price shown</p>
-          <div className="mt-1 text-3xl font-bold text-navy" aria-label={priceAriaLabel} title={priceTitle}>{displayPrice}</div>
-        </div>
-      </div>
-      {providerPrice ? <p className="mt-2 text-xs leading-5 text-muted">Provider price: {providerPrice}. Display currency is an estimate.</p> : null}
-      <Button variant="accent" size="lg" className="mt-4 w-full rounded-xl" onClick={onContinue} disabled={disabled}>
-        Continue to Provider <ArrowRight size={18} />
-      </Button>
-      <p className="mt-3 text-xs leading-5 text-muted">
-        {provider} confirms final price, availability, booking, payment, and fare rules.
-      </p>
-    </Card>
   );
 }
 
