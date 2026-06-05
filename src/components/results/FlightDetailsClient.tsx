@@ -127,15 +127,15 @@ export function FlightDetailsClient({ id }: { id: string }) {
   return (
     <main className="flex-1 bg-surface-muted/40">
       <section className="border-b border-border bg-white">
-        <div className="page-shell py-5 sm:py-6">
-          <div className="mx-auto grid w-full max-w-5xl gap-5">
+        <div className="page-shell py-4 sm:py-5">
+          <div className="mx-auto grid w-full max-w-5xl gap-4">
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
-                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-4 sm:p-5 lg:p-6">
+                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3.5 sm:p-4 lg:p-5">
                   <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-teal-dark">
                     <Sparkles size={14} /> Flight details
                   </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-semibold text-slate-600">
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm font-semibold text-slate-600">
                     <span className="text-navy">{flight.airlineName}</span>
                     {flight.flightNumber ? (
                       <>
@@ -147,14 +147,14 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       </>
                     ) : null}
                   </div>
-                  <h1 className="mt-2 flex min-w-0 flex-wrap items-center gap-3 text-3xl font-black tracking-tight text-navy sm:text-4xl lg:text-5xl">
+                  <h1 className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2.5 text-3xl font-black tracking-tight text-navy sm:text-4xl lg:text-5xl">
                     <span>{flight.originAirport}</span>
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-blue shadow-sm ring-1 ring-indigo-100 sm:h-10 sm:w-10">
-                      <ArrowRight size={22} />
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-blue shadow-sm ring-1 ring-indigo-100 sm:h-9 sm:w-9">
+                      <ArrowRight size={20} />
                     </span>
                     <span>{flight.destinationAirport}</span>
                   </h1>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     <DetailChip
                       icon={<Plane size={12} />}
                       label="Stops"
@@ -181,8 +181,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   </div>
                 </div>
 
-                <aside className="border-t border-indigo-100 bg-white p-4 sm:p-5 lg:border-l lg:border-t-0 lg:p-6">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 sm:p-4">
+                <aside className="border-t border-indigo-100 bg-white p-3.5 sm:p-4 lg:border-l lg:border-t-0 lg:p-5">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
                     <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
                       From
                     </p>
@@ -203,13 +203,13 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   <Button
                     variant="accent"
                     size="lg"
-                    className="mt-3 w-full rounded-xl px-6"
+                    className="mt-2.5 w-full rounded-xl px-6"
                     onClick={continueToProvider}
                     disabled={!hasProviderLink}
                   >
                     Continue to Provider <ArrowRight size={18} />
                   </Button>
-                  <p className="mt-2.5 flex gap-2 text-xs leading-5 text-slate-600">
+                  <p className="mt-2 flex gap-2 text-xs leading-5 text-slate-600">
                     <Info size={16} className="mt-0.5 shrink-0 text-blue" />
                     <span>{providerDisclaimer}</span>
                   </p>
@@ -438,9 +438,9 @@ function DetailChip({
 }) {
   return (
     <div
-      className={`inline-flex ${maxWidthClassName} items-center gap-1.5 rounded-full border border-indigo-100 bg-white/90 px-3 py-1.5 text-xs font-semibold leading-5 text-slate-700 shadow-sm`}
+      className={`inline-flex ${maxWidthClassName} items-center gap-1.5 rounded-full border border-indigo-100 bg-white/90 px-2.5 py-1 text-xs font-semibold leading-5 text-slate-700 shadow-sm`}
     >
-      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">
+      <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">
         {icon}
       </span>
       <span className="min-w-0 truncate">
