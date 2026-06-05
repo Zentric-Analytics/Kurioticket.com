@@ -218,10 +218,10 @@ export function FlightDetailsClient({ id }: { id: string }) {
       </section>
 
       <div className="page-shell py-6">
-        <section className="space-y-6">
-          <Card className="overflow-hidden p-0">
-            <div className="border-b border-border px-5 py-4 sm:px-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <section>
+          <Card className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-0 shadow-sm shadow-indigo-950/5">
+            <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-teal-dark">
                     Flight summary
@@ -236,6 +236,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </p>
               </div>
             </div>
+
             <div className="p-5 sm:p-6">
               <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_180px_minmax(0,1fr)] md:items-center">
                 <AirportTimeBlock
@@ -267,93 +268,97 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   align="right"
                 />
               </div>
-            </div>
-          </Card>
 
-          <Card className="p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
-              <div>
-                <p className="text-sm font-semibold text-teal-dark">
-                  Travel timeline
-                </p>
-                <h2 className="text-xl font-bold text-navy">Route details</h2>
-              </div>
-              <Badge variant={flight.stops === 0 ? "teal" : "blue"}>
-                {stopLabel}
-              </Badge>
-            </div>
-            <div className="mt-6 space-y-7">
-              {timelineLegs.map((leg, legIndex) => (
-                <div
-                  key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
-                >
-                  {timelineLegs.length > 1 ? (
-                    <p className="mb-4 text-sm font-bold uppercase tracking-wide text-muted">
-                      {formatLegDirection(leg.direction, legIndex)}
+              <div className="mt-5 border-t border-slate-200 pt-5">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-teal-dark">
+                      Travel timeline
                     </p>
-                  ) : null}
-                  <div className="space-y-0">
-                    <TimelineItem
-                      icon={<PlaneTakeoff size={18} />}
-                      title="Departure"
-                      eyebrow={leg.originAirport}
-                      body={`${leg.originAirport} at ${formatTime(leg.departureTime)}`}
-                    />
-                    {leg.layovers.map((layover, layoverIndex) => (
-                      <TimelineItem
-                        key={`${layover.airport}-${layover.duration}-${layoverIndex}`}
-                        icon={<CalendarClock size={18} />}
-                        title={`Layover in ${layover.airport}`}
-                        eyebrow={layover.duration}
-                        body={`${layover.duration}${layover.quality !== "unknown" ? ` • ${layover.quality} connection` : ""}`}
-                      />
-                    ))}
-                    <TimelineItem
-                      icon={<PlaneLanding size={18} />}
-                      title="Arrival"
-                      eyebrow={leg.destinationAirport}
-                      body={`${leg.destinationAirport} at ${formatTime(leg.arrivalTime)}`}
-                      isLast
-                    />
+                    <h3 className="text-lg font-bold text-navy">
+                      Route details
+                    </h3>
                   </div>
-                  {leg.segments.length ? (
-                    <div className="mt-4 rounded-2xl border border-border bg-slate-50/80 p-4">
-                      <p className="text-sm font-bold text-navy">
-                        Flight segments
-                      </p>
-                      <div className="mt-3 grid gap-3">
-                        {leg.segments.map((segment, segmentIndex) => (
-                          <div
-                            key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
-                            className="rounded-xl border border-white bg-white p-3 text-sm shadow-sm"
-                          >
-                            <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
-                              <span className="font-semibold text-navy">
-                                {segment.originAirport}{" "}
-                                {formatTime(segment.departureTime)}
-                              </span>
-                              <span className="hidden rounded-full bg-slate-100 px-2 py-1 text-xs font-bold text-muted sm:block">
-                                →
-                              </span>
-                              <span className="font-semibold text-navy sm:text-right">
-                                {segment.destinationAirport}{" "}
-                                {formatTime(segment.arrivalTime)}
-                              </span>
-                            </div>
-                            {segment.airlineName || segment.flightNumber ? (
-                              <p className="mt-1 text-muted">
-                                {[segment.airlineName, segment.flightNumber]
-                                  .filter(Boolean)
-                                  .join(" • ")}
-                              </p>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
+                  <Badge variant={flight.stops === 0 ? "teal" : "blue"}>
+                    {stopLabel}
+                  </Badge>
                 </div>
-              ))}
+
+                <div className="mt-4 space-y-4">
+                  {timelineLegs.map((leg, legIndex) => (
+                    <div
+                      key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
+                      className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+                    >
+                      {shouldShowLegLabel(leg, timelineLegs.length) ? (
+                        <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-muted">
+                          {formatLegDirection(leg.direction, legIndex)}
+                        </p>
+                      ) : null}
+                      <div className="space-y-0">
+                        <TimelineItem
+                          icon={<PlaneTakeoff size={16} />}
+                          title="Departure"
+                          eyebrow={leg.originAirport}
+                          body={`${leg.originAirport} at ${formatTime(leg.departureTime)}`}
+                        />
+                        {leg.layovers.map((layover, layoverIndex) => (
+                          <TimelineItem
+                            key={`${layover.airport}-${layover.duration}-${layoverIndex}`}
+                            icon={<CalendarClock size={16} />}
+                            title={`Layover in ${layover.airport}`}
+                            eyebrow={layover.duration}
+                            body={`${layover.duration}${layover.quality !== "unknown" ? ` • ${layover.quality} connection` : ""}`}
+                          />
+                        ))}
+                        <TimelineItem
+                          icon={<PlaneLanding size={16} />}
+                          title="Arrival"
+                          eyebrow={leg.destinationAirport}
+                          body={`${leg.destinationAirport} at ${formatTime(leg.arrivalTime)}`}
+                          isLast
+                        />
+                      </div>
+                      {leg.segments.length ? (
+                        <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-3">
+                          <p className="text-sm font-bold text-navy">
+                            Flight segments
+                          </p>
+                          <div className="mt-3 grid gap-2">
+                            {leg.segments.map((segment, segmentIndex) => (
+                              <div
+                                key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
+                                className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-sm"
+                              >
+                                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+                                  <span className="font-semibold text-navy">
+                                    {segment.originAirport}{" "}
+                                    {formatTime(segment.departureTime)}
+                                  </span>
+                                  <span className="hidden rounded-full bg-white px-2 py-1 text-xs font-bold text-muted shadow-sm ring-1 ring-slate-100 sm:block">
+                                    →
+                                  </span>
+                                  <span className="font-semibold text-navy sm:text-right">
+                                    {segment.destinationAirport}{" "}
+                                    {formatTime(segment.arrivalTime)}
+                                  </span>
+                                </div>
+                                {segment.airlineName || segment.flightNumber ? (
+                                  <p className="mt-1 text-muted">
+                                    {[segment.airlineName, segment.flightNumber]
+                                      .filter(Boolean)
+                                      .join(" • ")}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </Card>
         </section>
@@ -411,22 +416,24 @@ function TimelineItem({
   isLast?: boolean;
 }) {
   return (
-    <div className="relative grid grid-cols-[40px_1fr] gap-3 pb-5 last:pb-0 sm:grid-cols-[44px_1fr]">
+    <div className="relative grid grid-cols-[34px_1fr] gap-3 pb-3 last:pb-0">
       {!isLast ? (
         <span
-          className="absolute left-[19px] top-10 h-[calc(100%-2.5rem)] w-px bg-border sm:left-[21px] sm:top-11 sm:h-[calc(100%-2.75rem)]"
+          className="absolute left-4 top-8 h-[calc(100%-2rem)] w-px bg-slate-200"
           aria-hidden="true"
         />
       ) : null}
-      <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-teal/20 bg-teal/10 text-teal shadow-sm sm:h-11 sm:w-11">
+      <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border border-teal/20 bg-white text-teal shadow-sm">
         {icon}
       </div>
-      <div className="min-w-0 rounded-2xl border border-border bg-white p-4 shadow-[0_12px_30px_-26px_rgba(30,27,75,0.55)]">
+      <div className="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-[0_10px_24px_-22px_rgba(30,27,75,0.45)]">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div className="font-semibold text-navy">{title}</div>
-          <div className="text-sm font-semibold text-muted">{eyebrow}</div>
+          <div className="text-sm font-semibold text-navy">{title}</div>
+          <div className="text-xs font-semibold uppercase tracking-wide text-muted">
+            {eyebrow}
+          </div>
         </div>
-        <div className="mt-1 text-sm leading-6 text-slate-700">{body}</div>
+        <div className="mt-1 text-sm leading-5 text-slate-700">{body}</div>
       </div>
     </div>
   );
@@ -460,6 +467,12 @@ function DetailChip({
 function formatStops(stops: number) {
   if (stops === 0) return "Nonstop";
   return `${stops} stop${stops > 1 ? "s" : ""}`;
+}
+
+function shouldShowLegLabel(leg: FlightLeg, legCount: number) {
+  return (
+    legCount > 1 || leg.direction === "outbound" || leg.direction === "return"
+  );
 }
 
 function formatLegDirection(direction: FlightLeg["direction"], index: number) {
