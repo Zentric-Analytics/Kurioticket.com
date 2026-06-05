@@ -63,10 +63,10 @@ export function FlightCard({
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px] lg:items-stretch">
           <div className="min-w-0 space-y-2">
             <div className="flex min-w-0 items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
                 Flight option
               </p>
-              <p className="min-w-0 truncate text-right text-[11px] font-semibold text-slate-600">
+              <p className="min-w-0 truncate text-right text-xs font-semibold text-slate-700">
                 {flight.airlineName}
                 {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
               </p>
@@ -95,7 +95,7 @@ export function FlightCard({
               >
                 {displayPrice.formatted}
               </div>
-              <p className="mt-1 text-[10px] font-medium uppercase leading-none tracking-[0.1em] text-slate-500">
+              <p className="mt-1 text-[11px] font-medium uppercase leading-none tracking-[0.1em] text-slate-600">
                 Estimated price
               </p>
             </div>
@@ -103,14 +103,14 @@ export function FlightCard({
               href={`/flights/details/${encodeURIComponent(flight.id)}`}
               variant="primary"
               size="sm"
-              className="shrink-0 whitespace-nowrap rounded-full bg-navy px-3.5 text-xs font-semibold hover:bg-navy-soft lg:w-full lg:justify-center"
+              className="shrink-0 whitespace-nowrap rounded-full bg-navy px-3.5 text-sm font-semibold hover:bg-navy-soft lg:w-full lg:justify-center"
             >
               View Flight
             </LinkButton>
           </div>
         </div>
 
-        <div className="mt-2 rounded-xl border border-indigo-100 bg-indigo-50/50 px-2.5 py-1.5 text-[10.5px] font-medium leading-4 text-slate-600 sm:text-[11px]">
+        <div className="mt-2 rounded-xl border border-indigo-100 bg-indigo-50/50 px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
           {showsProviderBackedReturn
             ? "Outbound and return details are shown from provider-normalized itinerary data. Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking."
             : "Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking."}
@@ -142,10 +142,10 @@ function FlightLegRow({
 
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex items-center justify-between gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
               {formatLegTitle(leg)}
             </p>
-            <p className="truncate text-[11px] font-medium text-slate-500">
+            <p className="truncate text-xs font-medium text-slate-600">
               {leg.originAirport} → {leg.destinationAirport}
             </p>
           </div>
@@ -155,7 +155,7 @@ function FlightLegRow({
               <div className="text-[17px] font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-lg">
                 {formatTime(leg.departureTime)}
               </div>
-              <div className="mt-0.5 truncate text-[10.5px] font-medium text-slate-500 sm:text-[11px]">
+              <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
                 {leg.originAirport}
               </div>
             </div>
@@ -166,10 +166,10 @@ function FlightLegRow({
                 <PlaneTakeoff className="mx-1.5 h-3 w-3" />
                 <span className="h-px flex-1 bg-slate-200" />
               </div>
-              <div className="mt-0.5 text-[10.5px] font-semibold leading-4 text-slate-800">
+              <div className="mt-0.5 text-xs font-semibold leading-4 text-slate-800">
                 {leg.duration}
               </div>
-              <div className="text-[9.5px] font-medium leading-4 text-slate-500">
+              <div className="text-[11px] font-medium leading-4 text-slate-600">
                 {formatStopsLabel(leg.stops)}
               </div>
             </div>
@@ -178,7 +178,7 @@ function FlightLegRow({
               <div className="text-[17px] font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-lg">
                 {formatTime(leg.arrivalTime)}
               </div>
-              <div className="mt-0.5 truncate text-[10.5px] font-medium text-slate-500 sm:text-[11px]">
+              <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
                 {leg.destinationAirport}
               </div>
             </div>
@@ -186,7 +186,7 @@ function FlightLegRow({
 
           {leg.layovers.length ? (
             <p
-              className="mt-1 truncate text-[10.5px] font-medium text-slate-500 sm:text-[11px]"
+              className="mt-1 truncate text-xs font-medium text-slate-600"
               title={formatLayoverText(leg)}
             >
               {formatLayoverText(leg)}
@@ -222,7 +222,7 @@ function AirlineLogo({ flight }: { flight: PublicFlightResult }) {
 
 function FlightDetailLines({ details }: { details: DetailItem[] }) {
   return (
-    <div className="grid gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-[11px] leading-4 text-slate-600 sm:grid-cols-2">
+    <div className="grid gap-x-4 gap-y-1 border-t border-slate-100 pt-2 text-xs leading-5 text-slate-600 sm:grid-cols-2">
       {details.map((detail) => {
         const Icon = detail.icon;
 
