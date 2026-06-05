@@ -796,7 +796,7 @@ function HotelSummaryRow({
 
   return (
     <div
-      className="grid min-w-0 gap-2 sm:grid-cols-3"
+      className="flex max-w-full snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
       aria-label="Hotel result summary"
     >
       {items.map((item) => {
@@ -808,7 +808,7 @@ function HotelSummaryRow({
             key={item.label}
             type="button"
             className={cn(
-              "min-w-0 rounded-2xl border bg-white p-3.5 text-left shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_34px_-24px_rgba(30,27,75,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb]",
+              "min-w-[152px] snap-start rounded-2xl border bg-white p-2.5 text-left shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_34px_-24px_rgba(30,27,75,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:p-3.5",
               isActive
                 ? "border-indigo-400 bg-indigo-50/50 shadow-[0_18px_38px_-24px_rgba(79,70,229,0.7)] ring-1 ring-indigo-200"
                 : "border-indigo-100/80",
@@ -816,28 +816,30 @@ function HotelSummaryRow({
             aria-pressed={isActive}
             onClick={() => onSortModeChange(item.sortMode)}
           >
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2 sm:gap-3">
               <div
                 className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl",
                   item.iconClassName,
                 )}
                 aria-hidden="true"
               >
                 <Icon
-                  className={item.iconElementClassName}
-                  size={18}
+                  className={cn(
+                    "h-3.5 w-3.5 sm:h-[18px] sm:w-[18px]",
+                    item.iconElementClassName,
+                  )}
                   strokeWidth={2.8}
                 />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-700">
+                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-indigo-700 sm:text-[10px] sm:tracking-[0.14em]">
                   {item.label}
                 </p>
-                <p className="mt-1 text-base font-bold leading-6 tracking-[-0.02em] text-slate-950">
+                <p className="mt-0.5 text-sm font-bold leading-5 tracking-[-0.02em] text-slate-950 sm:mt-1 sm:text-base sm:leading-6">
                   {item.value}
                 </p>
-                <p className="mt-0.5 text-xs font-medium leading-4 text-slate-500">
+                <p className="mt-0.5 truncate text-[11px] font-medium leading-4 text-slate-500 sm:text-xs">
                   {item.helperText}
                 </p>
               </div>
