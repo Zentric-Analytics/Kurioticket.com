@@ -2,8 +2,11 @@ import { HomepageFareSnapshotStatus, Prisma } from "@/generated/prisma/client";
 
 import {
   DEFAULT_HOME_DISCOVERY_REGION,
+  GLOBAL_HOME_DISCOVERY_REGION,
   HOME_DISCOVERY_VISIBLE_CARD_COUNT,
   getDefaultHomeDiscoveryPriceRoutes,
+  getGlobalHomeDiscoveryFareCandidates,
+  getGlobalHomeDiscoveryPriceRoutes,
   getHomeDiscoveryFareCandidates,
   type HomeDiscoveryFareCandidate,
 } from "@/data/homeDiscovery";
@@ -198,6 +201,7 @@ export type HomepageDiscoveryFareFallbackReason =
   | "none"
   | "requested_region_no_candidates"
   | "requested_region_no_fresh_fares"
+  | "global_fallback_no_fresh_fares"
   | "default_region_no_fresh_fares";
 
 export type HomepageDiscoveryFareCardsMetadata = {
@@ -406,7 +410,20 @@ export function getPhase3AHomepageFareRoutes(): HomepageFareRoute[] {
     origin: HOMEPAGE_FARE_DEFAULT_ORIGIN,
     destination: route.destination,
   }));
-  const discoverRoutes = getDefaultHomeDiscoveryPriceRoutes().map((route) => ({
+  const defaultDiscoveryRoutes = getDefaultHomeDiscoveryPriceRoutes();
+  const visibleDefaultDiscoveryRoutes = defaultDiscoveryRoutes.slice(
+    0,
+    HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+  );
+  const backupDefaultDiscoveryRoutes = defaultDiscoveryRoutes.slice(
+    HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+  );
+  const globalDiscoveryRoutes = getGlobalHomeDiscoveryPriceRoutes();
+  const discoverRoutes = [
+    ...visibleDefaultDiscoveryRoutes,
+    ...globalDiscoveryRoutes,
+    ...backupDefaultDiscoveryRoutes,
+  ].map((route) => ({
     id: `discover-${route.id}`,
     label: route.label ?? route.id,
     origin: route.originCode,
@@ -1230,13 +1247,46 @@ export async function readHomepageDiscoveryFareCards({
     });
   }
 
-  const shouldTryDefaultFallback =
-    requestedRegionCode !== DEFAULT_HOME_DISCOVERY_REGION;
+  const fallbackReason: HomepageDiscoveryFareFallbackReason =
+    requestedCandidates.length
+      ? "requested_region_no_fresh_fares"
+      : "requested_region_no_candidates";
+  const globalCandidates = getGlobalHomeDiscoveryFareCandidates();
+  const shouldTryGlobalFallback = !areSameCandidateSets(
+    requestedCandidates,
+    globalCandidates,
+  );
+
+  if (shouldTryGlobalFallback) {
+    const globalResult = await buildHomepageDiscoveryFareCardsForCandidates({
+      candidates: globalCandidates,
+      requested,
+      currency: normalizedCurrency,
+    });
+
+    if (globalResult.freshCount > 0) {
+      return buildHomepageDiscoveryFareCardsResponse({
+        ...globalResult,
+        requested,
+        requestedRegionCode,
+        effectiveRegionCode: GLOBAL_HOME_DISCOVERY_REGION,
+        fallbackUsed: true,
+        fallbackReason,
+        currencyRequested: normalizedCurrency,
+        snapshotCurrency: normalizedCurrency,
+      });
+    }
+  }
+
+  const defaultCandidates = getHomeDiscoveryFareCandidates(
+    DEFAULT_HOME_DISCOVERY_REGION,
+  );
+  const shouldTryDefaultFallback = !areSameCandidateSets(
+    requestedCandidates,
+    defaultCandidates,
+  );
 
   if (shouldTryDefaultFallback) {
-    const defaultCandidates = getHomeDiscoveryFareCandidates(
-      DEFAULT_HOME_DISCOVERY_REGION,
-    );
     const defaultResult = await buildHomepageDiscoveryFareCardsForCandidates({
       candidates: defaultCandidates,
       requested,
@@ -1250,9 +1300,7 @@ export async function readHomepageDiscoveryFareCards({
         requestedRegionCode,
         effectiveRegionCode: DEFAULT_HOME_DISCOVERY_REGION,
         fallbackUsed: true,
-        fallbackReason: requestedCandidates.length
-          ? "requested_region_no_fresh_fares"
-          : "requested_region_no_candidates",
+        fallbackReason,
         currencyRequested: normalizedCurrency,
         snapshotCurrency: normalizedCurrency,
       });
@@ -1265,8 +1313,9 @@ export async function readHomepageDiscoveryFareCards({
     requestedRegionCode,
     effectiveRegionCode: requestedRegionCode,
     fallbackUsed: false,
-    fallbackReason:
-      requestedResult.freshCount > 0 ? "none" : "default_region_no_fresh_fares",
+    fallbackReason: shouldTryDefaultFallback
+      ? "default_region_no_fresh_fares"
+      : "global_fallback_no_fresh_fares",
     currencyRequested: normalizedCurrency,
     snapshotCurrency: normalizedCurrency,
   });
@@ -1339,6 +1388,29 @@ async function buildHomepageDiscoveryFareCardsForCandidates({
     candidateCount: candidates.length,
     freshCount: cards.filter((card) => card.priceState === "fresh").length,
   };
+}
+
+function areSameCandidateSets(
+  firstCandidates: HomeDiscoveryFareCandidate[],
+  secondCandidates: HomeDiscoveryFareCandidate[],
+) {
+  if (firstCandidates.length !== secondCandidates.length) return false;
+
+  const secondRouteKeys = new Set(
+    secondCandidates.map((candidate) =>
+      getHomepageDiscoveryCandidateRouteKey(candidate),
+    ),
+  );
+
+  return firstCandidates.every((candidate) =>
+    secondRouteKeys.has(getHomepageDiscoveryCandidateRouteKey(candidate)),
+  );
+}
+
+function getHomepageDiscoveryCandidateRouteKey(
+  candidate: HomeDiscoveryFareCandidate,
+) {
+  return `${candidate.id}:${candidate.originCode}:${candidate.destinationCode}`;
 }
 
 function buildHomepageDiscoveryFareCardsResponse({
