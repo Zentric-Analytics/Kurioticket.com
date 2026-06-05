@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import "./globals.css";
 
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { CurrencyRatesProvider } from "@/components/currency/CurrencyRatesProvider";
 import { LocaleProvider } from "@/components/layout/LocaleProvider";
 import { RegionProvider } from "@/components/region/RegionProvider";
 import { RouteProgressProvider } from "@/components/layout/RouteProgress";
@@ -83,7 +84,9 @@ export default async function RootLayout({
         <AuthProvider>
           <LocaleProvider>
             <RegionProvider initialMode={initialRegion} detectedMode={detectedRegion}>
-              <RouteProgressProvider>{children}</RouteProgressProvider>
+              <CurrencyRatesProvider>
+                <RouteProgressProvider>{children}</RouteProgressProvider>
+              </CurrencyRatesProvider>
             </RegionProvider>
           </LocaleProvider>
         </AuthProvider>

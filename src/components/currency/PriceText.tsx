@@ -1,5 +1,6 @@
 "use client";
 
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 
@@ -23,12 +24,15 @@ export function PriceText({
   maximumFractionDigits,
 }: PriceTextProps) {
   const { selectedOption } = useRegion();
+  const currencyRates = useCurrencyRates();
   const price = formatDisplayPrice({
     amount: sourceAmount ?? amountUsd,
     sourceCurrency,
     displayCurrency: selectedOption.currency,
     convertUsdEstimate,
     maximumFractionDigits,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
   });
 
   return (
