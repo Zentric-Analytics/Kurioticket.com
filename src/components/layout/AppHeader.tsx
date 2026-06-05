@@ -150,7 +150,6 @@ export function AppHeader({
       ) {
         setAccountOpen(false);
       }
-
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -422,7 +421,6 @@ export function AppHeader({
       </span>
     </span>
   );
-
 
   const handleRouteLinkClick = (
     event: ReactMouseEvent<HTMLAnchorElement>,
