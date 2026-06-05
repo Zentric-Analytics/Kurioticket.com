@@ -3410,8 +3410,12 @@ export function FlightResultsClient() {
                   <FlightCardSkeleton />
                 </div>
               ) : sortedResults.length ? (
-                sortedResults.map((flight) => (
-                  <FlightCard key={flight.id} flight={flight} />
+                sortedResults.map((flight, index) => (
+                  <FlightCard
+                    key={flight.id}
+                    flight={flight}
+                    isAccented={index % 2 === 0}
+                  />
                 ))
               ) : (
                 <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">

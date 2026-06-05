@@ -22,7 +22,13 @@ type DetailItem = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-export function FlightCard({ flight }: { flight: PublicFlightResult }) {
+export function FlightCard({
+  flight,
+  isAccented = false,
+}: {
+  flight: PublicFlightResult;
+  isAccented?: boolean;
+}) {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const displayPrice = formatDisplayPrice({
@@ -40,7 +46,19 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
   );
 
   return (
-    <Card className="w-full overflow-hidden border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.065)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.095)]">
+    <Card
+      className={cn(
+        "relative w-full overflow-hidden border-slate-200 bg-white shadow-[0_8px_24px_rgba(15,23,42,0.065)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.095)]",
+        isAccented &&
+          "border-indigo-200/80 bg-[linear-gradient(180deg,rgba(79,70,229,0.035),#fff_34%)] shadow-[0_10px_28px_rgba(79,70,229,0.09)] ring-1 ring-indigo-500/10",
+      )}
+    >
+      {isAccented ? (
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500/55 via-purple-500/45 to-teal/40"
+        />
+      ) : null}
       <div className="p-3 sm:p-3.5">
         <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px] lg:items-stretch">
           <div className="min-w-0 space-y-2">
@@ -68,16 +86,16 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
             <FlightDetailLines details={details} />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[132px] lg:shrink-0 lg:flex-col lg:items-end lg:justify-between lg:self-stretch lg:border-0 lg:bg-transparent lg:px-0 lg:pb-2 lg:pt-10 lg:text-right">
-            <div className="min-w-0 lg:text-right">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[132px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-3 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
+            <div className="min-w-0 lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
               <div
-                className="text-xl font-semibold tracking-[-0.025em] text-slate-950 sm:text-[1.35rem]"
+                className="text-xl font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-[1.35rem]"
                 aria-label={displayPrice.ariaLabel}
                 title={displayPrice.title}
               >
                 {displayPrice.formatted}
               </div>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.1em] text-slate-500">
+              <p className="mt-1 text-[10px] font-medium uppercase leading-none tracking-[0.1em] text-slate-500">
                 Estimated price
               </p>
             </div>
@@ -268,7 +286,7 @@ function buildFlightDetails(flight: PublicFlightResult): DetailItem[] {
     },
     {
       label: "Fare rules",
-      value: formatFareRulesValue(flight.refundInfo),
+      value: "Review before booking",
       icon: ShieldCheck,
     },
   ];
@@ -300,11 +318,6 @@ function formatBaggageValue(value?: string) {
     return "Check provider";
   }
 
-  return value;
-}
-
-function formatFareRulesValue(value?: string) {
-  if (!value || isProviderReviewCopy(value)) return "Review before booking";
   return value;
 }
 
