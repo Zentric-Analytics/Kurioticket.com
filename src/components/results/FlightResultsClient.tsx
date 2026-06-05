@@ -50,7 +50,7 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
 
-const resultStackClass = "w-full max-w-[760px] lg:ml-4 xl:ml-6";
+const resultStackClass = "w-full max-w-[680px] lg:ml-4 xl:ml-6";
 
 const loadingMessages = [
   "Searching airlines...",
@@ -370,12 +370,11 @@ function RecentSearchCard({
     <>
       <div className="relative h-24 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-sky-400">
         {entry.image ? (
-          <Image
+          <img
             src={entry.image}
             alt={entry.imageAlt || entry.label}
-            fill
-            sizes="(min-width: 768px) 320px, 100vw"
-            className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
         ) : (
           <div className="flex h-full items-center justify-between p-4 text-white">
@@ -1293,9 +1292,6 @@ export function FlightResultsClient() {
       primary,
       context,
       departure: `Departs ${departure}`,
-      note: hasSpecificBaggageInfo(flight.baggageInfo)
-        ? "Review fare rules before booking"
-        : "Baggage varies by fare",
     };
   };
 
@@ -3103,38 +3099,73 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="grid grid-cols-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:grid-cols-3">
-                <SummarySortButton
-                  label="Cheapest"
-                  details={buildSummaryDetails(sortSummaries.cheapest, "cheapest")}
-                  active={sortMode === "cheapest"}
-                  onClick={() => {
-                    triggerFilterApplying();
-                    setSortMode("cheapest");
-                  }}
-                />
+              <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-900/5">
+                <div className="hidden grid-cols-3 gap-2 sm:grid">
+                  <SummarySortButton
+                    label="Cheapest"
+                    details={buildSummaryDetails(sortSummaries.cheapest, "cheapest")}
+                    active={sortMode === "cheapest"}
+                    onClick={() => {
+                      triggerFilterApplying();
+                      setSortMode("cheapest");
+                    }}
+                  />
 
-                <SummarySortButton
-                  label="Best"
-                  details={buildSummaryDetails(sortSummaries.best, "best")}
-                  active={sortMode === "best"}
-                  bordered
-                  onClick={() => {
-                    triggerFilterApplying();
-                    setSortMode("best");
-                  }}
-                />
+                  <SummarySortButton
+                    label="Best"
+                    details={buildSummaryDetails(sortSummaries.best, "best")}
+                    active={sortMode === "best"}
+                    onClick={() => {
+                      triggerFilterApplying();
+                      setSortMode("best");
+                    }}
+                  />
 
-                <SummarySortButton
-                  label="Quickest"
-                  details={buildSummaryDetails(sortSummaries.fastest, "fastest")}
-                  active={sortMode === "fastest"}
-                  bordered
-                  onClick={() => {
-                    triggerFilterApplying();
-                    setSortMode("fastest");
-                  }}
-                />
+                  <SummarySortButton
+                    label="Quickest"
+                    details={buildSummaryDetails(sortSummaries.fastest, "fastest")}
+                    active={sortMode === "fastest"}
+                    onClick={() => {
+                      triggerFilterApplying();
+                      setSortMode("fastest");
+                    }}
+                  />
+                </div>
+
+                <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:hidden">
+                  <SummarySortButton
+                    label="Cheapest"
+                    details={buildSummaryDetails(sortSummaries.cheapest, "cheapest")}
+                    active={sortMode === "cheapest"}
+                    mobile
+                    onClick={() => {
+                      triggerFilterApplying();
+                      setSortMode("cheapest");
+                    }}
+                  />
+
+                  <SummarySortButton
+                    label="Best"
+                    details={buildSummaryDetails(sortSummaries.best, "best")}
+                    active={sortMode === "best"}
+                    mobile
+                    onClick={() => {
+                      triggerFilterApplying();
+                      setSortMode("best");
+                    }}
+                  />
+
+                  <SummarySortButton
+                    label="Quickest"
+                    details={buildSummaryDetails(sortSummaries.fastest, "fastest")}
+                    active={sortMode === "fastest"}
+                    mobile
+                    onClick={() => {
+                      triggerFilterApplying();
+                      setSortMode("fastest");
+                    }}
+                  />
+                </div>
               </div>
 
               <div className="space-y-3 sm:hidden">
@@ -3351,6 +3382,12 @@ function getUniformResultCurrency(results: PublicFlightResult[]) {
   return null;
 }
 
+function addDays(date: Date, amount: number): Date {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + amount);
+
+  return nextDate;
+}
 
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -4357,7 +4394,7 @@ function SummarySortButton({
   label,
   details,
   active,
-  bordered = false,
+  mobile = false,
   onClick,
 }: {
   label: string;
@@ -4365,10 +4402,9 @@ function SummarySortButton({
     primary: string;
     context: string;
     departure: string;
-    note: string;
   } | null;
   active: boolean;
-  bordered?: boolean;
+  mobile?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -4376,28 +4412,36 @@ function SummarySortButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "relative px-3 py-2.5 text-left transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
-        "border-t border-slate-200 first:border-t-0 sm:border-t-0",
-        bordered ? "sm:border-l sm:border-slate-200" : "",
+        "group relative rounded-2xl border text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
+        mobile
+          ? "min-w-[168px] snap-start px-3 py-3"
+          : "min-h-[112px] px-4 py-3",
         active
-          ? "bg-white text-navy after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-violet-600"
-          : "text-slate-600"
+          ? "border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-sky-50 text-navy shadow-sm ring-1 ring-indigo-100"
+          : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-slate-50"
       )}
     >
-      <span className="block text-[12px] font-semibold text-slate-600 sm:text-[13px]">
+      <span
+        className={cn(
+          "inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em]",
+          active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500"
+        )}
+      >
         {label}
       </span>
-      <span className="mt-0.5 block truncate text-[15px] font-semibold leading-5 text-slate-950">
+      <span className="mt-2 block truncate text-lg font-black leading-6 tracking-[-0.03em] text-slate-950">
         {details?.primary ?? "—"}
       </span>
       {details ? (
         <>
-          <span className="mt-0.5 block truncate text-[11px] font-semibold leading-4 text-slate-600">
+          <span className="mt-1 block truncate text-xs font-bold leading-5 text-slate-600">
             {details.context}
           </span>
-          <span className="mt-0.5 block truncate text-[11px] font-medium leading-4 text-slate-500">
-            {details.departure} · {details.note}
-          </span>
+          {!mobile ? (
+            <span className="mt-1 block truncate text-[11px] font-semibold leading-4 text-slate-500">
+              {details.departure}
+            </span>
+          ) : null}
         </>
       ) : null}
     </button>
@@ -4406,16 +4450,6 @@ function SummarySortButton({
 
 function formatStopsLabel(stops: number) {
   return stops === 0 ? "Nonstop" : `${stops} stop${stops > 1 ? "s" : ""}`;
-}
-
-function hasSpecificBaggageInfo(value?: string) {
-  if (!value) return false;
-  const normalized = value.toLowerCase();
-  return (
-    normalized.includes("included") ||
-    normalized.includes("carry-on") ||
-    normalized.includes("checked bag")
-  );
 }
 
 function FilterSection({

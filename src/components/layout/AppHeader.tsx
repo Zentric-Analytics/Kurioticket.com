@@ -1,17 +1,18 @@
 "use client";
 
 import {
-  createElement,
   useEffect,
   useId,
   useMemo,
   useRef,
   useState,
-  type ImgHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
 } from "react";
 
-import { signOut, useSession } from "next-auth/react";
+import {
+  signOut,
+  useSession,
+} from "next-auth/react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
@@ -39,9 +40,7 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
 
-function RawImage(props: ImgHTMLAttributes<HTMLImageElement>) {
-  return createElement("img", props);
-}
+const RawImage = "img";
 
 function SavedHeartIcon({
   className,
@@ -103,8 +102,6 @@ const signedInAccountMenuItems = [
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
 }: AppHeaderProps = {}) {
-  void hideMobileSecondaryNavLinks;
-
   const { data: session } = useSession();
 
   const isSignedIn = Boolean(session?.user);
@@ -115,7 +112,12 @@ export function AppHeader({
   const [accountOpen, setAccountOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const { locale, setLocale, t, locales } = useLocale();
+  const {
+    locale,
+    setLocale,
+    t,
+    locales,
+  } = useLocale();
 
   const pathname = usePathname();
   const { start: startRouteProgress } = useRouteProgress();
@@ -142,7 +144,10 @@ export function AppHeader({
     const onClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
 
-      if (accountRef.current && !accountRef.current.contains(target)) {
+      if (
+        accountRef.current &&
+        !accountRef.current.contains(target)
+      ) {
         setAccountOpen(false);
       }
     };
@@ -188,8 +193,8 @@ export function AppHeader({
 
       const focusableElements = Array.from(
         languageMenuRef.current.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ),
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        )
       ).filter((element) => element.getClientRects().length > 0);
 
       const firstElement = focusableElements[0];
@@ -219,11 +224,13 @@ export function AppHeader({
   }, [languageOpen]);
 
   const selectedLanguage = useMemo(
-    () => locales.find((option) => option.code === locale) ?? locales[0],
-    [locale, locales],
+    () =>
+      locales.find((option) => option.code === locale) ?? locales[0],
+    [locale, locales]
   );
 
-  const selectedLanguageDisplayName = selectedLanguage.label;
+  const selectedLanguageDisplayName =
+    selectedLanguage.label;
 
   const accountDisplayName = useMemo(() => {
     const rawName = session?.user?.name?.trim();
@@ -237,16 +244,16 @@ export function AppHeader({
 
   const accountInitials = useMemo(() => {
     const source =
-      session?.user?.name?.trim() || session?.user?.email?.trim() || "Account";
+      session?.user?.name?.trim() ||
+      session?.user?.email?.trim() ||
+      "Account";
 
-    return (
-      source
-        .split(/[\s@._-]+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part.charAt(0).toUpperCase())
-        .join("") || "A"
-    );
+    return source
+      .split(/[\s@._-]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "A";
   }, [session?.user?.email, session?.user?.name]);
 
   const filteredLanguages = useMemo(() => {
@@ -311,7 +318,7 @@ export function AppHeader({
           ]
         : []),
     ],
-    [isSignedIn, t],
+    [isSignedIn, t]
   );
 
   const isNavItemActive = (href: string) => {
@@ -362,13 +369,13 @@ export function AppHeader({
     ]);
 
     return navItems.filter(
-      (item) => Boolean(item.icon) && mobilePrimaryHrefs.has(item.href),
+      (item) => Boolean(item.icon) && mobilePrimaryHrefs.has(item.href)
     );
   }, [navItems]);
 
   const visibleMobilePrimaryNavItems = useMemo(
     () => mobilePrimaryNavItems,
-    [mobilePrimaryNavItems],
+    [hideMobileSecondaryNavLinks, mobilePrimaryNavItems]
   );
 
   const mobileDrawerHrefs = useMemo(
@@ -379,7 +386,7 @@ export function AppHeader({
         "/saved",
         ...(isSignedIn ? ["/dashboard"] : []),
       ]),
-    [isSignedIn],
+    [isSignedIn]
   );
 
   const mobileMenuNavItems = useMemo(() => {
@@ -388,7 +395,7 @@ export function AppHeader({
 
   const renderFlag = (
     countryCode: string | undefined,
-    fallbackText: string | undefined,
+    fallbackText: string | undefined
   ) => (
     <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
       {countryCode ? (
@@ -418,7 +425,7 @@ export function AppHeader({
   const handleRouteLinkClick = (
     event: ReactMouseEvent<HTMLAnchorElement>,
     href: string,
-    afterStart?: () => void,
+    afterStart?: () => void
   ) => {
     if (
       event.defaultPrevented ||
@@ -495,10 +502,7 @@ export function AppHeader({
               <div className="inline-flex h-12 items-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
                 <CountryCurrencySelector variant="header" grouped />
 
-                <span
-                  className="pointer-events-none h-6 w-px bg-white/20"
-                  aria-hidden="true"
-                />
+                <span className="pointer-events-none h-6 w-px bg-white/20" aria-hidden="true" />
 
                 <div className="relative" ref={languageRef}>
                   <button
@@ -513,11 +517,7 @@ export function AppHeader({
                   >
                     <span>{selectedLanguageDisplayName}</span>
 
-                    <ChevronDown
-                      size={14}
-                      className="text-indigo-100"
-                      aria-hidden="true"
-                    />
+                    <ChevronDown size={14} className="text-indigo-100" aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -543,9 +543,7 @@ export function AppHeader({
                       )}
                     </span>
 
-                    <span className="max-w-[8rem] truncate">
-                      {accountDisplayName}
-                    </span>
+                    <span className="max-w-[8rem] truncate">{accountDisplayName}</span>
 
                     <ChevronDown
                       size={14}
@@ -584,9 +582,7 @@ export function AppHeader({
                               href={item.href}
                               role="menuitem"
                               onClick={(event) =>
-                                handleRouteLinkClick(event, item.href, () =>
-                                  setAccountOpen(false),
-                                )
+                                handleRouteLinkClick(event, item.href, () => setAccountOpen(false))
                               }
                               className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
@@ -629,9 +625,7 @@ export function AppHeader({
                 <>
                   <Link
                     href="/auth/signin"
-                    onClick={(event) =>
-                      handleRouteLinkClick(event, "/auth/signin")
-                    }
+                    onClick={(event) => handleRouteLinkClick(event, "/auth/signin")}
                     className="inline-flex h-12 cursor-pointer items-center rounded-full px-4 text-sm font-semibold text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     {t.login}
@@ -639,9 +633,7 @@ export function AppHeader({
 
                   <Link
                     href="/auth/signup"
-                    onClick={(event) =>
-                      handleRouteLinkClick(event, "/auth/signup")
-                    }
+                    onClick={(event) => handleRouteLinkClick(event, "/auth/signup")}
                     className="inline-flex h-12 cursor-pointer items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     {t.signUp}
@@ -746,8 +738,7 @@ export function AppHeader({
                           id={languageDescriptionId}
                           className="mt-1 text-sm text-slate-600"
                         >
-                          Choose the language used across the site. This
-                          preference does not change airport suggestions.
+                          Choose the language used across the site. This preference does not change airport suggestions.
                         </p>
                       </div>
 
@@ -769,19 +760,13 @@ export function AppHeader({
                     </label>
 
                     <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
-                      <Search
-                        size={16}
-                        className="text-slate-500"
-                        aria-hidden="true"
-                      />
+                      <Search size={16} className="text-slate-500" aria-hidden="true" />
 
                       <input
                         ref={languageSearchInputRef}
                         id={languageSearchId}
                         value={languageQuery}
-                        onChange={(event) =>
-                          setLanguageQuery(event.target.value)
-                        }
+                        onChange={(event) => setLanguageQuery(event.target.value)}
                         placeholder="English (US) or English (UK)"
                         className="w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                       />
@@ -810,10 +795,7 @@ export function AppHeader({
                             }`}
                           >
                             <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
-                              {renderFlag(
-                                option.countryCode,
-                                option.fallbackText,
-                              )}
+                              {renderFlag(option.countryCode, option.fallbackText)}
 
                               <span>{option.label}</span>
                             </span>
@@ -822,11 +804,7 @@ export function AppHeader({
                               <span className="uppercase">{option.code}</span>
 
                               {active ? (
-                                <Check
-                                  size={16}
-                                  className="text-violet-600"
-                                  aria-hidden="true"
-                                />
+                                <Check size={16} className="text-violet-600" aria-hidden="true" />
                               ) : null}
                             </span>
                           </button>
@@ -835,10 +813,11 @@ export function AppHeader({
                     </div>
                   </section>
                 </>,
-                document.body,
+                document.body
               )
             : null}
         </div>
+
         <nav className="bg-white/5 md:hidden">
           <div className="page-shell overflow-x-auto py-2.5">
             <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
@@ -867,6 +846,7 @@ export function AppHeader({
             </div>
           </div>
         </nav>
+
         <div
           className={`border-t border-slate-200 bg-white md:hidden ${
             open ? "block" : "hidden"
@@ -894,7 +874,7 @@ export function AppHeader({
               <span className="inline-flex items-center gap-2">
                 {renderFlag(
                   selectedLanguage?.countryCode,
-                  selectedLanguage?.fallbackText,
+                  selectedLanguage?.fallbackText
                 )}
                 <span>{selectedLanguageDisplayName}</span>
               </span>
@@ -909,9 +889,7 @@ export function AppHeader({
                 <Link
                   key={item.href}
                   href={item.href}
-                  onClick={(event) =>
-                    handleRouteLinkClick(event, item.href, () => setOpen(false))
-                  }
+                  onClick={(event) => handleRouteLinkClick(event, item.href, () => setOpen(false))}
                   className="inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-[15px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 >
                   {Icon ? <Icon size={16} aria-hidden="true" /> : null}
@@ -921,10 +899,7 @@ export function AppHeader({
             })}
 
             {isSignedIn ? (
-              <section
-                className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-3"
-                aria-label="Account"
-              >
+              <section className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-3" aria-label="Account">
                 <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
                   <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-sm font-black text-white shadow-sm">
                     {session?.user?.image ? (
@@ -957,9 +932,7 @@ export function AppHeader({
                         key={item.href}
                         href={item.href}
                         onClick={(event) =>
-                          handleRouteLinkClick(event, item.href, () =>
-                            setOpen(false),
-                          )
+                          handleRouteLinkClick(event, item.href, () => setOpen(false))
                         }
                         className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                       >
@@ -984,6 +957,7 @@ export function AppHeader({
             ) : null}
           </nav>
         </div>
+
       </header>
     </>
   );
