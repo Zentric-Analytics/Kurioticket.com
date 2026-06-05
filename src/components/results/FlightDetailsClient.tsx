@@ -132,10 +132,13 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       </span>
                       <span>{flight.destinationAirport}</span>
                     </h1>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <TripPill icon={<Clock3 size={15} />} label={flight.duration} />
-                      <TripPill icon={<Plane size={15} />} label={stopLabel} />
-                      {flight.cabinClass ? <TripPill icon={<Ticket size={15} />} label={flight.cabinClass} /> : null}
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <DetailRow icon={<Plane size={17} />} label="Stops" value={stopLabel} />
+                      <DetailRow icon={<Clock3 size={17} />} label="Duration" value={flight.duration} />
+                      {flight.cabinClass ? <DetailRow icon={<Ticket size={17} />} label="Cabin" value={flight.cabinClass} /> : null}
+                      <DetailRow icon={<Luggage size={17} />} label="Baggage" value={flight.baggageInfo || "Confirmed by provider"} />
+                      <DetailRow icon={<RotateCcw size={17} />} label="Refund/change" value={flight.refundInfo || "Confirmed by provider"} />
+                      <DetailRow icon={<ShieldCheck size={17} />} label="Provider" value={flight.provider} />
                     </div>
                   </div>
                   <div className="rounded-2xl border border-border bg-white p-4 md:min-w-52 md:text-right">
@@ -167,7 +170,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
         </div>
       </section>
 
-      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[1fr_360px] lg:items-start">
+      <div className="page-shell py-6">
         <section className="space-y-6">
           <Card className="p-5 sm:p-6">
             <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -288,40 +291,11 @@ export function FlightDetailsClient({ id }: { id: string }) {
             </div>
           </Card>
         </section>
-
-        <aside className="space-y-4 lg:sticky lg:top-6">
-          <Card className="p-5">
-            <h2 className="text-lg font-bold text-navy">Trip details</h2>
-            <div className="mt-4 grid gap-3">
-              <DetailRow icon={<Plane size={17} />} label="Stops" value={stopLabel} />
-              <DetailRow icon={<Clock3 size={17} />} label="Duration" value={flight.duration} />
-              {flight.cabinClass ? <DetailRow icon={<Ticket size={17} />} label="Cabin" value={flight.cabinClass} /> : null}
-              <DetailRow icon={<Luggage size={17} />} label="Baggage" value={flight.baggageInfo || "Confirmed by provider"} />
-              <DetailRow icon={<RotateCcw size={17} />} label="Refund/change" value={flight.refundInfo || "Confirmed by provider"} />
-              <DetailRow icon={<ShieldCheck size={17} />} label="Provider" value={flight.provider} />
-            </div>
-            {flight.badges.length ? (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {flight.badges.map((badge) => (
-                  <Badge key={badge} variant="teal">{badge}</Badge>
-                ))}
-              </div>
-            ) : null}
-          </Card>
-        </aside>
       </div>
     </main>
   );
 }
 
-function TripPill({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm">
-      <span className="text-teal">{icon}</span>
-      {label}
-    </span>
-  );
-}
 
 function AirportTimeBlock({ label, time, airport, icon, align = "left" }: { label: string; time: string; airport: string; icon: React.ReactNode; align?: "left" | "right" }) {
   return (
