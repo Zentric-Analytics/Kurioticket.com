@@ -284,12 +284,16 @@ const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
       100,
   );
 
+type HotelSummarySortMode = "cheapest" | "bestValue" | "topRated";
+
 type HotelSummaryItem = {
   label: string;
   value: string;
   helperText: string;
   icon: LucideIcon;
   iconClassName: string;
+  iconElementClassName?: string;
+  sortMode: HotelSummarySortMode;
 };
 
 export function HotelResultsClient() {
@@ -310,6 +314,8 @@ export function HotelResultsClient() {
   const [minRating, setMinRating] = useState(DEFAULT_MIN_RATING);
   const [selectedFilters, setSelectedFilters] =
     useState<HotelFilterSelections>(emptySelections);
+  const [hotelSummarySortMode, setHotelSummarySortMode] =
+    useState<HotelSummarySortMode>("cheapest");
 
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
@@ -420,6 +426,10 @@ export function HotelResultsClient() {
   );
 
   const visibleFilteredHotels = filterApplying ? visibleFiltered : filtered;
+  const sortedVisibleHotels = useMemo(
+    () => sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode),
+    [hotelSummarySortMode, visibleFilteredHotels],
+  );
   const hotelSummaryItems = useMemo(
     () => buildHotelSummaryItems(visibleFilteredHotels),
     [visibleFilteredHotels],
@@ -669,7 +679,11 @@ export function HotelResultsClient() {
                   />
                 </div>
 
-                <HotelSummaryRow items={hotelSummaryItems} />
+                <HotelSummaryRow
+                  activeSortMode={hotelSummarySortMode}
+                  items={hotelSummaryItems}
+                  onSortModeChange={setHotelSummarySortMode}
+                />
 
                 {filterApplying ? (
                   <div className="space-y-3">
@@ -683,8 +697,8 @@ export function HotelResultsClient() {
                     <HotelSkeleton />
                     <HotelSkeleton />
                   </div>
-                ) : visibleFilteredHotels.length ? (
-                  visibleFilteredHotels.map((hotel) => (
+                ) : sortedVisibleHotels.length ? (
+                  sortedVisibleHotels.map((hotel) => (
                     <HotelCard key={hotel.id} hotel={hotel} />
                   ))
                 ) : (
@@ -764,7 +778,15 @@ export function HotelResultsClient() {
   );
 }
 
-function HotelSummaryRow({ items }: { items: HotelSummaryItem[] }) {
+function HotelSummaryRow({
+  activeSortMode,
+  items,
+  onSortModeChange,
+}: {
+  activeSortMode: HotelSummarySortMode;
+  items: HotelSummaryItem[];
+  onSortModeChange: (sortMode: HotelSummarySortMode) => void;
+}) {
   if (!items.length) return null;
 
   return (
@@ -774,11 +796,20 @@ function HotelSummaryRow({ items }: { items: HotelSummaryItem[] }) {
     >
       {items.map((item) => {
         const Icon = item.icon;
+        const isActive = item.sortMode === activeSortMode;
 
         return (
-          <div
+          <button
             key={item.label}
-            className="min-w-0 rounded-2xl border border-indigo-100/80 bg-white p-3.5 text-left shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)]"
+            type="button"
+            className={cn(
+              "min-w-0 rounded-2xl border bg-white p-3.5 text-left shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_34px_-24px_rgba(30,27,75,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb]",
+              isActive
+                ? "border-indigo-400 bg-indigo-50/50 shadow-[0_18px_38px_-24px_rgba(79,70,229,0.7)] ring-1 ring-indigo-200"
+                : "border-indigo-100/80",
+            )}
+            aria-pressed={isActive}
+            onClick={() => onSortModeChange(item.sortMode)}
           >
             <div className="flex items-start gap-3">
               <div
@@ -788,7 +819,11 @@ function HotelSummaryRow({ items }: { items: HotelSummaryItem[] }) {
                 )}
                 aria-hidden="true"
               >
-                <Icon size={17} strokeWidth={2.2} />
+                <Icon
+                  className={item.iconElementClassName}
+                  size={18}
+                  strokeWidth={2.8}
+                />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-700">
@@ -802,11 +837,58 @@ function HotelSummaryRow({ items }: { items: HotelSummaryItem[] }) {
                 </p>
               </div>
             </div>
-          </div>
+          </button>
         );
       })}
     </div>
   );
+}
+
+function sortHotelSummaryResults(
+  hotels: PublicHotelResult[],
+  sortMode: HotelSummarySortMode,
+) {
+  const indexedHotels = hotels.map((hotel, index) => ({ hotel, index }));
+
+  if (sortMode === "bestValue" && !hotels.some(hasHotelValueScore)) {
+    return hotels;
+  }
+
+  indexedHotels.sort((first, second) => {
+    if (sortMode === "cheapest") {
+      return (
+        getHotelSortablePrice(first.hotel) - getHotelSortablePrice(second.hotel) ||
+        first.index - second.index
+      );
+    }
+
+    if (sortMode === "topRated") {
+      return (
+        getHotelSortableRating(second.hotel) -
+          getHotelSortableRating(first.hotel) ||
+        getHotelSortablePrice(first.hotel) - getHotelSortablePrice(second.hotel) ||
+        first.index - second.index
+      );
+    }
+
+    const firstScore = getHotelValueSortScore(first.hotel);
+    const secondScore = getHotelValueSortScore(second.hotel);
+
+    if (firstScore === null && secondScore === null) {
+      return first.index - second.index;
+    }
+
+    if (firstScore === null) return 1;
+    if (secondScore === null) return -1;
+
+    return (
+      secondScore - firstScore ||
+      getHotelSortablePrice(first.hotel) - getHotelSortablePrice(second.hotel) ||
+      first.index - second.index
+    );
+  });
+
+  return indexedHotels.map(({ hotel }) => hotel);
 }
 
 function buildHotelSummaryItems(
@@ -815,20 +897,26 @@ function buildHotelSummaryItems(
   if (!hotels.length) return [];
 
   const cheapest = hotels.reduce((best, hotel) =>
-    hotel.totalPrice < best.totalPrice ? hotel : best,
+    getHotelSortablePrice(hotel) < getHotelSortablePrice(best) ? hotel : best,
   );
   const bestValue = hotels.reduce((best, hotel) => {
-    const hotelScore = getHotelValueSummaryScore(hotel);
-    const bestScore = getHotelValueSummaryScore(best);
+    const hotelScore = getHotelValueSortScore(hotel);
+    const bestScore = getHotelValueSortScore(best);
+
+    if (hotelScore === null && bestScore === null) return best;
+    if (hotelScore === null) return best;
+    if (bestScore === null) return hotel;
 
     return hotelScore > bestScore ||
-      (hotelScore === bestScore && hotel.totalPrice < best.totalPrice)
+      (hotelScore === bestScore &&
+        getHotelSortablePrice(hotel) < getHotelSortablePrice(best))
       ? hotel
       : best;
   });
   const topRated = hotels.reduce((best, hotel) =>
-    hotel.rating > best.rating ||
-    (hotel.rating === best.rating && hotel.totalPrice < best.totalPrice)
+    getHotelSortableRating(hotel) > getHotelSortableRating(best) ||
+    (getHotelSortableRating(hotel) === getHotelSortableRating(best) &&
+      getHotelSortablePrice(hotel) < getHotelSortablePrice(best))
       ? hotel
       : best,
   );
@@ -836,40 +924,56 @@ function buildHotelSummaryItems(
   return [
     {
       label: "CHEAPEST",
-      value: formatCurrency(cheapest.totalPrice, cheapest.currency),
+      value: formatCurrency(getHotelSortablePrice(cheapest), cheapest.currency),
       helperText: "Lowest total price",
       icon: Tag,
-      iconClassName: "bg-violet-50 text-violet-700 ring-1 ring-violet-100",
+      iconClassName: "bg-violet-100 text-indigo-700 ring-1 ring-violet-200",
+      sortMode: "cheapest",
     },
     {
       label: "BEST VALUE",
       value: formatHotelValueSummary(bestValue),
       helperText: "Best balance",
       icon: ThumbsUp,
-      iconClassName: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
+      iconClassName: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200",
+      sortMode: "bestValue",
     },
     {
       label: "TOP RATED",
-      value: `${formatHotelRating(topRated.rating)} stars`,
+      value: formatHotelRating(topRated.rating),
       helperText: "Highest rating",
       icon: Star,
-      iconClassName: "bg-amber-50 text-amber-600 ring-1 ring-amber-100",
+      iconClassName: "bg-amber-100 text-amber-600 ring-1 ring-amber-200",
+      iconElementClassName: "fill-current",
+      sortMode: "topRated",
     },
   ];
 }
 
-function getHotelValueSummaryScore(hotel: PublicHotelResult) {
-  return (
-    hotel.valueScore +
-    hotel.travelConfidenceScore +
-    hotel.arrivalSuitabilityScore +
-    hotel.rating
-  );
+function getHotelSortablePrice(hotel: PublicHotelResult) {
+  if (Number.isFinite(hotel.totalPrice)) return hotel.totalPrice;
+  if (Number.isFinite(hotel.pricePerNight)) return hotel.pricePerNight;
+
+  return Number.POSITIVE_INFINITY;
+}
+
+function getHotelSortableRating(hotel: PublicHotelResult) {
+  return Number.isFinite(hotel.rating) ? hotel.rating : Number.NEGATIVE_INFINITY;
+}
+
+function hasHotelValueScore(hotel: PublicHotelResult) {
+  return getHotelValueSortScore(hotel) !== null;
+}
+
+function getHotelValueSortScore(hotel: PublicHotelResult) {
+  return Number.isFinite(hotel.valueScore) ? hotel.valueScore : null;
 }
 
 function formatHotelValueSummary(hotel: PublicHotelResult) {
-  if (Number.isFinite(hotel.valueScore)) {
-    return `${Math.round(hotel.valueScore)}/100 score`;
+  const valueScore = getHotelValueSortScore(hotel);
+
+  if (valueScore !== null) {
+    return `${Math.round(valueScore)}/100 score`;
   }
 
   return "Recommended";
