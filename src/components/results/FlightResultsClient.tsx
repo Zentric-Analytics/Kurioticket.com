@@ -52,6 +52,7 @@ import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
 
 const resultStackClass = "w-full max-w-[680px] lg:ml-4 xl:ml-6";
+const desktopFilterStickyTopClass = "lg:sticky lg:top-[7.25rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:overscroll-contain";
 
 const loadingMessages = [
   "Searching airlines...",
@@ -545,6 +546,7 @@ export function FlightResultsClient() {
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const selectedCurrency = selectedOption.currency;
+  const initialDateSafeParams = normalizeFlightDateSearchParams(params);
   const discoveryCards = useMemo(
     () => getHomeDiscoveryByRegion(selectedOption.code).slice(0, 4),
     [selectedOption.code],
@@ -612,7 +614,7 @@ export function FlightResultsClient() {
   const [baggageIncludedOnly, setBaggageIncludedOnly] = useState(true);
   const [flexibleOnly, setFlexibleOnly] = useState(false);
   const [tripTypeInput, setTripTypeInput] = useState(
-    params.get("tripType") || "round-trip",
+    initialDateSafeParams.get("tripType") || "round-trip",
   );
   const [tripTypeMenuOpen, setTripTypeMenuOpen] = useState(false);
   const [originInput, setOriginInput] = useState(params.get("origin") || "");
@@ -624,10 +626,10 @@ export function FlightResultsClient() {
     params.get("destination") || "",
   );
   const [departureDateInput, setDepartureDateInput] = useState(
-    params.get("departureDate") || "",
+    initialDateSafeParams.get("departureDate") || "",
   );
   const [returnDateInput, setReturnDateInput] = useState(
-    params.get("returnDate") || "",
+    initialDateSafeParams.get("returnDate") || "",
   );
   const [adultCount, setAdultCount] = useState(() => {
     const adultsParam = params.get("adults");
@@ -836,15 +838,25 @@ export function FlightResultsClient() {
 
   useEffect(() => {
     const searchValues = new URLSearchParams(queryString);
-    const nextTripType = searchValues.get("tripType") || "round-trip";
-    const nextOrigin = searchValues.get("origin")?.trim() || "";
-    const nextDestination = searchValues.get("destination")?.trim() || "";
-    const nextDepartureDate = searchValues.get("departureDate")?.trim() || "";
-    const nextReturnDate = searchValues.get("returnDate")?.trim() || "";
-    const adultsParam = Number(searchValues.get("adults"));
-    const childrenParam = Number(searchValues.get("children"));
-    const infantsParam = Number(searchValues.get("infants"));
-    const legacyTravelers = Number(searchValues.get("travelers") || 1);
+    const normalizedSearchValues = normalizeFlightDateSearchParams(searchValues);
+
+    if (normalizedSearchValues.toString() !== searchValues.toString()) {
+      const nextQuery = normalizedSearchValues.toString();
+      router.replace(nextQuery ? `/flights/results?${nextQuery}` : "/flights/results", {
+        scroll: false,
+      });
+      return;
+    }
+
+    const nextTripType = normalizedSearchValues.get("tripType") || "round-trip";
+    const nextOrigin = normalizedSearchValues.get("origin")?.trim() || "";
+    const nextDestination = normalizedSearchValues.get("destination")?.trim() || "";
+    const nextDepartureDate = normalizedSearchValues.get("departureDate")?.trim() || "";
+    const nextReturnDate = normalizedSearchValues.get("returnDate")?.trim() || "";
+    const adultsParam = Number(normalizedSearchValues.get("adults"));
+    const childrenParam = Number(normalizedSearchValues.get("children"));
+    const infantsParam = Number(normalizedSearchValues.get("infants"));
+    const legacyTravelers = Number(normalizedSearchValues.get("travelers") || 1);
     const nextAdults = Number.isFinite(adultsParam)
       ? Math.max(1, adultsParam)
       : Math.max(1, legacyTravelers);
@@ -855,7 +867,7 @@ export function FlightResultsClient() {
       ? Math.max(0, infantsParam)
       : 0;
     const nextCabinClass = normalizeCabinClassValue(
-      searchValues.get("cabinClass"),
+      normalizedSearchValues.get("cabinClass"),
     );
 
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Keeps the editable search form in sync with URL-backed result searches.
@@ -876,7 +888,7 @@ export function FlightResultsClient() {
     setInfantCount(Math.min(Math.min(9, nextAdults), nextInfants));
     setCabinClassInput(nextCabinClass);
     closeFlightSearchPopovers();
-  }, [queryString]);
+  }, [queryString, router]);
 
   useEffect(() => {
     const query = originInput.trim();
@@ -3226,7 +3238,7 @@ export function FlightResultsClient() {
       </section>
 
       <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <aside className="hidden lg:block">
+        <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <Filters
             layout="desktop"
             maxPrice={maxPrice}
@@ -3280,8 +3292,8 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="rounded-3xl border border-slate-200/80 bg-white p-2.5 shadow-sm shadow-slate-900/[0.04]">
-                <div className="hidden auto-rows-fr grid-cols-3 gap-2.5 sm:grid">
+              <div className="w-full">
+                <div className="hidden auto-rows-fr grid-cols-3 gap-2 sm:grid">
                   <SummarySortButton
                     label="Cheapest"
                     details={buildSummaryDetails(
@@ -3319,7 +3331,7 @@ export function FlightResultsClient() {
                   />
                 </div>
 
-                <div className="-mx-1 flex snap-x gap-2.5 overflow-x-auto px-1 pb-1 sm:hidden">
+                <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:hidden">
                   <SummarySortButton
                     label="Cheapest"
                     details={buildSummaryDetails(
@@ -3658,6 +3670,36 @@ function isValidFutureOrTodayDateValue(value: string): boolean {
   if (!date) return false;
 
   return !isBeforeToday(date);
+}
+
+function normalizeFlightDateSearchParams(
+  params: Pick<URLSearchParams, "get" | "toString">,
+) {
+  const nextParams = new URLSearchParams(params.toString());
+  const tripType = nextParams.get("tripType") || "round-trip";
+  const departureDate = nextParams.get("departureDate")?.trim() || "";
+  const returnDate = nextParams.get("returnDate")?.trim() || "";
+
+  if (departureDate && !isValidFutureOrTodayDateValue(departureDate)) {
+    nextParams.delete("departureDate");
+    nextParams.delete("returnDate");
+    return nextParams;
+  }
+
+  if (tripType !== "round-trip") {
+    nextParams.delete("returnDate");
+    return nextParams;
+  }
+
+  if (
+    returnDate &&
+    (!isValidFutureOrTodayDateValue(returnDate) ||
+      (departureDate && isDateValueBefore(returnDate, departureDate)))
+  ) {
+    nextParams.delete("returnDate");
+  }
+
+  return nextParams;
 }
 
 function buildMonthDays(month: Date): Array<Date | null> {
@@ -4348,7 +4390,11 @@ function Filters({
       : "Mixed provider currencies";
 
   return (
-    <div className="bg-white">
+    <div className={cn(
+      "bg-white",
+      layout === "desktop" &&
+        "rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-900/[0.04]",
+    )}>
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
           <h2 className="text-base font-bold text-white">Filter by</h2>
@@ -4664,8 +4710,8 @@ function SummarySortButton({
       className={cn(
         "group relative flex h-full flex-col rounded-2xl border text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
         mobile
-          ? "min-w-[210px] snap-start px-4 py-3.5"
-          : "min-h-[132px] px-4 py-4",
+          ? "min-w-[178px] snap-start px-3 py-2.5"
+          : "min-h-[104px] px-3.5 py-3",
         active
           ? "border-indigo-200/80 bg-gradient-to-br from-indigo-50/80 via-white to-sky-50/80 text-slate-800 shadow-sm shadow-indigo-900/[0.04] ring-1 ring-indigo-100/80"
           : "border-slate-200/80 bg-white text-slate-600 hover:border-indigo-200/80 hover:bg-slate-50/80 hover:shadow-sm hover:shadow-slate-900/[0.03]",
@@ -4673,7 +4719,7 @@ function SummarySortButton({
     >
       <span
         className={cn(
-          "inline-flex w-fit rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]",
+          "inline-flex w-fit rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em]",
           active
             ? "bg-indigo-100 text-indigo-700"
             : "bg-slate-100 text-slate-500",
@@ -4681,15 +4727,15 @@ function SummarySortButton({
       >
         {label}
       </span>
-      <span className="mt-3 block truncate text-xl font-semibold leading-7 tracking-[-0.02em] text-slate-800 sm:text-lg sm:leading-6 lg:text-xl lg:leading-7">
+      <span className="mt-2 block truncate text-lg font-semibold leading-6 tracking-[-0.02em] text-slate-800 sm:text-base sm:leading-6 lg:text-lg">
         {details?.primary ?? "—"}
       </span>
       {details ? (
-        <span className="mt-2 flex min-h-0 flex-1 flex-col justify-end gap-1.5">
-          <span className="block truncate text-xs font-medium leading-5 text-slate-600">
+        <span className="mt-1.5 flex min-h-0 flex-1 flex-col justify-end gap-1">
+          <span className="block truncate text-[11px] font-medium leading-4 text-slate-600">
             {details.context}
           </span>
-          <span className="block truncate text-[11px] font-normal leading-4 text-slate-500">
+          <span className="block truncate text-[10px] font-normal leading-4 text-slate-500">
             {details.departure}
           </span>
         </span>

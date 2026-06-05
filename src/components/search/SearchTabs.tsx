@@ -352,6 +352,7 @@ export function SearchTabs({
     toOpen &&
     toQuery.length >= 2 &&
     (toLoading || toSuggestions.length > 0 || !toLoading);
+
   const normalizePassengerDraft = useCallback((
     adults: number,
     children: number,
@@ -455,7 +456,6 @@ export function SearchTabs({
 
     return () => controller.abort();
   }, []);
-
 
   useEffect(() => {
     const query = from.trim();
@@ -944,6 +944,17 @@ export function SearchTabs({
       isBeforeToday(returnParsed) ||
       Boolean(departureParsed && returnParsed < departureParsed));
 
+  const isValidFlightDate = (value: string) => {
+    const parsed = parseIsoDate(value);
+    return Boolean(parsed && !isBeforeToday(parsed));
+  };
+
+  const isFlightReturnRangeValid =
+    tripType !== "round-trip" ||
+    (isValidFlightDate(returnDate) &&
+      isValidFlightDate(departureDate) &&
+      returnDate >= departureDate);
+
   const onSelectDate = (
     date: Date
   ) => {
@@ -1190,10 +1201,8 @@ export function SearchTabs({
     isFlightSubmitting ||
     !from.trim() ||
     !to.trim() ||
-    isDepartureDateInvalid ||
-    (tripType ===
-      "round-trip" &&
-      isReturnDateInvalid);
+    !isValidFlightDate(departureDate) ||
+    !isFlightReturnRangeValid;
 
   const onFlightSubmit = (
     event: FormEvent<HTMLFormElement>
@@ -1496,7 +1505,12 @@ export function SearchTabs({
                         );
                         if (mode === "one-way") {
                           setReturnDate("");
-                        } else if (departureParsed && returnParsed && returnParsed < departureParsed) {
+                        } else if (
+                          returnDate &&
+                          (!isValidFlightDate(returnDate) ||
+                            !isValidFlightDate(departureDate) ||
+                            returnDate < departureDate)
+                        ) {
                           setReturnDate("");
                         }
                         setTripTypeOpen(
@@ -1919,18 +1933,22 @@ export function SearchTabs({
                                         day
                                       );
                                     const isInvalidReturnDate =
-                                      tripType === "round-trip" &&
-                                      Boolean(departureDate) &&
+                                      tripType ===
+                                        "round-trip" &&
+                                      Boolean(
+                                        departureDate
+                                      ) &&
                                       !returnDate &&
-                                      iso < departureDate;
-                                    const isDateDisabled =
+                                      iso <
+                                        departureDate;
+                                    const isDisabledDate =
                                       isPastDate ||
                                       isInvalidReturnDate;
                                     const isInRange =
                                       !!(
                                         departureParsed &&
                                         returnParsed &&
-                                        !isPastDate &&
+                                        !isDisabledDate &&
                                         day >
                                           departureParsed &&
                                         day <
@@ -1969,11 +1987,14 @@ export function SearchTabs({
                                           )
                                         }
                                         disabled={
-                                          isDateDisabled
+                                          isDisabledDate
+                                        }
+                                        aria-disabled={
+                                          isDisabledDate
                                         }
                                         className={cn(
                                           "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
-                                          isDateDisabled
+                                          isDisabledDate
                                             ? "text-slate-300 hover:bg-transparent"
                                             : "text-slate-900 hover:bg-indigo-50",
                                           isInRange &&
@@ -2310,11 +2331,13 @@ export function SearchTabs({
                                       isBeforeToday(
                                         day
                                       );
+                                    const isDisabledDate =
+                                      isPastDate;
                                     const isInRange =
                                       !!(
                                         checkInParsed &&
                                         checkOutParsed &&
-                                        !isPastDate &&
+                                        !isDisabledDate &&
                                         day >
                                           checkInParsed &&
                                         day <
@@ -2353,11 +2376,14 @@ export function SearchTabs({
                                           )
                                         }
                                         disabled={
-                                          isPastDate
+                                          isDisabledDate
+                                        }
+                                        aria-disabled={
+                                          isDisabledDate
                                         }
                                         className={cn(
                                           "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
-                                          isPastDate
+                                          isDisabledDate
                                             ? "text-slate-300 hover:bg-transparent"
                                             : "text-slate-900 hover:bg-indigo-50",
                                           isInRange &&
