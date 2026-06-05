@@ -152,6 +152,7 @@ export const fallbackExchangeRatesFromUsd: Record<string, number> = {
   WST: 2.75,
   XAF: 604,
   XCD: 2.7,
+  XCG: 1.79,
   XOF: 604,
   XPF: 110,
   YER: 250,
