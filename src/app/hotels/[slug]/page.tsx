@@ -4,7 +4,7 @@ import { SearchTabs } from "@/components/search/SearchTabs";
 import { Card } from "@/components/ui/Card";
 
 const searchTabTranslations = {
-  flights: "Flights", hotels: "Hotels", searchHotelsInstead: "Search hotels instead", from: "From", to: "To", departure: "Departure", return: "Return", destination: "Destination", checkIn: "Check-in", checkOut: "Check-out", guests: "Guests", rooms: "Rooms", cityAirport: "City or airport", cityHotelArea: "City or hotel area", selectDate: "Select date", notNeeded: "Not needed", travelersClass: "Travelers & Class", oneTraveler: "1 Traveler", twoTravelers: "2 Travelers", threeTravelers: "3 Travelers", fourTravelers: "4 Travelers", economy: "Economy", premiumEconomy: "Premium economy", business: "Business", first: "First", adults: "Adults", room: "Room", searchFlights: "Search Flights", searchHotels: "Search Hotels" };
+  flights: "Flights", hotels: "Hotels", searchHotelsInstead: "Search hotels instead", from: "From", to: "To", departure: "Departure", return: "Return", destination: "Destination", checkIn: "Check-in", checkOut: "Check-out", guests: "Guests", rooms: "Rooms", cityAirport: "City or airport", cityHotelArea: "City or hotel area", selectDate: "Select date", notNeeded: "Not needed", travelersClass: "Travelers & Class", oneTraveler: "1 Traveler", twoTravelers: "2 Travelers", threeTravelers: "3 Travelers", fourTravelers: "4 Travelers", economy: "Economy", business: "Business", first: "First", adults: "Adults", room: "Room", searchFlights: "Search Flights", searchHotels: "Search Hotels" };
 
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {

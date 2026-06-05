@@ -1,5 +1,5 @@
 export type TripType = "round-trip" | "one-way" | "multi-city";
-export type CabinClass = "economy" | "premium-economy" | "business" | "first";
+export type CabinClass = "economy" | "business" | "first";
 export type SortMode = "cheapest" | "best" | "fastest" | "stops";
 
 export type FlightSearchParams = {
@@ -32,6 +32,28 @@ export type Layover = {
   quality: "short" | "good" | "long" | "overnight" | "unknown";
 };
 
+export type FlightSegment = {
+  originAirport: string;
+  destinationAirport: string;
+  departureTime: string;
+  arrivalTime: string;
+  airlineName?: string;
+  flightNumber?: string;
+};
+
+export type FlightLeg = {
+  direction: "outbound" | "return" | "leg";
+  originAirport: string;
+  destinationAirport: string;
+  departureTime: string;
+  arrivalTime: string;
+  duration: string;
+  durationMinutes: number;
+  stops: number;
+  layovers: Layover[];
+  segments: FlightSegment[];
+};
+
 export type NormalizedFlightResult = {
   id: string;
   provider: string;
@@ -46,6 +68,7 @@ export type NormalizedFlightResult = {
   durationMinutes: number;
   stops: number;
   layovers: Layover[];
+  legs?: FlightLeg[];
   cabinClass: string;
   baggageInfo: string;
   refundInfo: string;

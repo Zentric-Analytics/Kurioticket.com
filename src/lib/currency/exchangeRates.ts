@@ -1,6 +1,9 @@
-export const exchangeRatesFromUsd: Record<string, number> = {
-  // Static display-only estimates from USD. These are approximate UI conversion
-  // rates, not real-time FX quotes or provider checkout price guarantees.
+export const FX_BASE_CURRENCY = "USD";
+
+// Emergency fallback-only display estimates from USD. These approximate rates are
+// not the production source of truth, real-time FX quotes, or provider checkout
+// price guarantees. Normal currency display should use /api/currency/rates.
+export const fallbackExchangeRatesFromUsd: Record<string, number> = {
   AED: 3.67,
   AFN: 70,
   ALL: 92,
@@ -157,27 +160,77 @@ export const exchangeRatesFromUsd: Record<string, number> = {
   ZWG: 14,
 };
 
-export function convertCurrency(amountUsd: number, targetCurrency: string) {
+export type ExchangeRates = Record<string, number>;
+
+export type CurrencyRatePayload = {
+  base: typeof FX_BASE_CURRENCY;
+  rates: ExchangeRates;
+  fetchedAt: string;
+  source: string;
+  isFallback: boolean;
+  missingCurrencies: string[];
+  cacheTtlSeconds: number;
+  cacheExpiresAt: string;
+};
+
+export const STATIC_FALLBACK_SOURCE = "static-fallback";
+
+export const exchangeRatesFromUsd = fallbackExchangeRatesFromUsd;
+
+export function getFallbackRatePayload({
+  fetchedAt = new Date().toISOString(),
+  missingCurrencies = [],
+  cacheTtlSeconds = 0,
+}: {
+  fetchedAt?: string;
+  missingCurrencies?: string[];
+  cacheTtlSeconds?: number;
+} = {}): CurrencyRatePayload {
+  const fetchedAtTime = new Date(fetchedAt).getTime();
+  const expiresAt = Number.isFinite(fetchedAtTime)
+    ? new Date(fetchedAtTime + cacheTtlSeconds * 1000).toISOString()
+    : fetchedAt;
+
+  return {
+    base: FX_BASE_CURRENCY,
+    rates: fallbackExchangeRatesFromUsd,
+    fetchedAt,
+    source: STATIC_FALLBACK_SOURCE,
+    isFallback: true,
+    missingCurrencies,
+    cacheTtlSeconds,
+    cacheExpiresAt: expiresAt,
+  };
+}
+
+export function convertCurrency(
+  amountUsd: number,
+  targetCurrency: string,
+  rates: ExchangeRates = fallbackExchangeRatesFromUsd
+) {
   const normalizedCurrency = targetCurrency.toUpperCase();
-  const rate = exchangeRatesFromUsd[normalizedCurrency];
+  const rate = rates[normalizedCurrency];
 
   if (rate === undefined) {
-    return amountUsd;
+    return null;
   }
 
   return amountUsd * rate;
 }
 
-export function resolveDisplayCurrency(targetCurrency: string) {
+export function resolveDisplayCurrency(
+  targetCurrency: string,
+  rates: ExchangeRates = fallbackExchangeRatesFromUsd
+) {
   const normalizedCurrency = targetCurrency.toUpperCase();
 
-  if (exchangeRatesFromUsd[normalizedCurrency] !== undefined) {
+  if (rates[normalizedCurrency] !== undefined) {
     return normalizedCurrency;
   }
 
-  return "USD";
+  return null;
 }
 
 export function isSupportedDisplayCurrency(targetCurrency: string) {
-  return exchangeRatesFromUsd[targetCurrency.toUpperCase()] !== undefined;
+  return fallbackExchangeRatesFromUsd[targetCurrency.toUpperCase()] !== undefined;
 }

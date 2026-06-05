@@ -23,6 +23,7 @@ import {
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
@@ -467,6 +468,10 @@ export default function Home() {
                         href={buildDiscoveryCardHref(
                           card.fare,
                           buildDiscoveryLink(card.item),
+                          {
+                            originCode: card.item.originCode,
+                            destinationCode: card.item.destinationCode,
+                          },
                         )}
                         itemId={card.item.id}
                         image={card.item.image}
@@ -479,6 +484,8 @@ export default function Home() {
                         compact
                         price={card.fare}
                         displayCurrency={selectedOption.currency}
+                        expectedOriginCode={card.item.originCode}
+                        expectedDestinationCode={card.item.destinationCode}
                         isPriceLoading={discoveryFareCardState.loading}
                         isSaved={savedTripIds.includes(card.item.id)}
                         onHeartToggle={handleSavedTripToggle}
@@ -497,6 +504,10 @@ export default function Home() {
                     href={buildDiscoveryCardHref(
                       card.fare,
                       buildDiscoveryLink(card.item),
+                      {
+                        originCode: card.item.originCode,
+                        destinationCode: card.item.destinationCode,
+                      },
                     )}
                     itemId={card.item.id}
                     image={card.item.image}
@@ -508,6 +519,8 @@ export default function Home() {
                     routeNote={card.item.routeNote}
                     price={card.fare}
                     displayCurrency={selectedOption.currency}
+                    expectedOriginCode={card.item.originCode}
+                    expectedDestinationCode={card.item.destinationCode}
                     isPriceLoading={discoveryFareCardState.loading}
                     isSaved={savedTripIds.includes(card.item.id)}
                     onHeartToggle={handleSavedTripToggle}
@@ -729,6 +742,8 @@ function DiscoverySuggestionCard({
   compact,
   price,
   displayCurrency,
+  expectedOriginCode,
+  expectedDestinationCode,
   isPriceLoading,
   isSaved,
   onHeartToggle,
@@ -745,6 +760,8 @@ function DiscoverySuggestionCard({
   compact?: boolean;
   price?: HomepageFare;
   displayCurrency: string;
+  expectedOriginCode: string;
+  expectedDestinationCode: string;
   isPriceLoading?: boolean;
   isSaved: boolean;
   onHeartToggle: (
@@ -808,6 +825,8 @@ function DiscoverySuggestionCard({
         <DiscoveryPricePill
           price={price}
           displayCurrency={displayCurrency}
+          expectedOriginCode={expectedOriginCode}
+          expectedDestinationCode={expectedDestinationCode}
           isLoading={Boolean(isPriceLoading)}
         />
       </div>
@@ -824,6 +843,7 @@ type ProviderBackedHomepageFare = HomepageFare & {
 
 function hasFreshProviderPrice(
   price?: HomepageFare,
+  expectedRoute?: { originCode?: string; destinationCode?: string },
 ): price is ProviderBackedHomepageFare {
   if (
     price?.providerBacked !== true ||
@@ -837,6 +857,21 @@ function hasFreshProviderPrice(
   }
 
   if (price.search.currency !== price.currency) return false;
+
+  if (
+    expectedRoute?.originCode &&
+    price.search.origin.toUpperCase() !== expectedRoute.originCode.toUpperCase()
+  ) {
+    return false;
+  }
+
+  if (
+    expectedRoute?.destinationCode &&
+    price.search.destination.toUpperCase() !==
+      expectedRoute.destinationCode.toUpperCase()
+  ) {
+    return false;
+  }
 
   const expiresAtMs = Date.parse(price.expiresAt);
   return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
@@ -856,8 +891,11 @@ function buildDestinationCardHref(
 function buildDiscoveryCardHref(
   price: HomepageFare | undefined,
   fallbackHref: ComponentProps<typeof Link>["href"],
+  expectedRoute?: { originCode?: string; destinationCode?: string },
 ) {
-  const search = hasFreshProviderPrice(price) ? price?.search : undefined;
+  const search = hasFreshProviderPrice(price, expectedRoute)
+    ? price?.search
+    : undefined;
 
   return search ? buildFlightResultsHref(search) : fallbackHref;
 }
@@ -889,13 +927,21 @@ function buildFlightResultsHref(search: DestinationPriceSearch) {
 function DiscoveryPricePill({
   price,
   displayCurrency,
+  expectedOriginCode,
+  expectedDestinationCode,
   isLoading,
 }: {
   price?: HomepageFare;
   displayCurrency: string;
+  expectedOriginCode?: string;
+  expectedDestinationCode?: string;
   isLoading: boolean;
 }) {
-  const hasProviderPrice = hasFreshProviderPrice(price);
+  const currencyRates = useCurrencyRates();
+  const hasProviderPrice = hasFreshProviderPrice(price, {
+    originCode: expectedOriginCode,
+    destinationCode: expectedDestinationCode,
+  });
 
   if (isLoading) {
     return (
@@ -931,6 +977,8 @@ function DiscoveryPricePill({
     displayCurrency,
     convertUsdEstimate: true,
     maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
   });
   const estimateCopy = displayPrice.isConvertedEstimate
     ? " Display estimate; final provider price may differ."
@@ -1037,6 +1085,7 @@ function DestinationPricePill({
   displayCurrency: string;
   isLoading: boolean;
 }) {
+  const currencyRates = useCurrencyRates();
   const hasProviderPrice = hasFreshProviderPrice(price);
 
   if (isLoading) {
@@ -1073,6 +1122,8 @@ function DestinationPricePill({
     displayCurrency,
     convertUsdEstimate: true,
     maximumFractionDigits: 0,
+    rates: currencyRates.rates,
+    isFallbackRate: currencyRates.isFallback,
   });
   const estimateCopy = displayPrice.isConvertedEstimate
     ? " Display estimate; final provider price may differ."
