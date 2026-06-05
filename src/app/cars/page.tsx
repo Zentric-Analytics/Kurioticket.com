@@ -139,7 +139,7 @@ const trustCards = [
   {
     title: "Clear rental review",
     description:
-      "Review final price, availability, fees, and rental rules before booking.",
+      "Review final price, availability, fees, and rental rules with the provider before booking.",
     icon: ShieldCheck,
   },
 ];
@@ -193,7 +193,7 @@ const carsFaqItems = [
   {
     question: "Why does driver age matter for rental cars?",
     answer:
-      "Rental rules, fees, vehicle eligibility, and deposit requirements can vary based on the driver’s age and pickup location.",
+      "Rental providers may apply different rules, fees, vehicle eligibility, or deposit requirements based on the driver’s age and location.",
   },
   {
     question: "What should I check before booking a rental car?",
@@ -203,12 +203,12 @@ const carsFaqItems = [
   {
     question: "Where is the final rental price confirmed?",
     answer:
-      "Final price, vehicle availability, taxes, fees, deposit requirements, and rental rules are confirmed during booking review before payment.",
+      "Final price, vehicle availability, taxes, fees, deposit requirements, and rental rules are confirmed by the provider before booking.",
   },
   {
     question: "What documents might I need at pickup?",
     answer:
-      "You may need a valid driver’s license, payment card, proof of identity, and any documents required by the pickup country or location.",
+      "Rental providers may require a valid driver’s license, payment card, proof of identity, and any documents required by the pickup country or location.",
   },
 ];
 
