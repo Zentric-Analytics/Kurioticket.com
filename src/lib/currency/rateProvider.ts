@@ -23,12 +23,14 @@ function getCacheTtlSeconds() {
     : DEFAULT_CACHE_TTL_SECONDS;
 }
 
-function getProviderName() {
-  return process.env.FX_PROVIDER_NAME?.trim() || "configured-fx-provider";
-}
-
 function isXeProvider(providerName: string) {
   return providerName.toUpperCase() === "XE";
+}
+
+function getProviderName() {
+  const configuredProviderName = process.env.FX_PROVIDER_NAME?.trim();
+  if (!configuredProviderName) return "configured-fx-provider";
+  return isXeProvider(configuredProviderName) ? "XE" : configuredProviderName;
 }
 
 function buildProviderUrl({
@@ -53,14 +55,17 @@ function buildProviderUrl({
   }
 
   const url = new URL(providerUrl);
+
+  if (isXeProvider(providerName)) {
+    if (!url.searchParams.has("from")) url.searchParams.set("from", FX_BASE_CURRENCY);
+    if (!url.searchParams.has("to")) url.searchParams.set("to", symbolList);
+    if (!url.searchParams.has("amount")) url.searchParams.set("amount", "1");
+    return url.toString();
+  }
+
   if (!url.searchParams.has("base")) url.searchParams.set("base", FX_BASE_CURRENCY);
   if (!url.searchParams.has("symbols")) url.searchParams.set("symbols", symbolList);
-  if (
-    !isXeProvider(providerName) &&
-    !url.searchParams.has("access_key") &&
-    !url.searchParams.has("api_key") &&
-    !url.searchParams.has("apikey")
-  ) {
+  if (!url.searchParams.has("access_key") && !url.searchParams.has("api_key") && !url.searchParams.has("apikey")) {
     url.searchParams.set("api_key", apiKey);
   }
 
@@ -112,7 +117,7 @@ type ProviderResponse = {
 
 function readProviderBase(data: ProviderResponse) {
   const base = data.base ?? data.base_code ?? data.from;
-  return typeof base === "string" ? base.toUpperCase() : FX_BASE_CURRENCY;
+  return typeof base === "string" ? base.toUpperCase() : null;
 }
 
 function readXeRateEntry(entry: XeRateEntry) {
@@ -145,7 +150,8 @@ function readXeProviderRates(data: ProviderResponse) {
 }
 
 function readProviderRates(data: ProviderResponse, providerName: string) {
-  if (readProviderBase(data) !== FX_BASE_CURRENCY) return null;
+  const providerBase = readProviderBase(data);
+  if (providerBase && providerBase !== FX_BASE_CURRENCY) return null;
   if (isXeProvider(providerName)) return readXeProviderRates(data);
   if (data.rates && typeof data.rates === "object") return data.rates as Record<string, unknown>;
   if (data.conversion_rates && typeof data.conversion_rates === "object") {
