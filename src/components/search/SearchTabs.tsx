@@ -163,9 +163,13 @@ export function SearchTabs({
 
   const fromWrapRef =
     useRef<HTMLDivElement>(null);
+  const fromInputRef =
+    useRef<HTMLInputElement>(null);
 
   const toWrapRef =
     useRef<HTMLDivElement>(null);
+  const toInputRef =
+    useRef<HTMLInputElement>(null);
   const dateWrapRef =
     useRef<HTMLDivElement>(null);
   const hotelDateWrapRef =
@@ -348,6 +352,7 @@ export function SearchTabs({
     toOpen &&
     toQuery.length >= 2 &&
     (toLoading || toSuggestions.length > 0 || !toLoading);
+
   const normalizePassengerDraft = useCallback((
     adults: number,
     children: number,
@@ -451,7 +456,6 @@ export function SearchTabs({
 
     return () => controller.abort();
   }, []);
-
 
   useEffect(() => {
     const query = from.trim();
@@ -819,24 +823,20 @@ export function SearchTabs({
   const parseIsoDate = (
     value: string
   ) => {
-    if (!value) return null;
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
     const [year, month, day] =
-      value.split("-");
-    if (
-      !year ||
-      !month ||
-      !day
-    ) {
-      return null;
-    }
+      value.split("-").map(Number);
     const parsed = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day)
+      year,
+      month - 1,
+      day
     );
     return Number.isNaN(
       parsed.getTime()
-    )
+    ) ||
+      parsed.getFullYear() !== year ||
+      parsed.getMonth() !== month - 1 ||
+      parsed.getDate() !== day
       ? null
       : parsed;
   };
@@ -935,6 +935,14 @@ export function SearchTabs({
     );
   const returnParsed =
     parseIsoDate(returnDate);
+  const isDepartureDateInvalid =
+    !departureParsed ||
+    isBeforeToday(departureParsed);
+  const isReturnDateInvalid =
+    tripType === "round-trip" &&
+    (!returnParsed ||
+      isBeforeToday(returnParsed) ||
+      Boolean(departureParsed && returnParsed < departureParsed));
 
   const isValidFlightDate = (value: string) => {
     const parsed = parseIsoDate(value);
@@ -1143,6 +1151,10 @@ export function SearchTabs({
     setToOpen(false);
   };
 
+  const focusInputAfterClear = (input: HTMLInputElement | null) => {
+    window.requestAnimationFrame(() => input?.focus());
+  };
+
   const onClearOrigin = () => {
     setHasUserEditedOrigin(true);
     setFrom("");
@@ -1151,6 +1163,7 @@ export function SearchTabs({
     setFromCode("");
     setFromOpen(false);
     setFromHighlight(0);
+    focusInputAfterClear(fromInputRef.current);
   };
   const onClearDestination = () => {
     setTo("");
@@ -1159,6 +1172,7 @@ export function SearchTabs({
     setToCode("");
     setToOpen(false);
     setToHighlight(0);
+    focusInputAfterClear(toInputRef.current);
   };
   const onClearTravelDates = () => {
     setDepartureDate("");
@@ -1196,7 +1210,9 @@ export function SearchTabs({
     event.preventDefault();
 
     if (
-      isFlightSearchDisabled
+      isFlightSearchDisabled ||
+      isDepartureDateInvalid ||
+      (tripType === "round-trip" && isReturnDateInvalid)
     ) {
       return;
     }
@@ -1537,8 +1553,9 @@ export function SearchTabs({
                   {t.origin ||
                     "Origin"}
                 </label>
-                <div className="flex h-8 items-center gap-1.5">
+                <div className="relative h-8">
                   <input
+                    ref={fromInputRef}
                     type="text"
                     value={from}
                     onChange={(
@@ -1573,7 +1590,7 @@ export function SearchTabs({
                       )
                     }
                     placeholder="From?"
-                    className="focus-ring h-full min-w-0 flex-1 rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                    className="focus-ring h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                     required
                   />
                   {from.trim() ? (
@@ -1582,9 +1599,9 @@ export function SearchTabs({
                       onClick={onClearOrigin}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label="Clear origin"
-                      className="focus-ring relative z-30 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
+                      className="focus-ring absolute right-0 top-1/2 z-30 inline-flex h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:h-8 sm:w-8"
                     >
-                      <X size={14} />
+                      <X size={15} />
                     </button>
                   ) : null}
                 </div>
@@ -1662,8 +1679,9 @@ export function SearchTabs({
                   {t.destination ||
                     "Destination"}
                 </label>
-                <div className="flex h-8 items-center gap-1.5">
+                <div className="relative h-8">
                   <input
+                    ref={toInputRef}
                     type="text"
                     value={to}
                     onChange={(
@@ -1695,7 +1713,7 @@ export function SearchTabs({
                       )
                     }
                     placeholder="To?"
-                    className="focus-ring h-full min-w-0 flex-1 rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                    className="focus-ring h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
                     required
                   />
                   {to.trim() ? (
@@ -1704,9 +1722,9 @@ export function SearchTabs({
                       onClick={onClearDestination}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label="Clear destination"
-                      className="focus-ring relative z-30 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95"
+                      className="focus-ring absolute right-0 top-1/2 z-30 inline-flex h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:h-8 sm:w-8"
                     >
-                      <X size={14} />
+                      <X size={15} />
                     </button>
                   ) : null}
                 </div>
