@@ -1202,6 +1202,7 @@ export function SearchTabs({
     setChildCount(normalizedChildren);
     setInfantCount(normalizedInfants);
 
+    const normalizedCabinClass = normalizeCabinClass(cabinClass);
     const params =
       new URLSearchParams({
         tripType:
@@ -1221,7 +1222,7 @@ export function SearchTabs({
         infants: String(normalizedInfants),
         travelers:
           normalizedTravelers,
-        cabinClass,
+        cabinClass: normalizedCabinClass,
       });
 
     if (

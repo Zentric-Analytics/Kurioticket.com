@@ -55,7 +55,6 @@ function getDuffelProviderBlockReason(apiKey: string) {
 
 const cabinClassMap: Record<FlightSearchParams["cabinClass"], string> = {
   economy: "economy",
-  "premium-economy": "premium_economy",
   business: "business",
   first: "first",
 };
