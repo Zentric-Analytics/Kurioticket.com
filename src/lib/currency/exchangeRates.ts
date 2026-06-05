@@ -172,6 +172,9 @@ export type CurrencyRatePayload = {
   missingCurrencies: string[];
   cacheTtlSeconds: number;
   cacheExpiresAt: string;
+  ratesSource?: "database" | "database-stale" | "provider-sync" | typeof STATIC_FALLBACK_SOURCE;
+  stale?: boolean;
+  snapshotId?: string;
 };
 
 export const STATIC_FALLBACK_SOURCE = "static-fallback";
