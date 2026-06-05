@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -223,6 +230,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
+  const [hasInteractedWithExpandedSearch, setHasInteractedWithExpandedSearch] =
+    useState(false);
   const [pickupLocation, setPickupLocation] = useState(values.pickupLocation);
   const [dropoffLocation, setDropoffLocation] = useState(
     values.dropoffLocation || values.pickupLocation,
@@ -241,6 +250,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const timeWrapRef = useRef<HTMLDivElement | null>(null);
   const driverAgeWrapRef = useRef<HTMLDivElement | null>(null);
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
+  const searchFormRef = useRef<HTMLFormElement | null>(null);
+  const expandedSearchScrollYRef = useRef(0);
   const pickupInputRef = useRef<HTMLInputElement | null>(null);
   const dropoffInputRef = useRef<HTMLInputElement | null>(null);
   const [visibleMonthDate, setVisibleMonthDate] = useState(() => {
@@ -278,6 +289,34 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     dropoffTime,
   )}`;
   const driverAgeSummary = getDriverAgeOptionLabel(driverAge);
+  const isExpandedStickySearchActive =
+    isSearchBarCompact && isSearchExpandedWhileSticky;
+  const canAutoCollapseExpandedSearch =
+    isExpandedStickySearchActive &&
+    !hasInteractedWithExpandedSearch &&
+    !datesOpen &&
+    !timesOpen &&
+    !driverAgeOpen;
+
+  const markExpandedSearchInteraction = useCallback(() => {
+    if (isExpandedStickySearchActive) {
+      setHasInteractedWithExpandedSearch(true);
+    }
+  }, [isExpandedStickySearchActive]);
+
+  const expandStickySearch = useCallback(() => {
+    expandedSearchScrollYRef.current = window.scrollY;
+    setHasInteractedWithExpandedSearch(false);
+    setIsSearchExpandedWhileSticky(true);
+  }, []);
+
+  const collapseStickySearch = useCallback(() => {
+    setIsSearchExpandedWhileSticky(false);
+    setHasInteractedWithExpandedSearch(false);
+    setDatesOpen(false);
+    setTimesOpen(false);
+    setDriverAgeOpen(false);
+  }, []);
 
   const toggleCarFilter = (groupId: string, option: string) => {
     setSelectedCarFilters((current) => {
@@ -314,6 +353,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
 
         if (!shouldCompact) {
           setIsSearchExpandedWhileSticky(false);
+          setHasInteractedWithExpandedSearch(false);
         }
       },
       { threshold: 0 },
@@ -323,6 +363,43 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
 
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!canAutoCollapseExpandedSearch) {
+      return undefined;
+    }
+
+    let animationFrame = 0;
+
+    const onScroll = () => {
+      if (animationFrame) {
+        return;
+      }
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        const focusedElement = document.activeElement;
+        const isFocusInsideSearch = Boolean(
+          focusedElement && searchFormRef.current?.contains(focusedElement),
+        );
+        const hasContinuedScrolling =
+          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
+
+        if (hasContinuedScrolling && !isFocusInsideSearch) {
+          collapseStickySearch();
+        }
+      });
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
 
   useEffect(() => {
     const onPointerDown = (event: PointerEvent) => {
@@ -364,6 +441,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     }
 
     const selectedIso = toIsoDate(date);
+    markExpandedSearchInteraction();
 
     if (!pickupDate || (pickupDate && dropoffDate)) {
       setPickupDate(selectedIso);
@@ -424,10 +502,20 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           </div>
 
           <form
+            ref={searchFormRef}
             action="/cars/results"
             method="get"
-            className="min-w-0"
-            onSubmit={() => setIsSearchExpandedWhileSticky(false)}
+            className={cn(
+              "min-w-0",
+              showCompactSearchSummary &&
+                "mx-auto w-full max-w-[58rem] sm:max-w-[60rem]",
+            )}
+            onFocusCapture={markExpandedSearchInteraction}
+            onChangeCapture={markExpandedSearchInteraction}
+            onSubmit={() => {
+              setIsSearchExpandedWhileSticky(false);
+              setHasInteractedWithExpandedSearch(false);
+            }}
           >
             <input type="hidden" name="pickupDate" value={pickupDate} />
             <input type="hidden" name="dropoffDate" value={dropoffDate} />
@@ -438,7 +526,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               className={cn(
                 "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-[padding,box-shadow] duration-200",
                 showCompactSearchSummary
-                  ? "p-1 shadow-[0_5px_16px_rgba(15,23,42,0.07)]"
+                  ? "border-slate-200/80 bg-white/95 p-1 shadow-[0_8px_22px_rgba(15,23,42,0.08)]"
                   : "p-1",
               )}
             >
@@ -446,11 +534,11 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 <button
                   type="button"
                   aria-label="Edit car search"
-                  onClick={() => setIsSearchExpandedWhileSticky(true)}
-                  className="focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-gradient-to-r from-white via-white to-indigo-50/50 px-3 py-2.5 text-left transition hover:border-indigo-200 hover:bg-indigo-50/60 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+                  onClick={expandStickySearch}
+                  className="focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-gradient-to-r from-white via-white to-indigo-50/40 px-3 py-2.5 text-left transition hover:bg-indigo-50/60 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
                 >
-                  <span className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                    <span className="flex min-w-0 items-center gap-2 text-sm font-black text-slate-950 sm:max-w-[30%]">
+                  <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,0.8fr)] lg:items-center lg:gap-3">
+                    <span className="flex min-w-0 items-center gap-2 text-sm font-black text-slate-950">
                       <MapPin
                         className="h-4 w-4 shrink-0 text-violet-600"
                         aria-hidden="true"
@@ -459,16 +547,13 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                         {pickupSummary} → {returnSummary}
                       </span>
                     </span>
-                    <span className="hidden h-1 w-1 shrink-0 rounded-full bg-slate-300 sm:block" />
-                    <span className="min-w-0 truncate text-sm font-semibold text-slate-700 sm:max-w-[24%]">
+                    <span className="min-w-0 truncate text-sm font-semibold text-slate-700">
                       {rentalDateSummary}
                     </span>
-                    <span className="hidden h-1 w-1 shrink-0 rounded-full bg-slate-300 sm:block" />
-                    <span className="min-w-0 truncate text-sm font-semibold text-slate-700 sm:max-w-[24%]">
+                    <span className="min-w-0 truncate text-sm font-semibold text-slate-700">
                       {timeSummary}
                     </span>
-                    <span className="hidden h-1 w-1 shrink-0 rounded-full bg-slate-300 sm:block" />
-                    <span className="min-w-0 truncate text-sm font-semibold text-slate-600 sm:max-w-[18%]">
+                    <span className="min-w-0 truncate text-sm font-semibold text-slate-600">
                       {driverAgeSummary}
                     </span>
                   </span>
@@ -489,8 +574,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                     }
                     label="Pickup location"
                     name="pickupLocation"
-                    onChange={setPickupLocation}
+                    onChange={(nextValue) => {
+                      markExpandedSearchInteraction();
+                      setPickupLocation(nextValue);
+                    }}
                     onClear={() => {
+                      markExpandedSearchInteraction();
                       setPickupLocation("");
                       pickupInputRef.current?.focus();
                     }}
@@ -507,8 +596,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                     }
                     label="Return location"
                     name="dropoffLocation"
-                    onChange={setDropoffLocation}
+                    onChange={(nextValue) => {
+                      markExpandedSearchInteraction();
+                      setDropoffLocation(nextValue);
+                    }}
                     onClear={() => {
+                      markExpandedSearchInteraction();
                       setDropoffLocation("");
                       dropoffInputRef.current?.focus();
                     }}
@@ -523,18 +616,25 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                     }
                     isOpen={datesOpen}
                     onClear={() => {
+                      markExpandedSearchInteraction();
                       setPickupDate("");
                       setDropoffDate("");
                     }}
-                    onDone={() => setDatesOpen(false)}
-                    onNextMonth={() =>
-                      setVisibleMonthDate((current) => addMonths(current, 1))
-                    }
-                    onPreviousMonth={() =>
-                      setVisibleMonthDate((current) => addMonths(current, -1))
-                    }
+                    onDone={() => {
+                      markExpandedSearchInteraction();
+                      setDatesOpen(false);
+                    }}
+                    onNextMonth={() => {
+                      markExpandedSearchInteraction();
+                      setVisibleMonthDate((current) => addMonths(current, 1));
+                    }}
+                    onPreviousMonth={() => {
+                      markExpandedSearchInteraction();
+                      setVisibleMonthDate((current) => addMonths(current, -1));
+                    }}
                     onSelectDate={selectRentalDate}
                     onToggle={() => {
+                      markExpandedSearchInteraction();
                       setDatesOpen((current) => !current);
                       setTimesOpen(false);
                       setDriverAgeOpen(false);
@@ -550,13 +650,20 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                     }
                     isOpen={timesOpen}
                     onToggle={() => {
+                      markExpandedSearchInteraction();
                       setTimesOpen((current) => !current);
                       setDatesOpen(false);
                       setDriverAgeOpen(false);
                     }}
                     pickupTime={pickupTime}
-                    setDropoffTime={setDropoffTime}
-                    setPickupTime={setPickupTime}
+                    setDropoffTime={(nextTime) => {
+                      markExpandedSearchInteraction();
+                      setDropoffTime(nextTime);
+                    }}
+                    setPickupTime={(nextTime) => {
+                      markExpandedSearchInteraction();
+                      setPickupTime(nextTime);
+                    }}
                     wrapRef={timeWrapRef}
                   />
                   <DriverAgeCell
@@ -566,10 +673,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                     }
                     isOpen={driverAgeOpen}
                     onSelect={(age) => {
+                      markExpandedSearchInteraction();
                       setDriverAge(age);
                       setDriverAgeOpen(false);
                     }}
                     onToggle={() => {
+                      markExpandedSearchInteraction();
                       setDriverAgeOpen((current) => !current);
                       setDatesOpen(false);
                       setTimesOpen(false);
@@ -596,14 +705,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       </section>
 
       <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside
-          className={cn(
-            "hidden lg:block lg:self-start lg:sticky lg:overscroll-contain lg:overflow-y-auto",
-            showCompactSearchSummary
-              ? "lg:top-[5.75rem] lg:max-h-[calc(100vh-6.75rem)]"
-              : "lg:top-[7.5rem] lg:max-h-[calc(100vh-8.75rem)]",
-          )}
-        >
+        <aside className="hidden lg:sticky lg:top-[7.75rem] lg:block lg:max-h-[calc(100vh-8.75rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
           <CarFilters
             activeFilterCount={activeFilterCount}
             layout="desktop"
@@ -1222,54 +1324,54 @@ function CarFilters({
   return (
     <div
       className={cn(
-        "overflow-hidden bg-white",
-        layout === "desktop" &&
-          "rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-900/[0.04]",
+        "overflow-hidden",
+        layout === "desktop"
+          ? "rounded-[1.35rem] border border-slate-200/80 bg-white/95 shadow-[0_16px_38px_rgba(15,23,42,0.07)] backdrop-blur"
+          : "bg-white",
       )}
     >
-      <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 bg-gradient-to-br from-white via-white to-indigo-50/70 px-4 py-4">
         <div>
-          <h2 className="text-base font-semibold text-white/95">
-            Refine your car search
+          <h2 className="text-base font-black tracking-[-0.01em] text-slate-950">
+            Filter by
           </h2>
-          <p className="mt-1 text-xs font-medium text-white/80">
-            Selected filters apply when matching car results are available.
-          </p>
+          {activeFilterCount > 0 ? (
+            <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-bold text-indigo-700 ring-1 ring-indigo-100">
+              {activeFilterCount} active
+            </p>
+          ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {activeFilterCount > 0 ? (
-            <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-white/70">
-              {activeFilterCount} active
-            </span>
+            <button
+              type="button"
+              className="focus-ring rounded-full border border-indigo-100 bg-white px-3 py-1.5 text-xs font-black text-indigo-700 shadow-sm transition hover:bg-indigo-50"
+              onClick={onClear}
+            >
+              Clear
+            </button>
           ) : null}
-          <SlidersHorizontal
-            className="text-white/90"
-            size={18}
-            aria-hidden="true"
-          />
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-indigo-700 shadow-sm">
+            <SlidersHorizontal size={17} aria-hidden="true" />
+          </span>
         </div>
       </div>
 
-      <div className="space-y-4 bg-white px-3 py-3">
+      <div className="space-y-1 bg-slate-50/70 px-3 py-3">
         {activeFilterCount > 0 ? (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2.5">
-            <span className="text-sm font-semibold text-indigo-900">
+          <div className="mb-2 flex items-center justify-between gap-3 rounded-2xl border border-indigo-100 bg-white px-3 py-2.5 shadow-sm shadow-indigo-900/[0.03]">
+            <span className="text-sm font-bold text-indigo-950">
               {activeFilterCount} selected
             </span>
             <button
               type="button"
-              className="focus-ring rounded-lg px-2 py-1 text-sm font-bold text-indigo-700 transition hover:bg-white/70"
+              className="focus-ring rounded-lg px-2 py-1 text-sm font-black text-indigo-700 transition hover:bg-indigo-50"
               onClick={onClear}
             >
               Reset filters
             </button>
           </div>
-        ) : (
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 text-sm font-medium leading-6 text-slate-600">
-            Choose any preferences below. We will use them to refine matching
-            car rental options when results are available.
-          </div>
-        )}
+        ) : null}
 
         {carFilterGroups.map((group) => (
           <FilterSection
@@ -1294,9 +1396,11 @@ function FilterSection({
   selectedOptions: string[];
 }) {
   return (
-    <section className="border-t border-slate-200/70 pt-4 first:border-t-0 first:pt-0">
-      <h3 className="text-sm font-bold text-slate-950">{group.title}</h3>
-      <div className="mt-2 space-y-2">
+    <section className="rounded-2xl border border-slate-200/70 bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
+      <h3 className="text-sm font-black tracking-[-0.01em] text-slate-950">
+        {group.title}
+      </h3>
+      <div className="mt-2 space-y-1.5">
         {group.options.map((option) => {
           const isSelected = selectedOptions.includes(option);
 
@@ -1304,10 +1408,10 @@ function FilterSection({
             <label
               key={option}
               className={cn(
-                "flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors",
+                "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors",
                 isSelected
-                  ? "border-indigo-200 bg-indigo-50 text-indigo-900 shadow-sm shadow-indigo-900/[0.03]"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950",
+                  ? "border-indigo-200 bg-indigo-50/90 text-indigo-900 shadow-sm shadow-indigo-900/[0.03]"
+                  : "border-transparent bg-slate-50/80 text-slate-700 hover:border-slate-200 hover:bg-white hover:text-slate-950",
               )}
             >
               <input
