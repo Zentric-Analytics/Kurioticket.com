@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X } from "lucide-react";
+import {
+  SlidersHorizontal,
+  Star,
+  Tag,
+  ThumbsUp,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
@@ -280,7 +287,9 @@ const getResultMaxPrice = (hotels: PublicHotelResult[]) =>
 type HotelSummaryItem = {
   label: string;
   value: string;
-  context: string;
+  helperText: string;
+  icon: LucideIcon;
+  iconClassName: string;
 };
 
 export function HotelResultsClient() {
@@ -760,27 +769,42 @@ function HotelSummaryRow({ items }: { items: HotelSummaryItem[] }) {
 
   return (
     <div
-      className="-mx-1 max-w-full overflow-x-auto px-1 pb-1"
+      className="grid min-w-0 gap-2 sm:grid-cols-3"
       aria-label="Hotel result summary"
     >
-      <div className="flex min-w-0 snap-x gap-2 sm:grid sm:grid-cols-3">
-        {items.map((item) => (
+      {items.map((item) => {
+        const Icon = item.icon;
+
+        return (
           <div
             key={item.label}
-            className="min-w-[156px] snap-start rounded-2xl border border-slate-200/80 bg-white px-3.5 py-3 text-left shadow-sm shadow-slate-900/[0.03] sm:min-w-0"
+            className="min-w-0 rounded-2xl border border-indigo-100/80 bg-white p-3.5 text-left shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)]"
           >
-            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-700">
-              {item.label}
-            </p>
-            <p className="mt-1.5 truncate text-base font-semibold leading-6 tracking-[-0.02em] text-slate-900">
-              {item.value}
-            </p>
-            <p className="mt-1 truncate text-xs font-medium leading-4 text-slate-500">
-              {item.context}
-            </p>
+            <div className="flex items-start gap-3">
+              <div
+                className={cn(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                  item.iconClassName,
+                )}
+                aria-hidden="true"
+              >
+                <Icon size={17} strokeWidth={2.2} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-indigo-700">
+                  {item.label}
+                </p>
+                <p className="mt-1 text-base font-bold leading-6 tracking-[-0.02em] text-slate-950">
+                  {item.value}
+                </p>
+                <p className="mt-0.5 text-xs font-medium leading-4 text-slate-500">
+                  {item.helperText}
+                </p>
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
@@ -811,19 +835,25 @@ function buildHotelSummaryItems(
 
   return [
     {
-      label: "Cheapest",
+      label: "CHEAPEST",
       value: formatCurrency(cheapest.totalPrice, cheapest.currency),
-      context: cheapest.name,
+      helperText: "Lowest total price",
+      icon: Tag,
+      iconClassName: "bg-violet-50 text-violet-700 ring-1 ring-violet-100",
     },
     {
-      label: "Best value",
+      label: "BEST VALUE",
       value: formatHotelValueSummary(bestValue),
-      context: bestValue.name,
+      helperText: "Best balance",
+      icon: ThumbsUp,
+      iconClassName: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
     },
     {
-      label: "Top rated",
-      value: formatHotelRating(topRated.rating),
-      context: topRated.name,
+      label: "TOP RATED",
+      value: `${formatHotelRating(topRated.rating)} stars`,
+      helperText: "Highest rating",
+      icon: Star,
+      iconClassName: "bg-amber-50 text-amber-600 ring-1 ring-amber-100",
     },
   ];
 }
@@ -838,15 +868,11 @@ function getHotelValueSummaryScore(hotel: PublicHotelResult) {
 }
 
 function formatHotelValueSummary(hotel: PublicHotelResult) {
-  if (hotel.badges.some((badge) => /recommended/i.test(badge))) {
-    return "Recommended";
-  }
-
   if (Number.isFinite(hotel.valueScore)) {
-    return `${Math.round(hotel.valueScore)} value score`;
+    return `${Math.round(hotel.valueScore)}/100 score`;
   }
 
-  return formatCurrency(hotel.totalPrice, hotel.currency);
+  return "Recommended";
 }
 
 function formatHotelRating(rating: number) {
