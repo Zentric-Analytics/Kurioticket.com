@@ -782,7 +782,7 @@ export function HotelSearchBar({
         className={cn(
           compact
             ? mobileSearchOpen
-              ? "fixed inset-0 z-[900] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
+              ? "fixed inset-0 z-[10000] flex h-full min-h-[100dvh] w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
               : "hidden sm:block sm:space-y-2"
             : "space-y-4",
         )}
