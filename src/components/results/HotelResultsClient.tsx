@@ -12,6 +12,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
+const desktopHotelFilterStickyTopClass =
+  "lg:sticky lg:top-[7.25rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:overscroll-contain";
 
 const FILTER_APPLYING_DELAY_MS = 700;
 const FILTER_SCROLLBAR_HIDE_DELAY_MS = 700;
@@ -523,8 +525,8 @@ export function HotelResultsClient() {
   };
 
   return (
-    <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8 pt-6 sm:pt-8 lg:pt-8">
-      <div className="sticky top-0 z-40 bg-[#f6f8fb] px-4 pb-1 pt-2 sm:hidden">
+    <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8">
+      <div className="sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden">
         <HotelSearchBar
           key={`mobile-${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
           initialDestination={body.destination}
@@ -539,8 +541,8 @@ export function HotelResultsClient() {
         />
       </div>
 
-      <div className="page-shell grid gap-x-5 gap-y-3 pb-6 pt-3 sm:py-6 lg:gap-x-3 lg:gap-y-3 lg:grid-cols-[240px_minmax(0,800px)_minmax(0,1fr)] xl:grid-cols-[248px_minmax(0,800px)_minmax(0,1fr)]">
-        <section className="hidden sm:block lg:sticky lg:top-0 lg:z-40 lg:col-span-3 lg:bg-[#f6f8fb]/95 lg:py-3 lg:backdrop-blur">
+      <section className="sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 py-3 shadow-sm shadow-slate-900/5 backdrop-blur sm:block">
+        <div className="page-shell">
           <HotelSearchBar
             key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
             initialDestination={body.destination}
@@ -553,11 +555,14 @@ export function HotelResultsClient() {
             compact
             className="min-w-0"
           />
-        </section>
+        </div>
+      </section>
 
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside
           className={cn(
-            "hotel-filter-scrollbar hidden lg:sticky lg:top-8 lg:block lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-x-hidden lg:overflow-y-auto",
+            "hotel-filter-scrollbar hidden lg:block lg:self-start lg:overflow-x-hidden",
+            desktopHotelFilterStickyTopClass,
             filterScrollbarVisible
               ? "hotel-filter-scrollbar--visible"
               : undefined,
@@ -577,7 +582,7 @@ export function HotelResultsClient() {
           />
         </aside>
 
-        <section className="min-w-0 space-y-4 lg:col-start-2">
+        <section className="min-w-0 space-y-4">
           {!loading && !error && warnings.length ? (
             <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
               Some provider checks may be limited for this hotel search. Review

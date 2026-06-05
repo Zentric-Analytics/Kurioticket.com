@@ -570,15 +570,15 @@ export function HotelSearchBar({
       {compact ? (
         <div className={cn("sm:hidden", mobileSearchOpen && "hidden")}>
           {onOpenFilters ? (
-            <div className="mx-auto flex w-full max-w-3xl min-w-0 items-center gap-3 overflow-visible">
+            <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
               <button
                 type="button"
                 aria-label="Open filters"
                 onClick={onOpenFilters}
-                className="focus-ring inline-flex h-[56px] w-[62px] shrink-0 items-center justify-center rounded-xl border border-indigo-200 bg-white px-1.5 text-[10px] font-bold text-indigo-900 shadow-[0_10px_24px_rgba(79,70,229,0.13)] transition hover:border-indigo-300 hover:bg-indigo-50/60"
+                className="focus-ring relative inline-flex h-16 w-[72px] shrink-0 items-center justify-center rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)]"
               >
-                <span className="flex flex-col items-center justify-center gap-0.5">
-                  <SlidersHorizontal size={15} />
+                <span className="flex flex-col items-center justify-center gap-1 leading-none">
+                  <SlidersHorizontal size={17} strokeWidth={2.3} />
                   <span>Filters</span>
                 </span>
               </button>
@@ -586,7 +586,7 @@ export function HotelSearchBar({
               <button
                 type="button"
                 onClick={() => setMobileSearchOpen(true)}
-                className="focus-ring flex h-[64px] min-w-0 max-w-full flex-1 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-300 bg-white px-4 py-0 text-left shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition hover:border-slate-400 hover:shadow-[0_14px_30px_rgba(15,23,42,0.12)]"
+                className="focus-ring flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)]"
               >
                 <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
                   <span className="block truncate text-[15px] font-bold leading-5 text-slate-950">
@@ -598,9 +598,9 @@ export function HotelSearchBar({
                 </span>
                 <span
                   aria-hidden="true"
-                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-800 shadow-sm"
+                  className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
                 >
-                  <PencilLine size={16} />
+                  <PencilLine size={16} strokeWidth={2.1} />
                 </span>
               </button>
             </div>
