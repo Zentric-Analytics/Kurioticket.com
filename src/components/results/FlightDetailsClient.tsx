@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Info, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Clock3,
+  Info,
+  Luggage,
+  Plane,
+  Sparkles,
+  Ticket,
+} from "lucide-react";
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -150,39 +158,60 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     </span>
                     <span>{flight.destinationAirport}</span>
                   </h1>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium leading-5 text-slate-600">
-                    <span>
-                      <span className="font-semibold text-slate-800">Stops:</span>{" "}
-                      {stopLabel}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium leading-5 text-slate-600">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Plane
+                        size={14}
+                        className="shrink-0 text-indigo-600"
+                        aria-hidden="true"
+                      />
+                      <span>
+                        <span className="font-semibold text-slate-800">
+                          Stops:
+                        </span>{" "}
+                        {stopLabel}
+                      </span>
                     </span>
-                    <span className="text-slate-300" aria-hidden="true">
-                      •
-                    </span>
-                    <span>
-                      <span className="font-semibold text-slate-800">
-                        Duration:
-                      </span>{" "}
-                      {flight.duration}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock3
+                        size={14}
+                        className="shrink-0 text-indigo-600"
+                        aria-hidden="true"
+                      />
+                      <span>
+                        <span className="font-semibold text-slate-800">
+                          Duration:
+                        </span>{" "}
+                        {flight.duration}
+                      </span>
                     </span>
                     {flight.cabinClass ? (
-                      <>
-                        <span className="text-slate-300" aria-hidden="true">
-                          •
-                        </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <Ticket
+                          size={14}
+                          className="shrink-0 text-indigo-600"
+                          aria-hidden="true"
+                        />
                         <span>
                           <span className="font-semibold text-slate-800">
                             Cabin:
                           </span>{" "}
                           {flight.cabinClass}
                         </span>
-                      </>
+                      </span>
                     ) : null}
-                    <span className="text-slate-300" aria-hidden="true">
-                      •
-                    </span>
-                    <span className="min-w-0">
-                      <span className="font-semibold text-slate-800">Baggage:</span>{" "}
-                      {flight.baggageInfo || "Confirmed by provider"}
+                    <span className="inline-flex min-w-0 items-center gap-1.5">
+                      <Luggage
+                        size={14}
+                        className="shrink-0 text-indigo-600"
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0">
+                        <span className="font-semibold text-slate-800">
+                          Baggage:
+                        </span>{" "}
+                        {flight.baggageInfo || "Confirmed by provider"}
+                      </span>
                     </span>
                   </div>
                 </div>
