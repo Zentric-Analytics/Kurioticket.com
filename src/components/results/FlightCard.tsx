@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   Armchair,
   Luggage,
@@ -35,30 +36,27 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
   return (
     <Card className="w-full overflow-hidden border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.07)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_38px_rgba(15,23,42,0.1)]">
       <div className="border-b border-indigo-100 bg-gradient-to-r from-indigo-600 via-violet-500 to-sky-500 px-3.5 py-2 sm:px-4">
-        <div className="flex items-center justify-between gap-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white/90">
+        <div className="flex items-center text-[10px] font-semibold uppercase tracking-[0.16em] text-white/90">
           <span>Flight option</span>
-          <span className="truncate normal-case tracking-normal text-white/80">{flight.provider}</span>
         </div>
       </div>
 
       <div className="p-3.5 sm:p-4">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_max-content] lg:items-start">
-          <div className="min-w-0 space-y-3">
-            <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50/80 text-indigo-700 shadow-sm">
-                <PlaneTakeoff className="h-4 w-4" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <h2 className="truncate text-[15px] font-semibold tracking-[-0.01em] text-slate-950 sm:text-base">
-                  {flight.airlineName}
-                </h2>
-                <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
-                  {flight.flightNumber || "Flight itinerary"}
-                </p>
-              </div>
-            </div>
+        <div className="flex min-w-0 items-center gap-2.5">
+          <AirlineLogo flight={flight} />
+          <div className="min-w-0">
+            <h2 className="truncate text-[15px] font-semibold tracking-[-0.01em] text-slate-950 sm:text-base">
+              {flight.airlineName}
+            </h2>
+            <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+              {flight.flightNumber || "Flight itinerary"}
+            </p>
+          </div>
+        </div>
 
-            <div className="space-y-3">
+        <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-start">
+          <div className="min-w-0 flex-1 space-y-2.5">
+            <div className="space-y-2.5">
               {visibleLegs.map((leg, index) => (
                 <FlightLegRow
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${leg.departureTime}-${index}`}
@@ -67,10 +65,12 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
                 />
               ))}
             </div>
+
+            <FlightDetailLines details={details} />
           </div>
 
-          <div className="flex items-end justify-between gap-3 border-t border-slate-100 pt-3 lg:min-w-36 lg:flex-col lg:items-end lg:border-t-0 lg:pt-0 lg:text-right">
-            <div className="text-right">
+          <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3 lg:w-40 lg:shrink-0 lg:flex-col lg:items-end lg:border-t-0 lg:pt-0 lg:text-right">
+            <div className="min-w-0 lg:text-right">
               <div
                 className="text-xl font-semibold tracking-[-0.025em] text-slate-950 sm:text-2xl"
                 aria-label={displayPrice.ariaLabel}
@@ -78,27 +78,19 @@ export function FlightCard({ flight }: { flight: PublicFlightResult }) {
               >
                 {displayPrice.formatted}
               </div>
-              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-500">
+              <p className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.1em] text-slate-500">
                 Estimated price
               </p>
             </div>
-            <div className="text-right">
-              <LinkButton
-                href={`/flights/details/${encodeURIComponent(flight.id)}`}
-                variant="primary"
-                size="sm"
-                className="whitespace-nowrap rounded-full bg-navy px-3.5 text-xs font-semibold hover:bg-navy-soft"
-              >
-                View Flight
-              </LinkButton>
-            </div>
+            <LinkButton
+              href={`/flights/details/${encodeURIComponent(flight.id)}`}
+              variant="primary"
+              size="sm"
+              className="shrink-0 whitespace-nowrap rounded-full bg-navy px-3.5 text-xs font-semibold hover:bg-navy-soft"
+            >
+              View Flight
+            </LinkButton>
           </div>
-        </div>
-
-        <div className="mt-3 grid gap-2 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-4">
-          {details.map((detail) => (
-            <FlightDetailCard key={detail.label} detail={detail} />
-          ))}
         </div>
 
         <div className="mt-3 rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2 text-[11px] font-medium leading-5 text-slate-600">
@@ -168,24 +160,44 @@ function FlightLegRow({ leg, compact }: { leg: FlightLeg; compact: boolean }) {
   );
 }
 
-function FlightDetailCard({ detail }: { detail: DetailItem }) {
-  const Icon = detail.icon;
+function AirlineLogo({ flight }: { flight: PublicFlightResult }) {
+  if (flight.airlineLogo) {
+    return (
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white shadow-sm">
+        <Image
+          src={flight.airlineLogo}
+          alt={`${flight.airlineName} logo`}
+          width={28}
+          height={28}
+          className="h-7 w-7 object-contain"
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-w-0 rounded-xl border border-slate-200 bg-white px-2.5 py-2 shadow-sm shadow-slate-900/[0.02]">
-      <div className="flex items-start gap-2">
-        <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
-          <Icon className="h-3 w-3" aria-hidden="true" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
-            {detail.label}
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-indigo-100 bg-indigo-50/80 text-indigo-700 shadow-sm">
+      <PlaneTakeoff className="h-4 w-4" aria-hidden="true" />
+    </div>
+  );
+}
+
+function FlightDetailLines({ details }: { details: DetailItem[] }) {
+  return (
+    <div className="grid gap-x-4 gap-y-1.5 border-t border-slate-100 pt-2.5 text-[11px] leading-5 text-slate-600 sm:grid-cols-2">
+      {details.map((detail) => {
+        const Icon = detail.icon;
+
+        return (
+          <p key={detail.label} className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+            <Icon className="h-3.5 w-3.5 shrink-0 text-indigo-500" aria-hidden="true" />
+            <span className="shrink-0 font-medium text-slate-700">{detail.label}:</span>
+            <span className="min-w-0 text-slate-600" title={detail.value}>
+              {detail.value}
+            </span>
           </p>
-          <p className="mt-0.5 line-clamp-2 text-[11px] font-semibold leading-4 text-slate-800" title={detail.value}>
-            {detail.value}
-          </p>
-        </div>
-      </div>
+        );
+      })}
     </div>
   );
 }
