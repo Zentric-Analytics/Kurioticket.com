@@ -186,19 +186,19 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </div>
 
                 <aside className="border-t border-indigo-100 bg-white p-3 sm:p-3.5 lg:border-l lg:border-t-0 lg:p-4">
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center shadow-sm">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                       From
                     </p>
                     <div
-                      className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl lg:text-right"
+                      className="mt-1 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
                       aria-label={displayPrice.ariaLabel}
                       title={displayPrice.title}
                     >
                       {displayPrice.formatted}
                     </div>
                     {displayPrice.isConvertedEstimate ? (
-                      <p className="mt-1.5 text-xs font-medium leading-5 text-slate-600 lg:text-right">
+                      <p className="mt-1 text-xs font-medium leading-5 text-slate-600">
                         Estimate shown. Provider price:{" "}
                         {displayPrice.providerFormatted}.
                       </p>
