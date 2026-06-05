@@ -531,9 +531,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             <input type="hidden" name="driverAge" value={driverAge} />
             <div
               className={cn(
-                "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.075)] transition-[padding,box-shadow] duration-200",
+                "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_24px_rgba(15,23,42,0.075)] transition-[padding,border-color,box-shadow,border-radius] duration-200",
                 showCompactSearchSummary
-                  ? "border-slate-200/80 bg-white/95 p-1 shadow-[0_8px_20px_rgba(15,23,42,0.07)]"
+                  ? "rounded-sm border-slate-300 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.12)]"
                   : "p-1",
               )}
             >
@@ -542,29 +542,33 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                   type="button"
                   aria-label="Edit car search"
                   onClick={expandStickySearch}
-                  className="focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-gradient-to-r from-white via-white to-indigo-50/35 px-3 py-2.5 text-left transition hover:bg-indigo-50/55 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+                  className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-left transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
                 >
                   <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,0.8fr)] lg:items-center lg:gap-3">
-                    <span className="flex min-w-0 items-center gap-2 text-sm font-black text-slate-950">
+                    <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
                       <MapPin
                         className="h-4 w-4 shrink-0 text-violet-600"
                         aria-hidden="true"
                       />
-                      <span className="min-w-0 truncate">
-                        {pickupSummary} → {returnSummary}
+                      <span className="flex min-w-0 items-center gap-1.5 truncate">
+                        <span className="min-w-0 truncate">{pickupSummary}</span>
+                        <span className="shrink-0 text-slate-400" aria-hidden="true">
+                          →
+                        </span>
+                        <span className="min-w-0 truncate">{returnSummary}</span>
                       </span>
                     </span>
-                    <span className="min-w-0 truncate text-sm font-semibold text-slate-700">
+                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
                       {rentalDateSummary}
                     </span>
-                    <span className="min-w-0 truncate text-sm font-semibold text-slate-700">
+                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
                       {timeSummary}
                     </span>
-                    <span className="min-w-0 truncate text-sm font-semibold text-slate-600">
+                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
                       {driverAgeSummary}
                     </span>
                   </span>
-                  <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg border border-indigo-100 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-indigo-700 shadow-sm sm:self-center">
+                  <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-[2px] border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 shadow-sm transition group-hover:border-indigo-200 group-hover:bg-white sm:self-center">
                     <PencilLine className="h-3.5 w-3.5" aria-hidden="true" />
                     Edit
                   </span>
