@@ -553,6 +553,11 @@ export function HotelResultsClient() {
     }));
   };
 
+  const updateHotelSummarySortMode = (sortMode: HotelSummarySortMode) => {
+    triggerFilterApplying();
+    setHotelSummarySortMode(sortMode);
+  };
+
   return (
     <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8">
       <div className="sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden">
@@ -682,7 +687,7 @@ export function HotelResultsClient() {
                 <HotelSummaryRow
                   activeSortMode={hotelSummarySortMode}
                   items={hotelSummaryItems}
-                  onSortModeChange={setHotelSummarySortMode}
+                  onSortModeChange={updateHotelSummarySortMode}
                 />
 
                 {filterApplying ? (
