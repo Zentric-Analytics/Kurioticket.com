@@ -1091,7 +1091,9 @@ export function FlightResultsClient() {
   }, [destinationInput, countryHint]);
 
   const body = useMemo(() => {
-    const searchParams = new URLSearchParams(searchQueryString);
+    const searchParams = normalizeFlightDateSearchParams(
+      new URLSearchParams(searchQueryString),
+    );
     const origin = searchParams.get("origin")?.trim() || "";
     const destination = searchParams.get("destination")?.trim() || "";
     const departureDate = searchParams.get("departureDate")?.trim() || "";
@@ -1132,7 +1134,7 @@ export function FlightResultsClient() {
       origin,
       destination,
       departureDate,
-      returnDate,
+      returnDate: tripType === "round-trip" ? returnDate : "",
       adults,
       children,
       infants,
@@ -2161,13 +2163,16 @@ export function FlightResultsClient() {
                   destinationInput.trim() ||
                   String(formData.get("destination") || ""),
                 departureDate: nextDepartureDate,
-                returnDate: nextReturnDate,
                 adults: String(adultCount),
                 children: String(childCount),
                 infants: String(infantCount),
                 travelers: String(adultCount + childCount + infantCount),
                 cabinClass: cabinClassInput,
               });
+
+              if (tripTypeInput === "round-trip" && nextReturnDate) {
+                nextParams.set("returnDate", nextReturnDate);
+              }
 
               router.push(`/flights/results?${nextParams.toString()}`);
             }}
@@ -2494,6 +2499,7 @@ export function FlightResultsClient() {
               departureValue={departureDateInput}
               returnValue={returnDateInput}
               activePicker={activeDatePicker}
+              tripType={tripTypeInput}
               onMonthChange={setCalendarMonth}
               onSelect={applyFlightDateSelection}
               onClear={() => {
@@ -2787,6 +2793,7 @@ export function FlightResultsClient() {
             departureValue={departureDateInput}
             returnValue={returnDateInput}
             activePicker={activeDatePicker}
+            tripType={tripTypeInput}
             onMonthChange={setCalendarMonth}
             onSelect={applyFlightDateSelection}
             onClear={() => {
@@ -3971,12 +3978,8 @@ function parseDateValue(value: string): Date | null {
   return date;
 }
 
-function isDateBeforeValue(date: Date, value: string): boolean {
-  const comparisonDate = parseDateValue(value);
-
-  if (!comparisonDate) return false;
-
-  return date < comparisonDate;
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
 function isDateValueBefore(value: string, comparisonValue: string): boolean {
@@ -3985,7 +3988,13 @@ function isDateValueBefore(value: string, comparisonValue: string): boolean {
 
   if (!date || !comparisonDate) return false;
 
-  return date < comparisonDate;
+  return startOfLocalDay(date) < startOfLocalDay(comparisonDate);
+}
+
+function isPastLocalDate(date: Date): boolean {
+  const today = new Date();
+
+  return startOfLocalDay(date) < startOfLocalDay(today);
 }
 
 function isValidFutureOrTodayDateValue(value: string): boolean {
@@ -3993,7 +4002,11 @@ function isValidFutureOrTodayDateValue(value: string): boolean {
 
   if (!date) return false;
 
-  return !isBeforeToday(date);
+  return !isPastLocalDate(date);
+}
+
+function isSelectableFlightDate(date: Date): boolean {
+  return !isPastLocalDate(date);
 }
 
 type FlightDateSelectionState = {
@@ -4015,7 +4028,7 @@ function getNextFlightDateSelection({
   departureDate: string;
   returnDate: string;
 } | null {
-  if (isBeforeToday(date)) return null;
+  if (!isSelectableFlightDate(date)) return null;
 
   const value = formatDateValue(date);
 
@@ -4041,7 +4054,13 @@ function getNextFlightDateSelection({
     };
   }
 
-  if (isDateValueBefore(value, departureDate)) return null;
+  if (isDateValueBefore(value, departureDate)) {
+    return {
+      activePicker: "return",
+      departureDate: value,
+      returnDate: "",
+    };
+  }
 
   return {
     activePicker: null,
@@ -4169,17 +4188,6 @@ function buildMonthDays(month: Date): Array<Date | null> {
   return cells;
 }
 
-function isBeforeToday(date: Date): boolean {
-  const today = new Date();
-  const startOfToday = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate(),
-  );
-
-  return date < startOfToday;
-}
-
 function isSameDateValue(date: Date, value: string): boolean {
   return Boolean(value) && formatDateValue(date) === value;
 }
@@ -4223,6 +4231,7 @@ function DatePickerPopover({
   departureValue,
   returnValue,
   activePicker,
+  tripType,
   onMonthChange,
   onSelect,
   onClear,
@@ -4235,6 +4244,7 @@ function DatePickerPopover({
   departureValue: string;
   returnValue: string;
   activePicker: "departure" | "return";
+  tripType: string;
   onMonthChange: (month: Date) => void;
   onSelect: (date: Date) => void;
   onClear: () => void;
@@ -4292,12 +4302,11 @@ function DatePickerPopover({
           const selectedDeparture = isSameDateValue(date, departureValue);
           const selectedReturn = isSameDateValue(date, returnValue);
           const isToday = isSameDateValue(date, formatDateValue(today));
-          const disabledPastDate = isBeforeToday(date);
-          const disabledBeforeDeparture =
-            activePicker === "return" &&
-            Boolean(departureValue) &&
-            isDateBeforeValue(date, departureValue);
-          const disabledDate = disabledPastDate || disabledBeforeDeparture;
+          // Flight calendars use one shared rule for enabled days: only past
+          // local days are disabled. In round-trip return mode, future dates
+          // before departure stay enabled and reset the departure date instead
+          // of trapping the user in an invalid return-only state.
+          const disabledDate = !isSelectableFlightDate(date);
 
           return (
             <button
@@ -4306,7 +4315,7 @@ function DatePickerPopover({
               disabled={disabledDate}
               aria-disabled={disabledDate}
               onClick={() => {
-                if (disabledDate) return;
+                if (disabledDate || !isSelectableFlightDate(date)) return;
                 onSelect(date);
               }}
               className={cn(
@@ -4336,7 +4345,7 @@ function DatePickerPopover({
       id="flight-date-picker-popover"
       role="dialog"
       aria-label={
-        activePicker === "departure"
+        tripType !== "round-trip" || activePicker === "departure"
           ? "Select departure date"
           : "Select return date"
       }
@@ -4355,7 +4364,7 @@ function DatePickerPopover({
               Travel dates
             </p>
             <h3 className="text-lg font-bold text-slate-950">
-              {activePicker === "departure"
+              {tripType !== "round-trip" || activePicker === "departure"
                 ? "Select departure"
                 : "Select return"}
             </h3>
