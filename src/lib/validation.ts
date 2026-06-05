@@ -74,6 +74,10 @@ export const flightSearchSchema = z
       travelers: adults + children + infants,
     };
   })
+  .refine((data) => data.tripType === "round-trip" || !data.returnDate, {
+    message: "Return date is only allowed for round trips.",
+    path: ["returnDate"],
+  })
   .refine((data) => data.tripType !== "round-trip" || Boolean(data.returnDate), {
     message: "Choose a return date for round trips.",
     path: ["returnDate"],
