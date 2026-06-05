@@ -128,7 +128,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
     <main className="flex-1 bg-surface-muted/40">
       <section className="border-b border-border bg-white">
         <div className="page-shell py-5 sm:py-6">
-          <div className="grid gap-5">
+          <div className="mx-auto grid w-full max-w-5xl gap-5">
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
                 <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-4 sm:p-5 lg:p-6">
