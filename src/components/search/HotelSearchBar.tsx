@@ -1,6 +1,13 @@
 "use client";
 
-import { type FormEvent, type KeyboardEvent as ReactKeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import {
   Calendar,
@@ -126,7 +133,10 @@ const normalizeCountryHint = (value: string | null | undefined) => {
   return /^[A-Z]{2}$/.test(countryCode) ? countryCode : "";
 };
 
-const destinationKindLabels: Record<HotelDestinationSuggestion["kind"], string> = {
+const destinationKindLabels: Record<
+  HotelDestinationSuggestion["kind"],
+  string
+> = {
   city: "City",
   district: "Area",
   landmark: "Landmark",
@@ -162,7 +172,12 @@ export function HotelSearchBar({
 }: HotelSearchBarProps) {
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
-  const { selectedOption, selectedCountryCode, detectedCountryCode, hasUserSelectedRegion } = useRegion();
+  const {
+    selectedOption,
+    selectedCountryCode,
+    detectedCountryCode,
+    hasUserSelectedRegion,
+  } = useRegion();
   const [destination, setDestination] = useState(initialDestination);
   const [checkIn, setCheckIn] = useState(initialCheckIn);
   const [checkOut, setCheckOut] = useState(initialCheckOut);
@@ -177,15 +192,25 @@ export function HotelSearchBar({
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [destinationSuggestions, setDestinationSuggestions] = useState<HotelDestinationSuggestion[]>([]);
-  const [destinationSuggestionsCountryHint, setDestinationSuggestionsCountryHint] = useState("");
-  const [destinationSuggestionsOpen, setDestinationSuggestionsOpen] = useState(false);
-  const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] = useState(false);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<
+    HotelDestinationSuggestion[]
+  >([]);
+  const [
+    destinationSuggestionsCountryHint,
+    setDestinationSuggestionsCountryHint,
+  ] = useState("");
+  const [destinationSuggestionsOpen, setDestinationSuggestionsOpen] =
+    useState(false);
+  const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] =
+    useState(false);
   const [destinationHighlight, setDestinationHighlight] = useState(0);
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const destinationWrapperRef = useRef<HTMLLabelElement>(null);
   const datesWrapperRef = useRef<HTMLDivElement>(null);
   const guestsRoomsWrapperRef = useRef<HTMLDivElement>(null);
+  const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
   const [hotelVisibleMonthDate, setHotelVisibleMonthDate] = useState(() => {
     const parsedCheckIn = parseIsoDate(initialCheckIn);
     if (parsedCheckIn) {
@@ -227,15 +252,23 @@ export function HotelSearchBar({
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
   const normalizedRooms = String(clampCount(rooms, 1, 6));
-  const selectedCountryHint = hasUserSelectedRegion ? normalizeCountryHint(selectedCountryCode ?? selectedOption.code) : "";
-  const detectedCountryHint = selectedCountryHint ? "" : normalizeCountryHint(detectedCountryCode);
+  const selectedCountryHint = hasUserSelectedRegion
+    ? normalizeCountryHint(selectedCountryCode ?? selectedOption.code)
+    : "";
+  const detectedCountryHint = selectedCountryHint
+    ? ""
+    : normalizeCountryHint(detectedCountryCode);
   const activeCountryHint = selectedCountryHint || detectedCountryHint;
   const destinationQuery = destination.trim();
   const visibleDestinationSuggestions =
-    destinationSuggestionsCountryHint === activeCountryHint ? destinationSuggestions : [];
+    destinationSuggestionsCountryHint === activeCountryHint
+      ? destinationSuggestions
+      : [];
   const shouldShowDestinationSuggestions =
     destinationSuggestionsOpen &&
-    (destinationSuggestionsLoading || visibleDestinationSuggestions.length > 0 || destinationQuery.length >= 1);
+    (destinationSuggestionsLoading ||
+      visibleDestinationSuggestions.length > 0 ||
+      destinationQuery.length >= 1);
 
   const hasActiveHotelSearch =
     destination.trim() !== "" ||
@@ -284,76 +317,156 @@ export function HotelSearchBar({
   }, [datesOpen, guestsRoomsOpen]);
 
   useEffect(() => {
+    const releaseExistingLock = () => {
+      mobileSearchScrollLockRef.current?.restore();
+      mobileSearchScrollLockRef.current = null;
+    };
+
+    if (!mobileSearchOpen || typeof window === "undefined") {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+
+    if (!mobileQuery.matches) {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const bodyElement = document.body;
+    const rootElement = document.documentElement;
+    const scrollY = window.scrollY;
+    const previousBodyStyles = {
+      left: bodyElement.style.left,
+      overflow: bodyElement.style.overflow,
+      position: bodyElement.style.position,
+      right: bodyElement.style.right,
+      top: bodyElement.style.top,
+      width: bodyElement.style.width,
+    };
+    const previousRootStyles = {
+      overflow: rootElement.style.overflow,
+      overscrollBehavior: rootElement.style.overscrollBehavior,
+    };
+
+    bodyElement.style.left = "0";
+    bodyElement.style.overflow = "hidden";
+    bodyElement.style.position = "fixed";
+    bodyElement.style.right = "0";
+    bodyElement.style.top = `-${scrollY}px`;
+    bodyElement.style.width = "100%";
+    rootElement.style.overflow = "hidden";
+    rootElement.style.overscrollBehavior = "none";
+
+    mobileSearchScrollLockRef.current = {
+      restore: () => {
+        bodyElement.style.left = previousBodyStyles.left;
+        bodyElement.style.overflow = previousBodyStyles.overflow;
+        bodyElement.style.position = previousBodyStyles.position;
+        bodyElement.style.right = previousBodyStyles.right;
+        bodyElement.style.top = previousBodyStyles.top;
+        bodyElement.style.width = previousBodyStyles.width;
+        rootElement.style.overflow = previousRootStyles.overflow;
+        rootElement.style.overscrollBehavior =
+          previousRootStyles.overscrollBehavior;
+        window.scrollTo(0, scrollY);
+      },
+    };
+
+    return releaseExistingLock;
+  }, [mobileSearchOpen]);
+
+  useEffect(() => {
     if (!destinationSuggestionsOpen) {
       return;
     }
 
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(async () => {
-      setDestinationSuggestionsLoading(true);
+    const timeoutId = window.setTimeout(
+      async () => {
+        setDestinationSuggestionsLoading(true);
 
-      try {
-        const params = new URLSearchParams({
-          limit: "8",
-        });
+        try {
+          const params = new URLSearchParams({
+            limit: "8",
+          });
 
-        if (destinationQuery.length >= 1) {
-          params.set("q", destinationQuery);
-        }
+          if (destinationQuery.length >= 1) {
+            params.set("q", destinationQuery);
+          }
 
-        if (selectedCountryHint) {
-          params.set("countryCode", selectedCountryHint);
-        }
+          if (selectedCountryHint) {
+            params.set("countryCode", selectedCountryHint);
+          }
 
-        if (detectedCountryHint) {
-          params.set("detectedCountryCode", detectedCountryHint);
-        }
+          if (detectedCountryHint) {
+            params.set("detectedCountryCode", detectedCountryHint);
+          }
 
-        if (typeof navigator !== "undefined" && navigator.language) {
-          params.set("locale", navigator.language);
-        }
+          if (typeof navigator !== "undefined" && navigator.language) {
+            params.set("locale", navigator.language);
+          }
 
-        const response = await fetch(`/api/hotels/destinations?${params.toString()}`, {
-          signal: controller.signal,
-          cache: "no-store",
-        });
+          const response = await fetch(
+            `/api/hotels/destinations?${params.toString()}`,
+            {
+              signal: controller.signal,
+              cache: "no-store",
+            },
+          );
 
-        if (!response.ok) {
-          throw new Error("Failed to load hotel destination suggestions");
-        }
+          if (!response.ok) {
+            throw new Error("Failed to load hotel destination suggestions");
+          }
 
-        const payload = (await response.json()) as HotelDestinationsApiResponse;
-        const suggestions = Array.isArray(payload.suggestions)
-          ? payload.suggestions
-              .filter((suggestion) =>
-                Boolean(suggestion?.id && suggestion?.name && suggestion?.country && suggestion?.searchValue),
-              )
-              .slice(0, 8)
-          : [];
+          const payload =
+            (await response.json()) as HotelDestinationsApiResponse;
+          const suggestions = Array.isArray(payload.suggestions)
+            ? payload.suggestions
+                .filter((suggestion) =>
+                  Boolean(
+                    suggestion?.id &&
+                    suggestion?.name &&
+                    suggestion?.country &&
+                    suggestion?.searchValue,
+                  ),
+                )
+                .slice(0, 8)
+            : [];
 
-        setDestinationSuggestions(suggestions);
-        setDestinationSuggestionsCountryHint(activeCountryHint);
-        setDestinationHighlight(0);
-      } catch {
-        if (!controller.signal.aborted) {
-          setDestinationSuggestions([]);
+          setDestinationSuggestions(suggestions);
           setDestinationSuggestionsCountryHint(activeCountryHint);
+          setDestinationHighlight(0);
+        } catch {
+          if (!controller.signal.aborted) {
+            setDestinationSuggestions([]);
+            setDestinationSuggestionsCountryHint(activeCountryHint);
+          }
+        } finally {
+          if (!controller.signal.aborted) {
+            setDestinationSuggestionsLoading(false);
+          }
         }
-      } finally {
-        if (!controller.signal.aborted) {
-          setDestinationSuggestionsLoading(false);
-        }
-      }
-    }, destinationQuery.length >= 1 ? 180 : 0);
+      },
+      destinationQuery.length >= 1 ? 180 : 0,
+    );
 
     return () => {
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [activeCountryHint, destinationQuery, destinationSuggestionsOpen, selectedCountryHint, detectedCountryHint]);
+  }, [
+    activeCountryHint,
+    destinationQuery,
+    destinationSuggestionsOpen,
+    selectedCountryHint,
+    detectedCountryHint,
+  ]);
 
-
-  const selectDestinationSuggestion = (suggestion: HotelDestinationSuggestion) => {
+  const selectDestinationSuggestion = (
+    suggestion: HotelDestinationSuggestion,
+  ) => {
     setDestination(suggestion.searchValue);
     setDestinationSuggestionsOpen(false);
     setDestinationHighlight(0);
@@ -361,7 +474,9 @@ export function HotelSearchBar({
     window.requestAnimationFrame(() => destinationInputRef.current?.focus());
   };
 
-  const handleDestinationKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+  const handleDestinationKeyDown = (
+    event: ReactKeyboardEvent<HTMLInputElement>,
+  ) => {
     if (event.key === "Escape") {
       setDestinationSuggestionsOpen(false);
       return;
@@ -377,7 +492,9 @@ export function HotelSearchBar({
     if (event.key === "ArrowDown") {
       event.preventDefault();
       setDestinationSuggestionsOpen(true);
-      setDestinationHighlight((current) => (current + 1) % visibleDestinationSuggestions.length);
+      setDestinationHighlight(
+        (current) => (current + 1) % visibleDestinationSuggestions.length,
+      );
       return;
     }
 
@@ -385,13 +502,16 @@ export function HotelSearchBar({
       event.preventDefault();
       setDestinationSuggestionsOpen(true);
       setDestinationHighlight(
-        (current) => (current - 1 + visibleDestinationSuggestions.length) % visibleDestinationSuggestions.length,
+        (current) =>
+          (current - 1 + visibleDestinationSuggestions.length) %
+          visibleDestinationSuggestions.length,
       );
       return;
     }
 
     if (event.key === "Enter" && destinationSuggestionsOpen) {
-      const highlightedSuggestion = visibleDestinationSuggestions[destinationHighlight];
+      const highlightedSuggestion =
+        visibleDestinationSuggestions[destinationHighlight];
       if (!highlightedSuggestion) return;
 
       event.preventDefault();
@@ -407,6 +527,13 @@ export function HotelSearchBar({
     setDestinationHighlight(0);
     setError("");
     destinationInputRef.current?.focus();
+  };
+
+  const closeMobileSearchPanel = () => {
+    setMobileSearchOpen(false);
+    setDestinationSuggestionsOpen(false);
+    setDatesOpen(false);
+    setGuestsRoomsOpen(false);
   };
 
   const handleResetSearch = () => {
@@ -543,19 +670,30 @@ export function HotelSearchBar({
   const fieldClassName = cn(
     "relative rounded-xl border border-slate-300 bg-white transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40",
     compact
-      ? "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+      ? cn(
+          "min-h-[56px] px-3 py-2 sm:min-h-[54px] sm:px-3 sm:py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+          mobileSearchOpen &&
+            "min-h-[74px] rounded-3xl border-slate-200 px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:px-3 sm:py-1.5 sm:shadow-none lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200",
+        )
       : "min-h-[54px] px-3 py-1.5 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
   );
   const valueControlClassName = cn(
     "focus-ring w-full rounded-md border-0 bg-transparent px-0 outline-none transition-colors",
     compact
-      ? "h-7 text-[15px] font-bold text-slate-950 placeholder:text-slate-500 sm:h-8 sm:text-[16px] sm:font-semibold md:text-sm"
+      ? cn(
+          "h-7 text-[15px] font-bold text-slate-950 placeholder:text-slate-500 sm:h-8 sm:text-[16px] sm:font-semibold md:text-sm",
+          mobileSearchOpen && "h-9 text-[16px] sm:h-8",
+        )
       : "h-8 text-[16px] text-slate-900 md:text-sm",
   );
   const fieldLabelClassName = cn(
     "block font-semibold uppercase",
     compact
-      ? "text-[10px] leading-4 tracking-[0.08em] text-slate-600 sm:mb-1 sm:text-xs sm:tracking-wide sm:text-slate-600"
+      ? cn(
+          "text-[10px] leading-4 tracking-[0.08em] text-slate-600 sm:mb-1 sm:text-xs sm:tracking-wide sm:text-slate-600",
+          mobileSearchOpen &&
+            "mb-1.5 text-[0.68rem] font-black tracking-[0.16em] text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600",
+        )
       : "mb-1 text-xs leading-4 tracking-wide text-slate-600",
   );
 
@@ -578,7 +716,11 @@ export function HotelSearchBar({
                 className="focus-ring relative inline-flex h-16 w-[72px] shrink-0 items-center justify-center rounded-md border border-indigo-100/90 bg-white px-2 text-[11px] font-semibold text-slate-800 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-indigo-200 hover:text-slate-950 hover:shadow-[0_8px_18px_rgba(79,70,229,0.12)] focus-visible:border-indigo-300"
               >
                 <span className="flex flex-col items-center justify-center gap-1 leading-none">
-                  <SlidersHorizontal className="text-indigo-700" size={17} strokeWidth={2.3} />
+                  <SlidersHorizontal
+                    className="text-indigo-700"
+                    size={17}
+                    strokeWidth={2.3}
+                  />
                   <span>Filters</span>
                 </span>
               </button>
@@ -622,31 +764,43 @@ export function HotelSearchBar({
       <form
         onSubmit={handleSubmit}
         className={cn(
-          compact ? "space-y-2 sm:block" : "space-y-4",
-          compact && (mobileSearchOpen ? "block" : "hidden"),
+          compact
+            ? cn(
+                "sm:block sm:space-y-2",
+                mobileSearchOpen
+                  ? "fixed inset-0 z-[10000] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:static sm:h-auto sm:w-auto sm:overflow-visible sm:bg-transparent"
+                  : "hidden",
+              )
+            : "space-y-4",
         )}
         noValidate
       >
         {compact ? (
-          <div className="flex items-center justify-between sm:hidden">
-            <span className="text-sm font-bold text-slate-700">
-              Edit search
-            </span>
-            <button
-              type="button"
-              aria-label="Close search form"
-              onClick={() => setMobileSearchOpen(false)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-            >
-              ×
-            </button>
+          <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-black tracking-tight text-slate-950">
+                Edit hotel search
+              </h2>
+              <button
+                type="button"
+                aria-label="Close search form"
+                onClick={closeMobileSearchPanel}
+                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+              >
+                ×
+              </button>
+            </div>
           </div>
         ) : null}
         <div
           className={cn(
             "overflow-visible",
             compact
-              ? "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)]"
+              ? cn(
+                  "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+                  mobileSearchOpen &&
+                    "min-h-0 flex-1 overflow-y-auto overscroll-contain border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none sm:overflow-visible sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+                )
               : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
           )}
         >
@@ -654,11 +808,18 @@ export function HotelSearchBar({
             className={cn(
               "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:gap-0",
               compact
-                ? "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]"
+                ? cn(
+                    "lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]",
+                    mobileSearchOpen &&
+                      "mx-auto flex w-full max-w-xl flex-col gap-3 sm:grid sm:max-w-none sm:gap-1.5 lg:gap-0",
+                  )
                 : "lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_104px]",
             )}
           >
-            <label ref={destinationWrapperRef} className={cn(fieldClassName, "lg:rounded-l-xl")}>
+            <label
+              ref={destinationWrapperRef}
+              className={cn(fieldClassName, "lg:rounded-l-xl")}
+            >
               <span className={fieldLabelClassName}>Destination</span>
               <span className="relative block">
                 <input
@@ -678,7 +839,8 @@ export function HotelSearchBar({
                   aria-expanded={shouldShowDestinationSuggestions}
                   aria-controls="hotel-destination-suggestions"
                   aria-activedescendant={
-                    shouldShowDestinationSuggestions && visibleDestinationSuggestions[destinationHighlight]
+                    shouldShowDestinationSuggestions &&
+                    visibleDestinationSuggestions[destinationHighlight]
                       ? `hotel-destination-suggestion-${visibleDestinationSuggestions[destinationHighlight].id}`
                       : undefined
                   }
@@ -726,7 +888,9 @@ export function HotelSearchBar({
                           type="button"
                           role="option"
                           aria-selected={isActive}
-                          onClick={() => selectDestinationSuggestion(suggestion)}
+                          onClick={() =>
+                            selectDestinationSuggestion(suggestion)
+                          }
                           onMouseDown={(event) => event.preventDefault()}
                           onMouseEnter={() => setDestinationHighlight(index)}
                           className={cn(
@@ -1062,7 +1226,11 @@ export function HotelSearchBar({
                 className={cn(
                   "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 disabled:cursor-not-allowed disabled:opacity-75 lg:h-full lg:self-stretch lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
                   compact
-                    ? "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-l-none"
+                    ? cn(
+                        "h-[54px] shadow-lg sm:min-h-[54px] lg:min-w-[112px] lg:rounded-l-none",
+                        mobileSearchOpen &&
+                          "mt-1 h-[52px] rounded-2xl text-base sm:mt-0 sm:h-[54px] sm:rounded-xl lg:rounded-l-none",
+                      )
                     : "h-12 lg:min-h-[54px] lg:rounded-none",
                 )}
                 disabled={isSubmitting}
