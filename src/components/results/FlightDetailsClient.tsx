@@ -130,7 +130,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
         <div className="page-shell py-4 sm:py-5">
           <div className="mx-auto grid w-full max-w-5xl gap-4">
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
-              <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
                 <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3.5 sm:p-4 lg:p-5">
                   <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
                     <Sparkles size={14} aria-hidden="true" /> Flight details
@@ -151,10 +151,10 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       </>
                     ) : null}
                   </div>
-                  <h1 className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2.5 text-4xl font-bold tracking-tight text-slate-950">
+                  <h1 className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2.5 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
                     <span>{flight.originAirport}</span>
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-9 sm:w-9">
-                      <ArrowRight size={18} aria-hidden="true" />
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
+                      <ArrowRight size={16} aria-hidden="true" />
                     </span>
                     <span>{flight.destinationAirport}</span>
                   </h1>
@@ -185,13 +185,13 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   </div>
                 </div>
 
-                <aside className="border-t border-indigo-100 bg-white p-3.5 sm:p-4 lg:border-l lg:border-t-0 lg:p-5">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <aside className="border-t border-indigo-100 bg-white p-3 sm:p-3.5 lg:border-l lg:border-t-0 lg:p-4">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                       From
                     </p>
                     <div
-                      className="mt-1 text-3xl font-bold tracking-tight text-slate-950 lg:text-right"
+                      className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl lg:text-right"
                       aria-label={displayPrice.ariaLabel}
                       title={displayPrice.title}
                     >
