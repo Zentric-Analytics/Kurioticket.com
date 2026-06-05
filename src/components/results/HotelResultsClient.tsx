@@ -796,7 +796,7 @@ function HotelSummaryRow({
 
   return (
     <div
-      className="flex max-w-full snap-x gap-1.5 overflow-x-auto pb-0.5 pr-8 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid sm:grid-cols-3 sm:gap-2 sm:overflow-visible sm:pb-0 sm:pr-0 [&::-webkit-scrollbar]:hidden"
+      className="flex max-w-full snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
       aria-label="Hotel result summary"
     >
       {items.map((item) => {
@@ -808,7 +808,7 @@ function HotelSummaryRow({
             key={item.label}
             type="button"
             className={cn(
-              "w-[136px] min-w-[136px] max-w-[150px] shrink-0 snap-start rounded-2xl border bg-white px-2.5 py-2 text-left shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_34px_-24px_rgba(30,27,75,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:w-auto sm:min-w-0 sm:max-w-none sm:p-3.5",
+              "min-w-[152px] snap-start rounded-2xl border bg-white p-2.5 text-left shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_34px_-24px_rgba(30,27,75,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:p-3.5",
               isActive
                 ? "border-indigo-400 bg-indigo-50/50 shadow-[0_18px_38px_-24px_rgba(79,70,229,0.7)] ring-1 ring-indigo-200"
                 : "border-indigo-100/80",
@@ -816,7 +816,7 @@ function HotelSummaryRow({
             aria-pressed={isActive}
             onClick={() => onSortModeChange(item.sortMode)}
           >
-            <div className="flex items-start gap-1.5 sm:gap-3">
+            <div className="flex items-start gap-2 sm:gap-3">
               <div
                 className={cn(
                   "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 sm:rounded-xl",
