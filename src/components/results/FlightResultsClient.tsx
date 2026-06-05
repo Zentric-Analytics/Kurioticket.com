@@ -786,6 +786,17 @@ export function FlightResultsClient() {
     setTripTypeMenuOpen(false);
   }
 
+  function closeMobileSearchDrawer() {
+    closeFlightSearchPopovers();
+    setMobileSearchOpen(false);
+  }
+
+  function openMobileSearchDrawer() {
+    setFiltersOpen(false);
+    closeFlightSearchPopovers();
+    setMobileSearchOpen(true);
+  }
+
   function focusOriginInput() {
     window.requestAnimationFrame(() => originInputRef.current?.focus());
   }
@@ -2065,6 +2076,10 @@ export function FlightResultsClient() {
           {activeDatePicker && datePickerPosition ? (
             <DatePickerPopover
               position={datePickerPosition}
+              onClose={() => {
+                setActiveDatePicker(null);
+                setDatePickerPosition(null);
+              }}
               month={calendarMonth}
               departureValue={departureDateInput}
               returnValue={returnDateInput}
@@ -2135,6 +2150,10 @@ export function FlightResultsClient() {
           {travelerPopoverOpen && travelerPopoverPosition ? (
             <TravelerCabinPopover
               position={travelerPopoverPosition}
+              onClose={() => {
+                setTravelerPopoverOpen(false);
+                setTravelerPopoverPosition(null);
+              }}
               adultCount={adultCount}
               childCount={childCount}
               infantCount={infantCount}
@@ -2387,12 +2406,20 @@ export function FlightResultsClient() {
     );
   }
 
-  function renderCompactSearchPopovers() {
+  function renderCompactSearchPopovers(
+    placement: "mobile" | "desktop" = "desktop",
+  ) {
+    const useMobileSheet = placement === "mobile";
     return (
       <>
-        {activeDatePicker && datePickerPosition ? (
+        {activeDatePicker && (useMobileSheet || datePickerPosition) ? (
           <DatePickerPopover
-            position={datePickerPosition}
+            position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
+            mobileSheet={useMobileSheet}
+            onClose={() => {
+              setActiveDatePicker(null);
+              setDatePickerPosition(null);
+            }}
             month={calendarMonth}
             departureValue={departureDateInput}
             returnValue={returnDateInput}
@@ -2460,9 +2487,14 @@ export function FlightResultsClient() {
           />
         ) : null}
 
-        {travelerPopoverOpen && travelerPopoverPosition ? (
+        {travelerPopoverOpen && (useMobileSheet || travelerPopoverPosition) ? (
           <TravelerCabinPopover
-            position={travelerPopoverPosition}
+            position={travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }}
+            mobileSheet={useMobileSheet}
+            onClose={() => {
+              setTravelerPopoverOpen(false);
+              setTravelerPopoverPosition(null);
+            }}
             adultCount={adultCount}
             childCount={childCount}
             infantCount={infantCount}
@@ -2524,7 +2556,7 @@ export function FlightResultsClient() {
               <button
                 type="button"
                 aria-label="Close search form"
-                onClick={() => setMobileSearchOpen(false)}
+                onClick={closeMobileSearchDrawer}
                 className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
               >
                 ×
@@ -2778,6 +2810,10 @@ export function FlightResultsClient() {
                 <button
                   type="button"
                   onClick={() => {
+                    setActiveSuggest(null);
+                    setDropdownPosition(null);
+                    setTravelerPopoverOpen(false);
+                    setTravelerPopoverPosition(null);
                     setActiveDatePicker("departure");
                     setDatePickerPosition(null);
                   }}
@@ -2803,6 +2839,10 @@ export function FlightResultsClient() {
                 <button
                   type="button"
                   onClick={() => {
+                    setActiveSuggest(null);
+                    setDropdownPosition(null);
+                    setActiveDatePicker(null);
+                    setDatePickerPosition(null);
                     setTravelerPopoverOpen(true);
                     setTravelerPopoverPosition(null);
                   }}
@@ -2852,7 +2892,7 @@ export function FlightResultsClient() {
             <button
               type="button"
               aria-label="Close search form"
-              onClick={() => setMobileSearchOpen(false)}
+              onClick={closeMobileSearchDrawer}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
             >
               ×
@@ -3107,6 +3147,10 @@ export function FlightResultsClient() {
                 <button
                   type="button"
                   onClick={() => {
+                    setActiveSuggest(null);
+                    setDropdownPosition(null);
+                    setTravelerPopoverOpen(false);
+                    setTravelerPopoverPosition(null);
                     setActiveDatePicker("departure");
                     setDatePickerPosition(null);
                   }}
@@ -3132,6 +3176,10 @@ export function FlightResultsClient() {
                 <button
                   type="button"
                   onClick={() => {
+                    setActiveSuggest(null);
+                    setDropdownPosition(null);
+                    setActiveDatePicker(null);
+                    setDatePickerPosition(null);
                     setTravelerPopoverOpen(true);
                     setTravelerPopoverPosition(null);
                   }}
@@ -3185,7 +3233,7 @@ export function FlightResultsClient() {
 
         <button
           type="button"
-          onClick={() => setMobileSearchOpen(true)}
+          onClick={openMobileSearchDrawer}
           className="flex h-[58px] min-w-0 max-w-full flex-1 items-center justify-between gap-2 overflow-hidden rounded-xl border border-slate-200 bg-white px-3 py-0 text-left shadow-[0_8px_18px_rgba(15,23,42,0.07)] transition hover:border-slate-300 hover:shadow-[0_10px_22px_rgba(15,23,42,0.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
@@ -3224,7 +3272,7 @@ export function FlightResultsClient() {
           "fixed inset-0 z-40 bg-navy/40 sm:hidden",
           mobileSearchOpen ? "block" : "hidden",
         )}
-        onClick={() => setMobileSearchOpen(false)}
+        onClick={closeMobileSearchDrawer}
       />
 
       <div
@@ -3233,19 +3281,16 @@ export function FlightResultsClient() {
           mobileSearchOpen ? "block" : "hidden",
         )}
       >
-        {mobileSearchOpen ? (
-          <>
-            {renderCompactSearchForm("mobile")}
-            {renderCompactSearchPopovers()}
-          </>
-        ) : null}
+        {mobileSearchOpen ? renderCompactSearchForm("mobile") : null}
       </div>
+
+      {mobileSearchOpen ? renderCompactSearchPopovers("mobile") : null}
 
       <section className="sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 py-3 shadow-sm shadow-slate-900/5 backdrop-blur sm:block">
         <div className="page-shell">
           {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
 
-          {renderCompactSearchPopovers()}
+          {renderCompactSearchPopovers("desktop")}
         </div>
       </section>
 
@@ -3788,6 +3833,7 @@ function buildTravelerCabinSummary(
 
 function DatePickerPopover({
   position,
+  mobileSheet = false,
   month,
   departureValue,
   returnValue,
@@ -3796,8 +3842,10 @@ function DatePickerPopover({
   onSelect,
   onClear,
   onToday,
+  onClose,
 }: {
   position: { top: number; left: number; width: number };
+  mobileSheet?: boolean;
   month: Date;
   departureValue: string;
   returnValue: string;
@@ -3806,11 +3854,29 @@ function DatePickerPopover({
   onSelect: (date: Date) => void;
   onClear: () => void;
   onToday: () => void;
+  onClose: () => void;
 }) {
   const leftMonth = startOfMonth(month);
   const rightMonth = addMonths(leftMonth, 1);
   const today = new Date();
   const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const dialogStyle = mobileSheet
+    ? ({
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        zIndex: 10020,
+      } as const)
+    : ({
+        position: "fixed",
+        top: position.top,
+        left: position.left,
+        width: position.width,
+        zIndex: 9999,
+      } as const);
 
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
@@ -3889,15 +3955,37 @@ function DatePickerPopover({
           ? "Select departure date"
           : "Select return date"
       }
-      style={{
-        position: "fixed",
-        top: position.top,
-        left: position.left,
-        width: position.width,
-        zIndex: 9999,
-      }}
-      className="w-full max-w-[min(620px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:p-4"
+      style={dialogStyle}
+      className={cn(
+        "w-full border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.16)]",
+        mobileSheet
+          ? "max-h-[min(88dvh,calc(100dvh-1rem))] overflow-y-auto overscroll-contain rounded-t-[1.5rem] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          : "max-w-[min(620px,calc(100vw-2rem))] rounded-2xl p-3.5 sm:p-4",
+      )}
     >
+      {mobileSheet ? (
+        <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Travel dates
+            </p>
+            <h3 className="text-lg font-bold text-slate-950">
+              {activePicker === "departure"
+                ? "Select departure"
+                : "Select return"}
+            </h3>
+          </div>
+          <button
+            type="button"
+            aria-label="Close date picker"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
+
       <div className="mb-3 flex items-center justify-between">
         <button
           type="button"
@@ -3946,6 +4034,7 @@ function DatePickerPopover({
 
 function TravelerCabinPopover({
   position,
+  mobileSheet = false,
   adultCount,
   childCount,
   infantCount,
@@ -3954,8 +4043,10 @@ function TravelerCabinPopover({
   onChildChange,
   onInfantChange,
   onCabinClassChange,
+  onClose,
 }: {
   position: { top: number; left: number; width: number };
+  mobileSheet?: boolean;
   adultCount: number;
   childCount: number;
   infantCount: number;
@@ -3964,81 +4055,141 @@ function TravelerCabinPopover({
   onChildChange: (value: number) => void;
   onInfantChange: (value: number) => void;
   onCabinClassChange: (value: CabinClassValue) => void;
+  onClose: () => void;
 }) {
-  return (
-    <div
-      id="flight-traveler-cabin-popover"
-      role="dialog"
-      aria-label="Travelers and cabin class"
-      style={{
+  const dialogStyle = mobileSheet
+    ? ({
+        position: "fixed",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100%",
+        zIndex: 10020,
+      } as const)
+    : ({
         position: "fixed",
         top: position.top,
         left: position.left,
         width: position.width,
         zIndex: 9999,
-      }}
-      className="w-full max-w-[min(350px,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-3 shadow-lg shadow-slate-900/10"
+      } as const);
+
+  return (
+    <div
+      id="flight-traveler-cabin-popover"
+      role="dialog"
+      aria-label="Travelers and cabin class"
+      style={dialogStyle}
+      className={cn(
+        "w-full border border-slate-200 bg-white shadow-lg shadow-slate-900/10",
+        mobileSheet
+          ? "flex max-h-[min(88dvh,calc(100dvh-1rem))] flex-col overflow-hidden rounded-t-[1.5rem]"
+          : "max-w-[min(350px,calc(100vw-2rem))] rounded-2xl p-3",
+      )}
     >
-      <div>
-        <h3 className="text-sm font-semibold text-slate-900">Travelers</h3>
+      {mobileSheet ? (
+        <div className="flex items-center justify-between border-b border-slate-200 p-4 pb-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+              Travelers
+            </p>
+            <h3 className="text-lg font-bold text-slate-950">
+              Travelers and cabin
+            </h3>
+          </div>
+          <button
+            type="button"
+            aria-label="Close travelers and cabin selector"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          >
+            ×
+          </button>
+        </div>
+      ) : null}
 
-        <div className="mt-3 divide-y divide-slate-100">
-          <CounterRow
-            label="Adults"
-            description="18+"
-            value={adultCount}
-            min={1}
-            max={9}
-            onChange={onAdultChange}
-          />
+      <div
+        className={cn(
+          mobileSheet
+            ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3"
+            : "",
+        )}
+      >
+        <div>
+          {!mobileSheet ? (
+            <h3 className="text-sm font-semibold text-slate-900">Travelers</h3>
+          ) : null}
 
-          <CounterRow
-            label="Children"
-            description="0–17"
-            value={childCount}
-            min={0}
-            max={9}
-            onChange={onChildChange}
-          />
+          <div className="mt-3 divide-y divide-slate-100">
+            <CounterRow
+              label="Adults"
+              description="18+"
+              value={adultCount}
+              min={1}
+              max={9}
+              onChange={onAdultChange}
+            />
 
-          <CounterRow
-            label="Infants on lap"
-            description="Under 2"
-            value={infantCount}
-            min={0}
-            max={adultCount}
-            onChange={onInfantChange}
-          />
+            <CounterRow
+              label="Children"
+              description="0–17"
+              value={childCount}
+              min={0}
+              max={9}
+              onChange={onChildChange}
+            />
+
+            <CounterRow
+              label="Infants on lap"
+              description="Under 2"
+              value={infantCount}
+              min={0}
+              max={adultCount}
+              onChange={onInfantChange}
+            />
+          </div>
+        </div>
+
+        <div className="mt-2 border-t border-slate-200 pt-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">
+            Cabin Class
+          </h3>
+          <div className="mt-2 grid grid-cols-3 gap-1">
+            {cabinClassOptions.map((option) => {
+              const selected = option.value === cabinClass;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => onCabinClassChange(option.value)}
+                  className={cn(
+                    "focus-ring rounded-md border px-2 py-1 text-xs font-medium leading-4 transition-colors text-center",
+                    selected
+                      ? "border-indigo-400 bg-indigo-50 text-indigo-900"
+                      : "border-slate-300 text-slate-700 hover:bg-slate-50",
+                  )}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      <div className="mt-2 border-t border-slate-200 pt-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">
-          Cabin Class
-        </h3>
-        <div className="mt-2 grid grid-cols-3 gap-1">
-          {cabinClassOptions.map((option) => {
-            const selected = option.value === cabinClass;
-
-            return (
-              <button
-                key={option.value}
-                type="button"
-                aria-pressed={selected}
-                onClick={() => onCabinClassChange(option.value)}
-                className={cn(
-                  "focus-ring rounded-md border px-2 py-1 text-xs font-medium leading-4 transition-colors text-center",
-                  selected
-                    ? "border-indigo-400 bg-indigo-50 text-indigo-900"
-                    : "border-slate-300 text-slate-700 hover:bg-slate-50",
-                )}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+      {mobileSheet ? (
+        <div className="border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-12 w-full rounded-xl bg-[#0a66c2] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#085aa9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-1"
+          >
+            Done
+          </button>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
