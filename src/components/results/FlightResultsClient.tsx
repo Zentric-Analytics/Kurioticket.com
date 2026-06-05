@@ -17,7 +17,7 @@ import {
   ChevronDown,
   Heart,
   Minus,
-  PencilLine,
+  SquarePen,
   Plus,
   SlidersHorizontal,
   X,
@@ -3414,7 +3414,7 @@ export function FlightResultsClient() {
               ? `Open filters, ${activeFilterLabel}`
               : "Open filters"
           }
-          className="relative h-16 w-[72px] shrink-0 rounded-2xl border-slate-200 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_10px_22px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_12px_24px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          className="relative h-16 w-[72px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
           onClick={() => setFiltersOpen(true)}
         >
           <span className="flex flex-col items-center justify-center gap-1 leading-none">
@@ -3422,7 +3422,7 @@ export function FlightResultsClient() {
             <span>Filters</span>
           </span>
           {activeFilterCount > 0 ? (
-            <span className="absolute right-1.5 top-1.5 inline-flex h-[23px] min-w-[23px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
+            <span className="absolute right-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
               {activeFilterCount}
             </span>
           ) : null}
@@ -3431,7 +3431,7 @@ export function FlightResultsClient() {
         <button
           type="button"
           onClick={openMobileSearchDrawer}
-          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-0 text-left shadow-[0_10px_22px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:shadow-[0_12px_24px_rgba(15,23,42,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
             <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
@@ -3444,9 +3444,9 @@ export function FlightResultsClient() {
           </span>
           <span
             aria-hidden="true"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm"
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]"
           >
-            <PencilLine size={17} />
+            <SquarePen size={16} strokeWidth={2.1} />
           </span>
         </button>
       </div>
@@ -3457,7 +3457,7 @@ export function FlightResultsClient() {
     <main className="flex-1 bg-[#f6f8fb] pb-8">
       <div
         className={cn(
-          "sticky top-0 z-50 border-b border-slate-200/80 bg-[#f6f8fb]/95 px-4 py-2 shadow-sm shadow-slate-900/5 backdrop-blur sm:hidden",
+          "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
           mobileSearchOpen && "hidden",
         )}
       >
