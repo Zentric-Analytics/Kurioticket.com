@@ -52,7 +52,8 @@ import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
 
 const resultStackClass = "w-full max-w-[680px] lg:ml-4 xl:ml-6";
-const desktopFilterStickyTopClass = "lg:sticky lg:top-[7.25rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:overscroll-contain";
+const desktopFilterStickyTopClass =
+  "lg:sticky lg:top-[7.25rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:overscroll-contain";
 
 const loadingMessages = [
   "Searching airlines...",
@@ -833,25 +834,34 @@ export function FlightResultsClient() {
 
   useEffect(() => {
     const searchValues = new URLSearchParams(queryString);
-    const normalizedSearchValues = normalizeFlightDateSearchParams(searchValues);
+    const normalizedSearchValues =
+      normalizeFlightDateSearchParams(searchValues);
 
     if (normalizedSearchValues.toString() !== searchValues.toString()) {
       const nextQuery = normalizedSearchValues.toString();
-      router.replace(nextQuery ? `/flights/results?${nextQuery}` : "/flights/results", {
-        scroll: false,
-      });
+      router.replace(
+        nextQuery ? `/flights/results?${nextQuery}` : "/flights/results",
+        {
+          scroll: false,
+        },
+      );
       return;
     }
 
     const nextTripType = normalizedSearchValues.get("tripType") || "round-trip";
     const nextOrigin = normalizedSearchValues.get("origin")?.trim() || "";
-    const nextDestination = normalizedSearchValues.get("destination")?.trim() || "";
-    const nextDepartureDate = normalizedSearchValues.get("departureDate")?.trim() || "";
-    const nextReturnDate = normalizedSearchValues.get("returnDate")?.trim() || "";
+    const nextDestination =
+      normalizedSearchValues.get("destination")?.trim() || "";
+    const nextDepartureDate =
+      normalizedSearchValues.get("departureDate")?.trim() || "";
+    const nextReturnDate =
+      normalizedSearchValues.get("returnDate")?.trim() || "";
     const adultsParam = Number(normalizedSearchValues.get("adults"));
     const childrenParam = Number(normalizedSearchValues.get("children"));
     const infantsParam = Number(normalizedSearchValues.get("infants"));
-    const legacyTravelers = Number(normalizedSearchValues.get("travelers") || 1);
+    const legacyTravelers = Number(
+      normalizedSearchValues.get("travelers") || 1,
+    );
     const nextAdults = Number.isFinite(adultsParam)
       ? Math.max(1, adultsParam)
       : Math.max(1, legacyTravelers);
@@ -2377,6 +2387,122 @@ export function FlightResultsClient() {
     );
   }
 
+  function renderCompactSearchPopovers() {
+    return (
+      <>
+        {activeDatePicker && datePickerPosition ? (
+          <DatePickerPopover
+            position={datePickerPosition}
+            month={calendarMonth}
+            departureValue={departureDateInput}
+            returnValue={returnDateInput}
+            activePicker={activeDatePicker}
+            onMonthChange={setCalendarMonth}
+            onSelect={(date) => {
+              if (isBeforeToday(date)) return;
+
+              const value = formatDateValue(date);
+
+              if (activeDatePicker === "departure") {
+                setDepartureDateInput(value);
+                setReturnDateInput((current) =>
+                  current && isDateValueBefore(current, value) ? "" : current,
+                );
+
+                if (tripTypeInput === "round-trip") {
+                  setActiveDatePicker("return");
+                } else {
+                  setActiveDatePicker(null);
+                  setDatePickerPosition(null);
+                }
+
+                return;
+              }
+
+              if (isDateValueBefore(value, departureDateInput)) return;
+
+              setReturnDateInput(value);
+              setActiveDatePicker(null);
+              setDatePickerPosition(null);
+            }}
+            onClear={() => {
+              if (activeDatePicker === "departure") {
+                setDepartureDateInput("");
+                setReturnDateInput("");
+              }
+
+              if (activeDatePicker === "return") {
+                setReturnDateInput("");
+              }
+            }}
+            onToday={() => {
+              const today = new Date();
+              const value = formatDateValue(today);
+
+              if (activeDatePicker === "departure") {
+                setDepartureDateInput(value);
+                setReturnDateInput((current) =>
+                  current && isDateValueBefore(current, value) ? "" : current,
+                );
+
+                if (tripTypeInput === "round-trip") {
+                  setActiveDatePicker("return");
+                  return;
+                }
+              } else {
+                if (isDateValueBefore(value, departureDateInput)) return;
+                setReturnDateInput(value);
+              }
+
+              setActiveDatePicker(null);
+              setDatePickerPosition(null);
+            }}
+          />
+        ) : null}
+
+        {travelerPopoverOpen && travelerPopoverPosition ? (
+          <TravelerCabinPopover
+            position={travelerPopoverPosition}
+            adultCount={adultCount}
+            childCount={childCount}
+            infantCount={infantCount}
+            cabinClass={cabinClassInput}
+            onAdultChange={(nextValue) => {
+              const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+
+              setAdultCount(nextAdultCount);
+              setChildCount((current) => Math.min(current, 9 - nextAdultCount));
+              setInfantCount((current) =>
+                Math.min(current, nextAdultCount, 9 - nextAdultCount),
+              );
+            }}
+            onChildChange={(nextValue) => {
+              const nextChildCount = Math.min(
+                9 - adultCount,
+                Math.max(0, nextValue),
+              );
+
+              setChildCount(nextChildCount);
+              setInfantCount((current) =>
+                Math.min(current, 9 - adultCount - nextChildCount),
+              );
+            }}
+            onInfantChange={(nextValue) => {
+              setInfantCount(
+                Math.min(
+                  adultCount,
+                  9 - adultCount - childCount,
+                  Math.max(0, nextValue),
+                ),
+              );
+            }}
+            onCabinClassChange={setCabinClassInput}
+          />
+        ) : null}
+      </>
+    );
+  }
+
   function renderCompactSearchForm(placement: "mobile" | "desktop") {
     if (placement === "mobile") {
       return (
@@ -3107,128 +3233,23 @@ export function FlightResultsClient() {
           mobileSearchOpen ? "block" : "hidden",
         )}
       >
-        {mobileSearchOpen ? renderCompactSearchForm("mobile") : null}
+        {mobileSearchOpen ? (
+          <>
+            {renderCompactSearchForm("mobile")}
+            {renderCompactSearchPopovers()}
+          </>
+        ) : null}
       </div>
 
       <section className="sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 py-3 shadow-sm shadow-slate-900/5 backdrop-blur sm:block">
         <div className="page-shell">
           {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
 
-          {activeDatePicker && datePickerPosition ? (
-            <DatePickerPopover
-              position={datePickerPosition}
-              month={calendarMonth}
-              departureValue={departureDateInput}
-              returnValue={returnDateInput}
-              activePicker={activeDatePicker}
-              onMonthChange={setCalendarMonth}
-              onSelect={(date) => {
-                if (isBeforeToday(date)) return;
-
-                const value = formatDateValue(date);
-
-                if (activeDatePicker === "departure") {
-                  setDepartureDateInput(value);
-                  setReturnDateInput((current) =>
-                    current && isDateValueBefore(current, value) ? "" : current,
-                  );
-
-                  if (tripTypeInput === "round-trip") {
-                    setActiveDatePicker("return");
-                  } else {
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                  }
-
-                  return;
-                }
-
-                if (isDateValueBefore(value, departureDateInput)) return;
-
-                setReturnDateInput(value);
-                setActiveDatePicker(null);
-                setDatePickerPosition(null);
-              }}
-              onClear={() => {
-                if (activeDatePicker === "departure") {
-                  setDepartureDateInput("");
-                  setReturnDateInput("");
-                }
-
-                if (activeDatePicker === "return") {
-                  setReturnDateInput("");
-                }
-              }}
-              onToday={() => {
-                const today = new Date();
-                const value = formatDateValue(today);
-
-                if (activeDatePicker === "departure") {
-                  setDepartureDateInput(value);
-                  setReturnDateInput((current) =>
-                    current && isDateValueBefore(current, value) ? "" : current,
-                  );
-
-                  if (tripTypeInput === "round-trip") {
-                    setActiveDatePicker("return");
-                    return;
-                  }
-                } else {
-                  if (isDateValueBefore(value, departureDateInput)) return;
-                  setReturnDateInput(value);
-                }
-
-                setActiveDatePicker(null);
-                setDatePickerPosition(null);
-              }}
-            />
-          ) : null}
-
-          {travelerPopoverOpen && travelerPopoverPosition ? (
-            <TravelerCabinPopover
-              position={travelerPopoverPosition}
-              adultCount={adultCount}
-              childCount={childCount}
-              infantCount={infantCount}
-              cabinClass={cabinClassInput}
-              onAdultChange={(nextValue) => {
-                const nextAdultCount = Math.min(9, Math.max(1, nextValue));
-
-                setAdultCount(nextAdultCount);
-                setChildCount((current) =>
-                  Math.min(current, 9 - nextAdultCount),
-                );
-                setInfantCount((current) =>
-                  Math.min(current, nextAdultCount, 9 - nextAdultCount),
-                );
-              }}
-              onChildChange={(nextValue) => {
-                const nextChildCount = Math.min(
-                  9 - adultCount,
-                  Math.max(0, nextValue),
-                );
-
-                setChildCount(nextChildCount);
-                setInfantCount((current) =>
-                  Math.min(current, 9 - adultCount - nextChildCount),
-                );
-              }}
-              onInfantChange={(nextValue) => {
-                setInfantCount(
-                  Math.min(
-                    adultCount,
-                    9 - adultCount - childCount,
-                    Math.max(0, nextValue),
-                  ),
-                );
-              }}
-              onCabinClassChange={setCabinClassInput}
-            />
-          ) : null}
+          {renderCompactSearchPopovers()}
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <Filters
             layout="desktop"
@@ -3495,7 +3516,7 @@ export function FlightResultsClient() {
           />
         </div>
 
-        <div className="border-t border-slate-200 bg-white p-4">
+        <div className="border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <Button
             type="button"
             className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
@@ -4381,11 +4402,13 @@ function Filters({
       : "Mixed provider currencies";
 
   return (
-    <div className={cn(
-      "bg-white",
-      layout === "desktop" &&
-        "rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-900/[0.04]",
-    )}>
+    <div
+      className={cn(
+        "bg-white",
+        layout === "desktop" &&
+          "rounded-2xl border border-slate-200/80 shadow-sm shadow-slate-900/[0.04]",
+      )}
+    >
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
           <h2 className="text-base font-bold text-white">Filter by</h2>
