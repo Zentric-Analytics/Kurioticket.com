@@ -986,6 +986,8 @@ export function SearchTabs({
     }
 
     if (selectedIso < departureDate) {
+      setDepartureDate(selectedIso);
+      setReturnDate("");
       return;
     }
 

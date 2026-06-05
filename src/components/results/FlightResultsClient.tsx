@@ -692,6 +692,7 @@ export function FlightResultsClient() {
   const returnWrapRef = useRef<HTMLDivElement | null>(null);
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
+  const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(null);
   const queryString = params.toString();
 
   const originFallbackSuggestions = useMemo(
@@ -753,6 +754,67 @@ export function FlightResultsClient() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const releaseExistingLock = () => {
+      mobileSearchScrollLockRef.current?.restore();
+      mobileSearchScrollLockRef.current = null;
+    };
+
+    if (!mobileSearchOpen || typeof window === "undefined") {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+
+    if (!mobileQuery.matches) {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const bodyElement = document.body;
+    const rootElement = document.documentElement;
+    const scrollY = window.scrollY;
+    const previousBodyStyles = {
+      left: bodyElement.style.left,
+      overflow: bodyElement.style.overflow,
+      position: bodyElement.style.position,
+      right: bodyElement.style.right,
+      top: bodyElement.style.top,
+      width: bodyElement.style.width,
+    };
+    const previousRootStyles = {
+      overflow: rootElement.style.overflow,
+      overscrollBehavior: rootElement.style.overscrollBehavior,
+    };
+
+    bodyElement.style.left = "0";
+    bodyElement.style.overflow = "hidden";
+    bodyElement.style.position = "fixed";
+    bodyElement.style.right = "0";
+    bodyElement.style.top = `-${scrollY}px`;
+    bodyElement.style.width = "100%";
+    rootElement.style.overflow = "hidden";
+    rootElement.style.overscrollBehavior = "none";
+
+    mobileSearchScrollLockRef.current = {
+      restore: () => {
+        bodyElement.style.left = previousBodyStyles.left;
+        bodyElement.style.overflow = previousBodyStyles.overflow;
+        bodyElement.style.position = previousBodyStyles.position;
+        bodyElement.style.right = previousBodyStyles.right;
+        bodyElement.style.top = previousBodyStyles.top;
+        bodyElement.style.width = previousBodyStyles.width;
+        rootElement.style.overflow = previousRootStyles.overflow;
+        rootElement.style.overscrollBehavior =
+          previousRootStyles.overscrollBehavior;
+        window.scrollTo(0, scrollY);
+      },
+    };
+
+    return releaseExistingLock;
+  }, [mobileSearchOpen]);
 
   function triggerFilterApplying() {
     setFilterApplying(true);
@@ -1327,6 +1389,31 @@ export function FlightResultsClient() {
     setDestinationCode(currentOriginCode);
     setActiveSuggest(null);
     setDropdownPosition(null);
+  }
+
+  function applyFlightDateSelection(date: Date) {
+    if (!activeDatePicker) return;
+
+    const nextDateState = getNextFlightDateSelection({
+      activePicker: activeDatePicker,
+      date,
+      departureDate: departureDateInput,
+      returnDate: returnDateInput,
+      tripType: tripTypeInput,
+    });
+
+    if (!nextDateState) return;
+
+    setDepartureDateInput(nextDateState.departureDate);
+    setReturnDateInput(nextDateState.returnDate);
+
+    if (nextDateState.activePicker) {
+      setActiveDatePicker(nextDateState.activePicker);
+      return;
+    }
+
+    setActiveDatePicker(null);
+    setDatePickerPosition(null);
   }
 
   function handleCompactSearchSubmit(event: FormEvent<HTMLFormElement>) {
@@ -2085,33 +2172,7 @@ export function FlightResultsClient() {
               returnValue={returnDateInput}
               activePicker={activeDatePicker}
               onMonthChange={setCalendarMonth}
-              onSelect={(date) => {
-                if (isBeforeToday(date)) return;
-
-                const value = formatDateValue(date);
-
-                if (activeDatePicker === "departure") {
-                  setDepartureDateInput(value);
-                  setReturnDateInput((current) =>
-                    current && isDateValueBefore(current, value) ? "" : current,
-                  );
-
-                  if (tripTypeInput === "round-trip") {
-                    setActiveDatePicker("return");
-                  } else {
-                    setActiveDatePicker(null);
-                    setDatePickerPosition(null);
-                  }
-
-                  return;
-                }
-
-                if (isDateValueBefore(value, departureDateInput)) return;
-
-                setReturnDateInput(value);
-                setActiveDatePicker(null);
-                setDatePickerPosition(null);
-              }}
+              onSelect={applyFlightDateSelection}
               onClear={() => {
                 if (activeDatePicker === "departure") {
                   setDepartureDateInput("");
@@ -2122,28 +2183,7 @@ export function FlightResultsClient() {
                   setReturnDateInput("");
                 }
               }}
-              onToday={() => {
-                const today = new Date();
-                const value = formatDateValue(today);
-
-                if (activeDatePicker === "departure") {
-                  setDepartureDateInput(value);
-                  setReturnDateInput((current) =>
-                    current && isDateValueBefore(current, value) ? "" : current,
-                  );
-
-                  if (tripTypeInput === "round-trip") {
-                    setActiveDatePicker("return");
-                    return;
-                  }
-                } else {
-                  if (isDateValueBefore(value, departureDateInput)) return;
-                  setReturnDateInput(value);
-                }
-
-                setActiveDatePicker(null);
-                setDatePickerPosition(null);
-              }}
+              onToday={() => applyFlightDateSelection(new Date())}
             />
           ) : null}
 
@@ -2425,33 +2465,7 @@ export function FlightResultsClient() {
             returnValue={returnDateInput}
             activePicker={activeDatePicker}
             onMonthChange={setCalendarMonth}
-            onSelect={(date) => {
-              if (isBeforeToday(date)) return;
-
-              const value = formatDateValue(date);
-
-              if (activeDatePicker === "departure") {
-                setDepartureDateInput(value);
-                setReturnDateInput((current) =>
-                  current && isDateValueBefore(current, value) ? "" : current,
-                );
-
-                if (tripTypeInput === "round-trip") {
-                  setActiveDatePicker("return");
-                } else {
-                  setActiveDatePicker(null);
-                  setDatePickerPosition(null);
-                }
-
-                return;
-              }
-
-              if (isDateValueBefore(value, departureDateInput)) return;
-
-              setReturnDateInput(value);
-              setActiveDatePicker(null);
-              setDatePickerPosition(null);
-            }}
+            onSelect={applyFlightDateSelection}
             onClear={() => {
               if (activeDatePicker === "departure") {
                 setDepartureDateInput("");
@@ -2462,28 +2476,7 @@ export function FlightResultsClient() {
                 setReturnDateInput("");
               }
             }}
-            onToday={() => {
-              const today = new Date();
-              const value = formatDateValue(today);
-
-              if (activeDatePicker === "departure") {
-                setDepartureDateInput(value);
-                setReturnDateInput((current) =>
-                  current && isDateValueBefore(current, value) ? "" : current,
-                );
-
-                if (tripTypeInput === "round-trip") {
-                  setActiveDatePicker("return");
-                  return;
-                }
-              } else {
-                if (isDateValueBefore(value, departureDateInput)) return;
-                setReturnDateInput(value);
-              }
-
-              setActiveDatePicker(null);
-              setDatePickerPosition(null);
-            }}
+            onToday={() => applyFlightDateSelection(new Date())}
           />
         ) : null}
 
@@ -2540,18 +2533,13 @@ export function FlightResultsClient() {
       return (
         <form
           onSubmit={handleCompactSearchSubmit}
-          className="mx-auto w-full min-w-0"
+          className="mx-auto flex w-full min-w-0 flex-col"
         >
-          <div className="rounded-t-2xl bg-white p-4 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                  Edit flight search
-                </p>
-                <h2 className="text-lg font-bold text-slate-950">
-                  Update your trip
-                </h2>
-              </div>
+          <div className="rounded-t-[1.5rem] bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-[0_-18px_42px_rgba(15,23,42,0.16)]">
+            <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-3">
+              <h2 className="text-lg font-bold tracking-tight text-slate-950">
+                Edit flight search
+              </h2>
 
               <button
                 type="button"
@@ -2563,14 +2551,15 @@ export function FlightResultsClient() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div ref={tripTypeMenuRef} className="relative">
+            <div className="space-y-3">
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-slate-900/[0.03]">
+                <div ref={tripTypeMenuRef} className="relative border-b border-slate-100">
                 <button
                   type="button"
                   aria-expanded={tripTypeMenuOpen}
                   aria-haspopup="listbox"
                   onClick={() => setTripTypeMenuOpen((open) => !open)}
-                  className="focus-ring flex min-h-[52px] w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition-colors hover:border-slate-300 hover:bg-white"
+                  className="focus-ring flex min-h-[54px] w-full items-center justify-between bg-white px-3.5 py-2.5 text-left transition-colors hover:bg-slate-50"
                 >
                   <span>
                     <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
@@ -2593,7 +2582,7 @@ export function FlightResultsClient() {
                   <div
                     role="listbox"
                     aria-label="Trip type"
-                    className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                    className="absolute left-3 right-3 top-full z-30 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
                   >
                     <button
                       type="button"
@@ -2638,12 +2627,12 @@ export function FlightResultsClient() {
                     </button>
                   </div>
                 ) : null}
-              </div>
+                </div>
 
-              <div className="space-y-3">
+                <div className="space-y-0 divide-y divide-slate-100">
                 <div
                   ref={originWrapRef}
-                  className="relative rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 transition-colors focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/40"
+                  className="relative bg-white px-3.5 py-2.5 transition-colors focus-within:bg-slate-50"
                 >
                   <label
                     className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
@@ -2730,7 +2719,7 @@ export function FlightResultsClient() {
 
                 <div
                   ref={destinationWrapRef}
-                  className="relative rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 transition-colors focus-within:border-indigo-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/40"
+                  className="relative bg-white px-3.5 py-2.5 transition-colors focus-within:bg-slate-50"
                 >
                   <label
                     className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
@@ -2804,9 +2793,8 @@ export function FlightResultsClient() {
                     />
                   ) : null}
                 </div>
-              </div>
 
-              <div ref={departureWrapRef}>
+                <div ref={departureWrapRef}>
                 <button
                   type="button"
                   onClick={() => {
@@ -2817,7 +2805,7 @@ export function FlightResultsClient() {
                     setActiveDatePicker("departure");
                     setDatePickerPosition(null);
                   }}
-                  className="focus-ring flex min-h-[56px] w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition-colors hover:border-slate-300 hover:bg-white"
+                  className="focus-ring flex min-h-[56px] w-full items-center gap-3 bg-white px-3.5 py-2.5 text-left transition-colors hover:bg-slate-50"
                 >
                   <Calendar className="h-5 w-5 shrink-0 text-indigo-700" />
                   <span className="min-w-0">
@@ -2846,7 +2834,7 @@ export function FlightResultsClient() {
                     setTravelerPopoverOpen(true);
                     setTravelerPopoverPosition(null);
                   }}
-                  className="focus-ring flex min-h-[56px] w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition-colors hover:border-slate-300 hover:bg-white"
+                  className="focus-ring flex min-h-[56px] w-full items-center justify-between gap-3 bg-white px-3.5 py-2.5 text-left transition-colors hover:bg-slate-50"
                 >
                   <span className="min-w-0">
                     <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
@@ -2863,12 +2851,14 @@ export function FlightResultsClient() {
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
                 </button>
+                </div>
               </div>
             </div>
+          </div>
 
             <Button
               type="submit"
-              className="mt-4 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
+              className="mt-3 h-12 w-full rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20"
             >
               Search
             </Button>
@@ -3277,7 +3267,7 @@ export function FlightResultsClient() {
 
       <div
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto rounded-t-2xl bg-white shadow-2xl sm:hidden",
+          "fixed inset-x-0 bottom-0 z-50 max-h-[88dvh] overflow-y-auto overscroll-contain rounded-t-[1.5rem] bg-white shadow-2xl sm:hidden",
           mobileSearchOpen ? "block" : "hidden",
         )}
       >
@@ -3727,6 +3717,66 @@ function isValidFutureOrTodayDateValue(value: string): boolean {
   if (!date) return false;
 
   return !isBeforeToday(date);
+}
+
+type FlightDateSelectionState = {
+  activePicker: "departure" | "return";
+  date: Date;
+  departureDate: string;
+  returnDate: string;
+  tripType: string;
+};
+
+function getNextFlightDateSelection({
+  activePicker,
+  date,
+  departureDate,
+  returnDate,
+  tripType,
+}: FlightDateSelectionState): {
+  activePicker: "return" | null;
+  departureDate: string;
+  returnDate: string;
+} | null {
+  if (isBeforeToday(date)) return null;
+
+  const value = formatDateValue(date);
+
+  if (tripType !== "round-trip" || activePicker === "departure") {
+    return {
+      activePicker: tripType === "round-trip" ? "return" : null,
+      departureDate: value,
+      returnDate:
+        tripType === "round-trip" &&
+        returnDate &&
+        isValidFutureOrTodayDateValue(returnDate) &&
+        !isDateValueBefore(returnDate, value)
+          ? returnDate
+          : "",
+    };
+  }
+
+  if (!departureDate || !isValidFutureOrTodayDateValue(departureDate)) {
+    return {
+      activePicker: "return",
+      departureDate: value,
+      returnDate: "",
+    };
+  }
+
+  if (isDateValueBefore(value, departureDate)) {
+    return {
+      activePicker: "return",
+      departureDate: value,
+      returnDate: "",
+    };
+  }
+
+  return {
+    activePicker: null,
+    departureDate,
+    returnDate: value,
+  };
 }
 
 function normalizeFlightDateSearchParams(
