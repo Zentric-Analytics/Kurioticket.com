@@ -3369,8 +3369,8 @@ export function FlightResultsClient() {
             </div>
           ) : (
             <div className={cn(resultStackClass, "space-y-4")}>
-              <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm shadow-slate-900/5">
-                <div className="hidden grid-cols-3 gap-2 sm:grid">
+              <div className="rounded-3xl border border-slate-200/80 bg-white p-2.5 shadow-sm shadow-slate-900/[0.04]">
+                <div className="hidden auto-rows-fr grid-cols-3 gap-2.5 sm:grid">
                   <SummarySortButton
                     label="Cheapest"
                     details={buildSummaryDetails(
@@ -3408,7 +3408,7 @@ export function FlightResultsClient() {
                   />
                 </div>
 
-                <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:hidden">
+                <div className="-mx-1 flex snap-x gap-2.5 overflow-x-auto px-1 pb-1 sm:hidden">
                   <SummarySortButton
                     label="Cheapest"
                     details={buildSummaryDetails(
@@ -4747,37 +4747,37 @@ function SummarySortButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative rounded-2xl border text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
+        "group relative flex h-full flex-col rounded-2xl border text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
         mobile
-          ? "min-w-[168px] snap-start px-3 py-3"
-          : "min-h-[112px] px-4 py-3",
+          ? "min-w-[210px] snap-start px-4 py-3.5"
+          : "min-h-[132px] px-4 py-4",
         active
-          ? "border-indigo-200 bg-gradient-to-br from-indigo-50 via-white to-sky-50 text-navy shadow-sm ring-1 ring-indigo-100"
-          : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-slate-50",
+          ? "border-indigo-200/80 bg-gradient-to-br from-indigo-50/80 via-white to-sky-50/80 text-slate-800 shadow-sm shadow-indigo-900/[0.04] ring-1 ring-indigo-100/80"
+          : "border-slate-200/80 bg-white text-slate-600 hover:border-indigo-200/80 hover:bg-slate-50/80 hover:shadow-sm hover:shadow-slate-900/[0.03]",
       )}
     >
       <span
         className={cn(
-          "inline-flex rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em]",
-          active ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-500",
+          "inline-flex w-fit rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em]",
+          active
+            ? "bg-indigo-100 text-indigo-700"
+            : "bg-slate-100 text-slate-500",
         )}
       >
         {label}
       </span>
-      <span className="mt-2 block truncate text-lg font-black leading-6 tracking-[-0.03em] text-slate-950">
+      <span className="mt-3 block truncate text-xl font-semibold leading-7 tracking-[-0.02em] text-slate-800 sm:text-lg sm:leading-6 lg:text-xl lg:leading-7">
         {details?.primary ?? "—"}
       </span>
       {details ? (
-        <>
-          <span className="mt-1 block truncate text-xs font-bold leading-5 text-slate-600">
+        <span className="mt-2 flex min-h-0 flex-1 flex-col justify-end gap-1.5">
+          <span className="block truncate text-xs font-medium leading-5 text-slate-600">
             {details.context}
           </span>
-          {!mobile ? (
-            <span className="mt-1 block truncate text-[11px] font-semibold leading-4 text-slate-500">
-              {details.departure}
-            </span>
-          ) : null}
-        </>
+          <span className="block truncate text-[11px] font-normal leading-4 text-slate-500">
+            {details.departure}
+          </span>
+        </span>
       ) : null}
     </button>
   );
