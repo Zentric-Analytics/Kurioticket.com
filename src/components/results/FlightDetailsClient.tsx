@@ -11,7 +11,6 @@ import {
   Plane,
   PlaneLanding,
   PlaneTakeoff,
-  RotateCcw,
   ShieldCheck,
   Sparkles,
   Ticket,
@@ -131,12 +130,11 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       </span>
                       <span>{flight.destinationAirport}</span>
                     </h1>
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                      <DetailRow icon={<Plane size={14} />} label="Stops" value={stopLabel} />
-                      <DetailRow icon={<Clock3 size={14} />} label="Duration" value={flight.duration} />
-                      {flight.cabinClass ? <DetailRow icon={<Ticket size={14} />} label="Cabin" value={flight.cabinClass} /> : null}
-                      <DetailRow icon={<Luggage size={14} />} label="Baggage" value={flight.baggageInfo || "Confirmed by provider"} />
-                      <DetailRow icon={<RotateCcw size={14} />} label="Refund/change" value={flight.refundInfo || "Confirmed by provider"} />
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <DetailChip icon={<Plane size={12} />} label="Stops" value={stopLabel} />
+                      <DetailChip icon={<Clock3 size={12} />} label="Duration" value={flight.duration} />
+                      {flight.cabinClass ? <DetailChip icon={<Ticket size={12} />} label="Cabin" value={flight.cabinClass} /> : null}
+                      <DetailChip icon={<Luggage size={12} />} label="Baggage" value={flight.baggageInfo || "Confirmed by provider"} maxWidthClassName="max-w-[360px]" />
                     </div>
                   </div>
                   <div className="rounded-2xl border border-border bg-white p-4 md:min-w-52 md:text-right">
@@ -324,14 +322,13 @@ function TimelineItem({ icon, title, eyebrow, body, isLast = false }: { icon: Re
   );
 }
 
-function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function DetailChip({ icon, label, value, maxWidthClassName = "max-w-full" }: { icon: React.ReactNode; label: string; value: string; maxWidthClassName?: string }) {
   return (
-    <div className="flex min-h-[52px] items-start gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 shadow-sm">
-      <div className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">{icon}</div>
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">{label}</p>
-        <p className="mt-0.5 line-clamp-2 text-xs font-semibold leading-4 text-slate-900">{value}</p>
-      </div>
+    <div className={`inline-flex ${maxWidthClassName} items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold leading-5 text-slate-700 shadow-sm`}>
+      <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700">{icon}</span>
+      <span className="min-w-0 truncate">
+        <span className="text-slate-500">{label}:</span> {value}
+      </span>
     </div>
   );
 }
