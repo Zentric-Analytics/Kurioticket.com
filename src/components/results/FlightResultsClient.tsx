@@ -706,6 +706,8 @@ export function FlightResultsClient() {
   const travelerCabinWrapRef = useRef<HTMLDivElement | null>(null);
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const filtersHydratedFromUrlRef = useRef(false);
+  const hydratedFilterQueryStringRef = useRef<string | null>(null);
+  const lastWrittenFilterQueryStringRef = useRef<string | null>(null);
   const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
@@ -1681,13 +1683,6 @@ export function FlightResultsClient() {
     };
   }, [results]);
 
-  useEffect(() => {
-    if (priceBounds.max > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset only when new result price bounds are derived.
-      setMaxPrice(priceBounds.max);
-    }
-  }, [priceBounds]);
-
   const timeBounds = useMemo(() => {
     const departureMinutes = results
       .map((flight) => getTimeMinutes(flight.departureTime))
@@ -1713,16 +1708,6 @@ export function FlightResultsClient() {
     };
   }, [results]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset only when new result time bounds are derived.
-    setMaxTakeoffMinutes(timeBounds.takeoff?.max ?? null);
-  }, [timeBounds.takeoff?.max]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset only when new result time bounds are derived.
-    setMaxLandingMinutes(timeBounds.landing?.max ?? null);
-  }, [timeBounds.landing?.max]);
-
   const durationBounds = useMemo(() => {
     const durations = results
       .map((flight) => flight.durationMinutes)
@@ -1739,12 +1724,14 @@ export function FlightResultsClient() {
   }, [results]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset only when new result duration bounds are derived.
-    setMaxDurationMinutes(durationBounds?.max ?? null);
-  }, [durationBounds?.max]);
-
-  useEffect(() => {
     if (loading) return;
+
+    if (lastWrittenFilterQueryStringRef.current === queryString) {
+      lastWrittenFilterQueryStringRef.current = null;
+      hydratedFilterQueryStringRef.current = queryString;
+      filtersHydratedFromUrlRef.current = true;
+      return;
+    }
 
     const filterParams = new URLSearchParams(queryString);
     const allowedStops = new Set(stopOptions.map((option) => option.value));
@@ -1757,48 +1744,98 @@ export function FlightResultsClient() {
     const allowedQuality = new Set(
       flightQualityOptions.map((option) => option.value),
     );
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrates client-only filter controls from shareable URL params after result-derived bounds/options load.
-    setMaxPrice(
+    const nextMaxPrice =
       parseBoundedFilterNumber(
         filterParams.get("fPrice"),
         priceBounds.min,
         priceBounds.max,
-      ) ?? priceBounds.max,
-    );
-    setMaxTakeoffMinutes(
+      ) ?? priceBounds.max;
+    const nextMaxTakeoffMinutes =
       parseBoundedFilterNumber(
         filterParams.get("fTakeoff"),
         timeBounds.takeoff?.min ?? null,
         timeBounds.takeoff?.max ?? null,
-      ) ?? timeBounds.takeoff?.max ?? null,
-    );
-    setMaxLandingMinutes(
+      ) ??
+      timeBounds.takeoff?.max ??
+      null;
+    const nextMaxLandingMinutes =
       parseBoundedFilterNumber(
         filterParams.get("fLanding"),
         timeBounds.landing?.min ?? null,
         timeBounds.landing?.max ?? null,
-      ) ?? timeBounds.landing?.max ?? null,
-    );
-    setMaxDurationMinutes(
+      ) ??
+      timeBounds.landing?.max ??
+      null;
+    const nextMaxDurationMinutes =
       parseBoundedFilterNumber(
         filterParams.get("fDuration"),
         durationBounds?.min ?? null,
         durationBounds?.max ?? null,
-      ) ?? durationBounds?.max ?? null,
+      ) ??
+      durationBounds?.max ??
+      null;
+    const nextSelectedStops = readFilterList(
+      filterParams,
+      "fStop",
+      allowedStops,
     );
-    setSelectedStops(readFilterList(filterParams, "fStop", allowedStops));
-    setSelectedAirlines(
-      readFilterList(filterParams, "fAirline", allowedAirlines),
+    const nextSelectedAirlines = readFilterList(
+      filterParams,
+      "fAirline",
+      allowedAirlines,
     );
-    setSelectedAirports(
-      readFilterList(filterParams, "fAirport", allowedAirports),
+    const nextSelectedAirports = readFilterList(
+      filterParams,
+      "fAirport",
+      allowedAirports,
     );
-    setSelectedFlightQuality(
-      readFilterList(filterParams, "fQuality", allowedQuality),
+    const nextSelectedFlightQuality = readFilterList(
+      filterParams,
+      "fQuality",
+      allowedQuality,
     );
-    setBaggageIncludedOnly(filterParams.get("fBaggage") !== "0");
-    setFlexibleOnly(filterParams.get("fFlexible") === "1");
+    const nextBaggageIncludedOnly = filterParams.get("fBaggage") !== "0";
+    const nextFlexibleOnly = filterParams.get("fFlexible") === "1";
+
+    setMaxPrice((current) =>
+      current === nextMaxPrice ? current : nextMaxPrice,
+    );
+    setMaxTakeoffMinutes((current) =>
+      current === nextMaxTakeoffMinutes ? current : nextMaxTakeoffMinutes,
+    );
+    setMaxLandingMinutes((current) =>
+      current === nextMaxLandingMinutes ? current : nextMaxLandingMinutes,
+    );
+    setMaxDurationMinutes((current) =>
+      current === nextMaxDurationMinutes ? current : nextMaxDurationMinutes,
+    );
+    setSelectedStops((current) =>
+      areStringArraysEqual(current, nextSelectedStops)
+        ? current
+        : nextSelectedStops,
+    );
+    setSelectedAirlines((current) =>
+      areStringArraysEqual(current, nextSelectedAirlines)
+        ? current
+        : nextSelectedAirlines,
+    );
+    setSelectedAirports((current) =>
+      areStringArraysEqual(current, nextSelectedAirports)
+        ? current
+        : nextSelectedAirports,
+    );
+    setSelectedFlightQuality((current) =>
+      areStringArraysEqual(current, nextSelectedFlightQuality)
+        ? current
+        : nextSelectedFlightQuality,
+    );
+    setBaggageIncludedOnly((current) =>
+      current === nextBaggageIncludedOnly ? current : nextBaggageIncludedOnly,
+    );
+    setFlexibleOnly((current) =>
+      current === nextFlexibleOnly ? current : nextFlexibleOnly,
+    );
+    hydratedFilterQueryStringRef.current = queryString;
     filtersHydratedFromUrlRef.current = true;
   }, [
     airlineOptions,
@@ -1818,7 +1855,13 @@ export function FlightResultsClient() {
   ]);
 
   useEffect(() => {
-    if (!filtersHydratedFromUrlRef.current || loading) return;
+    if (
+      !filtersHydratedFromUrlRef.current ||
+      hydratedFilterQueryStringRef.current !== queryString ||
+      loading
+    ) {
+      return;
+    }
 
     const currentParams = new URLSearchParams(queryString);
     const nextParams = new URLSearchParams(queryString);
@@ -1869,6 +1912,7 @@ export function FlightResultsClient() {
     if (nextParams.toString() === currentParams.toString()) return;
 
     const nextQuery = nextParams.toString();
+    lastWrittenFilterQueryStringRef.current = nextQuery;
     router.replace(
       nextQuery ? `/flights/results?${nextQuery}` : "/flights/results",
       {
@@ -1954,52 +1998,71 @@ export function FlightResultsClient() {
 
   const activeFilterLabel = `${activeFilterCount} active`;
 
-  const filtered = results.filter((flight) => {
-    const matchesPrice = flight.price <= maxPrice;
-    const matchesSelectedStops =
-      selectedStops.length === 0 ||
-      selectedStops.includes(getStopBucket(flight.stops));
-    const matchesAirline =
-      selectedAirlines.length === 0 ||
-      selectedAirlines.includes(flight.airlineName);
-    const matchesAirport =
-      selectedAirports.length === 0 ||
-      selectedAirports.some((airport) => flightMatchesAirport(flight, airport));
-    const matchesBaggage = !baggageIncludedOnly || hasBaggageIncluded(flight);
-    const matchesFlexibility = !flexibleOnly || hasFlexibleTerms(flight);
-    const matchesFlightQuality =
-      selectedFlightQuality.length === 0 ||
-      selectedFlightQuality.every((option) =>
-        flightHasQualityOption(flight, option),
-      );
-    const departureMinutes = getTimeMinutes(flight.departureTime);
-    const arrivalMinutes = getTimeMinutes(flight.arrivalTime);
-    const matchesTakeoffTime =
-      maxTakeoffMinutes === null ||
-      departureMinutes === null ||
-      departureMinutes <= maxTakeoffMinutes;
-    const matchesLandingTime =
-      maxLandingMinutes === null ||
-      arrivalMinutes === null ||
-      arrivalMinutes <= maxLandingMinutes;
-    const matchesDuration =
-      maxDurationMinutes === null ||
-      !Number.isFinite(flight.durationMinutes) ||
-      flight.durationMinutes <= maxDurationMinutes;
+  const filtered = useMemo(
+    () =>
+      results.filter((flight) => {
+        const matchesPrice = flight.price <= maxPrice;
+        const matchesSelectedStops =
+          selectedStops.length === 0 ||
+          selectedStops.includes(getStopBucket(flight.stops));
+        const matchesAirline =
+          selectedAirlines.length === 0 ||
+          selectedAirlines.includes(flight.airlineName);
+        const matchesAirport =
+          selectedAirports.length === 0 ||
+          selectedAirports.some((airport) =>
+            flightMatchesAirport(flight, airport),
+          );
+        const matchesBaggage =
+          !baggageIncludedOnly || hasBaggageIncluded(flight);
+        const matchesFlexibility = !flexibleOnly || hasFlexibleTerms(flight);
+        const matchesFlightQuality =
+          selectedFlightQuality.length === 0 ||
+          selectedFlightQuality.every((option) =>
+            flightHasQualityOption(flight, option),
+          );
+        const departureMinutes = getTimeMinutes(flight.departureTime);
+        const arrivalMinutes = getTimeMinutes(flight.arrivalTime);
+        const matchesTakeoffTime =
+          maxTakeoffMinutes === null ||
+          departureMinutes === null ||
+          departureMinutes <= maxTakeoffMinutes;
+        const matchesLandingTime =
+          maxLandingMinutes === null ||
+          arrivalMinutes === null ||
+          arrivalMinutes <= maxLandingMinutes;
+        const matchesDuration =
+          maxDurationMinutes === null ||
+          !Number.isFinite(flight.durationMinutes) ||
+          flight.durationMinutes <= maxDurationMinutes;
 
-    return (
-      matchesPrice &&
-      matchesSelectedStops &&
-      matchesAirline &&
-      matchesAirport &&
-      matchesBaggage &&
-      matchesFlexibility &&
-      matchesFlightQuality &&
-      matchesTakeoffTime &&
-      matchesLandingTime &&
-      matchesDuration
-    );
-  });
+        return (
+          matchesPrice &&
+          matchesSelectedStops &&
+          matchesAirline &&
+          matchesAirport &&
+          matchesBaggage &&
+          matchesFlexibility &&
+          matchesFlightQuality &&
+          matchesTakeoffTime &&
+          matchesLandingTime &&
+          matchesDuration
+        );
+      }),
+    [
+      baggageIncludedOnly,
+      flexibleOnly,
+      maxDurationMinutes,
+      maxLandingMinutes,
+      maxPrice,
+      maxTakeoffMinutes,
+      results,
+      selectedAirlines,
+      selectedAirports,
+      selectedFlightQuality,
+      selectedStops,
+    ],
+  );
 
   const sortedResults = useMemo(() => {
     const nextResults = [...filtered];
@@ -2152,7 +2215,9 @@ export function FlightResultsClient() {
                     id="tripType"
                     name="tripType"
                     value={tripTypeInput}
-                    onChange={(event) => handleTripTypeChange(event.target.value)}
+                    onChange={(event) =>
+                      handleTripTypeChange(event.target.value)
+                    }
                     className="focus-ring h-8 w-full appearance-none rounded-md border-0 bg-transparent px-0 pr-6 text-[16px] font-medium text-slate-900 outline-none transition-colors md:text-sm"
                   >
                     <option value="round-trip">Round-trip</option>
@@ -3706,7 +3771,9 @@ export function FlightResultsClient() {
         <div className="flex-1 overflow-auto p-5 pb-3">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">Filters</h2>
+              <h2 className="text-base font-semibold text-slate-900">
+                Filters
+              </h2>
               {activeFilterCount > 0 ? (
                 <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
                   {activeFilterLabel}
@@ -4069,6 +4136,12 @@ function appendFilterList(
   for (const value of Array.from(new Set(values)).filter(isSafeFilterValue)) {
     params.append(key, value);
   }
+}
+
+function areStringArraysEqual(first: string[], second: string[]) {
+  if (first.length !== second.length) return false;
+
+  return first.every((value, index) => value === second[index]);
 }
 
 function buildMonthDays(month: Date): Array<Date | null> {
