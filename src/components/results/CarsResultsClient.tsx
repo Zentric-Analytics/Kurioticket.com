@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Clock3,
   MapPin,
+  PencilLine,
   Search,
   SlidersHorizontal,
   Users,
@@ -99,6 +100,21 @@ const carFilterGroups: CarFilterGroup[] = [
     options: ["Airport counter", "Shuttle pickup", "City location"],
   },
 ];
+
+const formatCompactDate = (date: string) => {
+  if (!date) {
+    return "Select dates";
+  }
+
+  const [year, month, day] = date.split("-").map(Number);
+
+  return year && month && day
+    ? new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+      }).format(new Date(year, month - 1, day))
+    : date;
+};
 
 const formatDate = (date: string) => {
   if (!date) {
@@ -205,6 +221,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const [selectedCarFilters, setSelectedCarFilters] =
     useState<SelectedCarFilters>({});
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
+  const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
+    useState(false);
   const [pickupLocation, setPickupLocation] = useState(values.pickupLocation);
   const [dropoffLocation, setDropoffLocation] = useState(
     values.dropoffLocation || values.pickupLocation,
@@ -245,6 +263,21 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     [selectedCarFilters],
   );
   const activeFilterLabel = `${activeFilterCount} active`;
+  const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
+  const showCompactSearchSummary =
+    isSearchBarCompact && !isSearchExpandedWhileSticky;
+  const pickupSummary = pickupLocation.trim() || "Pickup location";
+  const returnSummary =
+    dropoffLocation.trim() || pickupLocation.trim() || "Return location";
+  const rentalDateSummary = pickupDate
+    ? dropoffDate
+      ? `${formatCompactDate(pickupDate)} — ${formatCompactDate(dropoffDate)}`
+      : formatCompactDate(pickupDate)
+    : "Select rental dates";
+  const timeSummary = `${formatTimeLabel(pickupTime)} — ${formatTimeLabel(
+    dropoffTime,
+  )}`;
+  const driverAgeSummary = getDriverAgeOptionLabel(driverAge);
 
   const toggleCarFilter = (groupId: string, option: string) => {
     setSelectedCarFilters((current) => {
@@ -276,7 +309,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsSearchBarCompact(!entry.isIntersecting);
+        const shouldCompact = !entry.isIntersecting;
+        setIsSearchBarCompact(shouldCompact);
+
+        if (!shouldCompact) {
+          setIsSearchExpandedWhileSticky(false);
+        }
       },
       { threshold: 0 },
     );
@@ -348,14 +386,19 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       <section
         className={cn(
           "sticky top-0 z-40 border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200",
-          isSearchBarCompact
+          showCompactSearchSummary
             ? "py-1.5 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
             : "py-2.5 shadow-[0_4px_16px_rgba(15,23,42,0.06)]",
         )}
         aria-labelledby="cars-results-heading"
       >
         <div className="page-shell">
-          <div className="mb-2 flex items-center justify-between gap-3 lg:hidden">
+          <div
+            className={cn(
+              "mb-2 flex items-center justify-between gap-3 lg:hidden",
+              showCompactSearchSummary && "hidden",
+            )}
+          >
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
               Car rental results
             </p>
@@ -380,7 +423,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             </Button>
           </div>
 
-          <form action="/cars/results" method="get" className="min-w-0">
+          <form
+            action="/cars/results"
+            method="get"
+            className="min-w-0"
+            onSubmit={() => setIsSearchExpandedWhileSticky(false)}
+          >
             <input type="hidden" name="pickupDate" value={pickupDate} />
             <input type="hidden" name="dropoffDate" value={dropoffDate} />
             <input type="hidden" name="pickupTime" value={pickupTime} />
@@ -389,115 +437,173 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             <div
               className={cn(
                 "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.08)] transition-[padding,box-shadow] duration-200",
-                isSearchBarCompact
-                  ? "p-0.5 shadow-[0_5px_16px_rgba(15,23,42,0.07)]"
+                showCompactSearchSummary
+                  ? "p-1 shadow-[0_5px_16px_rgba(15,23,42,0.07)]"
                   : "p-1",
               )}
             >
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1.15fr)_minmax(0,1.35fr)_minmax(0,1.15fr)_minmax(7.5rem,0.68fr)_108px] lg:gap-0">
-                <SearchInputCell
-                  icon={MapPin}
-                  inputRef={pickupInputRef}
-                  isCompact={isSearchBarCompact}
-                  label="Pickup location"
-                  name="pickupLocation"
-                  onChange={setPickupLocation}
-                  onClear={() => {
-                    setPickupLocation("");
-                    pickupInputRef.current?.focus();
-                  }}
-                  placeholder="Airport, city, or address"
-                  value={pickupLocation}
-                  clearLabel="Clear pickup location"
-                  className="lg:rounded-l-xl"
-                />
-                <SearchInputCell
-                  icon={MapPin}
-                  inputRef={dropoffInputRef}
-                  isCompact={isSearchBarCompact}
-                  label="Return location"
-                  name="dropoffLocation"
-                  onChange={setDropoffLocation}
-                  onClear={() => {
-                    setDropoffLocation("");
-                    dropoffInputRef.current?.focus();
-                  }}
-                  placeholder="Same as pickup"
-                  value={dropoffLocation}
-                  clearLabel="Clear return location"
-                />
-                <SearchDateCell
-                  dropoffDate={dropoffDate}
-                  isCompact={isSearchBarCompact}
-                  isOpen={datesOpen}
-                  onClear={() => {
-                    setPickupDate("");
-                    setDropoffDate("");
-                  }}
-                  onDone={() => setDatesOpen(false)}
-                  onNextMonth={() =>
-                    setVisibleMonthDate((current) => addMonths(current, 1))
-                  }
-                  onPreviousMonth={() =>
-                    setVisibleMonthDate((current) => addMonths(current, -1))
-                  }
-                  onSelectDate={selectRentalDate}
-                  onToggle={() => {
-                    setDatesOpen((current) => !current);
-                    setTimesOpen(false);
-                    setDriverAgeOpen(false);
-                  }}
-                  pickupDate={pickupDate}
-                  visibleMonthDate={visibleMonthDate}
-                  wrapRef={dateWrapRef}
-                />
-                <SearchTimeCell
-                  dropoffTime={dropoffTime}
-                  isCompact={isSearchBarCompact}
-                  isOpen={timesOpen}
-                  onToggle={() => {
-                    setTimesOpen((current) => !current);
-                    setDatesOpen(false);
-                    setDriverAgeOpen(false);
-                  }}
-                  pickupTime={pickupTime}
-                  setDropoffTime={setDropoffTime}
-                  setPickupTime={setPickupTime}
-                  wrapRef={timeWrapRef}
-                />
-                <DriverAgeCell
-                  driverAge={driverAge}
-                  isCompact={isSearchBarCompact}
-                  isOpen={driverAgeOpen}
-                  onSelect={(age) => {
-                    setDriverAge(age);
-                    setDriverAgeOpen(false);
-                  }}
-                  onToggle={() => {
-                    setDriverAgeOpen((current) => !current);
-                    setDatesOpen(false);
-                    setTimesOpen(false);
-                  }}
-                  wrapRef={driverAgeWrapRef}
-                />
-                <Button
-                  type="submit"
-                  className={cn(
-                    "mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-[min-height,height,box-shadow] duration-200 sm:mt-3 lg:mt-0 lg:h-auto lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
-                    isSearchBarCompact ? "lg:min-h-[46px]" : "lg:min-h-[54px]",
-                  )}
+              {showCompactSearchSummary ? (
+                <button
+                  type="button"
+                  aria-label="Edit car search"
+                  onClick={() => setIsSearchExpandedWhileSticky(true)}
+                  className="focus-ring flex w-full min-w-0 flex-col gap-2 rounded-xl bg-gradient-to-r from-white via-white to-indigo-50/50 px-3 py-2.5 text-left transition hover:border-indigo-200 hover:bg-indigo-50/60 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
                 >
-                  <Search className="h-4 w-4" aria-hidden="true" />
-                  Search
-                </Button>
-              </div>
+                  <span className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                    <span className="flex min-w-0 items-center gap-2 text-sm font-black text-slate-950 sm:max-w-[30%]">
+                      <MapPin
+                        className="h-4 w-4 shrink-0 text-violet-600"
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0 truncate">
+                        {pickupSummary} → {returnSummary}
+                      </span>
+                    </span>
+                    <span className="hidden h-1 w-1 shrink-0 rounded-full bg-slate-300 sm:block" />
+                    <span className="min-w-0 truncate text-sm font-semibold text-slate-700 sm:max-w-[24%]">
+                      {rentalDateSummary}
+                    </span>
+                    <span className="hidden h-1 w-1 shrink-0 rounded-full bg-slate-300 sm:block" />
+                    <span className="min-w-0 truncate text-sm font-semibold text-slate-700 sm:max-w-[24%]">
+                      {timeSummary}
+                    </span>
+                    <span className="hidden h-1 w-1 shrink-0 rounded-full bg-slate-300 sm:block" />
+                    <span className="min-w-0 truncate text-sm font-semibold text-slate-600 sm:max-w-[18%]">
+                      {driverAgeSummary}
+                    </span>
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-lg border border-indigo-100 bg-white px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-indigo-700 shadow-sm sm:self-center">
+                    <PencilLine className="h-3.5 w-3.5" aria-hidden="true" />
+                    Edit
+                  </span>
+                </button>
+              ) : null}
+
+              {showFullSearchForm ? (
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1.15fr)_minmax(0,1.35fr)_minmax(0,1.15fr)_minmax(7.5rem,0.68fr)_108px] lg:gap-0">
+                  <SearchInputCell
+                    icon={MapPin}
+                    inputRef={pickupInputRef}
+                    isCompact={
+                      isSearchBarCompact && !isSearchExpandedWhileSticky
+                    }
+                    label="Pickup location"
+                    name="pickupLocation"
+                    onChange={setPickupLocation}
+                    onClear={() => {
+                      setPickupLocation("");
+                      pickupInputRef.current?.focus();
+                    }}
+                    placeholder="Airport, city, or address"
+                    value={pickupLocation}
+                    clearLabel="Clear pickup location"
+                    className="lg:rounded-l-xl"
+                  />
+                  <SearchInputCell
+                    icon={MapPin}
+                    inputRef={dropoffInputRef}
+                    isCompact={
+                      isSearchBarCompact && !isSearchExpandedWhileSticky
+                    }
+                    label="Return location"
+                    name="dropoffLocation"
+                    onChange={setDropoffLocation}
+                    onClear={() => {
+                      setDropoffLocation("");
+                      dropoffInputRef.current?.focus();
+                    }}
+                    placeholder="Same as pickup"
+                    value={dropoffLocation}
+                    clearLabel="Clear return location"
+                  />
+                  <SearchDateCell
+                    dropoffDate={dropoffDate}
+                    isCompact={
+                      isSearchBarCompact && !isSearchExpandedWhileSticky
+                    }
+                    isOpen={datesOpen}
+                    onClear={() => {
+                      setPickupDate("");
+                      setDropoffDate("");
+                    }}
+                    onDone={() => setDatesOpen(false)}
+                    onNextMonth={() =>
+                      setVisibleMonthDate((current) => addMonths(current, 1))
+                    }
+                    onPreviousMonth={() =>
+                      setVisibleMonthDate((current) => addMonths(current, -1))
+                    }
+                    onSelectDate={selectRentalDate}
+                    onToggle={() => {
+                      setDatesOpen((current) => !current);
+                      setTimesOpen(false);
+                      setDriverAgeOpen(false);
+                    }}
+                    pickupDate={pickupDate}
+                    visibleMonthDate={visibleMonthDate}
+                    wrapRef={dateWrapRef}
+                  />
+                  <SearchTimeCell
+                    dropoffTime={dropoffTime}
+                    isCompact={
+                      isSearchBarCompact && !isSearchExpandedWhileSticky
+                    }
+                    isOpen={timesOpen}
+                    onToggle={() => {
+                      setTimesOpen((current) => !current);
+                      setDatesOpen(false);
+                      setDriverAgeOpen(false);
+                    }}
+                    pickupTime={pickupTime}
+                    setDropoffTime={setDropoffTime}
+                    setPickupTime={setPickupTime}
+                    wrapRef={timeWrapRef}
+                  />
+                  <DriverAgeCell
+                    driverAge={driverAge}
+                    isCompact={
+                      isSearchBarCompact && !isSearchExpandedWhileSticky
+                    }
+                    isOpen={driverAgeOpen}
+                    onSelect={(age) => {
+                      setDriverAge(age);
+                      setDriverAgeOpen(false);
+                    }}
+                    onToggle={() => {
+                      setDriverAgeOpen((current) => !current);
+                      setDatesOpen(false);
+                      setTimesOpen(false);
+                    }}
+                    wrapRef={driverAgeWrapRef}
+                  />
+                  <Button
+                    type="submit"
+                    className={cn(
+                      "mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-[min-height,height,box-shadow] duration-200 sm:mt-3 lg:mt-0 lg:h-auto lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+                      isSearchBarCompact && !isSearchExpandedWhileSticky
+                        ? "lg:min-h-[46px]"
+                        : "lg:min-h-[54px]",
+                    )}
+                  >
+                    <Search className="h-4 w-4" aria-hidden="true" />
+                    Search
+                  </Button>
+                </div>
+              ) : null}
             </div>
           </form>
         </div>
       </section>
 
       <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="hidden lg:block lg:self-start lg:sticky lg:top-[7.5rem] lg:max-h-[calc(100vh-8.75rem)] lg:overscroll-contain lg:overflow-y-auto">
+        <aside
+          className={cn(
+            "hidden lg:block lg:self-start lg:sticky lg:overscroll-contain lg:overflow-y-auto",
+            showCompactSearchSummary
+              ? "lg:top-[5.75rem] lg:max-h-[calc(100vh-6.75rem)]"
+              : "lg:top-[7.5rem] lg:max-h-[calc(100vh-8.75rem)]",
+          )}
+        >
           <CarFilters
             activeFilterCount={activeFilterCount}
             layout="desktop"
