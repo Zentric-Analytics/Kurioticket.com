@@ -180,6 +180,8 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const flightDatesPanelRef =
     useRef<HTMLDivElement>(null);
+  const flightDatesLauncherRef =
+    useRef<HTMLButtonElement>(null);
   const hotelDateWrapRef =
     useRef<HTMLDivElement>(null);
   const hotelDatesPanelRef =
@@ -190,6 +192,8 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const travelersPanelRef =
     useRef<HTMLDivElement>(null);
+  const travelersLauncherRef =
+    useRef<HTMLButtonElement>(null);
   const hotelGuestsRoomsWrapRef =
     useRef<HTMLDivElement>(null);
 
@@ -758,6 +762,62 @@ export function SearchTabs({
         );
       };
   }, [applyTravelersFromValues, cancelTravelersDraft, travelersMenuOpen]);
+
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    if (!flightDatesOpen && !travelersMenuOpen) return undefined;
+
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+    if (!mobileQuery.matches) return undefined;
+
+    const launcherElement = flightDatesOpen
+      ? flightDatesLauncherRef.current
+      : travelersLauncherRef.current;
+    const bodyElement = document.body;
+    const rootElement = document.documentElement;
+    const scrollY = window.scrollY;
+    const previousBodyStyles = {
+      left: bodyElement.style.left,
+      overflow: bodyElement.style.overflow,
+      overscrollBehavior: bodyElement.style.overscrollBehavior,
+      position: bodyElement.style.position,
+      right: bodyElement.style.right,
+      top: bodyElement.style.top,
+      touchAction: bodyElement.style.touchAction,
+      width: bodyElement.style.width,
+    };
+    const previousRootStyles = {
+      overflow: rootElement.style.overflow,
+      overscrollBehavior: rootElement.style.overscrollBehavior,
+    };
+
+    bodyElement.style.left = "0";
+    bodyElement.style.overflow = "hidden";
+    bodyElement.style.overscrollBehavior = "none";
+    bodyElement.style.position = "fixed";
+    bodyElement.style.right = "0";
+    bodyElement.style.top = `-${scrollY}px`;
+    bodyElement.style.touchAction = "none";
+    bodyElement.style.width = "100%";
+    rootElement.style.overflow = "hidden";
+    rootElement.style.overscrollBehavior = "none";
+
+    return () => {
+      bodyElement.style.left = previousBodyStyles.left;
+      bodyElement.style.overflow = previousBodyStyles.overflow;
+      bodyElement.style.overscrollBehavior = previousBodyStyles.overscrollBehavior;
+      bodyElement.style.position = previousBodyStyles.position;
+      bodyElement.style.right = previousBodyStyles.right;
+      bodyElement.style.top = previousBodyStyles.top;
+      bodyElement.style.touchAction = previousBodyStyles.touchAction;
+      bodyElement.style.width = previousBodyStyles.width;
+      rootElement.style.overflow = previousRootStyles.overflow;
+      rootElement.style.overscrollBehavior = previousRootStyles.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+      window.requestAnimationFrame(() => launcherElement?.focus());
+    };
+  }, [flightDatesOpen, travelersMenuOpen]);
 
   const guests = String(hotelAdultCount + hotelChildCount);
   const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? "guest" : "guests"}, ${rooms} ${Number(rooms) === 1 ? "room" : "rooms"}`;
@@ -1867,6 +1927,7 @@ export function SearchTabs({
                 </label>
                 <button
                   type="button"
+                  ref={flightDatesLauncherRef}
                   onClick={() =>
                     setFlightDatesOpen(
                       (
@@ -1904,7 +1965,7 @@ export function SearchTabs({
                 {flightDatesOpen ? (
                   <>
                     <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
-                    <div ref={flightDatesPanelRef} className="fixed inset-x-0 bottom-0 z-[260] max-h-[92vh] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <div ref={flightDatesPanelRef} role="dialog" aria-modal="true" aria-label="Choose travel dates" className="fixed inset-0 z-[260] flex h-[100dvh] min-h-0 w-full max-w-full flex-col overflow-y-auto overscroll-contain border border-slate-200 bg-white p-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:h-auto sm:max-h-[92vh] sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <button
                         type="button"
@@ -2148,6 +2209,7 @@ export function SearchTabs({
                     travelersMenuOpen
                   }
                   aria-haspopup="dialog"
+                  ref={travelersLauncherRef}
                   onClick={() => {
                     if (travelersMenuOpen) {
                       cancelTravelersDraft();
@@ -2173,7 +2235,7 @@ export function SearchTabs({
                 {travelersMenuOpen ? (
                   <>
                     <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
-                    <div ref={travelersPanelRef} className="fixed inset-x-0 bottom-0 z-[260] max-h-[90vh] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,440px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <div ref={travelersPanelRef} role="dialog" aria-modal="true" aria-label="Travelers and cabin" className="fixed inset-0 z-[260] flex h-[100dvh] min-h-0 w-full max-w-full flex-col overflow-y-auto overscroll-contain border border-slate-200 bg-white p-5 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:h-auto sm:max-h-[90vh] sm:w-[min(94vw,440px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
                     <div className="flex items-center justify-between gap-3">
                       <button
                         type="button"
