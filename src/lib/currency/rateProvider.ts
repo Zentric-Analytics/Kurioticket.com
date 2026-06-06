@@ -159,7 +159,9 @@ export async function fetchCurrencyFreaksRates({
   }
 
   if (!providerUrl || !apiKey) {
-    throw new Error("CurrencyFreaks provider URL or API key is not configured.");
+    throw new Error(
+      "CurrencyFreaks provider URL or API key is not configured.",
+    );
   }
 
   const controller = new AbortController();
@@ -183,10 +185,17 @@ export async function fetchCurrencyFreaksRates({
     }
 
     const data = (await response.json()) as CurrencyFreaksResponse;
-    const base = typeof data.base === "string" ? normalizeCurrencyCode(data.base) : null;
+    const base =
+      typeof data.base === "string" ? normalizeCurrencyCode(data.base) : null;
 
-    if (base !== FX_BASE_CURRENCY || !data.rates || typeof data.rates !== "object") {
-      throw new Error("CurrencyFreaks response did not include USD-based rates.");
+    if (
+      base !== FX_BASE_CURRENCY ||
+      !data.rates ||
+      typeof data.rates !== "object"
+    ) {
+      throw new Error(
+        "CurrencyFreaks response did not include USD-based rates.",
+      );
     }
 
     return buildPayloadFromProviderRates({
@@ -200,26 +209,47 @@ export async function fetchCurrencyFreaksRates({
   }
 }
 
+function getInMemoryTtlSeconds(
+  payload: CurrencyRatePayload,
+  cacheTtlSeconds: number,
+) {
+  return payload.ratesSource === "database" && !payload.stale
+    ? cacheTtlSeconds
+    : 60;
+}
+
 export async function getCurrencyRates({ bypassCache = false } = {}) {
   const cacheTtlSeconds = getCacheTtlSeconds();
-
-  if (!bypassCache) {
-    const cachedRates = getCachedCurrencyRates();
-    if (cachedRates) return cachedRates;
-  }
-
+  const cachedRates = bypassCache ? null : getCachedCurrencyRates();
   const snapshotPayload = await getLatestCurrencyRateSnapshotPayload({
     cacheTtlSeconds,
   });
 
-  const payload =
-    snapshotPayload ??
-    buildStaticFallbackPayload(
-      cacheTtlSeconds,
-      validateVisibleCurrencyCoverage(fallbackExchangeRatesFromUsd),
-    );
+  if (snapshotPayload) {
+    if (
+      !cachedRates ||
+      cachedRates.snapshotId !== snapshotPayload.snapshotId ||
+      cachedRates.ratesSource !== snapshotPayload.ratesSource ||
+      cachedRates.stale !== snapshotPayload.stale
+    ) {
+      return setCachedCurrencyRates(
+        snapshotPayload,
+        getInMemoryTtlSeconds(snapshotPayload, cacheTtlSeconds),
+      );
+    }
 
-  const inMemoryTtlSeconds = payload.ratesSource === "database" ? cacheTtlSeconds : 60;
+    return cachedRates;
+  }
 
-  return setCachedCurrencyRates(payload, inMemoryTtlSeconds);
+  if (cachedRates) return cachedRates;
+
+  const payload = buildStaticFallbackPayload(
+    cacheTtlSeconds,
+    validateVisibleCurrencyCoverage(fallbackExchangeRatesFromUsd),
+  );
+
+  return setCachedCurrencyRates(
+    payload,
+    getInMemoryTtlSeconds(payload, cacheTtlSeconds),
+  );
 }
