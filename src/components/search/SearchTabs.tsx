@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import {
+  ArrowLeft,
   ArrowRightLeft,
   BedDouble,
   Calendar,
@@ -165,6 +166,10 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const fromInputRef =
     useRef<HTMLInputElement>(null);
+  const originPickerInputRef =
+    useRef<HTMLInputElement>(null);
+  const originPickerPanelRef =
+    useRef<HTMLDivElement>(null);
 
   const toWrapRef =
     useRef<HTMLDivElement>(null);
@@ -172,11 +177,17 @@ export function SearchTabs({
     useRef<HTMLInputElement>(null);
   const dateWrapRef =
     useRef<HTMLDivElement>(null);
+  const flightDatesPanelRef =
+    useRef<HTMLDivElement>(null);
   const hotelDateWrapRef =
+    useRef<HTMLDivElement>(null);
+  const hotelDatesPanelRef =
     useRef<HTMLDivElement>(null);
   const tripTypeWrapRef =
     useRef<HTMLDivElement>(null);
   const travelersWrapRef =
+    useRef<HTMLDivElement>(null);
+  const travelersPanelRef =
     useRef<HTMLDivElement>(null);
   const hotelGuestsRoomsWrapRef =
     useRef<HTMLDivElement>(null);
@@ -620,6 +631,17 @@ export function SearchTabs({
   }, [originPrefillAttempted, hasUserEditedOrigin, from, buildPlacesUrl]);
 
   useEffect(() => {
+    if (!fromOpen) return;
+
+    const focusId = window.setTimeout(() => {
+      originPickerInputRef.current?.focus();
+      originPickerInputRef.current?.select();
+    }, 0);
+
+    return () => window.clearTimeout(focusId);
+  }, [fromOpen]);
+
+  useEffect(() => {
     travelersDraftRef.current = {
       adults: draftAdultCount,
       children: draftChildCount,
@@ -640,6 +662,9 @@ export function SearchTabs({
       if (
         !fromWrapRef.current?.contains(
           event.target as Node
+        ) &&
+        !originPickerPanelRef.current?.contains(
+          event.target as Node
         )
       ) {
         setFromOpen(false);
@@ -655,6 +680,9 @@ export function SearchTabs({
       if (
         !dateWrapRef.current?.contains(
           event.target as Node
+        ) &&
+        !flightDatesPanelRef.current?.contains(
+          event.target as Node
         )
       ) {
         setFlightDatesOpen(
@@ -663,6 +691,9 @@ export function SearchTabs({
       }
       if (
         !hotelDateWrapRef.current?.contains(
+          event.target as Node
+        ) &&
+        !hotelDatesPanelRef.current?.contains(
           event.target as Node
         )
       ) {
@@ -677,6 +708,9 @@ export function SearchTabs({
       }
       if (
         !travelersWrapRef.current?.contains(
+          event.target as Node
+        ) &&
+        !travelersPanelRef.current?.contains(
           event.target as Node
         )
       ) {
@@ -1586,6 +1620,11 @@ export function SearchTabs({
                         0
                       );
                     }}
+                    onClick={() =>
+                      setFromOpen(
+                        true
+                      )
+                    }
                     onFocus={() =>
                       setFromOpen(
                         true
@@ -1615,7 +1654,7 @@ export function SearchTabs({
                     </button>
                   ) : null}
                 </div>
-                {shouldShowFromSuggestionsPanel ? (
+                {false && shouldShowFromSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {isFromLoadingVisible ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
@@ -1668,6 +1707,157 @@ export function SearchTabs({
                       </div>
                     )}
                   </div>
+                ) : null}
+                {fromOpen ? (
+                  <>
+                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
+                    <div
+                      ref={originPickerPanelRef}
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="origin-picker-title"
+                      className="fixed inset-x-0 bottom-0 z-[260] flex max-h-[92vh] flex-col rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:h-[min(84vh,680px)] sm:w-[min(94vw,620px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6"
+                    >
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setFromOpen(false)}
+                          className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                        >
+                          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                          Back
+                        </button>
+                        <p id="origin-picker-title" className="text-lg font-semibold text-slate-900">
+                          Choose origin
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setFromOpen(false)}
+                          className="focus-ring rounded-full px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+
+                      <label className="sr-only" htmlFor="origin-picker-search">
+                        Search airports and cities
+                      </label>
+                      <div className="relative">
+                        <input
+                          ref={originPickerInputRef}
+                          id="origin-picker-search"
+                          type="text"
+                          value={from}
+                          onChange={(event) => {
+                            setHasUserEditedOrigin(true);
+                            const nextValue = event.target.value;
+                            setFrom(nextValue);
+                            if (nextValue.trim().length < 2) {
+                              setFromLoading(false);
+                              setFromLiveSuggestions([]);
+                            }
+                            setFromCode("");
+                            setFromHighlight(0);
+                          }}
+                          onKeyDown={(event) => onKeyNav(event, true)}
+                          placeholder="Search airports or cities"
+                          className="focus-ring h-14 w-full rounded-2xl border border-slate-300 bg-white py-3 pl-4 pr-14 text-lg font-semibold text-slate-900 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
+                        />
+                        {from.trim() ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setHasUserEditedOrigin(true);
+                              setFrom("");
+                              setFromLoading(false);
+                              setFromLiveSuggestions([]);
+                              setFromCode("");
+                              setFromHighlight(0);
+                              window.requestAnimationFrame(() => originPickerInputRef.current?.focus());
+                            }}
+                            aria-label="Clear origin"
+                            className="focus-ring absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                          >
+                            <X className="h-4 w-4" aria-hidden="true" />
+                          </button>
+                        ) : null}
+                      </div>
+
+                      <div className="mt-4 min-h-[260px] flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/60 p-2">
+                        {fromQuery.length < 2 ? (
+                          <div className="px-3 py-8 text-center text-sm text-slate-500">
+                            Start typing a city or airport name to see suggestions.
+                          </div>
+                        ) : isFromLoadingVisible ? (
+                          <div className="px-3 py-8 text-center text-sm text-slate-500">
+                            Searching airports and cities…
+                          </div>
+                        ) : fromSuggestions.length ? (
+                          fromSuggestions.map((option, index) => (
+                            <button
+                              key={`${option.code}-${option.airport}-picker`}
+                              type="button"
+                              onClick={() => {
+                                setFrom(formatAirportLabel(option));
+                                setFromCode(option.code);
+                                setFromOpen(false);
+                              }}
+                              className={cn(
+                                "focus-ring mb-1 block w-full rounded-xl px-4 py-3 text-left transition-colors last:mb-0",
+                                fromHighlight === index
+                                  ? "bg-white shadow-sm ring-1 ring-indigo-200"
+                                  : "hover:bg-white"
+                              )}
+                            >
+                              <span className="flex items-start justify-between gap-3">
+                                <span>
+                                  <span className="block text-base font-semibold text-slate-900">
+                                    {option.city} ({option.code})
+                                  </span>
+                                  <span className="block text-sm leading-6 text-slate-600">
+                                    {option.airport}
+                                    {option.country ? ` · ${option.country}` : ""}
+                                  </span>
+                                </span>
+                                <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">
+                                  {option.code}
+                                </span>
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-3 py-8 text-center text-sm text-slate-500">
+                            No matching airports or cities
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setHasUserEditedOrigin(true);
+                            setFrom("");
+                            setFromLoading(false);
+                            setFromLiveSuggestions([]);
+                            setFromCode("");
+                            setFromHighlight(0);
+                            window.requestAnimationFrame(() => originPickerInputRef.current?.focus());
+                          }}
+                          className="focus-ring rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                        >
+                          Clear
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFromOpen(false)}
+                          className="focus-ring rounded-xl bg-indigo-700 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    </div>
+                  </>
                 ) : null}
               </div>
               <div className="flex items-center justify-center">
@@ -1840,10 +2030,30 @@ export function SearchTabs({
                 ) : null}
 
                 {flightDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
-                    <p className="mb-3 text-base font-semibold text-slate-900">
-                      Choose travel dates
-                    </p>
+                  <>
+                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
+                    <div ref={flightDatesPanelRef} className="fixed inset-x-0 bottom-0 z-[260] max-h-[92vh] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setFlightDatesOpen(false)}
+                        className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                      >
+                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                        Back
+                      </button>
+                      <p className="text-base font-semibold text-slate-900">
+                        Choose travel dates
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setFlightDatesOpen(false)}
+                        aria-label="Close travel dates"
+                        className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
                     <div className="mb-3 flex items-center justify-between">
                       <button
                         type="button"
@@ -1959,7 +2169,7 @@ export function SearchTabs({
                                         <span
                                           key={`placeholder-${iso}`}
                                           aria-hidden="true"
-                                          className="h-8 w-8 justify-self-center"
+                                          className="h-10 w-10 justify-self-center sm:h-11 sm:w-11"
                                         />
                                       );
                                     }
@@ -2000,7 +2210,7 @@ export function SearchTabs({
                                           isDisabledDate
                                         }
                                         className={cn(
-                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
+                                          "focus-ring flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-base transition-colors disabled:cursor-not-allowed sm:h-11 sm:w-11",
                                           isDisabledDate
                                             ? "text-slate-300 hover:bg-transparent"
                                             : "text-slate-900 hover:bg-indigo-50",
@@ -2048,6 +2258,7 @@ export function SearchTabs({
                       </button>
                     </div>
                   </div>
+                  </>
                 ) : null}
               </div>
 
@@ -2088,14 +2299,24 @@ export function SearchTabs({
                   />
                 </button>
                 {travelersMenuOpen ? (
-                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[min(92vw,320px)] max-w-[330px] max-h-[70vh] overflow-y-auto -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-lg shadow-slate-900/10 sm:p-3 lg:left-auto lg:right-0 lg:w-[350px] lg:max-h-none lg:translate-x-0 lg:overflow-visible">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-slate-900">
+                  <>
+                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
+                    <div ref={travelersPanelRef} className="fixed inset-x-0 bottom-0 z-[260] max-h-[90vh] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,440px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={cancelTravelersDraft}
+                        className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                      >
+                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                        Back
+                      </button>
+                      <p className="text-lg font-semibold text-slate-900">
                         Travelers
                       </p>
-                      <button type="button" onClick={cancelTravelersDraft} aria-label="Close passenger selector" className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 text-sm leading-none text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">×</button>
+                      <button type="button" onClick={cancelTravelersDraft} aria-label="Cancel passenger selector" className="focus-ring rounded-full px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Cancel</button>
                     </div>
-                    <div className="mt-1.5 divide-y divide-slate-200">
+                    <div className="mt-5 divide-y divide-slate-200">
                       {[
                         { key: "adults", label: "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
                         { key: "children", label: "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
@@ -2108,21 +2329,21 @@ export function SearchTabs({
                           (row.key !== "infants" || draftInfantCount < draftAdultCount);
 
                         return (
-                          <div key={row.key} className="flex items-center justify-between py-2 first:pt-1 last:pb-1">
+                          <div key={row.key} className="flex items-center justify-between py-4 first:pt-1 last:pb-1">
                             <span>
                               <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
                               <span className="block text-xs leading-5 text-slate-600">{row.subtitle}</span>
                             </span>
                             <div className="flex items-center gap-1">
-                              <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
+                              <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
                               <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{row.count}</span>
-                              <button type="button" onClick={() => { if (row.key === "adults") { if (draftTravelerCount >= 9) return; setDraftAdultCount((current) => Math.min(9, current + 1)); return; } if (row.key === "children") { if (draftTravelerCount >= 9) return; setDraftChildCount((current) => Math.min(9, current + 1)); return; } if (row.key === "infants") { if (draftTravelerCount >= 9 || draftInfantCount >= draftAdultCount) return; setDraftInfantCount((current) => Math.min(draftAdultCount, current + 1)); } }} disabled={!canIncrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
+                              <button type="button" onClick={() => { if (row.key === "adults") { if (draftTravelerCount >= 9) return; setDraftAdultCount((current) => Math.min(9, current + 1)); return; } if (row.key === "children") { if (draftTravelerCount >= 9) return; setDraftChildCount((current) => Math.min(9, current + 1)); return; } if (row.key === "infants") { if (draftTravelerCount >= 9 || draftInfantCount >= draftAdultCount) return; setDraftInfantCount((current) => Math.min(draftAdultCount, current + 1)); } }} disabled={!canIncrement} className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                    <div className="mt-2 border-t border-slate-200 pt-2">
+                    <div className="mt-5 border-t border-slate-200 pt-5">
                       <div className="mb-1.5 flex items-center justify-between">
                         <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</p>
                       </div>
@@ -2132,10 +2353,11 @@ export function SearchTabs({
                         ))}
                       </div>
                     </div>
-                    <div className="mt-2 flex items-center justify-end gap-2 border-t border-slate-200 pt-2">
-                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
+                    <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-200 pt-5">
+                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-xl bg-indigo-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
                     </div>
                   </div>
+                  </>
                 ) : null}
               </div>
               <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
@@ -2236,10 +2458,30 @@ export function SearchTabs({
                   </span>
                 </button>
                 {hotelDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
-                    <p className="mb-3 text-base font-semibold text-slate-900">
-                      Choose travel dates
-                    </p>
+                  <>
+                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
+                    <div ref={hotelDatesPanelRef} className="fixed inset-x-0 bottom-0 z-[260] max-h-[92vh] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setHotelDatesOpen(false)}
+                        className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                      >
+                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                        Back
+                      </button>
+                      <p className="text-base font-semibold text-slate-900">
+                        Choose travel dates
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setHotelDatesOpen(false)}
+                        aria-label="Close travel dates"
+                        className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
                     <div className="mb-3 flex items-center justify-between">
                       <button
                         type="button"
@@ -2357,7 +2599,7 @@ export function SearchTabs({
                                         <span
                                           key={`placeholder-${iso}`}
                                           aria-hidden="true"
-                                          className="h-8 w-8 justify-self-center"
+                                          className="h-10 w-10 justify-self-center sm:h-11 sm:w-11"
                                         />
                                       );
                                     }
@@ -2389,7 +2631,7 @@ export function SearchTabs({
                                           isDisabledDate
                                         }
                                         className={cn(
-                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
+                                          "focus-ring flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-base transition-colors disabled:cursor-not-allowed sm:h-11 sm:w-11",
                                           isDisabledDate
                                             ? "text-slate-300 hover:bg-transparent"
                                             : "text-slate-900 hover:bg-indigo-50",
@@ -2435,6 +2677,7 @@ export function SearchTabs({
                       </button>
                     </div>
                   </div>
+                  </>
                 ) : null}
               </div>
               <div
