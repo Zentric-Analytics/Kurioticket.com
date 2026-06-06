@@ -284,6 +284,43 @@ const REGIONAL_HOME_DISCOVERY_SOURCE_BY_COUNTRY: Record<string, string> = {
 
   // North America non-US markets should never fall back to US domestic cards.
   MX: "CA",
+
+  // Middle East markets use the UAE/global-hub route set when exact content is absent.
+  AE: "AE",
+  BH: "AE",
+  IL: "AE",
+  JO: "AE",
+  KW: "AE",
+  LB: "AE",
+  OM: "AE",
+  QA: "AE",
+  SA: "AE",
+
+  // Asia markets use the Japan/Asia route set when exact content is absent.
+  BD: "JP",
+  CN: "JP",
+  HK: "JP",
+  ID: "JP",
+  IN: "JP",
+  JP: "JP",
+  KR: "JP",
+  LK: "JP",
+  MY: "JP",
+  PH: "JP",
+  SG: "JP",
+  TH: "JP",
+  TW: "JP",
+  VN: "JP",
+
+  // Latin America markets use the Brazil/Latin America route set when exact content is absent.
+  AR: "BR",
+  BO: "BR",
+  BR: "BR",
+  CL: "BR",
+  CO: "BR",
+  EC: "BR",
+  PE: "BR",
+  UY: "BR",
 };
 
 export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
@@ -1184,6 +1221,412 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
   fallback: fallbackDiscovery,
 };
 
+
+homeDiscoveryByRegion.KE = [
+  {
+    id: "ke-nbo-dxb",
+    title: "Dubai east-africa hub run",
+    originCity: "Nairobi",
+    originCode: "NBO",
+    destinationCity: "Dubai",
+    destinationCode: "DXB",
+    routeNote: "Strong Kenya-to-Gulf routing for shopping and onward links.",
+    priceFromUsd: 384,
+    image:
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Downtown Dubai skyline with Burj Khalifa",
+  },
+  {
+    id: "ke-nbo-znz",
+    title: "Zanzibar coast weekend",
+    originCity: "Nairobi",
+    originCode: "NBO",
+    destinationCity: "Zanzibar",
+    destinationCode: "ZNZ",
+    routeNote: "Short regional beach escape with spice-island stays.",
+    priceFromUsd: 214,
+    image:
+      "https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Zanzibar beach with clear blue water",
+  },
+  {
+    id: "ke-nbo-jnb",
+    title: "Johannesburg business link",
+    originCity: "Nairobi",
+    originCode: "NBO",
+    destinationCity: "Johannesburg",
+    destinationCode: "JNB",
+    routeNote: "Key Africa corridor for meetings, events, and city breaks.",
+    priceFromUsd: 362,
+    image:
+      "https://images.unsplash.com/photo-1577948000111-9c970dfe3743?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Johannesburg skyline and city towers",
+  },
+  {
+    id: "ke-nbo-lhr",
+    title: "London long-haul classic",
+    originCity: "Nairobi",
+    originCode: "NBO",
+    destinationCity: "London",
+    destinationCode: "LHR",
+    routeNote: "Major UK route for family, business, and culture trips.",
+    priceFromUsd: 574,
+    image:
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "London skyline and historic landmarks",
+  },
+  {
+    id: "ke-nbo-add",
+    title: "Addis Ababa connector",
+    originCity: "Nairobi",
+    originCode: "NBO",
+    destinationCity: "Addis Ababa",
+    destinationCode: "ADD",
+    routeNote: "East Africa transfer route with highland city stopovers.",
+    priceFromUsd: 241,
+    image:
+      "https://images.unsplash.com/photo-1629309786717-9505f20599c2?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Addis Ababa cityscape in the Ethiopian highlands",
+  },
+  {
+    id: "ke-nbo-ist",
+    title: "Istanbul Europe connector",
+    originCity: "Nairobi",
+    originCode: "NBO",
+    destinationCity: "Istanbul",
+    destinationCode: "IST",
+    routeNote: "Useful gateway for Europe links and Bosphorus stopovers.",
+    priceFromUsd: 429,
+    image:
+      "https://images.pexels.com/photos/11540297/pexels-photo-11540297.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Blue Mosque and Istanbul skyline",
+  },
+];
+
+homeDiscoveryByRegion.ZA = [
+  {
+    id: "za-jnb-cpt",
+    title: "Cape Town coast and mountain break",
+    originCity: "Johannesburg",
+    originCode: "JNB",
+    destinationCity: "Cape Town",
+    destinationCode: "CPT",
+    routeNote: "Core domestic leisure route for beaches, vineyards, and hikes.",
+    priceFromUsd: 137,
+    image:
+      "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Cape Town city and Table Mountain",
+  },
+  {
+    id: "za-jnb-dxb",
+    title: "Dubai global hub escape",
+    originCity: "Johannesburg",
+    originCode: "JNB",
+    destinationCity: "Dubai",
+    destinationCode: "DXB",
+    routeNote: "Gulf hub routing for shopping, stopovers, and onward trips.",
+    priceFromUsd: 461,
+    image:
+      "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Downtown Dubai skyline with Burj Khalifa",
+  },
+  {
+    id: "za-jnb-mru",
+    title: "Mauritius island reset",
+    originCity: "Johannesburg",
+    originCode: "JNB",
+    destinationCity: "Mauritius",
+    destinationCode: "MRU",
+    routeNote: "Indian Ocean resort route for warm-water breaks.",
+    priceFromUsd: 386,
+    image:
+      "https://images.unsplash.com/photo-1513415564515-763d91423bdd?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Mauritius lagoon and tropical coastline",
+  },
+  {
+    id: "za-jnb-lhr",
+    title: "London long-haul link",
+    originCity: "Johannesburg",
+    originCode: "JNB",
+    destinationCity: "London",
+    destinationCode: "LHR",
+    routeNote: "Major UK route for business, culture, and family travel.",
+    priceFromUsd: 611,
+    image:
+      "https://images.pexels.com/photos/460672/pexels-photo-460672.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "London bridge and city skyline",
+  },
+  {
+    id: "za-cpt-ams",
+    title: "Amsterdam Europe gateway",
+    originCity: "Cape Town",
+    originCode: "CPT",
+    destinationCity: "Amsterdam",
+    destinationCode: "AMS",
+    routeNote: "Europe route for canals, museums, and onward rail links.",
+    priceFromUsd: 642,
+    image:
+      "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Amsterdam canals and historic homes",
+  },
+  {
+    id: "za-jnb-nbo",
+    title: "Nairobi regional connector",
+    originCity: "Johannesburg",
+    originCode: "JNB",
+    destinationCity: "Nairobi",
+    destinationCode: "NBO",
+    routeNote: "East Africa link for safari add-ons and business travel.",
+    priceFromUsd: 344,
+    image:
+      "https://images.unsplash.com/photo-1618828665011-0abd973f7bb8?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Nairobi skyline near national park grasslands",
+  },
+];
+
+homeDiscoveryByRegion.AE = [
+  {
+    id: "ae-dxb-lhr",
+    title: "London premium long-haul",
+    originCity: "Dubai",
+    originCode: "DXB",
+    destinationCity: "London",
+    destinationCode: "LHR",
+    routeNote: "High-frequency global hub route for business and city stays.",
+    priceFromUsd: 526,
+    image:
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "London skyline and historic landmarks",
+  },
+  {
+    id: "ae-dxb-ist",
+    title: "Istanbul cultural stopover",
+    originCity: "Dubai",
+    originCode: "DXB",
+    destinationCity: "Istanbul",
+    destinationCode: "IST",
+    routeNote: "Shorter regional international route with Bosphorus evenings.",
+    priceFromUsd: 284,
+    image:
+      "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Istanbul skyline with domes and minarets",
+  },
+  {
+    id: "ae-dxb-cai",
+    title: "Cairo heritage hop",
+    originCity: "Dubai",
+    originCode: "DXB",
+    destinationCity: "Cairo",
+    destinationCode: "CAI",
+    routeNote: "Middle East route for Nile history and old-city markets.",
+    priceFromUsd: 231,
+    image:
+      "https://images.unsplash.com/photo-1539650116574-75c0c6d73b77?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Cairo skyline with the Pyramids of Giza",
+  },
+  {
+    id: "ae-dxb-sin",
+    title: "Singapore skyline getaway",
+    originCity: "Dubai",
+    originCode: "DXB",
+    destinationCity: "Singapore",
+    destinationCode: "SIN",
+    routeNote: "Efficient hub-to-hub Asia route with gardens and hawker food.",
+    priceFromUsd: 512,
+    image:
+      "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Marina Bay skyline in Singapore at dusk",
+  },
+  {
+    id: "ae-dxb-bkk",
+    title: "Bangkok city energy",
+    originCity: "Dubai",
+    originCode: "DXB",
+    destinationCity: "Bangkok",
+    destinationCode: "BKK",
+    routeNote: "Popular Asia escape for food, temples, and nightlife.",
+    priceFromUsd: 356,
+    image:
+      "https://images.unsplash.com/photo-1563492065599-3520f775eeed?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Bangkok skyline and temples",
+  },
+  {
+    id: "ae-dxb-cdg",
+    title: "Paris global city break",
+    originCity: "Dubai",
+    originCode: "DXB",
+    destinationCity: "Paris",
+    destinationCode: "CDG",
+    routeNote: "Classic Europe route for fashion, museums, and dining.",
+    priceFromUsd: 498,
+    image:
+      "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    imageAlt: "Eiffel Tower above Paris streets",
+  },
+];
+
+homeDiscoveryByRegion.JP = [
+  {
+    id: "jp-nrt-icn",
+    title: "Seoul quick city hop",
+    originCity: "Tokyo",
+    originCode: "NRT",
+    destinationCity: "Seoul",
+    destinationCode: "ICN",
+    routeNote: "Short Asia corridor for food, shopping, and culture weekends.",
+    priceFromUsd: 186,
+    image:
+      "https://images.unsplash.com/photo-1538485399081-7191377e8241?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Seoul city skyline at dusk",
+  },
+  {
+    id: "jp-nrt-sin",
+    title: "Singapore skyline route",
+    originCity: "Tokyo",
+    originCode: "NRT",
+    destinationCity: "Singapore",
+    destinationCode: "SIN",
+    routeNote: "Southeast Asia city break with gardens and hawker food.",
+    priceFromUsd: 364,
+    image:
+      "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Marina Bay skyline in Singapore at dusk",
+  },
+  {
+    id: "jp-nrt-bkk",
+    title: "Bangkok food and temple trip",
+    originCity: "Tokyo",
+    originCode: "NRT",
+    destinationCity: "Bangkok",
+    destinationCode: "BKK",
+    routeNote: "Warm-weather Asia route for markets, temples, and nightlife.",
+    priceFromUsd: 342,
+    image:
+      "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Bangkok skyline and temples",
+  },
+  {
+    id: "jp-nrt-hkg",
+    title: "Hong Kong harbor lights",
+    originCity: "Tokyo",
+    originCode: "NRT",
+    destinationCity: "Hong Kong",
+    destinationCode: "HKG",
+    routeNote: "Dense city route for skyline views, food, and shopping.",
+    priceFromUsd: 286,
+    image:
+      "https://images.unsplash.com/photo-1536599018102-9f803c140fc1?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Hong Kong harbor skyline at night",
+  },
+  {
+    id: "jp-nrt-dxb",
+    title: "Dubai global hub link",
+    originCity: "Tokyo",
+    originCode: "NRT",
+    destinationCity: "Dubai",
+    destinationCode: "DXB",
+    routeNote: "Long-haul gateway for Middle East stays and onward Europe links.",
+    priceFromUsd: 612,
+    image:
+      "https://images.unsplash.com/photo-1518684079-3c830dcef090?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Downtown Dubai skyline with Burj Khalifa",
+  },
+  {
+    id: "jp-nrt-dps",
+    title: "Bali island reset",
+    originCity: "Tokyo",
+    originCode: "NRT",
+    destinationCity: "Bali",
+    destinationCode: "DPS",
+    routeNote: "Tropical island route for villas, surf, and rice terraces.",
+    priceFromUsd: 398,
+    image:
+      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=92",
+    imageAlt: "Bali cliffs and tropical ocean",
+  },
+];
+
+homeDiscoveryByRegion.BR = [
+  {
+    id: "br-gru-eze",
+    title: "Buenos Aires culture hop",
+    originCity: "Sao Paulo",
+    originCode: "GRU",
+    destinationCity: "Buenos Aires",
+    destinationCode: "EZE",
+    routeNote: "Short regional route for food, tango, and city weekends.",
+    priceFromUsd: 221,
+    image:
+      "https://images.unsplash.com/photo-1589909202802-8f4aadce1849?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Buenos Aires city avenue and skyline",
+  },
+  {
+    id: "br-gru-lim",
+    title: "Lima coastal food trip",
+    originCity: "Sao Paulo",
+    originCode: "GRU",
+    destinationCity: "Lima",
+    destinationCode: "LIM",
+    routeNote: "Pacific views, world-class cuisine, and historic districts.",
+    priceFromUsd: 287,
+    image:
+      "https://images.unsplash.com/photo-1531968455001-5c5272a41129?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Miraflores coastline and city skyline in Lima",
+  },
+  {
+    id: "br-gru-scl",
+    title: "Santiago Andes gateway",
+    originCity: "Sao Paulo",
+    originCode: "GRU",
+    destinationCity: "Santiago",
+    destinationCode: "SCL",
+    routeNote: "Regional city route with wine valleys and mountain views.",
+    priceFromUsd: 264,
+    image:
+      "https://images.unsplash.com/photo-1597006438013-2a37fb4f817a?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Santiago skyline with Andes mountains",
+  },
+  {
+    id: "br-gru-lis",
+    title: "Lisbon Atlantic link",
+    originCity: "Sao Paulo",
+    originCode: "GRU",
+    destinationCity: "Lisbon",
+    destinationCode: "LIS",
+    routeNote: "Major Brazil-Portugal route for culture and onward Europe links.",
+    priceFromUsd: 589,
+    image:
+      "https://images.unsplash.com/photo-1585208798174-6cedd86e019a?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Historic tram on a Lisbon hillside street",
+  },
+  {
+    id: "br-gru-mia",
+    title: "Miami shopping and beach break",
+    originCity: "Sao Paulo",
+    originCode: "GRU",
+    destinationCity: "Miami",
+    destinationCode: "MIA",
+    routeNote: "Popular Florida route for beaches, shopping, and family trips.",
+    priceFromUsd: 497,
+    image:
+      "https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Miami Beach lifeguard tower and palms",
+  },
+  {
+    id: "br-gru-gig",
+    title: "Rio coast classic",
+    originCity: "Sao Paulo",
+    originCode: "GRU",
+    destinationCity: "Rio de Janeiro",
+    destinationCode: "GIG",
+    routeNote: "Domestic city-and-beach route for quick coastal breaks.",
+    priceFromUsd: 92,
+    image:
+      "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Rio de Janeiro coastline and mountains",
+  },
+];
+
 validateDestinationImages(
   "fallback home discovery destinations",
   fallbackDiscovery,
@@ -1887,9 +2330,13 @@ export function getHomeDiscoveryRouteAllowlist(): Map<
 > {
   const allowlist = new Map<string, HomeDiscoveryRoute>();
 
-  for (const route of getEligibleHomeDiscoveryFlightRoutes(
-    DEFAULT_HOME_DISCOVERY_REGION,
-  )) {
+  for (const regionCode of Object.keys(homeDiscoveryByRegion)) {
+    for (const route of getEligibleHomeDiscoveryFlightRoutes(regionCode)) {
+      allowlist.set(route.id, route);
+    }
+  }
+
+  for (const route of getGlobalHomeDiscoveryPriceRoutes()) {
     allowlist.set(route.id, route);
   }
 
