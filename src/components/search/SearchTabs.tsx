@@ -2679,7 +2679,7 @@ export function SearchTabs({
                 {hotelDatesOpen ? (
                   <>
                     <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
-                    <div ref={hotelDatesPanelRef} className="fixed inset-x-0 bottom-0 z-[260] max-h-[92vh] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <div ref={hotelDatesPanelRef} className="fixed inset-x-0 bottom-0 z-[260] hidden max-h-[92vh] overflow-y-auto rounded-t-3xl border border-slate-200 sm:block bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <button
                         type="button"
@@ -2934,7 +2934,7 @@ export function SearchTabs({
                   />
                 </button>
                 {hotelGuestsRoomsOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 w-[calc(100vw-24px)] max-w-[330px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
+                  <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 hidden w-[calc(100vw-24px)] max-w-[330px] sm:block overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
                     <div className="space-y-3">
                       {[
                         {
