@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
@@ -166,15 +167,15 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const fromInputRef =
     useRef<HTMLInputElement>(null);
-  const originPickerInputRef =
-    useRef<HTMLInputElement>(null);
-  const originPickerPanelRef =
-    useRef<HTMLDivElement>(null);
 
   const toWrapRef =
     useRef<HTMLDivElement>(null);
   const toInputRef =
     useRef<HTMLInputElement>(null);
+  const fromMobileLauncherRef =
+    useRef<HTMLButtonElement>(null);
+  const toMobileLauncherRef =
+    useRef<HTMLButtonElement>(null);
   const dateWrapRef =
     useRef<HTMLDivElement>(null);
   const flightDatesPanelRef =
@@ -227,6 +228,8 @@ export function SearchTabs({
 
   const [toOpen, setToOpen] =
     useState(false);
+  const [activeMobileAirportPicker, setActiveMobileAirportPicker] =
+    useState<"origin" | "destination" | null>(null);
   const [
     flightDatesOpen,
     setFlightDatesOpen,
@@ -631,17 +634,6 @@ export function SearchTabs({
   }, [originPrefillAttempted, hasUserEditedOrigin, from, buildPlacesUrl]);
 
   useEffect(() => {
-    if (!fromOpen) return;
-
-    const focusId = window.setTimeout(() => {
-      originPickerInputRef.current?.focus();
-      originPickerInputRef.current?.select();
-    }, 0);
-
-    return () => window.clearTimeout(focusId);
-  }, [fromOpen]);
-
-  useEffect(() => {
     travelersDraftRef.current = {
       adults: draftAdultCount,
       children: draftChildCount,
@@ -661,9 +653,6 @@ export function SearchTabs({
     ) => {
       if (
         !fromWrapRef.current?.contains(
-          event.target as Node
-        ) &&
-        !originPickerPanelRef.current?.contains(
           event.target as Node
         )
       ) {
@@ -1207,7 +1196,9 @@ export function SearchTabs({
     setFromCode("");
     setFromOpen(false);
     setFromHighlight(0);
-    focusInputAfterClear(fromInputRef.current);
+    if (!activeMobileAirportPicker) {
+      focusInputAfterClear(fromInputRef.current);
+    }
   };
   const onClearDestination = () => {
     setTo("");
@@ -1216,7 +1207,9 @@ export function SearchTabs({
     setToCode("");
     setToOpen(false);
     setToHighlight(0);
-    focusInputAfterClear(toInputRef.current);
+    if (!activeMobileAirportPicker) {
+      focusInputAfterClear(toInputRef.current);
+    }
   };
   const onClearTravelDates = () => {
     setDepartureDate("");
@@ -1598,6 +1591,22 @@ export function SearchTabs({
                     "Origin"}
                 </label>
                 <div className="relative h-8">
+                  <button
+                    ref={fromMobileLauncherRef}
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={activeMobileAirportPicker === "origin"}
+                    onClick={() => {
+                      setFromOpen(false);
+                      setToOpen(false);
+                      setActiveMobileAirportPicker("origin");
+                    }}
+                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
+                  >
+                    <span className={cn("truncate", !from.trim() && "text-slate-400")}>
+                      {from.trim() || "From?"}
+                    </span>
+                  </button>
                   <input
                     ref={fromInputRef}
                     type="text"
@@ -1639,8 +1648,7 @@ export function SearchTabs({
                       )
                     }
                     placeholder="From?"
-                    className="focus-ring h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
-                    required
+                    className="focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
                   />
                   {from.trim() ? (
                     <button
@@ -1648,13 +1656,13 @@ export function SearchTabs({
                       onClick={onClearOrigin}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label="Clear origin"
-                      className="focus-ring absolute right-0 top-1/2 z-30 inline-flex h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:h-8 sm:w-8"
+                      className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
                   ) : null}
                 </div>
-                {false && shouldShowFromSuggestionsPanel ? (
+                {shouldShowFromSuggestionsPanel ? (
                   <div className="absolute left-0 right-0 z-20 mt-1 w-full rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
                     {isFromLoadingVisible ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
@@ -1708,157 +1716,6 @@ export function SearchTabs({
                     )}
                   </div>
                 ) : null}
-                {fromOpen ? (
-                  <>
-                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
-                    <div
-                      ref={originPickerPanelRef}
-                      role="dialog"
-                      aria-modal="true"
-                      aria-labelledby="origin-picker-title"
-                      className="fixed inset-x-0 bottom-0 z-[260] flex max-h-[92vh] flex-col rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:h-[min(84vh,680px)] sm:w-[min(94vw,620px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6"
-                    >
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setFromOpen(false)}
-                          className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
-                        >
-                          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                          Back
-                        </button>
-                        <p id="origin-picker-title" className="text-lg font-semibold text-slate-900">
-                          Choose origin
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => setFromOpen(false)}
-                          className="focus-ring rounded-full px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-
-                      <label className="sr-only" htmlFor="origin-picker-search">
-                        Search airports and cities
-                      </label>
-                      <div className="relative">
-                        <input
-                          ref={originPickerInputRef}
-                          id="origin-picker-search"
-                          type="text"
-                          value={from}
-                          onChange={(event) => {
-                            setHasUserEditedOrigin(true);
-                            const nextValue = event.target.value;
-                            setFrom(nextValue);
-                            if (nextValue.trim().length < 2) {
-                              setFromLoading(false);
-                              setFromLiveSuggestions([]);
-                            }
-                            setFromCode("");
-                            setFromHighlight(0);
-                          }}
-                          onKeyDown={(event) => onKeyNav(event, true)}
-                          placeholder="Search airports or cities"
-                          className="focus-ring h-14 w-full rounded-2xl border border-slate-300 bg-white py-3 pl-4 pr-14 text-lg font-semibold text-slate-900 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30"
-                        />
-                        {from.trim() ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setHasUserEditedOrigin(true);
-                              setFrom("");
-                              setFromLoading(false);
-                              setFromLiveSuggestions([]);
-                              setFromCode("");
-                              setFromHighlight(0);
-                              window.requestAnimationFrame(() => originPickerInputRef.current?.focus());
-                            }}
-                            aria-label="Clear origin"
-                            className="focus-ring absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                          >
-                            <X className="h-4 w-4" aria-hidden="true" />
-                          </button>
-                        ) : null}
-                      </div>
-
-                      <div className="mt-4 min-h-[260px] flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/60 p-2">
-                        {fromQuery.length < 2 ? (
-                          <div className="px-3 py-8 text-center text-sm text-slate-500">
-                            Start typing a city or airport name to see suggestions.
-                          </div>
-                        ) : isFromLoadingVisible ? (
-                          <div className="px-3 py-8 text-center text-sm text-slate-500">
-                            Searching airports and cities…
-                          </div>
-                        ) : fromSuggestions.length ? (
-                          fromSuggestions.map((option, index) => (
-                            <button
-                              key={`${option.code}-${option.airport}-picker`}
-                              type="button"
-                              onClick={() => {
-                                setFrom(formatAirportLabel(option));
-                                setFromCode(option.code);
-                                setFromOpen(false);
-                              }}
-                              className={cn(
-                                "focus-ring mb-1 block w-full rounded-xl px-4 py-3 text-left transition-colors last:mb-0",
-                                fromHighlight === index
-                                  ? "bg-white shadow-sm ring-1 ring-indigo-200"
-                                  : "hover:bg-white"
-                              )}
-                            >
-                              <span className="flex items-start justify-between gap-3">
-                                <span>
-                                  <span className="block text-base font-semibold text-slate-900">
-                                    {option.city} ({option.code})
-                                  </span>
-                                  <span className="block text-sm leading-6 text-slate-600">
-                                    {option.airport}
-                                    {option.country ? ` · ${option.country}` : ""}
-                                  </span>
-                                </span>
-                                <span className="rounded-full bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700">
-                                  {option.code}
-                                </span>
-                              </span>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="px-3 py-8 text-center text-sm text-slate-500">
-                            No matching airports or cities
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setHasUserEditedOrigin(true);
-                            setFrom("");
-                            setFromLoading(false);
-                            setFromLiveSuggestions([]);
-                            setFromCode("");
-                            setFromHighlight(0);
-                            window.requestAnimationFrame(() => originPickerInputRef.current?.focus());
-                          }}
-                          className="focus-ring rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                        >
-                          Clear
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setFromOpen(false)}
-                          className="focus-ring rounded-xl bg-indigo-700 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600"
-                        >
-                          Done
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                ) : null}
               </div>
               <div className="flex items-center justify-center">
                 <button
@@ -1880,6 +1737,22 @@ export function SearchTabs({
                     "Destination"}
                 </label>
                 <div className="relative h-8">
+                  <button
+                    ref={toMobileLauncherRef}
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={activeMobileAirportPicker === "destination"}
+                    onClick={() => {
+                      setFromOpen(false);
+                      setToOpen(false);
+                      setActiveMobileAirportPicker("destination");
+                    }}
+                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
+                  >
+                    <span className={cn("truncate", !to.trim() && "text-slate-400")}>
+                      {to.trim() || "To?"}
+                    </span>
+                  </button>
                   <input
                     ref={toInputRef}
                     type="text"
@@ -1913,8 +1786,7 @@ export function SearchTabs({
                       )
                     }
                     placeholder="To?"
-                    className="focus-ring h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
-                    required
+                    className="focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
                   />
                   {to.trim() ? (
                     <button
@@ -1922,7 +1794,7 @@ export function SearchTabs({
                       onClick={onClearDestination}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label="Clear destination"
-                      className="focus-ring absolute right-0 top-1/2 z-30 inline-flex h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:h-8 sm:w-8"
+                      className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
@@ -2391,6 +2263,71 @@ export function SearchTabs({
               </div>
             </div>
           ) : null}
+
+          <MobileAirportPicker
+            open={activeMobileAirportPicker === "origin"}
+            title="Choose origin"
+            inputId="homepage-origin-picker-search"
+            value={from}
+            suggestions={fromSuggestions}
+            isLoading={isFromLoadingVisible}
+            launcherRef={fromMobileLauncherRef}
+            onChange={(nextValue) => {
+              setHasUserEditedOrigin(true);
+              setFrom(nextValue);
+              if (nextValue.trim().length < 2) {
+                setFromLoading(false);
+                setFromLiveSuggestions([]);
+              }
+              setFromCode("");
+              setFromHighlight(0);
+            }}
+            onClear={() => {
+              setHasUserEditedOrigin(true);
+              setFrom("");
+              setFromLoading(false);
+              setFromLiveSuggestions([]);
+              setFromCode("");
+              setFromHighlight(0);
+            }}
+            onSelect={(option) => {
+              setFrom(formatAirportLabel(option));
+              setFromCode(option.code);
+              setActiveMobileAirportPicker(null);
+            }}
+            onClose={() => setActiveMobileAirportPicker(null)}
+          />
+          <MobileAirportPicker
+            open={activeMobileAirportPicker === "destination"}
+            title="Choose destination"
+            inputId="homepage-destination-picker-search"
+            value={to}
+            suggestions={toSuggestions}
+            isLoading={isToLoadingVisible}
+            launcherRef={toMobileLauncherRef}
+            onChange={(nextValue) => {
+              setTo(nextValue);
+              if (nextValue.trim().length < 2) {
+                setToLoading(false);
+                setToLiveSuggestions([]);
+              }
+              setToCode("");
+              setToHighlight(0);
+            }}
+            onClear={() => {
+              setTo("");
+              setToLoading(false);
+              setToLiveSuggestions([]);
+              setToCode("");
+              setToHighlight(0);
+            }}
+            onSelect={(option) => {
+              setTo(formatAirportLabel(option));
+              setToCode(option.code);
+              setActiveMobileAirportPicker(null);
+            }}
+            onClose={() => setActiveMobileAirportPicker(null)}
+          />
         </form>
       ) : (
         <form
