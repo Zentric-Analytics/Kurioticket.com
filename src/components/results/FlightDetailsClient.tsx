@@ -278,7 +278,10 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 <div className="flex min-w-0 flex-col items-start gap-1 text-sm font-semibold text-slate-600 sm:items-center sm:text-center">
                   <div className="flex w-full items-center gap-2 text-teal sm:min-w-32">
                     <span className="h-px flex-1 bg-slate-200" />
-                    <ArrowRight size={16} className="shrink-0" />
+                    <Plane
+                      className="h-3.5 w-3.5 shrink-0 text-indigo-600"
+                      aria-hidden="true"
+                    />
                     <span className="h-px flex-1 bg-slate-200" />
                   </div>
                   <span className="text-xs font-medium text-slate-500">
@@ -429,7 +432,10 @@ function CompactFlightRow({
       </div>
       <div className="flex items-center gap-1.5 text-teal sm:min-w-20 sm:justify-center">
         <span className="h-px w-8 bg-slate-200 sm:w-10" />
-        <ArrowRight size={17} aria-hidden="true" />
+        <Plane
+          className="h-4 w-4 shrink-0 text-indigo-600"
+          aria-hidden="true"
+        />
         <span className="hidden h-px w-8 bg-slate-200 sm:block sm:w-10" />
       </div>
       <div className="min-w-0 sm:text-right">
