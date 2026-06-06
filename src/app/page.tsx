@@ -28,11 +28,11 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SearchTabs } from "@/components/search/SearchTabs";
 import { LinkButton } from "@/components/ui/Button";
-import { validateDestinationImages } from "@/data/destinationImageValidation";
 import {
   HOME_DISCOVERY_VISIBLE_CARD_COUNT,
   getHomeDiscoveryByRegion,
 } from "@/data/homeDiscovery";
+import { getPopularDestinationsByRegion } from "@/data/marketHomeContent";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -46,62 +46,6 @@ import {
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
-
-const destinations = [
-  {
-    id: "dubai",
-    code: "DXB",
-    cityKey: "homeDestinationDubaiCity",
-    countryKey: "homeDestinationDubaiCountry",
-    altKey: "homeDestinationDubaiAlt",
-    image:
-      "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1600",
-  },
-  {
-    id: "london",
-    code: "LHR",
-    cityKey: "homeDestinationLondonCity",
-    countryKey: "homeDestinationLondonCountry",
-    altKey: "homeDestinationLondonAlt",
-    image:
-      "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
-  },
-  {
-    id: "paris",
-    code: "CDG",
-    cityKey: "homeDestinationParisCity",
-    countryKey: "homeDestinationParisCountry",
-    altKey: "homeDestinationParisAlt",
-    image:
-      "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1600",
-  },
-  {
-    id: "bali",
-    code: "DPS",
-    cityKey: "homeDestinationBaliCity",
-    countryKey: "homeDestinationBaliCountry",
-    altKey: "homeDestinationBaliAlt",
-    image:
-      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1600&q=92",
-  },
-  {
-    id: "new-york",
-    code: "EWR",
-    cityKey: "homeDestinationNewYorkCity",
-    countryKey: "homeDestinationNewYorkCountry",
-    altKey: "homeDestinationNewYorkAlt",
-    image:
-      "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1600",
-  },
-];
-
-validateDestinationImages(
-  "popular destination rail",
-  destinations.map((destination) => ({
-    id: destination.id,
-    image: destination.image,
-  })),
-);
 
 type DestinationPriceSearch = {
   tripType: "one-way";
@@ -120,6 +64,7 @@ type DestinationPriceSearch = {
 type DestinationPrice = {
   id: string;
   code: string;
+  origin: string;
   price?: number;
   currency?: string;
   providerBacked: boolean;
@@ -192,6 +137,16 @@ export default function Home() {
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const popularDestinationResolution = useMemo(
+    () => getPopularDestinationsByRegion(regionCode),
+    [regionCode],
+  );
+  const {
+    effectiveMarketCode: popularDestinationMarket,
+    fallbackLevel: popularDestinationFallbackLevel,
+    fallbackUsed: popularDestinationFallbackUsed,
+    items: popularDestinations,
+  } = popularDestinationResolution;
   const fallbackDiscoveryCards = useMemo<HomeDiscoveryFareCard[]>(
     () =>
       getHomeDiscoveryByRegion(regionCode)
@@ -248,12 +203,21 @@ export default function Home() {
     const controller = new AbortController();
 
     async function fetchDestinationPrices() {
+      setDestinationPriceState({ loading: true, prices: {} });
       try {
         const response = await fetch("/api/flights/destination-prices", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            destinations: destinations.map(({ id, code }) => ({ id, code })),
+            regionCode,
+            effectiveMarketCode: popularDestinationMarket,
+            fallbackLevel: popularDestinationFallbackLevel,
+            fallbackUsed: popularDestinationFallbackUsed,
+            destinations: popularDestinations.map(({ id, code, originCode }) => ({
+              id,
+              code,
+              originCode,
+            })),
             currency: "USD",
           }),
           signal: controller.signal,
@@ -280,7 +244,13 @@ export default function Home() {
     void fetchDestinationPrices();
 
     return () => controller.abort();
-  }, []);
+  }, [
+    popularDestinationFallbackLevel,
+    popularDestinationFallbackUsed,
+    popularDestinationMarket,
+    popularDestinations,
+    regionCode,
+  ]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -410,24 +380,26 @@ export default function Home() {
               ref={destinationsRailRef}
               className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {destinations.map((destination) => {
+              {popularDestinations.map((destination) => {
                 const price = destinationPriceState.prices[destination.id];
 
                 return (
                   <DestinationCard
                     key={destination.id}
-                    city={t(destination.cityKey)}
-                    country={t(destination.countryKey)}
-                    imageAlt={t(destination.altKey)}
+                    city={destination.city}
+                    country={destination.country}
+                    imageAlt={destination.imageAlt}
                     saveLabelTemplate={t("homeSaveDestination")}
                     image={destination.image}
                     destinationId={destination.id}
                     price={price}
                     displayCurrency={selectedOption.currency}
-                    href={buildDestinationCardHref(
-                      price,
-                      t(destination.cityKey),
-                    )}
+                    originCode={destination.originCode}
+                    destinationCode={destination.code}
+                    href={buildDestinationCardHref(price, destination.city, {
+                      originCode: destination.originCode,
+                      destinationCode: destination.code,
+                    })}
                     isPriceLoading={destinationPriceState.loading}
                     isSaved={savedTripIds.includes(destination.id)}
                     onHeartToggle={handleSavedTripToggle}
@@ -880,8 +852,11 @@ function hasFreshProviderPrice(
 function buildDestinationCardHref(
   price: HomepageFare | undefined,
   fallbackCity: string,
+  expectedRoute?: { originCode?: string; destinationCode?: string },
 ) {
-  const search = hasFreshProviderPrice(price) ? price?.search : undefined;
+  const search = hasFreshProviderPrice(price, expectedRoute)
+    ? price?.search
+    : undefined;
 
   return search
     ? buildFlightResultsHref(search)
@@ -1004,6 +979,8 @@ function DestinationCard({
   destinationId,
   price,
   displayCurrency,
+  originCode,
+  destinationCode,
   href,
   isPriceLoading,
   isSaved,
@@ -1017,6 +994,8 @@ function DestinationCard({
   destinationId: string;
   price?: DestinationPrice;
   displayCurrency: string;
+  originCode: string;
+  destinationCode: string;
   href: ComponentProps<typeof Link>["href"];
   isPriceLoading: boolean;
   isSaved: boolean;
@@ -1068,6 +1047,8 @@ function DestinationCard({
           <DestinationPricePill
             price={price}
             displayCurrency={displayCurrency}
+            expectedOriginCode={originCode}
+            expectedDestinationCode={destinationCode}
             isLoading={isPriceLoading}
           />
         </div>
@@ -1079,14 +1060,21 @@ function DestinationCard({
 function DestinationPricePill({
   price,
   displayCurrency,
+  expectedOriginCode,
+  expectedDestinationCode,
   isLoading,
 }: {
   price?: DestinationPrice;
   displayCurrency: string;
+  expectedOriginCode?: string;
+  expectedDestinationCode?: string;
   isLoading: boolean;
 }) {
   const currencyRates = useCurrencyRates();
-  const hasProviderPrice = hasFreshProviderPrice(price);
+  const hasProviderPrice = hasFreshProviderPrice(price, {
+    originCode: expectedOriginCode,
+    destinationCode: expectedDestinationCode,
+  });
 
   if (isLoading) {
     return (
