@@ -27,6 +27,8 @@ import {
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
+import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -181,8 +183,12 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const flightDatesLauncherRef =
     useRef<HTMLButtonElement>(null);
+  const hotelDestinationMobileLauncherRef =
+    useRef<HTMLButtonElement>(null);
   const hotelDateWrapRef =
     useRef<HTMLDivElement>(null);
+  const hotelDatesMobileLauncherRef =
+    useRef<HTMLButtonElement>(null);
   const hotelDatesPanelRef =
     useRef<HTMLDivElement>(null);
   const tripTypeWrapRef =
@@ -193,6 +199,8 @@ export function SearchTabs({
     useRef<HTMLButtonElement>(null);
   const hotelGuestsRoomsWrapRef =
     useRef<HTMLDivElement>(null);
+  const hotelGuestsRoomsMobileLauncherRef =
+    useRef<HTMLButtonElement>(null);
 
   const [tab, setTab] =
     useState<TabMode>("flights");
@@ -239,6 +247,8 @@ export function SearchTabs({
     hotelDatesOpen,
     setHotelDatesOpen,
   ] = useState(false);
+  const [hotelDestinationMobilePickerOpen, setHotelDestinationMobilePickerOpen] =
+    useState(false);
 
   const [
     fromHighlight,
@@ -732,6 +742,7 @@ export function SearchTabs({
           false
         );
         setHotelDatesOpen(false);
+        setHotelDestinationMobilePickerOpen(false);
         setTripTypeOpen(false);
         if (travelersMenuOpen) {
           cancelTravelersDraft();
@@ -2591,6 +2602,30 @@ export function SearchTabs({
                   {t.destination ||
                     "Destination"}
                 </label>
+                <button
+                  ref={hotelDestinationMobileLauncherRef}
+                  type="button"
+                  onClick={() => {
+                    setHotelDestinationMobilePickerOpen(true);
+                    setHotelDatesOpen(false);
+                    setHotelGuestsRoomsOpen(false);
+                  }}
+                  aria-haspopup="dialog"
+                  aria-expanded={hotelDestinationMobilePickerOpen}
+                  aria-label="Choose hotel destination"
+                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
+                >
+                  <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
+                    {destination.trim() || "City or hotel"}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      "shrink-0 text-slate-500 transition-transform",
+                      hotelDestinationMobilePickerOpen && "rotate-180",
+                    )}
+                  />
+                </button>
                 <input
                   type="text"
                   value={
@@ -2606,7 +2641,7 @@ export function SearchTabs({
                     )
                   }
                   placeholder="City or hotel"
-                  className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                  className="focus-ring hidden h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
                   required
                 />
               </div>
@@ -2619,14 +2654,13 @@ export function SearchTabs({
                     "Travel dates"}
                 </label>
                 <button
+                  ref={hotelDatesMobileLauncherRef}
                   type="button"
-                  onClick={() =>
-                    setHotelDatesOpen(
-                      (
-                        prev
-                      ) => !prev
-                    )
-                  }
+                  onClick={() => {
+                    setHotelDatesOpen((prev) => !prev);
+                    setHotelDestinationMobilePickerOpen(false);
+                    setHotelGuestsRoomsOpen(false);
+                  }}
                   aria-expanded={
                     hotelDatesOpen
                   }
@@ -2874,12 +2908,13 @@ export function SearchTabs({
                     "Guests"}
                 </label>
                 <button
+                  ref={hotelGuestsRoomsMobileLauncherRef}
                   type="button"
-                  onClick={() =>
-                    setHotelGuestsRoomsOpen(
-                      (prev) => !prev
-                    )
-                  }
+                  onClick={() => {
+                    setHotelGuestsRoomsOpen((prev) => !prev);
+                    setHotelDestinationMobilePickerOpen(false);
+                    setHotelDatesOpen(false);
+                  }}
                   aria-expanded={
                     hotelGuestsRoomsOpen
                   }
@@ -3050,6 +3085,254 @@ export function SearchTabs({
               </div>
             </div>
           </div>
+
+          <HotelDestinationMobilePicker
+            open={hotelDestinationMobilePickerOpen}
+            value={destination}
+            titleId="homepage-hotel-mobile-destination-title"
+            inputId="homepage-hotel-mobile-destination-input"
+            launcherRef={hotelDestinationMobileLauncherRef}
+            detectedCountryHint={countryHint}
+            onChange={(nextDestination) => setDestination(nextDestination)}
+            onClose={() => setHotelDestinationMobilePickerOpen(false)}
+          />
+
+          <HotelMobilePickerShell
+            open={hotelDatesOpen}
+            title="Choose travel dates"
+            titleId="homepage-hotel-mobile-dates-title"
+            launcherRef={hotelDatesMobileLauncherRef}
+            onClose={() => setHotelDatesOpen(false)}
+            footer={
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCheckIn("");
+                    setCheckOut("");
+                  }}
+                  className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setHotelDatesOpen(false)}
+                  className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                >
+                  Done
+                </button>
+              </div>
+            }
+          >
+            <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-3 shadow-sm">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  aria-label="Previous month"
+                  onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, -1))}
+                  className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  Prev
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next month"
+                  onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, 1))}
+                  className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  Next
+                </button>
+              </div>
+              {[0, 1].map((monthOffset) => {
+                const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
+                const cells = buildMonthCells(monthDate);
+
+                return (
+                  <div key={monthOffset}>
+                    <p className="mb-2 text-center text-base font-black text-slate-900">
+                      {monthDate.toLocaleDateString("en-US", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500">
+                      {weekdays.map((weekday) => (
+                        <span key={weekday}>{weekday}</span>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-7 gap-1">
+                      {cells.map((cell) => {
+                        const day = cell.date;
+                        const iso = toIsoDate(day);
+                        const isCheckIn = iso === checkIn;
+                        const isCheckOut = iso === checkOut;
+                        const isPastDate = isBeforeToday(day);
+                        const isInvalidCheckOut = Boolean(checkIn && !checkOut && iso <= checkIn);
+                        const isDisabledDate = isPastDate || isInvalidCheckOut;
+                        const isInRange = Boolean(
+                          checkInParsed &&
+                            checkOutParsed &&
+                            !isPastDate &&
+                            day > checkInParsed &&
+                            day < checkOutParsed,
+                        );
+
+                        if (!cell.isCurrentMonth) {
+                          return (
+                            <span
+                              key={`homepage-mobile-placeholder-${iso}`}
+                              aria-hidden="true"
+                              className="h-11 w-11 justify-self-center"
+                            />
+                          );
+                        }
+
+                        return (
+                          <button
+                            key={iso}
+                            type="button"
+                            aria-label={`Select ${day.toLocaleDateString("en-US", {
+                              month: "long",
+                              day: "numeric",
+                              year: "numeric",
+                            })}`}
+                            onClick={() => onSelectHotelDate(day)}
+                            disabled={isDisabledDate}
+                            aria-disabled={isDisabledDate}
+                            className={cn(
+                              "focus-ring flex h-11 w-11 items-center justify-center justify-self-center rounded-full text-base font-semibold transition-colors disabled:cursor-not-allowed",
+                              isDisabledDate
+                                ? "text-slate-300 hover:bg-transparent"
+                                : "text-slate-900 hover:bg-indigo-50",
+                              isInRange && "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
+                              (isCheckIn || isCheckOut) && "bg-indigo-700 text-white hover:bg-indigo-700",
+                            )}
+                          >
+                            {day.getDate()}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </HotelMobilePickerShell>
+
+          <HotelMobilePickerShell
+            open={hotelGuestsRoomsOpen}
+            title="Guests and rooms"
+            titleId="homepage-hotel-mobile-guests-title"
+            launcherRef={hotelGuestsRoomsMobileLauncherRef}
+            onClose={() => setHotelGuestsRoomsOpen(false)}
+            footer={
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setHotelGuestsRoomsOpen(false)}
+                  className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                >
+                  Done
+                </button>
+              </div>
+            }
+          >
+            <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-4 shadow-sm">
+              {[
+                {
+                  key: "adults",
+                  label: "Adults",
+                  value: hotelAdultCount,
+                  min: 1,
+                  max: 12 - hotelChildCount,
+                  onDecrement: () => setHotelAdultCount((prev) => Math.max(1, prev - 1)),
+                  onIncrement: () =>
+                    setHotelAdultCount((prev) => Math.min(12 - hotelChildCount, prev + 1)),
+                },
+                {
+                  key: "children",
+                  label: "Children",
+                  value: hotelChildCount,
+                  min: 0,
+                  max: 12 - hotelAdultCount,
+                  onDecrement: () => setHotelChildCount((prev) => Math.max(0, prev - 1)),
+                  onIncrement: () =>
+                    setHotelChildCount((prev) => Math.min(12 - hotelAdultCount, prev + 1)),
+                },
+                {
+                  key: "rooms",
+                  label: "Rooms",
+                  value: Number(rooms),
+                  min: 1,
+                  max: 6,
+                  onDecrement: () => setRooms((prev) => String(Math.max(1, Number(prev) - 1))),
+                  onIncrement: () => setRooms((prev) => String(Math.min(6, Number(prev) + 1))),
+                },
+              ].map((row) => {
+                const canDecrement = row.value > row.min;
+                const canIncrement = row.value < row.max;
+
+                return (
+                  <div
+                    key={row.key}
+                    className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 last:border-b-0 last:pb-0"
+                  >
+                    <span className="text-base font-black text-slate-950">{row.label}</span>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={row.onDecrement}
+                        disabled={!canDecrement}
+                        className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Minus className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                      <span className="min-w-8 text-center text-lg font-black text-slate-950">
+                        {row.value}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={row.onIncrement}
+                        disabled={!canIncrement}
+                        className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <Plus className="h-5 w-5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-3">
+                <div>
+                  <p className="text-base font-black text-slate-950">Pet-friendly</p>
+                  <p className="text-sm leading-5 text-slate-600">
+                    Only show stays that allow pets
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={hotelPetFriendly}
+                  aria-label="Toggle pet-friendly stays"
+                  onClick={() => setHotelPetFriendly((prev) => !prev)}
+                  className={cn(
+                    "focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
+                    hotelPetFriendly
+                      ? "border-indigo-600 bg-indigo-600"
+                      : "border-slate-300 bg-slate-200",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform",
+                      hotelPetFriendly ? "translate-x-5" : "translate-x-0.5",
+                    )}
+                  />
+                </button>
+              </div>
+            </div>
+          </HotelMobilePickerShell>
         </form>
       )}
       </section>
