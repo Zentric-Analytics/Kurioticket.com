@@ -44,6 +44,13 @@ export function FlightCard({
   const showsProviderBackedReturn = visibleLegs.some(
     (leg) => leg.direction === "return",
   );
+  const providerPrice = `${displayPrice.providerFormatted} ${displayPrice.sourceCurrency}`;
+  const priceLabel = displayPrice.isConvertedEstimate
+    ? "Estimated display price"
+    : "Provider price";
+  const providerHandoffCopy = displayPrice.isConvertedEstimate
+    ? "Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking. Final provider currency may differ from your selected display currency."
+    : "Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking.";
 
   return (
     <Card
@@ -86,8 +93,8 @@ export function FlightCard({
             <FlightDetailLines details={details} />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[132px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-3 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
-            <div className="min-w-0 lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[132px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
+            <div className="min-w-0 lg:flex lg:min-h-[82px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
               <div
                 className="text-xl font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-[1.35rem]"
                 aria-label={displayPrice.ariaLabel}
@@ -96,8 +103,17 @@ export function FlightCard({
                 {displayPrice.formatted}
               </div>
               <p className="mt-1 text-[11px] font-medium uppercase leading-none tracking-[0.1em] text-slate-600">
-                Estimated price
+                {priceLabel}
               </p>
+              {displayPrice.isConvertedEstimate ? (
+                <div className="mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
+                  <p>Provider price: {providerPrice}</p>
+                  <p className="text-[11px] leading-4 text-slate-500">
+                    Final price may be charged by the provider in{" "}
+                    {displayPrice.sourceCurrency}.
+                  </p>
+                </div>
+              ) : null}
             </div>
             <LinkButton
               href={`/flights/details/${encodeURIComponent(flight.id)}`}
@@ -112,8 +128,8 @@ export function FlightCard({
 
         <div className="mt-2 rounded-xl border border-indigo-100 bg-indigo-50/50 px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
           {showsProviderBackedReturn
-            ? "Outbound and return details are shown from provider-normalized itinerary data. Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking."
-            : "Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking."}
+            ? `Outbound and return details are shown from provider-normalized itinerary data. ${providerHandoffCopy}`
+            : providerHandoffCopy}
         </div>
       </div>
     </Card>
