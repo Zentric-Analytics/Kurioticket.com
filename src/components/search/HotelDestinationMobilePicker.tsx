@@ -67,7 +67,9 @@ export function HotelDestinationMobilePicker({
   const activeCountryHint = selectedCountryHint || detectedCountryHint;
   const trimmedQuery = query.trim();
   const visibleSuggestions =
-    suggestionsCountryHint === activeCountryHint ? suggestions : [];
+    trimmedQuery.length >= 1 && suggestionsCountryHint === activeCountryHint
+      ? suggestions
+      : [];
 
   useEffect(() => {
     if (!open) return;
@@ -84,60 +86,67 @@ export function HotelDestinationMobilePicker({
   useEffect(() => {
     if (!open) return;
 
+    if (trimmedQuery.length < 1) {
+      const timeoutId = window.setTimeout(() => {
+        setLoading(false);
+        setSuggestions([]);
+        setSuggestionsCountryHint(activeCountryHint);
+        setHighlight(0);
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
+    }
+
     const controller = new AbortController();
-    const timeoutId = window.setTimeout(
-      async () => {
-        setLoading(true);
+    const timeoutId = window.setTimeout(async () => {
+      setLoading(true);
 
-        try {
-          const params = new URLSearchParams({ limit: "8" });
+      try {
+        const params = new URLSearchParams({ limit: "8", q: trimmedQuery });
 
-          if (trimmedQuery.length >= 1) params.set("q", trimmedQuery);
-          if (selectedCountryHint) params.set("countryCode", selectedCountryHint);
-          if (detectedCountryHint) {
-            params.set("detectedCountryCode", detectedCountryHint);
-          }
-          if (typeof navigator !== "undefined" && navigator.language) {
-            params.set("locale", navigator.language);
-          }
-
-          const response = await fetch(
-            `/api/hotels/destinations?${params.toString()}`,
-            { signal: controller.signal, cache: "no-store" },
-          );
-
-          if (!response.ok) {
-            throw new Error("Failed to load hotel destination suggestions");
-          }
-
-          const payload = (await response.json()) as HotelDestinationsApiResponse;
-          const nextSuggestions = Array.isArray(payload.suggestions)
-            ? payload.suggestions
-                .filter((suggestion) =>
-                  Boolean(
-                    suggestion?.id &&
-                      suggestion?.name &&
-                      suggestion?.country &&
-                      suggestion?.searchValue,
-                  ),
-                )
-                .slice(0, 8)
-            : [];
-
-          setSuggestions(nextSuggestions);
-          setSuggestionsCountryHint(activeCountryHint);
-          setHighlight(0);
-        } catch {
-          if (!controller.signal.aborted) {
-            setSuggestions([]);
-            setSuggestionsCountryHint(activeCountryHint);
-          }
-        } finally {
-          if (!controller.signal.aborted) setLoading(false);
+        if (selectedCountryHint) params.set("countryCode", selectedCountryHint);
+        if (detectedCountryHint) {
+          params.set("detectedCountryCode", detectedCountryHint);
         }
-      },
-      trimmedQuery.length >= 1 ? 180 : 0,
-    );
+        if (typeof navigator !== "undefined" && navigator.language) {
+          params.set("locale", navigator.language);
+        }
+
+        const response = await fetch(
+          `/api/hotels/destinations?${params.toString()}`,
+          { signal: controller.signal, cache: "no-store" },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to load hotel destination suggestions");
+        }
+
+        const payload = (await response.json()) as HotelDestinationsApiResponse;
+        const nextSuggestions = Array.isArray(payload.suggestions)
+          ? payload.suggestions
+              .filter((suggestion) =>
+                Boolean(
+                  suggestion?.id &&
+                    suggestion?.name &&
+                    suggestion?.country &&
+                    suggestion?.searchValue,
+                ),
+              )
+              .slice(0, 8)
+          : [];
+
+        setSuggestions(nextSuggestions);
+        setSuggestionsCountryHint(activeCountryHint);
+        setHighlight(0);
+      } catch {
+        if (!controller.signal.aborted) {
+          setSuggestions([]);
+          setSuggestionsCountryHint(activeCountryHint);
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }, 180);
 
     return () => {
       window.clearTimeout(timeoutId);
@@ -283,7 +292,7 @@ export function HotelDestinationMobilePicker({
             <div className="rounded-xl bg-slate-50 px-3 py-4 text-sm font-semibold text-slate-500">
               {trimmedQuery
                 ? "No matching destinations yet."
-                : "Start typing or choose a provider-backed suggestion."}
+                : "Search for a city, area, or landmark."}
             </div>
           )}
         </div>

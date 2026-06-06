@@ -295,6 +295,12 @@ export function HotelSearchBar({
 
       if (!(target instanceof Node)) return;
 
+      if (target instanceof Element) {
+        const mobilePickerShell = target.closest("[data-flight-mobile-picker-shell]");
+
+        if (mobilePickerShell) return;
+      }
+
       if (!destinationWrapperRef.current?.contains(target)) {
         setDestinationSuggestionsOpen(false);
       }
@@ -1002,7 +1008,7 @@ export function HotelSearchBar({
                 <span className="truncate">{dateSummary}</span>
               </button>
               {datesOpen ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
+                <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] hidden w-full rounded-2xl border border-slate-200 sm:block bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
                   <p className="mb-3 text-base font-semibold text-slate-900">
                     Choose travel dates
                   </p>
@@ -1157,7 +1163,7 @@ export function HotelSearchBar({
                 />
               </button>
               {guestsRoomsOpen ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 w-[calc(100vw-24px)] max-w-[330px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
+                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 hidden w-[calc(100vw-24px)] max-w-[330px] sm:block overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
                   <div className="space-y-3">
                     {[
                       {
@@ -1370,7 +1376,7 @@ export function HotelSearchBar({
           </div>
         }
       >
-        <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-3 shadow-sm">
+        <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-3 shadow-sm sm:p-4">
           <div className="flex items-center justify-between">
             <button
               type="button"
