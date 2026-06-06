@@ -3103,7 +3103,7 @@ export function SearchTabs({
             titleId="homepage-hotel-mobile-dates-title"
             launcherRef={hotelDatesMobileLauncherRef}
             onClose={() => setHotelDatesOpen(false)}
-            contentClassName="px-3 py-2"
+            contentClassName="px-3 py-3"
             footer={
               <div className="flex items-center justify-between gap-3">
                 <button
@@ -3126,7 +3126,7 @@ export function SearchTabs({
               </div>
             }
           >
-            <div className="mx-auto flex w-full max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-sm">
+            <div className="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm">
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -3145,8 +3145,8 @@ export function SearchTabs({
                   Next
                 </button>
               </div>
-              <div className="grid grid-cols-1 gap-2">
-                {[0].map((monthOffset) => {
+              <div className="grid grid-cols-1 gap-3">
+                {[0, 1].map((monthOffset) => {
                   const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
                   const cells = buildMonthCells(monthDate);
 
@@ -3185,7 +3185,7 @@ export function SearchTabs({
                               <span
                                 key={`homepage-mobile-placeholder-${iso}`}
                                 aria-hidden="true"
-                                className="h-9 w-9 justify-self-center min-[390px]:h-10 min-[390px]:w-10"
+                                className="h-8 w-8 justify-self-center min-[390px]:h-9 min-[390px]:w-9"
                               />
                             );
                           }
@@ -3203,7 +3203,7 @@ export function SearchTabs({
                               disabled={isDisabledDate}
                               aria-disabled={isDisabledDate}
                               className={cn(
-                                "focus-ring flex h-9 w-9 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-10 min-[390px]:w-10",
+                                "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-9 min-[390px]:w-9",
                                 isDisabledDate
                                   ? "text-slate-300 hover:bg-transparent"
                                   : "text-slate-900 hover:bg-indigo-50",
