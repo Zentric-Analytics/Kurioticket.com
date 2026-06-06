@@ -39,6 +39,9 @@ export function FlightMobilePickerShell({
   useEffect(() => {
     if (!open || typeof window === "undefined") return;
 
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+    if (!mobileQuery.matches) return;
+
     const launcherElement = launcherRef?.current;
     const bodyElement = document.body;
     const rootElement = document.documentElement;
@@ -91,7 +94,10 @@ export function FlightMobilePickerShell({
   if (!open || !portalElement) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden">
+    <div
+      data-flight-mobile-picker-shell
+      className="fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden"
+    >
       <div
         role="dialog"
         aria-modal="true"
