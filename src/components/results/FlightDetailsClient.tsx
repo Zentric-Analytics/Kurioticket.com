@@ -129,15 +129,15 @@ export function FlightDetailsClient({ id }: { id: string }) {
   return (
     <main className="flex-1 bg-surface-muted/40">
       <section className="border-b border-border bg-white">
-        <div className="page-shell py-4 sm:py-5">
-          <div className="mx-auto grid w-full max-w-5xl gap-4">
+        <div className="page-shell py-3 sm:py-4">
+          <div className="mx-auto grid w-full max-w-5xl gap-3">
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
-                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3.5 sm:p-4 lg:p-5">
-                  <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
+                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
+                  <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
                     <Sparkles size={14} aria-hidden="true" /> Flight details
                   </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     <span className="text-sm font-semibold text-slate-700">
                       {flight.airlineName}
                     </span>
@@ -153,15 +153,15 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       </>
                     ) : null}
                   </div>
-                  <h1 className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2.5 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                  <h1 className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
                     <span>{flight.originAirport}</span>
                     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
                       <ArrowRight size={16} aria-hidden="true" />
                     </span>
                     <span>{flight.destinationAirport}</span>
                   </h1>
-                  <div className="mt-3 text-xs font-medium text-slate-600">
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                  <div className="mt-2 text-xs font-medium leading-5 text-slate-600">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       {heroDetails.map((detail) => {
                         const Icon = detail.icon;
 
@@ -187,8 +187,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   </div>
                 </div>
 
-                <aside className="border-t border-indigo-100 bg-white p-3 sm:p-3.5 lg:border-l lg:border-t-0 lg:p-4">
-                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center shadow-sm">
+                <aside className="border-t border-indigo-100 bg-white p-2.5 sm:p-3 lg:border-l lg:border-t-0 lg:p-3.5">
+                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                       From
                     </p>
@@ -209,14 +209,14 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   <Button
                     variant="accent"
                     size="lg"
-                    className="mt-2.5 w-full rounded-xl px-6 text-sm font-semibold sm:text-base"
+                    className="mt-2 w-full rounded-xl px-6 text-sm font-semibold sm:text-base"
                     onClick={continueToProvider}
                     disabled={!hasProviderLink}
                   >
                     Continue to Provider <ArrowRight size={18} />
                   </Button>
-                  <p className="mt-2 flex gap-2 text-xs font-medium leading-5 text-slate-600">
-                    <Info size={16} className="mt-0.5 shrink-0 text-blue" />
+                  <p className="mt-1.5 flex gap-1.5 text-xs font-medium leading-4 text-slate-600">
+                    <Info size={15} className="mt-0.5 shrink-0 text-blue" />
                     <span>{providerDisclaimer}</span>
                   </p>
                 </aside>
