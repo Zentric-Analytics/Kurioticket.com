@@ -1381,6 +1381,7 @@ export function HotelSearchBar({
         titleId="hotel-results-mobile-dates-title"
         launcherRef={datesMobileLauncherRef}
         onClose={() => setDatesOpen(false)}
+        contentClassName="px-3 py-2"
         footer={
           <div className="flex items-center justify-between gap-3">
             <button
@@ -1403,13 +1404,13 @@ export function HotelSearchBar({
           </div>
         }
       >
-        <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-3 shadow-sm sm:p-4">
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-sm">
           <div className="flex items-center justify-between">
             <button
               type="button"
               aria-label="Previous month"
               onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, -1))}
-              className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
               Prev
             </button>
@@ -1417,25 +1418,25 @@ export function HotelSearchBar({
               type="button"
               aria-label="Next month"
               onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, 1))}
-              className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
               Next
             </button>
           </div>
-          <div className="grid grid-cols-1 gap-4">
-            {[0, 1].map((monthOffset) => {
+          <div className="grid grid-cols-1 gap-2">
+            {[0].map((monthOffset) => {
               const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
               const cells = buildMonthCells(monthDate);
 
               return (
                 <div key={monthOffset}>
-                  <p className="mb-2 text-center text-base font-black text-slate-900">
+                  <p className="mb-1 text-center text-sm font-black text-slate-900">
                     {monthDate.toLocaleDateString("en-US", {
                       month: "long",
                       year: "numeric",
                     })}
                   </p>
-                  <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500">
+                  <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
                     {weekdays.map((weekday) => (
                       <span key={weekday}>{weekday}</span>
                     ))}
@@ -1464,7 +1465,7 @@ export function HotelSearchBar({
                           <span
                             key={`mobile-placeholder-${iso}`}
                             aria-hidden="true"
-                            className="h-11 w-11 justify-self-center"
+                            className="h-9 w-9 justify-self-center min-[390px]:h-10 min-[390px]:w-10"
                           />
                         );
                       }
@@ -1482,7 +1483,7 @@ export function HotelSearchBar({
                           disabled={isDisabledDate}
                           aria-disabled={isDisabledDate}
                           className={cn(
-                            "focus-ring flex h-11 w-11 items-center justify-center justify-self-center rounded-full text-base font-semibold transition-colors disabled:cursor-not-allowed",
+                            "focus-ring flex h-9 w-9 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-10 min-[390px]:w-10",
                             isDisabledDate
                               ? "text-slate-300 hover:bg-transparent"
                               : "text-slate-900 hover:bg-indigo-50",
