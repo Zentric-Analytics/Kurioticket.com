@@ -129,17 +129,18 @@ const fallbackDiscovery: HomeDiscoveryItem[] = [
     imageAlt: "Cape Town city and Table Mountain",
   },
   {
-    id: "fallback-sfo-hnl",
-    title: "Honolulu island sunshine",
-    originCity: "San Francisco",
-    originCode: "SFO",
-    destinationCity: "Honolulu",
-    destinationCode: "HNL",
-    routeNote: "Easy Pacific getaway with beach mornings and crater hikes.",
-    priceFromUsd: 399,
+    id: "fallback-cai-dxb",
+    title: "Dubai connector break",
+    originCity: "Cairo",
+    originCode: "CAI",
+    destinationCity: "Dubai",
+    destinationCode: "DXB",
+    routeNote:
+      "Middle East route for easy stopovers, shopping, and onward links.",
+    priceFromUsd: 326,
     image:
-      "https://images.unsplash.com/photo-1507878866276-a947ef722fee?auto=format&fit=crop&w=1200&q=90",
-    imageAlt: "Waikiki beachfront in Honolulu",
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Downtown Dubai skyline with Burj Khalifa",
   },
   {
     id: "fallback-mad-mrk",
@@ -235,6 +236,55 @@ const fallbackDiscovery: HomeDiscoveryItem[] = [
     imageAlt: "Zanzibar beach with palm trees and turquoise water",
   },
 ];
+
+
+const REGIONAL_HOME_DISCOVERY_SOURCE_BY_COUNTRY: Record<string, string> = {
+  // Africa markets without dedicated homepage discovery data use Nigeria as the
+  // closest available Africa-relevant route set instead of the US market.
+  AO: "NG",
+  BF: "NG",
+  BJ: "NG",
+  BW: "NG",
+  CD: "NG",
+  CI: "NG",
+  CM: "NG",
+  DZ: "NG",
+  EG: "NG",
+  ET: "NG",
+  GH: "NG",
+  KE: "NG",
+  MA: "NG",
+  MU: "NG",
+  NA: "NG",
+  RW: "NG",
+  SN: "NG",
+  TZ: "NG",
+  UG: "NG",
+  ZA: "NG",
+  ZM: "NG",
+  ZW: "NG",
+
+  // Europe markets without dedicated cards use the UK/Europe route set.
+  AT: "GB",
+  BE: "GB",
+  CH: "GB",
+  CZ: "GB",
+  DE: "GB",
+  DK: "GB",
+  ES: "GB",
+  FI: "GB",
+  FR: "GB",
+  IE: "GB",
+  IT: "GB",
+  NL: "GB",
+  NO: "GB",
+  PL: "GB",
+  PT: "GB",
+  SE: "GB",
+
+  // North America non-US markets should never fall back to US domestic cards.
+  MX: "CA",
+};
 
 export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
   NG: [
@@ -1704,15 +1754,61 @@ export const HOME_DISCOVERY_VISIBLE_CARD_COUNT = 16;
 export function getHomeDiscoveryByRegion(
   regionCode?: string | null,
 ): HomeDiscoveryItem[] {
-  if (!regionCode) return fallbackDiscovery;
-  return homeDiscoveryByRegion[regionCode] ?? fallbackDiscovery;
+  const normalizedRegionCode = normalizeHomeDiscoveryRegionCode(regionCode);
+  const directRegionDiscovery = homeDiscoveryByRegion[normalizedRegionCode];
+
+  if (directRegionDiscovery) return directRegionDiscovery;
+
+  const regionalSourceCode = getRegionalHomeDiscoverySourceCode(
+    normalizedRegionCode,
+  );
+
+  return regionalSourceCode
+    ? homeDiscoveryByRegion[regionalSourceCode] ?? fallbackDiscovery
+    : fallbackDiscovery;
 }
 
 export function getHomeDiscoveryFareCandidates(
   regionCode: string = DEFAULT_HOME_DISCOVERY_REGION,
 ): HomeDiscoveryFareCandidate[] {
   const normalizedRegionCode = normalizeHomeDiscoveryRegionCode(regionCode);
-  const visibleCandidates = getHomeDiscoveryByRegion(normalizedRegionCode)
+  const regionDiscovery = homeDiscoveryByRegion[normalizedRegionCode];
+
+  if (!regionDiscovery) return [];
+
+  return buildHomeDiscoveryFareCandidatesForRegion(
+    normalizedRegionCode,
+    regionDiscovery,
+  );
+}
+
+export function getRegionalHomeDiscoveryFareCandidates(
+  regionCode: string,
+): HomeDiscoveryFareCandidate[] {
+  const normalizedRegionCode = normalizeHomeDiscoveryRegionCode(regionCode);
+  const regionalSourceCode = getRegionalHomeDiscoverySourceCode(
+    normalizedRegionCode,
+  );
+
+  if (!regionalSourceCode || regionalSourceCode === normalizedRegionCode) {
+    return [];
+  }
+
+  const regionalDiscovery = homeDiscoveryByRegion[regionalSourceCode];
+
+  return regionalDiscovery
+    ? buildHomeDiscoveryFareCandidatesForRegion(
+        regionalSourceCode,
+        regionalDiscovery,
+      )
+    : [];
+}
+
+function buildHomeDiscoveryFareCandidatesForRegion(
+  normalizedRegionCode: string,
+  regionDiscovery: HomeDiscoveryItem[],
+): HomeDiscoveryFareCandidate[] {
+  const visibleCandidates = regionDiscovery
     .map<HomeDiscoveryFareCandidate | undefined>((item, index) => {
       if (
         normalizedRegionCode === DEFAULT_HOME_DISCOVERY_REGION &&
@@ -1808,6 +1904,12 @@ function normalizeHomeDiscoveryRegionCode(
   return normalized && /^[A-Z]{2}$/.test(normalized)
     ? normalized
     : DEFAULT_HOME_DISCOVERY_REGION;
+}
+
+function getRegionalHomeDiscoverySourceCode(regionCode: string) {
+  if (regionCode === DEFAULT_HOME_DISCOVERY_REGION) return undefined;
+
+  return REGIONAL_HOME_DISCOVERY_SOURCE_BY_COUNTRY[regionCode];
 }
 
 function toHomeDiscoveryFareCandidate(
