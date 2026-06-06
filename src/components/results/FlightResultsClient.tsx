@@ -820,26 +820,72 @@ export function FlightResultsClient() {
   useEffect(() => {
     const sentinel = stickySentinelRef.current;
 
-    if (!sentinel || typeof IntersectionObserver === "undefined") {
+    if (!sentinel) {
       return undefined;
+    }
+
+    let animationFrame = 0;
+
+    const applyCompactState = (shouldCompact: boolean) => {
+      setIsSearchBarCompact(shouldCompact);
+
+      if (!shouldCompact) {
+        setIsSearchExpandedWhileSticky(false);
+        setHasInteractedWithExpandedSearch(false);
+      }
+    };
+
+    const updateFromSentinelPosition = () => {
+      applyCompactState(sentinel.getBoundingClientRect().bottom <= 0);
+    };
+
+    const schedulePositionUpdate = () => {
+      if (animationFrame) return;
+
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        updateFromSentinelPosition();
+      });
+    };
+
+    updateFromSentinelPosition();
+
+    if (typeof IntersectionObserver === "undefined") {
+      window.addEventListener("scroll", schedulePositionUpdate, {
+        passive: true,
+      });
+      window.addEventListener("resize", schedulePositionUpdate);
+
+      return () => {
+        window.removeEventListener("scroll", schedulePositionUpdate);
+        window.removeEventListener("resize", schedulePositionUpdate);
+        if (animationFrame) {
+          window.cancelAnimationFrame(animationFrame);
+        }
+      };
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        const shouldCompact = !entry.isIntersecting;
-        setIsSearchBarCompact(shouldCompact);
-
-        if (!shouldCompact) {
-          setIsSearchExpandedWhileSticky(false);
-          setHasInteractedWithExpandedSearch(false);
-        }
+        applyCompactState(!entry.isIntersecting);
       },
       { threshold: 0 },
     );
 
     observer.observe(sentinel);
+    window.addEventListener("scroll", schedulePositionUpdate, {
+      passive: true,
+    });
+    window.addEventListener("resize", schedulePositionUpdate);
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", schedulePositionUpdate);
+      window.removeEventListener("resize", schedulePositionUpdate);
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -3267,7 +3313,7 @@ export function FlightResultsClient() {
     }
     if (placement === "desktop" && showCompactSearchSummary) {
       return (
-        <div className="mx-auto w-full min-w-0 max-w-full sm:block sm:max-w-5xl">
+        <div className="mx-auto w-full min-w-0 max-w-[54rem] sm:block">
           <div className="overflow-visible rounded-sm border border-slate-300 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.12)]">
             <button
               type="button"

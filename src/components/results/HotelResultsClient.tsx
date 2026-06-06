@@ -698,7 +698,7 @@ export function HotelResultsClient() {
       >
         <div className="page-shell">
           {showCompactSearchSummary ? (
-            <div className="mx-auto w-full min-w-0 max-w-full sm:block sm:max-w-5xl">
+            <div className="mx-auto w-full min-w-0 max-w-[54rem] sm:block">
               <div className="overflow-visible rounded-sm border border-slate-300 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.12)]">
                 <button
                   type="button"
