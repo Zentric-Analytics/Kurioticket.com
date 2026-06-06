@@ -295,14 +295,20 @@ export function FlightDetailsClient({ id }: { id: string }) {
 
             <div className="mt-2 grid gap-1.5">
               {itineraryLegs.map((leg, legIndex) => (
-                <CompactLegSection
+                <div
                   key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
-                  leg={leg}
-                  legIndex={legIndex}
-                  legCount={itineraryLegs.length}
-                  fallbackAirlineName={flight.airlineName}
-                  fallbackFlightNumber={flight.flightNumber}
-                />
+                  className={
+                    legIndex > 0 ? "mt-2 border-t border-slate-200 pt-3" : ""
+                  }
+                >
+                  <CompactLegSection
+                    leg={leg}
+                    legIndex={legIndex}
+                    legCount={itineraryLegs.length}
+                    fallbackAirlineName={flight.airlineName}
+                    fallbackFlightNumber={flight.flightNumber}
+                  />
+                </div>
               ))}
             </div>
           </section>
