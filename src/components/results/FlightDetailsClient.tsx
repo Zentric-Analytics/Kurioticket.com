@@ -258,14 +258,14 @@ export function FlightDetailsClient({ id }: { id: string }) {
         <div className="mx-auto w-full max-w-3xl">
           <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm shadow-indigo-950/5 sm:p-4">
             <div className="border-b border-slate-200 pb-2">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-teal-dark">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="text-sm font-semibold tracking-tight text-teal-dark sm:text-base">
                   Selected flight
                 </p>
-                <h2 className="mt-0.5 truncate text-lg font-bold text-navy sm:text-xl">
+                <p className="min-w-0 max-w-full break-words text-right text-xs font-medium text-slate-500 sm:text-sm">
                   {flight.airlineName}
                   {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
-                </h2>
+                </p>
               </div>
             </div>
 
