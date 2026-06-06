@@ -25,6 +25,7 @@ import {
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { FlightCard } from "@/components/results/FlightCard";
+import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -681,6 +682,9 @@ export function FlightResultsClient() {
   );
   const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [activeMobileAirportPicker, setActiveMobileAirportPicker] = useState<
+    "origin" | "destination" | null
+  >(null);
   const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
   const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
     useState(false);
@@ -695,15 +699,21 @@ export function FlightResultsClient() {
   const [originSuggestions, setOriginSuggestions] = useState<AirportOption[]>(
     [],
   );
+  const [originSuggestionsLoading, setOriginSuggestionsLoading] =
+    useState(false);
   const [destinationSuggestions, setDestinationSuggestions] = useState<
     AirportOption[]
   >([]);
+  const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] =
+    useState(false);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
 
   const tripTypeMenuRef = useRef<HTMLDivElement | null>(null);
   const originInputRef = useRef<HTMLInputElement | null>(null);
   const destinationInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileOriginLauncherRef = useRef<HTMLButtonElement | null>(null);
+  const mobileDestinationLauncherRef = useRef<HTMLButtonElement | null>(null);
   const originWrapRef = useRef<HTMLDivElement | null>(null);
   const destinationWrapRef = useRef<HTMLDivElement | null>(null);
   const departureWrapRef = useRef<HTMLDivElement | null>(null);
@@ -1049,6 +1059,7 @@ export function FlightResultsClient() {
   }
 
   function closeFlightSearchPopovers() {
+    setActiveMobileAirportPicker(null);
     setActiveSuggest(null);
     setDropdownPosition(null);
     setActiveDatePicker(null);
@@ -1080,15 +1091,19 @@ export function FlightResultsClient() {
   function clearOriginField() {
     setOriginInput("");
     setOriginCode("");
+    setOriginSuggestions([]);
+    setOriginSuggestionsLoading(false);
     closeFlightSearchPopovers();
-    focusOriginInput();
+    if (!activeMobileAirportPicker) focusOriginInput();
   }
 
   function clearDestinationField() {
     setDestinationInput("");
     setDestinationCode("");
+    setDestinationSuggestions([]);
+    setDestinationSuggestionsLoading(false);
     closeFlightSearchPopovers();
-    focusDestinationInput();
+    if (!activeMobileAirportPicker) focusDestinationInput();
   }
 
   function handleSavedRouteToggle(
@@ -1183,11 +1198,13 @@ export function FlightResultsClient() {
     if (query.length < 2) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears stale suggestions when the search query becomes too short.
       setOriginSuggestions([]);
+      setOriginSuggestionsLoading(false);
       return;
     }
 
     const controller = new AbortController();
     const timeoutId = window.setTimeout(async () => {
+      setOriginSuggestionsLoading(true);
       try {
         const response = await fetch(
           buildPlacesUrl(query, "origin", countryHint),
@@ -1206,6 +1223,8 @@ export function FlightResultsClient() {
         setOriginSuggestions(suggestions);
       } catch {
         if (!controller.signal.aborted) setOriginSuggestions([]);
+      } finally {
+        if (!controller.signal.aborted) setOriginSuggestionsLoading(false);
       }
     }, 300);
 
@@ -1220,11 +1239,13 @@ export function FlightResultsClient() {
     if (query.length < 2) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- Clears stale suggestions when the search query becomes too short.
       setDestinationSuggestions([]);
+      setDestinationSuggestionsLoading(false);
       return;
     }
 
     const controller = new AbortController();
     const timeoutId = window.setTimeout(async () => {
+      setDestinationSuggestionsLoading(true);
       try {
         const response = await fetch(
           buildPlacesUrl(query, "destination", countryHint),
@@ -1244,6 +1265,8 @@ export function FlightResultsClient() {
         setDestinationSuggestions(suggestions);
       } catch {
         if (!controller.signal.aborted) setDestinationSuggestions([]);
+      } finally {
+        if (!controller.signal.aborted) setDestinationSuggestionsLoading(false);
       }
     }, 300);
 
@@ -3027,8 +3050,6 @@ export function FlightResultsClient() {
         "rounded-3xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm shadow-slate-900/[0.03] transition-colors focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/10";
       const mobileLabelClass =
         "mb-1.5 block text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500";
-      const mobileInputClass =
-        "h-9 w-full border-0 bg-transparent p-0 pr-9 text-[16px] font-bold leading-9 text-slate-950 outline-none placeholder:text-slate-400";
       const mobileTripTypeOptions = [
         { label: "Round-trip", value: "round-trip" },
         { label: "One-way", value: "one-way" },
@@ -3058,153 +3079,54 @@ export function FlightResultsClient() {
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
             <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
-              <div ref={originWrapRef} className={mobileFieldClass}>
-                <label className={mobileLabelClass} htmlFor="results-origin">
-                  Origin
-                </label>
-                <div className="relative">
-                  <input
-                    id="results-origin"
-                    ref={originInputRef}
-                    name="origin"
-                    required
-                    value={originInput}
-                    onFocus={() => {
-                      if (originInput.trim().length >= 2) {
-                        setActiveSuggest("origin");
-                      }
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    onChange={(event) => {
-                      setOriginInput(event.target.value);
-                      setOriginCode("");
-
-                      if (event.target.value.trim().length >= 2) {
-                        setActiveSuggest("origin");
-                      } else {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    placeholder="From?"
-                    autoComplete="off"
-                    className={mobileInputClass}
-                  />
-
-                  {originInput ? (
-                    <button
-                      type="button"
-                      aria-label="Clear origin"
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        clearOriginField();
-                      }}
-                      className="focus-ring absolute right-0 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                    >
-                      <X size={14} />
-                    </button>
-                  ) : null}
-                </div>
-
-                {activeSuggest === "origin" &&
-                originInput.trim().length >= 2 ? (
-                  <InlineSuggestionList
-                    id="flight-airport-suggestions"
-                    suggestions={resolvedOriginSuggestions}
-                    onSelect={(value) => {
-                      setOriginInput(value);
-                      setOriginCode(value);
-                      setActiveSuggest(null);
-                      setDropdownPosition(null);
-                    }}
-                  />
-                ) : null}
+              <div ref={originWrapRef}>
+                <button
+                  ref={mobileOriginLauncherRef}
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={activeMobileAirportPicker === "origin"}
+                  onClick={() => {
+                    closeFlightSearchPopovers();
+                    setActiveMobileAirportPicker("origin");
+                  }}
+                  className={cn(
+                    mobileFieldClass,
+                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-left",
+                  )}
+                >
+                  <span className="min-w-0">
+                    <span className={mobileLabelClass}>Origin</span>
+                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
+                      {originInput.trim() || "From?"}
+                    </span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                </button>
               </div>
 
-              <div ref={destinationWrapRef} className={mobileFieldClass}>
-                <label
-                  className={mobileLabelClass}
-                  htmlFor="results-destination"
+              <div ref={destinationWrapRef}>
+                <button
+                  ref={mobileDestinationLauncherRef}
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={activeMobileAirportPicker === "destination"}
+                  onClick={() => {
+                    closeFlightSearchPopovers();
+                    setActiveMobileAirportPicker("destination");
+                  }}
+                  className={cn(
+                    mobileFieldClass,
+                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-left",
+                  )}
                 >
-                  Destination
-                </label>
-                <div className="relative">
-                  <input
-                    id="results-destination"
-                    ref={destinationInputRef}
-                    name="destination"
-                    required
-                    value={destinationInput}
-                    onFocus={() => {
-                      if (destinationInput.trim().length >= 2) {
-                        setActiveSuggest("destination");
-                      }
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    onChange={(event) => {
-                      setDestinationInput(event.target.value);
-                      setDestinationCode("");
-
-                      if (event.target.value.trim().length >= 2) {
-                        setActiveSuggest("destination");
-                      } else {
-                        setActiveSuggest(null);
-                        setDropdownPosition(null);
-                      }
-                    }}
-                    placeholder="To?"
-                    autoComplete="off"
-                    className={mobileInputClass}
-                  />
-
-                  {destinationInput ? (
-                    <button
-                      type="button"
-                      aria-label="Clear destination"
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                      }}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        clearDestinationField();
-                      }}
-                      className="focus-ring absolute right-0 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                    >
-                      <X size={14} />
-                    </button>
-                  ) : null}
-                </div>
-
-                {activeSuggest === "destination" &&
-                destinationInput.trim().length >= 2 ? (
-                  <InlineSuggestionList
-                    id="flight-airport-suggestions"
-                    suggestions={resolvedDestinationSuggestions}
-                    onSelect={(value) => {
-                      setDestinationInput(value);
-                      setDestinationCode(value);
-                      setActiveSuggest(null);
-                      setDropdownPosition(null);
-                    }}
-                  />
-                ) : null}
+                  <span className="min-w-0">
+                    <span className={mobileLabelClass}>Destination</span>
+                    <span className="block truncate text-base font-bold leading-5 text-slate-950">
+                      {destinationInput.trim() || "To?"}
+                    </span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
+                </button>
               </div>
 
               <div ref={departureWrapRef}>
@@ -3764,6 +3686,69 @@ export function FlightResultsClient() {
       </div>
 
       {mobileSearchOpen ? renderCompactSearchPopovers("mobile") : null}
+
+      {mobileSearchOpen ? (
+        <>
+          <MobileAirportPicker
+            open={activeMobileAirportPicker === "origin"}
+            title="Choose origin"
+            inputId="results-mobile-origin-picker-search"
+            value={originInput}
+            suggestions={originSuggestions}
+            isLoading={originSuggestionsLoading}
+            launcherRef={mobileOriginLauncherRef}
+            onChange={(nextValue) => {
+              setOriginInput(nextValue);
+              setOriginCode("");
+              if (nextValue.trim().length < 2) {
+                setOriginSuggestions([]);
+                setOriginSuggestionsLoading(false);
+              }
+            }}
+            onClear={() => {
+              setOriginInput("");
+              setOriginCode("");
+              setOriginSuggestions([]);
+              setOriginSuggestionsLoading(false);
+            }}
+            onSelect={(option) => {
+              setOriginInput(option.code);
+              setOriginCode(option.code);
+              setActiveMobileAirportPicker(null);
+            }}
+            onClose={() => setActiveMobileAirportPicker(null)}
+          />
+          <MobileAirportPicker
+            open={activeMobileAirportPicker === "destination"}
+            title="Choose destination"
+            inputId="results-mobile-destination-picker-search"
+            value={destinationInput}
+            suggestions={destinationSuggestions}
+            isLoading={destinationSuggestionsLoading}
+            launcherRef={mobileDestinationLauncherRef}
+            onChange={(nextValue) => {
+              setDestinationInput(nextValue);
+              setDestinationCode("");
+              if (nextValue.trim().length < 2) {
+                setDestinationSuggestions([]);
+                setDestinationSuggestionsLoading(false);
+              }
+            }}
+            onClear={() => {
+              setDestinationInput("");
+              setDestinationCode("");
+              setDestinationSuggestions([]);
+              setDestinationSuggestionsLoading(false);
+            }}
+            onSelect={(option) => {
+              setDestinationInput(option.code);
+              setDestinationCode(option.code);
+              setActiveMobileAirportPicker(null);
+            }}
+            onClose={() => setActiveMobileAirportPicker(null)}
+          />
+        </>
+      ) : null}
 
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
@@ -4864,50 +4849,6 @@ function CounterRow({
           <Plus className="h-3.5 w-3.5" />
         </button>
       </div>
-    </div>
-  );
-}
-
-function InlineSuggestionList({
-  id,
-  suggestions,
-  onSelect,
-}: {
-  id: string;
-  suggestions: AirportOption[];
-  onSelect: (value: string) => void;
-}) {
-  return (
-    <div
-      id={id}
-      className="mt-3 max-h-[38dvh] overflow-y-auto rounded-2xl border border-slate-200 bg-white py-1 shadow-sm shadow-slate-900/[0.04]"
-    >
-      {suggestions.length ? (
-        suggestions.map((item) => (
-          <button
-            key={`${item.code}-${item.airport}`}
-            type="button"
-            onMouseDown={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-            }}
-            onClick={() => onSelect(airportInputValue(item))}
-            className="block w-full rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-slate-50 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30"
-          >
-            <p className="text-sm font-bold text-slate-950">
-              {item.city} ({item.code})
-            </p>
-            <p className="text-xs leading-5 text-slate-600">
-              {item.airport}
-              {item.country ? ` · ${item.country}` : ""}
-            </p>
-          </button>
-        ))
-      ) : (
-        <p className="px-4 py-4 text-sm font-semibold text-slate-500">
-          No matching airports found
-        </p>
-      )}
     </div>
   );
 }
