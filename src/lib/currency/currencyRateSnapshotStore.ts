@@ -8,6 +8,8 @@ import {
 import { getOptionalPrisma } from "@/lib/prisma";
 import { supportedRegions } from "@/lib/region/supportedRegions";
 
+const CURRENCYFREAKS_SOURCE = "CurrencyFreaks";
+
 const visibleCurrencies = Array.from(
   new Set(supportedRegions.map((region) => region.currency.toUpperCase())),
 ).sort();
@@ -26,7 +28,8 @@ function normalizeRates(value: unknown): ExchangeRates | null {
     const rate = typeof rawRate === "string" ? Number(rawRate) : rawRate;
 
     if (!/^[A-Z]{3}$/.test(currency)) continue;
-    if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) continue;
+    if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0)
+      continue;
 
     rates[currency] = rate;
   }
@@ -56,44 +59,51 @@ export async function getLatestCurrencyRateSnapshotPayload({
   if (!db) return null;
 
   try {
-    const snapshot = await db.currencyRateSnapshot.findFirst({
+    const snapshots = await db.currencyRateSnapshot.findMany({
       where: {
         baseCurrency: FX_BASE_CURRENCY,
         isFallback: false,
+        source: CURRENCYFREAKS_SOURCE,
         status: "valid",
       },
-      orderBy: { fetchedAt: "desc" },
+      orderBy: [{ fetchedAt: "desc" }, { createdAt: "desc" }],
     });
 
-    if (!snapshot) return null;
+    let newestStalePayload: CurrencyRatePayload | null = null;
 
-    const rates = normalizeRates(snapshot.rates);
-    if (!rates) return null;
+    for (const snapshot of snapshots) {
+      const rates = normalizeRates(snapshot.rates);
+      if (!rates) continue;
 
-    const missingCurrencies = Array.from(
-      new Set([
-        ...normalizeMissingCurrencies(snapshot.missingCurrencies),
-        ...validateVisibleCurrencyCoverage(rates),
-      ]),
-    ).sort();
+      const missingCurrencies = Array.from(
+        new Set([
+          ...normalizeMissingCurrencies(snapshot.missingCurrencies),
+          ...validateVisibleCurrencyCoverage(rates),
+        ]),
+      ).sort();
 
-    if (missingCurrencies.length > 0) return null;
+      if (missingCurrencies.length > 0) continue;
 
-    const stale = snapshot.expiresAt.getTime() <= now.getTime();
+      const stale = snapshot.expiresAt.getTime() <= now.getTime();
+      const payload: CurrencyRatePayload = {
+        base: FX_BASE_CURRENCY,
+        rates,
+        fetchedAt: snapshot.fetchedAt.toISOString(),
+        source: snapshot.source,
+        isFallback: false,
+        missingCurrencies,
+        cacheTtlSeconds,
+        cacheExpiresAt: snapshot.expiresAt.toISOString(),
+        ratesSource: stale ? "database-stale" : "database",
+        stale,
+        snapshotId: snapshot.id,
+      };
 
-    return {
-      base: FX_BASE_CURRENCY,
-      rates,
-      fetchedAt: snapshot.fetchedAt.toISOString(),
-      source: snapshot.source,
-      isFallback: false,
-      missingCurrencies,
-      cacheTtlSeconds,
-      cacheExpiresAt: snapshot.expiresAt.toISOString(),
-      ratesSource: stale ? "database-stale" : "database",
-      stale,
-      snapshotId: snapshot.id,
-    };
+      if (!stale) return payload;
+      newestStalePayload ??= payload;
+    }
+
+    return newestStalePayload;
   } catch (error) {
     console.error("[currency-rates] database snapshot read failed", error);
     return null;
