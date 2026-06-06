@@ -1061,7 +1061,7 @@ export function HotelSearchBar({
                   id="hotel-destination-suggestions"
                   role="listbox"
                   aria-label="Hotel destination suggestions"
-                  className="absolute left-0 right-0 top-[calc(100%+8px)] z-40 max-h-[min(68vh,360px)] w-[calc(100vw-24px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:w-[min(92vw,420px)] lg:w-[min(42vw,440px)]"
+                  className="absolute left-0 top-[calc(100%+8px)] z-50 hidden max-h-[min(68vh,360px)] w-[min(92vw,420px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:block lg:w-[min(42vw,440px)]"
                 >
                   {destinationSuggestionsLoading ? (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
