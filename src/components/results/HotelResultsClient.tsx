@@ -305,6 +305,14 @@ type HotelSummaryItem = {
   sortMode: HotelSummarySortMode;
 };
 
+type HotelMobileSearchDraft = {
+  destination: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  rooms: number;
+};
+
 export function HotelResultsClient() {
   const params = useSearchParams();
 
@@ -330,12 +338,16 @@ export function HotelResultsClient() {
     useState(false);
   const [hasInteractedWithExpandedSearch, setHasInteractedWithExpandedSearch] =
     useState(false);
+  const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
 
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
   const stickySentinelRef = useRef<HTMLDivElement | null>(null);
   const searchFormWrapRef = useRef<HTMLDivElement | null>(null);
   const expandedSearchScrollYRef = useRef(0);
+  const mobileHotelSearchScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
 
   const body = useMemo(
     () => ({
@@ -348,6 +360,39 @@ export function HotelResultsClient() {
     }),
     [params],
   );
+  const bodySearchKey = [
+    body.destination,
+    body.checkIn,
+    body.checkOut,
+    body.guests,
+    body.rooms,
+  ].join("-");
+  const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
+    () => ({
+      destination: body.destination,
+      checkIn: body.checkIn,
+      checkOut: body.checkOut,
+      guests: body.guests,
+      rooms: body.rooms,
+    }),
+    [body.checkIn, body.checkOut, body.destination, body.guests, body.rooms],
+  );
+  const [mobileHotelSearchDraft, setMobileHotelSearchDraft] =
+    useState<HotelMobileSearchDraft>(() => bodyMobileSearchDraft);
+  const [mobileHotelSearchDraftKey, setMobileHotelSearchDraftKey] =
+    useState(bodySearchKey);
+  const activeMobileHotelSearchDraft =
+    mobileHotelSearchDraftKey === bodySearchKey
+      ? mobileHotelSearchDraft
+      : bodyMobileSearchDraft;
+  const activeMobileHotelSearchKey = [
+    activeMobileHotelSearchDraft.destination,
+    activeMobileHotelSearchDraft.checkIn,
+    activeMobileHotelSearchDraft.checkOut,
+    activeMobileHotelSearchDraft.guests,
+    activeMobileHotelSearchDraft.rooms,
+    body.sort,
+  ].join("-");
 
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
@@ -366,6 +411,25 @@ export function HotelResultsClient() {
     "guest",
     "guests",
   )} · ${pluralizeHotelCount(body.rooms, "room", "rooms")}`;
+  const updateMobileHotelSearchDraft = useCallback(
+    (nextDraft: HotelMobileSearchDraft) => {
+      setMobileHotelSearchDraftKey(bodySearchKey);
+      setMobileHotelSearchDraft((currentDraft) => {
+        if (
+          currentDraft.destination === nextDraft.destination &&
+          currentDraft.checkIn === nextDraft.checkIn &&
+          currentDraft.checkOut === nextDraft.checkOut &&
+          currentDraft.guests === nextDraft.guests &&
+          currentDraft.rooms === nextDraft.rooms
+        ) {
+          return currentDraft;
+        }
+
+        return nextDraft;
+      });
+    },
+    [bodySearchKey],
+  );
 
   const markExpandedSearchInteraction = useCallback(() => {
     if (isExpandedStickySearchActive) {
@@ -383,6 +447,83 @@ export function HotelResultsClient() {
     setIsSearchExpandedWhileSticky(false);
     setHasInteractedWithExpandedSearch(false);
   }, []);
+
+  const openMobileHotelSearch = useCallback(() => {
+    setFiltersOpen(false);
+    setMobileHotelSearchOpen(true);
+  }, []);
+
+  const closeMobileHotelSearch = useCallback(() => {
+    setMobileHotelSearchOpen(false);
+  }, []);
+
+  useEffect(() => {
+    const releaseExistingLock = () => {
+      mobileHotelSearchScrollLockRef.current?.restore();
+      mobileHotelSearchScrollLockRef.current = null;
+    };
+
+    if (!mobileHotelSearchOpen || typeof window === "undefined") {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+
+    if (!mobileQuery.matches) {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const bodyElement = document.body;
+    const rootElement = document.documentElement;
+    const scrollY = window.scrollY;
+    const previousBodyStyles = {
+      left: bodyElement.style.left,
+      overflow: bodyElement.style.overflow,
+      overscrollBehavior: bodyElement.style.overscrollBehavior,
+      position: bodyElement.style.position,
+      right: bodyElement.style.right,
+      top: bodyElement.style.top,
+      touchAction: bodyElement.style.touchAction,
+      width: bodyElement.style.width,
+    };
+    const previousRootStyles = {
+      overflow: rootElement.style.overflow,
+      overscrollBehavior: rootElement.style.overscrollBehavior,
+    };
+
+    bodyElement.style.left = "0";
+    bodyElement.style.overflow = "hidden";
+    bodyElement.style.overscrollBehavior = "none";
+    bodyElement.style.position = "fixed";
+    bodyElement.style.right = "0";
+    bodyElement.style.top = `-${scrollY}px`;
+    bodyElement.style.touchAction = "none";
+    bodyElement.style.width = "100%";
+    rootElement.style.overflow = "hidden";
+    rootElement.style.overscrollBehavior = "none";
+
+    mobileHotelSearchScrollLockRef.current = {
+      restore: () => {
+        bodyElement.style.left = previousBodyStyles.left;
+        bodyElement.style.overflow = previousBodyStyles.overflow;
+        bodyElement.style.overscrollBehavior =
+          previousBodyStyles.overscrollBehavior;
+        bodyElement.style.position = previousBodyStyles.position;
+        bodyElement.style.right = previousBodyStyles.right;
+        bodyElement.style.top = previousBodyStyles.top;
+        bodyElement.style.touchAction = previousBodyStyles.touchAction;
+        bodyElement.style.width = previousBodyStyles.width;
+        rootElement.style.overflow = previousRootStyles.overflow;
+        rootElement.style.overscrollBehavior =
+          previousRootStyles.overscrollBehavior;
+        window.scrollTo(0, scrollY);
+      },
+    };
+
+    return releaseExistingLock;
+  }, [mobileHotelSearchOpen]);
 
   useEffect(() => {
     const sentinel = stickySentinelRef.current;
@@ -672,20 +813,47 @@ export function HotelResultsClient() {
 
   return (
     <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8">
-      <div className="sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden">
+      <div
+        className={cn(
+          "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
+          mobileHotelSearchOpen && "hidden",
+        )}
+      >
         <HotelSearchBar
-          key={`mobile-${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
-          initialDestination={body.destination}
-          initialCheckIn={body.checkIn}
-          initialCheckOut={body.checkOut}
-          initialGuests={body.guests}
-          initialRooms={body.rooms}
+          key={`mobile-controls-${activeMobileHotelSearchKey}`}
+          initialDestination={activeMobileHotelSearchDraft.destination}
+          initialCheckIn={activeMobileHotelSearchDraft.checkIn}
+          initialCheckOut={activeMobileHotelSearchDraft.checkOut}
+          initialGuests={activeMobileHotelSearchDraft.guests}
+          initialRooms={activeMobileHotelSearchDraft.rooms}
           initialSort={body.sort}
           errorRole="alert"
           compact
+          mobileLayout="controls"
           onOpenFilters={() => setFiltersOpen(true)}
+          onOpenMobileSearch={openMobileHotelSearch}
+          onMobileDraftChange={updateMobileHotelSearchDraft}
         />
       </div>
+
+      {mobileHotelSearchOpen ? (
+        <div className="fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden">
+          <HotelSearchBar
+            key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
+            initialDestination={activeMobileHotelSearchDraft.destination}
+            initialCheckIn={activeMobileHotelSearchDraft.checkIn}
+            initialCheckOut={activeMobileHotelSearchDraft.checkOut}
+            initialGuests={activeMobileHotelSearchDraft.guests}
+            initialRooms={activeMobileHotelSearchDraft.rooms}
+            initialSort={body.sort}
+            errorRole="alert"
+            compact
+            mobileLayout="drawer"
+            onCloseMobileSearch={closeMobileHotelSearch}
+            onMobileDraftChange={updateMobileHotelSearchDraft}
+          />
+        </div>
+      ) : null}
 
       <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
       <section
