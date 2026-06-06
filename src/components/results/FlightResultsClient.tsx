@@ -971,9 +971,11 @@ export function FlightResultsClient() {
     const previousBodyStyles = {
       left: bodyElement.style.left,
       overflow: bodyElement.style.overflow,
+      overscrollBehavior: bodyElement.style.overscrollBehavior,
       position: bodyElement.style.position,
       right: bodyElement.style.right,
       top: bodyElement.style.top,
+      touchAction: bodyElement.style.touchAction,
       width: bodyElement.style.width,
     };
     const previousRootStyles = {
@@ -983,9 +985,11 @@ export function FlightResultsClient() {
 
     bodyElement.style.left = "0";
     bodyElement.style.overflow = "hidden";
+    bodyElement.style.overscrollBehavior = "none";
     bodyElement.style.position = "fixed";
     bodyElement.style.right = "0";
     bodyElement.style.top = `-${scrollY}px`;
+    bodyElement.style.touchAction = "none";
     bodyElement.style.width = "100%";
     rootElement.style.overflow = "hidden";
     rootElement.style.overscrollBehavior = "none";
@@ -994,9 +998,11 @@ export function FlightResultsClient() {
       restore: () => {
         bodyElement.style.left = previousBodyStyles.left;
         bodyElement.style.overflow = previousBodyStyles.overflow;
+        bodyElement.style.overscrollBehavior = previousBodyStyles.overscrollBehavior;
         bodyElement.style.position = previousBodyStyles.position;
         bodyElement.style.right = previousBodyStyles.right;
         bodyElement.style.top = previousBodyStyles.top;
+        bodyElement.style.touchAction = previousBodyStyles.touchAction;
         bodyElement.style.width = previousBodyStyles.width;
         rootElement.style.overflow = previousRootStyles.overflow;
         rootElement.style.overscrollBehavior =
@@ -2992,7 +2998,10 @@ export function FlightResultsClient() {
                 setReturnDateInput("");
               }
             }}
-            onToday={() => applyFlightDateSelection(new Date())}
+            onToday={() => {
+              setActiveDatePicker(null);
+              setDatePickerPosition(null);
+            }}
           />
         ) : null}
 
@@ -4470,10 +4479,9 @@ function DatePickerPopover({
   const dialogStyle = mobileSheet
     ? ({
         position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
         width: "100%",
+        height: "100dvh",
         zIndex: 10020,
       } as const)
     : ({
@@ -4555,6 +4563,7 @@ function DatePickerPopover({
     <div
       id="flight-date-picker-popover"
       role="dialog"
+      aria-modal={mobileSheet ? "true" : undefined}
       aria-label={
         tripType !== "round-trip" || activePicker === "departure"
           ? "Select departure date"
@@ -4564,12 +4573,12 @@ function DatePickerPopover({
       className={cn(
         "w-full border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.16)]",
         mobileSheet
-          ? "max-h-[min(88dvh,calc(100dvh-1rem))] overflow-y-auto overscroll-contain rounded-t-[1.5rem] p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]"
+          ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-y-auto overscroll-contain rounded-none p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]"
           : "max-w-[min(620px,calc(100vw-2rem))] rounded-2xl p-3.5 sm:p-4",
       )}
     >
       {mobileSheet ? (
-        <div className="mb-3 flex items-center justify-between border-b border-slate-200 pb-3">
+        <div className="mb-3 flex shrink-0 items-center justify-between border-b border-slate-200 pb-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               Travel dates
@@ -4591,7 +4600,7 @@ function DatePickerPopover({
         </div>
       ) : null}
 
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex shrink-0 items-center justify-between">
         <button
           type="button"
           aria-label="Previous month"
@@ -4611,12 +4620,12 @@ function DatePickerPopover({
         </button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className={cn("min-h-0 flex-1 grid gap-3", mobileSheet ? "overflow-visible md:grid-cols-2" : "md:grid-cols-2")}>
         {renderMonth(leftMonth)}
-        <div className="hidden md:block">{renderMonth(rightMonth)}</div>
+        <div className={cn(mobileSheet ? "block" : "hidden md:block")}>{renderMonth(rightMonth)}</div>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
+      <div className="mt-4 flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white pt-3">
         <button
           type="button"
           className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm"
@@ -4665,10 +4674,9 @@ function TravelerCabinPopover({
   const dialogStyle = mobileSheet
     ? ({
         position: "fixed",
-        left: 0,
-        right: 0,
-        bottom: 0,
+        inset: 0,
         width: "100%",
+        height: "100dvh",
         zIndex: 10020,
       } as const)
     : ({
@@ -4683,17 +4691,18 @@ function TravelerCabinPopover({
     <div
       id="flight-traveler-cabin-popover"
       role="dialog"
+      aria-modal={mobileSheet ? "true" : undefined}
       aria-label="Travelers and cabin class"
       style={dialogStyle}
       className={cn(
         "w-full border border-slate-200 bg-white shadow-lg shadow-slate-900/10",
         mobileSheet
-          ? "flex max-h-[min(88dvh,calc(100dvh-1rem))] flex-col overflow-hidden rounded-t-[1.5rem]"
+          ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-hidden rounded-none pt-[env(safe-area-inset-top)]"
           : "max-w-[min(350px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
       {mobileSheet ? (
-        <div className="flex items-center justify-between border-b border-slate-200 p-4 pb-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 p-4 pb-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               Travelers
@@ -4716,7 +4725,7 @@ function TravelerCabinPopover({
       <div
         className={cn(
           mobileSheet
-            ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3"
+            ? "min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4"
             : "",
         )}
       >
@@ -4770,7 +4779,7 @@ function TravelerCabinPopover({
                   aria-pressed={selected}
                   onClick={() => onCabinClassChange(option.value)}
                   className={cn(
-                    "focus-ring rounded-md border px-2 py-1 text-xs font-medium leading-4 transition-colors text-center",
+                    "focus-ring min-h-11 rounded-xl border px-3 py-2 text-sm font-bold leading-4 text-center transition-colors",
                     selected
                       ? "border-indigo-400 bg-indigo-50 text-indigo-900"
                       : "border-slate-300 text-slate-700 hover:bg-slate-50",
@@ -4785,7 +4794,7 @@ function TravelerCabinPopover({
       </div>
 
       {mobileSheet ? (
-        <div className="border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="shrink-0 border-t border-slate-200 bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           <button
             type="button"
             onClick={onClose}
