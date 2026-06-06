@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Calendar,
   ChevronDown,
@@ -190,6 +190,10 @@ export function HotelSearchBar({
   className,
 }: HotelSearchBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentSearchParams = searchParams.toString();
+  const currentUrl = `${pathname}${currentSearchParams ? `?${currentSearchParams}` : ""}`;
   const { start: startRouteProgress } = useRouteProgress();
   const {
     selectedOption,
@@ -238,6 +242,7 @@ export function HotelSearchBar({
   const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
+  const submittingResetTimeoutRef = useRef<number | null>(null);
   const mobileSearchOpen =
     mobileLayout === "drawer" ||
     (mobileLayout === "default" && internalMobileSearchOpen);
@@ -332,6 +337,27 @@ export function HotelSearchBar({
     rooms,
     totalHotelGuests,
   ]);
+
+  useEffect(() => {
+    const resetId = window.setTimeout(() => {
+      setIsSubmitting(false);
+
+      if (submittingResetTimeoutRef.current !== null) {
+        window.clearTimeout(submittingResetTimeoutRef.current);
+        submittingResetTimeoutRef.current = null;
+      }
+    }, 0);
+
+    return () => window.clearTimeout(resetId);
+  }, [currentUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (submittingResetTimeoutRef.current !== null) {
+        window.clearTimeout(submittingResetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
@@ -781,12 +807,28 @@ export function HotelSearchBar({
       params.set("sort", initialSort);
     }
 
+    const nextUrl = `/hotels/results?${params.toString()}`;
+
     setRooms(String(normalizedRooms));
     setError("");
-    closeMobileSearchPanel();
+    closeHotelSearchPopovers();
     setIsSubmitting(true);
+
+    if (!mobileSearchOpen) {
+      closeMobileSearchPanel();
+    }
+
+    if (submittingResetTimeoutRef.current !== null) {
+      window.clearTimeout(submittingResetTimeoutRef.current);
+    }
+
+    submittingResetTimeoutRef.current = window.setTimeout(() => {
+      setIsSubmitting(false);
+      submittingResetTimeoutRef.current = null;
+    }, 15000);
+
     startRouteProgress();
-    router.push(`/hotels/results?${params.toString()}`);
+    router.push(nextUrl);
   };
 
   const fieldClassName = cn(

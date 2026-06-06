@@ -414,6 +414,14 @@ export function HotelResultsClient() {
   }, []);
 
   useEffect(() => {
+    const closeId = window.setTimeout(() => {
+      setMobileHotelSearchOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(closeId);
+  }, [bodySearchKey]);
+
+  useEffect(() => {
     const releaseExistingLock = () => {
       mobileHotelSearchScrollLockRef.current?.restore();
       mobileHotelSearchScrollLockRef.current = null;
