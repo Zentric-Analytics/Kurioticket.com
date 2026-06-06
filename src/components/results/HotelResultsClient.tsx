@@ -998,25 +998,24 @@ export function HotelResultsClient() {
                   filterApplying ? "animate-pulse opacity-80" : undefined,
                 )}
               >
-                <div className="space-y-2">
-                  <div className="w-full rounded-xl border border-indigo-100 bg-white px-4 py-3 shadow-sm shadow-slate-900/5">
-                    <h1 className="text-[15px] font-bold leading-tight text-slate-900 sm:text-[17px] lg:text-lg">
-                      We found {visibleFilteredHotels.length} places to stay for
-                      you
-                    </h1>
-                  </div>
-                  <ActiveHotelFilterChips
-                    chips={activeFilterChips}
-                    onRemove={removeFilterChip}
-                    onClearAll={resetFilters}
-                  />
-                </div>
+                <ActiveHotelFilterChips
+                  chips={activeFilterChips}
+                  onRemove={removeFilterChip}
+                  onClearAll={resetFilters}
+                />
 
                 <HotelSummaryRow
                   activeSortMode={hotelSummarySortMode}
                   items={hotelSummaryItems}
                   onSortModeChange={updateHotelSummarySortMode}
                 />
+
+                <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <h1 className="text-sm font-bold text-navy">
+                    We found {visibleFilteredHotels.length} places to stay for
+                    you
+                  </h1>
+                </div>
 
                 {filterApplying ? (
                   <div className="space-y-3">
