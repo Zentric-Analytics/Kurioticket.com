@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 
 import {
+  ArrowLeft,
   ArrowRightLeft,
   BedDouble,
   Calendar,
@@ -25,6 +26,7 @@ import {
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
@@ -170,13 +172,23 @@ export function SearchTabs({
     useRef<HTMLDivElement>(null);
   const toInputRef =
     useRef<HTMLInputElement>(null);
+  const fromMobileLauncherRef =
+    useRef<HTMLButtonElement>(null);
+  const toMobileLauncherRef =
+    useRef<HTMLButtonElement>(null);
   const dateWrapRef =
     useRef<HTMLDivElement>(null);
+  const flightDatesPanelRef =
+    useRef<HTMLDivElement>(null);
   const hotelDateWrapRef =
+    useRef<HTMLDivElement>(null);
+  const hotelDatesPanelRef =
     useRef<HTMLDivElement>(null);
   const tripTypeWrapRef =
     useRef<HTMLDivElement>(null);
   const travelersWrapRef =
+    useRef<HTMLDivElement>(null);
+  const travelersPanelRef =
     useRef<HTMLDivElement>(null);
   const hotelGuestsRoomsWrapRef =
     useRef<HTMLDivElement>(null);
@@ -216,6 +228,8 @@ export function SearchTabs({
 
   const [toOpen, setToOpen] =
     useState(false);
+  const [activeMobileAirportPicker, setActiveMobileAirportPicker] =
+    useState<"origin" | "destination" | null>(null);
   const [
     flightDatesOpen,
     setFlightDatesOpen,
@@ -655,6 +669,9 @@ export function SearchTabs({
       if (
         !dateWrapRef.current?.contains(
           event.target as Node
+        ) &&
+        !flightDatesPanelRef.current?.contains(
+          event.target as Node
         )
       ) {
         setFlightDatesOpen(
@@ -663,6 +680,9 @@ export function SearchTabs({
       }
       if (
         !hotelDateWrapRef.current?.contains(
+          event.target as Node
+        ) &&
+        !hotelDatesPanelRef.current?.contains(
           event.target as Node
         )
       ) {
@@ -677,6 +697,9 @@ export function SearchTabs({
       }
       if (
         !travelersWrapRef.current?.contains(
+          event.target as Node
+        ) &&
+        !travelersPanelRef.current?.contains(
           event.target as Node
         )
       ) {
@@ -1173,7 +1196,9 @@ export function SearchTabs({
     setFromCode("");
     setFromOpen(false);
     setFromHighlight(0);
-    focusInputAfterClear(fromInputRef.current);
+    if (!activeMobileAirportPicker) {
+      focusInputAfterClear(fromInputRef.current);
+    }
   };
   const onClearDestination = () => {
     setTo("");
@@ -1182,7 +1207,9 @@ export function SearchTabs({
     setToCode("");
     setToOpen(false);
     setToHighlight(0);
-    focusInputAfterClear(toInputRef.current);
+    if (!activeMobileAirportPicker) {
+      focusInputAfterClear(toInputRef.current);
+    }
   };
   const onClearTravelDates = () => {
     setDepartureDate("");
@@ -1564,6 +1591,22 @@ export function SearchTabs({
                     "Origin"}
                 </label>
                 <div className="relative h-8">
+                  <button
+                    ref={fromMobileLauncherRef}
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={activeMobileAirportPicker === "origin"}
+                    onClick={() => {
+                      setFromOpen(false);
+                      setToOpen(false);
+                      setActiveMobileAirportPicker("origin");
+                    }}
+                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
+                  >
+                    <span className={cn("truncate", !from.trim() && "text-slate-400")}>
+                      {from.trim() || "From?"}
+                    </span>
+                  </button>
                   <input
                     ref={fromInputRef}
                     type="text"
@@ -1586,6 +1629,11 @@ export function SearchTabs({
                         0
                       );
                     }}
+                    onClick={() =>
+                      setFromOpen(
+                        true
+                      )
+                    }
                     onFocus={() =>
                       setFromOpen(
                         true
@@ -1600,8 +1648,7 @@ export function SearchTabs({
                       )
                     }
                     placeholder="From?"
-                    className="focus-ring h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
-                    required
+                    className="focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
                   />
                   {from.trim() ? (
                     <button
@@ -1609,7 +1656,7 @@ export function SearchTabs({
                       onClick={onClearOrigin}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label="Clear origin"
-                      className="focus-ring absolute right-0 top-1/2 z-30 inline-flex h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:h-8 sm:w-8"
+                      className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
@@ -1690,6 +1737,22 @@ export function SearchTabs({
                     "Destination"}
                 </label>
                 <div className="relative h-8">
+                  <button
+                    ref={toMobileLauncherRef}
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-expanded={activeMobileAirportPicker === "destination"}
+                    onClick={() => {
+                      setFromOpen(false);
+                      setToOpen(false);
+                      setActiveMobileAirportPicker("destination");
+                    }}
+                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
+                  >
+                    <span className={cn("truncate", !to.trim() && "text-slate-400")}>
+                      {to.trim() || "To?"}
+                    </span>
+                  </button>
                   <input
                     ref={toInputRef}
                     type="text"
@@ -1723,8 +1786,7 @@ export function SearchTabs({
                       )
                     }
                     placeholder="To?"
-                    className="focus-ring h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
-                    required
+                    className="focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
                   />
                   {to.trim() ? (
                     <button
@@ -1732,7 +1794,7 @@ export function SearchTabs({
                       onClick={onClearDestination}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label="Clear destination"
-                      className="focus-ring absolute right-0 top-1/2 z-30 inline-flex h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:h-8 sm:w-8"
+                      className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
@@ -1840,10 +1902,30 @@ export function SearchTabs({
                 ) : null}
 
                 {flightDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
-                    <p className="mb-3 text-base font-semibold text-slate-900">
-                      Choose travel dates
-                    </p>
+                  <>
+                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
+                    <div ref={flightDatesPanelRef} className="fixed inset-x-0 bottom-0 z-[260] max-h-[92vh] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setFlightDatesOpen(false)}
+                        className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                      >
+                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                        Back
+                      </button>
+                      <p className="text-base font-semibold text-slate-900">
+                        Choose travel dates
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setFlightDatesOpen(false)}
+                        aria-label="Close travel dates"
+                        className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
                     <div className="mb-3 flex items-center justify-between">
                       <button
                         type="button"
@@ -1959,7 +2041,7 @@ export function SearchTabs({
                                         <span
                                           key={`placeholder-${iso}`}
                                           aria-hidden="true"
-                                          className="h-8 w-8 justify-self-center"
+                                          className="h-10 w-10 justify-self-center sm:h-11 sm:w-11"
                                         />
                                       );
                                     }
@@ -2000,7 +2082,7 @@ export function SearchTabs({
                                           isDisabledDate
                                         }
                                         className={cn(
-                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
+                                          "focus-ring flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-base transition-colors disabled:cursor-not-allowed sm:h-11 sm:w-11",
                                           isDisabledDate
                                             ? "text-slate-300 hover:bg-transparent"
                                             : "text-slate-900 hover:bg-indigo-50",
@@ -2048,6 +2130,7 @@ export function SearchTabs({
                       </button>
                     </div>
                   </div>
+                  </>
                 ) : null}
               </div>
 
@@ -2088,14 +2171,24 @@ export function SearchTabs({
                   />
                 </button>
                 {travelersMenuOpen ? (
-                  <div className="absolute left-1/2 top-full z-50 mt-2 w-[min(92vw,320px)] max-w-[330px] max-h-[70vh] overflow-y-auto -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-2.5 shadow-lg shadow-slate-900/10 sm:p-3 lg:left-auto lg:right-0 lg:w-[350px] lg:max-h-none lg:translate-x-0 lg:overflow-visible">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-semibold text-slate-900">
+                  <>
+                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
+                    <div ref={travelersPanelRef} className="fixed inset-x-0 bottom-0 z-[260] max-h-[90vh] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,440px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={cancelTravelersDraft}
+                        className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                      >
+                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                        Back
+                      </button>
+                      <p className="text-lg font-semibold text-slate-900">
                         Travelers
                       </p>
-                      <button type="button" onClick={cancelTravelersDraft} aria-label="Close passenger selector" className="focus-ring inline-flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 text-sm leading-none text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">×</button>
+                      <button type="button" onClick={cancelTravelersDraft} aria-label="Cancel passenger selector" className="focus-ring rounded-full px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Cancel</button>
                     </div>
-                    <div className="mt-1.5 divide-y divide-slate-200">
+                    <div className="mt-5 divide-y divide-slate-200">
                       {[
                         { key: "adults", label: "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
                         { key: "children", label: "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
@@ -2108,21 +2201,21 @@ export function SearchTabs({
                           (row.key !== "infants" || draftInfantCount < draftAdultCount);
 
                         return (
-                          <div key={row.key} className="flex items-center justify-between py-2 first:pt-1 last:pb-1">
+                          <div key={row.key} className="flex items-center justify-between py-4 first:pt-1 last:pb-1">
                             <span>
                               <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
                               <span className="block text-xs leading-5 text-slate-600">{row.subtitle}</span>
                             </span>
                             <div className="flex items-center gap-1">
-                              <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
+                              <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
                               <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{row.count}</span>
-                              <button type="button" onClick={() => { if (row.key === "adults") { if (draftTravelerCount >= 9) return; setDraftAdultCount((current) => Math.min(9, current + 1)); return; } if (row.key === "children") { if (draftTravelerCount >= 9) return; setDraftChildCount((current) => Math.min(9, current + 1)); return; } if (row.key === "infants") { if (draftTravelerCount >= 9 || draftInfantCount >= draftAdultCount) return; setDraftInfantCount((current) => Math.min(draftAdultCount, current + 1)); } }} disabled={!canIncrement} className="focus-ring inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
+                              <button type="button" onClick={() => { if (row.key === "adults") { if (draftTravelerCount >= 9) return; setDraftAdultCount((current) => Math.min(9, current + 1)); return; } if (row.key === "children") { if (draftTravelerCount >= 9) return; setDraftChildCount((current) => Math.min(9, current + 1)); return; } if (row.key === "infants") { if (draftTravelerCount >= 9 || draftInfantCount >= draftAdultCount) return; setDraftInfantCount((current) => Math.min(draftAdultCount, current + 1)); } }} disabled={!canIncrement} className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                    <div className="mt-2 border-t border-slate-200 pt-2">
+                    <div className="mt-5 border-t border-slate-200 pt-5">
                       <div className="mb-1.5 flex items-center justify-between">
                         <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</p>
                       </div>
@@ -2132,10 +2225,11 @@ export function SearchTabs({
                         ))}
                       </div>
                     </div>
-                    <div className="mt-2 flex items-center justify-end gap-2 border-t border-slate-200 pt-2">
-                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
+                    <div className="mt-5 flex items-center justify-end gap-2 border-t border-slate-200 pt-5">
+                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-xl bg-indigo-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
                     </div>
                   </div>
+                  </>
                 ) : null}
               </div>
               <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
@@ -2169,6 +2263,71 @@ export function SearchTabs({
               </div>
             </div>
           ) : null}
+
+          <MobileAirportPicker
+            open={activeMobileAirportPicker === "origin"}
+            title="Choose origin"
+            inputId="homepage-origin-picker-search"
+            value={from}
+            suggestions={fromSuggestions}
+            isLoading={isFromLoadingVisible}
+            launcherRef={fromMobileLauncherRef}
+            onChange={(nextValue) => {
+              setHasUserEditedOrigin(true);
+              setFrom(nextValue);
+              if (nextValue.trim().length < 2) {
+                setFromLoading(false);
+                setFromLiveSuggestions([]);
+              }
+              setFromCode("");
+              setFromHighlight(0);
+            }}
+            onClear={() => {
+              setHasUserEditedOrigin(true);
+              setFrom("");
+              setFromLoading(false);
+              setFromLiveSuggestions([]);
+              setFromCode("");
+              setFromHighlight(0);
+            }}
+            onSelect={(option) => {
+              setFrom(formatAirportLabel(option));
+              setFromCode(option.code);
+              setActiveMobileAirportPicker(null);
+            }}
+            onClose={() => setActiveMobileAirportPicker(null)}
+          />
+          <MobileAirportPicker
+            open={activeMobileAirportPicker === "destination"}
+            title="Choose destination"
+            inputId="homepage-destination-picker-search"
+            value={to}
+            suggestions={toSuggestions}
+            isLoading={isToLoadingVisible}
+            launcherRef={toMobileLauncherRef}
+            onChange={(nextValue) => {
+              setTo(nextValue);
+              if (nextValue.trim().length < 2) {
+                setToLoading(false);
+                setToLiveSuggestions([]);
+              }
+              setToCode("");
+              setToHighlight(0);
+            }}
+            onClear={() => {
+              setTo("");
+              setToLoading(false);
+              setToLiveSuggestions([]);
+              setToCode("");
+              setToHighlight(0);
+            }}
+            onSelect={(option) => {
+              setTo(formatAirportLabel(option));
+              setToCode(option.code);
+              setActiveMobileAirportPicker(null);
+            }}
+            onClose={() => setActiveMobileAirportPicker(null)}
+          />
         </form>
       ) : (
         <form
@@ -2236,10 +2395,30 @@ export function SearchTabs({
                   </span>
                 </button>
                 {hotelDatesOpen ? (
-                  <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
-                    <p className="mb-3 text-base font-semibold text-slate-900">
-                      Choose travel dates
-                    </p>
+                  <>
+                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
+                    <div ref={hotelDatesPanelRef} className="fixed inset-x-0 bottom-0 z-[260] max-h-[92vh] overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setHotelDatesOpen(false)}
+                        className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+                      >
+                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                        Back
+                      </button>
+                      <p className="text-base font-semibold text-slate-900">
+                        Choose travel dates
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setHotelDatesOpen(false)}
+                        aria-label="Close travel dates"
+                        className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    </div>
                     <div className="mb-3 flex items-center justify-between">
                       <button
                         type="button"
@@ -2357,7 +2536,7 @@ export function SearchTabs({
                                         <span
                                           key={`placeholder-${iso}`}
                                           aria-hidden="true"
-                                          className="h-8 w-8 justify-self-center"
+                                          className="h-10 w-10 justify-self-center sm:h-11 sm:w-11"
                                         />
                                       );
                                     }
@@ -2389,7 +2568,7 @@ export function SearchTabs({
                                           isDisabledDate
                                         }
                                         className={cn(
-                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
+                                          "focus-ring flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-base transition-colors disabled:cursor-not-allowed sm:h-11 sm:w-11",
                                           isDisabledDate
                                             ? "text-slate-300 hover:bg-transparent"
                                             : "text-slate-900 hover:bg-indigo-50",
@@ -2435,6 +2614,7 @@ export function SearchTabs({
                       </button>
                     </div>
                   </div>
+                  </>
                 ) : null}
               </div>
               <div

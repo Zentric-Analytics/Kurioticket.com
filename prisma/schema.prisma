@@ -505,6 +505,25 @@ model FeatureFlag {
   @@index([scope])
 }
 
+model CurrencyRateSnapshot {
+  id                String   @id @default(cuid())
+  baseCurrency      String
+  rates             Json
+  source            String
+  fetchedAt         DateTime
+  expiresAt         DateTime
+  isFallback        Boolean  @default(false)
+  missingCurrencies Json
+  providerRunId     String?
+  rateCount         Int?
+  status            String   @default("valid")
+  createdAt         DateTime @default(now())
+
+  @@index([baseCurrency, source, fetchedAt])
+  @@index([status, expiresAt])
+  @@index([isFallback, fetchedAt])
+}
+
 model HomepageFareSnapshot {
   id             String                     @id @default(cuid())
   snapshotKey    String                     @unique

@@ -3,16 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
-  CalendarClock,
-  CheckCircle2,
   Clock3,
   Info,
   Luggage,
   Plane,
-  PlaneLanding,
-  PlaneTakeoff,
-  RotateCcw,
-  ShieldCheck,
   Sparkles,
   Ticket,
 } from "lucide-react";
@@ -20,7 +14,6 @@ import type { FlightLeg, PublicFlightResult } from "@/lib/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { ScoreMeter } from "@/components/ui/ScoreMeter";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -37,11 +30,18 @@ export function FlightDetailsClient({ id }: { id: string }) {
     fetch(`/api/flights/details?id=${encodeURIComponent(id)}`)
       .then(async (response) => {
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Flight quote unavailable.");
+        if (!response.ok)
+          throw new Error(data.error || "Flight quote unavailable.");
         return data.flight as PublicFlightResult;
       })
       .then(setFlight)
-      .catch((detailsError) => setError(detailsError instanceof Error ? detailsError.message : "Flight quote unavailable."))
+      .catch((detailsError) =>
+        setError(
+          detailsError instanceof Error
+            ? detailsError.message
+            : "Flight quote unavailable.",
+        ),
+      )
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -49,14 +49,18 @@ export function FlightDetailsClient({ id }: { id: string }) {
     const response = await fetch("/api/redirect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, type: "flight", sourcePage: "flight_details" }),
+      body: JSON.stringify({
+        id,
+        type: "flight",
+        sourcePage: "flight_details",
+      }),
     });
     const data = (await response.json()) as { url?: string; error?: string };
     if (data.url) window.location.href = data.url;
     if (data.error) setError(data.error);
   }
 
-  const timelineLegs = useMemo(() => {
+  const itineraryLegs = useMemo(() => {
     if (!flight) return [];
     if (flight.legs?.length) return flight.legs;
     return [
@@ -75,6 +79,12 @@ export function FlightDetailsClient({ id }: { id: string }) {
     ];
   }, [flight]);
 
+  const connectionAirports = useMemo(() => {
+    return itineraryLegs.flatMap((leg) =>
+      leg.layovers.map((layover) => layover.airport),
+    );
+  }, [itineraryLegs]);
+
   if (loading) {
     return (
       <main className="page-shell flex-1 py-10">
@@ -87,8 +97,12 @@ export function FlightDetailsClient({ id }: { id: string }) {
     return (
       <main className="page-shell flex-1 py-10">
         <Card className="p-6">
-          <h1 className="text-xl font-bold text-navy">Flight quote unavailable</h1>
-          <p className="mt-2 text-muted">{error || "Please search again for current prices."}</p>
+          <h1 className="text-xl font-bold text-navy">
+            Flight quote unavailable
+          </h1>
+          <p className="mt-2 text-muted">
+            {error || "Please search again for current prices."}
+          </p>
         </Card>
       </main>
     );
@@ -104,344 +118,346 @@ export function FlightDetailsClient({ id }: { id: string }) {
   });
 
   const stopLabel = formatStops(flight.stops);
-  const hasProviderLink = Boolean(flight.partnerRedirectUrl || flight.bookingUrl);
-  const providerDisclaimer = "Final price, availability, payment, booking, and fare rules are confirmed by the provider.";
+  const hasProviderLink = Boolean(
+    flight.partnerRedirectUrl || flight.bookingUrl,
+  );
+  const providerDisclaimer =
+    "Final price, availability, payment, booking, and fare rules are confirmed by the provider.";
 
   return (
     <main className="flex-1 bg-surface-muted/40">
       <section className="border-b border-border bg-white">
-        <div className="page-shell py-6 sm:py-8">
-          <div className="grid gap-5 lg:grid-cols-[1fr_360px] lg:items-stretch">
-            <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_20px_50px_-28px_rgba(49,46,129,0.65)]">
-              <div className="border-b border-border bg-gradient-to-r from-indigo-50 via-white to-teal/10 px-5 py-4 sm:px-6">
-                <p className="flex items-center gap-2 text-sm font-semibold text-teal-dark">
-                  <Sparkles size={16} /> Flight details
-                </p>
-              </div>
-              <div className="p-5 sm:p-6">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-muted">
-                      <Badge variant="teal">{flight.provider}</Badge>
-                      <span>{flight.airlineName}</span>
-                      {flight.flightNumber ? <span>Flight {flight.flightNumber}</span> : null}
-                    </div>
-                    <h1 className="mt-3 flex flex-wrap items-center gap-3 text-3xl font-bold tracking-tight text-navy sm:text-4xl">
-                      <span>{flight.originAirport}</span>
-                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-blue">
-                        <ArrowRight size={22} />
-                      </span>
-                      <span>{flight.destinationAirport}</span>
-                    </h1>
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <TripPill icon={<Clock3 size={15} />} label={flight.duration} />
-                      <TripPill icon={<Plane size={15} />} label={stopLabel} />
-                      {flight.cabinClass ? <TripPill icon={<Ticket size={15} />} label={flight.cabinClass} /> : null}
-                    </div>
+        <div className="page-shell py-4 sm:py-5">
+          <div className="mx-auto grid w-full max-w-5xl gap-4">
+            <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
+              <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
+                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3.5 sm:p-4 lg:p-5">
+                  <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
+                    <Sparkles size={14} aria-hidden="true" /> Flight details
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                    <span className="text-sm font-semibold text-slate-700">
+                      {flight.airlineName}
+                    </span>
+                    {flight.flightNumber ? (
+                      <>
+                        <span
+                          className="h-1 w-1 rounded-full bg-slate-300"
+                          aria-hidden="true"
+                        />
+                        <span className="text-sm font-medium text-slate-500">
+                          Flight {flight.flightNumber}
+                        </span>
+                      </>
+                    ) : null}
                   </div>
-                  <div className="rounded-2xl border border-border bg-white p-4 md:min-w-52 md:text-right">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">From</p>
+                  <h1 className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2.5 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                    <span>{flight.originAirport}</span>
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
+                      <ArrowRight size={16} aria-hidden="true" />
+                    </span>
+                    <span>{flight.destinationAirport}</span>
+                  </h1>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium leading-5 text-slate-600">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Plane
+                        size={14}
+                        className="shrink-0 text-indigo-600"
+                        aria-hidden="true"
+                      />
+                      <span>
+                        <span className="font-semibold text-slate-800">
+                          Stops:
+                        </span>{" "}
+                        {stopLabel}
+                      </span>
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock3
+                        size={14}
+                        className="shrink-0 text-indigo-600"
+                        aria-hidden="true"
+                      />
+                      <span>
+                        <span className="font-semibold text-slate-800">
+                          Duration:
+                        </span>{" "}
+                        {flight.duration}
+                      </span>
+                    </span>
+                    {flight.cabinClass ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Ticket
+                          size={14}
+                          className="shrink-0 text-indigo-600"
+                          aria-hidden="true"
+                        />
+                        <span>
+                          <span className="font-semibold text-slate-800">
+                            Cabin:
+                          </span>{" "}
+                          {flight.cabinClass}
+                        </span>
+                      </span>
+                    ) : null}
+                    <span className="inline-flex min-w-0 items-center gap-1.5">
+                      <Luggage
+                        size={14}
+                        className="shrink-0 text-indigo-600"
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0">
+                        <span className="font-semibold text-slate-800">
+                          Baggage:
+                        </span>{" "}
+                        {flight.baggageInfo || "Confirmed by provider"}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+
+                <aside className="border-t border-indigo-100 bg-white p-3 sm:p-3.5 lg:border-l lg:border-t-0 lg:p-4">
+                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center shadow-sm">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      From
+                    </p>
                     <div
-                      className="mt-1 text-3xl font-bold text-navy"
+                      className="mt-1 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
                       aria-label={displayPrice.ariaLabel}
                       title={displayPrice.title}
                     >
                       {displayPrice.formatted}
                     </div>
                     {displayPrice.isConvertedEstimate ? (
-                      <p className="mt-1 text-xs leading-5 text-muted">Estimate shown. Provider price: {displayPrice.providerFormatted}.</p>
+                      <p className="mt-1 text-xs font-medium leading-5 text-slate-600">
+                        Estimate shown. Provider price:{" "}
+                        {displayPrice.providerFormatted}.
+                      </p>
                     ) : null}
                   </div>
-                </div>
-                <div className="mt-5 flex flex-col gap-3 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="flex gap-2 text-sm leading-6 text-slate-700">
-                    <Info size={18} className="mt-0.5 shrink-0 text-blue" />
-                    <span>{providerDisclaimer}</span>
-                  </p>
-                  <Button variant="accent" size="lg" className="shrink-0 rounded-xl px-6" onClick={continueToProvider} disabled={!hasProviderLink}>
+                  <Button
+                    variant="accent"
+                    size="lg"
+                    className="mt-2.5 w-full rounded-xl px-6 text-sm font-semibold sm:text-base"
+                    onClick={continueToProvider}
+                    disabled={!hasProviderLink}
+                  >
                     Continue to Provider <ArrowRight size={18} />
                   </Button>
-                </div>
+                  <p className="mt-2 flex gap-2 text-xs font-medium leading-5 text-slate-600">
+                    <Info size={16} className="mt-0.5 shrink-0 text-blue" />
+                    <span>{providerDisclaimer}</span>
+                  </p>
+                </aside>
               </div>
             </Card>
-
-            <CtaCard
-              displayPrice={displayPrice.formatted}
-              priceAriaLabel={displayPrice.ariaLabel}
-              priceTitle={displayPrice.title}
-              provider={flight.provider}
-              providerPrice={displayPrice.isConvertedEstimate ? displayPrice.providerFormatted : undefined}
-              onContinue={continueToProvider}
-              disabled={!hasProviderLink}
-            />
           </div>
         </div>
       </section>
 
-      <div className="page-shell grid gap-6 py-6 lg:grid-cols-[1fr_360px] lg:items-start">
-        <section className="space-y-6">
-          <Card className="p-5 sm:p-6">
-            <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-sm font-semibold text-teal-dark">Flight summary</p>
-                <h2 className="text-xl font-bold text-navy">Your selected itinerary</h2>
+      <div className="page-shell py-6">
+        <div className="mx-auto w-full max-w-3xl">
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-indigo-950/5 sm:p-5">
+            <div className="flex flex-col gap-2 border-b border-slate-200 pb-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-teal-dark">
+                  Selected flight
+                </p>
+                <h2 className="mt-0.5 truncate text-xl font-bold text-navy">
+                  {flight.airlineName}
+                  {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
+                </h2>
               </div>
-              <p className="text-sm font-semibold text-muted">{flight.airlineName}{flight.flightNumber ? ` • ${flight.flightNumber}` : ""}</p>
-            </div>
-            <div className="grid gap-5 md:grid-cols-[1fr_220px_1fr] md:items-center">
-              <AirportTimeBlock label="Departure" time={formatTime(flight.departureTime)} airport={flight.originAirport} icon={<PlaneTakeoff size={20} />} />
-              <div className="rounded-2xl border border-border bg-surface-muted/70 p-4 text-center">
-                <div className="flex items-center justify-center gap-2 text-sm font-semibold text-muted">
-                  <span className="h-px flex-1 bg-border" />
-                  <Plane size={20} className="text-teal" />
-                  <span className="h-px flex-1 bg-border" />
-                </div>
-                <p className="mt-3 text-lg font-bold text-navy">{flight.duration}</p>
-                <p className="text-sm text-muted">{stopLabel}</p>
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-bold text-indigo-800">
+                  {flight.duration}
+                </span>
+                <Badge variant={flight.stops === 0 ? "teal" : "blue"}>
+                  {stopLabel}
+                </Badge>
               </div>
-              <AirportTimeBlock label="Arrival" time={formatTime(flight.arrivalTime)} airport={flight.destinationAirport} icon={<PlaneLanding size={20} />} align="right" />
             </div>
-          </Card>
 
-          <Card className="p-5 sm:p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold text-teal-dark">Travel timeline</p>
-                <h2 className="text-xl font-bold text-navy">Route details</h2>
-              </div>
-              <Badge variant={flight.stops === 0 ? "teal" : "blue"}>{stopLabel}</Badge>
-            </div>
-            <div className="mt-6 space-y-6">
-              {timelineLegs.map((leg, legIndex) => (
-                <div key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}>
-                  {timelineLegs.length > 1 ? (
-                    <p className="mb-4 text-sm font-bold uppercase tracking-wide text-muted">{formatLegDirection(leg.direction, legIndex)}</p>
-                  ) : null}
-                  <div className="space-y-0">
-                    <TimelineItem
-                      icon={<PlaneTakeoff size={18} />}
-                      title="Departure"
-                      eyebrow={leg.originAirport}
-                      body={`${leg.originAirport} at ${formatTime(leg.departureTime)}`}
-                    />
-                    {leg.layovers.map((layover, layoverIndex) => (
-                      <TimelineItem
-                        key={`${layover.airport}-${layover.duration}-${layoverIndex}`}
-                        icon={<CalendarClock size={18} />}
-                        title={`Layover in ${layover.airport}`}
-                        eyebrow={layover.duration}
-                        body={`${layover.duration}${layover.quality !== "unknown" ? ` • ${layover.quality} connection` : ""}`}
-                      />
-                    ))}
-                    <TimelineItem
-                      icon={<PlaneLanding size={18} />}
-                      title="Arrival"
-                      eyebrow={leg.destinationAirport}
-                      body={`${leg.destinationAirport} at ${formatTime(leg.arrivalTime)}`}
-                      isLast
-                    />
-                  </div>
-                  {leg.segments.length ? (
-                    <div className="mt-4 rounded-2xl border border-border bg-surface-muted/60 p-4">
-                      <p className="text-sm font-bold text-navy">Flight segments</p>
-                      <div className="mt-3 grid gap-3">
-                        {leg.segments.map((segment, segmentIndex) => (
-                          <div key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`} className="grid gap-1 text-sm sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-                            <span className="font-semibold text-navy">{segment.originAirport} {formatTime(segment.departureTime)}</span>
-                            <span className="hidden text-muted sm:block">→</span>
-                            <span className="font-semibold text-navy sm:text-right">{segment.destinationAirport} {formatTime(segment.arrivalTime)}</span>
-                            {(segment.airlineName || segment.flightNumber) ? (
-                              <span className="text-muted sm:col-span-3">
-                                {[segment.airlineName, segment.flightNumber].filter(Boolean).join(" • ")}
-                              </span>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
+            <div className="mt-3 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-teal/10 p-3">
+              <div className="grid gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+                <CompactAirportTime
+                  airport={flight.originAirport}
+                  time={formatTime(flight.departureTime)}
+                />
+                <div className="flex min-w-0 items-center justify-center gap-2 text-center text-sm font-bold text-slate-600">
+                  <span className="hidden h-px w-10 bg-indigo-200 sm:block" />
+                  <span className="rounded-full border border-indigo-100 bg-white px-3 py-1 shadow-sm">
+                    {connectionAirports.length
+                      ? `${flight.duration} · ${connectionAirports.join(" · ")}`
+                      : `${flight.duration} · ${stopLabel}`}
+                  </span>
+                  <ArrowRight size={16} className="shrink-0 text-teal" />
+                  <span className="hidden h-px w-10 bg-indigo-200 sm:block" />
                 </div>
+                <CompactAirportTime
+                  airport={flight.destinationAirport}
+                  time={formatTime(flight.arrivalTime)}
+                  align="right"
+                />
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-3">
+              {itineraryLegs.map((leg, legIndex) => (
+                <CompactLegSection
+                  key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
+                  leg={leg}
+                  legIndex={legIndex}
+                  legCount={itineraryLegs.length}
+                  fallbackAirlineName={flight.airlineName}
+                  fallbackFlightNumber={flight.flightNumber}
+                />
               ))}
             </div>
-          </Card>
-
-          <Card className="p-5 sm:p-6">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 size={20} className="text-teal" />
-              <h2 className="text-xl font-bold text-navy">Why this option is highlighted</h2>
-            </div>
-            <div className="mt-4 grid gap-3">
-              {flight.recommendationReasons.length ? (
-                flight.recommendationReasons.map((reason) => (
-                  <p key={reason} className="rounded-xl border border-border bg-surface-muted/70 p-3 text-sm leading-6 text-slate-700">
-                    {reason}
-                  </p>
-                ))
-              ) : (
-                <p className="rounded-xl border border-border bg-surface-muted/70 p-3 text-sm leading-6 text-slate-700">
-                  This option is shown from the selected live flight result.
-                </p>
-              )}
-            </div>
-          </Card>
-
-          <Card className="border-indigo-100 bg-indigo-50/60 p-5 sm:p-6">
-            <div className="flex gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-blue shadow-sm">
-                <ShieldCheck size={20} />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-navy">Provider transparency</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-700">
-                  Kurioticket helps you compare flight options. {flight.provider} confirms booking, payment, final price, availability, and fare rules before you complete your purchase.
-                </p>
-              </div>
-            </div>
-          </Card>
-        </section>
-
-        <aside className="space-y-4 lg:sticky lg:top-6">
-          <CtaCard
-            displayPrice={displayPrice.formatted}
-            priceAriaLabel={displayPrice.ariaLabel}
-            priceTitle={displayPrice.title}
-            provider={flight.provider}
-            providerPrice={displayPrice.isConvertedEstimate ? displayPrice.providerFormatted : undefined}
-            onContinue={continueToProvider}
-            disabled={!hasProviderLink}
-            compact
-          />
-
-          <Card className="p-5">
-            <h2 className="text-lg font-bold text-navy">Trip details</h2>
-            <div className="mt-4 grid gap-3">
-              <DetailRow icon={<Plane size={17} />} label="Stops" value={stopLabel} />
-              <DetailRow icon={<Clock3 size={17} />} label="Duration" value={flight.duration} />
-              {flight.cabinClass ? <DetailRow icon={<Ticket size={17} />} label="Cabin" value={flight.cabinClass} /> : null}
-              <DetailRow icon={<Luggage size={17} />} label="Baggage" value={flight.baggageInfo || "Confirmed by provider"} />
-              <DetailRow icon={<RotateCcw size={17} />} label="Refund/change" value={flight.refundInfo || "Confirmed by provider"} />
-              <DetailRow icon={<ShieldCheck size={17} />} label="Provider" value={flight.provider} />
-            </div>
-            {flight.badges.length ? (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {flight.badges.map((badge) => (
-                  <Badge key={badge} variant="teal">{badge}</Badge>
-                ))}
-              </div>
-            ) : null}
-          </Card>
-
-          <Card className="p-5">
-            <h2 className="text-lg font-bold text-navy">Trip quality insights</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">A friendlier view of the same value, risk, comfort, confidence, and effort scores from this live result.</p>
-            <div className="mt-4 grid gap-4">
-              <ScoreInsight label="Value" helper="Price and itinerary balance" score={flight.valueScore} />
-              <ScoreInsight label="Risk" helper="Lower is better" score={flight.riskScore} invert />
-              <ScoreInsight label="Comfort" helper="Cabin and connection comfort" score={flight.comfortScore} />
-              <ScoreInsight label="Travel confidence" helper="Overall booking confidence" score={flight.travelConfidenceScore} />
-              <ScoreInsight label="Travel effort" helper="Lower effort is better" score={flight.travelEffortScore} invert />
-            </div>
-          </Card>
-        </aside>
+          </section>
+        </div>
       </div>
     </main>
   );
 }
 
-function CtaCard({
-  displayPrice,
-  priceAriaLabel,
-  priceTitle,
-  provider,
-  providerPrice,
-  onContinue,
-  disabled,
-  compact = false,
+function CompactAirportTime({
+  airport,
+  time,
+  align = "left",
 }: {
-  displayPrice: string;
-  priceAriaLabel: string;
-  priceTitle?: string;
-  provider: string;
-  providerPrice?: string;
-  onContinue: () => void;
-  disabled: boolean;
-  compact?: boolean;
+  airport: string;
+  time: string;
+  align?: "left" | "right";
 }) {
   return (
-    <Card className={compact ? "p-5" : "hidden p-5 lg:block"}>
-      <p className="text-sm font-semibold text-teal-dark">Ready to book?</p>
-      <div className="mt-2 flex items-end justify-between gap-3 lg:block">
+    <div className={align === "right" ? "sm:text-right" : ""}>
+      <p className="text-xl font-black tracking-tight text-navy">{airport}</p>
+      <p className="mt-0.5 text-sm font-semibold text-slate-600">{time}</p>
+    </div>
+  );
+}
+
+function CompactLegSection({
+  leg,
+  legIndex,
+  legCount,
+  fallbackAirlineName,
+  fallbackFlightNumber,
+}: {
+  leg: FlightLeg;
+  legIndex: number;
+  legCount: number;
+  fallbackAirlineName: string;
+  fallbackFlightNumber?: string;
+}) {
+  const segments = leg.segments.length
+    ? leg.segments
+    : [
+        {
+          originAirport: leg.originAirport,
+          destinationAirport: leg.destinationAirport,
+          departureTime: leg.departureTime,
+          arrivalTime: leg.arrivalTime,
+          airlineName: fallbackAirlineName,
+          flightNumber: fallbackFlightNumber,
+        },
+      ];
+
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+      <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+          {formatLegDirection(leg.direction, legIndex, legCount)} · {leg.originAirport} to{" "}
+          {leg.destinationAirport}
+        </p>
+        <p className="text-xs font-semibold text-slate-500">
+          {leg.duration} · {formatStops(leg.stops)}
+        </p>
+      </div>
+      <div className="grid gap-2">
+        {segments.map((segment, segmentIndex) => (
+          <div
+            key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
+          >
+            <CompactFlightRow
+              originAirport={segment.originAirport}
+              destinationAirport={segment.destinationAirport}
+              departureTime={segment.departureTime}
+              arrivalTime={segment.arrivalTime}
+              airlineName={segment.airlineName || fallbackAirlineName}
+              flightNumber={segment.flightNumber || fallbackFlightNumber}
+            />
+            {leg.layovers[segmentIndex] ? (
+              <LayoverSeparator layover={leg.layovers[segmentIndex]} />
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CompactFlightRow({
+  originAirport,
+  destinationAirport,
+  departureTime,
+  arrivalTime,
+  airlineName,
+  flightNumber,
+}: {
+  originAirport: string;
+  destinationAirport: string;
+  departureTime: string;
+  arrivalTime: string;
+  airlineName?: string;
+  flightNumber?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-[0_10px_24px_-24px_rgba(30,27,75,0.55)] sm:p-3">
+      <div className="grid gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted">Price shown</p>
-          <div className="mt-1 text-3xl font-bold text-navy" aria-label={priceAriaLabel} title={priceTitle}>{displayPrice}</div>
+          <p className="text-lg font-black tracking-tight text-navy">
+            {originAirport}{" "}
+            <span className="text-base font-bold text-slate-700">
+              {formatTime(departureTime)}
+            </span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-teal sm:justify-center">
+          <span className="h-px w-8 bg-teal/30" />
+          <ArrowRight size={17} aria-hidden="true" />
+          <span className="hidden h-px w-8 bg-teal/30 sm:block" />
+        </div>
+        <div className="sm:text-right">
+          <p className="text-lg font-black tracking-tight text-navy">
+            {destinationAirport}{" "}
+            <span className="text-base font-bold text-slate-700">
+              {formatTime(arrivalTime)}
+            </span>
+          </p>
         </div>
       </div>
-      {providerPrice ? <p className="mt-2 text-xs leading-5 text-muted">Provider price: {providerPrice}. Display currency is an estimate.</p> : null}
-      <Button variant="accent" size="lg" className="mt-4 w-full rounded-xl" onClick={onContinue} disabled={disabled}>
-        Continue to Provider <ArrowRight size={18} />
-      </Button>
-      <p className="mt-3 text-xs leading-5 text-muted">
-        {provider} confirms final price, availability, booking, payment, and fare rules.
-      </p>
-    </Card>
-  );
-}
-
-function TripPill({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm">
-      <span className="text-teal">{icon}</span>
-      {label}
-    </span>
-  );
-}
-
-function AirportTimeBlock({ label, time, airport, icon, align = "left" }: { label: string; time: string; airport: string; icon: React.ReactNode; align?: "left" | "right" }) {
-  return (
-    <div className={align === "right" ? "text-left md:text-right" : "text-left"}>
-      <p className="inline-flex items-center gap-2 text-sm font-semibold text-muted">
-        <span className="text-teal">{icon}</span>
-        {label}
-      </p>
-      <div className="mt-2 text-3xl font-bold text-navy">{time}</div>
-      <div className="mt-1 text-base font-semibold text-slate-700">{airport}</div>
+      {airlineName || flightNumber ? (
+        <p className="mt-1 text-sm font-semibold text-slate-600">
+          {[airlineName, flightNumber].filter(Boolean).join(" · ")}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-function TimelineItem({ icon, title, eyebrow, body, isLast = false }: { icon: React.ReactNode; title: string; eyebrow: string; body: string; isLast?: boolean }) {
+function LayoverSeparator({
+  layover,
+}: {
+  layover: FlightLeg["layovers"][number];
+}) {
   return (
-    <div className="relative grid grid-cols-[44px_1fr] gap-3 pb-6 last:pb-0">
-      {!isLast ? <span className="absolute left-[21px] top-11 h-[calc(100%-2.75rem)] w-px bg-border" aria-hidden="true" /> : null}
-      <div className="relative z-10 flex h-11 w-11 items-center justify-center rounded-full border border-teal/20 bg-teal/10 text-teal shadow-sm">{icon}</div>
-      <div className="min-w-0 rounded-2xl border border-border bg-white p-4 shadow-[0_12px_30px_-26px_rgba(30,27,75,0.55)]">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-          <div className="font-semibold text-navy">{title}</div>
-          <div className="text-sm font-semibold text-muted">{eyebrow}</div>
-        </div>
-        <div className="mt-1 text-sm leading-6 text-slate-700">{body}</div>
-      </div>
-    </div>
-  );
-}
-
-function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="flex gap-3 rounded-xl border border-border bg-surface-muted/60 p-3">
-      <div className="mt-0.5 text-teal">{icon}</div>
-      <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</p>
-        <p className="mt-1 break-words text-sm font-semibold leading-5 text-navy">{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function ScoreInsight({ label, helper, score, invert = false }: { label: string; helper: string; score: number; invert?: boolean }) {
-  return (
-    <div className="rounded-xl border border-border bg-surface-muted/50 p-3">
-      <ScoreMeter label={label} score={score} invert={invert} />
-      <p className="mt-2 text-xs leading-5 text-muted">{helper}</p>
+    <div className="px-2 py-1.5 text-sm font-semibold text-slate-500 sm:px-3">
+      Layover in {layover.airport} · {layover.duration}
+      {layover.quality !== "unknown"
+        ? ` · ${layover.quality} connection`
+        : ""}
     </div>
   );
 }
@@ -451,8 +467,12 @@ function formatStops(stops: number) {
   return `${stops} stop${stops > 1 ? "s" : ""}`;
 }
 
-function formatLegDirection(direction: FlightLeg["direction"], index: number) {
+function formatLegDirection(
+  direction: FlightLeg["direction"],
+  index: number,
+  legCount: number,
+) {
   if (direction === "outbound") return "Outbound";
   if (direction === "return") return "Return";
-  return `Leg ${index + 1}`;
+  return legCount > 1 ? `Leg ${index + 1}` : "Itinerary";
 }

@@ -152,6 +152,7 @@ export const fallbackExchangeRatesFromUsd: Record<string, number> = {
   WST: 2.75,
   XAF: 604,
   XCD: 2.7,
+  XCG: 1.79,
   XOF: 604,
   XPF: 110,
   YER: 250,
@@ -171,6 +172,9 @@ export type CurrencyRatePayload = {
   missingCurrencies: string[];
   cacheTtlSeconds: number;
   cacheExpiresAt: string;
+  ratesSource?: "database" | "database-stale" | "provider-sync" | typeof STATIC_FALLBACK_SOURCE;
+  stale?: boolean;
+  snapshotId?: string;
 };
 
 export const STATIC_FALLBACK_SOURCE = "static-fallback";

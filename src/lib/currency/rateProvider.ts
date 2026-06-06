@@ -7,16 +7,25 @@ import {
   type CurrencyRatePayload,
   type ExchangeRates,
 } from "@/lib/currency/exchangeRates";
-import { getCachedCurrencyRates, setCachedCurrencyRates } from "@/lib/currency/rateCache";
+import {
+  getCachedCurrencyRates,
+  setCachedCurrencyRates,
+} from "@/lib/currency/rateCache";
+import { getLatestCurrencyRateSnapshotPayload } from "@/lib/currency/currencyRateSnapshotStore";
 
 const DEFAULT_CACHE_TTL_SECONDS = 12 * 60 * 60;
 const PROVIDER_REQUEST_TIMEOUT_MS = 8_000;
+const CURRENCYFREAKS_SOURCE = "CurrencyFreaks";
 
 export const visibleCurrencies = Array.from(
-  new Set(supportedRegions.map((region) => region.currency.toUpperCase()))
+  new Set(supportedRegions.map((region) => region.currency.toUpperCase())),
 ).sort();
 
-function getCacheTtlSeconds() {
+export type CurrencyFreaksRateResult = CurrencyRatePayload & {
+  rateCount: number;
+};
+
+export function getCacheTtlSeconds() {
   const configuredTtl = Number(process.env.FX_RATE_CACHE_TTL_SECONDS);
   return Number.isFinite(configuredTtl) && configuredTtl > 0
     ? Math.floor(configuredTtl)
@@ -24,69 +33,51 @@ function getCacheTtlSeconds() {
 }
 
 function getProviderName() {
-  return process.env.FX_PROVIDER_NAME?.trim() || "configured-fx-provider";
+  return process.env.FX_PROVIDER_NAME?.trim() || CURRENCYFREAKS_SOURCE;
 }
 
-function buildProviderUrl(providerUrl: string, symbols: string[], apiKey: string) {
-  const symbolList = symbols.join(",");
-  const hasPlaceholders = /\{(?:base|symbols|apiKey)\}/.test(providerUrl);
+function normalizeCurrencyCode(code: string) {
+  return code.trim().toUpperCase();
+}
+
+function readPositiveRate(value: unknown) {
+  const rate = typeof value === "string" ? Number(value) : value;
+
+  if (typeof rate !== "number" || !Number.isFinite(rate) || rate <= 0) {
+    return null;
+  }
+
+  return rate;
+}
+
+type CurrencyFreaksResponse = {
+  date?: unknown;
+  base?: unknown;
+  rates?: unknown;
+};
+
+function buildCurrencyFreaksUrl({
+  providerUrl,
+  apiKey,
+}: {
+  providerUrl: string;
+  apiKey: string;
+}) {
+  const hasPlaceholders = /\{(?:base|apiKey)\}/.test(providerUrl);
 
   if (hasPlaceholders) {
     return providerUrl
       .replaceAll("{base}", encodeURIComponent(FX_BASE_CURRENCY))
-      .replaceAll("{symbols}", encodeURIComponent(symbolList))
       .replaceAll("{apiKey}", encodeURIComponent(apiKey));
   }
 
   const url = new URL(providerUrl);
-  if (!url.searchParams.has("base")) url.searchParams.set("base", FX_BASE_CURRENCY);
-  if (!url.searchParams.has("symbols")) url.searchParams.set("symbols", symbolList);
-  if (!url.searchParams.has("access_key") && !url.searchParams.has("api_key") && !url.searchParams.has("apikey")) {
-    url.searchParams.set("api_key", apiKey);
-  }
-
+  url.searchParams.set("base", FX_BASE_CURRENCY);
+  if (!url.searchParams.has("apikey")) url.searchParams.set("apikey", apiKey);
   return url.toString();
 }
 
-type ProviderResponse = {
-  base?: unknown;
-  base_code?: unknown;
-  rates?: unknown;
-  conversion_rates?: unknown;
-  time_last_update_utc?: unknown;
-  time_last_update_unix?: unknown;
-  date?: unknown;
-  timestamp?: unknown;
-};
-
-function readProviderBase(data: ProviderResponse) {
-  const base = data.base ?? data.base_code;
-  return typeof base === "string" ? base.toUpperCase() : FX_BASE_CURRENCY;
-}
-
-function readProviderRates(data: ProviderResponse) {
-  if (readProviderBase(data) !== FX_BASE_CURRENCY) return null;
-  if (data.rates && typeof data.rates === "object") return data.rates as Record<string, unknown>;
-  if (data.conversion_rates && typeof data.conversion_rates === "object") {
-    return data.conversion_rates as Record<string, unknown>;
-  }
-  return null;
-}
-
-function readFetchedAt(data: ProviderResponse) {
-  if (typeof data.time_last_update_utc === "string") {
-    const parsed = new Date(data.time_last_update_utc);
-    if (Number.isFinite(parsed.getTime())) return parsed.toISOString();
-  }
-
-  if (typeof data.time_last_update_unix === "number") {
-    return new Date(data.time_last_update_unix * 1000).toISOString();
-  }
-
-  if (typeof data.timestamp === "number") {
-    return new Date(data.timestamp * 1000).toISOString();
-  }
-
+function readFetchedAt(data: CurrencyFreaksResponse) {
   if (typeof data.date === "string") {
     const parsed = new Date(data.date);
     if (Number.isFinite(parsed.getTime())) return parsed.toISOString();
@@ -95,7 +86,11 @@ function readFetchedAt(data: ProviderResponse) {
   return new Date().toISOString();
 }
 
-function buildPayloadFromRates({
+export function validateVisibleCurrencyCoverage(rates: ExchangeRates) {
+  return visibleCurrencies.filter((currency) => rates[currency] === undefined);
+}
+
+function buildPayloadFromProviderRates({
   providerRates,
   fetchedAt,
   source,
@@ -105,29 +100,20 @@ function buildPayloadFromRates({
   fetchedAt: string;
   source: string;
   cacheTtlSeconds: number;
-}): CurrencyRatePayload {
+}): CurrencyFreaksRateResult {
   const rates: ExchangeRates = { [FX_BASE_CURRENCY]: 1 };
-  const missingCurrencies: string[] = [];
 
-  for (const currency of visibleCurrencies) {
-    if (currency === FX_BASE_CURRENCY) {
-      rates[currency] = 1;
-      continue;
-    }
+  for (const [rawCurrency, rawRate] of Object.entries(providerRates)) {
+    const currency = normalizeCurrencyCode(rawCurrency);
+    const rate = readPositiveRate(rawRate);
 
-    const providerRate = providerRates[currency];
-    if (typeof providerRate === "number" && Number.isFinite(providerRate) && providerRate > 0) {
-      rates[currency] = providerRate;
-      continue;
-    }
-
-    const fallbackRate = fallbackExchangeRatesFromUsd[currency];
-    if (typeof fallbackRate === "number") {
-      rates[currency] = fallbackRate;
-    }
-    missingCurrencies.push(currency);
+    if (!/^[A-Z]{3}$/.test(currency) || rate === null) continue;
+    rates[currency] = rate;
   }
 
+  rates[FX_BASE_CURRENCY] = 1;
+
+  const missingCurrencies = validateVisibleCurrencyCoverage(rates);
   const fetchedAtTime = new Date(fetchedAt).getTime();
   const cacheExpiresAt = Number.isFinite(fetchedAtTime)
     ? new Date(fetchedAtTime + cacheTtlSeconds * 1000).toISOString()
@@ -137,59 +123,78 @@ function buildPayloadFromRates({
     base: FX_BASE_CURRENCY,
     rates,
     fetchedAt,
-    source: missingCurrencies.length > 0 ? `${source}+${STATIC_FALLBACK_SOURCE}` : source,
-    isFallback: missingCurrencies.length > 0,
+    source,
+    isFallback: false,
     missingCurrencies,
     cacheTtlSeconds,
     cacheExpiresAt,
+    ratesSource: "provider-sync",
+    stale: false,
+    rateCount: Object.keys(rates).length,
   };
 }
 
-function buildFallbackPayload(cacheTtlSeconds: number, missingCurrencies: string[] = []) {
-  const payload = getFallbackRatePayload({ cacheTtlSeconds, missingCurrencies });
+function buildStaticFallbackPayload(
+  cacheTtlSeconds: number,
+  missingCurrencies: string[] = [],
+): CurrencyRatePayload {
   return {
-    ...payload,
-    rates: Object.fromEntries(visibleCurrencies.map((currency) => [currency, fallbackExchangeRatesFromUsd[currency]])),
-  } satisfies CurrencyRatePayload;
+    ...getFallbackRatePayload({ cacheTtlSeconds, missingCurrencies }),
+    ratesSource: STATIC_FALLBACK_SOURCE,
+    stale: false,
+  };
 }
 
-async function fetchProviderRates(cacheTtlSeconds: number) {
+export async function fetchCurrencyFreaksRates({
+  cacheTtlSeconds = getCacheTtlSeconds(),
+}: {
+  cacheTtlSeconds?: number;
+} = {}): Promise<CurrencyFreaksRateResult> {
+  const providerName = getProviderName();
   const providerUrl = process.env.FX_PROVIDER_URL?.trim();
   const apiKey = process.env.FX_PROVIDER_API_KEY?.trim();
 
+  if (providerName !== CURRENCYFREAKS_SOURCE) {
+    throw new Error("FX_PROVIDER_NAME must be CurrencyFreaks.");
+  }
+
   if (!providerUrl || !apiKey) {
-    return buildFallbackPayload(cacheTtlSeconds);
+    throw new Error("CurrencyFreaks provider URL or API key is not configured.");
   }
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), PROVIDER_REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    PROVIDER_REQUEST_TIMEOUT_MS,
+  );
 
   try {
-    const response = await fetch(buildProviderUrl(providerUrl, visibleCurrencies, apiKey), {
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-      signal: controller.signal,
-    });
+    const response = await fetch(
+      buildCurrencyFreaksUrl({ providerUrl, apiKey }),
+      {
+        headers: { Accept: "application/json" },
+        cache: "no-store",
+        signal: controller.signal,
+      },
+    );
 
     if (!response.ok) {
-      return buildFallbackPayload(cacheTtlSeconds);
+      throw new Error("CurrencyFreaks request failed.");
     }
 
-    const data = (await response.json()) as ProviderResponse;
-    const providerRates = readProviderRates(data);
+    const data = (await response.json()) as CurrencyFreaksResponse;
+    const base = typeof data.base === "string" ? normalizeCurrencyCode(data.base) : null;
 
-    if (!providerRates) {
-      return buildFallbackPayload(cacheTtlSeconds);
+    if (base !== FX_BASE_CURRENCY || !data.rates || typeof data.rates !== "object") {
+      throw new Error("CurrencyFreaks response did not include USD-based rates.");
     }
 
-    return buildPayloadFromRates({
-      providerRates,
+    return buildPayloadFromProviderRates({
+      providerRates: data.rates as Record<string, unknown>,
       fetchedAt: readFetchedAt(data),
-      source: getProviderName(),
+      source: CURRENCYFREAKS_SOURCE,
       cacheTtlSeconds,
     });
-  } catch {
-    return buildFallbackPayload(cacheTtlSeconds);
   } finally {
     clearTimeout(timeout);
   }
@@ -203,6 +208,18 @@ export async function getCurrencyRates({ bypassCache = false } = {}) {
     if (cachedRates) return cachedRates;
   }
 
-  const payload = await fetchProviderRates(cacheTtlSeconds);
-  return setCachedCurrencyRates(payload, cacheTtlSeconds);
+  const snapshotPayload = await getLatestCurrencyRateSnapshotPayload({
+    cacheTtlSeconds,
+  });
+
+  const payload =
+    snapshotPayload ??
+    buildStaticFallbackPayload(
+      cacheTtlSeconds,
+      validateVisibleCurrencyCoverage(fallbackExchangeRatesFromUsd),
+    );
+
+  const inMemoryTtlSeconds = payload.ratesSource === "database" ? cacheTtlSeconds : 60;
+
+  return setCachedCurrencyRates(payload, inMemoryTtlSeconds);
 }
