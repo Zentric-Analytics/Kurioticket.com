@@ -143,8 +143,9 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                         <AirlineNameWithLogo
                           airlineName={flight.airlineName}
-                          airlineLogo={getAirlineLogo(flight)}
+                          airlineLogoUrl={getAirlineLogo(flight)}
                           className="text-sm font-semibold text-slate-700"
+                          logoClassName="h-6 w-6"
                         />
                         {flight.flightNumber ? (
                           <>
@@ -319,24 +320,29 @@ function CompactAirportTime({
 
 function AirlineNameWithLogo({
   airlineName,
-  airlineLogo,
+  airlineLogoUrl,
   className = "",
+  logoClassName = "h-5 w-5",
 }: {
   airlineName: string;
-  airlineLogo?: string;
+  airlineLogoUrl?: string | null;
   className?: string;
+  logoClassName?: string;
 }) {
   return (
     <span
       className={`inline-flex min-w-0 items-center gap-1.5 ${className}`.trim()}
     >
-      {airlineLogo ? (
+      {airlineLogoUrl ? (
         <Image
-          src={airlineLogo}
+          src={airlineLogoUrl}
           alt={`${airlineName} logo`}
-          width={20}
-          height={20}
-          className="h-4 w-4 shrink-0 rounded-full object-contain"
+          width={24}
+          height={24}
+          className={`${logoClassName} shrink-0 rounded-full object-contain`.trim()}
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
         />
       ) : null}
       <span className="min-w-0 truncate">{airlineName}</span>
@@ -355,6 +361,8 @@ function getAirlineLogo(source: unknown) {
     "carrierLogo",
     "carrierLogoUrl",
     "logoUrl",
+    "marketingCarrierLogo",
+    "operatingCarrierLogo",
   ];
 
   for (const key of logoKeys) {
@@ -365,8 +373,33 @@ function getAirlineLogo(source: unknown) {
     }
   }
 
+  return getNestedLogo(fields, [
+    "airline",
+    "carrier",
+    "marketingCarrier",
+    "operatingCarrier",
+  ]);
+}
+
+function getNestedLogo(fields: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = fields[key];
+
+    if (!value || typeof value !== "object") continue;
+
+    const nested = value as Record<string, unknown>;
+    const logo = nested.logo ?? nested.logoUrl ?? nested.imageUrl;
+
+    if (typeof logo === "string" && logo.trim()) {
+      return logo.trim();
+    }
+  }
+
   return undefined;
 }
+
+const normalizeAirlineName = (value?: string | null) =>
+  value?.trim().toLowerCase() ?? "";
 
 function CompactLegSection({
   leg,
@@ -409,24 +442,34 @@ function CompactLegSection({
         </p>
       </div>
       <div className="divide-y divide-slate-100">
-        {segments.map((segment, segmentIndex) => (
-          <div
-            key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
-          >
-            <CompactFlightRow
-              originAirport={segment.originAirport}
-              destinationAirport={segment.destinationAirport}
-              departureTime={segment.departureTime}
-              arrivalTime={segment.arrivalTime}
-              airlineName={segment.airlineName || fallbackAirlineName}
-              airlineLogo={getAirlineLogo(segment) || fallbackAirlineLogo}
-              flightNumber={segment.flightNumber || fallbackFlightNumber}
-            />
-            {leg.layovers[segmentIndex] ? (
-              <LayoverSeparator layover={leg.layovers[segmentIndex]} />
-            ) : null}
-          </div>
-        ))}
+        {segments.map((segment, segmentIndex) => {
+          const airlineName = segment.airlineName || fallbackAirlineName;
+          const airlineLogo =
+            getAirlineLogo(segment) ??
+            (normalizeAirlineName(airlineName) ===
+              normalizeAirlineName(fallbackAirlineName)
+              ? fallbackAirlineLogo
+              : undefined);
+
+          return (
+            <div
+              key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
+            >
+              <CompactFlightRow
+                originAirport={segment.originAirport}
+                destinationAirport={segment.destinationAirport}
+                departureTime={segment.departureTime}
+                arrivalTime={segment.arrivalTime}
+                airlineName={airlineName}
+                airlineLogo={airlineLogo}
+                flightNumber={segment.flightNumber || fallbackFlightNumber}
+              />
+              {leg.layovers[segmentIndex] ? (
+                <LayoverSeparator layover={leg.layovers[segmentIndex]} />
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -463,7 +506,7 @@ function CompactFlightRow({
             {airlineName ? (
               <AirlineNameWithLogo
                 airlineName={airlineName}
-                airlineLogo={airlineLogo}
+                airlineLogoUrl={airlineLogo}
               />
             ) : null}
             {airlineName && flightNumber ? (
