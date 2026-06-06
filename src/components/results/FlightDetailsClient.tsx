@@ -2,16 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  type LucideIcon,
+  Armchair,
   ArrowRight,
-  Clock3,
   Info,
   Luggage,
   Plane,
+  Settings,
+  ShieldCheck,
   Sparkles,
-  Ticket,
 } from "lucide-react";
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -118,6 +119,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
   });
 
   const stopLabel = formatStops(flight.stops);
+  const heroDetails = buildHeroDetails(flight);
   const hasProviderLink = Boolean(
     flight.partnerRedirectUrl || flight.bookingUrl,
   );
@@ -158,61 +160,36 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     </span>
                     <span>{flight.destinationAirport}</span>
                   </h1>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium leading-5 text-slate-600">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Plane
-                        size={14}
-                        className="shrink-0 text-indigo-600"
-                        aria-hidden="true"
-                      />
-                      <span>
-                        <span className="font-semibold text-slate-800">
-                          Stops:
-                        </span>{" "}
-                        {stopLabel}
-                      </span>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Clock3
-                        size={14}
-                        className="shrink-0 text-indigo-600"
-                        aria-hidden="true"
-                      />
-                      <span>
-                        <span className="font-semibold text-slate-800">
-                          Duration:
-                        </span>{" "}
-                        {flight.duration}
-                      </span>
-                    </span>
-                    {flight.cabinClass ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <Ticket
-                          size={14}
-                          className="shrink-0 text-indigo-600"
-                          aria-hidden="true"
-                        />
-                        <span>
-                          <span className="font-semibold text-slate-800">
-                            Cabin:
-                          </span>{" "}
-                          {flight.cabinClass}
-                        </span>
-                      </span>
-                    ) : null}
-                    <span className="inline-flex min-w-0 items-center gap-1.5">
-                      <Luggage
-                        size={14}
-                        className="shrink-0 text-indigo-600"
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0">
-                        <span className="font-semibold text-slate-800">
-                          Baggage:
-                        </span>{" "}
-                        {flight.baggageInfo || "Confirmed by provider"}
-                      </span>
-                    </span>
+                  <div className="mt-3 space-y-2 text-xs font-medium text-slate-600">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                      {heroDetails.map((detail) => {
+                        const Icon = detail.icon;
+
+                        return (
+                          <span
+                            key={detail.label}
+                            className="inline-flex min-w-0 items-center gap-1.5"
+                          >
+                            <Icon
+                              className="h-3.5 w-3.5 shrink-0 text-indigo-600"
+                              aria-hidden="true"
+                            />
+                            <span className="min-w-0">
+                              <span className="font-semibold text-slate-800">
+                                {detail.label}:
+                              </span>{" "}
+                              {detail.value}
+                            </span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="max-w-2xl text-xs leading-5 text-slate-500">
+                      Outbound and return details are shown from{" "}
+                      provider-normalized itinerary data. Booking, payment, final
+                      price, availability, baggage, seat selection, and fare
+                      rules are confirmed by the provider before booking.
+                    </p>
                   </div>
                 </div>
 
@@ -257,62 +234,61 @@ export function FlightDetailsClient({ id }: { id: string }) {
 
       <div className="page-shell py-6">
         <div className="mx-auto w-full max-w-3xl">
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-indigo-950/5 sm:p-5">
-            <div className="flex flex-col gap-2 border-b border-slate-200 pb-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-teal-dark">
-                  Selected flight
-                </p>
-                <h2 className="mt-0.5 truncate text-xl font-bold text-navy">
-                  {flight.airlineName}
-                  {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
-                </h2>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-bold text-indigo-800">
-                  {flight.duration}
-                </span>
-                <Badge variant={flight.stops === 0 ? "teal" : "blue"}>
-                  {stopLabel}
-                </Badge>
-              </div>
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-indigo-950/5">
+            <div className="bg-gradient-to-r from-indigo-700 to-violet-600 px-4 py-2.5">
+              <p className="text-sm font-semibold tracking-tight text-white sm:text-base">
+                Selected flight
+              </p>
             </div>
 
-            <div className="mt-3 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 via-white to-teal/10 p-3">
-              <div className="grid gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
-                <CompactAirportTime
-                  airport={flight.originAirport}
-                  time={formatTime(flight.departureTime)}
-                />
-                <div className="flex min-w-0 items-center justify-center gap-2 text-center text-sm font-bold text-slate-600">
-                  <span className="hidden h-px w-10 bg-indigo-200 sm:block" />
-                  <span className="rounded-full border border-indigo-100 bg-white px-3 py-1 shadow-sm">
-                    {connectionAirports.length
-                      ? `${flight.duration} · ${connectionAirports.join(" · ")}`
-                      : `${flight.duration} · ${stopLabel}`}
-                  </span>
-                  <ArrowRight size={16} className="shrink-0 text-teal" />
-                  <span className="hidden h-px w-10 bg-indigo-200 sm:block" />
+            <div className="p-3 sm:p-4">
+              <div className="pb-3">
+                <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+                  <CompactAirportTime
+                    airport={flight.originAirport}
+                    time={formatTime(flight.departureTime)}
+                  />
+                  <div className="flex min-w-0 flex-col items-start gap-1 text-sm font-semibold text-slate-600 sm:items-center sm:text-center">
+                    <div className="flex w-full items-center gap-2 text-teal sm:min-w-32">
+                      <span className="h-px flex-1 bg-slate-200" />
+                      <Plane
+                        className="h-3.5 w-3.5 shrink-0 text-indigo-600"
+                        aria-hidden="true"
+                      />
+                      <span className="h-px flex-1 bg-slate-200" />
+                    </div>
+                    <span className="text-xs font-medium text-slate-500">
+                      {connectionAirports.length
+                        ? `${flight.duration} · ${connectionAirports.join(" · ")}`
+                        : `${flight.duration} · ${stopLabel}`}
+                    </span>
+                  </div>
+                  <CompactAirportTime
+                    airport={flight.destinationAirport}
+                    time={formatTime(flight.arrivalTime)}
+                    align="right"
+                  />
                 </div>
-                <CompactAirportTime
-                  airport={flight.destinationAirport}
-                  time={formatTime(flight.arrivalTime)}
-                  align="right"
-                />
               </div>
-            </div>
 
-            <div className="mt-3 grid gap-3">
-              {itineraryLegs.map((leg, legIndex) => (
-                <CompactLegSection
-                  key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
-                  leg={leg}
-                  legIndex={legIndex}
-                  legCount={itineraryLegs.length}
-                  fallbackAirlineName={flight.airlineName}
-                  fallbackFlightNumber={flight.flightNumber}
-                />
-              ))}
+              <div className="grid gap-2">
+                {itineraryLegs.map((leg, legIndex) => (
+                  <div
+                    key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
+                    className={
+                      legIndex > 0 ? "mt-2 border-t border-slate-200 pt-3" : ""
+                    }
+                  >
+                    <CompactLegSection
+                      leg={leg}
+                      legIndex={legIndex}
+                      legCount={itineraryLegs.length}
+                      fallbackAirlineName={flight.airlineName}
+                      fallbackFlightNumber={flight.flightNumber}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
         </div>
@@ -332,7 +308,7 @@ function CompactAirportTime({
 }) {
   return (
     <div className={align === "right" ? "sm:text-right" : ""}>
-      <p className="text-xl font-black tracking-tight text-navy">{airport}</p>
+      <p className="text-lg font-black tracking-tight text-navy sm:text-xl">{airport}</p>
       <p className="mt-0.5 text-sm font-semibold text-slate-600">{time}</p>
     </div>
   );
@@ -365,9 +341,9 @@ function CompactLegSection({
       ];
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
-      <div className="mb-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+    <section aria-label={formatLegDirection(leg.direction, legIndex, legCount)}>
+      <div className="mb-1.5 flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">
           {formatLegDirection(leg.direction, legIndex, legCount)} · {leg.originAirport} to{" "}
           {leg.destinationAirport}
         </p>
@@ -375,7 +351,7 @@ function CompactLegSection({
           {leg.duration} · {formatStops(leg.stops)}
         </p>
       </div>
-      <div className="grid gap-2">
+      <div className="divide-y divide-slate-100">
         {segments.map((segment, segmentIndex) => (
           <div
             key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
@@ -394,7 +370,7 @@ function CompactLegSection({
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -414,35 +390,36 @@ function CompactFlightRow({
   flightNumber?: string;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-[0_10px_24px_-24px_rgba(30,27,75,0.55)] sm:p-3">
-      <div className="grid gap-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
-        <div>
-          <p className="text-lg font-black tracking-tight text-navy">
-            {originAirport}{" "}
-            <span className="text-base font-bold text-slate-700">
-              {formatTime(departureTime)}
-            </span>
-          </p>
-        </div>
-        <div className="flex items-center gap-2 text-teal sm:justify-center">
-          <span className="h-px w-8 bg-teal/30" />
-          <ArrowRight size={17} aria-hidden="true" />
-          <span className="hidden h-px w-8 bg-teal/30 sm:block" />
-        </div>
-        <div className="sm:text-right">
-          <p className="text-lg font-black tracking-tight text-navy">
-            {destinationAirport}{" "}
-            <span className="text-base font-bold text-slate-700">
-              {formatTime(arrivalTime)}
-            </span>
-          </p>
-        </div>
-      </div>
-      {airlineName || flightNumber ? (
-        <p className="mt-1 text-sm font-semibold text-slate-600">
-          {[airlineName, flightNumber].filter(Boolean).join(" · ")}
+    <div className="grid gap-2 py-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+      <div className="min-w-0">
+        <p className="text-lg font-semibold tracking-[-0.02em] text-slate-950">
+          {formatTime(departureTime)}
         </p>
-      ) : null}
+        <p className="mt-0.5 truncate text-xs font-medium text-slate-600">
+          {originAirport}
+        </p>
+        {airlineName || flightNumber ? (
+          <p className="mt-1 truncate text-xs font-semibold text-slate-500">
+            {[airlineName, flightNumber].filter(Boolean).join(" · ")}
+          </p>
+        ) : null}
+      </div>
+      <div className="flex items-center gap-1.5 text-teal sm:min-w-20 sm:justify-center">
+        <span className="h-px w-8 bg-slate-200 sm:w-10" />
+        <Plane
+          className="h-4 w-4 shrink-0 text-indigo-600"
+          aria-hidden="true"
+        />
+        <span className="hidden h-px w-8 bg-slate-200 sm:block sm:w-10" />
+      </div>
+      <div className="min-w-0 sm:text-right">
+        <p className="text-lg font-semibold tracking-[-0.02em] text-slate-950">
+          {formatTime(arrivalTime)}
+        </p>
+        <p className="mt-0.5 truncate text-xs font-medium text-slate-600">
+          {destinationAirport}
+        </p>
+      </div>
     </div>
   );
 }
@@ -453,12 +430,114 @@ function LayoverSeparator({
   layover: FlightLeg["layovers"][number];
 }) {
   return (
-    <div className="px-2 py-1.5 text-sm font-semibold text-slate-500 sm:px-3">
+    <div className="py-1 text-xs font-medium text-slate-500">
       Layover in {layover.airport} · {layover.duration}
       {layover.quality !== "unknown"
         ? ` · ${layover.quality} connection`
         : ""}
     </div>
+  );
+}
+
+type HeroDetailItem = {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+};
+
+function buildHeroDetails(flight: PublicFlightResult): HeroDetailItem[] {
+  return [
+    {
+      label: "Baggage",
+      value: formatBaggageValue(flight.baggageInfo),
+      icon: Luggage,
+    },
+    {
+      label: "Cabin",
+      value: formatCabinClass(flight.cabinClass),
+      icon: Armchair,
+    },
+    {
+      label: "Seat selection",
+      value: formatSeatSelectionValue(flight),
+      icon: Settings,
+    },
+    {
+      label: "Fare rules",
+      value: formatFareRulesValue(flight),
+      icon: ShieldCheck,
+    },
+  ];
+}
+
+function formatCabinClass(value?: string) {
+  if (!value) return "Check provider";
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function formatBaggageValue(value?: string) {
+  if (
+    !value ||
+    isProviderReviewCopy(value) ||
+    /rules vary|vary by fare/i.test(value)
+  ) {
+    return "Check provider";
+  }
+
+  return value;
+}
+
+function formatSeatSelectionValue(flight: PublicFlightResult) {
+  return (
+    getOptionalStringField(flight, [
+      "seatSelectionInfo",
+      "seatSelectionText",
+      "seatSelectionPolicy",
+      "seatSelection",
+    ]) || "Provider rules apply"
+  );
+}
+
+function formatFareRulesValue(flight: PublicFlightResult) {
+  const fareRules = getOptionalStringField(flight, [
+    "fareRules",
+    "fareRuleSummary",
+    "fareRulesSummary",
+    "changeInfo",
+    "refundInfo",
+  ]);
+
+  if (!fareRules || isProviderReviewCopy(fareRules)) {
+    return "Review before booking";
+  }
+
+  return fareRules;
+}
+
+function getOptionalStringField(flight: PublicFlightResult, keys: string[]) {
+  const fields = flight as Record<string, unknown>;
+
+  for (const key of keys) {
+    const value = fields[key];
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
+function isProviderReviewCopy(value: string) {
+  const normalized = value.toLowerCase();
+  return (
+    normalized.includes("reviewed on the external provider") ||
+    normalized.includes("shown by the external provider") ||
+    normalized.includes("reviewed externally") ||
+    normalized.includes("rules vary") ||
+    normalized.includes("vary by fare")
   );
 }
 
