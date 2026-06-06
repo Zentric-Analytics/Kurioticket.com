@@ -3,6 +3,7 @@
 import {
   type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -559,6 +560,28 @@ export function HotelSearchBar({
     setGuestsRoomsOpen(false);
   };
 
+  const resetMobileSearchPanelScroll = useCallback(() => {
+    const scrollContainers = [
+      mobileSearchPanelRef.current,
+      mobileSearchContentRef.current,
+    ];
+
+    scrollContainers.forEach((scrollContainer) => {
+      if (!scrollContainer) return;
+
+      scrollContainer.scrollTop = 0;
+      scrollContainer.scrollTo({ left: 0, top: 0 });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!mobileSearchOpen || typeof window === "undefined") return;
+
+    const frame = window.requestAnimationFrame(resetMobileSearchPanelScroll);
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobileSearchOpen, resetMobileSearchPanelScroll]);
+
   const closeMobileSearchPanel = () => {
     closeHotelSearchPopovers();
     setMobileSearchOpen(false);
@@ -567,6 +590,10 @@ export function HotelSearchBar({
   const openMobileSearchPanel = () => {
     closeHotelSearchPopovers();
     setMobileSearchOpen(true);
+
+    if (typeof window === "undefined") return;
+
+    window.requestAnimationFrame(resetMobileSearchPanelScroll);
   };
 
   const handleResetSearch = () => {
