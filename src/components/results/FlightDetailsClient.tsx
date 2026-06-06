@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import {
   type LucideIcon,
@@ -129,72 +130,74 @@ export function FlightDetailsClient({ id }: { id: string }) {
   return (
     <main className="flex-1 bg-surface-muted/40">
       <section className="border-b border-border bg-white">
-        <div className="page-shell py-4 sm:py-5">
-          <div className="mx-auto grid w-full max-w-5xl gap-4">
+        <div className="page-shell py-3 sm:py-4">
+          <div className="mx-auto grid w-full max-w-5xl gap-3">
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
-                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3.5 sm:p-4 lg:p-5">
-                  <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
-                    <Sparkles size={14} aria-hidden="true" /> Flight details
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                    <span className="text-sm font-semibold text-slate-700">
-                      {flight.airlineName}
-                    </span>
-                    {flight.flightNumber ? (
-                      <>
-                        <span
-                          className="h-1 w-1 rounded-full bg-slate-300"
-                          aria-hidden="true"
+                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
+                  <div className="flex h-full min-w-0 flex-col items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1.5">
+                      <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
+                        <Sparkles size={14} aria-hidden="true" /> Flight details
+                      </p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <AirlineNameWithLogo
+                          airlineName={flight.airlineName}
+                          airlineLogoUrl={getAirlineLogo(flight)}
+                          className="text-sm font-semibold text-slate-700"
+                          logoClassName="h-6 w-6"
                         />
-                        <span className="text-sm font-medium text-slate-500">
-                          Flight {flight.flightNumber}
-                        </span>
-                      </>
-                    ) : null}
-                  </div>
-                  <h1 className="mt-1.5 flex min-w-0 flex-wrap items-center gap-2.5 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                    <span>{flight.originAirport}</span>
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
-                      <ArrowRight size={16} aria-hidden="true" />
-                    </span>
-                    <span>{flight.destinationAirport}</span>
-                  </h1>
-                  <div className="mt-3 space-y-2 text-xs font-medium text-slate-600">
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                      {heroDetails.map((detail) => {
-                        const Icon = detail.icon;
-
-                        return (
-                          <span
-                            key={detail.label}
-                            className="inline-flex min-w-0 items-center gap-1.5"
-                          >
-                            <Icon
-                              className="h-3.5 w-3.5 shrink-0 text-indigo-600"
+                        {flight.flightNumber ? (
+                          <>
+                            <span
+                              className="h-1 w-1 rounded-full bg-slate-300"
                               aria-hidden="true"
                             />
-                            <span className="min-w-0">
-                              <span className="font-semibold text-slate-800">
-                                {detail.label}:
-                              </span>{" "}
-                              {detail.value}
+                            <span className="text-sm font-medium text-slate-500">
+                              Flight {flight.flightNumber}
                             </span>
-                          </span>
-                        );
-                      })}
+                          </>
+                        ) : null}
+                      </div>
+                      <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                        <span>{flight.originAirport}</span>
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
+                          <ArrowRight size={16} aria-hidden="true" />
+                        </span>
+                        <span>{flight.destinationAirport}</span>
+                      </h1>
                     </div>
-                    <p className="max-w-2xl text-xs leading-5 text-slate-500">
-                      Outbound and return details are shown from{" "}
-                      provider-normalized itinerary data. Booking, payment, final
-                      price, availability, baggage, seat selection, and fare
-                      rules are confirmed by the provider before booking.
-                    </p>
+
+                    <div className="w-full rounded-xl border border-indigo-100/70 bg-white/65 px-3 py-2 text-xs font-medium leading-5 text-slate-600 shadow-sm shadow-indigo-950/5">
+                      <div className="flex flex-wrap items-start gap-x-4 gap-y-1">
+                        {heroDetails.map((detail) => {
+                          const Icon = detail.icon;
+
+                          return (
+                            <span
+                              key={detail.label}
+                              className="inline-flex min-w-0 items-start gap-1.5"
+                            >
+                              <Icon
+                                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600"
+                                aria-hidden="true"
+                              />
+                              <span className="min-w-0 leading-5">
+                                <span className="font-semibold text-slate-800">
+                                  {detail.label}:
+                                </span>{" "}
+                                {detail.value}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <aside className="border-t border-indigo-100 bg-white p-3 sm:p-3.5 lg:border-l lg:border-t-0 lg:p-4">
-                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-center shadow-sm">
+                <aside className="border-t border-indigo-100 bg-white p-2.5 sm:p-3 lg:border-l lg:border-t-0 lg:p-3.5">
+                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                       From
                     </p>
@@ -215,14 +218,14 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   <Button
                     variant="accent"
                     size="lg"
-                    className="mt-2.5 w-full rounded-xl px-6 text-sm font-semibold sm:text-base"
+                    className="mt-2 w-full rounded-xl px-6 text-sm font-semibold sm:text-base"
                     onClick={continueToProvider}
                     disabled={!hasProviderLink}
                   >
                     Continue to Provider <ArrowRight size={18} />
                   </Button>
-                  <p className="mt-2 flex gap-2 text-xs font-medium leading-5 text-slate-600">
-                    <Info size={16} className="mt-0.5 shrink-0 text-blue" />
+                  <p className="mt-1.5 flex gap-1.5 text-xs font-medium leading-4 text-slate-600">
+                    <Info size={15} className="mt-0.5 shrink-0 text-blue" />
                     <span>{providerDisclaimer}</span>
                   </p>
                 </aside>
@@ -276,7 +279,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   <div
                     key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
                     className={
-                      legIndex > 0 ? "mt-2 border-t border-slate-200 pt-3" : ""
+                      legIndex > 0 ? "mt-3 border-t border-violet-500 pt-3" : ""
                     }
                   >
                     <CompactLegSection
@@ -284,6 +287,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       legIndex={legIndex}
                       legCount={itineraryLegs.length}
                       fallbackAirlineName={flight.airlineName}
+                      fallbackAirlineLogo={getAirlineLogo(flight)}
                       fallbackFlightNumber={flight.flightNumber}
                     />
                   </div>
@@ -314,17 +318,102 @@ function CompactAirportTime({
   );
 }
 
+function AirlineNameWithLogo({
+  airlineName,
+  airlineLogoUrl,
+  className = "",
+  logoClassName = "h-5 w-5",
+}: {
+  airlineName: string;
+  airlineLogoUrl?: string | null;
+  className?: string;
+  logoClassName?: string;
+}) {
+  return (
+    <span
+      className={`inline-flex min-w-0 items-center gap-1.5 ${className}`.trim()}
+    >
+      {airlineLogoUrl ? (
+        <Image
+          src={airlineLogoUrl}
+          alt={`${airlineName} logo`}
+          width={24}
+          height={24}
+          className={`${logoClassName} shrink-0 rounded-full object-contain`.trim()}
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      ) : null}
+      <span className="min-w-0 truncate">{airlineName}</span>
+    </span>
+  );
+}
+
+function getAirlineLogo(source: unknown) {
+  if (!source || typeof source !== "object") return undefined;
+
+  const fields = source as Record<string, unknown>;
+  const logoKeys = [
+    "airlineLogo",
+    "airlineLogoUrl",
+    "airlineImage",
+    "carrierLogo",
+    "carrierLogoUrl",
+    "logoUrl",
+    "marketingCarrierLogo",
+    "operatingCarrierLogo",
+  ];
+
+  for (const key of logoKeys) {
+    const value = fields[key];
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return getNestedLogo(fields, [
+    "airline",
+    "carrier",
+    "marketingCarrier",
+    "operatingCarrier",
+  ]);
+}
+
+function getNestedLogo(fields: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = fields[key];
+
+    if (!value || typeof value !== "object") continue;
+
+    const nested = value as Record<string, unknown>;
+    const logo = nested.logo ?? nested.logoUrl ?? nested.imageUrl;
+
+    if (typeof logo === "string" && logo.trim()) {
+      return logo.trim();
+    }
+  }
+
+  return undefined;
+}
+
+const normalizeAirlineName = (value?: string | null) =>
+  value?.trim().toLowerCase() ?? "";
+
 function CompactLegSection({
   leg,
   legIndex,
   legCount,
   fallbackAirlineName,
+  fallbackAirlineLogo,
   fallbackFlightNumber,
 }: {
   leg: FlightLeg;
   legIndex: number;
   legCount: number;
   fallbackAirlineName: string;
+  fallbackAirlineLogo?: string;
   fallbackFlightNumber?: string;
 }) {
   const segments = leg.segments.length
@@ -336,6 +425,7 @@ function CompactLegSection({
           departureTime: leg.departureTime,
           arrivalTime: leg.arrivalTime,
           airlineName: fallbackAirlineName,
+          airlineLogo: fallbackAirlineLogo,
           flightNumber: fallbackFlightNumber,
         },
       ];
@@ -352,23 +442,34 @@ function CompactLegSection({
         </p>
       </div>
       <div className="divide-y divide-slate-100">
-        {segments.map((segment, segmentIndex) => (
-          <div
-            key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
-          >
-            <CompactFlightRow
-              originAirport={segment.originAirport}
-              destinationAirport={segment.destinationAirport}
-              departureTime={segment.departureTime}
-              arrivalTime={segment.arrivalTime}
-              airlineName={segment.airlineName || fallbackAirlineName}
-              flightNumber={segment.flightNumber || fallbackFlightNumber}
-            />
-            {leg.layovers[segmentIndex] ? (
-              <LayoverSeparator layover={leg.layovers[segmentIndex]} />
-            ) : null}
-          </div>
-        ))}
+        {segments.map((segment, segmentIndex) => {
+          const airlineName = segment.airlineName || fallbackAirlineName;
+          const airlineLogo =
+            getAirlineLogo(segment) ??
+            (normalizeAirlineName(airlineName) ===
+              normalizeAirlineName(fallbackAirlineName)
+              ? fallbackAirlineLogo
+              : undefined);
+
+          return (
+            <div
+              key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
+            >
+              <CompactFlightRow
+                originAirport={segment.originAirport}
+                destinationAirport={segment.destinationAirport}
+                departureTime={segment.departureTime}
+                arrivalTime={segment.arrivalTime}
+                airlineName={airlineName}
+                airlineLogo={airlineLogo}
+                flightNumber={segment.flightNumber || fallbackFlightNumber}
+              />
+              {leg.layovers[segmentIndex] ? (
+                <LayoverSeparator layover={leg.layovers[segmentIndex]} />
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
@@ -380,6 +481,7 @@ function CompactFlightRow({
   departureTime,
   arrivalTime,
   airlineName,
+  airlineLogo,
   flightNumber,
 }: {
   originAirport: string;
@@ -387,6 +489,7 @@ function CompactFlightRow({
   departureTime: string;
   arrivalTime: string;
   airlineName?: string;
+  airlineLogo?: string;
   flightNumber?: string;
 }) {
   return (
@@ -399,8 +502,22 @@ function CompactFlightRow({
           {originAirport}
         </p>
         {airlineName || flightNumber ? (
-          <p className="mt-1 truncate text-xs font-semibold text-slate-500">
-            {[airlineName, flightNumber].filter(Boolean).join(" · ")}
+          <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-500">
+            {airlineName ? (
+              <AirlineNameWithLogo
+                airlineName={airlineName}
+                airlineLogoUrl={airlineLogo}
+              />
+            ) : null}
+            {airlineName && flightNumber ? (
+              <span
+                className="h-1 w-1 shrink-0 rounded-full bg-slate-300"
+                aria-hidden="true"
+              />
+            ) : null}
+            {flightNumber ? (
+              <span className="min-w-0 truncate">{flightNumber}</span>
+            ) : null}
           </p>
         ) : null}
       </div>

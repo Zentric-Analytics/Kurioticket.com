@@ -10,9 +10,7 @@ import {
 } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  MapPin,
   SlidersHorizontal,
-  SquarePen,
   Star,
   Tag,
   ThumbsUp,
@@ -305,6 +303,14 @@ type HotelSummaryItem = {
   sortMode: HotelSummarySortMode;
 };
 
+type HotelMobileSearchDraft = {
+  destination: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  rooms: number;
+};
+
 export function HotelResultsClient() {
   const params = useSearchParams();
 
@@ -325,17 +331,13 @@ export function HotelResultsClient() {
     useState<HotelFilterSelections>(emptySelections);
   const [hotelSummarySortMode, setHotelSummarySortMode] =
     useState<HotelSummarySortMode>("cheapest");
-  const [isSearchBarCompact, setIsSearchBarCompact] = useState(false);
-  const [isSearchExpandedWhileSticky, setIsSearchExpandedWhileSticky] =
-    useState(false);
-  const [hasInteractedWithExpandedSearch, setHasInteractedWithExpandedSearch] =
-    useState(false);
+  const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
 
   const filterApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
-  const stickySentinelRef = useRef<HTMLDivElement | null>(null);
-  const searchFormWrapRef = useRef<HTMLDivElement | null>(null);
-  const expandedSearchScrollYRef = useRef(0);
+  const mobileHotelSearchScrollLockRef = useRef<{ restore: () => void } | null>(
+    null,
+  );
 
   const body = useMemo(
     () => ({
@@ -348,101 +350,144 @@ export function HotelResultsClient() {
     }),
     [params],
   );
-
-  const showCompactSearchSummary =
-    isSearchBarCompact && !isSearchExpandedWhileSticky;
-  const isExpandedStickySearchActive =
-    isSearchBarCompact && isSearchExpandedWhileSticky;
-  const canAutoCollapseExpandedSearch =
-    isExpandedStickySearchActive && !hasInteractedWithExpandedSearch;
-  const hotelDateSummary =
-    body.checkIn && body.checkOut
-      ? `${formatHotelCompactDate(body.checkIn)} — ${formatHotelCompactDate(
-          body.checkOut,
-        )}`
-      : "Select stay dates";
-  const hotelGuestRoomSummary = `${pluralizeHotelCount(
+  const bodySearchKey = [
+    body.destination,
+    body.checkIn,
+    body.checkOut,
     body.guests,
-    "guest",
-    "guests",
-  )} · ${pluralizeHotelCount(body.rooms, "room", "rooms")}`;
+    body.rooms,
+  ].join("-");
+  const bodyMobileSearchDraft = useMemo<HotelMobileSearchDraft>(
+    () => ({
+      destination: body.destination,
+      checkIn: body.checkIn,
+      checkOut: body.checkOut,
+      guests: body.guests,
+      rooms: body.rooms,
+    }),
+    [body.checkIn, body.checkOut, body.destination, body.guests, body.rooms],
+  );
+  const [mobileHotelSearchDraft, setMobileHotelSearchDraft] =
+    useState<HotelMobileSearchDraft>(() => bodyMobileSearchDraft);
+  const [mobileHotelSearchDraftKey, setMobileHotelSearchDraftKey] =
+    useState(bodySearchKey);
+  const activeMobileHotelSearchDraft =
+    mobileHotelSearchDraftKey === bodySearchKey
+      ? mobileHotelSearchDraft
+      : bodyMobileSearchDraft;
+  const activeMobileHotelSearchKey = [
+    activeMobileHotelSearchDraft.destination,
+    activeMobileHotelSearchDraft.checkIn,
+    activeMobileHotelSearchDraft.checkOut,
+    activeMobileHotelSearchDraft.guests,
+    activeMobileHotelSearchDraft.rooms,
+    body.sort,
+  ].join("-");
 
-  const markExpandedSearchInteraction = useCallback(() => {
-    if (isExpandedStickySearchActive) {
-      setHasInteractedWithExpandedSearch(true);
-    }
-  }, [isExpandedStickySearchActive]);
-
-  const expandStickySearch = useCallback(() => {
-    expandedSearchScrollYRef.current = window.scrollY;
-    setHasInteractedWithExpandedSearch(false);
-    setIsSearchExpandedWhileSticky(true);
-  }, []);
-
-  const collapseStickySearch = useCallback(() => {
-    setIsSearchExpandedWhileSticky(false);
-    setHasInteractedWithExpandedSearch(false);
-  }, []);
-
-  useEffect(() => {
-    const sentinel = stickySentinelRef.current;
-
-    if (!sentinel || typeof IntersectionObserver === "undefined") {
-      return undefined;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        const shouldCompact = !entry.isIntersecting;
-        setIsSearchBarCompact(shouldCompact);
-
-        if (!shouldCompact) {
-          setIsSearchExpandedWhileSticky(false);
-          setHasInteractedWithExpandedSearch(false);
+  const updateMobileHotelSearchDraft = useCallback(
+    (nextDraft: HotelMobileSearchDraft) => {
+      setMobileHotelSearchDraftKey(bodySearchKey);
+      setMobileHotelSearchDraft((currentDraft) => {
+        if (
+          currentDraft.destination === nextDraft.destination &&
+          currentDraft.checkIn === nextDraft.checkIn &&
+          currentDraft.checkOut === nextDraft.checkOut &&
+          currentDraft.guests === nextDraft.guests &&
+          currentDraft.rooms === nextDraft.rooms
+        ) {
+          return currentDraft;
         }
-      },
-      { threshold: 0 },
-    );
 
-    observer.observe(sentinel);
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!canAutoCollapseExpandedSearch) {
-      return undefined;
-    }
-
-    let animationFrame = 0;
-
-    const onScroll = () => {
-      if (animationFrame) return;
-
-      animationFrame = window.requestAnimationFrame(() => {
-        animationFrame = 0;
-        const focusedElement = document.activeElement;
-        const isFocusInsideSearch = Boolean(
-          focusedElement && searchFormWrapRef.current?.contains(focusedElement),
-        );
-        const hasContinuedScrolling =
-          Math.abs(window.scrollY - expandedSearchScrollYRef.current) > 16;
-
-        if (hasContinuedScrolling && !isFocusInsideSearch) {
-          collapseStickySearch();
-        }
+        return nextDraft;
       });
+    },
+    [bodySearchKey],
+  );
+
+  const openMobileHotelSearch = useCallback(() => {
+    setFiltersOpen(false);
+    setMobileHotelSearchOpen(true);
+  }, []);
+
+  const closeMobileHotelSearch = useCallback(() => {
+    setMobileHotelSearchOpen(false);
+  }, []);
+
+  useEffect(() => {
+    const closeId = window.setTimeout(() => {
+      setMobileHotelSearchOpen(false);
+    }, 0);
+
+    return () => window.clearTimeout(closeId);
+  }, [bodySearchKey]);
+
+  useEffect(() => {
+    const releaseExistingLock = () => {
+      mobileHotelSearchScrollLockRef.current?.restore();
+      mobileHotelSearchScrollLockRef.current = null;
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
+    if (!mobileHotelSearchOpen || typeof window === "undefined") {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
 
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (animationFrame) {
-        window.cancelAnimationFrame(animationFrame);
-      }
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
+
+    if (!mobileQuery.matches) {
+      releaseExistingLock();
+      return releaseExistingLock;
+    }
+
+    const bodyElement = document.body;
+    const rootElement = document.documentElement;
+    const scrollY = window.scrollY;
+    const previousBodyStyles = {
+      left: bodyElement.style.left,
+      overflow: bodyElement.style.overflow,
+      overscrollBehavior: bodyElement.style.overscrollBehavior,
+      position: bodyElement.style.position,
+      right: bodyElement.style.right,
+      top: bodyElement.style.top,
+      touchAction: bodyElement.style.touchAction,
+      width: bodyElement.style.width,
     };
-  }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
+    const previousRootStyles = {
+      overflow: rootElement.style.overflow,
+      overscrollBehavior: rootElement.style.overscrollBehavior,
+    };
+
+    bodyElement.style.left = "0";
+    bodyElement.style.overflow = "hidden";
+    bodyElement.style.overscrollBehavior = "none";
+    bodyElement.style.position = "fixed";
+    bodyElement.style.right = "0";
+    bodyElement.style.top = `-${scrollY}px`;
+    bodyElement.style.touchAction = "none";
+    bodyElement.style.width = "100%";
+    rootElement.style.overflow = "hidden";
+    rootElement.style.overscrollBehavior = "none";
+
+    mobileHotelSearchScrollLockRef.current = {
+      restore: () => {
+        bodyElement.style.left = previousBodyStyles.left;
+        bodyElement.style.overflow = previousBodyStyles.overflow;
+        bodyElement.style.overscrollBehavior =
+          previousBodyStyles.overscrollBehavior;
+        bodyElement.style.position = previousBodyStyles.position;
+        bodyElement.style.right = previousBodyStyles.right;
+        bodyElement.style.top = previousBodyStyles.top;
+        bodyElement.style.touchAction = previousBodyStyles.touchAction;
+        bodyElement.style.width = previousBodyStyles.width;
+        rootElement.style.overflow = previousRootStyles.overflow;
+        rootElement.style.overscrollBehavior =
+          previousRootStyles.overscrollBehavior;
+        window.scrollTo(0, scrollY);
+      },
+    };
+
+    return releaseExistingLock;
+  }, [mobileHotelSearchOpen]);
 
   useEffect(() => {
     let active = true;
@@ -672,83 +717,62 @@ export function HotelResultsClient() {
 
   return (
     <main className="flex-1 overflow-x-clip bg-[#f6f8fb] pb-8">
-      <div className="sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden">
+      <div
+        className={cn(
+          "sticky top-0 z-50 border-b border-slate-200/70 bg-[#f6f8fb]/95 px-4 py-2.5 shadow-[0_4px_14px_rgba(15,23,42,0.04)] backdrop-blur sm:hidden",
+          mobileHotelSearchOpen && "hidden",
+        )}
+      >
         <HotelSearchBar
-          key={`mobile-${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
-          initialDestination={body.destination}
-          initialCheckIn={body.checkIn}
-          initialCheckOut={body.checkOut}
-          initialGuests={body.guests}
-          initialRooms={body.rooms}
+          key={`mobile-controls-${activeMobileHotelSearchKey}`}
+          initialDestination={activeMobileHotelSearchDraft.destination}
+          initialCheckIn={activeMobileHotelSearchDraft.checkIn}
+          initialCheckOut={activeMobileHotelSearchDraft.checkOut}
+          initialGuests={activeMobileHotelSearchDraft.guests}
+          initialRooms={activeMobileHotelSearchDraft.rooms}
           initialSort={body.sort}
           errorRole="alert"
           compact
+          mobileLayout="controls"
           onOpenFilters={() => setFiltersOpen(true)}
+          onOpenMobileSearch={openMobileHotelSearch}
+          onMobileDraftChange={updateMobileHotelSearchDraft}
         />
       </div>
 
-      <div ref={stickySentinelRef} className="h-px" aria-hidden="true" />
-      <section
-        className={cn(
-          "sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 backdrop-blur transition-[padding,box-shadow] duration-200 sm:block",
-          showCompactSearchSummary
-            ? "py-1.5 shadow-[0_3px_12px_rgba(15,23,42,0.05)]"
-            : "py-3 shadow-sm shadow-slate-900/5",
-        )}
-      >
+      {mobileHotelSearchOpen ? (
+        <div className="fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden">
+          <HotelSearchBar
+            key={`mobile-drawer-${bodySearchKey}-${body.sort}`}
+            initialDestination={activeMobileHotelSearchDraft.destination}
+            initialCheckIn={activeMobileHotelSearchDraft.checkIn}
+            initialCheckOut={activeMobileHotelSearchDraft.checkOut}
+            initialGuests={activeMobileHotelSearchDraft.guests}
+            initialRooms={activeMobileHotelSearchDraft.rooms}
+            initialSort={body.sort}
+            errorRole="alert"
+            compact
+            mobileLayout="drawer"
+            onCloseMobileSearch={closeMobileHotelSearch}
+            onMobileDraftChange={updateMobileHotelSearchDraft}
+          />
+        </div>
+      ) : null}
+
+      <section className="sticky top-0 z-40 hidden border-b border-slate-200/80 bg-[#f6f8fb]/95 py-3 shadow-sm shadow-slate-900/5 backdrop-blur sm:block">
         <div className="page-shell">
-          {showCompactSearchSummary ? (
-            <div className="mx-auto w-full min-w-0 max-w-[54rem] sm:block">
-              <div className="overflow-visible rounded-sm border border-slate-300 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.12)]">
-                <button
-                  type="button"
-                  aria-label="Edit hotel search"
-                  onClick={expandStickySearch}
-                  className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-left transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
-                >
-                  <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)_minmax(0,0.8fr)] lg:items-center lg:gap-3">
-                    <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
-                      <MapPin
-                        className="h-4 w-4 shrink-0 text-violet-600"
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0 truncate">
-                        {body.destination.trim() || "Destination"}
-                      </span>
-                    </span>
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
-                      {hotelDateSummary}
-                    </span>
-                    <span className="min-w-0 truncate text-sm font-medium text-slate-600">
-                      {hotelGuestRoomSummary}
-                    </span>
-                  </span>
-                  <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-[2px] border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 shadow-sm transition group-hover:border-indigo-200 group-hover:bg-white sm:self-center">
-                    <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
-                    Edit
-                  </span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div
-              ref={searchFormWrapRef}
-              onPointerDown={markExpandedSearchInteraction}
-            >
-              <HotelSearchBar
-                key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
-                initialDestination={body.destination}
-                initialCheckIn={body.checkIn}
-                initialCheckOut={body.checkOut}
-                initialGuests={body.guests}
-                initialRooms={body.rooms}
-                initialSort={body.sort}
-                errorRole="alert"
-                compact
-                className="min-w-0"
-              />
-            </div>
-          )}
+          <HotelSearchBar
+            key={`${body.destination}-${body.checkIn}-${body.checkOut}-${body.guests}-${body.rooms}-${body.sort}`}
+            initialDestination={body.destination}
+            initialCheckIn={body.checkIn}
+            initialCheckOut={body.checkOut}
+            initialGuests={body.guests}
+            initialRooms={body.rooms}
+            initialSort={body.sort}
+            errorRole="alert"
+            compact
+            className="min-w-0"
+          />
         </div>
       </section>
 
@@ -830,25 +854,24 @@ export function HotelResultsClient() {
                   filterApplying ? "animate-pulse opacity-80" : undefined,
                 )}
               >
-                <div className="space-y-2">
-                  <div className="w-full rounded-xl border border-indigo-100 bg-white px-4 py-3 shadow-sm shadow-slate-900/5">
-                    <h1 className="text-[15px] font-bold leading-tight text-slate-900 sm:text-[17px] lg:text-lg">
-                      We found {visibleFilteredHotels.length} places to stay for
-                      you
-                    </h1>
-                  </div>
-                  <ActiveHotelFilterChips
-                    chips={activeFilterChips}
-                    onRemove={removeFilterChip}
-                    onClearAll={resetFilters}
-                  />
-                </div>
+                <ActiveHotelFilterChips
+                  chips={activeFilterChips}
+                  onRemove={removeFilterChip}
+                  onClearAll={resetFilters}
+                />
 
                 <HotelSummaryRow
                   activeSortMode={hotelSummarySortMode}
                   items={hotelSummaryItems}
                   onSortModeChange={updateHotelSummarySortMode}
                 />
+
+                <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <h1 className="text-sm font-bold text-navy">
+                    We found {visibleFilteredHotels.length} places to stay for
+                    you
+                  </h1>
+                </div>
 
                 {filterApplying ? (
                   <div className="space-y-3">
@@ -1024,8 +1047,8 @@ function sortHotelSummaryResults(
   indexedHotels.sort((first, second) => {
     if (sortMode === "cheapest") {
       return (
-        getHotelSortablePrice(first.hotel) - getHotelSortablePrice(second.hotel) ||
-        first.index - second.index
+        getHotelSortablePrice(first.hotel) -
+          getHotelSortablePrice(second.hotel) || first.index - second.index
       );
     }
 
@@ -1033,7 +1056,8 @@ function sortHotelSummaryResults(
       return (
         getHotelSortableRating(second.hotel) -
           getHotelSortableRating(first.hotel) ||
-        getHotelSortablePrice(first.hotel) - getHotelSortablePrice(second.hotel) ||
+        getHotelSortablePrice(first.hotel) -
+          getHotelSortablePrice(second.hotel) ||
         first.index - second.index
       );
     }
@@ -1050,7 +1074,8 @@ function sortHotelSummaryResults(
 
     return (
       secondScore - firstScore ||
-      getHotelSortablePrice(first.hotel) - getHotelSortablePrice(second.hotel) ||
+      getHotelSortablePrice(first.hotel) -
+        getHotelSortablePrice(second.hotel) ||
       first.index - second.index
     );
   });
@@ -1125,7 +1150,9 @@ function getHotelSortablePrice(hotel: PublicHotelResult) {
 }
 
 function getHotelSortableRating(hotel: PublicHotelResult) {
-  return Number.isFinite(hotel.rating) ? hotel.rating : Number.NEGATIVE_INFINITY;
+  return Number.isFinite(hotel.rating)
+    ? hotel.rating
+    : Number.NEGATIVE_INFINITY;
 }
 
 function hasHotelValueScore(hotel: PublicHotelResult) {
@@ -1631,23 +1658,6 @@ function HotelSkeleton() {
       </div>
     </div>
   );
-}
-
-function formatHotelCompactDate(value: string) {
-  if (!value) return "";
-
-  const date = new Date(`${value}T00:00:00`);
-
-  if (Number.isNaN(date.getTime())) return value;
-
-  return new Intl.DateTimeFormat("en", {
-    day: "2-digit",
-    month: "short",
-  }).format(date);
-}
-
-function pluralizeHotelCount(count: number, singular: string, plural: string) {
-  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 function nextDate(offset: number) {

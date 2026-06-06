@@ -3,12 +3,13 @@
 import {
   type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Calendar,
   ChevronDown,
@@ -21,6 +22,8 @@ import {
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { useRegion } from "@/components/region/RegionProvider";
 import { cn } from "@/lib/utils";
 
@@ -127,6 +130,14 @@ type HotelDestinationsApiResponse = {
   source?: "curated-destinations";
 };
 
+type HotelSearchDraft = {
+  destination: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  rooms: number;
+};
+
 const normalizeCountryHint = (value: string | null | undefined) => {
   const countryCode = value?.trim().toUpperCase() || "";
   if (countryCode === "EU") return countryCode;
@@ -153,7 +164,11 @@ export type HotelSearchBarProps = {
   introLabel?: string;
   errorRole?: "alert" | "status";
   compact?: boolean;
+  mobileLayout?: "default" | "controls" | "drawer";
   onOpenFilters?: () => void;
+  onOpenMobileSearch?: () => void;
+  onCloseMobileSearch?: () => void;
+  onMobileDraftChange?: (draft: HotelSearchDraft) => void;
   className?: string;
 };
 
@@ -167,10 +182,18 @@ export function HotelSearchBar({
   introLabel = "Compare hotel options",
   errorRole,
   compact = false,
+  mobileLayout = "default",
   onOpenFilters,
+  onOpenMobileSearch,
+  onCloseMobileSearch,
+  onMobileDraftChange,
   className,
 }: HotelSearchBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentSearchParams = searchParams.toString();
+  const currentUrl = `${pathname}${currentSearchParams ? `?${currentSearchParams}` : ""}`;
   const { start: startRouteProgress } = useRouteProgress();
   const {
     selectedOption,
@@ -190,7 +213,8 @@ export function HotelSearchBar({
   const [error, setError] = useState("");
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [internalMobileSearchOpen, setInternalMobileSearchOpen] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [destinationSuggestions, setDestinationSuggestions] = useState<
     HotelDestinationSuggestion[]
@@ -203,8 +227,13 @@ export function HotelSearchBar({
     useState(false);
   const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] =
     useState(false);
+  const [destinationMobilePickerOpen, setDestinationMobilePickerOpen] =
+    useState(false);
   const [destinationHighlight, setDestinationHighlight] = useState(0);
   const destinationInputRef = useRef<HTMLInputElement>(null);
+  const destinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
+  const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
+  const guestsRoomsMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const destinationWrapperRef = useRef<HTMLLabelElement>(null);
   const datesWrapperRef = useRef<HTMLDivElement>(null);
   const guestsRoomsWrapperRef = useRef<HTMLDivElement>(null);
@@ -213,6 +242,12 @@ export function HotelSearchBar({
   const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
+  const submittingResetTimeoutRef = useRef<number | null>(null);
+  const mobileSearchOpen =
+    mobileLayout === "drawer" ||
+    (mobileLayout === "default" && internalMobileSearchOpen);
+  const isPageLevelMobileDrawer = compact && mobileLayout === "drawer";
+
   const [hotelVisibleMonthDate, setHotelVisibleMonthDate] = useState(() => {
     const parsedCheckIn = parseIsoDate(initialCheckIn);
     if (parsedCheckIn) {
@@ -283,10 +318,58 @@ export function HotelSearchBar({
     error !== "";
 
   useEffect(() => {
+    if (!compact || mobileLayout === "default") return;
+
+    onMobileDraftChange?.({
+      destination,
+      checkIn,
+      checkOut,
+      guests: Math.max(1, Math.min(12, totalHotelGuests)),
+      rooms: clampCount(rooms, 1, 6),
+    });
+  }, [
+    checkIn,
+    checkOut,
+    compact,
+    destination,
+    mobileLayout,
+    onMobileDraftChange,
+    rooms,
+    totalHotelGuests,
+  ]);
+
+  useEffect(() => {
+    const resetId = window.setTimeout(() => {
+      setIsSubmitting(false);
+
+      if (submittingResetTimeoutRef.current !== null) {
+        window.clearTimeout(submittingResetTimeoutRef.current);
+        submittingResetTimeoutRef.current = null;
+      }
+    }, 0);
+
+    return () => window.clearTimeout(resetId);
+  }, [currentUrl]);
+
+  useEffect(() => {
+    return () => {
+      if (submittingResetTimeoutRef.current !== null) {
+        window.clearTimeout(submittingResetTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target;
 
       if (!(target instanceof Node)) return;
+
+      if (target instanceof Element) {
+        const mobilePickerShell = target.closest("[data-flight-mobile-picker-shell]");
+
+        if (mobilePickerShell) return;
+      }
 
       if (!destinationWrapperRef.current?.contains(target)) {
         setDestinationSuggestionsOpen(false);
@@ -319,25 +402,16 @@ export function HotelSearchBar({
   }, [datesOpen, guestsRoomsOpen]);
 
   useEffect(() => {
-    if (!mobileSearchOpen) {
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      mobileSearchPanelRef.current?.scrollTo({ top: 0, left: 0 });
-      mobileSearchContentRef.current?.scrollTo({ top: 0, left: 0 });
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [mobileSearchOpen]);
-
-  useEffect(() => {
     const releaseExistingLock = () => {
       mobileSearchScrollLockRef.current?.restore();
       mobileSearchScrollLockRef.current = null;
     };
 
-    if (!mobileSearchOpen || typeof window === "undefined") {
+    if (
+      mobileLayout !== "default" ||
+      !mobileSearchOpen ||
+      typeof window === "undefined"
+    ) {
       releaseExistingLock();
       return releaseExistingLock;
     }
@@ -355,9 +429,11 @@ export function HotelSearchBar({
     const previousBodyStyles = {
       left: bodyElement.style.left,
       overflow: bodyElement.style.overflow,
+      overscrollBehavior: bodyElement.style.overscrollBehavior,
       position: bodyElement.style.position,
       right: bodyElement.style.right,
       top: bodyElement.style.top,
+      touchAction: bodyElement.style.touchAction,
       width: bodyElement.style.width,
     };
     const previousRootStyles = {
@@ -367,9 +443,11 @@ export function HotelSearchBar({
 
     bodyElement.style.left = "0";
     bodyElement.style.overflow = "hidden";
+    bodyElement.style.overscrollBehavior = "none";
     bodyElement.style.position = "fixed";
     bodyElement.style.right = "0";
     bodyElement.style.top = `-${scrollY}px`;
+    bodyElement.style.touchAction = "none";
     bodyElement.style.width = "100%";
     rootElement.style.overflow = "hidden";
     rootElement.style.overscrollBehavior = "none";
@@ -378,9 +456,12 @@ export function HotelSearchBar({
       restore: () => {
         bodyElement.style.left = previousBodyStyles.left;
         bodyElement.style.overflow = previousBodyStyles.overflow;
+        bodyElement.style.overscrollBehavior =
+          previousBodyStyles.overscrollBehavior;
         bodyElement.style.position = previousBodyStyles.position;
         bodyElement.style.right = previousBodyStyles.right;
         bodyElement.style.top = previousBodyStyles.top;
+        bodyElement.style.touchAction = previousBodyStyles.touchAction;
         bodyElement.style.width = previousBodyStyles.width;
         rootElement.style.overflow = previousRootStyles.overflow;
         rootElement.style.overscrollBehavior =
@@ -390,7 +471,7 @@ export function HotelSearchBar({
     };
 
     return releaseExistingLock;
-  }, [mobileSearchOpen]);
+  }, [mobileLayout, mobileSearchOpen]);
 
   useEffect(() => {
     if (!destinationSuggestionsOpen) {
@@ -535,6 +616,7 @@ export function HotelSearchBar({
   };
 
   const handleClearDestination = () => {
+    setDestinationMobilePickerOpen(false);
     setDestination("");
     setDestinationSuggestions([]);
     setDestinationSuggestionsCountryHint(activeCountryHint);
@@ -544,11 +626,59 @@ export function HotelSearchBar({
     destinationInputRef.current?.focus();
   };
 
-  const closeMobileSearchPanel = () => {
-    setMobileSearchOpen(false);
+  const closeHotelSearchPopovers = () => {
     setDestinationSuggestionsOpen(false);
+    setDestinationMobilePickerOpen(false);
     setDatesOpen(false);
     setGuestsRoomsOpen(false);
+  };
+
+  const resetMobileSearchPanelScroll = useCallback(() => {
+    const scrollContainers = [
+      mobileSearchPanelRef.current,
+      mobileSearchContentRef.current,
+    ];
+
+    scrollContainers.forEach((scrollContainer) => {
+      if (!scrollContainer) return;
+
+      scrollContainer.scrollTop = 0;
+      scrollContainer.scrollTo({ left: 0, top: 0 });
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!mobileSearchOpen || typeof window === "undefined") return;
+
+    const frame = window.requestAnimationFrame(resetMobileSearchPanelScroll);
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobileSearchOpen, resetMobileSearchPanelScroll]);
+
+  const closeMobileSearchPanel = () => {
+    closeHotelSearchPopovers();
+
+    if (mobileLayout === "drawer") {
+      onCloseMobileSearch?.();
+      return;
+    }
+
+    setInternalMobileSearchOpen(false);
+  };
+
+  const openMobileSearchPanel = () => {
+    closeHotelSearchPopovers();
+
+    if (mobileLayout === "controls") {
+      onOpenMobileSearch?.();
+      return;
+    }
+
+    setInternalMobileSearchOpen(true);
+
+    if (typeof window === "undefined") return;
+
+    window.requestAnimationFrame(resetMobileSearchPanelScroll);
   };
 
   const handleResetSearch = () => {
@@ -562,10 +692,11 @@ export function HotelSearchBar({
     setError("");
     setDatesOpen(false);
     setGuestsRoomsOpen(false);
-    setMobileSearchOpen(false);
+    setInternalMobileSearchOpen(false);
     setDestinationSuggestions([]);
     setDestinationSuggestionsCountryHint(activeCountryHint);
     setDestinationSuggestionsOpen(false);
+    setDestinationMobilePickerOpen(false);
     setDestinationHighlight(0);
     setHotelVisibleMonthDate(currentMonthStart());
   };
@@ -575,6 +706,7 @@ export function HotelSearchBar({
       const nextOpen = !prev;
 
       if (nextOpen) {
+        setDestinationMobilePickerOpen(false);
         setGuestsRoomsOpen(false);
       }
 
@@ -587,6 +719,7 @@ export function HotelSearchBar({
       const nextOpen = !prev;
 
       if (nextOpen) {
+        setDestinationMobilePickerOpen(false);
         setDatesOpen(false);
       }
 
@@ -674,12 +807,28 @@ export function HotelSearchBar({
       params.set("sort", initialSort);
     }
 
+    const nextUrl = `/hotels/results?${params.toString()}`;
+
     setRooms(String(normalizedRooms));
     setError("");
-    setMobileSearchOpen(false);
+    closeHotelSearchPopovers();
     setIsSubmitting(true);
+
+    if (!mobileSearchOpen) {
+      closeMobileSearchPanel();
+    }
+
+    if (submittingResetTimeoutRef.current !== null) {
+      window.clearTimeout(submittingResetTimeoutRef.current);
+    }
+
+    submittingResetTimeoutRef.current = window.setTimeout(() => {
+      setIsSubmitting(false);
+      submittingResetTimeoutRef.current = null;
+    }, 15000);
+
     startRouteProgress();
-    router.push(`/hotels/results?${params.toString()}`);
+    router.push(nextUrl);
   };
 
   const fieldClassName = cn(
@@ -742,7 +891,7 @@ export function HotelSearchBar({
 
               <button
                 type="button"
-                onClick={() => setMobileSearchOpen(true)}
+                onClick={openMobileSearchPanel}
                 className="focus-ring flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-indigo-100/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-indigo-200 hover:shadow-[0_8px_18px_rgba(79,70,229,0.12)] focus-visible:border-indigo-300"
               >
                 <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
@@ -764,7 +913,7 @@ export function HotelSearchBar({
           ) : (
             <button
               type="button"
-              onClick={() => setMobileSearchOpen(true)}
+              onClick={openMobileSearchPanel}
               className="focus-ring w-full rounded-xl border border-indigo-100 bg-white px-4 py-4 text-left shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition hover:border-indigo-200 focus-visible:border-indigo-300"
             >
               <span className="block truncate text-sm font-semibold text-slate-950">
@@ -782,7 +931,9 @@ export function HotelSearchBar({
         className={cn(
           compact
             ? mobileSearchOpen
-              ? "fixed inset-0 z-[10000] flex h-full min-h-[100dvh] w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
+              ? isPageLevelMobileDrawer
+                ? "flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
+                : "fixed inset-0 z-[10000] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
               : "hidden sm:block sm:space-y-2"
             : "space-y-4",
         )}
@@ -813,7 +964,7 @@ export function HotelSearchBar({
               ? cn(
                   "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
                   mobileSearchOpen &&
-                    "min-h-0 flex-1 overflow-y-auto overscroll-contain border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none sm:overflow-visible sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+                    "min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none",
                 )
               : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
           )}
@@ -836,6 +987,34 @@ export function HotelSearchBar({
             >
               <span className={fieldLabelClassName}>Destination</span>
               <span className="relative block">
+                <button
+                  ref={destinationMobileLauncherRef}
+                  type="button"
+                  onClick={() => {
+                    setDestinationMobilePickerOpen(true);
+                    setDestinationSuggestionsOpen(false);
+                    setDatesOpen(false);
+                    setGuestsRoomsOpen(false);
+                  }}
+                  aria-haspopup="dialog"
+                  aria-expanded={destinationMobilePickerOpen}
+                  aria-label="Choose hotel destination"
+                  className={cn(
+                    valueControlClassName,
+                    "flex items-center justify-between gap-2 pr-2 text-left sm:hidden",
+                  )}
+                >
+                  <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
+                    {destination.trim() || "City, area, or landmark"}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      "shrink-0 text-slate-500 transition-transform",
+                      destinationMobilePickerOpen && "rotate-180",
+                    )}
+                  />
+                </button>
                 <input
                   ref={destinationInputRef}
                   type="text"
@@ -861,7 +1040,7 @@ export function HotelSearchBar({
                   placeholder="City, area, or landmark"
                   className={cn(
                     valueControlClassName,
-                    "pr-9 placeholder:text-slate-400",
+                    "pr-9 placeholder:text-slate-400 max-sm:hidden",
                   )}
                   required
                 />
@@ -871,7 +1050,7 @@ export function HotelSearchBar({
                     onClick={handleClearDestination}
                     onMouseDown={(event) => event.preventDefault()}
                     aria-label="Clear destination"
-                    className="focus-ring absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                    className="focus-ring absolute right-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -938,6 +1117,7 @@ export function HotelSearchBar({
             <div ref={datesWrapperRef} className={fieldClassName}>
               <span className={fieldLabelClassName}>Travel dates</span>
               <button
+                ref={datesMobileLauncherRef}
                 type="button"
                 onClick={handleToggleDates}
                 aria-expanded={datesOpen}
@@ -958,7 +1138,7 @@ export function HotelSearchBar({
                 <span className="truncate">{dateSummary}</span>
               </button>
               {datesOpen ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
+                <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] hidden w-full rounded-2xl border border-slate-200 sm:block bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
                   <p className="mb-3 text-base font-semibold text-slate-900">
                     Choose travel dates
                   </p>
@@ -1093,6 +1273,7 @@ export function HotelSearchBar({
             <div ref={guestsRoomsWrapperRef} className={fieldClassName}>
               <span className={fieldLabelClassName}>Guests</span>
               <button
+                ref={guestsRoomsMobileLauncherRef}
                 type="button"
                 onClick={handleToggleGuestsRooms}
                 aria-expanded={guestsRoomsOpen}
@@ -1112,7 +1293,7 @@ export function HotelSearchBar({
                 />
               </button>
               {guestsRoomsOpen ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 w-[calc(100vw-24px)] max-w-[330px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
+                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 hidden w-[calc(100vw-24px)] max-w-[330px] sm:block overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
                   <div className="space-y-3">
                     {[
                       {
@@ -1192,38 +1373,40 @@ export function HotelSearchBar({
                         </div>
                       );
                     })}
-                    <div className="border-t border-slate-200 pt-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">
-                            Pet-friendly
-                          </p>
-                          <p className="pr-2 text-xs leading-5 text-slate-600">
-                            Only show stays that allow pets
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={hotelPetFriendly}
-                          aria-label="Toggle pet-friendly stays"
-                          onClick={() => setHotelPetFriendly((prev) => !prev)}
-                          className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
-                            hotelPetFriendly
-                              ? "border-indigo-600 bg-indigo-600"
-                              : "border-slate-300 bg-slate-200"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                    {!mobileSearchOpen ? (
+                      <div className="border-t border-slate-200 pt-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              Pet-friendly
+                            </p>
+                            <p className="pr-2 text-xs leading-5 text-slate-600">
+                              Only show stays that allow pets
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={hotelPetFriendly}
+                            aria-label="Toggle pet-friendly stays"
+                            onClick={() => setHotelPetFriendly((prev) => !prev)}
+                            className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
                               hotelPetFriendly
-                                ? "translate-x-5"
-                                : "translate-x-0.5"
+                                ? "border-indigo-600 bg-indigo-600"
+                                : "border-slate-300 bg-slate-200"
                             }`}
-                          />
-                        </button>
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                                hotelPetFriendly
+                                  ? "translate-x-5"
+                                  : "translate-x-0.5"
+                              }`}
+                            />
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -1278,6 +1461,241 @@ export function HotelSearchBar({
           </p>
         ) : null}
       </form>
+
+      <HotelDestinationMobilePicker
+        open={destinationMobilePickerOpen}
+        value={destination}
+        titleId="hotel-results-mobile-destination-title"
+        inputId="hotel-results-mobile-destination-input"
+        launcherRef={destinationMobileLauncherRef}
+        selectedCountryHint={selectedCountryHint}
+        detectedCountryHint={detectedCountryHint}
+        onChange={(nextDestination) => {
+          setDestination(nextDestination);
+          setDestinationSuggestionsOpen(false);
+          setError("");
+        }}
+        onClose={() => setDestinationMobilePickerOpen(false)}
+      />
+
+      <HotelMobilePickerShell
+        open={datesOpen}
+        title="Choose travel dates"
+        titleId="hotel-results-mobile-dates-title"
+        launcherRef={datesMobileLauncherRef}
+        onClose={() => setDatesOpen(false)}
+        contentClassName="px-3 py-2"
+        footer={
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setCheckIn("");
+                setCheckOut("");
+              }}
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => setDatesOpen(false)}
+              className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              Done
+            </button>
+          </div>
+        }
+      >
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-sm">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              aria-label="Previous month"
+              onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, -1))}
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              aria-label="Next month"
+              onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, 1))}
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Next
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-2">
+            {[0].map((monthOffset) => {
+              const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
+              const cells = buildMonthCells(monthDate);
+
+              return (
+                <div key={monthOffset}>
+                  <p className="mb-1 text-center text-sm font-black text-slate-900">
+                    {monthDate.toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <div className="mb-1 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
+                    {weekdays.map((weekday) => (
+                      <span key={weekday}>{weekday}</span>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {cells.map((cell) => {
+                      const day = cell.date;
+                      const iso = toIsoDate(day);
+                      const isCheckIn = iso === checkIn;
+                      const isCheckOut = iso === checkOut;
+                      const isPastDate = isBeforeToday(day);
+                      const isInvalidCheckOut = Boolean(
+                        checkIn && !checkOut && iso <= checkIn,
+                      );
+                      const isDisabledDate = isPastDate || isInvalidCheckOut;
+                      const isInRange = Boolean(
+                        checkInParsed &&
+                          checkOutParsed &&
+                          !isPastDate &&
+                          day > checkInParsed &&
+                          day < checkOutParsed,
+                      );
+
+                      if (!cell.isCurrentMonth) {
+                        return (
+                          <span
+                            key={`mobile-placeholder-${iso}`}
+                            aria-hidden="true"
+                            className="h-9 w-9 justify-self-center min-[390px]:h-10 min-[390px]:w-10"
+                          />
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={iso}
+                          type="button"
+                          aria-label={`Select ${day.toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}`}
+                          onClick={() => handleSelectHotelDate(day)}
+                          disabled={isDisabledDate}
+                          aria-disabled={isDisabledDate}
+                          className={cn(
+                            "focus-ring flex h-9 w-9 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-10 min-[390px]:w-10",
+                            isDisabledDate
+                              ? "text-slate-300 hover:bg-transparent"
+                              : "text-slate-900 hover:bg-indigo-50",
+                            isInRange &&
+                              "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
+                            (isCheckIn || isCheckOut) &&
+                              "bg-indigo-700 text-white hover:bg-indigo-700",
+                          )}
+                        >
+                          {day.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </HotelMobilePickerShell>
+
+      <HotelMobilePickerShell
+        open={guestsRoomsOpen}
+        title="Guests and rooms"
+        titleId="hotel-results-mobile-guests-title"
+        launcherRef={guestsRoomsMobileLauncherRef}
+        onClose={() => setGuestsRoomsOpen(false)}
+        footer={
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setGuestsRoomsOpen(false)}
+              className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              Done
+            </button>
+          </div>
+        }
+      >
+        <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-4 shadow-sm">
+          {[
+            {
+              key: "adults",
+              label: "Adults",
+              value: hotelAdultCount,
+              min: 1,
+              max: 12 - hotelChildCount,
+              onDecrement: () => setHotelAdultCount((prev) => Math.max(1, prev - 1)),
+              onIncrement: () =>
+                setHotelAdultCount((prev) => Math.min(12 - hotelChildCount, prev + 1)),
+            },
+            {
+              key: "children",
+              label: "Children",
+              value: hotelChildCount,
+              min: 0,
+              max: 12 - hotelAdultCount,
+              onDecrement: () => setHotelChildCount((prev) => Math.max(0, prev - 1)),
+              onIncrement: () =>
+                setHotelChildCount((prev) => Math.min(12 - hotelAdultCount, prev + 1)),
+            },
+            {
+              key: "rooms",
+              label: "Rooms",
+              value: clampCount(rooms, 1, 6),
+              min: 1,
+              max: 6,
+              onDecrement: () =>
+                setRooms((prev) => String(Math.max(1, clampCount(prev, 1, 6) - 1))),
+              onIncrement: () =>
+                setRooms((prev) => String(Math.min(6, clampCount(prev, 1, 6) + 1))),
+            },
+          ].map((row) => {
+            const canDecrement = row.value > row.min;
+            const canIncrement = row.value < row.max;
+
+            return (
+              <div
+                key={row.key}
+                className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 last:border-b-0 last:pb-0"
+              >
+                <span className="text-base font-black text-slate-950">{row.label}</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={row.onDecrement}
+                    disabled={!canDecrement}
+                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Minus className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <span className="min-w-8 text-center text-lg font-black text-slate-950">
+                    {row.value}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={row.onIncrement}
+                    disabled={!canIncrement}
+                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Plus className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </HotelMobilePickerShell>
+
     </section>
   );
 }

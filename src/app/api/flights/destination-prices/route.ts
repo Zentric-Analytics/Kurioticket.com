@@ -4,6 +4,7 @@ import {
   DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT,
   getHomeDiscoveryRouteAllowlist,
 } from "@/data/homeDiscovery";
+import { getPopularDestinationAllowlist } from "@/data/marketHomeContent";
 import {
   getHomepageFareDateStrategy,
   HOMEPAGE_FARE_DEFAULT_CURRENCY,
@@ -17,10 +18,14 @@ import {
 const HOMEPAGE_DESTINATIONS = Object.fromEntries(
   PHASE_3A_POPULAR_HOMEPAGE_FARE_ROUTES.map((route) => [
     route.id,
-    route.destination,
+    {
+      code: route.destination,
+      originCode: HOMEPAGE_FARE_DEFAULT_ORIGIN,
+    },
   ]),
-) as Record<string, string>;
-const MAX_POPULAR_DESTINATIONS = 5;
+) as Record<string, { code: string; originCode: string }>;
+const MARKET_HOMEPAGE_DESTINATIONS = getPopularDestinationAllowlist();
+const MAX_POPULAR_DESTINATIONS = 8;
 const DISCOVER_PRICE_CAP = DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT;
 const HOME_DISCOVERY_ROUTES = getHomeDiscoveryRouteAllowlist();
 
@@ -50,6 +55,17 @@ export async function POST(request: Request) {
   const currency =
     normalizeHomepageFareCurrency(readStringProperty(payload, "currency")) ??
     HOMEPAGE_FARE_DEFAULT_CURRENCY;
+  const requestedRegionCode = normalizeHomepageFareRegionCode(
+    readStringProperty(payload, "regionCode"),
+  );
+  const effectiveMarketCode = readSafeMarketCode(
+    readStringProperty(payload, "effectiveMarketCode"),
+    requestedRegionCode,
+  );
+  const fallbackLevel = readSafeFallbackLevel(
+    readStringProperty(payload, "fallbackLevel"),
+  );
+  const fallbackUsed = readBooleanProperty(payload, "fallbackUsed");
   const destinations = readDestinations(payload, origin);
   const dateStrategy = getHomepageFareDateStrategy();
 
@@ -62,6 +78,10 @@ export async function POST(request: Request) {
           tripType: dateStrategy.tripType,
           departureDate: dateStrategy.departureDate,
         },
+        requestedRegionCode,
+        effectiveMarketCode,
+        fallbackLevel: "none",
+        fallbackUsed,
         prices: [],
       },
       { status: 200 },
@@ -85,6 +105,11 @@ export async function POST(request: Request) {
       tripType: dateStrategy.tripType,
       departureDate: dateStrategy.departureDate,
     },
+    requestedRegionCode,
+    effectiveMarketCode,
+    fallbackLevel,
+    fallbackUsed,
+    destinationMarket: effectiveMarketCode,
     prices,
   });
 }
@@ -143,11 +168,21 @@ function readPopularDestination(
     typeof item.code === "string" ? item.code : undefined,
   );
 
-  if (!isHomepageDestinationId(id) || code !== HOMEPAGE_DESTINATIONS[id]) {
+  const allowedDestination = getAllowedHomepageDestination(id);
+  const originCode = normalizeHomepageFareCode(
+    typeof item.originCode === "string" ? item.originCode : undefined,
+  );
+  const requestedOrigin = originCode ?? defaultOrigin;
+
+  if (
+    !allowedDestination ||
+    code !== allowedDestination.code ||
+    requestedOrigin !== allowedDestination.originCode
+  ) {
     return undefined;
   }
 
-  return { id, code, origin: defaultOrigin };
+  return { id, code, origin: requestedOrigin };
 }
 
 function readDiscoveryDestination(
@@ -182,8 +217,35 @@ function readStringProperty(payload: unknown, key: string) {
   return typeof value === "string" ? value : undefined;
 }
 
-function isHomepageDestinationId(value: string) {
-  return Object.prototype.hasOwnProperty.call(HOMEPAGE_DESTINATIONS, value);
+function readBooleanProperty(payload: unknown, key: string) {
+  if (!isRecord(payload)) return false;
+
+  return payload[key] === true;
+}
+
+function readSafeMarketCode(value: string | undefined, fallback: string) {
+  const normalized = value?.trim().toUpperCase();
+
+  return normalized && /^[A-Z_]{2,20}$/.test(normalized) ? normalized : fallback;
+}
+
+function readSafeFallbackLevel(value: string | undefined) {
+  return value === "exact-country" ||
+    value === "regional" ||
+    value === "global" ||
+    value === "neutral"
+    ? value
+    : "exact-country";
+}
+
+function getAllowedHomepageDestination(value: string) {
+  return MARKET_HOMEPAGE_DESTINATIONS.get(value) ?? HOMEPAGE_DESTINATIONS[value];
+}
+
+function normalizeHomepageFareRegionCode(value: string | undefined) {
+  const normalized = value?.trim().toUpperCase();
+
+  return normalized && /^[A-Z]{2}$/.test(normalized) ? normalized : "US";
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -214,6 +214,9 @@ export type HomepageDiscoveryFareFallbackScope =
 export type HomepageDiscoveryFareCardsMetadata = {
   requestedRegionCode: string;
   effectiveRegionCode: string;
+  effectiveMarketCode: string;
+  fallbackLevel: "exact-country" | "regional" | "global" | "neutral";
+  discoveryMarket: string;
   candidateCount: number;
   freshCount: number;
   neutralCount: number;
@@ -1507,6 +1510,8 @@ function buildHomepageDiscoveryFareCardsResponse({
   const freshCount = cards.filter((card) => card.priceState === "fresh").length;
   const neutralCount = cards.length - freshCount;
 
+  const fallbackLevel = getHomepageDiscoveryFallbackLevel(fallbackScope);
+
   return {
     cards,
     summary: {
@@ -1517,6 +1522,9 @@ function buildHomepageDiscoveryFareCardsResponse({
     metadata: {
       requestedRegionCode,
       effectiveRegionCode,
+      effectiveMarketCode: effectiveRegionCode,
+      fallbackLevel,
+      discoveryMarket: effectiveRegionCode,
       candidateCount,
       freshCount,
       neutralCount,
@@ -1535,6 +1543,16 @@ function getEffectiveRegionCodeForCandidates(
   fallbackRegionCode: string,
 ) {
   return candidates[0]?.regionCode ?? fallbackRegionCode;
+}
+
+function getHomepageDiscoveryFallbackLevel(
+  fallbackScope: HomepageDiscoveryFareFallbackScope,
+): "exact-country" | "regional" | "global" | "neutral" {
+  if (fallbackScope === "requested-region") return "exact-country";
+  if (fallbackScope === "regional") return "regional";
+  if (fallbackScope === "global-international") return "global";
+
+  return "neutral";
 }
 
 function normalizeHomepageDiscoveryRegionCode(regionCode: string) {
