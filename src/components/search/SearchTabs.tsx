@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -178,8 +179,6 @@ export function SearchTabs({
     useRef<HTMLButtonElement>(null);
   const dateWrapRef =
     useRef<HTMLDivElement>(null);
-  const flightDatesPanelRef =
-    useRef<HTMLDivElement>(null);
   const flightDatesLauncherRef =
     useRef<HTMLButtonElement>(null);
   const hotelDateWrapRef =
@@ -189,8 +188,6 @@ export function SearchTabs({
   const tripTypeWrapRef =
     useRef<HTMLDivElement>(null);
   const travelersWrapRef =
-    useRef<HTMLDivElement>(null);
-  const travelersPanelRef =
     useRef<HTMLDivElement>(null);
   const travelersLauncherRef =
     useRef<HTMLButtonElement>(null);
@@ -655,9 +652,17 @@ export function SearchTabs({
     const onPointerDown = (
       event: MouseEvent
     ) => {
+      const eventTarget = event.target as Node;
+      if (
+        eventTarget instanceof Element &&
+        eventTarget.closest("[data-flight-mobile-picker-shell]")
+      ) {
+        return;
+      }
+
       if (
         !fromWrapRef.current?.contains(
-          event.target as Node
+          eventTarget
         )
       ) {
         setFromOpen(false);
@@ -665,17 +670,14 @@ export function SearchTabs({
 
       if (
         !toWrapRef.current?.contains(
-          event.target as Node
+          eventTarget
         )
       ) {
         setToOpen(false);
       }
       if (
         !dateWrapRef.current?.contains(
-          event.target as Node
-        ) &&
-        !flightDatesPanelRef.current?.contains(
-          event.target as Node
+          eventTarget
         )
       ) {
         setFlightDatesOpen(
@@ -684,27 +686,24 @@ export function SearchTabs({
       }
       if (
         !hotelDateWrapRef.current?.contains(
-          event.target as Node
+          eventTarget
         ) &&
         !hotelDatesPanelRef.current?.contains(
-          event.target as Node
+          eventTarget
         )
       ) {
         setHotelDatesOpen(false);
       }
       if (
         !tripTypeWrapRef.current?.contains(
-          event.target as Node
+          eventTarget
         )
       ) {
         setTripTypeOpen(false);
       }
       if (
         !travelersWrapRef.current?.contains(
-          event.target as Node
-        ) &&
-        !travelersPanelRef.current?.contains(
-          event.target as Node
+          eventTarget
         )
       ) {
         if (travelersMenuOpen) {
@@ -719,7 +718,7 @@ export function SearchTabs({
       }
       if (
         !hotelGuestsRoomsWrapRef.current?.contains(
-          event.target as Node
+          eventTarget
         )
       ) {
         setHotelGuestsRoomsOpen(false);
@@ -763,61 +762,6 @@ export function SearchTabs({
       };
   }, [applyTravelersFromValues, cancelTravelersDraft, travelersMenuOpen]);
 
-
-  useEffect(() => {
-    if (typeof window === "undefined") return undefined;
-    if (!flightDatesOpen && !travelersMenuOpen) return undefined;
-
-    const mobileQuery = window.matchMedia("(max-width: 639px)");
-    if (!mobileQuery.matches) return undefined;
-
-    const launcherElement = flightDatesOpen
-      ? flightDatesLauncherRef.current
-      : travelersLauncherRef.current;
-    const bodyElement = document.body;
-    const rootElement = document.documentElement;
-    const scrollY = window.scrollY;
-    const previousBodyStyles = {
-      left: bodyElement.style.left,
-      overflow: bodyElement.style.overflow,
-      overscrollBehavior: bodyElement.style.overscrollBehavior,
-      position: bodyElement.style.position,
-      right: bodyElement.style.right,
-      top: bodyElement.style.top,
-      touchAction: bodyElement.style.touchAction,
-      width: bodyElement.style.width,
-    };
-    const previousRootStyles = {
-      overflow: rootElement.style.overflow,
-      overscrollBehavior: rootElement.style.overscrollBehavior,
-    };
-
-    bodyElement.style.left = "0";
-    bodyElement.style.overflow = "hidden";
-    bodyElement.style.overscrollBehavior = "none";
-    bodyElement.style.position = "fixed";
-    bodyElement.style.right = "0";
-    bodyElement.style.top = `-${scrollY}px`;
-    bodyElement.style.touchAction = "none";
-    bodyElement.style.width = "100%";
-    rootElement.style.overflow = "hidden";
-    rootElement.style.overscrollBehavior = "none";
-
-    return () => {
-      bodyElement.style.left = previousBodyStyles.left;
-      bodyElement.style.overflow = previousBodyStyles.overflow;
-      bodyElement.style.overscrollBehavior = previousBodyStyles.overscrollBehavior;
-      bodyElement.style.position = previousBodyStyles.position;
-      bodyElement.style.right = previousBodyStyles.right;
-      bodyElement.style.top = previousBodyStyles.top;
-      bodyElement.style.touchAction = previousBodyStyles.touchAction;
-      bodyElement.style.width = previousBodyStyles.width;
-      rootElement.style.overflow = previousRootStyles.overflow;
-      rootElement.style.overscrollBehavior = previousRootStyles.overscrollBehavior;
-      window.scrollTo(0, scrollY);
-      window.requestAnimationFrame(() => launcherElement?.focus());
-    };
-  }, [flightDatesOpen, travelersMenuOpen]);
 
   const guests = String(hotelAdultCount + hotelChildCount);
   const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? "guest" : "guests"}, ${rooms} ${Number(rooms) === 1 ? "room" : "rooms"}`;
@@ -1502,6 +1446,216 @@ export function SearchTabs({
     setCheckOut(selectedIso);
   };
 
+
+  const renderFlightDateCalendar = () => (
+    <>
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          type="button"
+          aria-label="Previous month"
+          onClick={() => setVisibleMonthDate((prev) => addMonths(prev, -1))}
+          className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Prev
+        </button>
+        <button
+          type="button"
+          aria-label="Next month"
+          onClick={() => setVisibleMonthDate((prev) => addMonths(prev, 1))}
+          className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+        >
+          Next
+        </button>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+        {[0, 1].map((monthOffset) => {
+          const monthDate = addMonths(visibleMonthDate, monthOffset);
+          const cells = buildMonthCells(monthDate);
+
+          return (
+            <div key={monthOffset}>
+              <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
+                {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+              </p>
+              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
+                {weekdays.map((weekday) => (
+                  <span key={weekday}>{weekday}</span>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {cells.map((cell) => {
+                  const day = cell.date;
+                  const iso = toIsoDate(day);
+                  const isDeparture = iso === departureDate;
+                  const isReturn = iso === returnDate;
+                  const isDisabledDate = !isSelectableFlightDate(day);
+                  const isInRange = !!(
+                    departureParsed &&
+                    returnParsed &&
+                    !isDisabledDate &&
+                    day > departureParsed &&
+                    day < returnParsed
+                  );
+
+                  if (!cell.isCurrentMonth) {
+                    return (
+                      <span
+                        key={`placeholder-${iso}`}
+                        aria-hidden="true"
+                        className="h-10 w-10 justify-self-center sm:h-11 sm:w-11"
+                      />
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={iso}
+                      type="button"
+                      aria-label={`Select ${day.toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}`}
+                      onClick={() => {
+                        if (isDisabledDate || !isSelectableFlightDate(day)) return;
+                        onSelectDate(day);
+                      }}
+                      disabled={isDisabledDate}
+                      aria-disabled={isDisabledDate}
+                      className={cn(
+                        "focus-ring flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-base transition-colors disabled:cursor-not-allowed sm:h-11 sm:w-11",
+                        isDisabledDate
+                          ? "text-slate-300 hover:bg-transparent"
+                          : "text-slate-900 hover:bg-indigo-50",
+                        isInRange && "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
+                        (isDeparture || isReturn) && "bg-indigo-700 text-white hover:bg-indigo-700"
+                      )}
+                    >
+                      {day.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+
+  const flightDatesFooter = (
+    <div className="flex items-center justify-between gap-3">
+      <button
+        type="button"
+        onClick={() => {
+          setDepartureDate("");
+          setReturnDate("");
+        }}
+        className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+      >
+        Clear
+      </button>
+      <button
+        type="button"
+        onClick={() => setFlightDatesOpen(false)}
+        className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+      >
+        Done
+      </button>
+    </div>
+  );
+
+  const renderTravelersCabinPicker = () => (
+    <>
+      <div className="divide-y divide-slate-200 rounded-2xl bg-white px-1 sm:rounded-none sm:bg-transparent sm:px-0">
+        {[
+          { key: "adults", label: "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
+          { key: "children", label: "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
+          { key: "infants", label: "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
+        ].map((row) => {
+          const draftTravelerCount = draftAdultCount + draftChildCount + draftInfantCount;
+          const canDecrement = row.count > row.min;
+          const canIncrement =
+            draftTravelerCount < 9 &&
+            (row.key !== "infants" || draftInfantCount < draftAdultCount);
+
+          return (
+            <div key={row.key} className="flex items-center justify-between py-4 first:pt-1 last:pb-1">
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
+                <span className="block text-xs leading-5 text-slate-600">{row.subtitle}</span>
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (row.key === "adults") {
+                      const nextAdults = Math.max(1, draftAdultCount - 1);
+                      setDraftAdultCount(nextAdults);
+                      setDraftInfantCount((current) => Math.min(current, nextAdults));
+                    }
+                    if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1));
+                    if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1));
+                  }}
+                  disabled={!canDecrement}
+                  className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </button>
+                <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{row.count}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (row.key === "adults") {
+                      if (draftTravelerCount >= 9) return;
+                      setDraftAdultCount((current) => Math.min(9, current + 1));
+                      return;
+                    }
+                    if (row.key === "children") {
+                      if (draftTravelerCount >= 9) return;
+                      setDraftChildCount((current) => Math.min(9, current + 1));
+                      return;
+                    }
+                    if (row.key === "infants") {
+                      if (draftTravelerCount >= 9 || draftInfantCount >= draftAdultCount) return;
+                      setDraftInfantCount((current) => Math.min(draftAdultCount, current + 1));
+                    }
+                  }}
+                  disabled={!canIncrement}
+                  className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-5 rounded-2xl border-t border-slate-200 bg-white pt-5 sm:rounded-none sm:bg-transparent">
+        <div className="mb-1.5 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</p>
+        </div>
+        <div className="grid grid-cols-3 gap-1">
+          {[["economy", "Economy"], ["business", "Business"], ["first", "First"]].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setDraftCabinClass(value)}
+              className={cn(
+                "focus-ring rounded-md border px-2 py-2 text-xs font-medium leading-4 text-center transition-colors sm:py-1 sm:text-xs",
+                draftCabinClass === value
+                  ? "border-indigo-400 bg-indigo-50 text-indigo-900"
+                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+
   return (
     <>
       <section className={wrapper}>
@@ -1964,8 +2118,19 @@ export function SearchTabs({
 
                 {flightDatesOpen ? (
                   <>
-                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
-                    <div ref={flightDatesPanelRef} role="dialog" aria-modal="true" aria-label="Choose travel dates" className="fixed inset-0 z-[260] flex h-[100dvh] min-h-0 w-full max-w-full flex-col overflow-y-auto overscroll-contain border border-slate-200 bg-white p-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:h-auto sm:max-h-[92vh] sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <FlightMobilePickerShell
+                      open={flightDatesOpen}
+                      title="Choose travel dates"
+                      titleId="homepage-flight-dates-title"
+                      launcherRef={flightDatesLauncherRef}
+                      footer={flightDatesFooter}
+                      onClose={() => setFlightDatesOpen(false)}
+                      contentClassName="px-4 py-4"
+                    >
+                      {renderFlightDateCalendar()}
+                    </FlightMobilePickerShell>
+                    <div className="fixed inset-0 z-[250] hidden bg-slate-950/35 backdrop-blur-sm sm:block" aria-hidden="true" />
+                    <div role="dialog" aria-modal="true" aria-label="Choose travel dates" className="hidden overflow-y-auto overscroll-contain border border-slate-200 bg-white p-4 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:fixed sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:z-[260] sm:flex sm:h-auto sm:max-h-[92vh] sm:w-[min(94vw,760px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:flex-col sm:rounded-3xl sm:p-6">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <button
                         type="button"
@@ -2234,8 +2399,29 @@ export function SearchTabs({
                 </button>
                 {travelersMenuOpen ? (
                   <>
-                    <div className="fixed inset-0 z-[250] bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
-                    <div ref={travelersPanelRef} role="dialog" aria-modal="true" aria-label="Travelers and cabin" className="fixed inset-0 z-[260] flex h-[100dvh] min-h-0 w-full max-w-full flex-col overflow-y-auto overscroll-contain border border-slate-200 bg-white p-5 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:h-auto sm:max-h-[90vh] sm:w-[min(94vw,440px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl sm:p-6">
+                    <FlightMobilePickerShell
+                      open={travelersMenuOpen}
+                      title="Travelers"
+                      titleId="homepage-flight-travelers-title"
+                      launcherRef={travelersLauncherRef}
+                      footer={
+                        <div className="flex items-center justify-end">
+                          <button
+                            type="button"
+                            onClick={applyTravelersDraft}
+                            className="focus-ring rounded-xl bg-indigo-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600"
+                          >
+                            Done
+                          </button>
+                        </div>
+                      }
+                      onClose={cancelTravelersDraft}
+                      contentClassName="px-4 py-5"
+                    >
+                      {renderTravelersCabinPicker()}
+                    </FlightMobilePickerShell>
+                    <div className="fixed inset-0 z-[250] hidden bg-slate-950/35 backdrop-blur-sm sm:block" aria-hidden="true" />
+                    <div role="dialog" aria-modal="true" aria-label="Travelers and cabin" className="hidden overflow-y-auto overscroll-contain border border-slate-200 bg-white p-5 pt-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-20px_60px_rgba(15,23,42,0.22)] sm:fixed sm:inset-x-1/2 sm:bottom-auto sm:top-1/2 sm:z-[260] sm:flex sm:h-auto sm:max-h-[90vh] sm:w-[min(94vw,440px)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:flex-col sm:rounded-3xl sm:p-6">
                     <div className="flex items-center justify-between gap-3">
                       <button
                         type="button"
