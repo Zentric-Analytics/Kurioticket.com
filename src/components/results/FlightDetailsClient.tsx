@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  type LucideIcon,
+  Armchair,
   ArrowRight,
-  Clock3,
   Info,
   Luggage,
   Plane,
+  Settings,
+  ShieldCheck,
   Sparkles,
-  Ticket,
 } from "lucide-react";
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
@@ -117,6 +119,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
   });
 
   const stopLabel = formatStops(flight.stops);
+  const heroDetails = buildHeroDetails(flight);
   const hasProviderLink = Boolean(
     flight.partnerRedirectUrl || flight.bookingUrl,
   );
@@ -157,61 +160,36 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     </span>
                     <span>{flight.destinationAirport}</span>
                   </h1>
-                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium leading-5 text-slate-600">
-                    <span className="inline-flex items-center gap-1.5">
-                      <Plane
-                        size={14}
-                        className="shrink-0 text-indigo-600"
-                        aria-hidden="true"
-                      />
-                      <span>
-                        <span className="font-semibold text-slate-800">
-                          Stops:
-                        </span>{" "}
-                        {stopLabel}
-                      </span>
-                    </span>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Clock3
-                        size={14}
-                        className="shrink-0 text-indigo-600"
-                        aria-hidden="true"
-                      />
-                      <span>
-                        <span className="font-semibold text-slate-800">
-                          Duration:
-                        </span>{" "}
-                        {flight.duration}
-                      </span>
-                    </span>
-                    {flight.cabinClass ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <Ticket
-                          size={14}
-                          className="shrink-0 text-indigo-600"
-                          aria-hidden="true"
-                        />
-                        <span>
-                          <span className="font-semibold text-slate-800">
-                            Cabin:
-                          </span>{" "}
-                          {flight.cabinClass}
-                        </span>
-                      </span>
-                    ) : null}
-                    <span className="inline-flex min-w-0 items-center gap-1.5">
-                      <Luggage
-                        size={14}
-                        className="shrink-0 text-indigo-600"
-                        aria-hidden="true"
-                      />
-                      <span className="min-w-0">
-                        <span className="font-semibold text-slate-800">
-                          Baggage:
-                        </span>{" "}
-                        {flight.baggageInfo || "Confirmed by provider"}
-                      </span>
-                    </span>
+                  <div className="mt-3 space-y-2 text-xs font-medium text-slate-600">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                      {heroDetails.map((detail) => {
+                        const Icon = detail.icon;
+
+                        return (
+                          <span
+                            key={detail.label}
+                            className="inline-flex min-w-0 items-center gap-1.5"
+                          >
+                            <Icon
+                              className="h-3.5 w-3.5 shrink-0 text-indigo-600"
+                              aria-hidden="true"
+                            />
+                            <span className="min-w-0">
+                              <span className="font-semibold text-slate-800">
+                                {detail.label}:
+                              </span>{" "}
+                              {detail.value}
+                            </span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="max-w-2xl text-xs leading-5 text-slate-500">
+                      Outbound and return details are shown from{" "}
+                      provider-normalized itinerary data. Booking, payment, final
+                      price, availability, baggage, seat selection, and fare
+                      rules are confirmed by the provider before booking.
+                    </p>
                   </div>
                 </div>
 
@@ -458,6 +436,108 @@ function LayoverSeparator({
         ? ` · ${layover.quality} connection`
         : ""}
     </div>
+  );
+}
+
+type HeroDetailItem = {
+  label: string;
+  value: string;
+  icon: LucideIcon;
+};
+
+function buildHeroDetails(flight: PublicFlightResult): HeroDetailItem[] {
+  return [
+    {
+      label: "Baggage",
+      value: formatBaggageValue(flight.baggageInfo),
+      icon: Luggage,
+    },
+    {
+      label: "Cabin",
+      value: formatCabinClass(flight.cabinClass),
+      icon: Armchair,
+    },
+    {
+      label: "Seat selection",
+      value: formatSeatSelectionValue(flight),
+      icon: Settings,
+    },
+    {
+      label: "Fare rules",
+      value: formatFareRulesValue(flight),
+      icon: ShieldCheck,
+    },
+  ];
+}
+
+function formatCabinClass(value?: string) {
+  if (!value) return "Check provider";
+  return value
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function formatBaggageValue(value?: string) {
+  if (
+    !value ||
+    isProviderReviewCopy(value) ||
+    /rules vary|vary by fare/i.test(value)
+  ) {
+    return "Check provider";
+  }
+
+  return value;
+}
+
+function formatSeatSelectionValue(flight: PublicFlightResult) {
+  return (
+    getOptionalStringField(flight, [
+      "seatSelectionInfo",
+      "seatSelectionText",
+      "seatSelectionPolicy",
+      "seatSelection",
+    ]) || "Provider rules apply"
+  );
+}
+
+function formatFareRulesValue(flight: PublicFlightResult) {
+  const fareRules = getOptionalStringField(flight, [
+    "fareRules",
+    "fareRuleSummary",
+    "fareRulesSummary",
+    "changeInfo",
+    "refundInfo",
+  ]);
+
+  if (!fareRules || isProviderReviewCopy(fareRules)) {
+    return "Review before booking";
+  }
+
+  return fareRules;
+}
+
+function getOptionalStringField(flight: PublicFlightResult, keys: string[]) {
+  const fields = flight as Record<string, unknown>;
+
+  for (const key of keys) {
+    const value = fields[key];
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
+function isProviderReviewCopy(value: string) {
+  const normalized = value.toLowerCase();
+  return (
+    normalized.includes("reviewed on the external provider") ||
+    normalized.includes("shown by the external provider") ||
+    normalized.includes("reviewed externally") ||
+    normalized.includes("rules vary") ||
+    normalized.includes("vary by fare")
   );
 }
 
