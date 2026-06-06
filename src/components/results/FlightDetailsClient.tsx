@@ -160,7 +160,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     </span>
                     <span>{flight.destinationAirport}</span>
                   </h1>
-                  <div className="mt-3 space-y-2 text-xs font-medium text-slate-600">
+                  <div className="mt-3 text-xs font-medium text-slate-600">
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                       {heroDetails.map((detail) => {
                         const Icon = detail.icon;
@@ -184,12 +184,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
                         );
                       })}
                     </div>
-                    <p className="max-w-2xl text-xs leading-5 text-slate-500">
-                      Outbound and return details are shown from{" "}
-                      provider-normalized itinerary data. Booking, payment, final
-                      price, availability, baggage, seat selection, and fare
-                      rules are confirmed by the provider before booking.
-                    </p>
                   </div>
                 </div>
 
