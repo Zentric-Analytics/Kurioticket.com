@@ -130,6 +130,14 @@ type HotelDestinationsApiResponse = {
   source?: "curated-destinations";
 };
 
+type HotelSearchDraft = {
+  destination: string;
+  checkIn: string;
+  checkOut: string;
+  guests: number;
+  rooms: number;
+};
+
 const normalizeCountryHint = (value: string | null | undefined) => {
   const countryCode = value?.trim().toUpperCase() || "";
   if (countryCode === "EU") return countryCode;
@@ -156,7 +164,11 @@ export type HotelSearchBarProps = {
   introLabel?: string;
   errorRole?: "alert" | "status";
   compact?: boolean;
+  mobileLayout?: "default" | "controls" | "drawer";
   onOpenFilters?: () => void;
+  onOpenMobileSearch?: () => void;
+  onCloseMobileSearch?: () => void;
+  onMobileDraftChange?: (draft: HotelSearchDraft) => void;
   className?: string;
 };
 
@@ -170,7 +182,11 @@ export function HotelSearchBar({
   introLabel = "Compare hotel options",
   errorRole,
   compact = false,
+  mobileLayout = "default",
   onOpenFilters,
+  onOpenMobileSearch,
+  onCloseMobileSearch,
+  onMobileDraftChange,
   className,
 }: HotelSearchBarProps) {
   const router = useRouter();
@@ -193,7 +209,8 @@ export function HotelSearchBar({
   const [error, setError] = useState("");
   const [datesOpen, setDatesOpen] = useState(false);
   const [guestsRoomsOpen, setGuestsRoomsOpen] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [internalMobileSearchOpen, setInternalMobileSearchOpen] =
+    useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [destinationSuggestions, setDestinationSuggestions] = useState<
     HotelDestinationSuggestion[]
@@ -221,6 +238,11 @@ export function HotelSearchBar({
   const mobileSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
   );
+  const mobileSearchOpen =
+    mobileLayout === "drawer" ||
+    (mobileLayout === "default" && internalMobileSearchOpen);
+  const isPageLevelMobileDrawer = compact && mobileLayout === "drawer";
+
   const [hotelVisibleMonthDate, setHotelVisibleMonthDate] = useState(() => {
     const parsedCheckIn = parseIsoDate(initialCheckIn);
     if (parsedCheckIn) {
@@ -291,6 +313,27 @@ export function HotelSearchBar({
     error !== "";
 
   useEffect(() => {
+    if (!compact || mobileLayout === "default") return;
+
+    onMobileDraftChange?.({
+      destination,
+      checkIn,
+      checkOut,
+      guests: Math.max(1, Math.min(12, totalHotelGuests)),
+      rooms: clampCount(rooms, 1, 6),
+    });
+  }, [
+    checkIn,
+    checkOut,
+    compact,
+    destination,
+    mobileLayout,
+    onMobileDraftChange,
+    rooms,
+    totalHotelGuests,
+  ]);
+
+  useEffect(() => {
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target;
 
@@ -338,7 +381,11 @@ export function HotelSearchBar({
       mobileSearchScrollLockRef.current = null;
     };
 
-    if (!mobileSearchOpen || typeof window === "undefined") {
+    if (
+      mobileLayout !== "default" ||
+      !mobileSearchOpen ||
+      typeof window === "undefined"
+    ) {
       releaseExistingLock();
       return releaseExistingLock;
     }
@@ -398,7 +445,7 @@ export function HotelSearchBar({
     };
 
     return releaseExistingLock;
-  }, [mobileSearchOpen]);
+  }, [mobileLayout, mobileSearchOpen]);
 
   useEffect(() => {
     if (!destinationSuggestionsOpen) {
@@ -584,12 +631,24 @@ export function HotelSearchBar({
 
   const closeMobileSearchPanel = () => {
     closeHotelSearchPopovers();
-    setMobileSearchOpen(false);
+
+    if (mobileLayout === "drawer") {
+      onCloseMobileSearch?.();
+      return;
+    }
+
+    setInternalMobileSearchOpen(false);
   };
 
   const openMobileSearchPanel = () => {
     closeHotelSearchPopovers();
-    setMobileSearchOpen(true);
+
+    if (mobileLayout === "controls") {
+      onOpenMobileSearch?.();
+      return;
+    }
+
+    setInternalMobileSearchOpen(true);
 
     if (typeof window === "undefined") return;
 
@@ -607,7 +666,7 @@ export function HotelSearchBar({
     setError("");
     setDatesOpen(false);
     setGuestsRoomsOpen(false);
-    setMobileSearchOpen(false);
+    setInternalMobileSearchOpen(false);
     setDestinationSuggestions([]);
     setDestinationSuggestionsCountryHint(activeCountryHint);
     setDestinationSuggestionsOpen(false);
@@ -724,7 +783,7 @@ export function HotelSearchBar({
 
     setRooms(String(normalizedRooms));
     setError("");
-    setMobileSearchOpen(false);
+    closeMobileSearchPanel();
     setIsSubmitting(true);
     startRouteProgress();
     router.push(`/hotels/results?${params.toString()}`);
@@ -830,7 +889,9 @@ export function HotelSearchBar({
         className={cn(
           compact
             ? mobileSearchOpen
-              ? "fixed inset-0 z-[10000] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
+              ? isPageLevelMobileDrawer
+                ? "flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
+                : "fixed inset-0 z-[10000] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
               : "hidden sm:block sm:space-y-2"
             : "space-y-4",
         )}
