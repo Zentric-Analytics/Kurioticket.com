@@ -326,19 +326,6 @@ export function HotelSearchBar({
   }, [datesOpen, guestsRoomsOpen]);
 
   useEffect(() => {
-    if (!mobileSearchOpen) {
-      return;
-    }
-
-    const frameId = window.requestAnimationFrame(() => {
-      mobileSearchPanelRef.current?.scrollTo({ top: 0, left: 0 });
-      mobileSearchContentRef.current?.scrollTo({ top: 0, left: 0 });
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
-  }, [mobileSearchOpen]);
-
-  useEffect(() => {
     const releaseExistingLock = () => {
       mobileSearchScrollLockRef.current?.restore();
       mobileSearchScrollLockRef.current = null;
@@ -362,9 +349,11 @@ export function HotelSearchBar({
     const previousBodyStyles = {
       left: bodyElement.style.left,
       overflow: bodyElement.style.overflow,
+      overscrollBehavior: bodyElement.style.overscrollBehavior,
       position: bodyElement.style.position,
       right: bodyElement.style.right,
       top: bodyElement.style.top,
+      touchAction: bodyElement.style.touchAction,
       width: bodyElement.style.width,
     };
     const previousRootStyles = {
@@ -374,9 +363,11 @@ export function HotelSearchBar({
 
     bodyElement.style.left = "0";
     bodyElement.style.overflow = "hidden";
+    bodyElement.style.overscrollBehavior = "none";
     bodyElement.style.position = "fixed";
     bodyElement.style.right = "0";
     bodyElement.style.top = `-${scrollY}px`;
+    bodyElement.style.touchAction = "none";
     bodyElement.style.width = "100%";
     rootElement.style.overflow = "hidden";
     rootElement.style.overscrollBehavior = "none";
@@ -385,9 +376,12 @@ export function HotelSearchBar({
       restore: () => {
         bodyElement.style.left = previousBodyStyles.left;
         bodyElement.style.overflow = previousBodyStyles.overflow;
+        bodyElement.style.overscrollBehavior =
+          previousBodyStyles.overscrollBehavior;
         bodyElement.style.position = previousBodyStyles.position;
         bodyElement.style.right = previousBodyStyles.right;
         bodyElement.style.top = previousBodyStyles.top;
+        bodyElement.style.touchAction = previousBodyStyles.touchAction;
         bodyElement.style.width = previousBodyStyles.width;
         rootElement.style.overflow = previousRootStyles.overflow;
         rootElement.style.overscrollBehavior =
@@ -552,12 +546,21 @@ export function HotelSearchBar({
     destinationInputRef.current?.focus();
   };
 
-  const closeMobileSearchPanel = () => {
-    setMobileSearchOpen(false);
+  const closeHotelSearchPopovers = () => {
     setDestinationSuggestionsOpen(false);
     setDestinationMobilePickerOpen(false);
     setDatesOpen(false);
     setGuestsRoomsOpen(false);
+  };
+
+  const closeMobileSearchPanel = () => {
+    closeHotelSearchPopovers();
+    setMobileSearchOpen(false);
+  };
+
+  const openMobileSearchPanel = () => {
+    closeHotelSearchPopovers();
+    setMobileSearchOpen(true);
   };
 
   const handleResetSearch = () => {
@@ -754,7 +757,7 @@ export function HotelSearchBar({
 
               <button
                 type="button"
-                onClick={() => setMobileSearchOpen(true)}
+                onClick={openMobileSearchPanel}
                 className="focus-ring flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-indigo-100/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-indigo-200 hover:shadow-[0_8px_18px_rgba(79,70,229,0.12)] focus-visible:border-indigo-300"
               >
                 <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
@@ -776,7 +779,7 @@ export function HotelSearchBar({
           ) : (
             <button
               type="button"
-              onClick={() => setMobileSearchOpen(true)}
+              onClick={openMobileSearchPanel}
               className="focus-ring w-full rounded-xl border border-indigo-100 bg-white px-4 py-4 text-left shadow-[0_12px_26px_rgba(15,23,42,0.10)] transition hover:border-indigo-200 focus-visible:border-indigo-300"
             >
               <span className="block truncate text-sm font-semibold text-slate-950">
@@ -794,7 +797,7 @@ export function HotelSearchBar({
         className={cn(
           compact
             ? mobileSearchOpen
-              ? "fixed inset-0 z-[10000] flex h-full min-h-[100dvh] w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
+              ? "fixed inset-0 z-[10000] flex h-[100dvh] min-h-0 w-full min-w-0 flex-col overflow-hidden bg-slate-50 sm:hidden"
               : "hidden sm:block sm:space-y-2"
             : "space-y-4",
         )}
@@ -825,7 +828,7 @@ export function HotelSearchBar({
               ? cn(
                   "rounded-xl border border-slate-300 bg-slate-50 p-2 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
                   mobileSearchOpen &&
-                    "min-h-0 flex-1 overflow-y-auto overscroll-contain border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none sm:overflow-visible sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+                    "min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-none border-0 bg-slate-50 px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-none",
                 )
               : "rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
           )}
@@ -1234,38 +1237,40 @@ export function HotelSearchBar({
                         </div>
                       );
                     })}
-                    <div className="border-t border-slate-200 pt-3">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">
-                            Pet-friendly
-                          </p>
-                          <p className="pr-2 text-xs leading-5 text-slate-600">
-                            Only show stays that allow pets
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={hotelPetFriendly}
-                          aria-label="Toggle pet-friendly stays"
-                          onClick={() => setHotelPetFriendly((prev) => !prev)}
-                          className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
-                            hotelPetFriendly
-                              ? "border-indigo-600 bg-indigo-600"
-                              : "border-slate-300 bg-slate-200"
-                          }`}
-                        >
-                          <span
-                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                    {!mobileSearchOpen ? (
+                      <div className="border-t border-slate-200 pt-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              Pet-friendly
+                            </p>
+                            <p className="pr-2 text-xs leading-5 text-slate-600">
+                              Only show stays that allow pets
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={hotelPetFriendly}
+                            aria-label="Toggle pet-friendly stays"
+                            onClick={() => setHotelPetFriendly((prev) => !prev)}
+                            className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
                               hotelPetFriendly
-                                ? "translate-x-5"
-                                : "translate-x-0.5"
+                                ? "border-indigo-600 bg-indigo-600"
+                                : "border-slate-300 bg-slate-200"
                             }`}
-                          />
-                        </button>
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                                hotelPetFriendly
+                                  ? "translate-x-5"
+                                  : "translate-x-0.5"
+                              }`}
+                            />
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    ) : null}
                   </div>
                 </div>
               ) : null}
@@ -1551,34 +1556,6 @@ export function HotelSearchBar({
               </div>
             );
           })}
-          <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-3">
-            <div>
-              <p className="text-base font-black text-slate-950">Pet-friendly</p>
-              <p className="text-sm leading-5 text-slate-600">
-                Only show stays that allow pets
-              </p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={hotelPetFriendly}
-              aria-label="Toggle pet-friendly stays"
-              onClick={() => setHotelPetFriendly((prev) => !prev)}
-              className={cn(
-                "focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
-                hotelPetFriendly
-                  ? "border-indigo-600 bg-indigo-600"
-                  : "border-slate-300 bg-slate-200",
-              )}
-            >
-              <span
-                className={cn(
-                  "inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform",
-                  hotelPetFriendly ? "translate-x-5" : "translate-x-0.5",
-                )}
-              />
-            </button>
-          </div>
         </div>
       </HotelMobilePickerShell>
 
