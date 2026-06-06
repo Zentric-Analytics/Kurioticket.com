@@ -11,7 +11,6 @@ import {
   Ticket,
 } from "lucide-react";
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
@@ -258,7 +257,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
       <div className="page-shell py-6">
         <div className="mx-auto w-full max-w-3xl">
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-indigo-950/5 sm:p-5">
-            <div className="flex flex-col gap-2 border-b border-slate-200 pb-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="border-b border-slate-200 pb-3">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-teal-dark">
                   Selected flight
@@ -267,14 +266,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   {flight.airlineName}
                   {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
                 </h2>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm font-bold text-indigo-800">
-                  {flight.duration}
-                </span>
-                <Badge variant={flight.stops === 0 ? "teal" : "blue"}>
-                  {stopLabel}
-                </Badge>
               </div>
             </div>
 
