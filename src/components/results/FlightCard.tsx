@@ -46,7 +46,7 @@ export function FlightCard({
   );
   const providerPrice = `${displayPrice.providerFormatted} ${displayPrice.sourceCurrency}`;
   const priceLabel = displayPrice.isConvertedEstimate
-    ? "Estimated display price"
+    ? "Estimated price"
     : "Provider price";
   const providerHandoffCopy = displayPrice.isConvertedEstimate
     ? "Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking. Final provider currency may differ from your selected display currency."
@@ -108,10 +108,6 @@ export function FlightCard({
               {displayPrice.isConvertedEstimate ? (
                 <div className="mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
                   <p>Provider price: {providerPrice}</p>
-                  <p className="text-[11px] leading-4 text-slate-500">
-                    Final price may be charged by the provider in{" "}
-                    {displayPrice.sourceCurrency}.
-                  </p>
                 </div>
               ) : null}
             </div>
