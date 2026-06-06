@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
+import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { useRegion } from "@/components/region/RegionProvider";
 import { cn } from "@/lib/utils";
 
@@ -203,8 +205,13 @@ export function HotelSearchBar({
     useState(false);
   const [destinationSuggestionsLoading, setDestinationSuggestionsLoading] =
     useState(false);
+  const [destinationMobilePickerOpen, setDestinationMobilePickerOpen] =
+    useState(false);
   const [destinationHighlight, setDestinationHighlight] = useState(0);
   const destinationInputRef = useRef<HTMLInputElement>(null);
+  const destinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
+  const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
+  const guestsRoomsMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const destinationWrapperRef = useRef<HTMLLabelElement>(null);
   const datesWrapperRef = useRef<HTMLDivElement>(null);
   const guestsRoomsWrapperRef = useRef<HTMLDivElement>(null);
@@ -535,6 +542,7 @@ export function HotelSearchBar({
   };
 
   const handleClearDestination = () => {
+    setDestinationMobilePickerOpen(false);
     setDestination("");
     setDestinationSuggestions([]);
     setDestinationSuggestionsCountryHint(activeCountryHint);
@@ -547,6 +555,7 @@ export function HotelSearchBar({
   const closeMobileSearchPanel = () => {
     setMobileSearchOpen(false);
     setDestinationSuggestionsOpen(false);
+    setDestinationMobilePickerOpen(false);
     setDatesOpen(false);
     setGuestsRoomsOpen(false);
   };
@@ -566,6 +575,7 @@ export function HotelSearchBar({
     setDestinationSuggestions([]);
     setDestinationSuggestionsCountryHint(activeCountryHint);
     setDestinationSuggestionsOpen(false);
+    setDestinationMobilePickerOpen(false);
     setDestinationHighlight(0);
     setHotelVisibleMonthDate(currentMonthStart());
   };
@@ -575,6 +585,7 @@ export function HotelSearchBar({
       const nextOpen = !prev;
 
       if (nextOpen) {
+        setDestinationMobilePickerOpen(false);
         setGuestsRoomsOpen(false);
       }
 
@@ -587,6 +598,7 @@ export function HotelSearchBar({
       const nextOpen = !prev;
 
       if (nextOpen) {
+        setDestinationMobilePickerOpen(false);
         setDatesOpen(false);
       }
 
@@ -836,6 +848,34 @@ export function HotelSearchBar({
             >
               <span className={fieldLabelClassName}>Destination</span>
               <span className="relative block">
+                <button
+                  ref={destinationMobileLauncherRef}
+                  type="button"
+                  onClick={() => {
+                    setDestinationMobilePickerOpen(true);
+                    setDestinationSuggestionsOpen(false);
+                    setDatesOpen(false);
+                    setGuestsRoomsOpen(false);
+                  }}
+                  aria-haspopup="dialog"
+                  aria-expanded={destinationMobilePickerOpen}
+                  aria-label="Choose hotel destination"
+                  className={cn(
+                    valueControlClassName,
+                    "flex items-center justify-between gap-2 pr-2 text-left sm:hidden",
+                  )}
+                >
+                  <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
+                    {destination.trim() || "City, area, or landmark"}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      "shrink-0 text-slate-500 transition-transform",
+                      destinationMobilePickerOpen && "rotate-180",
+                    )}
+                  />
+                </button>
                 <input
                   ref={destinationInputRef}
                   type="text"
@@ -861,7 +901,7 @@ export function HotelSearchBar({
                   placeholder="City, area, or landmark"
                   className={cn(
                     valueControlClassName,
-                    "pr-9 placeholder:text-slate-400",
+                    "pr-9 placeholder:text-slate-400 max-sm:hidden",
                   )}
                   required
                 />
@@ -871,7 +911,7 @@ export function HotelSearchBar({
                     onClick={handleClearDestination}
                     onMouseDown={(event) => event.preventDefault()}
                     aria-label="Clear destination"
-                    className="focus-ring absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                    className="focus-ring absolute right-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -938,6 +978,7 @@ export function HotelSearchBar({
             <div ref={datesWrapperRef} className={fieldClassName}>
               <span className={fieldLabelClassName}>Travel dates</span>
               <button
+                ref={datesMobileLauncherRef}
                 type="button"
                 onClick={handleToggleDates}
                 aria-expanded={datesOpen}
@@ -1093,6 +1134,7 @@ export function HotelSearchBar({
             <div ref={guestsRoomsWrapperRef} className={fieldClassName}>
               <span className={fieldLabelClassName}>Guests</span>
               <button
+                ref={guestsRoomsMobileLauncherRef}
                 type="button"
                 onClick={handleToggleGuestsRooms}
                 aria-expanded={guestsRoomsOpen}
@@ -1278,6 +1320,268 @@ export function HotelSearchBar({
           </p>
         ) : null}
       </form>
+
+      <HotelDestinationMobilePicker
+        open={destinationMobilePickerOpen}
+        value={destination}
+        titleId="hotel-results-mobile-destination-title"
+        inputId="hotel-results-mobile-destination-input"
+        launcherRef={destinationMobileLauncherRef}
+        selectedCountryHint={selectedCountryHint}
+        detectedCountryHint={detectedCountryHint}
+        onChange={(nextDestination) => {
+          setDestination(nextDestination);
+          setDestinationSuggestionsOpen(false);
+          setError("");
+        }}
+        onClose={() => setDestinationMobilePickerOpen(false)}
+      />
+
+      <HotelMobilePickerShell
+        open={datesOpen}
+        title="Choose travel dates"
+        titleId="hotel-results-mobile-dates-title"
+        launcherRef={datesMobileLauncherRef}
+        onClose={() => setDatesOpen(false)}
+        footer={
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setCheckIn("");
+                setCheckOut("");
+              }}
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => setDatesOpen(false)}
+              className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              Done
+            </button>
+          </div>
+        }
+      >
+        <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              aria-label="Previous month"
+              onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, -1))}
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              aria-label="Next month"
+              onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, 1))}
+              className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Next
+            </button>
+          </div>
+          <div className="grid grid-cols-1 gap-4">
+            {[0, 1].map((monthOffset) => {
+              const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
+              const cells = buildMonthCells(monthDate);
+
+              return (
+                <div key={monthOffset}>
+                  <p className="mb-2 text-center text-base font-black text-slate-900">
+                    {monthDate.toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500">
+                    {weekdays.map((weekday) => (
+                      <span key={weekday}>{weekday}</span>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {cells.map((cell) => {
+                      const day = cell.date;
+                      const iso = toIsoDate(day);
+                      const isCheckIn = iso === checkIn;
+                      const isCheckOut = iso === checkOut;
+                      const isPastDate = isBeforeToday(day);
+                      const isInvalidCheckOut = Boolean(
+                        checkIn && !checkOut && iso <= checkIn,
+                      );
+                      const isDisabledDate = isPastDate || isInvalidCheckOut;
+                      const isInRange = Boolean(
+                        checkInParsed &&
+                          checkOutParsed &&
+                          !isPastDate &&
+                          day > checkInParsed &&
+                          day < checkOutParsed,
+                      );
+
+                      if (!cell.isCurrentMonth) {
+                        return (
+                          <span
+                            key={`mobile-placeholder-${iso}`}
+                            aria-hidden="true"
+                            className="h-11 w-11 justify-self-center"
+                          />
+                        );
+                      }
+
+                      return (
+                        <button
+                          key={iso}
+                          type="button"
+                          aria-label={`Select ${day.toLocaleDateString("en-US", {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}`}
+                          onClick={() => handleSelectHotelDate(day)}
+                          disabled={isDisabledDate}
+                          aria-disabled={isDisabledDate}
+                          className={cn(
+                            "focus-ring flex h-11 w-11 items-center justify-center justify-self-center rounded-full text-base font-semibold transition-colors disabled:cursor-not-allowed",
+                            isDisabledDate
+                              ? "text-slate-300 hover:bg-transparent"
+                              : "text-slate-900 hover:bg-indigo-50",
+                            isInRange &&
+                              "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
+                            (isCheckIn || isCheckOut) &&
+                              "bg-indigo-700 text-white hover:bg-indigo-700",
+                          )}
+                        >
+                          {day.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </HotelMobilePickerShell>
+
+      <HotelMobilePickerShell
+        open={guestsRoomsOpen}
+        title="Guests and rooms"
+        titleId="hotel-results-mobile-guests-title"
+        launcherRef={guestsRoomsMobileLauncherRef}
+        onClose={() => setGuestsRoomsOpen(false)}
+        footer={
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setGuestsRoomsOpen(false)}
+              className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+            >
+              Done
+            </button>
+          </div>
+        }
+      >
+        <div className="mx-auto w-full max-w-xl space-y-4 rounded-2xl bg-white p-4 shadow-sm">
+          {[
+            {
+              key: "adults",
+              label: "Adults",
+              value: hotelAdultCount,
+              min: 1,
+              max: 12 - hotelChildCount,
+              onDecrement: () => setHotelAdultCount((prev) => Math.max(1, prev - 1)),
+              onIncrement: () =>
+                setHotelAdultCount((prev) => Math.min(12 - hotelChildCount, prev + 1)),
+            },
+            {
+              key: "children",
+              label: "Children",
+              value: hotelChildCount,
+              min: 0,
+              max: 12 - hotelAdultCount,
+              onDecrement: () => setHotelChildCount((prev) => Math.max(0, prev - 1)),
+              onIncrement: () =>
+                setHotelChildCount((prev) => Math.min(12 - hotelAdultCount, prev + 1)),
+            },
+            {
+              key: "rooms",
+              label: "Rooms",
+              value: clampCount(rooms, 1, 6),
+              min: 1,
+              max: 6,
+              onDecrement: () =>
+                setRooms((prev) => String(Math.max(1, clampCount(prev, 1, 6) - 1))),
+              onIncrement: () =>
+                setRooms((prev) => String(Math.min(6, clampCount(prev, 1, 6) + 1))),
+            },
+          ].map((row) => {
+            const canDecrement = row.value > row.min;
+            const canIncrement = row.value < row.max;
+
+            return (
+              <div
+                key={row.key}
+                className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 last:border-b-0 last:pb-0"
+              >
+                <span className="text-base font-black text-slate-950">{row.label}</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={row.onDecrement}
+                    disabled={!canDecrement}
+                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Minus className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <span className="min-w-8 text-center text-lg font-black text-slate-950">
+                    {row.value}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={row.onIncrement}
+                    disabled={!canIncrement}
+                    className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Plus className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+          <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-3">
+            <div>
+              <p className="text-base font-black text-slate-950">Pet-friendly</p>
+              <p className="text-sm leading-5 text-slate-600">
+                Only show stays that allow pets
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={hotelPetFriendly}
+              aria-label="Toggle pet-friendly stays"
+              onClick={() => setHotelPetFriendly((prev) => !prev)}
+              className={cn(
+                "focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
+                hotelPetFriendly
+                  ? "border-indigo-600 bg-indigo-600"
+                  : "border-slate-300 bg-slate-200",
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform",
+                  hotelPetFriendly ? "translate-x-5" : "translate-x-0.5",
+                )}
+              />
+            </button>
+          </div>
+        </div>
+      </HotelMobilePickerShell>
+
     </section>
   );
 }
