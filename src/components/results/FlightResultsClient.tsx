@@ -1424,7 +1424,7 @@ export function FlightResultsClient() {
   useEffect(() => {
     function updateDropdownPosition(target: "origin" | "destination") {
       const viewportPadding = 16;
-      const preferredWidth = 520;
+      const preferredWidth = 380;
       const wrap =
         target === "origin"
           ? originWrapRef.current
@@ -1505,7 +1505,7 @@ export function FlightResultsClient() {
   useEffect(() => {
     function updateDatePickerPosition(target: "departure" | "return") {
       const viewportPadding = 16;
-      const preferredWidth = 720;
+      const preferredWidth = 620;
       const wrap =
         target === "departure"
           ? departureWrapRef.current
@@ -1572,7 +1572,7 @@ export function FlightResultsClient() {
   useEffect(() => {
     function updateTravelerPopoverPosition() {
       const viewportPadding = 16;
-      const preferredWidth = 520;
+      const preferredWidth = 360;
       const trigger = travelerCabinWrapRef.current?.querySelector("button");
 
       if (!trigger) return;
