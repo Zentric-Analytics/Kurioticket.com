@@ -5,6 +5,7 @@ import {
   type ReactNode,
   type RefObject,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { ArrowLeft } from "lucide-react";
 
@@ -33,6 +34,8 @@ export function FlightMobilePickerShell({
   className,
   contentClassName,
 }: FlightMobilePickerShellProps) {
+  const portalElement = typeof document === "undefined" ? null : document.body;
+
   useEffect(() => {
     if (!open || typeof window === "undefined") return;
 
@@ -51,6 +54,7 @@ export function FlightMobilePickerShell({
       width: bodyElement.style.width,
     };
     const previousRootStyles = {
+      height: rootElement.style.height,
       overflow: rootElement.style.overflow,
       overscrollBehavior: rootElement.style.overscrollBehavior,
     };
@@ -63,6 +67,7 @@ export function FlightMobilePickerShell({
     bodyElement.style.top = `-${scrollY}px`;
     bodyElement.style.touchAction = "none";
     bodyElement.style.width = "100%";
+    rootElement.style.height = "100%";
     rootElement.style.overflow = "hidden";
     rootElement.style.overscrollBehavior = "none";
 
@@ -75,6 +80,7 @@ export function FlightMobilePickerShell({
       bodyElement.style.top = previousBodyStyles.top;
       bodyElement.style.touchAction = previousBodyStyles.touchAction;
       bodyElement.style.width = previousBodyStyles.width;
+      rootElement.style.height = previousRootStyles.height;
       rootElement.style.overflow = previousRootStyles.overflow;
       rootElement.style.overscrollBehavior = previousRootStyles.overscrollBehavior;
       window.scrollTo(0, scrollY);
@@ -82,11 +88,10 @@ export function FlightMobilePickerShell({
     };
   }, [launcherRef, open]);
 
-  if (!open) return null;
+  if (!open || !portalElement) return null;
 
-  return (
-    <div className="fixed inset-0 z-[10020] sm:hidden">
-      <div className="absolute inset-0 bg-slate-950/35 backdrop-blur-sm" aria-hidden="true" />
+  return createPortal(
+    <div className="fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden">
       <div
         role="dialog"
         aria-modal="true"
@@ -98,11 +103,11 @@ export function FlightMobilePickerShell({
           }
         }}
         className={cn(
-          "absolute inset-0 flex h-[100dvh] min-h-0 w-full max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)] shadow-[0_-20px_60px_rgba(15,23,42,0.22)]",
+          "fixed inset-0 flex h-[100dvh] min-h-0 w-screen max-w-full flex-col overflow-hidden bg-white pt-[env(safe-area-inset-top)]",
           className,
         )}
       >
-        <div className="shrink-0 border-b border-slate-200 bg-white px-4 pb-3 pt-3">
+        <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-3">
           <div className="mx-auto flex w-full max-w-xl items-center justify-between gap-3">
             <button
               type="button"
@@ -125,16 +130,17 @@ export function FlightMobilePickerShell({
           </div>
         </div>
 
-        <div className={cn("min-h-0 flex-1 overflow-y-auto overscroll-contain bg-slate-50 px-4 py-4", contentClassName)}>
+        <div className={cn("min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain bg-slate-50 px-4 py-4", contentClassName)}>
           {children}
         </div>
 
         {footer ? (
-          <div className="shrink-0 border-t border-slate-200 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+          <div className="shrink-0 border-t border-slate-200/80 bg-white px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
             <div className="mx-auto w-full max-w-xl">{footer}</div>
           </div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    portalElement,
   );
 }
