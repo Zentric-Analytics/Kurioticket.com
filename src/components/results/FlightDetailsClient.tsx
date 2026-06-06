@@ -270,7 +270,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   <div
                     key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
                     className={
-                      legIndex > 0 ? "mt-3 border-t border-violet-300 pt-3" : ""
+                      legIndex > 0 ? "mt-3 border-t border-violet-500 pt-3" : ""
                     }
                   >
                     <CompactLegSection
