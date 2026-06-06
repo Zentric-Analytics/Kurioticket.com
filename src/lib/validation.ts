@@ -199,6 +199,13 @@ export const supportTicketSchema = z.object({
   sourceContext: z.record(z.string(), z.unknown()).optional(),
 });
 
+export const newsletterSubscribeSchema = z.object({
+  email: emailSchema,
+  source: z.string().trim().min(1).max(80).optional(),
+  locale: z.string().trim().min(2).max(20).optional(),
+  regionCode: z.string().trim().min(2).max(16).optional(),
+});
+
 export const priceAlertSchema = z.object({
   type: z.enum(["FLIGHT", "HOTEL"]),
   origin: z.string().trim().max(80).optional(),
