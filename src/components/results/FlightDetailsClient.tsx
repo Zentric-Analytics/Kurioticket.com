@@ -133,7 +133,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
           <div className="mx-auto grid w-full max-w-5xl gap-3">
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
-                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
+                <div className="flex min-w-0 flex-col justify-center bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
                   <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
                     <Sparkles size={14} aria-hidden="true" /> Flight details
                   </p>
