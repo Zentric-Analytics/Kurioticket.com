@@ -134,61 +134,63 @@ export function FlightDetailsClient({ id }: { id: string }) {
           <div className="mx-auto grid w-full max-w-5xl gap-3">
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
-                <div className="flex min-w-0 flex-col items-start justify-between gap-2 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
-                  <div className="min-w-0 space-y-1.5">
-                    <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
-                      <Sparkles size={14} aria-hidden="true" /> Flight details
-                    </p>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                      <AirlineNameWithLogo
-                        airlineName={flight.airlineName}
-                        airlineLogo={getAirlineLogo(flight)}
-                        className="text-sm font-semibold text-slate-700"
-                      />
-                      {flight.flightNumber ? (
-                        <>
-                          <span
-                            className="h-1 w-1 rounded-full bg-slate-300"
-                            aria-hidden="true"
-                          />
-                          <span className="text-sm font-medium text-slate-500">
-                            Flight {flight.flightNumber}
-                          </span>
-                        </>
-                      ) : null}
-                    </div>
-                    <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
-                      <span>{flight.originAirport}</span>
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
-                        <ArrowRight size={16} aria-hidden="true" />
-                      </span>
-                      <span>{flight.destinationAirport}</span>
-                    </h1>
-                  </div>
-
-                  <div className="w-full border-t border-indigo-100/70 pt-2 text-xs font-medium leading-5 text-slate-600">
-                    <div className="flex flex-wrap items-start gap-x-4 gap-y-1">
-                      {heroDetails.map((detail) => {
-                        const Icon = detail.icon;
-
-                        return (
-                          <span
-                            key={detail.label}
-                            className="inline-flex min-w-0 items-start gap-1.5"
-                          >
-                            <Icon
-                              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600"
+                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
+                  <div className="flex h-full min-w-0 flex-col items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1.5">
+                      <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
+                        <Sparkles size={14} aria-hidden="true" /> Flight details
+                      </p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <AirlineNameWithLogo
+                          airlineName={flight.airlineName}
+                          airlineLogo={getAirlineLogo(flight)}
+                          className="text-sm font-semibold text-slate-700"
+                        />
+                        {flight.flightNumber ? (
+                          <>
+                            <span
+                              className="h-1 w-1 rounded-full bg-slate-300"
                               aria-hidden="true"
                             />
-                            <span className="min-w-0 leading-5">
-                              <span className="font-semibold text-slate-800">
-                                {detail.label}:
-                              </span>{" "}
-                              {detail.value}
+                            <span className="text-sm font-medium text-slate-500">
+                              Flight {flight.flightNumber}
                             </span>
-                          </span>
-                        );
-                      })}
+                          </>
+                        ) : null}
+                      </div>
+                      <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                        <span>{flight.originAirport}</span>
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
+                          <ArrowRight size={16} aria-hidden="true" />
+                        </span>
+                        <span>{flight.destinationAirport}</span>
+                      </h1>
+                    </div>
+
+                    <div className="w-full rounded-xl border border-indigo-100/70 bg-white/65 px-3 py-2 text-xs font-medium leading-5 text-slate-600 shadow-sm shadow-indigo-950/5">
+                      <div className="flex flex-wrap items-start gap-x-4 gap-y-1">
+                        {heroDetails.map((detail) => {
+                          const Icon = detail.icon;
+
+                          return (
+                            <span
+                              key={detail.label}
+                              className="inline-flex min-w-0 items-start gap-1.5"
+                            >
+                              <Icon
+                                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600"
+                                aria-hidden="true"
+                              />
+                              <span className="min-w-0 leading-5">
+                                <span className="font-semibold text-slate-800">
+                                  {detail.label}:
+                                </span>{" "}
+                                {detail.value}
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
