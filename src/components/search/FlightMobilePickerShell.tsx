@@ -21,8 +21,6 @@ type FlightMobilePickerShellProps = {
   onClose: () => void;
   className?: string;
   contentClassName?: string;
-  viewportClassName?: string;
-  mobileMediaQuery?: string;
 };
 
 export function FlightMobilePickerShell({
@@ -35,15 +33,13 @@ export function FlightMobilePickerShell({
   onClose,
   className,
   contentClassName,
-  viewportClassName = "sm:hidden",
-  mobileMediaQuery = "(max-width: 639px)",
 }: FlightMobilePickerShellProps) {
   const portalElement = typeof document === "undefined" ? null : document.body;
 
   useEffect(() => {
     if (!open || typeof window === "undefined") return;
 
-    const mobileQuery = window.matchMedia(mobileMediaQuery);
+    const mobileQuery = window.matchMedia("(max-width: 639px)");
     if (!mobileQuery.matches) return;
 
     const launcherElement = launcherRef?.current;
@@ -93,14 +89,14 @@ export function FlightMobilePickerShell({
       window.scrollTo(0, scrollY);
       window.requestAnimationFrame(() => launcherElement?.focus());
     };
-  }, [launcherRef, mobileMediaQuery, open]);
+  }, [launcherRef, open]);
 
   if (!open || !portalElement) return null;
 
   return createPortal(
     <div
       data-flight-mobile-picker-shell
-      className={cn("fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white", viewportClassName)}
+      className="fixed inset-0 z-[2147483647] h-[100dvh] w-screen max-w-full overflow-hidden bg-white sm:hidden"
     >
       <div
         role="dialog"

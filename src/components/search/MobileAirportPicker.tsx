@@ -20,8 +20,6 @@ type MobileAirportPickerProps = {
   onClear: () => void;
   onSelect: (option: AirportOption) => void;
   onClose: () => void;
-  shellViewportClassName?: string;
-  shellMobileMediaQuery?: string;
 };
 
 export function MobileAirportPicker({
@@ -36,8 +34,6 @@ export function MobileAirportPicker({
   onClear,
   onSelect,
   onClose,
-  shellViewportClassName,
-  shellMobileMediaQuery,
 }: MobileAirportPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const titleId = `${inputId}-title`;
@@ -63,8 +59,6 @@ export function MobileAirportPicker({
       titleId={titleId}
       launcherRef={launcherRef}
       onClose={onClose}
-      viewportClassName={shellViewportClassName}
-      mobileMediaQuery={shellMobileMediaQuery}
       footer={(
         <div className="flex items-center justify-between gap-3">
           <button

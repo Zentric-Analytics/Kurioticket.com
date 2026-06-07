@@ -274,7 +274,7 @@ export function AppHeader({
   const navItems = useMemo(
     () => [
       {
-        href: "/flights",
+        href: "/flights/results",
         label: t.flights,
         icon: Plane,
       },
@@ -351,7 +351,7 @@ export function AppHeader({
 
   const desktopPrimaryNavItems = useMemo(() => {
     const desktopPrimaryHrefs = new Set([
-      "/flights",
+      "/flights/results",
       "/hotels",
       "/cars",
       "/deals",
@@ -362,7 +362,7 @@ export function AppHeader({
 
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
-      "/flights",
+      "/flights/results",
       "/hotels",
       "/cars",
       "/deals",
@@ -374,7 +374,7 @@ export function AppHeader({
   }, [navItems]);
 
   const visibleMobilePrimaryNavItems = useMemo(
-    () => (hideMobileSecondaryNavLinks ? [...mobilePrimaryNavItems] : mobilePrimaryNavItems),
+    () => mobilePrimaryNavItems,
     [hideMobileSecondaryNavLinks, mobilePrimaryNavItems]
   );
 
