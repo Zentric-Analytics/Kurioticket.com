@@ -25,7 +25,7 @@ const HOMEPAGE_DESTINATIONS = Object.fromEntries(
   ]),
 ) as Record<string, { code: string; originCode: string }>;
 const MARKET_HOMEPAGE_DESTINATIONS = getPopularDestinationAllowlist();
-const MAX_POPULAR_DESTINATIONS = 16;
+const MAX_POPULAR_DESTINATIONS = 32;
 const DISCOVER_PRICE_CAP = DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT;
 const HOME_DISCOVERY_ROUTES = getHomeDiscoveryRouteAllowlist();
 

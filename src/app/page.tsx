@@ -32,7 +32,10 @@ import {
   HOME_DISCOVERY_VISIBLE_CARD_COUNT,
   getHomeDiscoveryByRegion,
 } from "@/data/homeDiscovery";
-import { getPopularDestinationsByRegion } from "@/data/marketHomeContent";
+import {
+  getPopularDestinationFareCandidatesByRegion,
+  getPopularDestinationsByRegion,
+} from "@/data/marketHomeContent";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
@@ -163,8 +166,15 @@ export default function Home() {
     fallbackUsed: popularDestinationFallbackUsed,
     items: popularDestinations,
   } = popularDestinationResolution;
+  const popularDestinationFareCandidates = useMemo(
+    () => getPopularDestinationFareCandidatesByRegion(regionCode).items,
+    [regionCode],
+  );
   const visiblePopularDestinations = useMemo(() => {
-    const destinationsWithIndex = popularDestinations.map((destination, index) => {
+    const selectionPool = destinationPriceState.loading
+      ? popularDestinations
+      : popularDestinationFareCandidates;
+    const destinationsWithIndex = selectionPool.map((destination, index) => {
       const price = destinationPriceState.prices[destination.id];
       const hasFreshPrice = hasFreshProviderPrice(price, {
         originCode: destination.originCode,
@@ -188,7 +198,12 @@ export default function Home() {
       )
       .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT)
       .map(({ destination }) => destination);
-  }, [destinationPriceState.loading, destinationPriceState.prices, popularDestinations]);
+  }, [
+    destinationPriceState.loading,
+    destinationPriceState.prices,
+    popularDestinationFareCandidates,
+    popularDestinations,
+  ]);
 
   const fallbackDiscoveryCards = useMemo<HomeDiscoveryFareCard[]>(
     () =>
@@ -295,11 +310,13 @@ export default function Home() {
             effectiveMarketCode: popularDestinationMarket,
             fallbackLevel: popularDestinationFallbackLevel,
             fallbackUsed: popularDestinationFallbackUsed,
-            destinations: popularDestinations.map(({ id, code, originCode }) => ({
-              id,
-              code,
-              originCode,
-            })),
+            destinations: popularDestinationFareCandidates.map(
+              ({ id, code, originCode }) => ({
+                id,
+                code,
+                originCode,
+              }),
+            ),
             currency: "USD",
           }),
           signal: controller.signal,
@@ -329,8 +346,8 @@ export default function Home() {
   }, [
     popularDestinationFallbackLevel,
     popularDestinationFallbackUsed,
+    popularDestinationFareCandidates,
     popularDestinationMarket,
-    popularDestinations,
     regionCode,
   ]);
 
