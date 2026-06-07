@@ -47,6 +47,8 @@ import {
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
 
+const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
+
 type DestinationPriceSearch = {
   tripType: "one-way";
   origin: string;
@@ -161,6 +163,33 @@ export default function Home() {
     fallbackUsed: popularDestinationFallbackUsed,
     items: popularDestinations,
   } = popularDestinationResolution;
+  const visiblePopularDestinations = useMemo(() => {
+    const destinationsWithIndex = popularDestinations.map((destination, index) => {
+      const price = destinationPriceState.prices[destination.id];
+      const hasFreshPrice = hasFreshProviderPrice(price, {
+        originCode: destination.originCode,
+        destinationCode: destination.code,
+      });
+
+      return { destination, hasFreshPrice, index };
+    });
+
+    if (destinationPriceState.loading) {
+      return destinationsWithIndex
+        .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT)
+        .map(({ destination }) => destination);
+    }
+
+    return destinationsWithIndex
+      .sort(
+        (first, second) =>
+          Number(second.hasFreshPrice) - Number(first.hasFreshPrice) ||
+          first.index - second.index,
+      )
+      .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT)
+      .map(({ destination }) => destination);
+  }, [destinationPriceState.loading, destinationPriceState.prices, popularDestinations]);
+
   const fallbackDiscoveryCards = useMemo<HomeDiscoveryFareCard[]>(
     () =>
       getHomeDiscoveryByRegion(regionCode)
@@ -433,7 +462,7 @@ export default function Home() {
               ref={destinationsRailRef}
               className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {popularDestinations.map((destination) => {
+              {visiblePopularDestinations.map((destination) => {
                 const price = destinationPriceState.prices[destination.id];
 
                 return (

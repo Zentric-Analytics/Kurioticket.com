@@ -33,11 +33,11 @@ const PROVIDER_NAME = "Duffel";
 const NEAR_EXPIRY_REFRESH_WINDOW_MS = 6 * 60 * 60 * 1000;
 
 export const HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS = {
-  popularVisibleTarget: 5,
+  popularVisibleTarget: 8,
   discoverVisibleTarget: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
-  discoverBackupFreshTarget: 3,
-  maxRouteAttemptsPerRun: 36,
-  maxProviderCallsPerRun: 96,
+  discoverBackupFreshTarget: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+  maxRouteAttemptsPerRun: 144,
+  maxProviderCallsPerRun: 144,
   maxDateCandidatesPerRoute: 3,
 } as const;
 
@@ -251,10 +251,12 @@ export type HomepageFareRefreshStoppedReason =
   | "all_remaining_cooldown_or_unavailable";
 
 export type HomepageFareMarketTarget = {
-  popularTarget: number;
-  popularFresh: number;
-  discoveryTarget: number;
-  discoveryFresh: number;
+  popularVisibleTarget: number;
+  popularVisibleFresh: number;
+  discoveryVisibleTarget: number;
+  discoveryVisibleFresh: number;
+  backupTarget: number;
+  backupFresh: number;
   targetMet: boolean;
   reason?: string;
 };
@@ -289,7 +291,13 @@ export type HomepageFareRefreshCounts = {
   marketTargetMet: Record<string, boolean>;
   underfilledMarkets: HomepageFareUnderfilledMarket[];
   marketRoutesAttempted: Record<string, number>;
+  routeAttemptsByMarket: Record<string, number>;
   marketFreshCounts: Record<string, number>;
+  visiblePopularPricedByMarket: Record<string, number>;
+  visibleDiscoveryPricedByMarket: Record<string, number>;
+  backupFreshByMarket: Record<string, number>;
+  candidatePoolSizeByMarket: Record<string, number>;
+  replacementCandidatesUsedByMarket: Record<string, number>;
   popularFreshByMarket: Record<string, number>;
   discoveryFreshByMarket: Record<string, number>;
   providerCallsByMarket: Record<string, number>;
@@ -570,6 +578,9 @@ function computeFreshCountsByMarket(
   const marketFreshCounts = createEmptyRefreshMarketCounts();
   const popularFreshByMarket = createEmptyRefreshMarketCounts();
   const discoveryFreshByMarket = createEmptyRefreshMarketCounts();
+  const visiblePopularPricedByMarket = createEmptyRefreshMarketCounts();
+  const visibleDiscoveryPricedByMarket = createEmptyRefreshMarketCounts();
+  const backupFreshByMarket = createEmptyRefreshMarketCounts();
 
   for (const route of routes) {
     if (!freshRouteIds.has(route.id)) continue;
@@ -579,15 +590,75 @@ function computeFreshCountsByMarket(
     if (route.isPopular) {
       popularFreshByMarket[route.market] =
         (popularFreshByMarket[route.market] ?? 0) + 1;
+      if (route.visibility === "visible") {
+        visiblePopularPricedByMarket[route.market] =
+          (visiblePopularPricedByMarket[route.market] ?? 0) + 1;
+      }
     }
 
     if (route.isDiscover) {
       discoveryFreshByMarket[route.market] =
         (discoveryFreshByMarket[route.market] ?? 0) + 1;
+      if (route.visibility === "visible" || route.visibility === "fallback") {
+        visibleDiscoveryPricedByMarket[route.market] =
+          (visibleDiscoveryPricedByMarket[route.market] ?? 0) + 1;
+      } else if (route.visibility === "backup") {
+        backupFreshByMarket[route.market] =
+          (backupFreshByMarket[route.market] ?? 0) + 1;
+      }
     }
   }
 
-  return { marketFreshCounts, popularFreshByMarket, discoveryFreshByMarket };
+  return {
+    marketFreshCounts,
+    popularFreshByMarket,
+    discoveryFreshByMarket,
+    visiblePopularPricedByMarket,
+    visibleDiscoveryPricedByMarket,
+    backupFreshByMarket,
+  };
+}
+
+function computeCandidatePoolSizeByMarket(routes: HomepageRefreshRoute[]) {
+  const counts = createEmptyRefreshMarketCounts();
+
+  for (const route of routes) {
+    counts[route.market] = (counts[route.market] ?? 0) + 1;
+  }
+
+  return counts;
+}
+
+function computeReplacementCandidatesUsedByMarket(
+  routes: HomepageRefreshRoute[],
+  freshRouteIds: Set<string>,
+) {
+  const counts = createEmptyRefreshMarketCounts();
+
+  for (const market of HOMEPAGE_FARE_REFRESH_MARKETS) {
+    const marketRoutes = routes.filter((route) => route.market === market);
+    const visibleDiscoveryFresh = marketRoutes.filter(
+      (route) =>
+        route.isDiscover && route.visibility === "visible" && freshRouteIds.has(route.id),
+    ).length;
+    const visibleDiscoveryTarget = Math.min(
+      HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+      marketRoutes.filter(
+        (route) => route.isDiscover && route.visibility === "visible",
+      ).length,
+    );
+    const backupFresh = marketRoutes.filter(
+      (route) =>
+        route.isDiscover && route.visibility === "backup" && freshRouteIds.has(route.id),
+    ).length;
+
+    counts[market] = Math.min(
+      Math.max(0, visibleDiscoveryTarget - visibleDiscoveryFresh),
+      backupFresh,
+    );
+  }
+
+  return counts;
 }
 
 function updateRefreshMarketFreshMetadata(
@@ -595,12 +666,25 @@ function updateRefreshMarketFreshMetadata(
   routes: HomepageRefreshRoute[],
   freshRouteIds: Set<string>,
 ) {
-  const { marketFreshCounts, popularFreshByMarket, discoveryFreshByMarket } =
-    computeFreshCountsByMarket(routes, freshRouteIds);
+  const {
+    marketFreshCounts,
+    popularFreshByMarket,
+    discoveryFreshByMarket,
+    visiblePopularPricedByMarket,
+    visibleDiscoveryPricedByMarket,
+    backupFreshByMarket,
+  } = computeFreshCountsByMarket(routes, freshRouteIds);
 
   counts.marketFreshCounts = marketFreshCounts;
   counts.popularFreshByMarket = popularFreshByMarket;
   counts.discoveryFreshByMarket = discoveryFreshByMarket;
+  counts.visiblePopularPricedByMarket = visiblePopularPricedByMarket;
+  counts.visibleDiscoveryPricedByMarket = visibleDiscoveryPricedByMarket;
+  counts.backupFreshByMarket = backupFreshByMarket;
+  counts.replacementCandidatesUsedByMarket = computeReplacementCandidatesUsedByMarket(
+    routes,
+    freshRouteIds,
+  );
 }
 
 function updateRefreshMarketTargetMetadata(
@@ -635,37 +719,67 @@ function computeHomepageFareMarketTargets(
   return Object.fromEntries(
     HOMEPAGE_FARE_REFRESH_MARKETS.map((market) => {
       const marketRoutes = routes.filter((route) => route.market === market);
-      const popularTarget = Math.min(
+      const visiblePopularRoutes = marketRoutes.filter(
+        (route) => route.isPopular && route.visibility === "visible",
+      );
+      const visibleDiscoveryRoutes = marketRoutes.filter(
+        (route) =>
+          route.isDiscover &&
+          (route.visibility === "visible" || route.visibility === "fallback"),
+      );
+      const backupRoutes = marketRoutes.filter(
+        (route) => route.visibility === "backup",
+      );
+      const popularVisibleTarget = Math.min(
         budget.popularVisibleTarget,
-        marketRoutes.filter((route) => route.isPopular).length,
+        visiblePopularRoutes.length,
       );
-      const discoveryTarget = Math.min(
-        budget.discoverVisibleTarget + budget.discoverBackupFreshTarget,
-        marketRoutes.filter((route) => route.isDiscover).length,
+      const discoveryVisibleTarget = Math.min(
+        budget.discoverVisibleTarget,
+        visibleDiscoveryRoutes.length,
       );
-      const popularFresh = marketRoutes.filter(
-        (route) => route.isPopular && freshRouteIds.has(route.id),
+      const backupTarget = Math.min(
+        Math.max(0, marketRoutes.length - popularVisibleTarget - discoveryVisibleTarget),
+        budget.discoverBackupFreshTarget,
+      );
+      const popularVisibleFresh = visiblePopularRoutes.filter((route) =>
+        freshRouteIds.has(route.id),
       ).length;
-      const discoveryFresh = marketRoutes.filter(
+      const discoveryPoolFresh = marketRoutes.filter(
         (route) => route.isDiscover && freshRouteIds.has(route.id),
       ).length;
+      const discoveryVisibleFresh = Math.min(
+        discoveryVisibleTarget,
+        discoveryPoolFresh,
+      );
+      const backupFresh = backupRoutes.filter((route) =>
+        freshRouteIds.has(route.id),
+      ).length;
       const targetMet =
-        popularFresh >= popularTarget && discoveryFresh >= discoveryTarget;
-      const missingPopular = Math.max(0, popularTarget - popularFresh);
-      const missingDiscovery = Math.max(0, discoveryTarget - discoveryFresh);
+        popularVisibleFresh >= popularVisibleTarget &&
+        discoveryVisibleFresh >= discoveryVisibleTarget &&
+        backupFresh >= backupTarget;
+      const missingPopular = Math.max(0, popularVisibleTarget - popularVisibleFresh);
+      const missingDiscovery = Math.max(
+        0,
+        discoveryVisibleTarget - discoveryVisibleFresh,
+      );
+      const missingBackup = Math.max(0, backupTarget - backupFresh);
 
       return [
         market,
         {
-          popularTarget,
-          popularFresh,
-          discoveryTarget,
-          discoveryFresh,
+          popularVisibleTarget,
+          popularVisibleFresh,
+          discoveryVisibleTarget,
+          discoveryVisibleFresh,
+          backupTarget,
+          backupFresh,
           targetMet,
           ...(targetMet
             ? {}
             : {
-                reason: `missing ${missingPopular} popular and ${missingDiscovery} discovery fresh fares`,
+                reason: `missing ${missingPopular} visible popular, ${missingDiscovery} visible discovery, and ${missingBackup} backup fresh fares`,
               }),
         },
       ];
@@ -722,7 +836,13 @@ export async function refreshPhase3AHomepageFareSnapshots({
     marketTargetMet: {},
     underfilledMarkets: [],
     marketRoutesAttempted: createEmptyRefreshMarketCounts(),
+    routeAttemptsByMarket: createEmptyRefreshMarketCounts(),
     marketFreshCounts: createEmptyRefreshMarketCounts(),
+    visiblePopularPricedByMarket: createEmptyRefreshMarketCounts(),
+    visibleDiscoveryPricedByMarket: createEmptyRefreshMarketCounts(),
+    backupFreshByMarket: createEmptyRefreshMarketCounts(),
+    candidatePoolSizeByMarket: computeCandidatePoolSizeByMarket(allCandidateRoutes),
+    replacementCandidatesUsedByMarket: createEmptyRefreshMarketCounts(),
     popularFreshByMarket: createEmptyRefreshMarketCounts(),
     discoveryFreshByMarket: createEmptyRefreshMarketCounts(),
     providerCallsByMarket: createEmptyRefreshMarketCounts(),
@@ -824,6 +944,8 @@ export async function refreshPhase3AHomepageFareSnapshots({
     counts.routeAttempts += 1;
     counts.marketRoutesAttempted[route.market] =
       (counts.marketRoutesAttempted[route.market] ?? 0) + 1;
+    counts.routeAttemptsByMarket[route.market] =
+      (counts.routeAttemptsByMarket[route.market] ?? 0) + 1;
     const result = await refreshHomepageFareRoute({
       route,
       departureDate: dateStrategy.departureDate,
@@ -1224,23 +1346,13 @@ function hasMetHomepageFareOperationalTarget(
   budget: HomepageFareRefreshBudget,
 ) {
   return HOMEPAGE_FARE_REFRESH_MARKETS.every((market) => {
-    const marketRoutes = routes.filter((route) => route.market === market);
-    const popularTarget = Math.min(
-      budget.popularVisibleTarget,
-      marketRoutes.filter((route) => route.isPopular).length,
-    );
-    const discoveryTarget = Math.min(
-      budget.discoverVisibleTarget + budget.discoverBackupFreshTarget,
-      marketRoutes.filter((route) => route.isDiscover).length,
-    );
-    const freshPopular = marketRoutes.filter(
-      (route) => route.isPopular && freshRouteIds.has(route.id),
-    ).length;
-    const freshDiscover = marketRoutes.filter(
-      (route) => route.isDiscover && freshRouteIds.has(route.id),
-    ).length;
+    const targets = computeHomepageFareMarketTargets(
+      routes,
+      freshRouteIds,
+      budget,
+    )[market];
 
-    return freshPopular >= popularTarget && freshDiscover >= discoveryTarget;
+    return targets?.targetMet === true;
   });
 }
 
