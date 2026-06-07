@@ -23,11 +23,13 @@ export async function sendTransactionalEmail(input: {
   to: string;
   subject: string;
   html: string;
+  from?: string;
+  replyTo?: string;
   idempotencyKey?: string;
   requireConfigured?: boolean;
 }) {
   const resend = getResend();
-  const from = process.env.RESEND_FROM_EMAIL || "";
+  const from = input.from || process.env.RESEND_FROM_EMAIL || "";
 
   if (!resend || !from) {
     if (input.requireConfigured) {
@@ -46,6 +48,7 @@ export async function sendTransactionalEmail(input: {
       to: input.to,
       subject: input.subject,
       html: input.html,
+      ...(input.replyTo ? { replyTo: input.replyTo } : {}),
     },
     input.idempotencyKey ? { headers: { "Idempotency-Key": input.idempotencyKey } } : undefined,
   );
@@ -114,6 +117,17 @@ export function loginVerificationCodeEmail(input: { code: string; name?: string 
       <p style="display:inline-block;font-size:32px;font-weight:700;letter-spacing:7px;color:#0f766e;background:#eef4f7;border-radius:12px;padding:12px 16px">${input.code}</p>
       <p>This code expires in ${input.expiresInMinutes} minutes.</p>
       <p>If you did not try to log in to Kurioticket, you can ignore this email.</p>
+    </div>
+  `;
+}
+
+export function newsletterWelcomeEmail() {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
+      <h1 style="font-size:22px">You’re subscribed to Kurioticket updates</h1>
+      <p>Thanks for subscribing. We’ll send occasional Kurioticket updates to help you compare travel options more calmly.</p>
+      <p>We will not ask you for payment details by email, and booking decisions should always be confirmed on Kurioticket or the provider site.</p>
+      <p>You can unsubscribe anytime from future newsletter emails.</p>
     </div>
   `;
 }

@@ -1424,7 +1424,7 @@ export function FlightResultsClient() {
   useEffect(() => {
     function updateDropdownPosition(target: "origin" | "destination") {
       const viewportPadding = 16;
-      const preferredWidth = 520;
+      const preferredWidth = 380;
       const wrap =
         target === "origin"
           ? originWrapRef.current
@@ -1505,7 +1505,7 @@ export function FlightResultsClient() {
   useEffect(() => {
     function updateDatePickerPosition(target: "departure" | "return") {
       const viewportPadding = 16;
-      const preferredWidth = 720;
+      const preferredWidth = 620;
       const wrap =
         target === "departure"
           ? departureWrapRef.current
@@ -1572,7 +1572,7 @@ export function FlightResultsClient() {
   useEffect(() => {
     function updateTravelerPopoverPosition() {
       const viewportPadding = 16;
-      const preferredWidth = 520;
+      const preferredWidth = 360;
       const trigger = travelerCabinWrapRef.current?.querySelector("button");
 
       if (!trigger) return;
@@ -4513,7 +4513,7 @@ function DatePickerPopover({
             return (
               <span
                 key={`${renderedMonth.toISOString()}-blank-${index}`}
-                className="h-9"
+                className={mobileSheet ? "h-9" : "h-8"}
               />
             );
           }
@@ -4538,7 +4538,7 @@ function DatePickerPopover({
                 onSelect(date);
               }}
               className={cn(
-                "h-9 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:h-10 sm:text-sm",
+                mobileSheet ? "h-9 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:h-10 sm:text-sm" : "h-8 rounded-md text-xs font-semibold transition hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500",
                 selectedDeparture || selectedReturn
                   ? "bg-[#0a66c2] text-white hover:bg-[#085aa9] focus:bg-[#085aa9]"
                   : disabledDate
@@ -4571,10 +4571,10 @@ function DatePickerPopover({
       }
       style={dialogStyle}
       className={cn(
-        "w-full border border-slate-200 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.16)]",
+        "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-y-auto overscroll-contain rounded-none p-4 pt-[calc(1rem+env(safe-area-inset-top))] pb-[calc(1rem+env(safe-area-inset-bottom))]"
-          : "max-w-[min(620px,calc(100vw-2rem))] rounded-2xl p-3.5 sm:p-4",
+          : "max-w-[min(560px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
       {mobileSheet ? (
@@ -4695,10 +4695,10 @@ function TravelerCabinPopover({
       aria-label="Travelers and cabin class"
       style={dialogStyle}
       className={cn(
-        "w-full border border-slate-200 bg-white shadow-lg shadow-slate-900/10",
+        "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
         mobileSheet
           ? "flex h-[100dvh] min-h-0 max-w-full flex-col overflow-hidden rounded-none pt-[env(safe-area-inset-top)]"
-          : "max-w-[min(350px,calc(100vw-2rem))] rounded-2xl p-3",
+          : "max-w-[min(320px,calc(100vw-2rem))] rounded-2xl p-3",
       )}
     >
       {mobileSheet ? (

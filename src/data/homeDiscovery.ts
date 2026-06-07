@@ -1,3 +1,5 @@
+import { resolveMarket } from "@/lib/market/resolveMarket";
+
 import { validateDestinationImages } from "./destinationImageValidation";
 
 export type HomeDiscoveryItem = {
@@ -237,91 +239,6 @@ const fallbackDiscovery: HomeDiscoveryItem[] = [
   },
 ];
 
-
-const REGIONAL_HOME_DISCOVERY_SOURCE_BY_COUNTRY: Record<string, string> = {
-  // Africa markets without dedicated homepage discovery data use Nigeria as the
-  // closest available Africa-relevant route set instead of the US market.
-  AO: "NG",
-  BF: "NG",
-  BJ: "NG",
-  BW: "NG",
-  CD: "NG",
-  CI: "NG",
-  CM: "NG",
-  DZ: "NG",
-  EG: "NG",
-  ET: "NG",
-  GH: "NG",
-  KE: "NG",
-  MA: "NG",
-  MU: "NG",
-  NA: "NG",
-  RW: "NG",
-  SN: "NG",
-  TZ: "NG",
-  UG: "NG",
-  ZA: "NG",
-  ZM: "NG",
-  ZW: "NG",
-
-  // Europe markets without dedicated cards use the UK/Europe route set.
-  AT: "GB",
-  BE: "GB",
-  CH: "GB",
-  CZ: "GB",
-  DE: "GB",
-  DK: "GB",
-  ES: "GB",
-  FI: "GB",
-  FR: "GB",
-  IE: "GB",
-  IT: "GB",
-  NL: "GB",
-  NO: "GB",
-  PL: "GB",
-  PT: "GB",
-  SE: "GB",
-
-  // North America non-US markets should never fall back to US domestic cards.
-  MX: "CA",
-
-  // Middle East markets use the UAE/global-hub route set when exact content is absent.
-  AE: "AE",
-  BH: "AE",
-  IL: "AE",
-  JO: "AE",
-  KW: "AE",
-  LB: "AE",
-  OM: "AE",
-  QA: "AE",
-  SA: "AE",
-
-  // Asia markets use the Japan/Asia route set when exact content is absent.
-  BD: "JP",
-  CN: "JP",
-  HK: "JP",
-  ID: "JP",
-  IN: "JP",
-  JP: "JP",
-  KR: "JP",
-  LK: "JP",
-  MY: "JP",
-  PH: "JP",
-  SG: "JP",
-  TH: "JP",
-  TW: "JP",
-  VN: "JP",
-
-  // Latin America markets use the Brazil/Latin America route set when exact content is absent.
-  AR: "BR",
-  BO: "BR",
-  BR: "BR",
-  CL: "BR",
-  CO: "BR",
-  EC: "BR",
-  PE: "BR",
-  UY: "BR",
-};
 
 export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
   NG: [
@@ -1384,6 +1301,87 @@ homeDiscoveryByRegion.ZA = [
   },
 ];
 
+homeDiscoveryByRegion.DE = [
+  {
+    id: "de-fra-lhr",
+    title: "London business and culture link",
+    originCity: "Frankfurt",
+    originCode: "FRA",
+    destinationCity: "London",
+    destinationCode: "LHR",
+    routeNote: "High-frequency Europe route for meetings, weekends, and onward trips.",
+    priceFromUsd: 158,
+    image:
+      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "London skyline and historic landmarks",
+  },
+  {
+    id: "de-fra-cdg",
+    title: "Paris rail-and-air alternative",
+    originCity: "Frankfurt",
+    originCode: "FRA",
+    destinationCity: "Paris",
+    destinationCode: "CDG",
+    routeNote: "Core Europe corridor for fashion, museums, and business travel.",
+    priceFromUsd: 142,
+    image:
+      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Eiffel Tower above Paris streets",
+  },
+  {
+    id: "de-fra-ams",
+    title: "Amsterdam canal weekend",
+    originCity: "Frankfurt",
+    originCode: "FRA",
+    destinationCity: "Amsterdam",
+    destinationCode: "AMS",
+    routeNote: "Short Europe hop for canals, museums, and conference travel.",
+    priceFromUsd: 133,
+    image:
+      "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Amsterdam canals and historic homes",
+  },
+  {
+    id: "de-muc-fco",
+    title: "Rome landmark getaway",
+    originCity: "Munich",
+    originCode: "MUC",
+    destinationCity: "Rome",
+    destinationCode: "FCO",
+    routeNote: "Classic southern Europe break for ruins, piazzas, and food.",
+    priceFromUsd: 156,
+    image:
+      "https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "The Colosseum and city streets in Rome",
+  },
+  {
+    id: "de-fra-ist",
+    title: "Istanbul Bosphorus connector",
+    originCity: "Frankfurt",
+    originCode: "FRA",
+    destinationCity: "Istanbul",
+    destinationCode: "IST",
+    routeNote: "Major hub route for Türkiye trips and onward regional links.",
+    priceFromUsd: 214,
+    image:
+      "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Istanbul skyline with domes and minarets",
+  },
+  {
+    id: "de-fra-dxb",
+    title: "Dubai long-haul hub escape",
+    originCity: "Frankfurt",
+    originCode: "FRA",
+    destinationCity: "Dubai",
+    destinationCode: "DXB",
+    routeNote: "Strong Gulf route for winter sun and onward Asia connections.",
+    priceFromUsd: 392,
+    image:
+      "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=90",
+    imageAlt: "Downtown Dubai skyline with Burj Khalifa",
+  },
+];
+
 homeDiscoveryByRegion.AE = [
   {
     id: "ae-dxb-lhr",
@@ -1626,6 +1624,14 @@ homeDiscoveryByRegion.BR = [
     imageAlt: "Rio de Janeiro coastline and mountains",
   },
 ];
+
+homeDiscoveryByRegion.AFRICA = homeDiscoveryByRegion.NG;
+homeDiscoveryByRegion.EUROPE = homeDiscoveryByRegion.DE;
+homeDiscoveryByRegion.MIDDLE_EAST = homeDiscoveryByRegion.AE;
+homeDiscoveryByRegion.ASIA = homeDiscoveryByRegion.JP;
+homeDiscoveryByRegion.LATIN_AMERICA = homeDiscoveryByRegion.BR;
+homeDiscoveryByRegion.CANADA = homeDiscoveryByRegion.CA;
+homeDiscoveryByRegion.GLOBAL = fallbackDiscovery;
 
 validateDestinationImages(
   "fallback home discovery destinations",
@@ -2348,15 +2354,17 @@ function normalizeHomeDiscoveryRegionCode(
 ) {
   const normalized = regionCode?.trim().toUpperCase();
 
-  return normalized && /^[A-Z]{2}$/.test(normalized)
+  return normalized && /^[A-Z_]{2,20}$/.test(normalized)
     ? normalized
-    : DEFAULT_HOME_DISCOVERY_REGION;
+    : GLOBAL_HOME_DISCOVERY_REGION;
 }
 
 function getRegionalHomeDiscoverySourceCode(regionCode: string) {
   if (regionCode === DEFAULT_HOME_DISCOVERY_REGION) return undefined;
 
-  return REGIONAL_HOME_DISCOVERY_SOURCE_BY_COUNTRY[regionCode];
+  const marketCode = resolveMarket(regionCode).contentMarketCode;
+
+  return homeDiscoveryByRegion[marketCode] ? marketCode : undefined;
 }
 
 function toHomeDiscoveryFareCandidate(

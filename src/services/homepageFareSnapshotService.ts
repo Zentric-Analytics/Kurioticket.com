@@ -4,13 +4,14 @@ import {
   DEFAULT_HOME_DISCOVERY_REGION,
   GLOBAL_HOME_DISCOVERY_REGION,
   HOME_DISCOVERY_VISIBLE_CARD_COUNT,
-  getDefaultHomeDiscoveryPriceRoutes,
   getGlobalHomeDiscoveryFareCandidates,
   getGlobalHomeDiscoveryPriceRoutes,
   getHomeDiscoveryFareCandidates,
   getRegionalHomeDiscoveryFareCandidates,
   type HomeDiscoveryFareCandidate,
 } from "@/data/homeDiscovery";
+import { popularDestinationsByMarket } from "@/data/marketHomeContent";
+import { HOMEPAGE_REFRESH_MARKET_CODES } from "@/lib/market/resolveMarket";
 import { getOptionalPrisma } from "@/lib/prisma";
 import type {
   FlightSearchParams,
@@ -35,10 +36,14 @@ export const HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS = {
   popularVisibleTarget: 5,
   discoverVisibleTarget: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
   discoverBackupFreshTarget: 3,
-  maxRouteAttemptsPerRun: 28,
-  maxProviderCallsPerRun: 84,
+  maxRouteAttemptsPerRun: 36,
+  maxProviderCallsPerRun: 96,
   maxDateCandidatesPerRoute: 3,
 } as const;
+
+const HOMEPAGE_FARE_REFRESH_MARKETS = HOMEPAGE_REFRESH_MARKET_CODES;
+
+type HomepageFareRefreshMarket = (typeof HOMEPAGE_FARE_REFRESH_MARKETS)[number];
 
 const SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES = {
   provider_no_inventory: "no_inventory",
@@ -242,7 +247,21 @@ export type HomepageFareRefreshStoppedReason =
   | "target_met"
   | "route_budget_exhausted"
   | "provider_budget_exhausted"
-  | "completed";
+  | "completed"
+  | "all_remaining_cooldown_or_unavailable";
+
+export type HomepageFareMarketTarget = {
+  popularTarget: number;
+  popularFresh: number;
+  discoveryTarget: number;
+  discoveryFresh: number;
+  targetMet: boolean;
+  reason?: string;
+};
+
+export type HomepageFareUnderfilledMarket = HomepageFareMarketTarget & {
+  market: string;
+};
 
 export type HomepageFareRefreshReadiness = {
   freshPopular: number;
@@ -265,6 +284,19 @@ export type HomepageFareRefreshCounts = {
   readinessBefore: HomepageFareRefreshReadiness;
   readinessAfter: HomepageFareRefreshReadiness;
   refreshBudget: HomepageFareRefreshBudget;
+  marketsConsidered: string[];
+  marketTargets: Record<string, HomepageFareMarketTarget>;
+  marketTargetMet: Record<string, boolean>;
+  underfilledMarkets: HomepageFareUnderfilledMarket[];
+  marketRoutesAttempted: Record<string, number>;
+  marketFreshCounts: Record<string, number>;
+  popularFreshByMarket: Record<string, number>;
+  discoveryFreshByMarket: Record<string, number>;
+  providerCallsByMarket: Record<string, number>;
+  failedByMarket: Record<string, number>;
+  unavailableByMarket: Record<string, number>;
+  skippedCooldownByMarket: Record<string, number>;
+  skippedByMarket: Record<string, number>;
 };
 
 export type HomepageFareRefreshScope =
@@ -274,9 +306,17 @@ export type HomepageFareRefreshScope =
   | "discover-first-6"
   | "all-phase-3a";
 
+type HomepageFareRefreshRouteVisibility =
+  | "visible"
+  | "backup"
+  | "fallback"
+  | "legacy";
+
 type HomepageRefreshRoute = HomepageFareRoute & {
   isPopular: boolean;
   isDiscover: boolean;
+  market: string;
+  visibility: HomepageFareRefreshRouteVisibility;
   priority: number;
 };
 
@@ -416,33 +456,221 @@ export function buildHomepageFareSnapshotKey(input: SnapshotKeyInput) {
 }
 
 export function getPhase3AHomepageFareRoutes(): HomepageFareRoute[] {
-  const popularRoutes = PHASE_3A_POPULAR_HOMEPAGE_FARE_ROUTES.map((route) => ({
-    id: `popular-${route.id}`,
-    label: route.label,
-    origin: HOMEPAGE_FARE_DEFAULT_ORIGIN,
-    destination: route.destination,
-  }));
-  const defaultDiscoveryRoutes = getDefaultHomeDiscoveryPriceRoutes();
-  const visibleDefaultDiscoveryRoutes = defaultDiscoveryRoutes.slice(
-    0,
-    HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+  return dedupeHomepageFareRoutes(
+    getAllHomepageFareRefreshRoutes().map(
+      ({ id, label, origin, destination }) => ({
+        id,
+        label,
+        origin,
+        destination,
+      }),
+    ),
   );
-  const backupDefaultDiscoveryRoutes = defaultDiscoveryRoutes.slice(
-    HOME_DISCOVERY_VISIBLE_CARD_COUNT,
-  );
-  const globalDiscoveryRoutes = getGlobalHomeDiscoveryPriceRoutes();
-  const discoverRoutes = [
-    ...visibleDefaultDiscoveryRoutes,
-    ...globalDiscoveryRoutes,
-    ...backupDefaultDiscoveryRoutes,
-  ].map((route) => ({
-    id: `discover-${route.id}`,
-    label: route.label ?? route.id,
-    origin: route.originCode,
-    destination: route.destinationCode,
-  }));
+}
 
-  return dedupeHomepageFareRoutes([...popularRoutes, ...discoverRoutes]);
+function getAllHomepageFareRefreshRoutes(): HomepageRefreshRoute[] {
+  const routes: HomepageRefreshRoute[] = [];
+  let priority = 1;
+
+  for (const market of HOMEPAGE_FARE_REFRESH_MARKETS) {
+    for (const route of getMarketPopularRefreshRoutes(market)) {
+      routes.push({
+        ...route,
+        isPopular: true,
+        isDiscover: false,
+        market,
+        visibility: "visible",
+        priority,
+      });
+      priority += 1;
+    }
+
+    for (const route of getMarketDiscoveryRefreshRoutes(market)) {
+      routes.push({
+        ...route,
+        isPopular: false,
+        isDiscover: true,
+        market,
+        visibility: route.visibility,
+        priority,
+      });
+      priority += 1;
+    }
+  }
+
+  for (const route of PHASE_3A_POPULAR_HOMEPAGE_FARE_ROUTES) {
+    routes.push({
+      id: `popular-${route.id}`,
+      label: route.label,
+      origin: HOMEPAGE_FARE_DEFAULT_ORIGIN,
+      destination: route.destination,
+      isPopular: true,
+      isDiscover: false,
+      market: DEFAULT_HOME_DISCOVERY_REGION,
+      visibility: "legacy",
+      priority,
+    });
+    priority += 1;
+  }
+
+  return dedupeRefreshRoutes(routes);
+}
+
+function getMarketPopularRefreshRoutes(
+  market: HomepageFareRefreshMarket,
+): HomepageFareRoute[] {
+  const destinations = popularDestinationsByMarket[market] ?? [];
+
+  return destinations.map((destination) => ({
+    id: `popular-${destination.id}`,
+    label: destination.city,
+    origin: destination.originCode,
+    destination: destination.code,
+  }));
+}
+
+function getMarketDiscoveryRefreshRoutes(
+  market: HomepageFareRefreshMarket,
+): Array<
+  HomepageFareRoute & { visibility: HomepageFareRefreshRouteVisibility }
+> {
+  if (market === GLOBAL_HOME_DISCOVERY_REGION) {
+    return getGlobalHomeDiscoveryPriceRoutes().map((route, index) => ({
+      id: `discover-${route.id}`,
+      label: route.label ?? route.id,
+      origin: route.originCode,
+      destination: route.destinationCode,
+      visibility:
+        index < HOME_DISCOVERY_VISIBLE_CARD_COUNT ? "fallback" : "backup",
+    }));
+  }
+
+  const regionCode = market === "CANADA" ? "CA" : market;
+  const candidates = getHomeDiscoveryFareCandidates(regionCode);
+
+  return candidates.map((candidate, index) => ({
+    id: `discover-${candidate.id}`,
+    label: candidate.title,
+    origin: candidate.originCode,
+    destination: candidate.destinationCode,
+    visibility: index < HOME_DISCOVERY_VISIBLE_CARD_COUNT ? "visible" : "backup",
+  }));
+}
+
+function createEmptyRefreshMarketCounts() {
+  return Object.fromEntries(
+    HOMEPAGE_FARE_REFRESH_MARKETS.map((market) => [market, 0]),
+  ) as Record<string, number>;
+}
+
+function computeFreshCountsByMarket(
+  routes: HomepageRefreshRoute[],
+  freshRouteIds: Set<string>,
+) {
+  const marketFreshCounts = createEmptyRefreshMarketCounts();
+  const popularFreshByMarket = createEmptyRefreshMarketCounts();
+  const discoveryFreshByMarket = createEmptyRefreshMarketCounts();
+
+  for (const route of routes) {
+    if (!freshRouteIds.has(route.id)) continue;
+
+    marketFreshCounts[route.market] = (marketFreshCounts[route.market] ?? 0) + 1;
+
+    if (route.isPopular) {
+      popularFreshByMarket[route.market] =
+        (popularFreshByMarket[route.market] ?? 0) + 1;
+    }
+
+    if (route.isDiscover) {
+      discoveryFreshByMarket[route.market] =
+        (discoveryFreshByMarket[route.market] ?? 0) + 1;
+    }
+  }
+
+  return { marketFreshCounts, popularFreshByMarket, discoveryFreshByMarket };
+}
+
+function updateRefreshMarketFreshMetadata(
+  counts: HomepageFareRefreshCounts,
+  routes: HomepageRefreshRoute[],
+  freshRouteIds: Set<string>,
+) {
+  const { marketFreshCounts, popularFreshByMarket, discoveryFreshByMarket } =
+    computeFreshCountsByMarket(routes, freshRouteIds);
+
+  counts.marketFreshCounts = marketFreshCounts;
+  counts.popularFreshByMarket = popularFreshByMarket;
+  counts.discoveryFreshByMarket = discoveryFreshByMarket;
+}
+
+function updateRefreshMarketTargetMetadata(
+  counts: HomepageFareRefreshCounts,
+  routes: HomepageRefreshRoute[],
+  freshRouteIds: Set<string>,
+  budget: HomepageFareRefreshBudget,
+) {
+  const marketTargets = computeHomepageFareMarketTargets(
+    routes,
+    freshRouteIds,
+    budget,
+  );
+
+  counts.marketTargets = marketTargets;
+  counts.marketTargetMet = Object.fromEntries(
+    Object.entries(marketTargets).map(([market, target]) => [
+      market,
+      target.targetMet,
+    ]),
+  );
+  counts.underfilledMarkets = Object.entries(marketTargets)
+    .filter(([, target]) => !target.targetMet)
+    .map(([market, target]) => ({ market, ...target }));
+}
+
+function computeHomepageFareMarketTargets(
+  routes: HomepageRefreshRoute[],
+  freshRouteIds: Set<string>,
+  budget: HomepageFareRefreshBudget,
+): Record<string, HomepageFareMarketTarget> {
+  return Object.fromEntries(
+    HOMEPAGE_FARE_REFRESH_MARKETS.map((market) => {
+      const marketRoutes = routes.filter((route) => route.market === market);
+      const popularTarget = Math.min(
+        budget.popularVisibleTarget,
+        marketRoutes.filter((route) => route.isPopular).length,
+      );
+      const discoveryTarget = Math.min(
+        budget.discoverVisibleTarget + budget.discoverBackupFreshTarget,
+        marketRoutes.filter((route) => route.isDiscover).length,
+      );
+      const popularFresh = marketRoutes.filter(
+        (route) => route.isPopular && freshRouteIds.has(route.id),
+      ).length;
+      const discoveryFresh = marketRoutes.filter(
+        (route) => route.isDiscover && freshRouteIds.has(route.id),
+      ).length;
+      const targetMet =
+        popularFresh >= popularTarget && discoveryFresh >= discoveryTarget;
+      const missingPopular = Math.max(0, popularTarget - popularFresh);
+      const missingDiscovery = Math.max(0, discoveryTarget - discoveryFresh);
+
+      return [
+        market,
+        {
+          popularTarget,
+          popularFresh,
+          discoveryTarget,
+          discoveryFresh,
+          targetMet,
+          ...(targetMet
+            ? {}
+            : {
+                reason: `missing ${missingPopular} popular and ${missingDiscovery} discovery fresh fares`,
+              }),
+        },
+      ];
+    }),
+  );
 }
 
 export async function refreshPhase3AHomepageFareSnapshots({
@@ -489,10 +717,40 @@ export async function refreshPhase3AHomepageFareSnapshots({
     readinessBefore,
     readinessAfter: readinessBefore,
     refreshBudget,
+    marketsConsidered: [...HOMEPAGE_FARE_REFRESH_MARKETS],
+    marketTargets: {},
+    marketTargetMet: {},
+    underfilledMarkets: [],
+    marketRoutesAttempted: createEmptyRefreshMarketCounts(),
+    marketFreshCounts: createEmptyRefreshMarketCounts(),
+    popularFreshByMarket: createEmptyRefreshMarketCounts(),
+    discoveryFreshByMarket: createEmptyRefreshMarketCounts(),
+    providerCallsByMarket: createEmptyRefreshMarketCounts(),
+    failedByMarket: createEmptyRefreshMarketCounts(),
+    unavailableByMarket: createEmptyRefreshMarketCounts(),
+    skippedCooldownByMarket: createEmptyRefreshMarketCounts(),
+    skippedByMarket: createEmptyRefreshMarketCounts(),
   };
+  updateRefreshMarketFreshMetadata(counts, allCandidateRoutes, freshRouteIds);
+  updateRefreshMarketTargetMetadata(
+    counts,
+    allCandidateRoutes,
+    freshRouteIds,
+    refreshBudget,
+  );
 
-  if (hasMetHomepageFareOperationalTarget(readinessBefore, refreshBudget)) {
+  if (
+    hasMetHomepageFareOperationalTarget(
+      allCandidateRoutes,
+      freshRouteIds,
+      refreshBudget,
+    )
+  ) {
     counts.skipped = refreshRoutes.length;
+    for (const route of refreshRoutes) {
+      counts.skippedByMarket[route.market] =
+        (counts.skippedByMarket[route.market] ?? 0) + 1;
+    }
     counts.stoppedReason = "target_met";
     return counts;
   }
@@ -504,6 +762,31 @@ export async function refreshPhase3AHomepageFareSnapshots({
     freshRouteIds,
     now,
   });
+  const prioritizedRouteIds = new Set(
+    prioritizedRoutes.map((route) => route.id),
+  );
+
+  for (const route of refreshRoutes) {
+    const snapshot = snapshotsByRouteId.get(route.id);
+
+    if (
+      !prioritizedRouteIds.has(route.id) &&
+      isRefreshCooldownSnapshot(snapshot, now)
+    ) {
+      counts.skippedCooldownByMarket[route.market] =
+        (counts.skippedCooldownByMarket[route.market] ?? 0) + 1;
+    }
+  }
+
+  if (!prioritizedRoutes.length) {
+    counts.stoppedReason = "all_remaining_cooldown_or_unavailable";
+    counts.skipped = refreshRoutes.length;
+    for (const route of refreshRoutes) {
+      counts.skippedByMarket[route.market] =
+        (counts.skippedByMarket[route.market] ?? 0) + 1;
+    }
+    return counts;
+  }
 
   for (const route of prioritizedRoutes) {
     counts.readinessAfter = computeHomepageFareRefreshReadiness(
@@ -512,7 +795,13 @@ export async function refreshPhase3AHomepageFareSnapshots({
       refreshBudget,
     );
 
-    if (hasMetHomepageFareOperationalTarget(counts.readinessAfter, refreshBudget)) {
+    if (
+      hasMetHomepageFareOperationalTarget(
+        allCandidateRoutes,
+        freshRouteIds,
+        refreshBudget,
+      )
+    ) {
       counts.stoppedReason = "target_met";
       break;
     }
@@ -533,6 +822,8 @@ export async function refreshPhase3AHomepageFareSnapshots({
     }
 
     counts.routeAttempts += 1;
+    counts.marketRoutesAttempted[route.market] =
+      (counts.marketRoutesAttempted[route.market] ?? 0) + 1;
     const result = await refreshHomepageFareRoute({
       route,
       departureDate: dateStrategy.departureDate,
@@ -543,6 +834,22 @@ export async function refreshPhase3AHomepageFareSnapshots({
 
     if (result === "refreshed" || result === "retained") {
       freshRouteIds.add(route.id);
+      updateRefreshMarketFreshMetadata(
+        counts,
+        allCandidateRoutes,
+        freshRouteIds,
+      );
+      updateRefreshMarketTargetMetadata(
+        counts,
+        allCandidateRoutes,
+        freshRouteIds,
+        refreshBudget,
+      );
+    }
+
+    if (result === "skipped") {
+      counts.skippedByMarket[route.market] =
+        (counts.skippedByMarket[route.market] ?? 0) + 1;
     }
 
     if (result === "provider_incident") {
@@ -557,7 +864,13 @@ export async function refreshPhase3AHomepageFareSnapshots({
   );
 
   if (counts.stoppedReason === "completed") {
-    if (hasMetHomepageFareOperationalTarget(counts.readinessAfter, refreshBudget)) {
+    if (
+      hasMetHomepageFareOperationalTarget(
+        allCandidateRoutes,
+        freshRouteIds,
+        refreshBudget,
+      )
+    ) {
       counts.stoppedReason = "target_met";
     } else if (counts.routeAttempts >= refreshBudget.maxRouteAttemptsPerRun) {
       counts.stoppedReason = "route_budget_exhausted";
@@ -572,7 +885,19 @@ export async function refreshPhase3AHomepageFareSnapshots({
   );
   if (counts.stoppedReason !== "completed" || providerIncidentDetected) {
     counts.skipped += unattemptedRoutes;
+    for (const route of prioritizedRoutes.slice(counts.routeAttempts)) {
+      counts.skippedByMarket[route.market] =
+        (counts.skippedByMarket[route.market] ?? 0) + 1;
+    }
   }
+
+  updateRefreshMarketFreshMetadata(counts, allCandidateRoutes, freshRouteIds);
+  updateRefreshMarketTargetMetadata(
+    counts,
+    allCandidateRoutes,
+    freshRouteIds,
+    refreshBudget,
+  );
 
   return counts;
 }
@@ -636,6 +961,8 @@ async function refreshHomepageFareRoute({
         sort: "cheapest",
       };
       counts.providerCalls += 1;
+      counts.providerCallsByMarket[route.market] =
+        (counts.providerCallsByMarket[route.market] ?? 0) + 1;
       const providerResult = await searchDuffelFlights(providerSearch);
       const result = selectProviderFare(providerResult.results, search.currency);
       const provider = providerResult.provider || PROVIDER_NAME;
@@ -702,6 +1029,8 @@ async function refreshHomepageFareRoute({
         reason: terminalResult.reason,
       });
       counts.unavailable += 1;
+      counts.unavailableByMarket[route.market] =
+        (counts.unavailableByMarket[route.market] ?? 0) + 1;
       return "unavailable";
     }
 
@@ -721,6 +1050,8 @@ async function refreshHomepageFareRoute({
       reason: terminalResult?.reason || "provider_failed",
     });
     counts.failed += 1;
+    counts.failedByMarket[route.market] =
+      (counts.failedByMarket[route.market] ?? 0) + 1;
 
     return terminalResult && isProviderWideHomepageFareIncident(terminalResult.reason)
       ? "provider_incident"
@@ -745,6 +1076,8 @@ async function refreshHomepageFareRoute({
     }
 
     counts.failed += 1;
+    counts.failedByMarket[route.market] =
+      (counts.failedByMarket[route.market] ?? 0) + 1;
     return "failed";
   }
 }
@@ -823,28 +1156,22 @@ export function classifyHomepageFareProviderFailure(
 function getRefreshRoutes(
   scope: HomepageFareRefreshScope,
 ): HomepageRefreshRoute[] {
-  const routes: HomepageRefreshRoute[] = [];
-
-  for (const [index, route] of getPhase3AHomepageFareRoutes().entries()) {
-    const isPopularRoute = route.id.startsWith("popular-");
-    const isDiscoverRoute = route.id.startsWith("discover-");
-
-    if (
-      scope === "all-phase-3a" ||
-      (scope === "popular" && isPopularRoute) ||
-      ((scope === "discover" ||
-        scope === "discover-default" ||
-        scope === "discover-first-6") &&
-        isDiscoverRoute)
-    ) {
-      routes.push({
-        ...route,
-        isPopular: isPopularRoute,
-        isDiscover: isDiscoverRoute,
-        priority: index + 1,
-      });
+  const routes = getAllHomepageFareRefreshRoutes().filter((route) => {
+    if (scope === "all-phase-3a") return true;
+    if (scope === "popular") return route.isPopular;
+    if (scope === "discover" || scope === "discover-default") {
+      return route.isDiscover;
     }
-  }
+    if (scope === "discover-first-6") {
+      return (
+        route.isDiscover &&
+        route.visibility === "visible" &&
+        route.priority <= 6
+      );
+    }
+
+    return false;
+  });
 
   return dedupeRefreshRoutes(routes);
 }
@@ -892,14 +1219,29 @@ function computeHomepageFareRefreshReadiness(
 }
 
 function hasMetHomepageFareOperationalTarget(
-  readiness: HomepageFareRefreshReadiness,
+  routes: HomepageRefreshRoute[],
+  freshRouteIds: Set<string>,
   budget: HomepageFareRefreshBudget,
 ) {
-  return (
-    readiness.freshPopular >= budget.popularVisibleTarget &&
-    readiness.freshDiscover >=
-      budget.discoverVisibleTarget + budget.discoverBackupFreshTarget
-  );
+  return HOMEPAGE_FARE_REFRESH_MARKETS.every((market) => {
+    const marketRoutes = routes.filter((route) => route.market === market);
+    const popularTarget = Math.min(
+      budget.popularVisibleTarget,
+      marketRoutes.filter((route) => route.isPopular).length,
+    );
+    const discoveryTarget = Math.min(
+      budget.discoverVisibleTarget + budget.discoverBackupFreshTarget,
+      marketRoutes.filter((route) => route.isDiscover).length,
+    );
+    const freshPopular = marketRoutes.filter(
+      (route) => route.isPopular && freshRouteIds.has(route.id),
+    ).length;
+    const freshDiscover = marketRoutes.filter(
+      (route) => route.isDiscover && freshRouteIds.has(route.id),
+    ).length;
+
+    return freshPopular >= popularTarget && freshDiscover >= discoveryTarget;
+  });
 }
 
 function prioritizeHomepageFareRefreshRoutes({
@@ -913,26 +1255,68 @@ function prioritizeHomepageFareRefreshRoutes({
   freshRouteIds: Set<string>;
   now: Date;
 }) {
-  return [...routes]
+  const scoredRoutes = [...routes]
     .filter((route) => {
       const snapshot = snapshotsByRouteId.get(route.id);
 
+      if (isRefreshCooldownSnapshot(snapshot, now)) return false;
+
       return !freshRouteIds.has(route.id) || isNearExpirySnapshot(snapshot, now);
     })
-    .sort((first, second) => {
-      const firstScore = getHomepageFareRefreshPriorityScore({
-        route: first,
-        snapshot: snapshotsByRouteId.get(first.id),
+    .map((route) => ({
+      route,
+      score: getHomepageFareRefreshPriorityScore({
+        route,
+        snapshot: snapshotsByRouteId.get(route.id),
         now,
-      });
-      const secondScore = getHomepageFareRefreshPriorityScore({
-        route: second,
-        snapshot: snapshotsByRouteId.get(second.id),
-        now,
-      });
+      }),
+    }))
+    .sort(
+      (first, second) =>
+        first.score - second.score || first.route.priority - second.route.priority,
+    );
 
-      return firstScore - secondScore;
-    });
+  const routesByScore = new Map<number, HomepageRefreshRoute[]>();
+
+  for (const { route, score } of scoredRoutes) {
+    routesByScore.set(score, [...(routesByScore.get(score) ?? []), route]);
+  }
+
+  return [...routesByScore.entries()]
+    .sort(([firstScore], [secondScore]) => firstScore - secondScore)
+    .flatMap(([, sameScoreRoutes]) =>
+      roundRobinHomepageFareRoutesByMarket(sameScoreRoutes),
+    );
+}
+
+function roundRobinHomepageFareRoutesByMarket(routes: HomepageRefreshRoute[]) {
+  const routesByMarket = new Map<string, HomepageRefreshRoute[]>();
+
+  for (const route of routes) {
+    routesByMarket.set(route.market, [
+      ...(routesByMarket.get(route.market) ?? []),
+      route,
+    ]);
+  }
+
+  const orderedRoutes: HomepageRefreshRoute[] = [];
+  let appendedRoute = true;
+
+  while (appendedRoute) {
+    appendedRoute = false;
+
+    for (const market of HOMEPAGE_FARE_REFRESH_MARKETS) {
+      const marketRoutes = routesByMarket.get(market);
+      const route = marketRoutes?.shift();
+
+      if (!route) continue;
+
+      orderedRoutes.push(route);
+      appendedRoute = true;
+    }
+  }
+
+  return orderedRoutes;
 }
 
 function getHomepageFareRefreshPriorityScore({
@@ -951,22 +1335,17 @@ function getHomepageFareRefreshPriorityScore({
   });
   const status = getSnapshotPriorityStatus(snapshot, now);
 
-  if (route.isPopular && !isFresh) return 0;
+  if (route.isPopular && route.visibility === "visible" && !isFresh) return 0;
   if (route.isDiscover && hasSuccessfulActiveHomepageFareHistory(snapshot)) {
     return status === "failed" ? 4 : 1;
   }
-  if (route.isDiscover && getDiscoverRoutePriority(route) <= 16) return 2;
+  if (route.isDiscover && route.visibility === "visible") return 2;
   if (status === "unavailable") return 3;
   if (status === "failed") return 4;
-  if (route.isPopular) return 5;
+  if (route.visibility === "backup" || route.visibility === "fallback") return 5;
+  if (route.isPopular) return 6;
 
-  return 6;
-}
-
-function getDiscoverRoutePriority(route: HomepageRefreshRoute) {
-  if (!Number.isFinite(route.priority)) return Number.MAX_SAFE_INTEGER;
-
-  return Math.max(1, route.priority - PHASE_3A_POPULAR_HOMEPAGE_FARE_ROUTES.length);
+  return 7;
 }
 
 function getSnapshotPriorityStatus(
@@ -989,7 +1368,22 @@ function getSnapshotPriorityStatus(
 function hasSuccessfulActiveHomepageFareHistory(
   snapshot: HomepageFareSnapshotRecord | undefined,
 ) {
-  return snapshot?.providerBacked === true && snapshot.status === HomepageFareSnapshotStatus.ACTIVE;
+  return (
+    snapshot?.providerBacked === true &&
+    snapshot.status === HomepageFareSnapshotStatus.ACTIVE
+  );
+}
+
+function isRefreshCooldownSnapshot(
+  snapshot: HomepageFareSnapshotRecord | undefined,
+  now: Date,
+) {
+  return Boolean(
+    snapshot &&
+      (snapshot.status === HomepageFareSnapshotStatus.UNAVAILABLE ||
+        snapshot.status === HomepageFareSnapshotStatus.FAILED) &&
+      snapshot.expiresAt.getTime() > now.getTime(),
+  );
 }
 
 function isNearExpirySnapshot(

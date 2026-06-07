@@ -107,6 +107,11 @@ enum HomepageFareSnapshotStatus {
   DISABLED
 }
 
+enum NewsletterSubscriberStatus {
+  SUBSCRIBED
+  UNSUBSCRIBED
+}
+
 model User {
   id                      String              @id @default(cuid())
   name                    String?
@@ -296,6 +301,26 @@ model PriceSnapshot {
 
   @@index([priceAlertId])
   @@index([createdAt])
+}
+
+model NewsletterSubscriber {
+  id                   String                     @id @default(cuid())
+  email                String                     @unique
+  status               NewsletterSubscriberStatus @default(SUBSCRIBED)
+  source               String?
+  locale               String?
+  regionCode           String?
+  ipHash               String?
+  userAgent            String?
+  subscribedAt         DateTime                   @default(now())
+  unsubscribedAt       DateTime?
+  unsubscribeTokenHash String?
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([subscribedAt])
 }
 
 model SupportTicket {

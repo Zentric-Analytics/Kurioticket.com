@@ -104,11 +104,25 @@ type DiscoveryFareCardState = {
   cards: HomeDiscoveryFareCard[];
 };
 
+type NewsletterStatus = "idle" | "success" | "error";
+
+function isNewsletterEmail(value: string) {
+  const email = value.trim();
+  return (
+    email.length > 2 &&
+    email.length <= 254 &&
+    !/\s/.test(email) &&
+    /^[^@]+@[^@]+\.[^@]+$/.test(email)
+  );
+}
+
 export default function Home() {
   const { locale } = useLocale();
   const { mode: regionCode, selectedOption } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState<NewsletterStatus>("idle");
+  const [newsletterPending, setNewsletterPending] = useState(false);
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
   const [destinationPriceState, setDestinationPriceState] =
     useState<DestinationPriceState>({
@@ -180,15 +194,54 @@ export default function Home() {
     return groups;
   }, [discoveryCards]);
 
-  const handleNewsletterSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleNewsletterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!newsletterEmail.trim()) {
+    if (newsletterPending) return;
+
+    const email = newsletterEmail.trim();
+    if (!isNewsletterEmail(email)) {
+      setNewsletterStatus("error");
+      setNewsletterMessage("Enter a valid email address.");
       return;
     }
 
-    setNewsletterMessage(t("homeNewsletterThanks"));
-    setNewsletterEmail("");
+    setNewsletterPending(true);
+    setNewsletterStatus("idle");
+    setNewsletterMessage("");
+
+    try {
+      const response = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          source: "homepage",
+          locale,
+          regionCode,
+        }),
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { ok?: boolean; message?: string }
+        | null;
+
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.message || "Unable to subscribe right now.");
+      }
+
+      setNewsletterStatus("success");
+      setNewsletterMessage(data.message || t("homeNewsletterThanks"));
+      setNewsletterEmail("");
+    } catch (error) {
+      setNewsletterStatus("error");
+      setNewsletterMessage(
+        error instanceof Error
+          ? error.message
+          : "We couldn’t subscribe you right now. Please try again soon.",
+      );
+    } finally {
+      setNewsletterPending(false);
+    }
   };
 
   useEffect(() => {
@@ -628,28 +681,48 @@ export default function Home() {
                 <form
                   className="flex min-w-0 flex-1 flex-row items-center gap-1.5 sm:basis-auto sm:gap-2 lg:basis-[66%] lg:flex-nowrap lg:justify-end"
                   onSubmit={handleNewsletterSubmit}
+                  aria-busy={newsletterPending}
                 >
                   <input
                     type="email"
                     value={newsletterEmail}
-                    onChange={(event) => setNewsletterEmail(event.target.value)}
+                    onChange={(event) => {
+                      setNewsletterEmail(event.target.value);
+                      if (newsletterStatus !== "idle") {
+                        setNewsletterStatus("idle");
+                        setNewsletterMessage("");
+                      }
+                    }}
                     placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-9 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 sm:h-11 sm:min-w-[12rem] sm:px-3.5 sm:text-sm lg:min-w-[20rem] lg:max-w-[30rem]"
+                    className="focus-ring h-9 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:h-11 sm:min-w-[12rem] sm:px-3.5 sm:text-sm lg:min-w-[20rem] lg:max-w-[30rem]"
                     aria-label={t("homeEmailAddress")}
+                    disabled={newsletterPending}
                     required
                   />
 
                   <button
                     type="submit"
-                    className="focus-ring h-9 w-auto shrink-0 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 text-xs font-extrabold text-white transition hover:bg-slate-800 sm:h-11 sm:px-5 sm:text-sm"
+                    className="focus-ring h-9 w-auto shrink-0 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 text-xs font-extrabold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500 sm:h-11 sm:px-5 sm:text-sm"
+                    aria-busy={newsletterPending}
+                    disabled={newsletterPending}
                   >
-                    {t("homeSubscribe")}
+                    {newsletterPending ? "Subscribing…" : t("homeSubscribe")}
                   </button>
                 </form>
               </div>
 
+              <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-600 sm:text-xs">
+                By subscribing, you agree to receive Kurioticket updates. You can unsubscribe anytime.
+              </p>
+
               {newsletterMessage ? (
-                <p className="mt-2 text-xs font-semibold text-slate-700 sm:text-sm">
+                <p
+                  className={`mt-2 text-xs font-semibold sm:text-sm ${
+                    newsletterStatus === "error" ? "text-red-700" : "text-slate-700"
+                  }`}
+                  role="status"
+                  aria-live="polite"
+                >
                   {newsletterMessage}
                 </p>
               ) : null}

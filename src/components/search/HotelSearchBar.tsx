@@ -1061,7 +1061,7 @@ export function HotelSearchBar({
                   id="hotel-destination-suggestions"
                   role="listbox"
                   aria-label="Hotel destination suggestions"
-                  className="absolute left-0 right-0 top-[calc(100%+8px)] z-40 max-h-[min(68vh,360px)] w-[calc(100vw-24px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:w-[min(92vw,420px)] lg:w-[min(42vw,440px)]"
+                  className="absolute left-0 top-[calc(100%+8px)] z-50 hidden max-h-[min(68vh,360px)] w-[min(92vw,420px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:block lg:w-[min(42vw,440px)]"
                 >
                   {destinationSuggestionsLoading ? (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
@@ -1138,8 +1138,8 @@ export function HotelSearchBar({
                 <span className="truncate">{dateSummary}</span>
               </button>
               {datesOpen ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] hidden w-full rounded-2xl border border-slate-200 sm:block bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
-                  <p className="mb-3 text-base font-semibold text-slate-900">
+                <div className="absolute left-0 top-[calc(100%+8px)] z-[200] hidden w-[min(92vw,580px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                  <p className="mb-2.5 text-sm font-semibold text-slate-900">
                     Choose travel dates
                   </p>
                   <div className="mb-3 flex items-center justify-between">
@@ -1164,7 +1164,7 @@ export function HotelSearchBar({
                       Next
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {[0, 1].map((monthOffset) => {
                       const monthDate = addMonths(
                         hotelVisibleMonthDate,
@@ -1293,7 +1293,7 @@ export function HotelSearchBar({
                 />
               </button>
               {guestsRoomsOpen ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 hidden w-[calc(100vw-24px)] max-w-[330px] sm:block overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
+                <div className="absolute left-0 top-[calc(100%+8px)] z-30 hidden w-[min(92vw,320px)] rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:block">
                   <div className="space-y-3">
                     {[
                       {
@@ -1484,7 +1484,7 @@ export function HotelSearchBar({
         titleId="hotel-results-mobile-dates-title"
         launcherRef={datesMobileLauncherRef}
         onClose={() => setDatesOpen(false)}
-        contentClassName="px-3 py-2"
+        contentClassName="px-3 py-3"
         footer={
           <div className="flex items-center justify-between gap-3">
             <button
@@ -1507,7 +1507,7 @@ export function HotelSearchBar({
           </div>
         }
       >
-        <div className="mx-auto flex w-full max-w-xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-sm">
+        <div className="mx-auto flex w-full max-w-xl flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm">
           <div className="flex items-center justify-between">
             <button
               type="button"
@@ -1526,8 +1526,8 @@ export function HotelSearchBar({
               Next
             </button>
           </div>
-          <div className="grid grid-cols-1 gap-2">
-            {[0].map((monthOffset) => {
+          <div className="grid grid-cols-1 gap-3">
+            {[0, 1].map((monthOffset) => {
               const monthDate = addMonths(hotelVisibleMonthDate, monthOffset);
               const cells = buildMonthCells(monthDate);
 
@@ -1568,7 +1568,7 @@ export function HotelSearchBar({
                           <span
                             key={`mobile-placeholder-${iso}`}
                             aria-hidden="true"
-                            className="h-9 w-9 justify-self-center min-[390px]:h-10 min-[390px]:w-10"
+                            className="h-8 w-8 justify-self-center min-[390px]:h-9 min-[390px]:w-9"
                           />
                         );
                       }
@@ -1586,7 +1586,7 @@ export function HotelSearchBar({
                           disabled={isDisabledDate}
                           aria-disabled={isDisabledDate}
                           className={cn(
-                            "focus-ring flex h-9 w-9 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-10 min-[390px]:w-10",
+                            "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-9 min-[390px]:w-9",
                             isDisabledDate
                               ? "text-slate-300 hover:bg-transparent"
                               : "text-slate-900 hover:bg-indigo-50",
