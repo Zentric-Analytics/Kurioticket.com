@@ -1,10 +1,6 @@
-import { validateDestinationImages } from "./destinationImageValidation";
+import { resolveMarket, type MarketFallbackLevel } from "@/lib/market/resolveMarket";
 
-export type MarketFallbackLevel =
-  | "exact-country"
-  | "regional"
-  | "global"
-  | "neutral";
+import { validateDestinationImages } from "./destinationImageValidation";
 
 export type PopularDestination = {
   id: string;
@@ -23,140 +19,6 @@ export type MarketContentResolution<T> = {
   fallbackUsed: boolean;
   items: T[];
 };
-
-const normalizeMarketRegionCode = (regionCode: string | undefined | null) => {
-  const normalized = regionCode?.trim().toUpperCase();
-
-  return normalized && /^[A-Z]{2}$/.test(normalized) ? normalized : "US";
-};
-
-const africaCountries = [
-  "AO",
-  "BF",
-  "BJ",
-  "BW",
-  "CD",
-  "CG",
-  "CI",
-  "CM",
-  "DZ",
-  "EG",
-  "ET",
-  "GA",
-  "GH",
-  "GM",
-  "GN",
-  "KE",
-  "LR",
-  "MA",
-  "MU",
-  "MZ",
-  "NA",
-  "NE",
-  "RW",
-  "SN",
-  "TZ",
-  "UG",
-  "ZA",
-  "ZM",
-  "ZW",
-] as const;
-
-const europeCountries = [
-  "AD",
-  "AT",
-  "BE",
-  "BG",
-  "CH",
-  "CY",
-  "CZ",
-  "DE",
-  "DK",
-  "EE",
-  "ES",
-  "FI",
-  "FR",
-  "GB",
-  "GR",
-  "HR",
-  "HU",
-  "IE",
-  "IS",
-  "IT",
-  "LT",
-  "LU",
-  "LV",
-  "MT",
-  "NL",
-  "NO",
-  "PL",
-  "PT",
-  "RO",
-  "SE",
-  "SI",
-  "SK",
-] as const;
-
-const middleEastCountries = [
-  "AE",
-  "BH",
-  "IL",
-  "JO",
-  "KW",
-  "LB",
-  "OM",
-  "PS",
-  "QA",
-  "SA",
-] as const;
-
-const asiaCountries = [
-  "BD",
-  "CN",
-  "HK",
-  "ID",
-  "IN",
-  "JP",
-  "KR",
-  "LK",
-  "MY",
-  "NP",
-  "PH",
-  "PK",
-  "SG",
-  "TH",
-  "TW",
-  "VN",
-] as const;
-
-const latinAmericaCountries = [
-  "AR",
-  "BO",
-  "BR",
-  "CL",
-  "CO",
-  "CR",
-  "DO",
-  "EC",
-  "GT",
-  "HN",
-  "MX",
-  "NI",
-  "PA",
-  "PE",
-  "PY",
-  "SV",
-  "UY",
-] as const;
-
-const regionalMarketByCountry = new Map<string, string>([
-  ...africaCountries.map((code) => [code, "AFRICA"] as const),
-  ...europeCountries.map((code) => [code, "EUROPE"] as const),
-  ...middleEastCountries.map((code) => [code, "MIDDLE_EAST"] as const),
-  ...asiaCountries.map((code) => [code, "ASIA"] as const),
-  ...latinAmericaCountries.map((code) => [code, "LATIN_AMERICA"] as const),
-  ["CA", "CANADA"],
-]);
 
 export const popularDestinationsByMarket: Record<
   string,
@@ -420,6 +282,68 @@ export const popularDestinationsByMarket: Record<
         "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=1600&q=90",
     },
   ],
+  DE: [
+    {
+      id: "de-london",
+      code: "LHR",
+      originCode: "FRA",
+      city: "London",
+      country: "United Kingdom",
+      imageAlt: "London skyline and historic landmarks",
+      image:
+        "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1600&q=90",
+    },
+    {
+      id: "de-paris",
+      code: "CDG",
+      originCode: "FRA",
+      city: "Paris",
+      country: "France",
+      imageAlt: "Eiffel Tower above Paris streets",
+      image:
+        "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=90",
+    },
+    {
+      id: "de-amsterdam",
+      code: "AMS",
+      originCode: "FRA",
+      city: "Amsterdam",
+      country: "Netherlands",
+      imageAlt: "Amsterdam canals and historic homes",
+      image:
+        "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1600&q=90",
+    },
+    {
+      id: "de-rome",
+      code: "FCO",
+      originCode: "MUC",
+      city: "Rome",
+      country: "Italy",
+      imageAlt: "The Colosseum and city streets in Rome",
+      image:
+        "https://images.unsplash.com/photo-1529260830199-42c24126f198?auto=format&fit=crop&w=1600&q=90",
+    },
+    {
+      id: "de-istanbul",
+      code: "IST",
+      originCode: "FRA",
+      city: "Istanbul",
+      country: "Türkiye",
+      imageAlt: "Istanbul skyline with domes and minarets",
+      image:
+        "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1600&q=90",
+    },
+    {
+      id: "de-dubai",
+      code: "DXB",
+      originCode: "FRA",
+      city: "Dubai",
+      country: "United Arab Emirates",
+      imageAlt: "Downtown Dubai skyline with Burj Khalifa",
+      image:
+        "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=90",
+    },
+  ],
   GB: [
     {
       id: "gb-paris",
@@ -671,7 +595,7 @@ export const popularDestinationsByMarket: Record<
 };
 
 popularDestinationsByMarket.AFRICA = popularDestinationsByMarket.NG;
-popularDestinationsByMarket.EUROPE = popularDestinationsByMarket.GB;
+popularDestinationsByMarket.EUROPE = popularDestinationsByMarket.DE;
 popularDestinationsByMarket.MIDDLE_EAST = popularDestinationsByMarket.AE;
 popularDestinationsByMarket.ASIA = popularDestinationsByMarket.JP;
 popularDestinationsByMarket.LATIN_AMERICA = popularDestinationsByMarket.BR;
@@ -764,38 +688,23 @@ export function getPopularDestinationAllowlist() {
 }
 
 export function getRegionalMarketCode(regionCode?: string | null) {
-  return regionalMarketByCountry.get(normalizeMarketRegionCode(regionCode));
+  return resolveMarket(regionCode).contentMarketCode;
 }
 
 function resolveMarketContent<T>(
   regionCode: string | undefined | null,
   contentByMarket: Record<string, T[]>,
 ): MarketContentResolution<T> {
-  const requestedRegionCode = normalizeMarketRegionCode(regionCode);
-  const exactContent = contentByMarket[requestedRegionCode];
+  const marketProfile = resolveMarket(regionCode);
+  const marketContent = contentByMarket[marketProfile.contentMarketCode];
 
-  if (exactContent?.length) {
+  if (marketContent?.length) {
     return {
-      requestedRegionCode,
-      effectiveMarketCode: requestedRegionCode,
-      fallbackLevel: "exact-country",
-      fallbackUsed: false,
-      items: exactContent,
-    };
-  }
-
-  const regionalMarketCode = getRegionalMarketCode(requestedRegionCode);
-  const regionalContent = regionalMarketCode
-    ? contentByMarket[regionalMarketCode]
-    : undefined;
-
-  if (regionalMarketCode && regionalContent?.length) {
-    return {
-      requestedRegionCode,
-      effectiveMarketCode: regionalMarketCode,
-      fallbackLevel: "regional",
-      fallbackUsed: true,
-      items: regionalContent,
+      requestedRegionCode: marketProfile.countryCode,
+      effectiveMarketCode: marketProfile.contentMarketCode,
+      fallbackLevel: marketProfile.fallbackLevel,
+      fallbackUsed: marketProfile.fallbackLevel !== "exact-country",
+      items: marketContent,
     };
   }
 
@@ -803,7 +712,7 @@ function resolveMarketContent<T>(
 
   if (globalContent?.length) {
     return {
-      requestedRegionCode,
+      requestedRegionCode: marketProfile.countryCode,
       effectiveMarketCode: "GLOBAL",
       fallbackLevel: "global",
       fallbackUsed: true,
@@ -812,7 +721,7 @@ function resolveMarketContent<T>(
   }
 
   return {
-    requestedRegionCode,
+    requestedRegionCode: marketProfile.countryCode,
     effectiveMarketCode: "NEUTRAL",
     fallbackLevel: "neutral",
     fallbackUsed: true,
