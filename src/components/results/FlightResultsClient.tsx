@@ -682,6 +682,7 @@ export function FlightResultsClient() {
   );
   const [travelerPopoverOpen, setTravelerPopoverOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isSearchSubmitting, setIsSearchSubmitting] = useState(false);
   const [activeMobileAirportPicker, setActiveMobileAirportPicker] = useState<
     "origin" | "destination" | null
   >(null);
@@ -775,6 +776,23 @@ export function FlightResultsClient() {
     childCount,
     infantCount,
     cabinClassInput,
+  );
+  const compactSearchOrigin = (originCode || originInput.trim()).trim();
+  const compactSearchDestination = (
+    destinationCode || destinationInput.trim()
+  ).trim();
+  const compactSearchDepartureDate = departureDateInput.trim();
+  const compactSearchReturnDate = returnDateInput.trim();
+  const isCompactSearchValid = Boolean(
+    compactSearchOrigin &&
+      compactSearchDestination &&
+      isValidFutureOrTodayDateValue(compactSearchDepartureDate) &&
+      (tripTypeInput !== "round-trip" ||
+        (isValidFutureOrTodayDateValue(compactSearchReturnDate) &&
+          !isDateValueBefore(
+            compactSearchReturnDate,
+            compactSearchDepartureDate,
+          ))),
   );
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
@@ -1221,6 +1239,7 @@ export function FlightResultsClient() {
     setInfantCount(Math.min(Math.min(9, nextAdults), nextInfants));
     setCabinClassInput(nextCabinClass);
     closeFlightSearchPopovers();
+    setIsSearchSubmitting(false);
   }, [router, searchQueryString]);
 
   useEffect(() => {
@@ -1699,10 +1718,10 @@ export function FlightResultsClient() {
   function handleCompactSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const nextOrigin = originCode || originInput.trim();
-    const nextDestination = destinationCode || destinationInput.trim();
-    const nextDepartureDate = departureDateInput.trim();
-    const nextReturnDate = returnDateInput.trim();
+    const nextOrigin = compactSearchOrigin;
+    const nextDestination = compactSearchDestination;
+    const nextDepartureDate = compactSearchDepartureDate;
+    const nextReturnDate = compactSearchReturnDate;
     const hasValidDepartureDate =
       isValidFutureOrTodayDateValue(nextDepartureDate);
     const hasValidReturnDate =
@@ -1754,8 +1773,14 @@ export function FlightResultsClient() {
       nextParams.set("returnDate", nextReturnDate);
     }
 
+    const nextQueryString = nextParams.toString();
+    const currentSearchValues = normalizeFlightDateSearchParams(
+      new URLSearchParams(searchQueryString),
+    );
+
+    setIsSearchSubmitting(nextQueryString !== currentSearchValues.toString());
     closeMobileSearchDrawer();
-    router.push(`/flights/results?${nextParams.toString()}`);
+    router.push(`/flights/results?${nextQueryString}`);
   }
 
   const priceLabelCurrency = useMemo(
@@ -3116,6 +3141,38 @@ export function FlightResultsClient() {
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
             <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
+              <div className="rounded-3xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/[0.03]">
+                <span className="mb-2 block px-2 text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500">
+                  Trip type
+                </span>
+                <div
+                  className="grid grid-cols-2 gap-1.5"
+                  role="group"
+                  aria-label="Trip type"
+                >
+                  {mobileTripTypeOptions.map((option) => {
+                    const selected = tripTypeInput === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        aria-pressed={selected}
+                        onClick={() => handleTripTypeChange(option.value)}
+                        className={cn(
+                          "focus-ring min-h-11 rounded-2xl px-3 py-2 text-sm font-black transition-colors",
+                          selected
+                            ? "bg-slate-950 text-white shadow-sm"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200",
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div ref={originWrapRef}>
                 <button
                   ref={mobileOriginLauncherRef}
@@ -3229,43 +3286,12 @@ export function FlightResultsClient() {
                 </button>
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/[0.03]">
-                <span className="mb-2 block px-2 text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500">
-                  Trip type
-                </span>
-                <div
-                  className="grid grid-cols-2 gap-1.5"
-                  role="group"
-                  aria-label="Trip type"
-                >
-                  {mobileTripTypeOptions.map((option) => {
-                    const selected = tripTypeInput === option.value;
-
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        aria-pressed={selected}
-                        onClick={() => handleTripTypeChange(option.value)}
-                        className={cn(
-                          "focus-ring min-h-11 rounded-2xl px-3 py-2 text-sm font-black transition-colors",
-                          selected
-                            ? "bg-slate-950 text-white shadow-sm"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200",
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               <Button
                 type="submit"
+                disabled={!isCompactSearchValid || isSearchSubmitting}
                 className="mt-1 h-[52px] w-full rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20"
               >
-                Search
+                {isSearchSubmitting ? "Searching…" : "Search"}
               </Button>
             </div>
           </div>
@@ -3759,9 +3785,10 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
+                disabled={!isCompactSearchValid || isSearchSubmitting}
                 className="h-full min-h-[54px] w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:min-w-[112px] lg:rounded-l-none lg:rounded-r-xl"
               >
-                Search
+                {isSearchSubmitting ? "Searching…" : "Search"}
               </Button>
             </div>
           </div>
@@ -3832,6 +3859,9 @@ export function FlightResultsClient() {
       </div>
 
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Edit flight search"
         className={cn(
           "fixed inset-0 z-[10000] min-h-[100dvh] overflow-hidden bg-slate-50 sm:hidden",
           mobileSearchOpen ? "block" : "hidden",
@@ -4419,11 +4449,7 @@ function getNextFlightDateSelection({
   }
 
   if (isDateValueBefore(value, departureDate)) {
-    return {
-      activePicker: "return",
-      departureDate: value,
-      returnDate: "",
-    };
+    return null;
   }
 
   return {
@@ -4675,11 +4701,12 @@ function DatePickerPopover({
           const selectedDeparture = isSameDateValue(date, departureValue);
           const selectedReturn = isSameDateValue(date, returnValue);
           const isToday = isSameDateValue(date, formatDateValue(today));
-          // Flight calendars use one shared rule for enabled days: only past
-          // local days are disabled. In round-trip return mode, future dates
-          // before departure stay enabled and reset the departure date instead
-          // of trapping the user in an invalid return-only state.
-          const disabledDate = !isSelectableFlightDate(date);
+          const disabledDate =
+            !isSelectableFlightDate(date) ||
+            (tripType === "round-trip" &&
+              activePicker === "return" &&
+              Boolean(departureValue) &&
+              isDateValueBefore(formatDateValue(date), departureValue));
 
           return (
             <button
@@ -4718,11 +4745,7 @@ function DatePickerPopover({
       id="flight-date-picker-popover"
       role="dialog"
       aria-modal={mobileSheet ? "true" : undefined}
-      aria-label={
-        tripType !== "round-trip" || activePicker === "departure"
-          ? "Select departure date"
-          : "Select return date"
-      }
+      aria-label="Choose travel dates"
       style={dialogStyle}
       className={cn(
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
@@ -4738,9 +4761,7 @@ function DatePickerPopover({
               Travel dates
             </p>
             <h3 className="text-lg font-bold text-slate-950">
-              {tripType !== "round-trip" || activePicker === "departure"
-                ? "Select departure"
-                : "Select return"}
+              Choose travel dates
             </h3>
           </div>
           <button
