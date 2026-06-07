@@ -1097,6 +1097,7 @@ export async function refreshPhase3AHomepageFareSnapshots({
     routes: refreshRoutes,
     snapshotsByRouteId,
     freshRouteIds,
+    marketTargets: counts.marketTargets,
     now,
   });
   const prioritizedRouteIds = new Set(
@@ -1577,18 +1578,27 @@ function prioritizeHomepageFareRefreshRoutes({
   routes,
   snapshotsByRouteId,
   freshRouteIds,
+  marketTargets,
   now,
 }: {
   routes: HomepageRefreshRoute[];
   snapshotsByRouteId: Map<string, HomepageFareSnapshotRecord>;
   freshRouteIds: Set<string>;
+  marketTargets: Record<string, HomepageFareMarketTarget>;
   now: Date;
 }) {
+  const hasUnderfilledMarkets = Object.values(marketTargets).some(
+    (target) => !target.targetMet,
+  );
   const scoredRoutes = [...routes]
     .filter((route) => {
       const snapshot = snapshotsByRouteId.get(route.id);
 
       if (isRefreshCooldownSnapshot(snapshot, now)) return false;
+
+      if (hasUnderfilledMarkets && marketTargets[route.market]?.targetMet) {
+        return false;
+      }
 
       return !freshRouteIds.has(route.id) || isNearExpirySnapshot(snapshot, now);
     })
@@ -1597,6 +1607,7 @@ function prioritizeHomepageFareRefreshRoutes({
       score: getHomepageFareRefreshPriorityScore({
         route,
         snapshot: snapshotsByRouteId.get(route.id),
+        target: marketTargets[route.market],
         now,
       }),
     }))
@@ -1651,10 +1662,12 @@ function roundRobinHomepageFareRoutesByMarket(routes: HomepageRefreshRoute[]) {
 function getHomepageFareRefreshPriorityScore({
   route,
   snapshot,
+  target,
   now,
 }: {
   route: HomepageRefreshRoute;
   snapshot?: HomepageFareSnapshotRecord;
+  target?: HomepageFareMarketTarget;
   now: Date;
 }) {
   const isFresh = isFreshHomepageFareSnapshotRecord({
@@ -1664,6 +1677,10 @@ function getHomepageFareRefreshPriorityScore({
   });
   const status = getSnapshotPriorityStatus(snapshot, now);
 
+  if (!target?.targetMet && route.isPopular && route.visibility === "visible" && !isFresh) return 0;
+  if (!target?.targetMet && route.isDiscover && route.visibility === "visible" && !isFresh) return 1;
+  if (!target?.targetMet && route.visibility === "backup" && !isFresh) return 2;
+  if (target?.targetMet) return 8;
   if (route.isPopular && route.visibility === "visible" && !isFresh) return 0;
   if (route.isDiscover && hasSuccessfulActiveHomepageFareHistory(snapshot)) {
     return status === "failed" ? 4 : 1;
@@ -1966,149 +1983,74 @@ export async function readHomepageDiscoveryFareCards({
     });
   }
 
-  const requestedResult = await buildHomepageDiscoveryFareCardsForCandidates({
-    candidates: requestedCandidates,
-    requested,
-    currency: normalizedCurrency,
-  });
-
-  if (requestedResult.freshCount > 0) {
-    return buildHomepageDiscoveryFareCardsResponse({
-      ...requestedResult,
-      requested,
-      requestedRegionCode,
-      effectiveRegionCode: requestedRegionCode,
-      fallbackUsed: false,
-      fallbackReason: "none",
-      fallbackScope: "requested-region",
-      usDomesticFallbackBlocked: false,
-      currencyRequested: normalizedCurrency,
-      snapshotCurrency: normalizedCurrency,
-    });
-  }
-
-  const fallbackReason: HomepageDiscoveryFareFallbackReason =
-    requestedCandidates.length
-      ? "requested_region_no_fresh_fares"
-      : "requested_region_no_candidates";
-
   const regionalCandidates = getRegionalHomeDiscoveryFareCandidates(
     requestedRegionCode,
   );
   const shouldTryRegionalFallback =
     regionalCandidates.length > 0 &&
     !areSameCandidateSets(requestedCandidates, regionalCandidates);
-
-  let regionalResult: HomepageDiscoveryFareCandidateBuildResult | undefined;
-
-  if (shouldTryRegionalFallback) {
-    regionalResult = await buildHomepageDiscoveryFareCardsForCandidates({
-      candidates: regionalCandidates,
-      requested,
-      currency: normalizedCurrency,
-    });
-
-    if (regionalResult.freshCount > 0) {
-      return buildHomepageDiscoveryFareCardsResponse({
-        ...regionalResult,
-        requested,
-        requestedRegionCode,
-        effectiveRegionCode: getEffectiveRegionCodeForCandidates(
-          regionalCandidates,
-          requestedRegionCode,
-        ),
-        fallbackUsed: true,
-        fallbackReason,
-        fallbackScope: "regional",
-        usDomesticFallbackBlocked: isNonUsRegion,
-        currencyRequested: normalizedCurrency,
-        snapshotCurrency: normalizedCurrency,
-      });
-    }
-  }
-
   const globalCandidates = getGlobalHomeDiscoveryFareCandidates();
-  const shouldTryGlobalFallback = !areSameCandidateSets(
-    requestedCandidates,
-    globalCandidates,
-  );
-
-  if (shouldTryGlobalFallback) {
-    const globalResult = await buildHomepageDiscoveryFareCardsForCandidates({
-      candidates: globalCandidates,
-      requested,
-      currency: normalizedCurrency,
-    });
-
-    if (globalResult.freshCount > 0) {
-      return buildHomepageDiscoveryFareCardsResponse({
-        ...globalResult,
-        requested,
-        requestedRegionCode,
-        effectiveRegionCode: GLOBAL_HOME_DISCOVERY_REGION,
-        fallbackUsed: true,
-        fallbackReason: shouldTryRegionalFallback
-          ? "regional_fallback_no_fresh_fares"
-          : fallbackReason,
-        fallbackScope: "global-international",
-        usDomesticFallbackBlocked: isNonUsRegion,
-        currencyRequested: normalizedCurrency,
-        snapshotCurrency: normalizedCurrency,
-      });
-    }
-  }
-
-  if (requestedResult.cards.length > 0) {
-    return buildHomepageDiscoveryFareCardsResponse({
-      ...requestedResult,
-      requested,
-      requestedRegionCode,
-      effectiveRegionCode: requestedRegionCode,
-      fallbackUsed: false,
-      fallbackReason,
-      fallbackScope: "requested-region",
-      usDomesticFallbackBlocked: isNonUsRegion,
-      currencyRequested: normalizedCurrency,
-      snapshotCurrency: normalizedCurrency,
-    });
-  }
-
-  if (regionalResult?.cards.length) {
-    return buildHomepageDiscoveryFareCardsResponse({
-      ...regionalResult,
-      requested,
-      requestedRegionCode,
-      effectiveRegionCode: getEffectiveRegionCodeForCandidates(
-        regionalCandidates,
-        requestedRegionCode,
-      ),
-      fallbackUsed: true,
-      fallbackReason: "regional_fallback_no_fresh_fares",
-      fallbackScope: "regional",
-      usDomesticFallbackBlocked: isNonUsRegion,
-      currencyRequested: normalizedCurrency,
-      snapshotCurrency: normalizedCurrency,
-    });
-  }
-
-  const globalNeutralResult = await buildHomepageDiscoveryFareCardsForCandidates({
-    candidates: globalCandidates,
+  const shouldTryGlobalFallback =
+    globalCandidates.length > 0 &&
+    !areSameCandidateSets(requestedCandidates, globalCandidates) &&
+    (!regionalCandidates.length ||
+      !areSameCandidateSets(regionalCandidates, globalCandidates));
+  const candidatePool = dedupeHomepageDiscoveryFareCandidates([
+    ...requestedCandidates,
+    ...(shouldTryRegionalFallback ? regionalCandidates : []),
+    ...(shouldTryGlobalFallback ? globalCandidates : []),
+  ]);
+  const pooledResult = await buildHomepageDiscoveryFareCardsForCandidates({
+    candidates: candidatePool,
     requested,
     currency: normalizedCurrency,
   });
+  const requestedFreshCount = pooledResult.cards.filter(
+    (card) =>
+      card.priceState === "fresh" &&
+      requestedCandidates.some((candidate) => candidate.id === card.item.id),
+  ).length;
+  const regionalFreshCount = pooledResult.cards.filter(
+    (card) =>
+      card.priceState === "fresh" &&
+      regionalCandidates.some((candidate) => candidate.id === card.item.id),
+  ).length;
+  const fallbackReason: HomepageDiscoveryFareFallbackReason =
+    requestedCandidates.length
+      ? "requested_region_no_fresh_fares"
+      : "requested_region_no_candidates";
+  const fallbackScope: HomepageDiscoveryFareFallbackScope =
+    requestedFreshCount >= Math.min(requested, pooledResult.freshCount)
+      ? "requested-region"
+      : regionalFreshCount > 0
+        ? "regional"
+        : pooledResult.freshCount > 0
+          ? "global-international"
+          : "requested-region";
+  const effectiveRegionCode =
+    fallbackScope === "regional"
+      ? getEffectiveRegionCodeForCandidates(regionalCandidates, requestedRegionCode)
+      : fallbackScope === "global-international"
+        ? GLOBAL_HOME_DISCOVERY_REGION
+        : requestedRegionCode;
 
   return buildHomepageDiscoveryFareCardsResponse({
-    ...globalNeutralResult,
+    ...pooledResult,
     requested,
     requestedRegionCode,
-    effectiveRegionCode: GLOBAL_HOME_DISCOVERY_REGION,
-    fallbackUsed: true,
-    fallbackReason: shouldTryGlobalFallback
-      ? "global_fallback_no_fresh_fares"
-      : fallbackReason,
-    fallbackScope: globalNeutralResult.cards.length
-      ? "global-international"
-      : "none",
+    effectiveRegionCode,
+    fallbackUsed: fallbackScope !== "requested-region",
+    fallbackReason:
+      pooledResult.freshCount > 0
+        ? fallbackScope === "global-international" && shouldTryRegionalFallback
+          ? "regional_fallback_no_fresh_fares"
+          : fallbackScope === "requested-region"
+            ? "none"
+            : fallbackReason
+        : shouldTryGlobalFallback
+          ? "global_fallback_no_fresh_fares"
+          : fallbackReason,
+    fallbackScope,
     usDomesticFallbackBlocked: isNonUsRegion,
     currencyRequested: normalizedCurrency,
     snapshotCurrency: normalizedCurrency,
@@ -2182,6 +2124,24 @@ async function buildHomepageDiscoveryFareCardsForCandidates({
     candidateCount: candidates.length,
     freshCount: cards.filter((card) => card.priceState === "fresh").length,
   };
+}
+
+function dedupeHomepageDiscoveryFareCandidates(
+  candidates: HomeDiscoveryFareCandidate[],
+) {
+  const seen = new Set<string>();
+  const deduped: HomeDiscoveryFareCandidate[] = [];
+
+  for (const candidate of candidates) {
+    const key = getHomepageDiscoveryCandidateRouteKey(candidate);
+
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    deduped.push(candidate);
+  }
+
+  return deduped;
 }
 
 function areSameCandidateSets(
