@@ -1138,8 +1138,8 @@ export function HotelSearchBar({
                 <span className="truncate">{dateSummary}</span>
               </button>
               {datesOpen ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] hidden w-full rounded-2xl border border-slate-200 sm:block bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4">
-                  <p className="mb-3 text-base font-semibold text-slate-900">
+                <div className="absolute left-0 top-[calc(100%+8px)] z-[200] hidden w-[min(92vw,580px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                  <p className="mb-2.5 text-sm font-semibold text-slate-900">
                     Choose travel dates
                   </p>
                   <div className="mb-3 flex items-center justify-between">
@@ -1164,7 +1164,7 @@ export function HotelSearchBar({
                       Next
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {[0, 1].map((monthOffset) => {
                       const monthDate = addMonths(
                         hotelVisibleMonthDate,
@@ -1293,7 +1293,7 @@ export function HotelSearchBar({
                 />
               </button>
               {guestsRoomsOpen ? (
-                <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 hidden w-[calc(100vw-24px)] max-w-[330px] sm:block overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] max-sm:max-h-[min(70vh,360px)] sm:right-auto sm:w-[min(92vw,320px)] sm:max-w-[320px]">
+                <div className="absolute left-0 top-[calc(100%+8px)] z-30 hidden w-[min(92vw,320px)] rounded-xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:block">
                   <div className="space-y-3">
                     {[
                       {
