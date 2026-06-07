@@ -1625,6 +1625,202 @@ homeDiscoveryByRegion.BR = [
   },
 ];
 
+
+function appendHomeDiscoveryRoutes(regionCode: string, items: HomeDiscoveryItem[]) {
+  const existingItems = homeDiscoveryByRegion[regionCode] ?? [];
+
+  homeDiscoveryByRegion[regionCode] = [
+    ...existingItems,
+    ...items.map((item, index) => ({
+      ...item,
+      image: addImageSignature(item.image, existingItems.length + index),
+    })),
+  ];
+}
+
+const cardImagePhotoIds = [
+  338515, 532826, 753626, 466685, 21014, 672358, 59519, 417074,
+  2166553, 2474690, 1450353, 2901209, 346885, 356830, 164595,
+  258154, 261102, 210243, 7536261, 3278215, 3225531, 161853,
+  2422461, 2246476, 3889855, 1008155, 1051075, 208745, 2363,
+  358229, 258383, 457882, 221457, 2104882, 2356045, 3769138,
+  2403209, 3361480, 3155666, 347141, 358457, 460376, 7536262,
+] as const;
+
+function addImageSignature(_image: string, index: number) {
+  const photoId = cardImagePhotoIds[index % cardImagePhotoIds.length];
+
+  return `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg?auto=compress&cs=tinysrgb&w=1200`;
+}
+
+const imageByCity = {
+  london:
+    "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1200&q=90",
+  dubai:
+    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1200&q=90",
+  paris:
+    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1200&q=90",
+  istanbul:
+    "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1200&q=90",
+  singapore:
+    "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?auto=format&fit=crop&w=1200&q=90",
+  bangkok:
+    "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=90",
+  capeTown:
+    "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1200&q=90",
+  rio:
+    "https://images.unsplash.com/photo-1483729558449-99ef09a8c325?auto=format&fit=crop&w=1200&q=90",
+  cancun:
+    "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=90",
+  city:
+    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=90",
+} as const;
+
+appendHomeDiscoveryRoutes("NG", [
+  { id: "ng-los-cdg-alt", title: "Paris Schengen gateway", originCity: "Lagos", originCode: "LOS", destinationCity: "Paris", destinationCode: "CDG", routeNote: "West Africa to Europe route for business and culture trips.", priceFromUsd: 0, image: imageByCity.paris, imageAlt: "Eiffel Tower above Paris streets" },
+  { id: "ng-los-acc", title: "Accra regional hop", originCity: "Lagos", originCode: "LOS", destinationCity: "Accra", destinationCode: "ACC", routeNote: "Short West Africa corridor for meetings and weekends.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Accra coastal city scene and palm trees" },
+  { id: "ng-abv-dxb", title: "Abuja to Dubai hub", originCity: "Abuja", originCode: "ABV", destinationCity: "Dubai", destinationCode: "DXB", routeNote: "Capital city to Gulf hub route for shopping and onward links.", priceFromUsd: 0, image: imageByCity.dubai, imageAlt: "Downtown Dubai skyline with Burj Khalifa" },
+  { id: "ng-abv-lhr", title: "Abuja to London link", originCity: "Abuja", originCode: "ABV", destinationCity: "London", destinationCode: "LHR", routeNote: "Provider-searchable UK route from Nigeria's capital.", priceFromUsd: 0, image: imageByCity.london, imageAlt: "London skyline and historic landmarks" },
+  { id: "ng-acc-lhr", title: "Accra to London route", originCity: "Accra", originCode: "ACC", destinationCity: "London", destinationCode: "LHR", routeNote: "West Africa to UK route for family, business, and events.", priceFromUsd: 0, image: imageByCity.london, imageAlt: "London skyline and historic landmarks" },
+  { id: "ng-acc-dxb", title: "Accra to Dubai route", originCity: "Accra", originCode: "ACC", destinationCity: "Dubai", destinationCode: "DXB", routeNote: "West Africa to Gulf hub route with broad provider inventory.", priceFromUsd: 0, image: imageByCity.dubai, imageAlt: "Downtown Dubai skyline with Burj Khalifa" },
+]);
+
+appendHomeDiscoveryRoutes("KE", [
+  { id: "ke-nbo-cpt", title: "Cape Town southern escape", originCity: "Nairobi", originCode: "NBO", destinationCity: "Cape Town", destinationCode: "CPT", routeNote: "East Africa to South Africa route for coast, wine, and mountains.", priceFromUsd: 0, image: imageByCity.capeTown, imageAlt: "Cape Town city and Table Mountain" },
+  { id: "ke-nbo-dar", title: "Dar es Salaam coastal link", originCity: "Nairobi", originCode: "NBO", destinationCity: "Dar es Salaam", destinationCode: "DAR", routeNote: "Short East Africa business and coast route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Dar es Salaam coastline and city" },
+  { id: "ke-nbo-cdg", title: "Paris long-haul gateway", originCity: "Nairobi", originCode: "NBO", destinationCity: "Paris", destinationCode: "CDG", routeNote: "Europe link for culture, fashion, and onward rail.", priceFromUsd: 0, image: imageByCity.paris, imageAlt: "Eiffel Tower above Paris streets" },
+  { id: "ke-nbo-bkk", title: "Bangkok Asia connector", originCity: "Nairobi", originCode: "NBO", destinationCity: "Bangkok", destinationCode: "BKK", routeNote: "East Africa to Asia route for city breaks and onward links.", priceFromUsd: 0, image: imageByCity.bangkok, imageAlt: "Bangkok skyline and temples" },
+  { id: "ke-nbo-doh", title: "Doha Gulf connector", originCity: "Nairobi", originCode: "NBO", destinationCity: "Doha", destinationCode: "DOH", routeNote: "High-connectivity Gulf hub route for international trips.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Doha skyline and waterfront" },
+]);
+
+appendHomeDiscoveryRoutes("ZA", [
+  { id: "za-cpt-jnb", title: "Johannesburg return corridor", originCity: "Cape Town", originCode: "CPT", destinationCity: "Johannesburg", destinationCode: "JNB", routeNote: "Core domestic business and leisure corridor.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Johannesburg skyline and city towers" },
+  { id: "za-cpt-lhr", title: "Cape Town to London", originCity: "Cape Town", originCode: "CPT", destinationCity: "London", destinationCode: "LHR", routeNote: "Strong South Africa to UK provider route.", priceFromUsd: 0, image: imageByCity.london, imageAlt: "London skyline and historic landmarks" },
+  { id: "za-cpt-dxb", title: "Cape Town to Dubai", originCity: "Cape Town", originCode: "CPT", destinationCity: "Dubai", destinationCode: "DXB", routeNote: "Southern Africa to Gulf hub route.", priceFromUsd: 0, image: imageByCity.dubai, imageAlt: "Downtown Dubai skyline with Burj Khalifa" },
+  { id: "za-jnb-ist", title: "Istanbul hub link", originCity: "Johannesburg", originCode: "JNB", destinationCity: "Istanbul", destinationCode: "IST", routeNote: "International hub route for Europe and Middle East connections.", priceFromUsd: 0, image: imageByCity.istanbul, imageAlt: "Istanbul skyline with domes and minarets" },
+]);
+
+appendHomeDiscoveryRoutes("DE", [
+  { id: "de-fra-fco", title: "Rome from Frankfurt", originCity: "Frankfurt", originCode: "FRA", destinationCity: "Rome", destinationCode: "FCO", routeNote: "Provider-searchable intra-Europe city break.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "The Colosseum and city streets in Rome" },
+  { id: "de-fra-bcn", title: "Barcelona from Frankfurt", originCity: "Frankfurt", originCode: "FRA", destinationCity: "Barcelona", destinationCode: "BCN", routeNote: "Strong leisure route for coast, food, and architecture.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Barcelona city streets and architecture" },
+  { id: "de-lhr-cdg", title: "London to Paris alternate", originCity: "London", originCode: "LHR", destinationCity: "Paris", destinationCode: "CDG", routeNote: "Europe trunk route for backup priced cards.", priceFromUsd: 0, image: imageByCity.paris, imageAlt: "Eiffel Tower above Paris streets" },
+  { id: "de-lhr-ams", title: "London to Amsterdam", originCity: "London", originCode: "LHR", destinationCity: "Amsterdam", destinationCode: "AMS", routeNote: "High-frequency Europe route for short breaks.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Amsterdam canals and historic homes" },
+  { id: "de-lhr-dxb", title: "London to Dubai hub", originCity: "London", originCode: "LHR", destinationCity: "Dubai", destinationCode: "DXB", routeNote: "Europe to Middle East trunk route.", priceFromUsd: 0, image: imageByCity.dubai, imageAlt: "Downtown Dubai skyline with Burj Khalifa" },
+]);
+
+appendHomeDiscoveryRoutes("AE", [
+  { id: "ae-dxb-jed", title: "Jeddah regional route", originCity: "Dubai", originCode: "DXB", destinationCity: "Jeddah", destinationCode: "JED", routeNote: "Middle East regional route for family and pilgrimage travel.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Jeddah waterfront and city skyline" },
+  { id: "ae-auh-lhr", title: "Abu Dhabi to London", originCity: "Abu Dhabi", originCode: "AUH", destinationCity: "London", destinationCode: "LHR", routeNote: "UAE capital to UK trunk route.", priceFromUsd: 0, image: imageByCity.london, imageAlt: "London skyline and historic landmarks" },
+  { id: "ae-doh-lhr", title: "Doha to London", originCity: "Doha", originCode: "DOH", destinationCity: "London", destinationCode: "LHR", routeNote: "Middle East hub to UK provider-backed route.", priceFromUsd: 0, image: imageByCity.london, imageAlt: "London skyline and historic landmarks" },
+  { id: "ae-dxb-ams", title: "Dubai to Amsterdam", originCity: "Dubai", originCode: "DXB", destinationCity: "Amsterdam", destinationCode: "AMS", routeNote: "Gulf to Europe route for city breaks and onward rail.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Amsterdam canals and historic homes" },
+]);
+
+appendHomeDiscoveryRoutes("JP", [
+  { id: "jp-hnd-icn", title: "Haneda to Seoul", originCity: "Tokyo", originCode: "HND", destinationCity: "Seoul", destinationCode: "ICN", routeNote: "Provider-searchable short Asia route from Haneda.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Seoul city skyline at dusk" },
+  { id: "jp-sin-bkk", title: "Singapore to Bangkok", originCity: "Singapore", originCode: "SIN", destinationCity: "Bangkok", destinationCode: "BKK", routeNote: "Southeast Asia trunk route with strong fare inventory.", priceFromUsd: 0, image: imageByCity.bangkok, imageAlt: "Bangkok skyline and temples" },
+  { id: "jp-sin-dps", title: "Singapore to Bali", originCity: "Singapore", originCode: "SIN", destinationCity: "Bali", destinationCode: "DPS", routeNote: "Regional island route for warm-weather trips.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Bali cliffs and tropical ocean" },
+  { id: "jp-sin-dxb", title: "Singapore to Dubai", originCity: "Singapore", originCode: "SIN", destinationCity: "Dubai", destinationCode: "DXB", routeNote: "Asia to Gulf hub route.", priceFromUsd: 0, image: imageByCity.dubai, imageAlt: "Downtown Dubai skyline with Burj Khalifa" },
+  { id: "jp-bkk-hkg", title: "Bangkok to Hong Kong", originCity: "Bangkok", originCode: "BKK", destinationCity: "Hong Kong", destinationCode: "HKG", routeNote: "High-demand Asia city-pair route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Hong Kong skyline and Victoria Harbour at night" },
+]);
+
+appendHomeDiscoveryRoutes("BR", [
+  { id: "br-gru-mad", title: "Madrid Atlantic link", originCity: "Sao Paulo", originCode: "GRU", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Brazil to Spain trunk route for Europe trips.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+  { id: "br-gru-bog", title: "Bogota regional connector", originCity: "Sao Paulo", originCode: "GRU", destinationCity: "Bogota", destinationCode: "BOG", routeNote: "Latin America business and culture route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Bogota city skyline and mountains" },
+  { id: "br-gig-gru", title: "Rio to Sao Paulo", originCity: "Rio de Janeiro", originCode: "GIG", destinationCity: "Sao Paulo", destinationCode: "GRU", routeNote: "Core domestic Brazil corridor for backup cards.", priceFromUsd: 0, image: imageByCity.rio, imageAlt: "Rio de Janeiro coastline and mountains" },
+  { id: "br-mex-cun", title: "Mexico City to Cancun", originCity: "Mexico City", originCode: "MEX", destinationCity: "Cancun", destinationCode: "CUN", routeNote: "Latin America leisure trunk route.", priceFromUsd: 0, image: imageByCity.cancun, imageAlt: "White sand beach and turquoise water in Cancun" },
+  { id: "br-mex-mad", title: "Mexico City to Madrid", originCity: "Mexico City", originCode: "MEX", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Latin America to Europe backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+  { id: "br-bog-mia", title: "Bogota to Miami", originCity: "Bogota", originCode: "BOG", destinationCity: "Miami", destinationCode: "MIA", routeNote: "Latin America to Florida provider-searchable route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Miami Beach lifeguard tower and palms" },
+]);
+
+appendHomeDiscoveryRoutes("CA", [
+  { id: "ca-yyz-yul", title: "Toronto to Montreal", originCity: "Toronto", originCode: "YYZ", destinationCity: "Montreal", destinationCode: "YUL", routeNote: "Core Canadian city-pair route for reliable fare inventory.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Montreal skyline and old city streets" },
+  { id: "ca-yyz-lhr", title: "Toronto to London", originCity: "Toronto", originCode: "YYZ", destinationCity: "London", destinationCode: "LHR", routeNote: "Major Canada to UK route.", priceFromUsd: 0, image: imageByCity.london, imageAlt: "London skyline and historic landmarks" },
+  { id: "ca-yyz-cdg", title: "Toronto to Paris", originCity: "Toronto", originCode: "YYZ", destinationCity: "Paris", destinationCode: "CDG", routeNote: "Canada to France route for culture and onward Europe.", priceFromUsd: 0, image: imageByCity.paris, imageAlt: "Eiffel Tower above Paris streets" },
+  { id: "ca-yvr-yyz", title: "Vancouver to Toronto", originCity: "Vancouver", originCode: "YVR", destinationCity: "Toronto", destinationCode: "YYZ", routeNote: "Trans-Canada trunk route with broad provider coverage.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Toronto skyline with Lake Ontario" },
+]);
+
+appendHomeDiscoveryRoutes("KE", [
+  { id: "ke-nbo-ams", title: "Amsterdam Europe gateway", originCity: "Nairobi", originCode: "NBO", destinationCity: "Amsterdam", destinationCode: "AMS", routeNote: "East Africa to Europe backup route for priced inventory.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Amsterdam canals and historic homes" },
+  { id: "ke-nbo-cai", title: "Cairo North Africa link", originCity: "Nairobi", originCode: "NBO", destinationCity: "Cairo", destinationCode: "CAI", routeNote: "Africa connector route for culture and onward links.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Cairo skyline with the Pyramids of Giza" },
+  { id: "ke-nbo-los", title: "Lagos Africa business route", originCity: "Nairobi", originCode: "NBO", destinationCity: "Lagos", destinationCode: "LOS", routeNote: "East-to-West Africa business corridor.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Lagos skyline and lagoon" },
+  { id: "ke-nbo-mru", title: "Mauritius island route", originCity: "Nairobi", originCode: "NBO", destinationCity: "Mauritius", destinationCode: "MRU", routeNote: "Indian Ocean leisure route for backup cards.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Mauritius lagoon and tropical coastline" },
+  { id: "ke-nbo-jed", title: "Jeddah regional link", originCity: "Nairobi", originCode: "NBO", destinationCity: "Jeddah", destinationCode: "JED", routeNote: "East Africa to Middle East route with provider coverage.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Jeddah waterfront and city skyline" },
+]);
+appendHomeDiscoveryRoutes("ZA", [
+  { id: "za-jnb-cdg", title: "Paris long-haul link", originCity: "Johannesburg", originCode: "JNB", destinationCity: "Paris", destinationCode: "CDG", routeNote: "Southern Africa to Europe route for provider-backed alternates.", priceFromUsd: 0, image: imageByCity.paris, imageAlt: "Eiffel Tower above Paris streets" },
+  { id: "za-cpt-cdg", title: "Cape Town to Paris", originCity: "Cape Town", originCode: "CPT", destinationCity: "Paris", destinationCode: "CDG", routeNote: "Cape Town Europe backup route.", priceFromUsd: 0, image: imageByCity.paris, imageAlt: "Eiffel Tower above Paris streets" },
+  { id: "za-dur-jnb", title: "Durban to Johannesburg", originCity: "Durban", originCode: "DUR", destinationCity: "Johannesburg", destinationCode: "JNB", routeNote: "Domestic trunk route for reliable snapshots.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Johannesburg skyline and city towers" },
+  { id: "za-jnb-add", title: "Addis Ababa connector", originCity: "Johannesburg", originCode: "JNB", destinationCity: "Addis Ababa", destinationCode: "ADD", routeNote: "Africa hub route for backup pricing.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Addis Ababa cityscape in the Ethiopian highlands" },
+  { id: "za-jnb-acc", title: "Accra regional link", originCity: "Johannesburg", originCode: "JNB", destinationCity: "Accra", destinationCode: "ACC", routeNote: "Southern-to-West Africa route for backup inventory.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Accra coastal city scene and palm trees" },
+  { id: "za-cpt-mru", title: "Cape Town to Mauritius", originCity: "Cape Town", originCode: "CPT", destinationCity: "Mauritius", destinationCode: "MRU", routeNote: "Indian Ocean leisure backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Mauritius lagoon and tropical coastline" },
+]);
+appendHomeDiscoveryRoutes("DE", [
+  { id: "de-fra-mad", title: "Madrid from Frankfurt", originCity: "Frankfurt", originCode: "FRA", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Intra-Europe trunk route for backup pricing.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+  { id: "de-fra-lis", title: "Lisbon from Frankfurt", originCity: "Frankfurt", originCode: "FRA", destinationCity: "Lisbon", destinationCode: "LIS", routeNote: "Europe leisure route with provider inventory.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Historic tram on a Lisbon hillside street" },
+  { id: "de-muc-lhr", title: "Munich to London", originCity: "Munich", originCode: "MUC", destinationCity: "London", destinationCode: "LHR", routeNote: "Germany to UK backup route.", priceFromUsd: 0, image: imageByCity.london, imageAlt: "London skyline and historic landmarks" },
+  { id: "de-muc-cdg", title: "Munich to Paris", originCity: "Munich", originCode: "MUC", destinationCity: "Paris", destinationCode: "CDG", routeNote: "Germany to France backup route.", priceFromUsd: 0, image: imageByCity.paris, imageAlt: "Eiffel Tower above Paris streets" },
+  { id: "de-ber-ams", title: "Berlin to Amsterdam", originCity: "Berlin", originCode: "BER", destinationCity: "Amsterdam", destinationCode: "AMS", routeNote: "Europe city-pair route for backup inventory.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Amsterdam canals and historic homes" },
+]);
+appendHomeDiscoveryRoutes("AE", [
+  { id: "ae-dxb-mnl", title: "Manila long-haul route", originCity: "Dubai", originCode: "DXB", destinationCity: "Manila", destinationCode: "MNL", routeNote: "Middle East to Asia route with strong demand.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Manila skyline and bay" },
+  { id: "ae-dxb-del", title: "Delhi regional connector", originCity: "Dubai", originCode: "DXB", destinationCity: "Delhi", destinationCode: "DEL", routeNote: "UAE to India trunk route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Delhi city architecture" },
+  { id: "ae-dxb-bom", title: "Mumbai regional connector", originCity: "Dubai", originCode: "DXB", destinationCity: "Mumbai", destinationCode: "BOM", routeNote: "UAE to India business and family route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Mumbai skyline and waterfront" },
+  { id: "ae-auh-bom", title: "Abu Dhabi to Mumbai", originCity: "Abu Dhabi", originCode: "AUH", destinationCity: "Mumbai", destinationCode: "BOM", routeNote: "UAE capital to India backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Mumbai skyline and waterfront" },
+  { id: "ae-dxb-mru", title: "Dubai to Mauritius", originCity: "Dubai", originCode: "DXB", destinationCity: "Mauritius", destinationCode: "MRU", routeNote: "Indian Ocean leisure route from the Gulf.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Mauritius lagoon and tropical coastline" },
+  { id: "ae-doh-bkk", title: "Doha to Bangkok", originCity: "Doha", originCode: "DOH", destinationCity: "Bangkok", destinationCode: "BKK", routeNote: "Middle East hub to Asia backup route.", priceFromUsd: 0, image: imageByCity.bangkok, imageAlt: "Bangkok skyline and temples" },
+]);
+appendHomeDiscoveryRoutes("JP", [
+  { id: "jp-hnd-bkk", title: "Haneda to Bangkok", originCity: "Tokyo", originCode: "HND", destinationCity: "Bangkok", destinationCode: "BKK", routeNote: "Tokyo to Thailand route for backup cards.", priceFromUsd: 0, image: imageByCity.bangkok, imageAlt: "Bangkok skyline and temples" },
+  { id: "jp-hnd-sin", title: "Haneda to Singapore", originCity: "Tokyo", originCode: "HND", destinationCity: "Singapore", destinationCode: "SIN", routeNote: "Tokyo to Singapore route with broad inventory.", priceFromUsd: 0, image: imageByCity.singapore, imageAlt: "Marina Bay skyline in Singapore at dusk" },
+  { id: "jp-nrt-mnl", title: "Tokyo to Manila", originCity: "Tokyo", originCode: "NRT", destinationCity: "Manila", destinationCode: "MNL", routeNote: "Asia city-pair route for backup snapshots.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Manila skyline and bay" },
+  { id: "jp-hnd-hkg", title: "Haneda to Hong Kong", originCity: "Tokyo", originCode: "HND", destinationCity: "Hong Kong", destinationCode: "HKG", routeNote: "High-demand Asia city route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Hong Kong skyline and Victoria Harbour at night" },
+  { id: "jp-kix-icn", title: "Osaka to Seoul", originCity: "Osaka", originCode: "KIX", destinationCity: "Seoul", destinationCode: "ICN", routeNote: "Japan to Korea regional backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Seoul city skyline at dusk" },
+]);
+appendHomeDiscoveryRoutes("BR", [
+  { id: "br-gru-cun", title: "Sao Paulo to Cancun", originCity: "Sao Paulo", originCode: "GRU", destinationCity: "Cancun", destinationCode: "CUN", routeNote: "Latin America leisure route for backup cards.", priceFromUsd: 0, image: imageByCity.cancun, imageAlt: "White sand beach and turquoise water in Cancun" },
+  { id: "br-gru-mex", title: "Sao Paulo to Mexico City", originCity: "Sao Paulo", originCode: "GRU", destinationCity: "Mexico City", destinationCode: "MEX", routeNote: "Latin America city-pair backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Mexico City historic center and cathedral skyline" },
+  { id: "br-gig-mia", title: "Rio to Miami", originCity: "Rio de Janeiro", originCode: "GIG", destinationCity: "Miami", destinationCode: "MIA", routeNote: "Brazil to Florida route with provider coverage.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Miami Beach lifeguard tower and palms" },
+  { id: "br-gig-lis", title: "Rio to Lisbon", originCity: "Rio de Janeiro", originCode: "GIG", destinationCity: "Lisbon", destinationCode: "LIS", routeNote: "Brazil to Portugal long-haul backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Historic tram on a Lisbon hillside street" },
+  { id: "br-bog-mad", title: "Bogota to Madrid", originCity: "Bogota", originCode: "BOG", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Latin America to Europe backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+]);
+
+appendHomeDiscoveryRoutes("KE", [
+  { id: "ke-nbo-kgl", title: "Kigali regional connector", originCity: "Nairobi", originCode: "NBO", destinationCity: "Kigali", destinationCode: "KGL", routeNote: "East Africa backup route for provider snapshots.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Kigali skyline and hills" },
+  { id: "ke-nbo-acc", title: "Accra Africa connector", originCity: "Nairobi", originCode: "NBO", destinationCity: "Accra", destinationCode: "ACC", routeNote: "East-to-West Africa backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Accra coastal city scene and palm trees" },
+  { id: "ke-nbo-mba", title: "Mombasa coast route", originCity: "Nairobi", originCode: "NBO", destinationCity: "Mombasa", destinationCode: "MBA", routeNote: "Domestic Kenya route for leisure backup pricing.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Mombasa coast and old town" },
+  { id: "ke-nbo-mad", title: "Madrid Europe connector", originCity: "Nairobi", originCode: "NBO", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Long-haul Europe backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+]);
+appendHomeDiscoveryRoutes("ZA", [
+  { id: "za-jnb-mad", title: "Madrid long-haul route", originCity: "Johannesburg", originCode: "JNB", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Southern Africa to Europe backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+  { id: "za-jnb-lis", title: "Lisbon long-haul route", originCity: "Johannesburg", originCode: "JNB", destinationCity: "Lisbon", destinationCode: "LIS", routeNote: "Southern Africa to Portugal backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Historic tram on a Lisbon hillside street" },
+  { id: "za-cpt-acc", title: "Cape Town to Accra", originCity: "Cape Town", originCode: "CPT", destinationCity: "Accra", destinationCode: "ACC", routeNote: "Africa regional backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Accra coastal city scene and palm trees" },
+  { id: "za-jnb-dar", title: "Dar es Salaam link", originCity: "Johannesburg", originCode: "JNB", destinationCity: "Dar es Salaam", destinationCode: "DAR", routeNote: "Southern-to-East Africa backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Dar es Salaam coastline and city" },
+]);
+appendHomeDiscoveryRoutes("DE", [
+  { id: "de-fra-vie", title: "Vienna from Frankfurt", originCity: "Frankfurt", originCode: "FRA", destinationCity: "Vienna", destinationCode: "VIE", routeNote: "Europe backup city-pair route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Vienna historic center" },
+  { id: "de-fra-zrh", title: "Zurich from Frankfurt", originCity: "Frankfurt", originCode: "FRA", destinationCity: "Zurich", destinationCode: "ZRH", routeNote: "Short Europe backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Zurich skyline and lake" },
+  { id: "de-muc-mad", title: "Munich to Madrid", originCity: "Munich", originCode: "MUC", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Germany to Spain backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+  { id: "de-ber-lhr", title: "Berlin to London", originCity: "Berlin", originCode: "BER", destinationCity: "London", destinationCode: "LHR", routeNote: "Germany to UK backup route.", priceFromUsd: 0, image: imageByCity.london, imageAlt: "London skyline and historic landmarks" },
+]);
+appendHomeDiscoveryRoutes("AE", [
+  { id: "ae-dxb-kul", title: "Kuala Lumpur route", originCity: "Dubai", originCode: "DXB", destinationCity: "Kuala Lumpur", destinationCode: "KUL", routeNote: "UAE to Southeast Asia backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Kuala Lumpur skyline at dusk" },
+  { id: "ae-auh-cai", title: "Abu Dhabi to Cairo", originCity: "Abu Dhabi", originCode: "AUH", destinationCity: "Cairo", destinationCode: "CAI", routeNote: "Middle East regional backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Cairo skyline with the Pyramids of Giza" },
+  { id: "ae-doh-ist", title: "Doha to Istanbul", originCity: "Doha", originCode: "DOH", destinationCity: "Istanbul", destinationCode: "IST", routeNote: "Middle East to Türkiye backup route.", priceFromUsd: 0, image: imageByCity.istanbul, imageAlt: "Istanbul skyline with domes and minarets" },
+  { id: "ae-dxb-mad", title: "Dubai to Madrid", originCity: "Dubai", originCode: "DXB", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Gulf to Europe backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+]);
+appendHomeDiscoveryRoutes("JP", [
+  { id: "jp-nrt-kul", title: "Tokyo to Kuala Lumpur", originCity: "Tokyo", originCode: "NRT", destinationCity: "Kuala Lumpur", destinationCode: "KUL", routeNote: "Asia backup route for provider snapshots.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Kuala Lumpur skyline at dusk" },
+  { id: "jp-hnd-tpe", title: "Tokyo to Taipei", originCity: "Tokyo", originCode: "HND", destinationCity: "Taipei", destinationCode: "TPE", routeNote: "Short Asia route for backup pricing.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Taipei skyline and city streets" },
+  { id: "jp-kix-bkk", title: "Osaka to Bangkok", originCity: "Osaka", originCode: "KIX", destinationCity: "Bangkok", destinationCode: "BKK", routeNote: "Japan to Thailand backup route.", priceFromUsd: 0, image: imageByCity.bangkok, imageAlt: "Bangkok skyline and temples" },
+  { id: "jp-nrt-mad", title: "Tokyo to Madrid", originCity: "Tokyo", originCode: "NRT", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Asia to Europe long-haul backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+]);
+appendHomeDiscoveryRoutes("BR", [
+  { id: "br-gru-sjo", title: "Sao Paulo to San Jose", originCity: "Sao Paulo", originCode: "GRU", destinationCity: "San Jose", destinationCode: "SJO", routeNote: "Latin America backup route for nature trips.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "San Jose skyline with green hills" },
+  { id: "br-mex-sjo-alt", title: "Mexico City to San Jose", originCity: "Mexico City", originCode: "MEX", destinationCity: "San Jose", destinationCode: "SJO", routeNote: "Central America backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "San Jose skyline with green hills" },
+  { id: "br-bog-cun", title: "Bogota to Cancun", originCity: "Bogota", originCode: "BOG", destinationCity: "Cancun", destinationCode: "CUN", routeNote: "Latin America leisure backup route.", priceFromUsd: 0, image: imageByCity.cancun, imageAlt: "White sand beach and turquoise water in Cancun" },
+  { id: "br-gig-mad", title: "Rio to Madrid", originCity: "Rio de Janeiro", originCode: "GIG", destinationCity: "Madrid", destinationCode: "MAD", routeNote: "Brazil to Spain backup route.", priceFromUsd: 0, image: imageByCity.city, imageAlt: "Madrid streets and historic architecture" },
+]);
+
 homeDiscoveryByRegion.AFRICA = homeDiscoveryByRegion.NG;
 homeDiscoveryByRegion.EUROPE = homeDiscoveryByRegion.DE;
 homeDiscoveryByRegion.MIDDLE_EAST = homeDiscoveryByRegion.AE;

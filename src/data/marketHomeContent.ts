@@ -594,6 +594,94 @@ export const popularDestinationsByMarket: Record<
   ],
 };
 
+
+function appendPopularDestinationRoutes(
+  marketCode: string,
+  items: PopularDestination[],
+) {
+  popularDestinationsByMarket[marketCode] = [
+    ...(popularDestinationsByMarket[marketCode] ?? []),
+    ...items.map((item) => ({
+      ...item,
+      image: addPopularImageSignature(item.image, item.id),
+    })),
+  ];
+}
+
+const cardImagePhotoIds = [
+  338515, 532826, 753626, 466685, 21014, 672358, 59519, 417074,
+  2166553, 2474690, 1450353, 2901209, 346885, 356830, 164595,
+  258154, 261102, 210243, 7536261, 3278215, 3225531, 161853,
+  2422461, 2246476, 3889855, 1008155, 1051075, 208745, 2363,
+  358229, 258383, 457882, 221457, 2104882, 2356045, 3769138,
+  2403209, 3361480, 3155666, 347141, 358457, 460376, 7536262,
+] as const;
+
+function addPopularImageSignature(_image: string, signature: string) {
+  const photoId =
+    cardImagePhotoIds[
+      Math.abs(
+        [...signature].reduce(
+          (hash, character) => hash * 31 + character.charCodeAt(0),
+          7,
+        ),
+      ) % cardImagePhotoIds.length
+    ];
+
+  return `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg?auto=compress&cs=tinysrgb&w=1200`;
+}
+
+const popularRouteImageByCity = {
+  london:
+    "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1600&q=90",
+  dubai:
+    "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&w=1600&q=90",
+  paris:
+    "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1600&q=90",
+  istanbul:
+    "https://images.unsplash.com/photo-1541432901042-2d8bd64b4a9b?auto=format&fit=crop&w=1600&q=90",
+  capeTown:
+    "https://images.unsplash.com/photo-1576485290814-1c72aa4bbb8e?auto=format&fit=crop&w=1600&q=90",
+  bangkok:
+    "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1600&q=90",
+  city:
+    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=90",
+} as const;
+
+appendPopularDestinationRoutes("NG", [
+  { id: "ng-abv-dubai", code: "DXB", originCode: "ABV", city: "Dubai", country: "United Arab Emirates", imageAlt: "Downtown Dubai skyline with Burj Khalifa", image: popularRouteImageByCity.dubai },
+  { id: "ng-abv-london", code: "LHR", originCode: "ABV", city: "London", country: "United Kingdom", imageAlt: "London skyline and historic landmarks", image: popularRouteImageByCity.london },
+  { id: "ng-acc-dubai", code: "DXB", originCode: "ACC", city: "Dubai", country: "United Arab Emirates", imageAlt: "Downtown Dubai skyline with Burj Khalifa", image: popularRouteImageByCity.dubai },
+]);
+appendPopularDestinationRoutes("KE", [
+  { id: "ke-cape-town", code: "CPT", originCode: "NBO", city: "Cape Town", country: "South Africa", imageAlt: "Cape Town city and Table Mountain", image: popularRouteImageByCity.capeTown },
+  { id: "ke-istanbul", code: "IST", originCode: "NBO", city: "Istanbul", country: "Türkiye", imageAlt: "Istanbul skyline with domes and minarets", image: popularRouteImageByCity.istanbul },
+  { id: "ke-paris", code: "CDG", originCode: "NBO", city: "Paris", country: "France", imageAlt: "Eiffel Tower above Paris streets", image: popularRouteImageByCity.paris },
+]);
+appendPopularDestinationRoutes("ZA", [
+  { id: "za-cpt-london", code: "LHR", originCode: "CPT", city: "London", country: "United Kingdom", imageAlt: "London skyline and historic landmarks", image: popularRouteImageByCity.london },
+  { id: "za-cpt-dubai", code: "DXB", originCode: "CPT", city: "Dubai", country: "United Arab Emirates", imageAlt: "Downtown Dubai skyline with Burj Khalifa", image: popularRouteImageByCity.dubai },
+]);
+appendPopularDestinationRoutes("DE", [
+  { id: "de-barcelona", code: "BCN", originCode: "FRA", city: "Barcelona", country: "Spain", imageAlt: "Barcelona city streets and architecture", image: popularRouteImageByCity.city },
+  { id: "de-rome-fra", code: "FCO", originCode: "FRA", city: "Rome", country: "Italy", imageAlt: "The Colosseum and city streets in Rome", image: popularRouteImageByCity.city },
+]);
+appendPopularDestinationRoutes("GB", [
+  { id: "gb-dxb-alt", code: "DXB", originCode: "LHR", city: "Dubai", country: "United Arab Emirates", imageAlt: "Downtown Dubai skyline with Burj Khalifa", image: popularRouteImageByCity.dubai },
+  { id: "gb-paris-alt", code: "CDG", originCode: "LHR", city: "Paris", country: "France", imageAlt: "Eiffel Tower above Paris streets", image: popularRouteImageByCity.paris },
+]);
+appendPopularDestinationRoutes("AE", [
+  { id: "ae-jeddah", code: "JED", originCode: "DXB", city: "Jeddah", country: "Saudi Arabia", imageAlt: "Jeddah waterfront and city skyline", image: popularRouteImageByCity.city },
+  { id: "ae-bangkok-alt", code: "BKK", originCode: "DXB", city: "Bangkok", country: "Thailand", imageAlt: "Bangkok skyline and temples", image: popularRouteImageByCity.bangkok },
+]);
+appendPopularDestinationRoutes("JP", [
+  { id: "jp-seoul-hnd", code: "ICN", originCode: "HND", city: "Seoul", country: "South Korea", imageAlt: "Seoul city skyline at dusk", image: popularRouteImageByCity.city },
+  { id: "jp-singapore-hnd", code: "SIN", originCode: "HND", city: "Singapore", country: "Singapore", imageAlt: "Marina Bay skyline in Singapore at dusk", image: popularRouteImageByCity.city },
+]);
+appendPopularDestinationRoutes("BR", [
+  { id: "br-madrid", code: "MAD", originCode: "GRU", city: "Madrid", country: "Spain", imageAlt: "Madrid streets and historic architecture", image: popularRouteImageByCity.city },
+  { id: "br-bogota", code: "BOG", originCode: "GRU", city: "Bogota", country: "Colombia", imageAlt: "Bogota city skyline and mountains", image: popularRouteImageByCity.city },
+]);
 popularDestinationsByMarket.AFRICA = popularDestinationsByMarket.NG;
 popularDestinationsByMarket.EUROPE = popularDestinationsByMarket.DE;
 popularDestinationsByMarket.MIDDLE_EAST = popularDestinationsByMarket.AE;
