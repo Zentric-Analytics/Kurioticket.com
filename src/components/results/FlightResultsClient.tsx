@@ -934,6 +934,26 @@ export function FlightResultsClient() {
   }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
 
   useEffect(() => {
+    if (!canAutoCollapseExpandedSearch) {
+      return undefined;
+    }
+
+    function handleOutsideClick(event: MouseEvent) {
+      const target = event.target as Node;
+
+      if (searchFormRef.current?.contains(target)) return;
+
+      collapseStickySearch();
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
+  }, [canAutoCollapseExpandedSearch, collapseStickySearch]);
+
+  useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- Hydrates client-only localStorage-backed recent searches after mount.
     setRecentSearches(readRecentSearches());
     setSavedTripIds(readSavedTripIds());
@@ -1037,6 +1057,8 @@ export function FlightResultsClient() {
   }
 
   function handleTripTypeChange(nextTripType: string) {
+    markExpandedSearchInteraction();
+
     const normalizedTripType =
       nextTripType === "one-way" ? "one-way" : "round-trip";
 
@@ -1095,6 +1117,7 @@ export function FlightResultsClient() {
   }
 
   function clearOriginField() {
+    markExpandedSearchInteraction();
     setOriginInput("");
     setOriginCode("");
     setOriginSuggestions([]);
@@ -1104,6 +1127,7 @@ export function FlightResultsClient() {
   }
 
   function clearDestinationField() {
+    markExpandedSearchInteraction();
     setDestinationInput("");
     setDestinationCode("");
     setDestinationSuggestions([]);
@@ -1632,6 +1656,8 @@ export function FlightResultsClient() {
   }, [travelerPopoverOpen]);
 
   function handleSwapLocations() {
+    markExpandedSearchInteraction();
+
     const currentOriginInput = originInput;
     const currentOriginCode = originCode;
 
@@ -1645,6 +1671,8 @@ export function FlightResultsClient() {
 
   function applyFlightDateSelection(date: Date) {
     if (!activeDatePicker) return;
+
+    markExpandedSearchInteraction();
 
     const nextDateState = getNextFlightDateSelection({
       activePicker: activeDatePicker,
@@ -3138,10 +3166,11 @@ export function FlightResultsClient() {
                 </button>
               </div>
 
-              <div ref={departureWrapRef}>
+              <div ref={departureWrapRef} className="relative">
                 <button
                   type="button"
                   onClick={() => {
+                    setTripTypeMenuOpen(false);
                     setActiveSuggest(null);
                     setDropdownPosition(null);
                     setTravelerPopoverOpen(false);
@@ -3168,10 +3197,11 @@ export function FlightResultsClient() {
                 </button>
               </div>
 
-              <div ref={travelerCabinWrapRef}>
+              <div ref={travelerCabinWrapRef} className="relative">
                 <button
                   type="button"
                   onClick={() => {
+                    setTripTypeMenuOpen(false);
                     setActiveSuggest(null);
                     setDropdownPosition(null);
                     setActiveDatePicker(null);
@@ -3297,6 +3327,7 @@ export function FlightResultsClient() {
       <form
         ref={placement === "desktop" ? searchFormRef : undefined}
         onSubmit={handleCompactSearchSubmit}
+        onChangeCapture={markExpandedSearchInteraction}
         className={cn(
           "mx-auto w-full min-w-0 max-w-full sm:max-w-5xl",
           placement === "desktop" && "hidden sm:block",
@@ -3319,7 +3350,6 @@ export function FlightResultsClient() {
 
           <div
             className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]"
-            onPointerDown={markExpandedSearchInteraction}
           >
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div ref={tripTypeMenuRef} className="relative">
@@ -3327,7 +3357,15 @@ export function FlightResultsClient() {
                   type="button"
                   aria-expanded={tripTypeMenuOpen}
                   aria-haspopup="listbox"
-                  onClick={() => setTripTypeMenuOpen((open) => !open)}
+                  onClick={() => {
+                    setActiveSuggest(null);
+                    setDropdownPosition(null);
+                    setActiveDatePicker(null);
+                    setDatePickerPosition(null);
+                    setTravelerPopoverOpen(false);
+                    setTravelerPopoverPosition(null);
+                    setTripTypeMenuOpen((open) => !open);
+                  }}
                   className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200"
                 >
                   <span className="min-w-0">
@@ -3404,6 +3442,11 @@ export function FlightResultsClient() {
                     required
                     value={originInput}
                     onFocus={() => {
+                      setTripTypeMenuOpen(false);
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                      setTravelerPopoverOpen(false);
+                      setTravelerPopoverPosition(null);
                       if (originInput.trim().length >= 2)
                         setActiveSuggest("origin");
                     }}
@@ -3414,6 +3457,11 @@ export function FlightResultsClient() {
                       }
                     }}
                     onChange={(event) => {
+                      setTripTypeMenuOpen(false);
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                      setTravelerPopoverOpen(false);
+                      setTravelerPopoverPosition(null);
                       setOriginInput(event.target.value);
                       setOriginCode("");
 
@@ -3448,12 +3496,13 @@ export function FlightResultsClient() {
                     </button>
                   ) : null}
 
-                  {activeSuggest === "origin" && dropdownPosition ? (
+                  {activeSuggest === "origin" ? (
                     <SuggestionList
                       id="flight-airport-suggestions"
-                      position={dropdownPosition}
+                      alignToField
                       suggestions={resolvedOriginSuggestions}
                       onSelect={(value) => {
+                        markExpandedSearchInteraction();
                         setOriginInput(value);
                         setOriginCode(value);
                         setActiveSuggest(null);
@@ -3491,6 +3540,11 @@ export function FlightResultsClient() {
                     required
                     value={destinationInput}
                     onFocus={() => {
+                      setTripTypeMenuOpen(false);
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                      setTravelerPopoverOpen(false);
+                      setTravelerPopoverPosition(null);
                       if (destinationInput.trim().length >= 2) {
                         setActiveSuggest("destination");
                       }
@@ -3502,6 +3556,11 @@ export function FlightResultsClient() {
                       }
                     }}
                     onChange={(event) => {
+                      setTripTypeMenuOpen(false);
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                      setTravelerPopoverOpen(false);
+                      setTravelerPopoverPosition(null);
                       setDestinationInput(event.target.value);
                       setDestinationCode("");
 
@@ -3536,12 +3595,13 @@ export function FlightResultsClient() {
                     </button>
                   ) : null}
 
-                  {activeSuggest === "destination" && dropdownPosition ? (
+                  {activeSuggest === "destination" ? (
                     <SuggestionList
                       id="flight-airport-suggestions"
-                      position={dropdownPosition}
+                      alignToField
                       suggestions={resolvedDestinationSuggestions}
                       onSelect={(value) => {
+                        markExpandedSearchInteraction();
                         setDestinationInput(value);
                         setDestinationCode(value);
                         setActiveSuggest(null);
@@ -3552,10 +3612,11 @@ export function FlightResultsClient() {
                 </div>
               </div>
 
-              <div ref={departureWrapRef}>
+              <div ref={departureWrapRef} className="relative">
                 <button
                   type="button"
                   onClick={() => {
+                    setTripTypeMenuOpen(false);
                     setActiveSuggest(null);
                     setDropdownPosition(null);
                     setTravelerPopoverOpen(false);
@@ -3579,12 +3640,46 @@ export function FlightResultsClient() {
                     </span>
                   </span>
                 </button>
+
+                {activeDatePicker ? (
+                  <DatePickerPopover
+                    alignToField="right"
+                    position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
+                    onClose={() => {
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                    }}
+                    month={calendarMonth}
+                    departureValue={departureDateInput}
+                    returnValue={returnDateInput}
+                    activePicker={activeDatePicker}
+                    tripType={tripTypeInput}
+                    onMonthChange={setCalendarMonth}
+                    onSelect={applyFlightDateSelection}
+                    onClear={() => {
+                      markExpandedSearchInteraction();
+                      if (activeDatePicker === "departure") {
+                        setDepartureDateInput("");
+                        setReturnDateInput("");
+                      }
+
+                      if (activeDatePicker === "return") {
+                        setReturnDateInput("");
+                      }
+                    }}
+                    onToday={() => {
+                      setActiveDatePicker(null);
+                      setDatePickerPosition(null);
+                    }}
+                  />
+                ) : null}
               </div>
 
-              <div ref={travelerCabinWrapRef}>
+              <div ref={travelerCabinWrapRef} className="relative">
                 <button
                   type="button"
                   onClick={() => {
+                    setTripTypeMenuOpen(false);
                     setActiveSuggest(null);
                     setDropdownPosition(null);
                     setActiveDatePicker(null);
@@ -3609,6 +3704,57 @@ export function FlightResultsClient() {
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
                 </button>
+
+                {travelerPopoverOpen ? (
+                  <TravelerCabinPopover
+                    alignToField="right"
+                    position={travelerPopoverPosition ?? { top: 0, left: 0, width: 0 }}
+                    onClose={() => {
+                      setTravelerPopoverOpen(false);
+                      setTravelerPopoverPosition(null);
+                    }}
+                    adultCount={adultCount}
+                    childCount={childCount}
+                    infantCount={infantCount}
+                    cabinClass={cabinClassInput}
+                    onAdultChange={(nextValue) => {
+                      markExpandedSearchInteraction();
+                      const nextAdultCount = Math.min(9, Math.max(1, nextValue));
+
+                      setAdultCount(nextAdultCount);
+                      setChildCount((current) => Math.min(current, 9 - nextAdultCount));
+                      setInfantCount((current) =>
+                        Math.min(current, nextAdultCount, 9 - nextAdultCount),
+                      );
+                    }}
+                    onChildChange={(nextValue) => {
+                      markExpandedSearchInteraction();
+                      const nextChildCount = Math.min(
+                        9 - adultCount,
+                        Math.max(0, nextValue),
+                      );
+
+                      setChildCount(nextChildCount);
+                      setInfantCount((current) =>
+                        Math.min(current, 9 - adultCount - nextChildCount),
+                      );
+                    }}
+                    onInfantChange={(nextValue) => {
+                      markExpandedSearchInteraction();
+                      setInfantCount(
+                        Math.min(
+                          adultCount,
+                          9 - adultCount - childCount,
+                          Math.max(0, nextValue),
+                        ),
+                      );
+                    }}
+                    onCabinClassChange={(nextValue) => {
+                      markExpandedSearchInteraction();
+                      setCabinClassInput(nextValue);
+                    }}
+                  />
+                ) : null}
               </div>
 
               <Button
@@ -3770,8 +3916,6 @@ export function FlightResultsClient() {
       >
         <div className="page-shell">
           {!mobileSearchOpen ? renderCompactSearchForm("desktop") : null}
-
-          {renderCompactSearchPopovers("desktop")}
         </div>
       </section>
 
@@ -4447,6 +4591,7 @@ function buildTravelerCabinSummary(
 function DatePickerPopover({
   position,
   mobileSheet = false,
+  alignToField,
   month,
   departureValue,
   returnValue,
@@ -4460,6 +4605,7 @@ function DatePickerPopover({
 }: {
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
+  alignToField?: "left" | "right";
   month: Date;
   departureValue: string;
   returnValue: string;
@@ -4484,13 +4630,21 @@ function DatePickerPopover({
         height: "100dvh",
         zIndex: 10020,
       } as const)
-    : ({
-        position: "fixed",
-        top: position.top,
-        left: position.left,
-        width: position.width,
-        zIndex: 9999,
-      } as const);
+    : alignToField
+      ? ({
+          position: "absolute",
+          top: "calc(100% + 0.5rem)",
+          ...(alignToField === "right" ? { right: 0 } : { left: 0 }),
+          width: "min(560px, calc(100vw - 2rem))",
+          zIndex: 70,
+        } as const)
+      : ({
+          position: "fixed",
+          top: position.top,
+          left: position.left,
+          width: position.width,
+          zIndex: 9999,
+        } as const);
 
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
@@ -4649,6 +4803,7 @@ function DatePickerPopover({
 function TravelerCabinPopover({
   position,
   mobileSheet = false,
+  alignToField,
   adultCount,
   childCount,
   infantCount,
@@ -4661,6 +4816,7 @@ function TravelerCabinPopover({
 }: {
   position: { top: number; left: number; width: number };
   mobileSheet?: boolean;
+  alignToField?: "left" | "right";
   adultCount: number;
   childCount: number;
   infantCount: number;
@@ -4679,13 +4835,21 @@ function TravelerCabinPopover({
         height: "100dvh",
         zIndex: 10020,
       } as const)
-    : ({
-        position: "fixed",
-        top: position.top,
-        left: position.left,
-        width: position.width,
-        zIndex: 9999,
-      } as const);
+    : alignToField
+      ? ({
+          position: "absolute",
+          top: "calc(100% + 0.5rem)",
+          ...(alignToField === "right" ? { right: 0 } : { left: 0 }),
+          width: "min(320px, calc(100vw - 2rem))",
+          zIndex: 70,
+        } as const)
+      : ({
+          position: "fixed",
+          top: position.top,
+          left: position.left,
+          width: position.width,
+          zIndex: 9999,
+        } as const);
 
   return (
     <div
@@ -4867,22 +5031,34 @@ function SuggestionList({
   suggestions,
   onSelect,
   position,
+  alignToField = false,
 }: {
   id: string;
   suggestions: AirportOption[];
   onSelect: (value: string) => void;
-  position: { top: number; left: number; width: number };
+  position?: { top: number; left: number; width: number };
+  alignToField?: boolean;
 }) {
   return (
     <div
       id={id}
-      style={{
-        position: "fixed",
-        top: position.top,
-        left: position.left,
-        width: position.width,
-        zIndex: 9999,
-      }}
+      style={
+        alignToField
+          ? {
+              position: "absolute",
+              top: "calc(100% + 0.5rem)",
+              left: 0,
+              width: "min(380px, calc(100vw - 2rem))",
+              zIndex: 70,
+            }
+          : {
+              position: "fixed",
+              top: position?.top ?? 0,
+              left: position?.left ?? 0,
+              width: position?.width ?? 0,
+              zIndex: 9999,
+            }
+      }
       className="w-full max-h-[min(42dvh,270px)] overflow-auto rounded-xl border border-slate-200 bg-white py-0.5 shadow-xl md:max-h-[220px]"
     >
       {suggestions.length ? (
