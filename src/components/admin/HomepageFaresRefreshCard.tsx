@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
 const DEFAULT_REFRESH_BUDGET: RefreshBudget = {
-  popularVisibleTarget: 5,
+  popularVisibleTarget: 8,
   discoverVisibleTarget: 16,
   discoverBackupFreshTarget: 3,
-  maxRouteAttemptsPerRun: 28,
-  maxProviderCallsPerRun: 84,
+  maxRouteAttemptsPerRun: 144,
+  maxProviderCallsPerRun: 144,
   maxDateCandidatesPerRoute: 3,
 };
 
@@ -20,8 +20,8 @@ const DEFAULT_READINESS_COUNTS: RefreshReadinessCounts = {
   freshDiscover: 0,
   freshDiscoverDisplayed: 0,
   freshDiscoverBackup: 0,
-  publicFreshTarget: 21,
-  operationalFreshTarget: 24,
+  publicFreshTarget: 24,
+  operationalFreshTarget: 27,
 };
 
 const DEFAULT_COUNTS: RefreshCounts = {
@@ -33,6 +33,22 @@ const DEFAULT_COUNTS: RefreshCounts = {
   routeAttempts: 0,
   providerCalls: 0,
   stoppedReason: "completed",
+  globalReadinessStatus: "not_ready",
+  requiredMarkets: [],
+  readyMarkets: [],
+  underfilledMarkets: [],
+  marketReadinessSummary: [],
+  marketTargets: {},
+  marketTargetMet: {},
+  popularFreshByMarket: {},
+  discoveryFreshByMarket: {},
+  backupFreshByMarket: {},
+  candidatePoolSizeByMarket: {},
+  routeAttemptsByMarket: {},
+  providerCallsByMarket: {},
+  failedByMarket: {},
+  unavailableByMarket: {},
+  skippedCooldownByMarket: {},
   readinessBefore: DEFAULT_READINESS_COUNTS,
   readinessAfter: DEFAULT_READINESS_COUNTS,
   refreshBudget: DEFAULT_REFRESH_BUDGET,
@@ -56,13 +72,34 @@ const DEFAULT_HEALTH: HomepageFareHealth = {
 
 const DEFAULT_DISPLAY_READINESS: DisplayReadiness = {
   ...DEFAULT_HEALTH,
+  globalReadinessStatus: "not_ready",
   popularFresh: 0,
-  popularTarget: 5,
+  popularTarget: 8,
   discoverFresh: 0,
   discoverVisibleTarget: 16,
   discoverDisplayedFresh: 0,
   discoverBackupFresh: 0,
-  publicFreshTarget: 21,
+  publicFreshTarget: 24,
+};
+
+
+const DEFAULT_MARKET_STATUS_FIELDS = {
+  globalReadinessStatus: "not_ready" as const,
+  requiredMarkets: [],
+  marketTargets: {},
+  marketTargetMet: {},
+  underfilledMarkets: [],
+  readyMarkets: [],
+  marketReadinessSummary: [],
+  popularFreshByMarket: {},
+  discoveryFreshByMarket: {},
+  backupFreshByMarket: {},
+  candidatePoolSizeByMarket: {},
+  routeAttemptsByMarket: {},
+  providerCallsByMarket: {},
+  failedByMarket: {},
+  unavailableByMarket: {},
+  skippedCooldownByMarket: {},
 };
 
 const SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES = {
@@ -89,7 +126,17 @@ type RefreshStoppedReason =
   | "target_met"
   | "route_budget_exhausted"
   | "provider_budget_exhausted"
-  | "completed";
+  | "completed"
+  | "all_remaining_cooldown_or_unavailable";
+
+type GlobalReadinessStatus = "ready" | "partial" | "not_ready";
+
+type MarketReadinessStatus =
+  | "ready"
+  | "underfilled"
+  | "provider_exhausted"
+  | "budget_exhausted"
+  | "cooldown";
 
 type RefreshReadinessCounts = {
   freshPopular: number;
@@ -109,6 +156,30 @@ type RefreshBudget = {
   maxDateCandidatesPerRoute: number;
 };
 
+type MarketReadiness = {
+  market: string;
+  marketCode: string;
+  marketLabel: string;
+  marketGroup: string;
+  marketVisibility: "country" | "regional" | "global";
+  popularVisibleTarget: number;
+  popularVisibleFresh: number;
+  discoveryVisibleTarget: number;
+  discoveryVisibleFresh: number;
+  backupTarget: number;
+  backupFresh: number;
+  targetMet: boolean;
+  status: MarketReadinessStatus;
+  underfillReason?: string;
+  reason?: string;
+  routeAttempts: number;
+  providerCalls: number;
+  failed: number;
+  unavailable: number;
+  skippedCooldown: number;
+  candidatePoolSize: number;
+};
+
 type RefreshCounts = {
   refreshed: number;
   unavailable: number;
@@ -118,9 +189,25 @@ type RefreshCounts = {
   routeAttempts: number;
   providerCalls: number;
   stoppedReason: RefreshStoppedReason;
+  globalReadinessStatus: GlobalReadinessStatus;
+  requiredMarkets: string[];
+  readyMarkets: string[];
+  underfilledMarkets: MarketReadiness[];
+  marketReadinessSummary: MarketReadiness[];
   readinessBefore: RefreshReadinessCounts;
   readinessAfter: RefreshReadinessCounts;
   refreshBudget: RefreshBudget;
+  marketTargets: Record<string, MarketReadiness>;
+  marketTargetMet: Record<string, boolean>;
+  popularFreshByMarket: Record<string, number>;
+  discoveryFreshByMarket: Record<string, number>;
+  backupFreshByMarket: Record<string, number>;
+  candidatePoolSizeByMarket: Record<string, number>;
+  routeAttemptsByMarket: Record<string, number>;
+  providerCallsByMarket: Record<string, number>;
+  failedByMarket: Record<string, number>;
+  unavailableByMarket: Record<string, number>;
+  skippedCooldownByMarket: Record<string, number>;
 };
 
 type RefreshState = {
@@ -164,6 +251,7 @@ type HomepageFareHealth = {
 };
 
 type DisplayReadiness = HomepageFareHealth & {
+  globalReadinessStatus: GlobalReadinessStatus;
   popularFresh: number;
   popularTarget: number;
   discoverFresh: number;
@@ -180,6 +268,22 @@ type HomepageFareStatusPayload = {
   displayReadiness: DisplayReadiness;
   candidatePoolHealth: HomepageFareStatusSummary;
   refreshBudget: RefreshBudget;
+  globalReadinessStatus: GlobalReadinessStatus;
+  requiredMarkets: string[];
+  marketTargets: Record<string, MarketReadiness>;
+  marketTargetMet: Record<string, boolean>;
+  underfilledMarkets: MarketReadiness[];
+  readyMarkets: string[];
+  marketReadinessSummary: MarketReadiness[];
+  popularFreshByMarket: Record<string, number>;
+  discoveryFreshByMarket: Record<string, number>;
+  backupFreshByMarket: Record<string, number>;
+  candidatePoolSizeByMarket: Record<string, number>;
+  routeAttemptsByMarket: Record<string, number>;
+  providerCallsByMarket: Record<string, number>;
+  failedByMarket: Record<string, number>;
+  unavailableByMarket: Record<string, number>;
+  skippedCooldownByMarket: Record<string, number>;
 };
 
 type StatusLoadState = {
@@ -282,6 +386,7 @@ export function HomepageFaresRefreshCard() {
     displayReadiness: DEFAULT_DISPLAY_READINESS,
     candidatePoolHealth: DEFAULT_STATUS_SUMMARY,
     refreshBudget: DEFAULT_REFRESH_BUDGET,
+    ...DEFAULT_MARKET_STATUS_FIELDS,
   };
 
   return (
@@ -371,6 +476,10 @@ export function HomepageFaresRefreshCard() {
 
         <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
 
+        <p className="mt-3 text-xs leading-5 text-muted">
+          Ready means this market has enough fresh provider-backed fares to fill visible homepage pricing slots. Underfilled means this market still needs more provider-backed fare snapshots. Regional and global rows are fallback markets used when a supported country resolves to that market experience.
+        </p>
+
         <dl className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             label="Popular fresh"
@@ -385,8 +494,8 @@ export function HomepageFaresRefreshCard() {
             value={statusPayload.displayReadiness.discoverBackupFresh}
           />
           <MetricCard
-            label="Public fresh target"
-            value={statusPayload.displayReadiness.publicFreshTarget}
+            label="Total expired"
+            value={statusPayload.summary.expired}
           />
         </dl>
 
@@ -400,7 +509,7 @@ export function HomepageFaresRefreshCard() {
             value={statusPayload.refreshBudget.maxProviderCallsPerRun}
           />
           <MetricCard
-            label="Provider calls used"
+            label="Total provider calls"
             value={refreshState.counts?.providerCalls ?? "—"}
           />
           <MetricCard
@@ -433,6 +542,8 @@ export function HomepageFaresRefreshCard() {
         <p className="mt-3 text-xs font-semibold text-muted">
           Candidate pool health: {statusPayload.candidatePoolHealth.failed} failed and {statusPayload.candidatePoolHealth.unavailable} unavailable routes remain visible here without forcing public display readiness to attention.
         </p>
+
+        <MarketReadinessTable markets={statusPayload.marketReadinessSummary} />
 
         <div className="mt-4 overflow-hidden rounded-xl border border-border">
           <div className="hidden grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr] gap-3 bg-slate-50 px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-muted md:grid">
@@ -543,6 +654,84 @@ function DisplayReadinessSummary({ readiness }: { readiness: DisplayReadiness })
   );
 }
 
+function MarketReadinessTable({ markets }: { markets: MarketReadiness[] }) {
+  return (
+    <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+      <table className="min-w-full divide-y divide-border text-left text-sm">
+        <thead className="bg-slate-50 text-xs font-extrabold uppercase tracking-wide text-muted">
+          <tr>
+            <th className="px-3 py-3">Market</th>
+            <th className="px-3 py-3">Popular</th>
+            <th className="px-3 py-3">Discovery</th>
+            <th className="px-3 py-3">Backup</th>
+            <th className="px-3 py-3">Status</th>
+            <th className="px-3 py-3">Attempts</th>
+            <th className="px-3 py-3">Provider calls</th>
+            <th className="px-3 py-3">Failed</th>
+            <th className="px-3 py-3">Unavailable</th>
+            <th className="px-3 py-3">Cooldown</th>
+            <th className="px-3 py-3">Underfill reason</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {markets.length ? (
+            markets.map((market) => (
+              <tr key={market.marketCode} className="align-top">
+                <td className="px-3 py-3 font-bold text-navy">
+                  <span>{market.marketCode}</span>
+                  <span className="block text-xs font-semibold text-muted">
+                    {market.marketLabel} · {market.marketGroup}
+                  </span>
+                </td>
+                <td className="px-3 py-3 font-semibold text-navy">
+                  {market.popularVisibleFresh}/{market.popularVisibleTarget}
+                </td>
+                <td className="px-3 py-3 font-semibold text-navy">
+                  {market.discoveryVisibleFresh}/{market.discoveryVisibleTarget}
+                </td>
+                <td className="px-3 py-3 font-semibold text-navy">
+                  {market.backupFresh}/{market.backupTarget}
+                </td>
+                <td className="px-3 py-3">
+                  <MarketStatusBadge status={market.status} />
+                </td>
+                <td className="px-3 py-3 text-navy">{market.routeAttempts}</td>
+                <td className="px-3 py-3 text-navy">{market.providerCalls}</td>
+                <td className="px-3 py-3 text-navy">{market.failed}</td>
+                <td className="px-3 py-3 text-navy">{market.unavailable}</td>
+                <td className="px-3 py-3 text-navy">{market.skippedCooldown}</td>
+                <td className="max-w-xs px-3 py-3 text-xs font-semibold text-muted">
+                  {market.underfillReason ?? "—"}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td className="px-3 py-4 font-semibold text-muted" colSpan={11}>
+                No market readiness metadata was returned.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MarketStatusBadge({ status }: { status: MarketReadinessStatus }) {
+  const ready = status === "ready";
+
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${
+        ready ? "bg-teal/10 text-teal-dark" : "bg-amber/10 text-amber"
+      }`}
+    >
+      {formatMarketStatus(status)}
+    </span>
+  );
+}
+
 function MetricCard({
   label,
   value,
@@ -596,6 +785,22 @@ function normalizeRefreshCounts(payload: unknown): RefreshCounts {
     routeAttempts: readCount(counts.routeAttempts),
     providerCalls: readCount(counts.providerCalls),
     stoppedReason: readStoppedReason(counts.stoppedReason),
+    globalReadinessStatus: readGlobalReadinessStatus(counts.globalReadinessStatus),
+    requiredMarkets: readStringArray(counts.requiredMarkets),
+    readyMarkets: readStringArray(counts.readyMarkets),
+    underfilledMarkets: normalizeMarketReadinessArray(counts.underfilledMarkets),
+    marketReadinessSummary: normalizeMarketReadinessArray(counts.marketReadinessSummary),
+    marketTargets: normalizeMarketReadinessRecord(counts.marketTargets),
+    marketTargetMet: normalizeBooleanRecord(counts.marketTargetMet),
+    popularFreshByMarket: normalizeCountRecord(counts.popularFreshByMarket),
+    discoveryFreshByMarket: normalizeCountRecord(counts.discoveryFreshByMarket),
+    backupFreshByMarket: normalizeCountRecord(counts.backupFreshByMarket),
+    candidatePoolSizeByMarket: normalizeCountRecord(counts.candidatePoolSizeByMarket),
+    routeAttemptsByMarket: normalizeCountRecord(counts.routeAttemptsByMarket),
+    providerCallsByMarket: normalizeCountRecord(counts.providerCallsByMarket),
+    failedByMarket: normalizeCountRecord(counts.failedByMarket),
+    unavailableByMarket: normalizeCountRecord(counts.unavailableByMarket),
+    skippedCooldownByMarket: normalizeCountRecord(counts.skippedCooldownByMarket),
     readinessBefore: normalizeRefreshReadiness(counts.readinessBefore),
     readinessAfter: normalizeRefreshReadiness(counts.readinessAfter),
     refreshBudget: normalizeRefreshBudget(counts.refreshBudget),
@@ -611,6 +816,7 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
       displayReadiness: DEFAULT_DISPLAY_READINESS,
       candidatePoolHealth: DEFAULT_STATUS_SUMMARY,
       refreshBudget: DEFAULT_REFRESH_BUDGET,
+      ...DEFAULT_MARKET_STATUS_FIELDS,
     };
   }
 
@@ -621,6 +827,22 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     displayReadiness?: unknown;
     candidatePoolHealth?: unknown;
     refreshBudget?: unknown;
+    globalReadinessStatus?: unknown;
+    requiredMarkets?: unknown;
+    marketTargets?: unknown;
+    marketTargetMet?: unknown;
+    underfilledMarkets?: unknown;
+    readyMarkets?: unknown;
+    marketReadinessSummary?: unknown;
+    popularFreshByMarket?: unknown;
+    discoveryFreshByMarket?: unknown;
+    backupFreshByMarket?: unknown;
+    candidatePoolSizeByMarket?: unknown;
+    routeAttemptsByMarket?: unknown;
+    providerCallsByMarket?: unknown;
+    failedByMarket?: unknown;
+    unavailableByMarket?: unknown;
+    skippedCooldownByMarket?: unknown;
   };
   const routes = Array.isArray(candidate.routes)
     ? candidate.routes
@@ -640,6 +862,22 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
       summary.total,
     ),
     refreshBudget: normalizeRefreshBudget(candidate.refreshBudget),
+    globalReadinessStatus: readGlobalReadinessStatus(candidate.globalReadinessStatus),
+    requiredMarkets: readStringArray(candidate.requiredMarkets),
+    marketTargets: normalizeMarketReadinessRecord(candidate.marketTargets),
+    marketTargetMet: normalizeBooleanRecord(candidate.marketTargetMet),
+    underfilledMarkets: normalizeMarketReadinessArray(candidate.underfilledMarkets),
+    readyMarkets: readStringArray(candidate.readyMarkets),
+    marketReadinessSummary: normalizeMarketReadinessArray(candidate.marketReadinessSummary),
+    popularFreshByMarket: normalizeCountRecord(candidate.popularFreshByMarket),
+    discoveryFreshByMarket: normalizeCountRecord(candidate.discoveryFreshByMarket),
+    backupFreshByMarket: normalizeCountRecord(candidate.backupFreshByMarket),
+    candidatePoolSizeByMarket: normalizeCountRecord(candidate.candidatePoolSizeByMarket),
+    routeAttemptsByMarket: normalizeCountRecord(candidate.routeAttemptsByMarket),
+    providerCallsByMarket: normalizeCountRecord(candidate.providerCallsByMarket),
+    failedByMarket: normalizeCountRecord(candidate.failedByMarket),
+    unavailableByMarket: normalizeCountRecord(candidate.unavailableByMarket),
+    skippedCooldownByMarket: normalizeCountRecord(candidate.skippedCooldownByMarket),
   };
 }
 
@@ -651,6 +889,7 @@ function normalizeDisplayReadiness(value: unknown): DisplayReadiness {
 
   return {
     ...health,
+    globalReadinessStatus: readGlobalReadinessStatus(readiness.globalReadinessStatus),
     popularFresh: readCount(readiness.popularFresh),
     popularTarget: readCount(readiness.popularTarget) || DEFAULT_DISPLAY_READINESS.popularTarget,
     discoverFresh: readCount(readiness.discoverFresh),
@@ -849,9 +1088,26 @@ function readStoppedReason(value: unknown): RefreshStoppedReason {
   return value === "target_met" ||
     value === "route_budget_exhausted" ||
     value === "provider_budget_exhausted" ||
+    value === "all_remaining_cooldown_or_unavailable" ||
     value === "completed"
     ? value
     : "completed";
+}
+
+
+function formatMarketStatus(status: MarketReadinessStatus) {
+  switch (status) {
+    case "ready":
+      return "Ready";
+    case "provider_exhausted":
+      return "Provider exhausted";
+    case "budget_exhausted":
+      return "Budget exhausted";
+    case "cooldown":
+      return "Cooldown";
+    case "underfilled":
+      return "Underfilled";
+  }
 }
 
 function formatStoppedReason(reason: RefreshStoppedReason) {
@@ -862,9 +1118,118 @@ function formatStoppedReason(reason: RefreshStoppedReason) {
       return "Route budget exhausted";
     case "provider_budget_exhausted":
       return "Provider budget exhausted";
+    case "all_remaining_cooldown_or_unavailable":
+      return "Cooldown / unavailable";
     case "completed":
       return "Completed";
   }
+}
+
+
+function readGlobalReadinessStatus(value: unknown): GlobalReadinessStatus {
+  return value === "ready" || value === "partial" || value === "not_ready"
+    ? value
+    : "not_ready";
+}
+
+function readMarketReadinessStatus(value: unknown): MarketReadinessStatus {
+  return value === "ready" ||
+    value === "underfilled" ||
+    value === "provider_exhausted" ||
+    value === "budget_exhausted" ||
+    value === "cooldown"
+    ? value
+    : "underfilled";
+}
+
+function readStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
+function normalizeCountRecord(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, count]) => [key, readCount(count)]),
+  );
+}
+
+function normalizeBooleanRecord(value: unknown): Record<string, boolean> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, flag]) => [key, flag === true]),
+  );
+}
+
+function normalizeMarketReadinessArray(value: unknown): MarketReadiness[] {
+  return Array.isArray(value)
+    ? value
+        .map(normalizeMarketReadiness)
+        .filter((market): market is MarketReadiness => Boolean(market))
+    : [];
+}
+
+function normalizeMarketReadinessRecord(
+  value: unknown,
+): Record<string, MarketReadiness> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .map(([key, market]) => [
+        key,
+        normalizeMarketReadiness(
+          market && typeof market === "object" && !Array.isArray(market)
+            ? { market: key, ...market }
+            : market,
+        ),
+      ] as const)
+      .filter((entry): entry is readonly [string, MarketReadiness] => Boolean(entry[1])),
+  );
+}
+
+function normalizeMarketReadiness(value: unknown): MarketReadiness | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+
+  const market = value as Partial<Record<keyof MarketReadiness, unknown>>;
+  const marketCode = typeof market.marketCode === "string" ? market.marketCode : undefined;
+  if (!marketCode) return undefined;
+
+  const underfillReason =
+    typeof market.underfillReason === "string" ? market.underfillReason : undefined;
+
+  return {
+    market: typeof market.market === "string" ? market.market : marketCode,
+    marketCode,
+    marketLabel:
+      typeof market.marketLabel === "string" ? market.marketLabel : marketCode,
+    marketGroup:
+      typeof market.marketGroup === "string" ? market.marketGroup : "Global",
+    marketVisibility:
+      market.marketVisibility === "country" ||
+      market.marketVisibility === "regional" ||
+      market.marketVisibility === "global"
+        ? market.marketVisibility
+        : "global",
+    popularVisibleTarget: readCount(market.popularVisibleTarget),
+    popularVisibleFresh: readCount(market.popularVisibleFresh),
+    discoveryVisibleTarget: readCount(market.discoveryVisibleTarget),
+    discoveryVisibleFresh: readCount(market.discoveryVisibleFresh),
+    backupTarget: readCount(market.backupTarget),
+    backupFresh: readCount(market.backupFresh),
+    targetMet: market.targetMet === true,
+    status: readMarketReadinessStatus(market.status),
+    ...(underfillReason ? { underfillReason, reason: underfillReason } : {}),
+    routeAttempts: readCount(market.routeAttempts),
+    providerCalls: readCount(market.providerCalls),
+    failed: readCount(market.failed),
+    unavailable: readCount(market.unavailable),
+    skippedCooldown: readCount(market.skippedCooldown),
+    candidatePoolSize: readCount(market.candidatePoolSize),
+  };
 }
 
 function readSnapshotStatus(
