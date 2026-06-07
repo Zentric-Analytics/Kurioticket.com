@@ -41,6 +41,9 @@ type MonthCell = {
 
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+const standaloneMobilePickerViewportClassName = "lg:hidden";
+const standaloneMobilePickerMediaQuery = "(max-width: 1023px)";
+
 const normalizeSuggestionText = (value: string) =>
   value
     .normalize("NFKD")
@@ -500,7 +503,7 @@ export function StandaloneFlightSearchForm() {
     if (query.length < 2) return null;
 
     return (
-      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_16px_36px_rgba(15,23,42,0.14)] lg:block">
         {loading ? (
           <p className="px-3 py-4 text-sm font-medium text-slate-500">Searching airports and cities…</p>
         ) : suggestions.length ? (
@@ -807,6 +810,8 @@ export function StandaloneFlightSearchForm() {
                   launcherRef={datesMobileLauncherRef}
                   onClose={() => setDatesOpen(false)}
                   contentClassName="px-3 py-3"
+                  viewportClassName={standaloneMobilePickerViewportClassName}
+                  mobileMediaQuery={standaloneMobilePickerMediaQuery}
                   footer={
                     <div className="flex items-center justify-between gap-3">
                       <button
@@ -831,7 +836,7 @@ export function StandaloneFlightSearchForm() {
                 >
                   {renderDateCalendar(true)}
                 </FlightMobilePickerShell>
-                <div className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,620px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                <div className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,620px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] lg:block">
                   {renderDateCalendar(false)}
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
                     <button
@@ -893,6 +898,8 @@ export function StandaloneFlightSearchForm() {
                   launcherRef={travelersLauncherRef}
                   onClose={closeTravelers}
                   contentClassName="px-4 py-5"
+                  viewportClassName={standaloneMobilePickerViewportClassName}
+                  mobileMediaQuery={standaloneMobilePickerMediaQuery}
                   footer={
                     <div className="flex justify-end">
                       <button
@@ -907,7 +914,7 @@ export function StandaloneFlightSearchForm() {
                 >
                   {renderTravelersPicker()}
                 </FlightMobilePickerShell>
-                <div className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                <div className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] lg:block">
                   {renderTravelersPicker()}
                   <div className="mt-3 flex justify-end border-t border-slate-200 pt-3">
                     <button
@@ -965,6 +972,8 @@ export function StandaloneFlightSearchForm() {
           onClear={() => clearAirport("origin")}
           onSelect={(option) => selectAirport("origin", option)}
           onClose={() => setActiveMobileAirportPicker(null)}
+          shellViewportClassName={standaloneMobilePickerViewportClassName}
+          shellMobileMediaQuery={standaloneMobilePickerMediaQuery}
         />
         <MobileAirportPicker
           open={activeMobileAirportPicker === "destination"}
@@ -986,6 +995,8 @@ export function StandaloneFlightSearchForm() {
           onClear={() => clearAirport("destination")}
           onSelect={(option) => selectAirport("destination", option)}
           onClose={() => setActiveMobileAirportPicker(null)}
+          shellViewportClassName={standaloneMobilePickerViewportClassName}
+          shellMobileMediaQuery={standaloneMobilePickerMediaQuery}
         />
       </form>
     </section>
@@ -1043,12 +1054,12 @@ const AirportFieldControl = React.forwardRef<HTMLDivElement, AirportFieldControl
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={onMobileOpen}
-        className="focus-ring flex min-h-10 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-black text-slate-950 sm:hidden"
+        className="focus-ring flex min-h-10 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-black text-slate-950 lg:hidden"
       >
         <span className={cn("truncate", !value && "text-slate-400")}>{value || placeholder}</span>
         <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
       </button>
-      <div className="relative hidden sm:block">
+      <div className="relative hidden lg:block">
         <input
           ref={inputRef}
           type="text"
