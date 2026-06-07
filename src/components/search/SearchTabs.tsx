@@ -13,7 +13,6 @@ import {
 import { useRouter } from "next/navigation";
 
 import {
-  ArrowLeft,
   ArrowRightLeft,
   BedDouble,
   Calendar,
@@ -2140,28 +2139,10 @@ export function SearchTabs({
                     >
                       {renderFlightDateCalendar()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label="Choose travel dates" className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,600px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setFlightDatesOpen(false)}
-                        className="focus-ring inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100"
-                      >
-                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                        Back
-                      </button>
-                      <p className="text-base font-semibold text-slate-900">
-                        Choose travel dates
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setFlightDatesOpen(false)}
-                        aria-label="Close travel dates"
-                        className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                      >
-                        <X className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </div>
+                    <div role="dialog" aria-label="Choose travel dates" className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,560px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                    <p className="mb-2.5 text-sm font-semibold text-slate-900">
+                      Choose travel dates
+                    </p>
                     <div className="mb-3 flex items-center justify-between">
                       <button
                         type="button"
@@ -2430,21 +2411,10 @@ export function SearchTabs({
                     >
                       {renderTravelersCabinPicker()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,340px)] rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
-                    <div className="flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={cancelTravelersDraft}
-                        className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
-                      >
-                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                        Back
-                      </button>
-                      <p className="text-lg font-semibold text-slate-900">
-                        Travelers
-                      </p>
-                      <button type="button" onClick={cancelTravelersDraft} aria-label="Cancel passenger selector" className="focus-ring rounded-full px-2.5 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900">Cancel</button>
-                    </div>
+                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,320px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      Travelers
+                    </h3>
                     <div className="mt-3 divide-y divide-slate-100">
                       {[
                         { key: "adults", label: "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
@@ -2676,28 +2646,10 @@ export function SearchTabs({
                 </button>
                 {hotelDatesOpen ? (
                   <>
-                    <div ref={hotelDatesPanelRef} className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,600px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setHotelDatesOpen(false)}
-                        className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
-                      >
-                        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                        Back
-                      </button>
-                      <p className="text-base font-semibold text-slate-900">
-                        Choose travel dates
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setHotelDatesOpen(false)}
-                        aria-label="Close travel dates"
-                        className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
-                      >
-                        <X className="h-4 w-4" aria-hidden="true" />
-                      </button>
-                    </div>
+                    <div ref={hotelDatesPanelRef} className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,560px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                    <p className="mb-2.5 text-sm font-semibold text-slate-900">
+                      Choose travel dates
+                    </p>
                     <div className="mb-3 flex items-center justify-between">
                       <button
                         type="button"
