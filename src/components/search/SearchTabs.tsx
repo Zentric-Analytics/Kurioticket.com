@@ -1039,6 +1039,22 @@ export function SearchTabs({
     setReturnDate(selectedIso);
   };
 
+
+  const handleTripTypeChange = (mode: Exclude<TripType, "multi-city">) => {
+    setTripType(mode);
+    if (mode === "one-way") {
+      setReturnDate("");
+    } else if (
+      returnDate &&
+      (!isValidFlightDate(returnDate) ||
+        !isValidFlightDate(departureDate) ||
+        returnDate < departureDate)
+    ) {
+      setReturnDate("");
+    }
+    setTripTypeOpen(false);
+  };
+
   const tripTypeLabel = (
     mode: TripType
   ) => {
@@ -1712,7 +1728,7 @@ export function SearchTabs({
           }
           className="space-y-2"
         >
-          <div className="flex items-center justify-between gap-2 px-1">
+          <div className="hidden items-center justify-between gap-2 px-1 sm:flex">
             <div
               ref={tripTypeWrapRef}
               className="relative inline-flex"
@@ -1761,22 +1777,7 @@ export function SearchTabs({
                       key={mode}
                       type="button"
                       onClick={() => {
-                        setTripType(
-                          mode
-                        );
-                        if (mode === "one-way") {
-                          setReturnDate("");
-                        } else if (
-                          returnDate &&
-                          (!isValidFlightDate(returnDate) ||
-                            !isValidFlightDate(departureDate) ||
-                            returnDate < departureDate)
-                        ) {
-                          setReturnDate("");
-                        }
-                        setTripTypeOpen(
-                          false
-                        );
+                        handleTripTypeChange(mode);
                       }}
                       className={cn(
                         "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
@@ -1803,7 +1804,185 @@ export function SearchTabs({
               )}
             </div>
           </div>
-          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
+
+          <div className="space-y-3 sm:hidden">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-2">
+              <p className="px-2 pb-2 text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500">
+                Trip type
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {(["round-trip", "one-way"] as const).map((mode) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => handleTripTypeChange(mode)}
+                    aria-pressed={tripType === mode}
+                    className={cn(
+                      "focus-ring min-h-12 rounded-xl border px-3 text-sm font-extrabold transition-colors",
+                      tripType === mode
+                        ? "border-indigo-600 bg-indigo-700 text-white shadow-sm shadow-indigo-700/20"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                    )}
+                  >
+                    {tripTypeLabel(mode)}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 px-2 text-xs font-medium text-slate-500">
+                Multi-city is not available yet. Use one-way or round-trip search.
+              </p>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="relative rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/15">
+                <button
+                  ref={fromMobileLauncherRef}
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={activeMobileAirportPicker === "origin"}
+                  onClick={() => {
+                    setFromOpen(false);
+                    setToOpen(false);
+                    setActiveMobileAirportPicker("origin");
+                  }}
+                  className="focus-ring flex min-h-[76px] w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
+                >
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700">
+                    <Plane className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500">
+                      Origin
+                    </span>
+                    <span className={cn("mt-1 block truncate text-base font-extrabold text-slate-950", !from.trim() && "font-semibold text-slate-400")}>
+                      {from.trim() || "Where from?"}
+                    </span>
+                  </span>
+                </button>
+                {from.trim() ? (
+                  <button
+                    type="button"
+                    onClick={onClearOrigin}
+                    aria-label="Clear origin"
+                    className="focus-ring absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="relative rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/15">
+                <button
+                  ref={toMobileLauncherRef}
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={activeMobileAirportPicker === "destination"}
+                  onClick={() => {
+                    setFromOpen(false);
+                    setToOpen(false);
+                    setActiveMobileAirportPicker("destination");
+                  }}
+                  className="focus-ring flex min-h-[76px] w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
+                >
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+                    <Plane className="h-5 w-5 rotate-90" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500">
+                      Destination
+                    </span>
+                    <span className={cn("mt-1 block truncate text-base font-extrabold text-slate-950", !to.trim() && "font-semibold text-slate-400")}>
+                      {to.trim() || "Where to?"}
+                    </span>
+                  </span>
+                </button>
+                {to.trim() ? (
+                  <button
+                    type="button"
+                    onClick={onClearDestination}
+                    aria-label="Clear destination"
+                    className="focus-ring absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="relative rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/15">
+                <button
+                  ref={flightDatesLauncherRef}
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={flightDatesOpen}
+                  aria-label="Choose travel dates"
+                  onClick={() => setFlightDatesOpen((prev) => !prev)}
+                  className="focus-ring flex min-h-[76px] w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
+                >
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
+                    <Calendar className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500">
+                      Travel dates
+                    </span>
+                    <span className={cn("mt-1 block truncate text-base font-extrabold text-slate-950", !departureDate && "font-semibold text-slate-400")}>
+                      {dateSummary}
+                    </span>
+                  </span>
+                </button>
+                {departureDate ? (
+                  <button
+                    type="button"
+                    onClick={onClearTravelDates}
+                    aria-label="Clear travel dates"
+                    className="focus-ring absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200 transition-colors hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="relative rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/15">
+                <button
+                  ref={travelersLauncherRef}
+                  type="button"
+                  aria-haspopup="dialog"
+                  aria-expanded={travelersMenuOpen}
+                  onClick={() => {
+                    if (travelersMenuOpen) {
+                      cancelTravelersDraft();
+                      return;
+                    }
+                    openTravelersMenu();
+                  }}
+                  className="focus-ring flex min-h-[76px] w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
+                >
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700">
+                    <ChevronDown className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500">
+                      Travelers / cabin
+                    </span>
+                    <span className="mt-1 block truncate text-base font-extrabold text-slate-950">
+                      {travelerSummary}
+                    </span>
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isFlightSearchDisabled}
+              aria-busy={isFlightSubmitting}
+              className="min-h-[56px] w-full rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-base font-black text-white shadow-lg shadow-indigo-700/25"
+            >
+              {isFlightSubmitting ? "Searching flights..." : t.search || "Search"}
+            </Button>
+          </div>
+
+          <div className="hidden overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:block">
             <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
               <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
               <div
@@ -1816,7 +1995,6 @@ export function SearchTabs({
                 </label>
                 <div className="relative h-8">
                   <button
-                    ref={fromMobileLauncherRef}
                     type="button"
                     aria-haspopup="dialog"
                     aria-expanded={activeMobileAirportPicker === "origin"}
@@ -1962,7 +2140,6 @@ export function SearchTabs({
                 </label>
                 <div className="relative h-8">
                   <button
-                    ref={toMobileLauncherRef}
                     type="button"
                     aria-haspopup="dialog"
                     aria-expanded={activeMobileAirportPicker === "destination"}
@@ -2091,7 +2268,6 @@ export function SearchTabs({
                 </label>
                 <button
                   type="button"
-                  ref={flightDatesLauncherRef}
                   onClick={() =>
                     setFlightDatesOpen(
                       (
@@ -2365,7 +2541,6 @@ export function SearchTabs({
                     travelersMenuOpen
                   }
                   aria-haspopup="dialog"
-                  ref={travelersLauncherRef}
                   onClick={() => {
                     if (travelersMenuOpen) {
                       cancelTravelersDraft();
