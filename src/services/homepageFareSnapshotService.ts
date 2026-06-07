@@ -35,7 +35,7 @@ const NEAR_EXPIRY_REFRESH_WINDOW_MS = 6 * 60 * 60 * 1000;
 export const HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS = {
   popularVisibleTarget: 8,
   discoverVisibleTarget: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
-  discoverBackupFreshTarget: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+  discoverBackupFreshTarget: 3,
   maxRouteAttemptsPerRun: 144,
   maxProviderCallsPerRun: 144,
   maxDateCandidatesPerRoute: 3,
@@ -78,6 +78,7 @@ export const PHASE_3A_POPULAR_HOMEPAGE_FARE_ROUTES = [
 
 export type HomepageFareRoute = {
   id: string;
+  market?: string;
   origin: string;
   destination: string;
   label?: string;
@@ -92,6 +93,7 @@ export type HomepageFareSnapshotStatusValue =
 
 export type HomepageFareSnapshotStatusRoute = {
   id: string;
+  market: string;
   label: string;
   origin: string;
   destination: string;
@@ -123,7 +125,17 @@ export type HomepageFareSnapshotHealth = {
   message: string;
 };
 
+export type HomepageFareGlobalReadinessStatus = "ready" | "partial" | "not_ready";
+
+export type HomepageFareMarketReadinessStatus =
+  | "ready"
+  | "underfilled"
+  | "provider_exhausted"
+  | "budget_exhausted"
+  | "cooldown";
+
 export type HomepageFareDisplayReadiness = HomepageFareSnapshotHealth & {
+  globalReadinessStatus: HomepageFareGlobalReadinessStatus;
   popularFresh: number;
   popularTarget: number;
   discoverFresh: number;
@@ -151,6 +163,22 @@ export type HomepageFareSnapshotStatusResponse = {
   displayReadiness: HomepageFareDisplayReadiness;
   candidatePoolHealth: HomepageFareCandidatePoolHealth;
   refreshBudget: HomepageFareRefreshBudget;
+  globalReadinessStatus: HomepageFareGlobalReadinessStatus;
+  requiredMarkets: string[];
+  marketTargets: Record<string, HomepageFareMarketTarget>;
+  marketTargetMet: Record<string, boolean>;
+  underfilledMarkets: HomepageFareUnderfilledMarket[];
+  readyMarkets: string[];
+  marketReadinessSummary: HomepageFareMarketReadinessSummary[];
+  popularFreshByMarket: Record<string, number>;
+  discoveryFreshByMarket: Record<string, number>;
+  backupFreshByMarket: Record<string, number>;
+  candidatePoolSizeByMarket: Record<string, number>;
+  routeAttemptsByMarket: Record<string, number>;
+  providerCallsByMarket: Record<string, number>;
+  failedByMarket: Record<string, number>;
+  unavailableByMarket: Record<string, number>;
+  skippedCooldownByMarket: Record<string, number>;
 };
 
 export type HomepageFareSearch = {
@@ -251,6 +279,10 @@ export type HomepageFareRefreshStoppedReason =
   | "all_remaining_cooldown_or_unavailable";
 
 export type HomepageFareMarketTarget = {
+  marketCode: string;
+  marketLabel: string;
+  marketGroup: string;
+  marketVisibility: "country" | "regional" | "global";
   popularVisibleTarget: number;
   popularVisibleFresh: number;
   discoveryVisibleTarget: number;
@@ -258,10 +290,22 @@ export type HomepageFareMarketTarget = {
   backupTarget: number;
   backupFresh: number;
   targetMet: boolean;
+  status: HomepageFareMarketReadinessStatus;
+  underfillReason?: string;
   reason?: string;
+  routeAttempts: number;
+  providerCalls: number;
+  failed: number;
+  unavailable: number;
+  skippedCooldown: number;
+  candidatePoolSize: number;
 };
 
 export type HomepageFareUnderfilledMarket = HomepageFareMarketTarget & {
+  market: string;
+};
+
+export type HomepageFareMarketReadinessSummary = HomepageFareMarketTarget & {
   market: string;
 };
 
@@ -283,6 +327,10 @@ export type HomepageFareRefreshCounts = {
   routeAttempts: number;
   providerCalls: number;
   stoppedReason: HomepageFareRefreshStoppedReason;
+  globalReadinessStatus: HomepageFareGlobalReadinessStatus;
+  requiredMarkets: string[];
+  readyMarkets: string[];
+  marketReadinessSummary: HomepageFareMarketReadinessSummary[];
   readinessBefore: HomepageFareRefreshReadiness;
   readinessAfter: HomepageFareRefreshReadiness;
   refreshBudget: HomepageFareRefreshBudget;
@@ -619,6 +667,82 @@ function computeFreshCountsByMarket(
   };
 }
 
+
+const HOMEPAGE_FARE_MARKET_METADATA: Record<
+  string,
+  { label: string; group: string; visibility: "country" | "regional" | "global" }
+> = {
+  US: { label: "United States", group: "US", visibility: "country" },
+  CANADA: { label: "Canada", group: "Canada", visibility: "country" },
+  NG: { label: "Nigeria", group: "Africa", visibility: "country" },
+  KE: { label: "Kenya", group: "Africa", visibility: "country" },
+  ZA: { label: "South Africa", group: "Africa", visibility: "country" },
+  GB: { label: "United Kingdom", group: "Europe", visibility: "country" },
+  DE: { label: "Germany", group: "Europe", visibility: "country" },
+  AE: { label: "United Arab Emirates", group: "Middle East", visibility: "country" },
+  JP: { label: "Japan", group: "Asia", visibility: "country" },
+  BR: { label: "Brazil", group: "Latin America", visibility: "country" },
+  AFRICA: { label: "Africa regional fallback", group: "Africa", visibility: "regional" },
+  EUROPE: { label: "Europe regional fallback", group: "Europe", visibility: "regional" },
+  MIDDLE_EAST: { label: "Middle East regional fallback", group: "Middle East", visibility: "regional" },
+  ASIA: { label: "Asia regional fallback", group: "Asia", visibility: "regional" },
+  LATIN_AMERICA: { label: "Latin America regional fallback", group: "Latin America", visibility: "regional" },
+  GLOBAL: { label: "Global international fallback", group: "Global International", visibility: "global" },
+};
+
+function getHomepageFareMarketMetadata(market: string) {
+  return (
+    HOMEPAGE_FARE_MARKET_METADATA[market] ?? {
+      label: market,
+      group: "Global International",
+      visibility: "global" as const,
+    }
+  );
+}
+
+function getGlobalHomepageFareReadinessStatus(
+  marketTargets: Record<string, HomepageFareMarketTarget>,
+): HomepageFareGlobalReadinessStatus {
+  const requiredTargets = HOMEPAGE_FARE_REFRESH_MARKETS
+    .map((market) => marketTargets[market])
+    .filter((target): target is HomepageFareMarketTarget => Boolean(target));
+
+  if (!requiredTargets.length) return "not_ready";
+  if (requiredTargets.every((target) => target.targetMet)) return "ready";
+  if (requiredTargets.some((target) => target.targetMet)) return "partial";
+
+  return "not_ready";
+}
+
+function getReadyHomepageFareMarkets(
+  marketTargets: Record<string, HomepageFareMarketTarget>,
+) {
+  return HOMEPAGE_FARE_REFRESH_MARKETS.filter(
+    (market) => marketTargets[market]?.targetMet === true,
+  );
+}
+
+function buildHomepageFareMarketReadinessSummary(
+  marketTargets: Record<string, HomepageFareMarketTarget>,
+): HomepageFareMarketReadinessSummary[] {
+  return HOMEPAGE_FARE_REFRESH_MARKETS.map((market) => ({
+    market,
+    ...marketTargets[market],
+  })).filter((target) => Boolean(target.marketCode)) as HomepageFareMarketReadinessSummary[];
+}
+
+function updateRefreshGlobalReadinessMetadata(
+  counts: HomepageFareRefreshCounts,
+) {
+  counts.globalReadinessStatus = getGlobalHomepageFareReadinessStatus(
+    counts.marketTargets,
+  );
+  counts.readyMarkets = getReadyHomepageFareMarkets(counts.marketTargets);
+  counts.marketReadinessSummary = buildHomepageFareMarketReadinessSummary(
+    counts.marketTargets,
+  );
+}
+
 function computeCandidatePoolSizeByMarket(routes: HomepageRefreshRoute[]) {
   const counts = createEmptyRefreshMarketCounts();
 
@@ -697,6 +821,15 @@ function updateRefreshMarketTargetMetadata(
     routes,
     freshRouteIds,
     budget,
+    {
+      routeAttemptsByMarket: counts.routeAttemptsByMarket,
+      providerCallsByMarket: counts.providerCallsByMarket,
+      failedByMarket: counts.failedByMarket,
+      unavailableByMarket: counts.unavailableByMarket,
+      skippedCooldownByMarket: counts.skippedCooldownByMarket,
+      candidatePoolSizeByMarket: counts.candidatePoolSizeByMarket,
+      stoppedReason: counts.stoppedReason,
+    },
   );
 
   counts.marketTargets = marketTargets;
@@ -709,12 +842,22 @@ function updateRefreshMarketTargetMetadata(
   counts.underfilledMarkets = Object.entries(marketTargets)
     .filter(([, target]) => !target.targetMet)
     .map(([market, target]) => ({ market, ...target }));
+  updateRefreshGlobalReadinessMetadata(counts);
 }
 
 function computeHomepageFareMarketTargets(
   routes: HomepageRefreshRoute[],
   freshRouteIds: Set<string>,
   budget: HomepageFareRefreshBudget,
+  metrics: {
+    routeAttemptsByMarket?: Record<string, number>;
+    providerCallsByMarket?: Record<string, number>;
+    failedByMarket?: Record<string, number>;
+    unavailableByMarket?: Record<string, number>;
+    skippedCooldownByMarket?: Record<string, number>;
+    candidatePoolSizeByMarket?: Record<string, number>;
+    stoppedReason?: HomepageFareRefreshStoppedReason;
+  } = {},
 ): Record<string, HomepageFareMarketTarget> {
   return Object.fromEntries(
     HOMEPAGE_FARE_REFRESH_MARKETS.map((market) => {
@@ -766,9 +909,35 @@ function computeHomepageFareMarketTargets(
       );
       const missingBackup = Math.max(0, backupTarget - backupFresh);
 
+      const routeAttempts = metrics.routeAttemptsByMarket?.[market] ?? 0;
+      const providerCalls = metrics.providerCallsByMarket?.[market] ?? 0;
+      const failed = metrics.failedByMarket?.[market] ?? 0;
+      const unavailable = metrics.unavailableByMarket?.[market] ?? 0;
+      const skippedCooldown = metrics.skippedCooldownByMarket?.[market] ?? 0;
+      const candidatePoolSize =
+        metrics.candidatePoolSizeByMarket?.[market] ?? marketRoutes.length;
+      const underfillReason = targetMet
+        ? undefined
+        : `missing ${missingPopular} visible popular, ${missingDiscovery} visible discovery, and ${missingBackup} backup fresh fares`;
+      const metadata = getHomepageFareMarketMetadata(market);
+      const status = classifyHomepageFareMarketReadinessStatus({
+        targetMet,
+        routeAttempts,
+        providerCalls,
+        failed,
+        unavailable,
+        skippedCooldown,
+        candidatePoolSize,
+        stoppedReason: metrics.stoppedReason,
+      });
+
       return [
         market,
         {
+          marketCode: market,
+          marketLabel: metadata.label,
+          marketGroup: metadata.group,
+          marketVisibility: metadata.visibility,
           popularVisibleTarget,
           popularVisibleFresh,
           discoveryVisibleTarget,
@@ -776,15 +945,59 @@ function computeHomepageFareMarketTargets(
           backupTarget,
           backupFresh,
           targetMet,
-          ...(targetMet
-            ? {}
-            : {
-                reason: `missing ${missingPopular} visible popular, ${missingDiscovery} visible discovery, and ${missingBackup} backup fresh fares`,
-              }),
+          status,
+          ...(underfillReason
+            ? {
+                underfillReason,
+                reason: underfillReason,
+              }
+            : {}),
+          routeAttempts,
+          providerCalls,
+          failed,
+          unavailable,
+          skippedCooldown,
+          candidatePoolSize,
         },
       ];
     }),
   );
+}
+
+
+function classifyHomepageFareMarketReadinessStatus({
+  targetMet,
+  routeAttempts,
+  providerCalls,
+  failed,
+  unavailable,
+  skippedCooldown,
+  candidatePoolSize,
+  stoppedReason,
+}: {
+  targetMet: boolean;
+  routeAttempts: number;
+  providerCalls: number;
+  failed: number;
+  unavailable: number;
+  skippedCooldown: number;
+  candidatePoolSize: number;
+  stoppedReason?: HomepageFareRefreshStoppedReason;
+}): HomepageFareMarketReadinessStatus {
+  if (targetMet) return "ready";
+  if (stoppedReason === "provider_budget_exhausted") return "budget_exhausted";
+  if (stoppedReason === "route_budget_exhausted") return "budget_exhausted";
+  if (
+    stoppedReason === "all_remaining_cooldown_or_unavailable" ||
+    (skippedCooldown > 0 && routeAttempts === 0 && providerCalls === 0)
+  ) {
+    return "cooldown";
+  }
+  if (candidatePoolSize > 0 && failed + unavailable >= candidatePoolSize) {
+    return "provider_exhausted";
+  }
+
+  return "underfilled";
 }
 
 export async function refreshPhase3AHomepageFareSnapshots({
@@ -828,6 +1041,10 @@ export async function refreshPhase3AHomepageFareSnapshots({
     routeAttempts: 0,
     providerCalls: 0,
     stoppedReason: "completed",
+    globalReadinessStatus: "not_ready",
+    requiredMarkets: [...HOMEPAGE_FARE_REFRESH_MARKETS],
+    readyMarkets: [],
+    marketReadinessSummary: [],
     readinessBefore,
     readinessAfter: readinessBefore,
     refreshBudget,
@@ -2125,7 +2342,7 @@ function isFreshHomepageFareSnapshotResponseEntry(
 }
 
 export async function readHomepageFareSnapshotStatus({
-  routes = getPhase3AHomepageFareRoutes(),
+  routes = getAllHomepageFareRefreshRoutes(),
   departureDate = getHomepageFareDateStrategy().departureDate,
   currency = DEFAULT_CURRENCY,
   now = new Date(),
@@ -2143,7 +2360,17 @@ export async function readHomepageFareSnapshotStatus({
   const summary = createEmptyHomepageFareSnapshotStatusSummary();
 
   if (!eligibleRoutes.length) {
-    const displayReadiness = classifyHomepageFareDisplayReadiness([], getHomepageFareSmartRefreshBudget());
+    const refreshBudget = getHomepageFareSmartRefreshBudget();
+    const marketTargets = computeHomepageFareMarketTargets(
+      [],
+      new Set(),
+      refreshBudget,
+    );
+    const displayReadiness = classifyHomepageFareDisplayReadiness(
+      [],
+      refreshBudget,
+      marketTargets,
+    );
 
     return {
       routes: [],
@@ -2151,7 +2378,32 @@ export async function readHomepageFareSnapshotStatus({
       health: displayReadiness,
       displayReadiness,
       candidatePoolHealth: summary,
-      refreshBudget: getHomepageFareSmartRefreshBudget(),
+      refreshBudget,
+      globalReadinessStatus: displayReadiness.globalReadinessStatus,
+      requiredMarkets: [...HOMEPAGE_FARE_REFRESH_MARKETS],
+      marketTargets,
+      marketTargetMet: Object.fromEntries(
+        Object.entries(marketTargets).map(([market, target]) => [
+          market,
+          target.targetMet,
+        ]),
+      ),
+      underfilledMarkets: Object.entries(marketTargets)
+        .filter(([, target]) => !target.targetMet)
+        .map(([market, target]) => ({ market, ...target })),
+      readyMarkets: getReadyHomepageFareMarkets(marketTargets),
+      marketReadinessSummary: buildHomepageFareMarketReadinessSummary(
+        marketTargets,
+      ),
+      popularFreshByMarket: createEmptyRefreshMarketCounts(),
+      discoveryFreshByMarket: createEmptyRefreshMarketCounts(),
+      backupFreshByMarket: createEmptyRefreshMarketCounts(),
+      candidatePoolSizeByMarket: createEmptyRefreshMarketCounts(),
+      routeAttemptsByMarket: createEmptyRefreshMarketCounts(),
+      providerCallsByMarket: createEmptyRefreshMarketCounts(),
+      failedByMarket: createEmptyRefreshMarketCounts(),
+      unavailableByMarket: createEmptyRefreshMarketCounts(),
+      skippedCooldownByMarket: createEmptyRefreshMarketCounts(),
     };
   }
 
@@ -2215,10 +2467,44 @@ export async function readHomepageFareSnapshotStatus({
   });
 
   const refreshBudget = getHomepageFareSmartRefreshBudget();
+  const freshRouteIds = new Set(
+    statusRoutes
+      .filter((route) => route.status === "fresh")
+      .map((route) => route.id),
+  );
+  const refreshRoutes = eligibleRoutes.filter(
+    (route): route is HomepageRefreshRoute =>
+      "isPopular" in route && "isDiscover" in route && "visibility" in route,
+  );
+  const {
+    popularFreshByMarket,
+    visibleDiscoveryPricedByMarket,
+    backupFreshByMarket,
+  } = computeFreshCountsByMarket(refreshRoutes, freshRouteIds);
+  const candidatePoolSizeByMarket = computeCandidatePoolSizeByMarket(
+    refreshRoutes,
+  );
+  const emptyMarketCounts = createEmptyRefreshMarketCounts();
+  const marketTargets = computeHomepageFareMarketTargets(
+    refreshRoutes,
+    freshRouteIds,
+    refreshBudget,
+    { candidatePoolSizeByMarket },
+  );
   const displayReadiness = classifyHomepageFareDisplayReadiness(
     statusRoutes,
     refreshBudget,
+    marketTargets,
   );
+  const marketTargetMet = Object.fromEntries(
+    Object.entries(marketTargets).map(([market, target]) => [
+      market,
+      target.targetMet,
+    ]),
+  );
+  const underfilledMarkets = Object.entries(marketTargets)
+    .filter(([, target]) => !target.targetMet)
+    .map(([market, target]) => ({ market, ...target }));
 
   return {
     routes: statusRoutes,
@@ -2227,6 +2513,24 @@ export async function readHomepageFareSnapshotStatus({
     displayReadiness,
     candidatePoolHealth: summary,
     refreshBudget,
+    globalReadinessStatus: displayReadiness.globalReadinessStatus,
+    requiredMarkets: [...HOMEPAGE_FARE_REFRESH_MARKETS],
+    marketTargets,
+    marketTargetMet,
+    underfilledMarkets,
+    readyMarkets: getReadyHomepageFareMarkets(marketTargets),
+    marketReadinessSummary: buildHomepageFareMarketReadinessSummary(
+      marketTargets,
+    ),
+    popularFreshByMarket,
+    discoveryFreshByMarket: visibleDiscoveryPricedByMarket,
+    backupFreshByMarket,
+    candidatePoolSizeByMarket,
+    routeAttemptsByMarket: emptyMarketCounts,
+    providerCallsByMarket: emptyMarketCounts,
+    failedByMarket: emptyMarketCounts,
+    unavailableByMarket: emptyMarketCounts,
+    skippedCooldownByMarket: emptyMarketCounts,
   };
 }
 
@@ -2388,7 +2692,9 @@ function normalizeRoute(
   if (!origin || !destination || origin === destination) return undefined;
 
   return {
+    ...route,
     id: route.id,
+    market: route.market,
     label: route.label,
     origin,
     destination,
@@ -2496,6 +2802,7 @@ function createEmptyHomepageFareSnapshotStatusSummary(): HomepageFareSnapshotSta
 function classifyHomepageFareDisplayReadiness(
   routes: HomepageFareSnapshotStatusRoute[],
   budget: HomepageFareRefreshBudget,
+  marketTargets?: Record<string, HomepageFareMarketTarget>,
 ): HomepageFareDisplayReadiness {
   const popularFresh = routes.filter(
     (route) => route.id.startsWith("popular-") && route.status === "fresh",
@@ -2514,16 +2821,17 @@ function classifyHomepageFareDisplayReadiness(
   const publicFreshTarget =
     budget.popularVisibleTarget + budget.discoverVisibleTarget;
   const visibleFresh = popularFresh + discoverDisplayedFresh;
+  const globalReadinessStatus = marketTargets
+    ? getGlobalHomepageFareReadinessStatus(marketTargets)
+    : "not_ready";
 
-  if (
-    popularFresh >= budget.popularVisibleTarget &&
-    discoverDisplayedFresh >= budget.discoverVisibleTarget
-  ) {
+  if (globalReadinessStatus === "ready") {
     return {
       status: "healthy",
-      label: "Homepage display ready",
+      label: "Global homepage ready",
       message:
-        "Enough fresh provider-backed fares exist to fill the visible homepage pricing slots.",
+        "Every configured homepage market has enough fresh provider-backed fares to fill visible homepage pricing slots.",
+      globalReadinessStatus,
       popularFresh,
       popularTarget: budget.popularVisibleTarget,
       discoverFresh,
@@ -2534,12 +2842,14 @@ function classifyHomepageFareDisplayReadiness(
     };
   }
 
-  if (visibleFresh > 0) {
+  if (globalReadinessStatus === "partial" || visibleFresh > 0) {
     return {
       status: "warning",
-      label: "Partial homepage pricing",
+      label: "Global homepage partially ready",
       message:
-        "Some visible homepage pricing slots have fresh provider-backed fares, but the display target is not full yet.",
+        "At least one market has fresh provider-backed homepage fares, but market coverage is incomplete.",
+      globalReadinessStatus:
+        globalReadinessStatus === "not_ready" ? "partial" : globalReadinessStatus,
       popularFresh,
       popularTarget: budget.popularVisibleTarget,
       discoverFresh,
@@ -2552,9 +2862,10 @@ function classifyHomepageFareDisplayReadiness(
 
   return {
     status: "attention",
-    label: "Homepage pricing needs attention",
+    label: "Global homepage not ready",
     message:
-      "Fresh provider-backed fares are not available for the visible homepage pricing slots.",
+      "Fresh provider-backed fares are not available for configured homepage markets yet.",
+    globalReadinessStatus,
     popularFresh,
     popularTarget: budget.popularVisibleTarget,
     discoverFresh,
@@ -2578,6 +2889,7 @@ function formatHomepageFareSnapshotStatusRoute({
 }): HomepageFareSnapshotStatusRoute {
   const base = {
     id: route.id,
+    market: route.market ?? "GLOBAL",
     label: route.label ?? `${route.origin} → ${route.destination}`,
     origin: route.origin,
     destination: route.destination,
