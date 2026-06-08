@@ -226,12 +226,14 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </aside>
               </div>
 
-              <SelectedFlightSummary
-                itineraryLegs={itineraryLegs}
-                fallbackAirlineName={flight.airlineName}
-                fallbackAirlineLogo={getAirlineLogo(flight)}
-                fallbackFlightNumber={flight.flightNumber}
-              />
+              <div className="w-full lg:max-w-[760px] xl:max-w-[800px]">
+                <SelectedFlightSummary
+                  itineraryLegs={itineraryLegs}
+                  fallbackAirlineName={flight.airlineName}
+                  fallbackAirlineLogo={getAirlineLogo(flight)}
+                  fallbackFlightNumber={flight.flightNumber}
+                />
+              </div>
             </Card>
           </div>
         </div>
