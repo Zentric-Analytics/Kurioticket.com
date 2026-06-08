@@ -290,9 +290,10 @@ function getRouteEndpointDisplayName(
     if (value) return value;
   }
 
-  return endpoint === "origin"
-    ? flight.originAirport
-    : flight.destinationAirport;
+  const airportCode = getRouteEndpointAirportCode(flight, endpoint);
+  const resolvedCityName = resolveAirportCodeToCityName(airportCode);
+
+  return resolvedCityName ?? airportCode;
 }
 
 type RouteEndpointCandidate = {
@@ -428,6 +429,63 @@ function getRouteEndpointCandidateGroups(
       },
     ],
   ];
+}
+
+const AIRPORT_CODE_CITY_NAMES: Record<string, string> = {
+  AMS: "Amsterdam",
+  ATL: "Atlanta",
+  BCN: "Barcelona",
+  BOS: "Boston",
+  BWI: "Baltimore",
+  CDG: "Paris",
+  DCA: "Washington",
+  DEN: "Denver",
+  DFW: "Dallas",
+  DOH: "Doha",
+  DXB: "Dubai",
+  EWR: "New York",
+  FCO: "Rome",
+  FRA: "Frankfurt",
+  HND: "Tokyo",
+  IAD: "Washington",
+  IAH: "Houston",
+  IST: "Istanbul",
+  JFK: "New York",
+  LAS: "Las Vegas",
+  LAX: "Los Angeles",
+  LGA: "New York",
+  LGW: "London",
+  LHR: "London",
+  LOS: "Lagos",
+  MAD: "Madrid",
+  MCO: "Orlando",
+  MIA: "Miami",
+  MXP: "Milan",
+  NRT: "Tokyo",
+  ORD: "Chicago",
+  ORY: "Paris",
+  PHX: "Phoenix",
+  SAN: "San Diego",
+  SEA: "Seattle",
+  SFO: "San Francisco",
+  SJC: "San Jose",
+  YYZ: "Toronto",
+  YVR: "Vancouver",
+};
+
+function getRouteEndpointAirportCode(
+  flight: PublicFlightResult,
+  endpoint: "origin" | "destination",
+) {
+  return endpoint === "origin"
+    ? flight.originAirport.trim()
+    : flight.destinationAirport.trim();
+}
+
+function resolveAirportCodeToCityName(value: string) {
+  if (!isAirportCodeOnly(value)) return undefined;
+
+  return AIRPORT_CODE_CITY_NAMES[value.trim().toUpperCase()];
 }
 
 function getFirstReadableRouteValue(
