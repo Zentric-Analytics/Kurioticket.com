@@ -137,7 +137,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                         <AirlineNameWithLogo
                           airlineName={flight.airlineName}
                           airlineLogoUrl={getAirlineLogo(flight)}
-                          className="text-sm font-semibold text-slate-700"
+                          className="text-sm font-medium text-slate-700"
                           logoClassName="h-6 w-6"
                         />
                         {flight.flightNumber ? (
@@ -146,13 +146,13 @@ export function FlightDetailsClient({ id }: { id: string }) {
                               className="h-1 w-1 rounded-full bg-slate-300"
                               aria-hidden="true"
                             />
-                            <span className="text-sm font-medium text-slate-500">
+                            <span className="text-sm font-medium text-slate-700">
                               Flight {flight.flightNumber}
                             </span>
                           </>
                         ) : null}
                       </div>
-                      <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">
+                      <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
                         <span>{flight.originAirport}</span>
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
                           <ArrowRight size={16} aria-hidden="true" />
@@ -161,7 +161,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       </h1>
                     </div>
 
-                    <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] font-medium leading-5 text-slate-600">
+                    <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium leading-5 text-slate-600">
                       {heroDetails.map((detail) => {
                         const Icon = detail.icon;
 
@@ -178,7 +178,9 @@ export function FlightDetailsClient({ id }: { id: string }) {
                               <span className="font-semibold text-slate-800">
                                 {detail.label}:
                               </span>{" "}
-                              {detail.value}
+                              <span className="font-medium text-slate-600">
+                                {detail.value}
+                              </span>
                             </span>
                           </span>
                         );
@@ -190,11 +192,11 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 <aside className="border-t border-indigo-100 bg-white p-2.5 sm:p-3 lg:border-l lg:border-t-0 lg:p-3.5">
                   <div className="flex h-full flex-col justify-center gap-2">
                     <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                         From
                       </p>
                       <div
-                        className="mt-0.5 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
+                        className="mt-0.5 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl"
                         aria-label={displayPrice.ariaLabel}
                         title={displayPrice.title}
                       >
@@ -216,7 +218,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     >
                       Continue to Provider <ArrowRight size={18} />
                     </Button>
-                    <p className="flex gap-1.5 text-xs font-medium leading-4 text-slate-600">
+                    <p className="flex gap-1.5 text-xs leading-4 text-slate-500">
                       <Info size={15} className="mt-0.5 shrink-0 text-blue" />
                       <span>{providerDisclaimer}</span>
                     </p>
@@ -232,7 +234,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
         <div className="mx-auto w-full max-w-3xl">
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-indigo-950/5">
             <div className="bg-gradient-to-r from-indigo-700 to-violet-600 px-4 py-2">
-              <p className="text-sm font-semibold tracking-tight text-white sm:text-base">
+              <p className="text-sm font-semibold tracking-wide text-white">
                 Selected flight
               </p>
             </div>
@@ -388,7 +390,7 @@ function CompactLegSection({
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700">
             {directionLabel}
           </p>
-          <p className="text-xs font-medium text-slate-600">
+          <p className="text-xs font-semibold tracking-wide text-slate-600">
             {leg.originAirport} to {leg.destinationAirport}
           </p>
         </div>
@@ -451,19 +453,20 @@ function CompactFlightRow({
     <div className="grid grid-cols-[minmax(0,1fr)_2rem_minmax(0,1fr)] items-center gap-2 py-1.5 sm:grid-cols-[minmax(0,1fr)_5rem_minmax(0,1fr)] sm:gap-3">
       <div className="min-w-0">
         <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <span className="truncate text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
+          <span className="truncate text-base font-semibold text-slate-900 sm:text-lg">
             {originAirport}
           </span>
-          <span className="text-sm font-medium text-slate-600">
+          <span className="text-sm font-medium text-slate-700">
             {formatTime(departureTime)}
           </span>
         </p>
         {airlineName || flightNumber ? (
-          <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs font-medium text-slate-500">
+          <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs font-medium">
             {airlineName ? (
               <AirlineNameWithLogo
                 airlineName={airlineName}
                 airlineLogoUrl={airlineLogo}
+                className="text-xs font-medium text-slate-700"
                 logoClassName="h-4 w-4"
               />
             ) : null}
@@ -474,7 +477,9 @@ function CompactFlightRow({
               />
             ) : null}
             {flightNumber ? (
-              <span className="min-w-0 truncate">{flightNumber}</span>
+              <span className="min-w-0 truncate text-xs font-medium text-slate-500">
+                {flightNumber}
+              </span>
             ) : null}
           </p>
         ) : null}
@@ -489,10 +494,10 @@ function CompactFlightRow({
       </div>
       <div className="min-w-0 text-right">
         <p className="flex min-w-0 flex-wrap items-baseline justify-end gap-x-2 gap-y-0.5">
-          <span className="text-sm font-medium text-slate-600">
+          <span className="text-sm font-medium text-slate-700">
             {formatTime(arrivalTime)}
           </span>
-          <span className="truncate text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
+          <span className="truncate text-base font-semibold text-slate-900 sm:text-lg">
             {destinationAirport}
           </span>
         </p>
