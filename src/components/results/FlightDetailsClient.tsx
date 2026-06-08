@@ -238,14 +238,14 @@ export function FlightDetailsClient({ id }: { id: string }) {
       <div className="page-shell py-6">
         <div className="mx-auto w-full max-w-3xl">
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-indigo-950/5">
-            <div className="bg-gradient-to-r from-indigo-700 to-violet-600 px-4 py-2.5">
+            <div className="bg-gradient-to-r from-indigo-700 to-violet-600 px-4 py-2">
               <p className="text-sm font-semibold tracking-tight text-white sm:text-base">
                 Selected flight
               </p>
             </div>
 
-            <div className="p-3 sm:p-4">
-              <div className="pb-3">
+            <div className="p-2.5 sm:p-3">
+              <div className="pb-2">
                 <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
                   <CompactAirportTime
                     airport={flight.originAirport}
@@ -274,12 +274,12 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </div>
               </div>
 
-              <div className="grid gap-2">
+              <div className="grid gap-1.5">
                 {itineraryLegs.map((leg, legIndex) => (
                   <div
                     key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
                     className={
-                      legIndex > 0 ? "mt-3 border-t border-violet-500 pt-3" : ""
+                      legIndex > 0 ? "mt-2 border-t border-violet-500 pt-2.5" : ""
                     }
                   >
                     <CompactLegSection
@@ -434,7 +434,7 @@ function CompactLegSection({
 
   return (
     <section aria-label={formatLegDirection(leg.direction, legIndex, legCount)}>
-      <div className="mb-1.5 flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-1 flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700">
           {formatLegDirection(leg.direction, legIndex, legCount)} · {leg.originAirport} to{" "}
           {leg.destinationAirport}
@@ -495,7 +495,7 @@ function CompactFlightRow({
   flightNumber?: string;
 }) {
   return (
-    <div className="grid gap-2 py-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
+    <div className="grid gap-1.5 py-1.5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center">
       <div className="min-w-0">
         <p className="text-lg font-semibold tracking-[-0.02em] text-slate-950">
           {formatTime(departureTime)}
@@ -504,7 +504,7 @@ function CompactFlightRow({
           {originAirport}
         </p>
         {airlineName || flightNumber ? (
-          <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-500">
+          <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs font-semibold text-slate-500">
             {airlineName ? (
               <AirlineNameWithLogo
                 airlineName={airlineName}
@@ -549,7 +549,7 @@ function LayoverSeparator({
   layover: FlightLeg["layovers"][number];
 }) {
   return (
-    <div className="py-1 text-xs font-medium text-slate-500">
+    <div className="py-0.5 text-xs font-medium leading-4 text-slate-500">
       Layover in {layover.airport} · {layover.duration}
       {layover.quality !== "unknown"
         ? ` · ${layover.quality} connection`
