@@ -283,30 +283,223 @@ function getRouteEndpointDisplayName(
   flight: PublicFlightResult,
   endpoint: "origin" | "destination",
 ) {
-  const fieldSets =
-    endpoint === "origin"
-      ? [
-          ["originCity", "originCityName", "originDisplayName", "originName"],
-          ["originAirportName", "originAirportDisplayName"],
-        ]
-      : [
-          [
-            "destinationCity",
-            "destinationCityName",
-            "destinationDisplayName",
-            "destinationName",
-          ],
-          ["destinationAirportName", "destinationAirportDisplayName"],
-        ];
+  const candidateGroups = getRouteEndpointCandidateGroups(endpoint);
 
-  for (const fields of fieldSets) {
-    const value = getOptionalStringField(flight, fields);
+  for (const group of candidateGroups) {
+    const value = getFirstReadableRouteValue(flight, group);
     if (value) return value;
   }
 
   return endpoint === "origin"
     ? flight.originAirport
     : flight.destinationAirport;
+}
+
+type RouteEndpointCandidate = {
+  directKeys?: string[];
+  objectKeys?: string[];
+  nestedKeys?: string[];
+  cleanAirportName?: boolean;
+};
+
+function getRouteEndpointCandidateGroups(
+  endpoint: "origin" | "destination",
+): RouteEndpointCandidate[][] {
+  if (endpoint === "origin") {
+    return [
+      [
+        {
+          directKeys: [
+            "originCity",
+            "originCityName",
+            "fromCity",
+            "fromCityName",
+            "departureCity",
+            "departureCityName",
+          ],
+          objectKeys: ["origin", "from", "departure"],
+          nestedKeys: ["city", "cityName", "municipality", "municipalityName"],
+        },
+      ],
+      [
+        {
+          directKeys: [
+            "originDisplayName",
+            "originName",
+            "fromDisplayName",
+            "fromName",
+            "departureDisplayName",
+            "departureName",
+          ],
+          objectKeys: ["origin", "from", "departure", "originAirport"],
+          nestedKeys: ["displayName", "name", "label"],
+        },
+      ],
+      [
+        {
+          directKeys: [
+            "originAirportName",
+            "originAirportDisplayName",
+            "fromAirportName",
+            "fromAirportDisplayName",
+            "departureAirportName",
+            "departureAirportDisplayName",
+          ],
+          objectKeys: ["origin", "from", "departure", "originAirport"],
+          nestedKeys: ["airportName", "airportDisplayName", "fullName"],
+          cleanAirportName: true,
+        },
+      ],
+      [
+        {
+          directKeys: [
+            "originFullName",
+            "originLocationName",
+            "fromFullName",
+            "fromLocationName",
+            "departureFullName",
+            "departureLocationName",
+          ],
+          objectKeys: ["origin", "from", "departure", "originAirport"],
+          nestedKeys: ["fullName", "locationName", "title"],
+          cleanAirportName: true,
+        },
+      ],
+    ];
+  }
+
+  return [
+    [
+      {
+        directKeys: [
+          "destinationCity",
+          "destinationCityName",
+          "toCity",
+          "toCityName",
+          "arrivalCity",
+          "arrivalCityName",
+        ],
+        objectKeys: ["destination", "to", "arrival"],
+        nestedKeys: ["city", "cityName", "municipality", "municipalityName"],
+      },
+    ],
+    [
+      {
+        directKeys: [
+          "destinationDisplayName",
+          "destinationName",
+          "toDisplayName",
+          "toName",
+          "arrivalDisplayName",
+          "arrivalName",
+        ],
+        objectKeys: ["destination", "to", "arrival", "destinationAirport"],
+        nestedKeys: ["displayName", "name", "label"],
+      },
+    ],
+    [
+      {
+        directKeys: [
+          "destinationAirportName",
+          "destinationAirportDisplayName",
+          "toAirportName",
+          "toAirportDisplayName",
+          "arrivalAirportName",
+          "arrivalAirportDisplayName",
+        ],
+        objectKeys: ["destination", "to", "arrival", "destinationAirport"],
+        nestedKeys: ["airportName", "airportDisplayName", "fullName"],
+        cleanAirportName: true,
+      },
+    ],
+    [
+      {
+        directKeys: [
+          "destinationFullName",
+          "destinationLocationName",
+          "toFullName",
+          "toLocationName",
+          "arrivalFullName",
+          "arrivalLocationName",
+        ],
+        objectKeys: ["destination", "to", "arrival", "destinationAirport"],
+        nestedKeys: ["fullName", "locationName", "title"],
+        cleanAirportName: true,
+      },
+    ],
+  ];
+}
+
+function getFirstReadableRouteValue(
+  flight: PublicFlightResult,
+  candidates: RouteEndpointCandidate[],
+) {
+  for (const candidate of candidates) {
+    for (const rawValue of getRouteCandidateValues(flight, candidate)) {
+      const value = candidate.cleanAirportName
+        ? cleanAirportDisplayName(rawValue)
+        : rawValue;
+
+      if (value && !isAirportCodeOnly(value)) return value;
+    }
+  }
+
+  return undefined;
+}
+
+function getRouteCandidateValues(
+  flight: PublicFlightResult,
+  candidate: RouteEndpointCandidate,
+) {
+  const values: string[] = [];
+  const fields = flight as Record<string, unknown>;
+
+  for (const key of candidate.directKeys ?? []) {
+    const value = fields[key];
+
+    if (typeof value === "string" && value.trim()) {
+      values.push(value.trim());
+    }
+  }
+
+  for (const objectKey of candidate.objectKeys ?? []) {
+    const nestedSource = fields[objectKey];
+    if (!nestedSource || typeof nestedSource !== "object") continue;
+
+    const nestedFields = nestedSource as Record<string, unknown>;
+
+    for (const nestedKey of candidate.nestedKeys ?? []) {
+      const value = nestedFields[nestedKey];
+
+      if (typeof value === "string" && value.trim()) {
+        values.push(value.trim());
+      }
+    }
+  }
+
+  return values;
+}
+
+function cleanAirportDisplayName(value?: string) {
+  if (!value) return undefined;
+
+  let cleaned = value
+    .replace(/\s*\([A-Z]{3}\)\s*$/i, "")
+    .replace(/^([A-Z]{3})\s*[-–—:]\s*/i, "")
+    .replace(/\s+airport\s*$/i, "")
+    .replace(/\s+international\s*$/i, "")
+    .replace(/\s+intl\.?\s*$/i, "")
+    .trim();
+
+  if (!cleaned || isAirportCodeOnly(cleaned)) {
+    cleaned = value.trim();
+  }
+
+  return cleaned;
+}
+
+function isAirportCodeOnly(value: string) {
+  return /^[A-Z]{3}$/i.test(value.trim());
 }
 
 function AirlineNameWithLogo({
