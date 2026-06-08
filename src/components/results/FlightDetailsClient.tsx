@@ -226,7 +226,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </aside>
               </div>
 
-              <div className="w-full lg:w-[58%]">
+              <div className="w-full lg:-mt-3 lg:w-[58%]">
                 <SelectedFlightSummary
                   itineraryLegs={itineraryLegs}
                   fallbackAirlineName={flight.airlineName}
