@@ -131,7 +131,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
                 <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
-                  <div className="flex h-full min-w-0 flex-col justify-between gap-2">
+                  <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <AirlineNameWithLogo
