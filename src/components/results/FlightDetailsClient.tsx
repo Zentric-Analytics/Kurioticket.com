@@ -225,47 +225,67 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   </div>
                 </aside>
               </div>
+
+              <SelectedFlightSummary
+                itineraryLegs={itineraryLegs}
+                fallbackAirlineName={flight.airlineName}
+                fallbackAirlineLogo={getAirlineLogo(flight)}
+                fallbackFlightNumber={flight.flightNumber}
+              />
             </Card>
           </div>
         </div>
       </section>
+    </main>
+  );
+}
 
-      <div className="page-shell py-6">
-        <div className="mx-auto w-full max-w-3xl">
-          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm shadow-indigo-950/5">
-            <div className="bg-gradient-to-r from-indigo-700 to-violet-600 px-4 py-2">
-              <p className="text-sm font-semibold tracking-wide text-white">
-                Selected flight
-              </p>
-            </div>
+function SelectedFlightSummary({
+  itineraryLegs,
+  fallbackAirlineName,
+  fallbackAirlineLogo,
+  fallbackFlightNumber,
+}: {
+  itineraryLegs: FlightLeg[];
+  fallbackAirlineName: string;
+  fallbackAirlineLogo?: string;
+  fallbackFlightNumber?: string;
+}) {
+  return (
+    <section
+      className="border-t border-indigo-100 bg-white/95"
+      aria-label="Selected flight itinerary"
+    >
+      <div className="bg-gradient-to-r from-indigo-700 to-violet-600 px-4 py-2">
+        <p className="text-sm font-semibold tracking-wide text-white">
+          Selected flight
+        </p>
+      </div>
 
-            <div className="p-3 sm:p-3.5">
-              <div className="grid gap-1.5">
-                {itineraryLegs.map((leg, legIndex) => (
-                  <div
-                    key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
-                    className={
-                      legIndex > 0
-                        ? "mt-2 border-t border-violet-500/80 pt-2"
-                        : ""
-                    }
-                  >
-                    <CompactLegSection
-                      leg={leg}
-                      legIndex={legIndex}
-                      legCount={itineraryLegs.length}
-                      fallbackAirlineName={flight.airlineName}
-                      fallbackAirlineLogo={getAirlineLogo(flight)}
-                      fallbackFlightNumber={flight.flightNumber}
-                    />
-                  </div>
-                ))}
-              </div>
+      <div className="p-3 sm:p-3.5 lg:p-4">
+        <div className="grid gap-1.5">
+          {itineraryLegs.map((leg, legIndex) => (
+            <div
+              key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
+              className={
+                legIndex > 0
+                  ? "mt-2 border-t border-violet-500/80 pt-2"
+                  : ""
+              }
+            >
+              <CompactLegSection
+                leg={leg}
+                legIndex={legIndex}
+                legCount={itineraryLegs.length}
+                fallbackAirlineName={fallbackAirlineName}
+                fallbackAirlineLogo={fallbackAirlineLogo}
+                fallbackFlightNumber={fallbackFlightNumber}
+              />
             </div>
-          </section>
+          ))}
         </div>
       </div>
-    </main>
+    </section>
   );
 }
 
