@@ -11,7 +11,6 @@ import {
   Plane,
   Settings,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import type { FlightLeg, PublicFlightResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
@@ -130,9 +129,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
                   <div className="flex h-full min-w-0 flex-col justify-between gap-2">
                     <div className="min-w-0 space-y-1">
-                      <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
-                        <Sparkles size={14} aria-hidden="true" /> Flight details
-                      </p>
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <AirlineNameWithLogo
                           airlineName={flight.airlineName}
