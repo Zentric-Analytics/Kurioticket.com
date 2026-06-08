@@ -113,6 +113,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
   });
 
   const heroDetails = buildHeroDetails(flight);
+  const routeHeading = buildRouteHeading(flight);
   const hasProviderLink = Boolean(
     flight.partnerRedirectUrl || flight.bookingUrl,
   );
@@ -124,6 +125,9 @@ export function FlightDetailsClient({ id }: { id: string }) {
       <section className="border-b border-border bg-white">
         <div className="page-shell py-3 sm:py-4">
           <div className="mx-auto grid w-full max-w-5xl gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+              {routeHeading}
+            </h1>
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
                 <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
@@ -263,6 +267,46 @@ export function FlightDetailsClient({ id }: { id: string }) {
       </div>
     </main>
   );
+}
+
+function buildRouteHeading(flight: PublicFlightResult) {
+  const originDisplayName = getRouteEndpointDisplayName(flight, "origin");
+  const destinationDisplayName = getRouteEndpointDisplayName(
+    flight,
+    "destination",
+  );
+
+  return `${originDisplayName} to ${destinationDisplayName}`;
+}
+
+function getRouteEndpointDisplayName(
+  flight: PublicFlightResult,
+  endpoint: "origin" | "destination",
+) {
+  const fieldSets =
+    endpoint === "origin"
+      ? [
+          ["originCity", "originCityName", "originDisplayName", "originName"],
+          ["originAirportName", "originAirportDisplayName"],
+        ]
+      : [
+          [
+            "destinationCity",
+            "destinationCityName",
+            "destinationDisplayName",
+            "destinationName",
+          ],
+          ["destinationAirportName", "destinationAirportDisplayName"],
+        ];
+
+  for (const fields of fieldSets) {
+    const value = getOptionalStringField(flight, fields);
+    if (value) return value;
+  }
+
+  return endpoint === "origin"
+    ? flight.originAirport
+    : flight.destinationAirport;
 }
 
 function AirlineNameWithLogo({
