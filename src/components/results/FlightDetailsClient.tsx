@@ -118,7 +118,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
     flight.partnerRedirectUrl || flight.bookingUrl,
   );
   const providerDisclaimer =
-    "Final price, availability, payment, booking, and fare rules are confirmed by the provider.";
+    "Final price, availability, booking, and fare rules are confirmed by the provider.";
 
   return (
     <main className="flex-1 bg-surface-muted/40">
@@ -551,7 +551,7 @@ function buildHeroDetails(flight: PublicFlightResult): HeroDetailItem[] {
 }
 
 function formatCabinClass(value?: string) {
-  if (!value) return "Check provider";
+  if (!value) return "Confirmed by provider";
   return value
     .replace(/[-_]/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
@@ -563,7 +563,7 @@ function formatBaggageValue(value?: string) {
     isProviderReviewCopy(value) ||
     /rules vary|vary by fare/i.test(value)
   ) {
-    return "Check provider";
+    return "Confirmed by provider";
   }
 
   return value;
