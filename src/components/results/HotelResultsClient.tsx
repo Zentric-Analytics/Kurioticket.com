@@ -30,6 +30,7 @@ const desktopHotelFilterStickyTopClass =
   "lg:sticky lg:top-[7.25rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:overscroll-contain";
 
 const FILTER_APPLYING_DELAY_MS = 700;
+const SEARCH_APPLYING_TIMEOUT_MS = 15000;
 const FILTER_SCROLLBAR_HIDE_DELAY_MS = 700;
 const DEFAULT_MIN_RATING = 3;
 
@@ -324,6 +325,7 @@ export function HotelResultsClient() {
   const [messageIndex, setMessageIndex] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filterApplying, setFilterApplying] = useState(false);
+  const [searchApplying, setSearchApplying] = useState(false);
   const [filterScrollbarVisible, setFilterScrollbarVisible] = useState(false);
   const [maxPrice, setMaxPrice] = useState(1200);
   const [minRating, setMinRating] = useState(DEFAULT_MIN_RATING);
@@ -334,6 +336,7 @@ export function HotelResultsClient() {
   const [mobileHotelSearchOpen, setMobileHotelSearchOpen] = useState(false);
 
   const filterApplyingTimeoutRef = useRef<number | null>(null);
+  const searchApplyingTimeoutRef = useRef<number | null>(null);
   const filterScrollbarTimeoutRef = useRef<number | null>(null);
   const mobileHotelSearchScrollLockRef = useRef<{ restore: () => void } | null>(
     null,
@@ -519,12 +522,22 @@ export function HotelResultsClient() {
         setVisibleFiltered(data.results);
         setWarnings(data.warnings || []);
         setFilterApplying(false);
+        setSearchApplying(false);
+        if (searchApplyingTimeoutRef.current !== null) {
+          window.clearTimeout(searchApplyingTimeoutRef.current);
+          searchApplyingTimeoutRef.current = null;
+        }
         setMaxPrice(getResultMaxPrice(data.results));
         setSelectedFilters(emptySelections);
       })
       .catch((searchError) => {
         if (!active) return;
 
+        setSearchApplying(false);
+        if (searchApplyingTimeoutRef.current !== null) {
+          window.clearTimeout(searchApplyingTimeoutRef.current);
+          searchApplyingTimeoutRef.current = null;
+        }
         setError(
           searchError instanceof Error
             ? searchError.message
@@ -582,7 +595,8 @@ export function HotelResultsClient() {
     [maxPrice, minRating, resultCurrency, resultMaxPrice, selectedFilters],
   );
 
-  const visibleFilteredHotels = filterApplying ? visibleFiltered : filtered;
+  const resultsApplying = filterApplying || searchApplying;
+  const visibleFilteredHotels = resultsApplying ? visibleFiltered : filtered;
   const sortedVisibleHotels = useMemo(
     () => sortHotelSummaryResults(visibleFilteredHotels, hotelSummarySortMode),
     [hotelSummarySortMode, visibleFilteredHotels],
@@ -626,6 +640,10 @@ export function HotelResultsClient() {
         window.clearTimeout(filterApplyingTimeoutRef.current);
       }
 
+      if (searchApplyingTimeoutRef.current !== null) {
+        window.clearTimeout(searchApplyingTimeoutRef.current);
+      }
+
       if (filterScrollbarTimeoutRef.current !== null) {
         window.clearTimeout(filterScrollbarTimeoutRef.current);
       }
@@ -645,9 +663,9 @@ export function HotelResultsClient() {
     }, FILTER_SCROLLBAR_HIDE_DELAY_MS);
   }
 
-  function triggerFilterApplying() {
+  const triggerFilterApplying = useCallback(() => {
     setVisibleFiltered((current) => {
-      if (filterApplying && current.length > 0) return current;
+      if (resultsApplying && current.length > 0) return current;
       return filtered;
     });
 
@@ -657,7 +675,21 @@ export function HotelResultsClient() {
       window.clearTimeout(filterApplyingTimeoutRef.current);
       filterApplyingTimeoutRef.current = null;
     }
-  }
+  }, [filtered, resultsApplying]);
+
+  const triggerSearchApplying = useCallback(() => {
+    triggerFilterApplying();
+    setSearchApplying(true);
+
+    if (searchApplyingTimeoutRef.current !== null) {
+      window.clearTimeout(searchApplyingTimeoutRef.current);
+    }
+
+    searchApplyingTimeoutRef.current = window.setTimeout(() => {
+      setSearchApplying(false);
+      searchApplyingTimeoutRef.current = null;
+    }, SEARCH_APPLYING_TIMEOUT_MS);
+  }, [triggerFilterApplying]);
 
   const updateMaxPrice = (value: number) => {
     triggerFilterApplying();
@@ -737,6 +769,7 @@ export function HotelResultsClient() {
           onOpenFilters={() => setFiltersOpen(true)}
           onOpenMobileSearch={openMobileHotelSearch}
           onMobileDraftChange={updateMobileHotelSearchDraft}
+          onSubmitStart={triggerSearchApplying}
         />
       </div>
 
@@ -755,6 +788,7 @@ export function HotelResultsClient() {
             mobileLayout="drawer"
             onCloseMobileSearch={closeMobileHotelSearch}
             onMobileDraftChange={updateMobileHotelSearchDraft}
+            onSubmitStart={triggerSearchApplying}
           />
         </div>
       ) : null}
@@ -772,6 +806,7 @@ export function HotelResultsClient() {
             errorRole="alert"
             compact
             className="min-w-0"
+            onSubmitStart={triggerSearchApplying}
           />
         </div>
       </section>
@@ -851,7 +886,7 @@ export function HotelResultsClient() {
               <div
                 className={cn(
                   "space-y-3 transition-opacity",
-                  filterApplying ? "animate-pulse opacity-80" : undefined,
+                  resultsApplying ? "animate-pulse opacity-80" : undefined,
                 )}
               >
                 <ActiveHotelFilterChips
@@ -873,19 +908,7 @@ export function HotelResultsClient() {
                   </h1>
                 </div>
 
-                {filterApplying ? (
-                  <div className="space-y-3">
-                    <div
-                      role="status"
-                      aria-live="polite"
-                      className="rounded-xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
-                    >
-                      Updating results...
-                    </div>
-                    <HotelSkeleton />
-                    <HotelSkeleton />
-                  </div>
-                ) : sortedVisibleHotels.length ? (
+                {sortedVisibleHotels.length ? (
                   sortedVisibleHotels.map((hotel) => (
                     <HotelCard key={hotel.id} hotel={hotel} />
                   ))
