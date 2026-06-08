@@ -312,7 +312,9 @@ function CompactAirportTime({
 }) {
   return (
     <div className={align === "right" ? "sm:text-right" : ""}>
-      <p className="text-lg font-black tracking-tight text-navy sm:text-xl">{airport}</p>
+      <p className="text-base font-semibold tracking-tight text-slate-900 sm:text-lg">
+        {airport}
+      </p>
       <p className="mt-0.5 text-sm font-semibold text-slate-600">{time}</p>
     </div>
   );
@@ -433,7 +435,7 @@ function CompactLegSection({
   return (
     <section aria-label={formatLegDirection(leg.direction, legIndex, legCount)}>
       <div className="mb-1.5 flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-700">
           {formatLegDirection(leg.direction, legIndex, legCount)} · {leg.originAirport} to{" "}
           {leg.destinationAirport}
         </p>
@@ -498,7 +500,7 @@ function CompactFlightRow({
         <p className="text-lg font-semibold tracking-[-0.02em] text-slate-950">
           {formatTime(departureTime)}
         </p>
-        <p className="mt-0.5 truncate text-xs font-medium text-slate-600">
+        <p className="mt-0.5 truncate text-sm font-semibold text-slate-800">
           {originAirport}
         </p>
         {airlineName || flightNumber ? (
@@ -533,7 +535,7 @@ function CompactFlightRow({
         <p className="text-lg font-semibold tracking-[-0.02em] text-slate-950">
           {formatTime(arrivalTime)}
         </p>
-        <p className="mt-0.5 truncate text-xs font-medium text-slate-600">
+        <p className="mt-0.5 truncate text-sm font-semibold text-slate-800">
           {destinationAirport}
         </p>
       </div>
