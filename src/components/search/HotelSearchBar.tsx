@@ -169,6 +169,7 @@ export type HotelSearchBarProps = {
   onOpenMobileSearch?: () => void;
   onCloseMobileSearch?: () => void;
   onMobileDraftChange?: (draft: HotelSearchDraft) => void;
+  onSubmitStart?: () => void;
   className?: string;
 };
 
@@ -187,6 +188,7 @@ export function HotelSearchBar({
   onOpenMobileSearch,
   onCloseMobileSearch,
   onMobileDraftChange,
+  onSubmitStart,
   className,
 }: HotelSearchBarProps) {
   const router = useRouter();
@@ -813,6 +815,7 @@ export function HotelSearchBar({
     setError("");
     closeHotelSearchPopovers();
     setIsSubmitting(true);
+    onSubmitStart?.();
 
     if (!mobileSearchOpen) {
       closeMobileSearchPanel();
