@@ -258,12 +258,6 @@ function SelectedFlightSummary({
       className="border-t border-indigo-100 bg-white/95"
       aria-label="Selected flight itinerary"
     >
-      <div className="bg-gradient-to-r from-indigo-700 to-violet-600 px-4 py-2">
-        <p className="text-sm font-semibold tracking-wide text-white">
-          Selected flight
-        </p>
-      </div>
-
       <div className="p-3 sm:p-3.5 lg:p-4">
         <div className="grid gap-1.5">
           {itineraryLegs.map((leg, legIndex) => (
