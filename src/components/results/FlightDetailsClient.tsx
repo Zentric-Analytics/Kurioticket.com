@@ -135,12 +135,12 @@ export function FlightDetailsClient({ id }: { id: string }) {
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_280px]">
                 <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
-                  <div className="flex h-full min-w-0 flex-col items-start justify-between gap-3">
+                  <div className="flex h-full min-w-0 flex-col justify-between gap-2.5">
                     <div className="min-w-0 space-y-1.5">
                       <p className="inline-flex items-center gap-2 rounded-full border border-teal/15 bg-teal/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-teal-dark">
                         <Sparkles size={14} aria-hidden="true" /> Flight details
                       </p>
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <AirlineNameWithLogo
                           airlineName={flight.airlineName}
                           airlineLogoUrl={getAirlineLogo(flight)}
@@ -168,66 +168,66 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       </h1>
                     </div>
 
-                    <div className="w-full rounded-xl border border-indigo-100/70 bg-white/65 px-3 py-2 text-xs font-medium leading-5 text-slate-600 shadow-sm shadow-indigo-950/5">
-                      <div className="flex flex-wrap items-start gap-x-4 gap-y-1">
-                        {heroDetails.map((detail) => {
-                          const Icon = detail.icon;
+                    <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] font-medium leading-5 text-slate-600">
+                      {heroDetails.map((detail) => {
+                        const Icon = detail.icon;
 
-                          return (
-                            <span
-                              key={detail.label}
-                              className="inline-flex min-w-0 items-start gap-1.5"
-                            >
-                              <Icon
-                                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-indigo-600"
-                                aria-hidden="true"
-                              />
-                              <span className="min-w-0 leading-5">
-                                <span className="font-semibold text-slate-800">
-                                  {detail.label}:
-                                </span>{" "}
-                                {detail.value}
-                              </span>
+                        return (
+                          <span
+                            key={detail.label}
+                            className="inline-flex min-w-0 items-center gap-1.5"
+                          >
+                            <Icon
+                              className="h-3.5 w-3.5 shrink-0 text-indigo-600"
+                              aria-hidden="true"
+                            />
+                            <span className="min-w-0">
+                              <span className="font-semibold text-slate-800">
+                                {detail.label}:
+                              </span>{" "}
+                              {detail.value}
                             </span>
-                          );
-                        })}
-                      </div>
+                          </span>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
 
                 <aside className="border-t border-indigo-100 bg-white p-2.5 sm:p-3 lg:border-l lg:border-t-0 lg:p-3.5">
-                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-                      From
-                    </p>
-                    <div
-                      className="mt-1 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
-                      aria-label={displayPrice.ariaLabel}
-                      title={displayPrice.title}
-                    >
-                      {displayPrice.formatted}
-                    </div>
-                    {displayPrice.isConvertedEstimate ? (
-                      <p className="mt-1 text-xs font-medium leading-5 text-slate-600">
-                        Estimate shown. Provider price:{" "}
-                        {displayPrice.providerFormatted}.
+                  <div className="flex h-full flex-col justify-center gap-2">
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+                        From
                       </p>
-                    ) : null}
+                      <div
+                        className="mt-0.5 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl"
+                        aria-label={displayPrice.ariaLabel}
+                        title={displayPrice.title}
+                      >
+                        {displayPrice.formatted}
+                      </div>
+                      {displayPrice.isConvertedEstimate ? (
+                        <p className="mt-1 text-xs font-medium leading-5 text-slate-600">
+                          Estimate shown. Provider price:{" "}
+                          {displayPrice.providerFormatted}.
+                        </p>
+                      ) : null}
+                    </div>
+                    <Button
+                      variant="accent"
+                      size="lg"
+                      className="w-full rounded-xl px-6 text-sm font-semibold sm:text-base"
+                      onClick={continueToProvider}
+                      disabled={!hasProviderLink}
+                    >
+                      Continue to Provider <ArrowRight size={18} />
+                    </Button>
+                    <p className="flex gap-1.5 text-xs font-medium leading-4 text-slate-600">
+                      <Info size={15} className="mt-0.5 shrink-0 text-blue" />
+                      <span>{providerDisclaimer}</span>
+                    </p>
                   </div>
-                  <Button
-                    variant="accent"
-                    size="lg"
-                    className="mt-2 w-full rounded-xl px-6 text-sm font-semibold sm:text-base"
-                    onClick={continueToProvider}
-                    disabled={!hasProviderLink}
-                  >
-                    Continue to Provider <ArrowRight size={18} />
-                  </Button>
-                  <p className="mt-1.5 flex gap-1.5 text-xs font-medium leading-4 text-slate-600">
-                    <Info size={15} className="mt-0.5 shrink-0 text-blue" />
-                    <span>{providerDisclaimer}</span>
-                  </p>
                 </aside>
               </div>
             </Card>
