@@ -226,7 +226,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </aside>
               </div>
 
-              <div className="w-full lg:-mt-7 lg:w-[58%]">
+              <div className="w-full lg:-mt-8 lg:w-[58%]">
                 <SelectedFlightSummary
                   itineraryLegs={itineraryLegs}
                   fallbackAirlineName={flight.airlineName}
@@ -258,7 +258,10 @@ function SelectedFlightSummary({
       className="border-t border-indigo-100 bg-white/95"
       aria-label="Selected flight itinerary"
     >
-      <div className="p-3 sm:p-3.5 lg:p-4">
+      <div className="px-3 pb-3 pt-2.5 sm:px-3.5 sm:pb-3.5 sm:pt-3 lg:px-4 lg:pb-4 lg:pt-3">
+        <p className="mb-2 text-sm font-semibold tracking-tight text-slate-900">
+          Selected Flights
+        </p>
         <div className="grid gap-1.5">
           {itineraryLegs.map((leg, legIndex) => (
             <div
