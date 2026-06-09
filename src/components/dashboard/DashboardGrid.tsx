@@ -8,6 +8,7 @@ import {
   Bookmark,
   BriefcaseBusiness,
   Building2,
+  Car,
   ChevronRight,
   Clock3,
   Grid2X2,
@@ -50,6 +51,12 @@ const quickActions = [
     icon: Building2,
   },
   {
+    title: "Search cars",
+    body: "Find the best car rental deals",
+    href: "/cars",
+    icon: Car,
+  },
+  {
     title: "View saved trips",
     body: "See your saved itineraries",
     href: "/dashboard/saved",
@@ -90,12 +97,12 @@ function isActiveDashboardRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function TravelIllustration({ variant = "luggage" }: { variant?: "luggage" | "globe" }) {
+function TravelIllustration({ compact = false, variant = "luggage" }: { compact?: boolean; variant?: "luggage" | "globe" }) {
   return (
     <div
       className={cn(
         "relative isolate flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100/70 text-violet-700",
-        variant === "globe" ? "size-24 sm:size-28" : "size-24 sm:size-28",
+        compact ? "size-20" : "size-24 sm:size-28",
       )}
       aria-hidden="true"
     >
@@ -112,7 +119,7 @@ function TravelIllustration({ variant = "luggage" }: { variant?: "luggage" | "gl
       ) : (
         <>
           <div className="absolute bottom-7 h-3 w-20 rounded-full bg-violet-300/30 blur-sm" />
-          <Luggage className="relative size-14 fill-violet-500/20 text-violet-700 drop-shadow-sm sm:size-16" />
+          <Luggage className={cn("relative fill-violet-500/20 text-violet-700 drop-shadow-sm", compact ? "size-12" : "size-14 sm:size-16")} />
         </>
       )}
     </div>
@@ -123,9 +130,9 @@ export function AccountDashboardFrame({ children }: AccountDashboardFrameProps) 
   const pathname = usePathname();
 
   return (
-    <div className="grid min-w-0 gap-4 lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[16rem_minmax(0,1fr)]">
-      <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start" aria-label="Account navigation">
-        <div className="rounded-[1.4rem] border border-violet-100/80 bg-white p-2 shadow-[0_24px_70px_-50px_rgba(49,46,129,0.45)] lg:min-h-[calc(100vh-8rem)] lg:p-2.5">
+    <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15.75rem_minmax(0,1fr)]">
+      <aside className="min-w-0 lg:sticky lg:top-5 lg:self-start" aria-label="Account navigation">
+        <div className="rounded-[1.25rem] border border-violet-100/80 bg-white p-2 shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)] lg:min-h-[calc(100vh-7.25rem)] lg:p-2.5">
           <nav className="overflow-x-auto lg:overflow-visible">
             <div className="flex min-w-max gap-2 lg:min-w-0 lg:flex-col lg:gap-1.5">
               {navItems.map((item) => {
@@ -139,7 +146,7 @@ export function AccountDashboardFrame({ children }: AccountDashboardFrameProps) 
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "focus-ring flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition hover:bg-violet-50 hover:text-violet-700",
-                      active ? "bg-violet-50 text-violet-700 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.04)]" : "text-slate-950",
+                      active ? "bg-violet-50 text-violet-700 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]" : "text-slate-900",
                     )}
                   >
                     <Icon className="size-4 shrink-0" strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
@@ -150,16 +157,17 @@ export function AccountDashboardFrame({ children }: AccountDashboardFrameProps) 
             </div>
           </nav>
 
-          <div className="mt-5 hidden rounded-2xl border border-violet-100 bg-gradient-to-b from-violet-50 to-white p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-20 xl:mt-24">
-            <div className="mx-auto mb-3 flex justify-center">
-              <TravelIllustration />
+          <div className="mt-5 hidden rounded-2xl border border-violet-100 bg-gradient-to-b from-violet-50/90 to-white p-3.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-16 xl:mt-20">
+            <div className="mx-auto mb-2.5 flex justify-center">
+              <TravelIllustration compact />
             </div>
             <h2 className="text-sm font-semibold text-slate-950">Book your next trip</h2>
-            <p className="mx-auto mt-2 max-w-40 text-xs leading-5 text-slate-600">Find great deals on flights and hotels.</p>
+            <p className="mx-auto mt-1.5 max-w-40 text-xs leading-5 text-slate-600">Find great deals on flights and hotels.</p>
             <Link
               href="/flights/results"
-              className="focus-ring mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-violet-300 bg-white px-4 text-sm font-semibold text-violet-700 transition hover:border-violet-500 hover:bg-violet-50"
+              className="focus-ring mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-violet-300 bg-white px-4 text-xs font-semibold text-violet-700 transition hover:border-violet-500 hover:bg-violet-50"
             >
+              <Plane className="size-3.5" aria-hidden="true" />
               Search flights
             </Link>
           </div>
@@ -174,18 +182,16 @@ function QuickActionTile({ title, body, href, icon: Icon }: { title: string; bod
   return (
     <Link
       href={href}
-      className="focus-ring group flex min-h-24 min-w-0 flex-col justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-[0_18px_45px_-38px_rgba(30,27,75,0.48)] transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_22px_52px_-34px_rgba(79,70,229,0.45)]"
+      className="focus-ring group flex min-h-20 min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_18px_45px_-38px_rgba(30,27,75,0.48)] transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_22px_52px_-34px_rgba(79,70,229,0.45)]"
     >
-      <div className="flex items-start justify-between gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
-          <Icon className="size-4" aria-hidden="true" />
-        </span>
-        <ChevronRight className="mt-1 size-4 shrink-0 text-slate-950 transition group-hover:translate-x-0.5 group-hover:text-violet-700" aria-hidden="true" />
-      </div>
-      <div className="mt-3">
-        <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
-        <p className="mt-1.5 text-xs leading-5 text-slate-600">{body}</p>
-      </div>
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+        <Icon className="size-5" aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-slate-950">{title}</span>
+        <span className="mt-1 block text-xs leading-5 text-slate-600">{body}</span>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-slate-900 transition group-hover:translate-x-0.5 group-hover:text-violet-700" aria-hidden="true" />
     </Link>
   );
 }
@@ -196,30 +202,33 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
       className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_22px_62px_-50px_rgba(49,46,129,0.48)]"
       aria-labelledby="dashboard-title"
     >
-      <div className="grid gap-5 p-4 sm:p-5 lg:p-6 xl:grid-cols-[minmax(0,1fr)_minmax(29rem,0.9fr)] xl:items-center">
-        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
-          <div
-            className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-700 text-2xl font-bold text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.8)] sm:size-20 sm:text-3xl"
-            aria-hidden="true"
-          >
-            {initials}
-          </div>
-          <div className="min-w-0">
-            <h1 id="dashboard-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-              Welcome back, {displayName} 👋
-            </h1>
-            {userEmail ? <p className="mt-1.5 break-words text-xs font-medium text-slate-500 sm:text-sm">{userEmail}</p> : null}
-            <p className="mt-3 max-w-lg text-sm leading-6 text-slate-600">
-              Manage your trips, saved travel plans, alerts, and account preferences from one place.
-            </p>
-          </div>
+      <div className="flex min-w-0 flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5 lg:p-6">
+        <div
+          className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-700 text-2xl font-bold text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.8)] sm:size-18 sm:text-3xl"
+          aria-hidden="true"
+        >
+          {initials}
         </div>
-        <div className="grid gap-2.5 border-slate-200 sm:grid-cols-3 xl:border-l xl:pl-5">
-          {quickActions.map((action) => (
-            <QuickActionTile key={action.title} {...action} />
-          ))}
+        <div className="min-w-0">
+          <h1 id="dashboard-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+            Welcome back, {displayName} 👋
+          </h1>
+          {userEmail ? <p className="mt-1.5 break-words text-xs font-medium text-slate-500 sm:text-sm">{userEmail}</p> : null}
+          <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-600">
+            Manage your trips, saved travel plans, alerts, and account preferences from one place.
+          </p>
         </div>
       </div>
+    </section>
+  );
+}
+
+function QuickActionsRow() {
+  return (
+    <section aria-label="Quick actions" className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {quickActions.map((action) => (
+        <QuickActionTile key={action.title} {...action} />
+      ))}
     </section>
   );
 }
@@ -296,16 +305,17 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
   return (
     <>
       <AccountIdentityHeader initials={initials} displayName={displayName} userEmail={userEmail} />
+      <QuickActionsRow />
 
       <section
         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-50px_rgba(49,46,129,0.52)]"
         aria-labelledby="travel-status-title"
       >
-        <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center xl:px-7 xl:py-6">
+        <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center xl:px-7 xl:py-7">
           <TravelIllustration />
           <div className="min-w-0">
             <h2 id="travel-status-title" className="text-base font-semibold text-slate-950">Your travel status</h2>
-            <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">No upcoming trips yet</h3>
+            <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-950 sm:text-[1.6rem]">No upcoming trips yet</h3>
             <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-600">
               Trips you book or save will appear here when available.
             </p>

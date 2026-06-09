@@ -30,7 +30,7 @@ export default async function DashboardPage() {
   return (
     <>
       <AppHeader />
-      <main className="flex-1 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.08),transparent_30%),linear-gradient(180deg,#fbfaff_0%,#ffffff_48%,#f8fafc_100%)] pb-10 pt-5 sm:pt-6 lg:pt-6">
+      <main className="flex-1 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.08),transparent_30%),linear-gradient(180deg,#fbfaff_0%,#ffffff_48%,#f8fafc_100%)] pb-10 pt-4 sm:pt-5 lg:pt-5">
         <div className="page-shell min-w-0">
           <AccountDashboardFrame>
             <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} />
