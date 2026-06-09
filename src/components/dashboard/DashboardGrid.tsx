@@ -157,15 +157,15 @@ export function AccountDashboardFrame({ children }: AccountDashboardFrameProps) 
             </div>
           </nav>
 
-          <div className="mt-5 hidden rounded-2xl border border-violet-100 bg-gradient-to-b from-violet-50/90 to-white p-3.5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-16 xl:mt-20">
-            <div className="mx-auto mb-2.5 flex justify-center">
+          <div className="mt-5 hidden rounded-2xl border border-violet-100/80 bg-gradient-to-b from-violet-50/55 to-white p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-14 xl:mt-16">
+            <div className="mx-auto mb-2 flex justify-center opacity-85">
               <TravelIllustration compact />
             </div>
-            <h2 className="text-sm font-semibold text-slate-950">Book your next trip</h2>
-            <p className="mx-auto mt-1.5 max-w-40 text-xs leading-5 text-slate-600">Find great deals on flights and hotels.</p>
+            <h2 className="text-[13px] font-semibold text-slate-900">Book your next trip</h2>
+            <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">Find great deals on flights and hotels.</p>
             <Link
               href="/flights/results"
-              className="focus-ring mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-violet-300 bg-white px-4 text-xs font-semibold text-violet-700 transition hover:border-violet-500 hover:bg-violet-50"
+              className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200 bg-white px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-50"
             >
               <Plane className="size-3.5" aria-hidden="true" />
               Search flights
@@ -182,16 +182,16 @@ function QuickActionTile({ title, body, href, icon: Icon }: { title: string; bod
   return (
     <Link
       href={href}
-      className="focus-ring group flex min-h-20 min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_18px_45px_-38px_rgba(30,27,75,0.48)] transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_22px_52px_-34px_rgba(79,70,229,0.45)]"
+      className="focus-ring group flex min-h-20 min-w-0 items-center gap-3 rounded-xl border border-slate-300/80 bg-white/95 p-3 shadow-[0_18px_48px_-36px_rgba(30,27,75,0.62)] transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white hover:shadow-[0_22px_54px_-34px_rgba(79,70,229,0.52)]"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-        <Icon className="size-5" aria-hidden="true" />
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/80 text-violet-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]">
+        <Icon className="size-5" strokeWidth={2.25} aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-slate-950">{title}</span>
-        <span className="mt-1 block text-xs leading-5 text-slate-600">{body}</span>
+        <span className="mt-1 block text-xs leading-5 text-slate-700">{body}</span>
       </span>
-      <ChevronRight className="size-4 shrink-0 text-slate-900 transition group-hover:translate-x-0.5 group-hover:text-violet-700" aria-hidden="true" />
+      <ChevronRight className="size-4 shrink-0 text-slate-700 transition group-hover:translate-x-0.5 group-hover:text-violet-800" strokeWidth={2.4} aria-hidden="true" />
     </Link>
   );
 }
@@ -199,12 +199,12 @@ function QuickActionTile({ title, body, href, icon: Icon }: { title: string; bod
 function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_22px_62px_-50px_rgba(49,46,129,0.48)]"
+      className="overflow-hidden rounded-2xl border border-slate-300/80 bg-[linear-gradient(135deg,#ffffff_0%,#faf8ff_58%,#f8fafc_100%)] shadow-[0_24px_66px_-46px_rgba(49,46,129,0.62)]"
       aria-labelledby="dashboard-title"
     >
-      <div className="flex min-w-0 flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5 lg:p-6">
+      <div className="flex min-w-0 flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5 lg:p-5">
         <div
-          className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-700 text-2xl font-bold text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.8)] sm:size-18 sm:text-3xl"
+          className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-2xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
           aria-hidden="true"
         >
           {initials}
@@ -213,8 +213,8 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
           <h1 id="dashboard-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
             Welcome back, {displayName} 👋
           </h1>
-          {userEmail ? <p className="mt-1.5 break-words text-xs font-medium text-slate-500 sm:text-sm">{userEmail}</p> : null}
-          <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-600">
+          {userEmail ? <p className="mt-1.5 break-words text-xs font-semibold text-slate-600 sm:text-sm">{userEmail}</p> : null}
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
             Manage your trips, saved travel plans, alerts, and account preferences from one place.
           </p>
         </div>
@@ -235,14 +235,14 @@ function QuickActionsRow() {
 
 function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: string; value: string; href?: string; linkText: string; icon: LucideIcon }) {
   const content = (
-    <div className="flex min-w-0 items-center gap-3 px-3.5 py-3 sm:px-4 lg:min-h-20 lg:border-l lg:border-slate-200 lg:first:border-l-0">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-        <Icon className="size-5" aria-hidden="true" />
+    <div className="flex min-w-0 items-center gap-3 px-3.5 py-3 sm:px-4 lg:min-h-20 lg:border-l lg:border-slate-300/80 lg:first:border-l-0">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/75 text-violet-800">
+        <Icon className="size-5" strokeWidth={2.25} aria-hidden="true" />
       </span>
       <div className="min-w-0">
-        <dt className="text-xs font-semibold text-slate-950">{label}</dt>
+        <dt className="text-xs font-semibold text-slate-800">{label}</dt>
         <dd className="mt-1 text-xl font-bold leading-none text-slate-950">{value}</dd>
-        <p className="mt-1.5 text-xs font-semibold text-violet-700">{linkText}</p>
+        <p className="mt-1.5 text-xs font-bold text-violet-800">{linkText}</p>
       </div>
     </div>
   );
@@ -252,7 +252,7 @@ function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: str
   }
 
   return (
-    <Link href={href} className="focus-ring block rounded-2xl transition hover:bg-violet-50/45">
+    <Link href={href} className="focus-ring block rounded-2xl transition hover:bg-violet-50/70">
       {content}
     </Link>
   );
@@ -260,15 +260,15 @@ function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: str
 
 function SetupRow({ title, body, href, icon: Icon }: { title: string; body: string; href: string; icon: LucideIcon }) {
   return (
-    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-3 px-5 py-3.5 transition hover:bg-violet-50/45 sm:px-6">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-        <Icon className="size-4" aria-hidden="true" />
+    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-3 px-5 py-3.5 transition hover:bg-violet-50/70 sm:px-6">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/70 text-violet-800">
+        <Icon className="size-4" strokeWidth={2.25} aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-slate-950">{title}</span>
-        <span className="mt-1 block text-xs leading-5 text-slate-600">{body}</span>
+        <span className="mt-1 block text-xs leading-5 text-slate-700">{body}</span>
       </span>
-      <ChevronRight className="size-4 shrink-0 text-slate-950 transition group-hover:translate-x-0.5 group-hover:text-violet-700" aria-hidden="true" />
+      <ChevronRight className="size-4 shrink-0 text-slate-700 transition group-hover:translate-x-0.5 group-hover:text-violet-800" strokeWidth={2.4} aria-hidden="true" />
     </Link>
   );
 }
@@ -303,12 +303,12 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
 
 export function DashboardOverview({ initials, displayName, userEmail }: DashboardOverviewProps) {
   return (
-    <>
+    <div className="mx-auto min-w-0 max-w-[62rem] space-y-3.5 sm:space-y-4 xl:max-w-[64rem]">
       <AccountIdentityHeader initials={initials} displayName={displayName} userEmail={userEmail} />
       <QuickActionsRow />
 
       <section
-        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-50px_rgba(49,46,129,0.52)]"
+        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
         aria-labelledby="travel-status-title"
       >
         <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center xl:px-7 xl:py-7">
@@ -316,7 +316,7 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
           <div className="min-w-0">
             <h2 id="travel-status-title" className="text-base font-semibold text-slate-950">Your travel status</h2>
             <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-950 sm:text-[1.6rem]">No upcoming trips yet</h3>
-            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-600">
+            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-700">
               Trips you book or save will appear here when available.
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -337,7 +337,7 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
       </section>
 
       <section
-        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-50px_rgba(49,46,129,0.52)]"
+        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
         aria-labelledby="snapshot-title"
       >
         <div className="px-5 pt-4 sm:px-6">
@@ -351,13 +351,13 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
       </section>
 
       <section
-        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-50px_rgba(49,46,129,0.52)]"
+        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
         aria-labelledby="setup-title"
       >
-        <div className="border-b border-slate-200 px-5 py-3.5 sm:px-6">
+        <div className="border-b border-slate-300/80 px-5 py-3.5 sm:px-6">
           <h2 id="setup-title" className="text-base font-semibold text-slate-950">Finish setting up your account</h2>
         </div>
-        <div className="divide-y divide-slate-200">
+        <div className="divide-y divide-slate-300/80">
           <SetupRow
             title="Personal details"
             body="Add or update your personal information"
@@ -378,7 +378,7 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
           />
         </div>
       </section>
-    </>
+    </div>
   );
 }
 
