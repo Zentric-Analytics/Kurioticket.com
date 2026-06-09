@@ -7,10 +7,7 @@ import {
   Bell,
   Bookmark,
   BriefcaseBusiness,
-  Building2,
-  Car,
   ChevronRight,
-  Clock3,
   Grid2X2,
   Headphones,
   LifeBuoy,
@@ -35,40 +32,6 @@ const navItems = [
   { label: "Price alerts", href: "/dashboard/alerts", icon: Bell },
   { label: "Preferences", href: "/dashboard/preferences", icon: Settings },
   { label: "Support", href: "/dashboard/support", icon: LifeBuoy },
-];
-
-const quickActions = [
-  {
-    title: "Search flights",
-    body: "Find the best flight deals",
-    href: "/flights/results",
-    icon: Plane,
-  },
-  {
-    title: "Search hotels",
-    body: "Find the perfect stay",
-    href: "/hotels",
-    icon: Building2,
-  },
-  {
-    title: "Search cars",
-    body: "Compare car rental deals",
-    href: "/cars",
-    icon: Car,
-  },
-  {
-    title: "View saved trips",
-    body: "See your saved trips and ideas",
-    href: "/dashboard/saved",
-    icon: Bookmark,
-  },
-];
-
-const snapshotItems = [
-  { label: "Trips", value: "0", href: "/dashboard/trips", linkText: "View trips", icon: BriefcaseBusiness },
-  { label: "Saved", value: "0", href: "/dashboard/saved", linkText: "View saved", icon: Bookmark },
-  { label: "Price alerts", value: "0", href: "/dashboard/alerts", linkText: "View price alerts", icon: Bell },
-  { label: "Recent searches", value: "0", href: "/flights/results", linkText: "Start searching", icon: Clock3 },
 ];
 
 type AccountDashboardFrameProps = {
@@ -193,42 +156,6 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
   );
 }
 
-function QuickActionTile({ title, body, href, icon: Icon }: { title: string; body: string; href: string; icon: LucideIcon }) {
-  return (
-    <Link
-      href={href}
-      className="focus-ring group flex min-h-20 min-w-0 items-center gap-3 rounded-xl border border-slate-300/80 bg-white/95 p-3 shadow-[0_18px_48px_-36px_rgba(30,27,75,0.62)] transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white hover:shadow-[0_22px_54px_-34px_rgba(79,70,229,0.52)]"
-    >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/80 text-violet-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]">
-        <Icon className="size-5" strokeWidth={2.25} aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-slate-950">{title}</span>
-        <span className="mt-1 block text-xs leading-5 text-slate-700">{body}</span>
-      </span>
-      <ChevronRight className="size-4 shrink-0 text-slate-700 transition group-hover:translate-x-0.5 group-hover:text-violet-800" strokeWidth={2.4} aria-hidden="true" />
-    </Link>
-  );
-}
-
-function QuickActionListRow({ title, body, href, icon: Icon }: { title: string; body: string; href: string; icon: LucideIcon }) {
-  return (
-    <Link
-      href={href}
-      className="focus-ring group flex min-w-0 items-center gap-3 border-b border-slate-200 px-3 py-3 transition last:border-b-0 hover:bg-violet-50/60"
-    >
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-100/70 text-violet-700">
-        <Icon className="size-5" strokeWidth={2.3} aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-slate-950">{title}</span>
-        <span className="mt-0.5 block text-sm leading-5 text-slate-700">{body}</span>
-      </span>
-      <ChevronRight className="size-4 shrink-0 text-slate-950 transition group-hover:translate-x-0.5 group-hover:text-violet-800" strokeWidth={2.5} aria-hidden="true" />
-    </Link>
-  );
-}
-
 function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
   return (
     <section
@@ -253,74 +180,6 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
         </div>
       </div>
     </section>
-  );
-}
-
-function QuickActionsRow() {
-  return (
-    <>
-      <section
-        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_20px_60px_-48px_rgba(49,46,129,0.6)] lg:hidden"
-        aria-labelledby="quick-actions-title"
-      >
-        <div className="px-4 pt-3.5">
-          <h2 id="quick-actions-title" className="text-base font-semibold text-slate-950">Quick actions</h2>
-        </div>
-        <div className="m-3 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          {quickActions.map((action) => (
-            <QuickActionListRow key={action.title} {...action} />
-          ))}
-        </div>
-      </section>
-
-      <section aria-label="Quick actions" className="hidden min-w-0 gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-4">
-        {quickActions.map((action) => (
-          <QuickActionTile key={action.title} {...action} />
-        ))}
-      </section>
-    </>
-  );
-}
-
-function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: string; value: string; href?: string; linkText: string; icon: LucideIcon }) {
-  const content = (
-    <div className="flex min-w-0 items-start gap-2 px-2 py-3 sm:gap-3 sm:px-4 lg:min-h-20 lg:items-center lg:gap-2.5 lg:border-l lg:border-slate-300/80 lg:first:border-l-0">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/75 text-violet-800 sm:size-10">
-        <Icon className="size-4.5 sm:size-5" strokeWidth={2.25} aria-hidden="true" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <dt className="text-xs font-semibold leading-tight text-slate-800 lg:truncate">{label}</dt>
-        <dd className="mt-1 text-xl font-bold leading-none text-slate-950">{value}</dd>
-        <p className="mt-1 text-[11px] font-bold leading-tight text-violet-800 sm:text-xs lg:hidden">{linkText}</p>
-      </div>
-      <p className="hidden shrink-0 text-[11px] font-bold text-violet-800 sm:text-xs lg:block">{linkText}</p>
-      <ChevronRight className="hidden size-3.5 shrink-0 text-slate-700 lg:block" strokeWidth={2.4} aria-hidden="true" />
-    </div>
-  );
-
-  if (!href) {
-    return content;
-  }
-
-  return (
-    <Link href={href} className="focus-ring block rounded-2xl border border-slate-200 transition hover:bg-violet-50/70 lg:border-0">
-      {content}
-    </Link>
-  );
-}
-
-function SetupRow({ title, body, href, icon: Icon }: { title: string; body: string; href: string; icon: LucideIcon }) {
-  return (
-    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-3 px-5 py-3.5 transition hover:bg-violet-50/70 sm:px-6">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/70 text-violet-800">
-        <Icon className="size-4" strokeWidth={2.25} aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-slate-950">{title}</span>
-        <span className="mt-1 block text-xs leading-5 text-slate-700">{body}</span>
-      </span>
-      <ChevronRight className="size-4 shrink-0 text-slate-700 transition group-hover:translate-x-0.5 group-hover:text-violet-800" strokeWidth={2.4} aria-hidden="true" />
-    </Link>
   );
 }
 
@@ -354,88 +213,8 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
 
 export function DashboardOverview({ initials, displayName, userEmail }: DashboardOverviewProps) {
   return (
-    <div className="mx-auto min-w-0 max-w-[62rem] space-y-3.5 sm:space-y-4 xl:max-w-[64rem]">
+    <div className="mx-auto min-w-0 max-w-[62rem] xl:max-w-[64rem]">
       <AccountIdentityHeader initials={initials} displayName={displayName} userEmail={userEmail} />
-      <QuickActionsRow />
-
-      <section
-        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
-        aria-label="Your travel status"
-      >
-        <div className="px-5 pt-4 lg:hidden">
-          <h2 className="text-base font-semibold text-slate-950">Your travel status</h2>
-        </div>
-        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 p-4 pt-4 sm:gap-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] xl:px-7 xl:py-7">
-          <TravelIllustration />
-          <div className="min-w-0">
-            <h2 className="hidden text-base font-semibold text-slate-950 lg:block">Your travel status</h2>
-            <h3 className="mt-0 text-lg font-bold tracking-tight text-slate-950 sm:text-[1.6rem] lg:mt-3">No upcoming trips yet</h3>
-            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-700 lg:mt-2.5">
-              Trips you book or save will appear here when available.
-            </p>
-            <div className="mt-4 flex flex-row gap-2 max-[380px]:flex-col lg:mt-5 lg:gap-3">
-              <Link
-                href="/flights/results"
-                className="focus-ring inline-flex h-10 items-center justify-center whitespace-nowrap rounded-xl bg-violet-700 px-3 text-[13px] font-bold text-white transition hover:bg-violet-800 max-[380px]:w-full sm:px-4 sm:text-sm"
-              >
-                Search flights
-              </Link>
-              <Link
-                href="/hotels"
-                className="focus-ring inline-flex h-10 items-center justify-center whitespace-nowrap rounded-xl border border-violet-500 bg-white px-3 text-[13px] font-bold text-violet-700 transition hover:bg-violet-50 max-[380px]:w-full sm:px-4 sm:text-sm"
-              >
-                Search hotels
-              </Link>
-            </div>
-          </div>
-          <div className="hidden lg:flex">
-            <TravelIllustration variant="globe" />
-          </div>
-        </div>
-      </section>
-
-      <section
-        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
-        aria-labelledby="snapshot-title"
-      >
-        <div className="px-5 pt-4 sm:px-6">
-          <h2 id="snapshot-title" className="text-base font-semibold text-slate-950">Account snapshot</h2>
-        </div>
-        <dl className="grid grid-cols-2 gap-1.5 p-2.5 sm:p-3 lg:grid-cols-4 lg:gap-0">
-          {snapshotItems.map((item) => (
-            <SnapshotLink key={item.label} {...item} />
-          ))}
-        </dl>
-      </section>
-
-      <section
-        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
-        aria-labelledby="setup-title"
-      >
-        <div className="border-b border-slate-300/80 px-5 py-3.5 sm:px-6">
-          <h2 id="setup-title" className="text-base font-semibold text-slate-950">Finish setting up your account</h2>
-        </div>
-        <div className="divide-y divide-slate-300/80">
-          <SetupRow
-            title="Personal details"
-            body="Add your name, phone number and more"
-            href="/dashboard/preferences"
-            icon={UserRound}
-          />
-          <SetupRow
-            title="Travel preferences"
-            body="Set your preferred travel options"
-            href="/dashboard/preferences"
-            icon={Plane}
-          />
-          <SetupRow
-            title="Security and privacy"
-            body="Manage your password and privacy settings"
-            href="/dashboard/preferences"
-            icon={ShieldCheck}
-          />
-        </div>
-      </section>
     </div>
   );
 }
