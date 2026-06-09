@@ -41,6 +41,12 @@ import {
   type AirportOption,
 } from "@/data/airports";
 import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDiscovery";
+import {
+  applyDefaultOrigin,
+  canApplyDefaultOrigin,
+  markOriginManualInput,
+  type OriginFieldState,
+} from "@/lib/flights/defaultOrigin";
 
 type TabMode =
   | "flights"
@@ -58,6 +64,7 @@ type SearchTabsProps = {
 
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
+  defaultOriginAirport?: AirportOption | null;
   fallback?: boolean;
   source?: string;
 };
@@ -215,10 +222,15 @@ export function SearchTabs({
     setTravelersMenuOpen,
   ] = useState(false);
 
-  const [from, setFrom] =
-    useState("");
-  const [fromCode, setFromCode] =
-    useState("");
+  const [fromState, setFromState] =
+    useState<OriginFieldState>({
+      input: "",
+      code: "",
+      source: "empty",
+      userInteracted: false,
+    });
+  const from = fromState.input;
+  const fromCode = fromState.code;
   const [to, setTo] =
     useState("");
   const [toCode, setToCode] =
@@ -438,9 +450,10 @@ export function SearchTabs({
     );
   }, [applyTravelersFromValues, draftAdultCount, draftChildCount, draftInfantCount, draftCabinClass]);
 
-  const buildPlacesUrl = useCallback((query: string, context: "origin" | "destination") => {
+  const buildPlacesUrl = useCallback((query: string, context: "origin" | "destination", requestDefault = false) => {
     const params = new URLSearchParams();
     if (query.length >= 2) params.set("q", query);
+    if (requestDefault) params.set("default", "true");
     params.set("context", context);
     if (context === "origin" && countryHint) params.set("countryCode", countryHint);
     if (typeof navigator !== "undefined" && navigator.language) params.set("locale", navigator.language);
@@ -473,6 +486,39 @@ export function SearchTabs({
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!canApplyDefaultOrigin(fromState)) return;
+
+    const controller = new AbortController();
+
+    const loadDefaultOrigin = async () => {
+      try {
+        const response = await fetch(buildPlacesUrl("", "origin", true), {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as PlacesApiResponse;
+        const defaultAirport = payload.defaultOriginAirport ?? null;
+        setFromState((current) => applyDefaultOrigin(current, defaultAirport));
+        if (Array.isArray(payload.suggestions)) {
+          setFromLiveSuggestions(
+            dedupeSuggestions(payload.suggestions)
+              .filter((item) => !!item?.code && !!item?.city && !!item?.airport)
+              .slice(0, 7),
+          );
+        }
+      } catch {
+        // The homepage search keeps its existing empty-origin behavior if defaults are unavailable.
+      }
+    };
+
+    void loadDefaultOrigin();
+
+    return () => controller.abort();
+  }, [buildPlacesUrl, fromState]);
 
   useEffect(() => {
     const query = from.trim();
@@ -1082,10 +1128,6 @@ export function SearchTabs({
       ? setFromHighlight
       : setToHighlight;
 
-    const setValue = isFrom
-      ? setFrom
-      : setTo;
-
     const setOpen = isFrom
       ? setFromOpen
       : setToOpen;
@@ -1124,16 +1166,18 @@ export function SearchTabs({
     ) {
       event.preventDefault();
 
-      setValue(
-        formatAirportLabel(
-          list[active]
-        )
-      );
       if (isFrom) {
-        setFromCode(
+        setFromState((current) => markOriginManualInput(
+          current,
+          formatAirportLabel(list[active]),
           list[active].code
-        );
+        ));
       } else {
+        setTo(
+          formatAirportLabel(
+            list[active]
+          )
+        );
         setToCode(
           list[active].code
         );
@@ -1151,8 +1195,12 @@ export function SearchTabs({
     const fromValue = from;
     const fromCanonicalCode = fromCode;
 
-    setFrom(to);
-    setFromCode(toCode);
+    setFromState({
+      input: to,
+      code: toCode,
+      source: to.trim() ? "manual" : "empty",
+      userInteracted: true,
+    });
     setTo(fromValue);
     setToCode(fromCanonicalCode);
     setFromOpen(false);
@@ -1164,10 +1212,9 @@ export function SearchTabs({
   };
 
   const onClearOrigin = () => {
-    setFrom("");
+    setFromState((current) => markOriginManualInput(current, ""));
     setFromLoading(false);
     setFromLiveSuggestions([]);
-    setFromCode("");
     setFromOpen(false);
     setFromHighlight(0);
     if (!activeMobileAirportPicker) {
@@ -1799,12 +1846,11 @@ export function SearchTabs({
                       event
                     ) => {
                       const nextValue = event.target.value;
-                      setFrom(nextValue);
+                      setFromState((current) => markOriginManualInput(current, nextValue));
                       if (nextValue.trim().length < 2) {
                         setFromLoading(false);
                         setFromLiveSuggestions([]);
                       }
-                      setFromCode("");
                       setFromOpen(
                         true
                       );
@@ -1860,14 +1906,11 @@ export function SearchTabs({
                           key={`${option.code}-${option.airport}`}
                           type="button"
                           onClick={() => {
-                            setFrom(
-                              formatAirportLabel(
-                                option
-                              )
-                            );
-                            setFromCode(
+                            setFromState((current) => markOriginManualInput(
+                              current,
+                              formatAirportLabel(option),
                               option.code
-                            );
+                            ));
                             setFromOpen(
                               false
                             );
@@ -2459,24 +2502,21 @@ export function SearchTabs({
             isLoading={isFromLoadingVisible}
             launcherRef={fromMobileLauncherRef}
             onChange={(nextValue) => {
-              setFrom(nextValue);
+              setFromState((current) => markOriginManualInput(current, nextValue));
               if (nextValue.trim().length < 2) {
                 setFromLoading(false);
                 setFromLiveSuggestions([]);
               }
-              setFromCode("");
               setFromHighlight(0);
             }}
             onClear={() => {
-                    setFrom("");
+              setFromState((current) => markOriginManualInput(current, ""));
               setFromLoading(false);
               setFromLiveSuggestions([]);
-              setFromCode("");
               setFromHighlight(0);
             }}
             onSelect={(option) => {
-              setFrom(formatAirportLabel(option));
-              setFromCode(option.code);
+              setFromState((current) => markOriginManualInput(current, formatAirportLabel(option), option.code));
               setActiveMobileAirportPicker(null);
             }}
             onClose={() => setActiveMobileAirportPicker(null)}

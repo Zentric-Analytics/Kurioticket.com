@@ -1991,6 +1991,7 @@ export async function readHomepageDiscoveryFareCards({
     !areSameCandidateSets(requestedCandidates, regionalCandidates);
   const globalCandidates = getGlobalHomeDiscoveryFareCandidates();
   const shouldTryGlobalFallback =
+    isNonUsRegion &&
     globalCandidates.length > 0 &&
     !areSameCandidateSets(requestedCandidates, globalCandidates) &&
     (!regionalCandidates.length ||
