@@ -193,21 +193,21 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       </div>
                     </div>
 
-                    <aside className="flex items-center justify-center border-t border-indigo-100 bg-white px-2.5 py-2 sm:px-3 lg:px-3.5 lg:py-2.5">
-                      <div className="mx-auto flex w-full max-w-full flex-col items-center gap-1 text-center sm:max-w-[320px] lg:max-w-[320px]">
-                        <div className="w-full rounded-md border border-slate-200 bg-slate-50/70 px-2.5 py-1 text-center shadow-sm">
+                    <aside className="flex items-center justify-center border-t border-indigo-100 bg-white px-3 py-3 sm:px-3 sm:py-2 lg:px-3.5 lg:py-2.5">
+                      <div className="mx-auto flex w-full max-w-[20rem] flex-col items-stretch gap-1.5 text-center sm:max-w-[320px] sm:gap-1 lg:max-w-[320px]">
+                        <div className="w-full rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2 text-center shadow-sm sm:px-2.5 sm:py-1">
                           <p className="text-[10px] font-semibold uppercase leading-3 tracking-wide text-slate-500">
                             From
                           </p>
                           <div
-                            className="whitespace-nowrap text-[1.125rem] font-medium leading-5 tracking-tight text-slate-900 sm:text-[1.2rem] sm:leading-6 lg:font-semibold"
+                            className="whitespace-nowrap text-center text-[1.125rem] font-medium leading-5 tracking-tight text-slate-900 sm:text-[1.2rem] sm:leading-6 lg:font-semibold"
                             aria-label={displayPrice.ariaLabel}
                             title={displayPrice.title}
                           >
                             {displayPrice.formatted}
                           </div>
                           {displayPrice.isConvertedEstimate ? (
-                            <p className="mt-0.5 text-[11px] font-medium leading-[0.95rem] text-slate-600">
+                            <p className="mx-auto mt-1 max-w-[17rem] text-center text-[11px] font-medium leading-[0.95rem] text-slate-600 sm:mt-0.5">
                               Estimate shown. Provider price:{" "}
                               {displayPrice.providerFormatted}.
                             </p>
@@ -216,18 +216,18 @@ export function FlightDetailsClient({ id }: { id: string }) {
                         <Button
                           variant="accent"
                           size="lg"
-                          className="h-10 w-full gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm font-semibold sm:h-9 sm:text-[13px]"
+                          className="h-11 w-full justify-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm font-semibold sm:h-9 sm:text-[13px]"
                           onClick={continueToProvider}
                           disabled={!hasProviderLink}
                         >
                           Continue to Provider <ArrowRight size={16} />
                         </Button>
-                        <p className="flex items-start justify-center gap-1.5 text-center text-xs leading-4 text-slate-500">
+                        <p className="flex w-full items-start justify-center gap-1.5 text-center text-xs leading-4 text-slate-500">
                           <Info
                             size={14}
                             className="mt-0.5 shrink-0 text-blue"
                           />
-                          <span>{providerDisclaimer}</span>
+                          <span className="min-w-0">{providerDisclaimer}</span>
                         </p>
                       </div>
                     </aside>
