@@ -1316,7 +1316,7 @@ function CompactFlightRow({
               <AirlineNameWithLogo
                 airlineName={airlineName}
                 airlineLogoUrl={airlineLogo}
-                className="text-xs font-medium text-slate-700"
+                className="flex-1 text-xs font-medium text-slate-700"
                 logoClassName="h-4 w-4"
               />
             ) : null}
@@ -1327,7 +1327,7 @@ function CompactFlightRow({
               />
             ) : null}
             {flightNumber ? (
-              <span className="min-w-0 truncate text-xs font-medium text-slate-500">
+              <span className="shrink-0 whitespace-nowrap text-xs font-medium text-slate-500">
                 {flightNumber}
               </span>
             ) : null}
