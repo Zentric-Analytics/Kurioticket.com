@@ -154,7 +154,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                           </>
                         ) : null}
                       </div>
-                      <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
+                      <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-medium leading-tight tracking-tight text-slate-900 sm:text-4xl lg:font-semibold">
                         <span>{flight.originAirport}</span>
                         <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
                           <ArrowRight size={16} aria-hidden="true" />
@@ -198,7 +198,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                         From
                       </p>
                       <div
-                        className="text-xl font-semibold tracking-tight text-slate-900 sm:text-[1.375rem] sm:leading-7"
+                        className="text-xl font-medium tracking-tight text-slate-900 sm:text-[1.375rem] sm:leading-7 lg:font-semibold"
                         aria-label={displayPrice.ariaLabel}
                         title={displayPrice.title}
                       >
