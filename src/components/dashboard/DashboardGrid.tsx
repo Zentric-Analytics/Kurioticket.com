@@ -65,10 +65,10 @@ const quickActions = [
 ];
 
 const snapshotItems = [
-  { label: "Trips", value: "0", href: "/dashboard/trips", linkText: "View all", icon: BriefcaseBusiness },
-  { label: "Saved", value: "0", href: "/dashboard/saved", linkText: "View all", icon: Bookmark },
-  { label: "Price alerts", value: "0", href: "/dashboard/alerts", linkText: "View all", icon: Bell },
-  { label: "Recent searches", value: "0", href: "/flights/results", linkText: "View all", icon: Clock3 },
+  { label: "Trips", value: "0", href: "/dashboard/trips", linkText: "View trips", icon: BriefcaseBusiness },
+  { label: "Saved", value: "0", href: "/dashboard/saved", linkText: "View saved", icon: Bookmark },
+  { label: "Price alerts", value: "0", href: "/dashboard/alerts", linkText: "View price alerts", icon: Bell },
+  { label: "Recent searches", value: "0", href: "/flights/results", linkText: "Start searching", icon: Clock3 },
 ];
 
 type AccountDashboardFrameProps = {
@@ -284,16 +284,17 @@ function QuickActionsRow() {
 
 function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: string; value: string; href?: string; linkText: string; icon: LucideIcon }) {
   const content = (
-    <div className="flex min-w-0 items-center gap-2.5 px-2.5 py-3 sm:gap-3 sm:px-4 lg:min-h-20 lg:border-l lg:border-slate-300/80 lg:first:border-l-0">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/75 text-violet-800">
-        <Icon className="size-5" strokeWidth={2.25} aria-hidden="true" />
+    <div className="flex min-w-0 items-start gap-2 px-2 py-3 sm:gap-3 sm:px-4 lg:min-h-20 lg:items-center lg:gap-2.5 lg:border-l lg:border-slate-300/80 lg:first:border-l-0">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/75 text-violet-800 sm:size-10">
+        <Icon className="size-4.5 sm:size-5" strokeWidth={2.25} aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1">
-        <dt className="truncate text-xs font-semibold text-slate-800">{label}</dt>
+        <dt className="text-xs font-semibold leading-tight text-slate-800 lg:truncate">{label}</dt>
         <dd className="mt-1 text-xl font-bold leading-none text-slate-950">{value}</dd>
+        <p className="mt-1 text-[11px] font-bold leading-tight text-violet-800 sm:text-xs lg:hidden">{linkText}</p>
       </div>
-      <p className="shrink-0 text-[11px] font-bold text-violet-800 sm:text-xs">{linkText}</p>
-      <ChevronRight className="size-3.5 shrink-0 text-slate-700" strokeWidth={2.4} aria-hidden="true" />
+      <p className="hidden shrink-0 text-[11px] font-bold text-violet-800 sm:text-xs lg:block">{linkText}</p>
+      <ChevronRight className="hidden size-3.5 shrink-0 text-slate-700 lg:block" strokeWidth={2.4} aria-hidden="true" />
     </div>
   );
 
@@ -364,7 +365,7 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
         <div className="px-5 pt-4 lg:hidden">
           <h2 className="text-base font-semibold text-slate-950">Your travel status</h2>
         </div>
-        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 p-5 pt-4 sm:gap-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] xl:px-7 xl:py-7">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 p-4 pt-4 sm:gap-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] xl:px-7 xl:py-7">
           <TravelIllustration />
           <div className="min-w-0">
             <h2 className="hidden text-base font-semibold text-slate-950 lg:block">Your travel status</h2>
@@ -372,16 +373,16 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
             <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-700 lg:mt-2.5">
               Trips you book or save will appear here when available.
             </p>
-            <div className="mt-4 flex flex-row gap-2.5 lg:mt-5 lg:gap-3">
+            <div className="mt-4 flex flex-row gap-2 max-[380px]:flex-col lg:mt-5 lg:gap-3">
               <Link
                 href="/flights/results"
-                className="focus-ring inline-flex h-10 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-bold text-white transition hover:bg-violet-800"
+                className="focus-ring inline-flex h-10 items-center justify-center whitespace-nowrap rounded-xl bg-violet-700 px-3 text-[13px] font-bold text-white transition hover:bg-violet-800 max-[380px]:w-full sm:px-4 sm:text-sm"
               >
                 Search flights
               </Link>
               <Link
                 href="/hotels"
-                className="focus-ring inline-flex h-10 items-center justify-center rounded-xl border border-violet-500 bg-white px-4 text-sm font-bold text-violet-700 transition hover:bg-violet-50"
+                className="focus-ring inline-flex h-10 items-center justify-center whitespace-nowrap rounded-xl border border-violet-500 bg-white px-3 text-[13px] font-bold text-violet-700 transition hover:bg-violet-50 max-[380px]:w-full sm:px-4 sm:text-sm"
               >
                 Search hotels
               </Link>
