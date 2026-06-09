@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { airports, getDefaultAirports, type AirportOption } from "@/data/airports";
+import { getDefaultAirports } from "@/data/airports";
+import { getDefaultOriginAirport } from "@/lib/flights/defaultOrigin";
+import { prioritizeOriginSuggestions } from "@/lib/flights/originAirportSuggestions";
 import { normalizeCountryCode } from "@/lib/geo/context";
+import { resolveMaxMindGeoIpLocationForRequest } from "@/lib/geo/maxmind";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
 import { searchCuratedPlaceSuggestions, searchDuffelPlaces } from "@/services/travel/providers/duffelProvider";
 
@@ -9,28 +12,6 @@ const MIN_QUERY_LENGTH = 1;
 const MAX_QUERY_LENGTH = 80;
 const SAFE_QUERY = /^[\p{L}\p{N}\s'.,\-()]+$/u;
 const MAX_RADIUS_KM = 150;
-const CONFIDENT_RECOMMENDATION_THRESHOLD = 0.7;
-
-type RecommendedOrigin = {
-  code: string;
-  city: string;
-  airport: string;
-  country?: string;
-  lat?: number;
-  lon?: number;
-  confidence: number;
-};
-
-const toRecommendedOrigin = (airport: AirportOption, confidence: number): RecommendedOrigin => ({
-  code: airport.code,
-  city: airport.city,
-  airport: airport.airport,
-  country: airport.country,
-  lat: airport.lat,
-  lon: airport.lon,
-  confidence,
-});
-
 type SearchContext = "origin" | "destination";
 
 const toBoundedNumber = (value: string | null, min: number, max: number) => {
@@ -45,13 +26,6 @@ const normalizeContext = (value: string | null): SearchContext => {
   return "origin";
 };
 
-const normalizeName = (value: string) =>
-  value
-    .normalize("NFKD")
-    .replace(/\p{M}/gu, "")
-    .trim()
-    .toLowerCase();
-
 export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const query = (searchParams.get("q") || "").trim();
@@ -62,12 +36,6 @@ export async function GET(request: Request) {
   const rawRadius = toBoundedNumber(searchParams.get("radius"), 1, MAX_RADIUS_KM);
   const radiusKm = rawRadius ? Math.min(rawRadius, MAX_RADIUS_KM) : undefined;
   const isDefault = searchParams.get("default") === "true";
-  const defaultOriginRequested = searchParams.get("defaultOrigin") === "true";
-  const headerCity =
-    request.headers.get("x-vercel-ip-city") ||
-    request.headers.get("cf-ipcity") ||
-    request.headers.get("x-city");
-  const normalizedHeaderCity = headerCity ? normalizeName(headerCity) : "";
   const headerLat = toBoundedNumber(
     request.headers.get("x-vercel-ip-latitude") || request.headers.get("cf-iplatitude"),
     -90,
@@ -90,44 +58,15 @@ export async function GET(request: Request) {
     .map((value) => normalizeCountryCode(value))
     .find(Boolean);
   const visitorIp = extractVisitorIp(request.headers);
-  const shouldResolveIpinfoCountry = context === "origin" && !headerCountryCode && Boolean(visitorIp);
+  const maxMindLocation = context === "origin" ? await resolveMaxMindGeoIpLocationForRequest(request) : null;
+  const shouldResolveIpinfoCountry = context === "origin" && !headerCountryCode && !maxMindLocation?.countryCode && Boolean(visitorIp);
   const ipinfoCountryContext = shouldResolveIpinfoCountry && visitorIp
     ? await resolveIpinfoLiteCountryContext(visitorIp)
     : null;
-  const serverCountryCode = headerCountryCode || ipinfoCountryContext?.countryCode;
+  const serverCountryCode = headerCountryCode || maxMindLocation?.countryCode || ipinfoCountryContext?.countryCode;
   const countryCode = context === "origin"
     ? serverCountryCode || explicitCountryCode
     : undefined;
-
-  if (defaultOriginRequested && context === "origin" && query.length === 0) {
-    let recommended: AirportOption | undefined;
-    let confidence = 0;
-    let source: "latlng" | "city" | undefined;
-
-    if (typeof resolvedLat === "number" && typeof resolvedLng === "number") {
-      recommended = getDefaultAirports({
-        context: "origin",
-        lat: resolvedLat,
-        lon: resolvedLng,
-        limit: 1,
-      })[0];
-      confidence = recommended ? 0.92 : 0;
-      source = recommended ? "latlng" : undefined;
-    } else if (normalizedHeaderCity) {
-      recommended = airports.find((airport) => normalizeName(airport.city) === normalizedHeaderCity);
-      confidence = recommended ? 0.85 : 0;
-      source = recommended ? "city" : undefined;
-    }
-
-    if (!recommended || confidence < CONFIDENT_RECOMMENDATION_THRESHOLD) {
-      return NextResponse.json({ recommendedOrigin: null });
-    }
-
-    return NextResponse.json({
-      recommendedOrigin: toRecommendedOrigin(recommended, confidence),
-      source,
-    });
-  }
 
   const isQueryValid =
     query.length >= MIN_QUERY_LENGTH && query.length <= MAX_QUERY_LENGTH && SAFE_QUERY.test(query);
@@ -136,22 +75,45 @@ export async function GET(request: Request) {
     const providerResult = await searchDuffelPlaces(query, { context, lat, lng, radiusKm, countryCode, locale });
     if (providerResult.status !== "success") {
       const fallbackSuggestions = searchCuratedPlaceSuggestions(query, { context, lat, lng, radiusKm, countryCode, locale });
+      const orderedFallbackSuggestions = context === "origin"
+        ? prioritizeOriginSuggestions(fallbackSuggestions, maxMindLocation)
+        : fallbackSuggestions;
 
-      return NextResponse.json({
-        suggestions: fallbackSuggestions,
-        fallback: true,
-        error: fallbackSuggestions.length > 0 ? undefined : "Suggestions are temporarily unavailable.",
-      });
+      return NextResponse.json(
+        {
+          suggestions: orderedFallbackSuggestions,
+          fallback: true,
+          error: orderedFallbackSuggestions.length > 0 ? undefined : "Suggestions are temporarily unavailable.",
+        },
+        { headers: { "Cache-Control": context === "origin" ? "private, no-store" : "no-store" } },
+      );
     }
-    return NextResponse.json({ suggestions: providerResult.results });
+    const suggestions = context === "origin"
+      ? prioritizeOriginSuggestions(providerResult.results, maxMindLocation)
+      : providerResult.results;
+    return NextResponse.json(
+      { suggestions },
+      { headers: { "Cache-Control": context === "origin" ? "private, no-store" : "no-store" } },
+    );
   }
 
   if (isDefault && query.length === 0) {
-    return NextResponse.json({
-      suggestions: getDefaultAirports({ context, countryCode, lat, lon: lng, limit: 8 }),
-      source: "curated",
-    });
+    const defaultOrigin = context === "origin" && maxMindLocation
+      ? getDefaultOriginAirport(maxMindLocation, 8)
+      : null;
+    const suggestions = defaultOrigin
+      ? defaultOrigin.suggestions
+      : getDefaultAirports({ context, countryCode, lat: resolvedLat, lon: resolvedLng, limit: 8 });
+
+    return NextResponse.json(
+      {
+        suggestions,
+        defaultOriginAirport: context === "origin" ? defaultOrigin?.airport ?? null : undefined,
+        source: "curated",
+      },
+      { headers: { "Cache-Control": context === "origin" ? "private, no-store" : "no-store" } },
+    );
   }
 
-  return NextResponse.json({ suggestions: [] });
+  return NextResponse.json({ suggestions: [] }, { headers: { "Cache-Control": "no-store" } });
 }

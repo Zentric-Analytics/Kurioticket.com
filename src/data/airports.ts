@@ -3,12 +3,16 @@ import { distanceKm } from "@/lib/geo/distance";
 
 export type AirportOption = {
   code: string;
+  name?: string;
   city: string;
   airport: string;
   country?: string;
   countryCode?: string;
+  latitude?: number;
+  longitude?: number;
   lat?: number;
   lon?: number;
+  priority?: number;
 };
 
 type AirportSeed = readonly [
@@ -18,7 +22,8 @@ type AirportSeed = readonly [
   countryCode: string,
   lat: number,
   lon: number,
-  country?: string,
+  countryOrPriority?: string | number,
+  priorityOverride?: number,
 ];
 
 // Global commercial-airport suggestion catalog. Seeded from public airport references
@@ -34,9 +39,10 @@ const airportSeeds: AirportSeed[] = [
   ["SFO", "San Francisco", "San Francisco International Airport", "US", 37.6213, -122.379],
   ["MIA", "Miami", "Miami International Airport", "US", 25.7959, -80.287],
   ["SEA", "Seattle", "Seattle-Tacoma International Airport", "US", 47.4502, -122.3088],
-  ["IAH", "Houston", "George Bush Intercontinental Airport", "US", 29.9902, -95.3368],
-  ["HOU", "Houston", "William P. Hobby Airport", "US", 29.6454, -95.2789],
-  ["YYZ", "Toronto", "Toronto Pearson International Airport", "CA", 43.6777, -79.6248],
+  ["IAH", "Houston", "George Bush Intercontinental Airport", "US", 29.9902, -95.3368, 98],
+  ["HOU", "Houston", "William P. Hobby Airport", "US", 29.6454, -95.2789, 86],
+  ["YYZ", "Toronto", "Toronto Pearson International Airport", "CA", 43.6777, -79.6248, 98],
+  ["YTZ", "Toronto", "Billy Bishop Toronto City Airport", "CA", 43.6275, -79.3962, 72],
   ["YVR", "Vancouver", "Vancouver International Airport", "CA", 49.1951, -123.1779],
   ["YUL", "Montreal", "Montréal-Trudeau International Airport", "CA", 45.47, -73.7408],
   ["MEX", "Mexico City", "Mexico City International Airport", "MX", 19.4363, -99.0721],
@@ -74,8 +80,11 @@ const airportSeeds: AirportSeed[] = [
   ["GIG", "Rio de Janeiro", "Rio de Janeiro/Galeão International Airport", "BR", -22.809999, -43.2506],
   ["BSB", "Brasília", "Brasília International Airport", "BR", -15.8697, -47.9208],
   ["MAO", "Manaus", "Eduardo Gomes International Airport", "BR", -3.0386, -60.0497],
-  ["LHR", "London", "Heathrow Airport", "GB", 51.47, -0.4543],
-  ["LGW", "London", "Gatwick Airport", "GB", 51.1537, -0.1821],
+  ["LHR", "London", "Heathrow Airport", "GB", 51.47, -0.4543, 100],
+  ["LGW", "London", "Gatwick Airport", "GB", 51.1537, -0.1821, 88],
+  ["LCY", "London", "London City Airport", "GB", 51.5053, 0.0553, 74],
+  ["STN", "London", "London Stansted Airport", "GB", 51.885, 0.235, 72],
+  ["LTN", "London", "London Luton Airport", "GB", 51.8747, -0.3683, 70],
   ["MAN", "Manchester", "Manchester Airport", "GB", 53.3537, -2.2749],
   ["DUB", "Dublin", "Dublin Airport", "IE", 53.4213, -6.2701],
   ["KEF", "Reykjavík", "Keflavík International Airport", "IS", 63.985, -22.6056],
@@ -185,7 +194,8 @@ const airportSeeds: AirportSeed[] = [
   ["SEZ", "Mahé", "Seychelles International Airport", "SC", -4.6743, 55.5218],
   ["TNR", "Antananarivo", "Ivato International Airport", "MG", -18.7969, 47.4788],
   ["RUN", "Saint-Denis", "Roland Garros Airport", "RE", -20.8901, 55.5164, "Réunion"],
-  ["DXB", "Dubai", "Dubai International Airport", "AE", 25.2532, 55.3657],
+  ["DXB", "Dubai", "Dubai International Airport", "AE", 25.2532, 55.3657, 100],
+  ["DWC", "Dubai", "Al Maktoum International Airport", "AE", 24.8964, 55.1614, 68],
   ["AUH", "Abu Dhabi", "Zayed International Airport", "AE", 24.4329, 54.6511],
   ["DOH", "Doha", "Hamad International Airport", "QA", 25.2731, 51.6081],
   ["BAH", "Manama", "Bahrain International Airport", "BH", 26.2708, 50.6336],
@@ -272,15 +282,36 @@ const airportSeeds: AirportSeed[] = [
 
 const airportCountry = (countryCode: string, country?: string) => country || countryCodeToCountryName(countryCode) || countryCode;
 
-export const airports: AirportOption[] = airportSeeds.map(([code, city, airport, countryCode, lat, lon, country]) => ({
-  code,
-  city,
-  airport,
-  country: airportCountry(countryCode, country),
-  countryCode,
-  lat,
-  lon,
-}));
+const defaultAirportPriority = (index: number) => Math.max(20, 90 - Math.floor(index / 3));
+
+const readAirportSeedCountry = (countryOrPriority?: string | number) =>
+  typeof countryOrPriority === "string" ? countryOrPriority : undefined;
+
+const readAirportSeedPriority = (index: number, countryOrPriority?: string | number, priorityOverride?: number) => {
+  const candidate = typeof countryOrPriority === "number" ? countryOrPriority : priorityOverride;
+  return typeof candidate === "number" && Number.isFinite(candidate)
+    ? Math.max(0, Math.min(100, candidate))
+    : defaultAirportPriority(index);
+};
+
+export const airports: AirportOption[] = airportSeeds.map((seed, index) => {
+  const [code, city, airport, countryCode, lat, lon, countryOrPriority, priorityOverride] = seed;
+  const country = readAirportSeedCountry(countryOrPriority);
+
+  return {
+    code,
+    name: airport,
+    city,
+    airport,
+    country: airportCountry(countryCode, country),
+    countryCode,
+    latitude: lat,
+    longitude: lon,
+    lat,
+    lon,
+    priority: readAirportSeedPriority(index, countryOrPriority, priorityOverride),
+  };
+});
 
 export const destinationDefaults = ["LHR", "CDG", "DXB", "JFK", "LAX", "AMS", "MAD", "FCO", "SIN", "HND", "DOH"];
 
@@ -315,6 +346,8 @@ export const getDefaultAirports = (params: { context: "origin" | "destination"; 
         const bd = destinationOrder.get(b.code) ?? 999;
         if (ad !== bd) return ad - bd;
       }
+      const priorityDelta = (b.priority ?? 0) - (a.priority ?? 0);
+      if (priorityDelta !== 0) return priorityDelta;
       return a.city.localeCompare(b.city);
     })
     .slice(0, limit);

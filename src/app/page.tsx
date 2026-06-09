@@ -32,10 +32,13 @@ import {
   HOME_DISCOVERY_VISIBLE_CARD_COUNT,
   getHomeDiscoveryByRegion,
 } from "@/data/homeDiscovery";
-import { getPopularDestinationsByRegion } from "@/data/marketHomeContent";
-import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
+import {
+  getPopularDestinationFareCandidatesByRegion,
+  getPopularDestinationsByRegion,
+} from "@/data/marketHomeContent";
 import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
@@ -46,6 +49,8 @@ import {
 
 const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
+
+const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
 
 type DestinationPriceSearch = {
   tripType: "one-way";
@@ -72,6 +77,8 @@ type DestinationPrice = {
   expiresAt?: string;
   search?: DestinationPriceSearch;
   unavailable?: boolean;
+  priceState?: "fresh" | "last_known_good" | "none";
+  cachedProviderBacked?: boolean;
 };
 
 type HomeDiscoveryCardItem = {
@@ -91,7 +98,7 @@ type HomepageFare = Omit<DestinationPrice, "id" | "code" | "unavailable">;
 type HomeDiscoveryFareCard = {
   item: HomeDiscoveryCardItem;
   fare?: HomepageFare;
-  priceState: "fresh" | "none";
+  priceState: "fresh" | "last_known_good" | "none";
 };
 
 type DestinationPriceState = {
@@ -161,6 +168,45 @@ export default function Home() {
     fallbackUsed: popularDestinationFallbackUsed,
     items: popularDestinations,
   } = popularDestinationResolution;
+  const popularDestinationFareCandidates = useMemo(
+    () => getPopularDestinationFareCandidatesByRegion(regionCode).items,
+    [regionCode],
+  );
+  const visiblePopularDestinations = useMemo(() => {
+    const replacementAwareDestinations = destinationPriceState.loading
+      ? popularDestinations
+      : popularDestinationFareCandidates;
+    const destinationsWithIndex = replacementAwareDestinations.map((destination, index) => {
+      const price = destinationPriceState.prices[destination.id];
+      const hasFreshPrice = hasFreshProviderPrice(price, {
+        originCode: destination.originCode,
+        destinationCode: destination.code,
+      });
+
+      return { destination, hasFreshPrice, index };
+    });
+
+    if (destinationPriceState.loading) {
+      return destinationsWithIndex
+        .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT)
+        .map(({ destination }) => destination);
+    }
+
+    return destinationsWithIndex
+      .sort(
+        (first, second) =>
+          Number(second.hasFreshPrice) - Number(first.hasFreshPrice) ||
+          first.index - second.index,
+      )
+      .slice(0, POPULAR_DESTINATION_VISIBLE_CARD_COUNT)
+      .map(({ destination }) => destination);
+  }, [
+    destinationPriceState.loading,
+    destinationPriceState.prices,
+    popularDestinationFareCandidates,
+    popularDestinations,
+  ]);
+
   const fallbackDiscoveryCards = useMemo<HomeDiscoveryFareCard[]>(
     () =>
       getHomeDiscoveryByRegion(regionCode)
@@ -266,11 +312,13 @@ export default function Home() {
             effectiveMarketCode: popularDestinationMarket,
             fallbackLevel: popularDestinationFallbackLevel,
             fallbackUsed: popularDestinationFallbackUsed,
-            destinations: popularDestinations.map(({ id, code, originCode }) => ({
-              id,
-              code,
-              originCode,
-            })),
+            destinations: popularDestinationFareCandidates.map(
+              ({ id, code, originCode }) => ({
+                id,
+                code,
+                originCode,
+              }),
+            ),
             currency: "USD",
           }),
           signal: controller.signal,
@@ -300,8 +348,8 @@ export default function Home() {
   }, [
     popularDestinationFallbackLevel,
     popularDestinationFallbackUsed,
+    popularDestinationFareCandidates,
     popularDestinationMarket,
-    popularDestinations,
     regionCode,
   ]);
 
@@ -433,7 +481,7 @@ export default function Home() {
               ref={destinationsRailRef}
               className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {popularDestinations.map((destination) => {
+              {visiblePopularDestinations.map((destination) => {
                 const price = destinationPriceState.prices[destination.id];
 
                 return (
@@ -449,9 +497,11 @@ export default function Home() {
                     displayCurrency={selectedOption.currency}
                     originCode={destination.originCode}
                     destinationCode={destination.code}
-                    href={buildDestinationCardHref(price, destination.city, {
+                    href={buildDestinationCardHref(price, {
                       originCode: destination.originCode,
                       destinationCode: destination.code,
+                      displayCurrency: selectedOption.currency,
+                      market: regionCode,
                     })}
                     isPriceLoading={destinationPriceState.loading}
                     isSaved={savedTripIds.includes(destination.id)}
@@ -490,14 +540,12 @@ export default function Home() {
                     return (
                       <DiscoverySuggestionCard
                         key={card.item.id}
-                        href={buildDiscoveryCardHref(
-                          card.fare,
-                          buildDiscoveryLink(card.item),
-                          {
-                            originCode: card.item.originCode,
-                            destinationCode: card.item.destinationCode,
-                          },
-                        )}
+                        href={buildDiscoveryCardHref(card.fare, {
+                          originCode: card.item.originCode,
+                          destinationCode: card.item.destinationCode,
+                          displayCurrency: selectedOption.currency,
+                          market: regionCode,
+                        })}
                         itemId={card.item.id}
                         image={card.item.image}
                         imageAlt={card.item.imageAlt}
@@ -526,14 +574,12 @@ export default function Home() {
                 return (
                   <DiscoverySuggestionCard
                     key={card.item.id}
-                    href={buildDiscoveryCardHref(
-                      card.fare,
-                      buildDiscoveryLink(card.item),
-                      {
-                        originCode: card.item.originCode,
-                        destinationCode: card.item.destinationCode,
-                      },
-                    )}
+                    href={buildDiscoveryCardHref(card.fare, {
+                      originCode: card.item.originCode,
+                      destinationCode: card.item.destinationCode,
+                      displayCurrency: selectedOption.currency,
+                      market: regionCode,
+                    })}
                     itemId={card.item.id}
                     image={card.item.image}
                     imageAlt={card.item.imageAlt}
@@ -918,58 +964,63 @@ function hasFreshProviderPrice(
     return false;
   }
 
+  if (price.priceState === "last_known_good" || price.cachedProviderBacked === true) {
+    return true;
+  }
+
   const expiresAtMs = Date.parse(price.expiresAt);
   return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
 }
 
 function buildDestinationCardHref(
   price: HomepageFare | undefined,
-  fallbackCity: string,
-  expectedRoute?: { originCode?: string; destinationCode?: string },
+  options: {
+    originCode: string;
+    destinationCode: string;
+    displayCurrency: string;
+    market: string;
+  },
 ) {
-  const search = hasFreshProviderPrice(price, expectedRoute)
-    ? price?.search
-    : undefined;
-
-  return search
-    ? buildFlightResultsHref(search)
-    : `/hotels/results?destination=${encodeURIComponent(fallbackCity)}`;
+  return buildRouteCardHref(price, options);
 }
 
 function buildDiscoveryCardHref(
   price: HomepageFare | undefined,
-  fallbackHref: ComponentProps<typeof Link>["href"],
-  expectedRoute?: { originCode?: string; destinationCode?: string },
+  options: {
+    originCode: string;
+    destinationCode: string;
+    displayCurrency: string;
+    market: string;
+  },
 ) {
-  const search = hasFreshProviderPrice(price, expectedRoute)
-    ? price?.search
-    : undefined;
-
-  return search ? buildFlightResultsHref(search) : fallbackHref;
+  return buildRouteCardHref(price, options);
 }
 
-function buildFlightResultsHref(search: DestinationPriceSearch) {
-  const query: Record<string, string> = {
-    tripType: search.tripType,
-    origin: search.origin,
-    destination: search.destination,
-    departureDate: search.departureDate,
-    travelers: String(search.travelers),
-    adults: String(search.adults),
-    children: String(search.children),
-    infants: String(search.infants),
-    cabinClass: search.cabinClass,
-    currency: search.currency,
+function buildRouteCardHref(
+  price: HomepageFare | undefined,
+  options: {
+    originCode: string;
+    destinationCode: string;
+    displayCurrency: string;
+    market: string;
+  },
+) {
+  const expectedRoute = {
+    originCode: options.originCode,
+    destinationCode: options.destinationCode,
   };
+  const fareSearch = hasFreshProviderPrice(price, expectedRoute)
+    ? price.search
+    : undefined;
 
-  if (search.returnDate) {
-    query.returnDate = search.returnDate;
-  }
-
-  return {
-    pathname: "/flights/results",
-    query,
-  };
+  return (
+    buildHomepageRouteCardFlightHref({
+      fareSearch,
+      route: expectedRoute,
+      displayCurrency: options.displayCurrency,
+      market: options.market,
+    }) ?? "/flights"
+  );
 }
 
 function DiscoveryPricePill({

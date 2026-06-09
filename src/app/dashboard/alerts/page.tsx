@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
+import { AccountDashboardFrame } from "@/components/dashboard/DashboardGrid";
 import { authOptions } from "@/lib/auth";
 import {
   type AccountPriceAlert,
@@ -136,39 +137,43 @@ export default async function AlertsPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
-        <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Account tools</p>
-          <h1 className="mt-2 text-3xl font-bold text-navy">Price alerts</h1>
-          <p className="mt-3 text-sm leading-6 text-muted">
-            View provider-backed alert records saved to your Kurioticket account.
-          </p>
-        </div>
+      <main className="flex-1 bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.12),transparent_34%),linear-gradient(180deg,#f8fbfc_0%,#ffffff_48%,#f8fafc_100%)] pb-10 pt-24 sm:pt-28 lg:pt-28">
+        <div className="page-shell min-w-0">
+          <AccountDashboardFrame>
+            <div className="max-w-3xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Account tools</p>
+              <h1 className="mt-2 text-3xl font-bold text-navy">Price alerts</h1>
+              <p className="mt-3 text-sm leading-6 text-muted">
+                View provider-backed alert records saved to your Kurioticket account.
+              </p>
+            </div>
 
-        {loadError ? (
-          <Card className="mt-5 p-5">
-            <h2 className="font-bold text-navy">We could not load your alerts. Please try again.</h2>
-            <p className="mt-2 text-sm leading-6 text-muted">
-              Your account details stay protected. Refresh the page or return to your dashboard.
-            </p>
-            <LinkButton href="/dashboard" variant="secondary" className="mt-4">Return to dashboard</LinkButton>
-          </Card>
-        ) : alerts.length > 0 ? (
-          <div className="mt-5 grid gap-4">
-            {alerts.map((alert) => (
-              <AlertCard key={alert.id} alert={alert} />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-5">
-            <EmptyAlertsState />
-          </div>
-        )}
+            {loadError ? (
+              <Card className="mt-5 p-5">
+                <h2 className="font-bold text-navy">We could not load your alerts. Please try again.</h2>
+                <p className="mt-2 text-sm leading-6 text-muted">
+                  Your account details stay protected. Refresh the page or return to your dashboard.
+                </p>
+                <LinkButton href="/dashboard" variant="secondary" className="mt-4">Return to dashboard</LinkButton>
+              </Card>
+            ) : alerts.length > 0 ? (
+              <div className="mt-5 grid gap-4">
+                {alerts.map((alert) => (
+                  <AlertCard key={alert.id} alert={alert} />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5">
+                <EmptyAlertsState />
+              </div>
+            )}
 
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <LinkButton href="/flights/results">Search flights</LinkButton>
-          <LinkButton href="/hotels" variant="secondary">Search hotels</LinkButton>
-          <LinkButton href="/cars" variant="secondary">Search cars</LinkButton>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <LinkButton href="/flights/results">Search flights</LinkButton>
+              <LinkButton href="/hotels" variant="secondary">Search hotels</LinkButton>
+              <LinkButton href="/cars" variant="secondary">Search cars</LinkButton>
+            </div>
+          </AccountDashboardFrame>
         </div>
       </main>
       <Footer />
