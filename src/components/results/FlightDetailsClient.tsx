@@ -263,33 +263,26 @@ function SelectedFlightSummary({
   fallbackFlightNumber?: string;
 }) {
   return (
-    <section
-      className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm"
-      aria-label="Selected flight itinerary"
-    >
-      <div className="px-3 pb-3 pt-2.5 sm:px-3.5 sm:pb-3.5 sm:pt-3 lg:px-4 lg:pb-4 lg:pt-3">
-        <p className="mb-2 text-sm font-semibold tracking-tight text-slate-900">
-          Selected Flights
-        </p>
-        <div className="grid gap-1.5">
-          {itineraryLegs.map((leg, legIndex) => (
-            <div
-              key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
-              className={
-                legIndex > 0 ? "mt-2 border-t border-violet-500/80 pt-2" : ""
-              }
-            >
-              <CompactLegSection
-                leg={leg}
-                legIndex={legIndex}
-                legCount={itineraryLegs.length}
-                fallbackAirlineName={fallbackAirlineName}
-                fallbackAirlineLogo={fallbackAirlineLogo}
-                fallbackFlightNumber={fallbackFlightNumber}
-              />
-            </div>
-          ))}
-        </div>
+    <section className="min-w-0" aria-label="Selected flight itinerary">
+      <h2 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
+        Selected Flights
+      </h2>
+      <div className="mt-3 grid gap-4 border-t border-slate-200 pt-4">
+        {itineraryLegs.map((leg, legIndex) => (
+          <div
+            key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
+            className={legIndex > 0 ? "border-t border-slate-200 pt-4" : ""}
+          >
+            <CompactLegSection
+              leg={leg}
+              legIndex={legIndex}
+              legCount={itineraryLegs.length}
+              fallbackAirlineName={fallbackAirlineName}
+              fallbackAirlineLogo={fallbackAirlineLogo}
+              fallbackFlightNumber={fallbackFlightNumber}
+            />
+          </div>
+        ))}
       </div>
     </section>
   );
