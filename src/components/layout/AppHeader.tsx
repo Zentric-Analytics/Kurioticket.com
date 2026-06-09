@@ -223,6 +223,39 @@ export function AppHeader({
     };
   }, [languageOpen]);
 
+  useEffect(() => {
+    const closeMenuOnRouteChange = window.setTimeout(() => {
+      setOpen(false);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(closeMenuOnRouteChange);
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
   const selectedLanguage = useMemo(
     () =>
       locales.find((option) => option.code === locale) ?? locales[0],
@@ -375,6 +408,9 @@ export function AppHeader({
 
   const visibleMobilePrimaryNavItems = useMemo(
     () => mobilePrimaryNavItems,
+    // hideMobileSecondaryNavLinks is retained for the current header API even though
+    // mobile secondary links now live in the overlay drawer instead of this rail.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [hideMobileSecondaryNavLinks, mobilePrimaryNavItems]
   );
 
@@ -699,6 +735,9 @@ export function AppHeader({
 
             <button
               type="button"
+              aria-label={open ? "Close mobile menu" : "Open mobile menu"}
+              aria-expanded={open}
+              aria-controls={open ? "mobile-menu-drawer" : undefined}
               className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               onClick={() => setOpen((value) => !value)}
             >
@@ -847,116 +886,158 @@ export function AppHeader({
           </div>
         </nav>
 
-        <div
-          className={`border-t border-slate-200 bg-white md:hidden ${
-            open ? "block" : "hidden"
-          }`}
-          aria-hidden={!open}
-        >
-          <nav className="page-shell grid gap-2 py-4">
-            <div className="pb-2">
-              <CountryCurrencySelector
-                variant="mobile"
-                onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
-              />
-            </div>
+        {open && typeof document !== "undefined"
+          ? createPortal(
+              <div
+                className="fixed inset-0 z-[70] md:hidden"
+                role="presentation"
+              >
+                <button
+                  type="button"
+                  className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45"
+                  aria-label="Close mobile menu backdrop"
+                  onClick={() => setOpen(false)}
+                />
 
-            <button
-              ref={languageTriggerRef}
-              type="button"
-              onClick={() => setLanguageOpen(true)}
-              aria-haspopup="dialog"
-              aria-expanded={languageOpen}
-              aria-controls={languageOpen ? languageDialogId : undefined}
-              aria-label={`Open language preferences, current language ${selectedLanguageDisplayName}`}
-              className="inline-flex h-12 cursor-pointer items-center justify-between rounded-none border border-slate-200 px-4 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-            >
-              <span className="inline-flex items-center gap-2">
-                {renderFlag(
-                  selectedLanguage?.countryCode,
-                  selectedLanguage?.fallbackText
-                )}
-                <span>{selectedLanguageDisplayName}</span>
-              </span>
-
-              <ChevronDown size={14} className="text-slate-500" />
-            </button>
-
-            {mobileMenuNavItems.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={(event) => handleRouteLinkClick(event, item.href, () => setOpen(false))}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-[15px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                <aside
+                  id="mobile-menu-drawer"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Mobile menu"
+                  className="fixed inset-y-0 right-0 z-[80] flex h-screen w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
-                  {Icon ? <Icon size={16} aria-hidden="true" /> : null}
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-4">
+                    <Link
+                      href="/"
+                      aria-label="Kurioticket home"
+                      onClick={(event) => handleRouteLinkClick(event, "/", () => setOpen(false))}
+                      className="shrink-0"
+                    >
+                      <KurioticketLogo variant="full" tone="dark" />
+                    </Link>
 
-            {isSignedIn ? (
-              <section className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-3" aria-label="Account">
-                <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-sm font-black text-white shadow-sm">
-                    {session?.user?.image ? (
-                      <RawImage
-                        src={session.user.image}
-                        alt=""
-                        className="h-full w-full object-cover"
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      aria-label="Close mobile menu"
+                    >
+                      <X size={18} aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <nav className="page-shell grid min-h-0 flex-1 gap-2 overflow-y-auto overflow-x-hidden py-4">
+                    <div className="pb-2">
+                      <CountryCurrencySelector
+                        variant="mobile"
+                        onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
                       />
-                    ) : (
-                      accountInitials
-                    )}
-                  </span>
+                    </div>
 
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-black text-slate-950">
-                      {session?.user?.name || accountDisplayName}
-                    </span>
-                    <span className="block truncate text-xs font-semibold text-slate-500">
-                      {session?.user?.email || "Kurioticket account"}
-                    </span>
-                  </span>
-                </div>
+                    <button
+                      ref={languageTriggerRef}
+                      type="button"
+                      onClick={() => {
+                        setOpen(false);
+                        setLanguageOpen(true);
+                      }}
+                      aria-haspopup="dialog"
+                      aria-expanded={languageOpen}
+                      aria-controls={languageOpen ? languageDialogId : undefined}
+                      aria-label={`Open language preferences, current language ${selectedLanguageDisplayName}`}
+                      className="inline-flex h-12 cursor-pointer items-center justify-between rounded-none border border-slate-200 px-4 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        {renderFlag(
+                          selectedLanguage?.countryCode,
+                          selectedLanguage?.fallbackText
+                        )}
+                        <span>{selectedLanguageDisplayName}</span>
+                      </span>
 
-                <div className="mt-2 grid gap-1">
-                  {signedInAccountMenuItems.map((item) => {
-                    const Icon = item.icon;
+                      <ChevronDown size={14} className="text-slate-500" />
+                    </button>
 
-                    return (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={(event) =>
-                          handleRouteLinkClick(event, item.href, () => setOpen(false))
-                        }
-                        className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      >
-                        <Icon size={16} aria-hidden="true" />
-                        <span>{item.label}</span>
-                      </Link>
-                    );
-                  })}
+                    {mobileMenuNavItems.map((item) => {
+                      const Icon = item.icon;
 
-                  <button
-                    type="button"
-                    onClick={handleSignOut}
-                    disabled={isSigningOut}
-                    aria-busy={isSigningOut}
-                    className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
-                  >
-                    <LogOut size={16} aria-hidden="true" />
-                    {isSigningOut ? "Signing out…" : t.logout}
-                  </button>
-                </div>
-              </section>
-            ) : null}
-          </nav>
-        </div>
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={(event) => handleRouteLinkClick(event, item.href, () => setOpen(false))}
+                          className="inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-[15px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                          {Icon ? <Icon size={16} aria-hidden="true" /> : null}
+                          <span>{item.label}</span>
+                        </Link>
+                      );
+                    })}
+
+                    {isSignedIn ? (
+                      <section className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-3" aria-label="Account">
+                        <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
+                          <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-sm font-black text-white shadow-sm">
+                            {session?.user?.image ? (
+                              <RawImage
+                                src={session.user.image}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              accountInitials
+                            )}
+                          </span>
+
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-black text-slate-950">
+                              {session?.user?.name || accountDisplayName}
+                            </span>
+                            <span className="block truncate text-xs font-semibold text-slate-500">
+                              {session?.user?.email || "Kurioticket account"}
+                            </span>
+                          </span>
+                        </div>
+
+                        <div className="mt-2 grid gap-1">
+                          {signedInAccountMenuItems.map((item) => {
+                            const Icon = item.icon;
+
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={(event) =>
+                                  handleRouteLinkClick(event, item.href, () => setOpen(false))
+                                }
+                                className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              >
+                                <Icon size={16} aria-hidden="true" />
+                                <span>{item.label}</span>
+                              </Link>
+                            );
+                          })}
+
+                          <button
+                            type="button"
+                            onClick={handleSignOut}
+                            disabled={isSigningOut}
+                            aria-busy={isSigningOut}
+                            className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                          >
+                            <LogOut size={16} aria-hidden="true" />
+                            {isSigningOut ? "Signing out…" : t.logout}
+                          </button>
+                        </div>
+                      </section>
+                    ) : null}
+                  </nav>
+                </aside>
+              </div>,
+              document.body
+            )
+          : null}
+
 
       </header>
     </>
