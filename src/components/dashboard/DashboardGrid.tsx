@@ -325,12 +325,6 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             Update your information and manage how it is used across Kurioticket.
           </p>
         </div>
-        <div
-          className="hidden size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-lg font-bold text-white shadow-[0_16px_34px_-20px_rgba(79,70,229,0.85)] ring-1 ring-white/80 md:flex"
-          aria-hidden="true"
-        >
-          {props.initials}
-        </div>
       </div>
 
       <div className="divide-y divide-slate-200">
