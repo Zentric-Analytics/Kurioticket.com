@@ -67,10 +67,6 @@ type LocationApiResponse = {
   countryCode?: string | null;
 };
 
-type RecommendedOrigin = AirportOption & {
-  confidence?: number;
-};
-
 const normalizeSuggestionText = (value: string) =>
   value
     .normalize("NFKD")
@@ -223,9 +219,6 @@ export function SearchTabs({
     useState("");
   const [fromCode, setFromCode] =
     useState("");
-  const [hasUserEditedOrigin, setHasUserEditedOrigin] = useState(false);
-  const [originPrefillAttempted, setOriginPrefillAttempted] = useState(false);
-
   const [to, setTo] =
     useState("");
   const [toCode, setToCode] =
@@ -610,38 +603,6 @@ export function SearchTabs({
       controller.abort();
     };
   }, [to, buildPlacesUrl]);
-
-  useEffect(() => {
-    if (originPrefillAttempted || hasUserEditedOrigin || from.trim()) return;
-
-    const controller = new AbortController();
-
-    const loadRecommendedOrigin = async () => {
-      try {
-        const response = await fetch(buildPlacesUrl("", "origin") + "&defaultOrigin=true", {
-          signal: controller.signal,
-          cache: "no-store",
-        });
-        if (!response.ok) return;
-        const payload = (await response.json()) as { recommendedOrigin?: RecommendedOrigin | null };
-        const recommended = payload.recommendedOrigin;
-        if (recommended && (recommended.confidence ?? 0) >= 0.7 && !hasUserEditedOrigin && !from.trim()) {
-          setFrom(formatAirportLabel(recommended));
-          setFromCode(recommended.code);
-        }
-      } catch {
-        // no-op
-      } finally {
-        if (!controller.signal.aborted) {
-          setOriginPrefillAttempted(true);
-        }
-      }
-    };
-
-    void loadRecommendedOrigin();
-
-    return () => controller.abort();
-  }, [originPrefillAttempted, hasUserEditedOrigin, from, buildPlacesUrl]);
 
   useEffect(() => {
     travelersDraftRef.current = {
@@ -1203,7 +1164,6 @@ export function SearchTabs({
   };
 
   const onClearOrigin = () => {
-    setHasUserEditedOrigin(true);
     setFrom("");
     setFromLoading(false);
     setFromLiveSuggestions([]);
@@ -1838,7 +1798,6 @@ export function SearchTabs({
                     onChange={(
                       event
                     ) => {
-                      setHasUserEditedOrigin(true);
                       const nextValue = event.target.value;
                       setFrom(nextValue);
                       if (nextValue.trim().length < 2) {
@@ -2500,7 +2459,6 @@ export function SearchTabs({
             isLoading={isFromLoadingVisible}
             launcherRef={fromMobileLauncherRef}
             onChange={(nextValue) => {
-              setHasUserEditedOrigin(true);
               setFrom(nextValue);
               if (nextValue.trim().length < 2) {
                 setFromLoading(false);
@@ -2510,8 +2468,7 @@ export function SearchTabs({
               setFromHighlight(0);
             }}
             onClear={() => {
-              setHasUserEditedOrigin(true);
-              setFrom("");
+                    setFrom("");
               setFromLoading(false);
               setFromLiveSuggestions([]);
               setFromCode("");
