@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE,
   buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
+  paginateAdminHomepageFareRoutes,
+  splitAdminHomepageFareMarketRouteGroups,
   type AdminHomepageFareMarket,
   type AdminHomepageFareRoute,
 } from "./homepageFareRouteGrouping";
@@ -220,4 +223,52 @@ test("readiness labels distinguish underfilled, exhausted, ready, and fallback-o
   assert.equal(groups.find((group) => group.marketCode === "NG")?.status, "Ready");
   assert.equal(groups.find((group) => group.marketCode === "CA")?.status, "Failed");
   assert.equal(groups.find((group) => group.marketCode === "GLOBAL")?.status, "Fallback only");
+});
+
+
+test("route pagination limits visible routes to 10 per page and reports totals", () => {
+  const manyRoutes = Array.from({ length: 23 }, (_, index): AdminHomepageFareRoute => ({
+    id: `route-${index + 1}`,
+    market: "US",
+    label: `Route ${index + 1}`,
+    origin: "JFK",
+    destination: `D${index + 1}`,
+    section: index % 2 === 0 ? "popular" : "discovery",
+    status: "fresh",
+  }));
+
+  const firstPage = paginateAdminHomepageFareRoutes(manyRoutes, 1);
+  assert.equal(firstPage.routes.length, ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE);
+  assert.equal(firstPage.totalRoutes, 23);
+  assert.equal(firstPage.start, 1);
+  assert.equal(firstPage.end, 10);
+  assert.equal(firstPage.hasPreviousPage, false);
+  assert.equal(firstPage.hasNextPage, true);
+
+  const lastPage = paginateAdminHomepageFareRoutes(manyRoutes, 3);
+  assert.equal(lastPage.routes.length, 3);
+  assert.equal(lastPage.start, 21);
+  assert.equal(lastPage.end, 23);
+  assert.equal(lastPage.hasPreviousPage, true);
+  assert.equal(lastPage.hasNextPage, false);
+});
+
+test("filters apply within selected market groups and View All", () => {
+  const usMissingGroups = buildAdminHomepageFareRouteGroups({ routes, markets, filter: "missing" });
+  const selectedUs = usMissingGroups.find((group) => group.marketCode === "US");
+  assert.deepEqual(selectedUs?.routes.map((route) => route.id), ["discover-us-la-vegas"]);
+
+  const allFreshRoutes = buildAdminHomepageFareAllRoutesGroup(routes, "fresh");
+  assert.equal(allFreshRoutes.routes.length, 2);
+  assert.deepEqual(allFreshRoutes.routes.map((route) => route.market), ["US", "NG"]);
+});
+
+test("public market cards exclude fallback-only groups while fallback groups remain selectable data", () => {
+  const groups = buildAdminHomepageFareRouteGroups({ routes, markets });
+  const { publicGroups, fallbackGroups } = splitAdminHomepageFareMarketRouteGroups(groups);
+
+  assert.deepEqual(publicGroups.map((group) => group.marketCode), ["US", "NG"]);
+  assert.deepEqual(fallbackGroups.map((group) => group.marketCode), ["GLOBAL"]);
+  assert.equal(fallbackGroups[0]?.status, "Fallback only");
+  assert.equal(fallbackGroups[0]?.routes.length, 1);
 });
