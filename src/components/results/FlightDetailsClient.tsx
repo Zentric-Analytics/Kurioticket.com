@@ -328,122 +328,121 @@ function ProviderComparisonPanel({
   onContinueToProvider: () => void;
 }) {
   return (
-    <aside
-      className="min-w-0 rounded-xl border border-slate-200/70 bg-white/70 p-3 shadow-none sm:p-4 lg:mt-1"
-      aria-label="Compare more providers"
-    >
+    <aside className="min-w-0 lg:mt-1" aria-label="Compare more providers">
       <div>
         <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-900 sm:text-lg">
           Compare more providers
         </h2>
         <p className="mt-1.5 text-sm leading-5 text-slate-700 sm:mt-2 sm:leading-6">
-          Kurioticket can compare from different providers
+          Kurioticket can compare from different providers.
         </p>
       </div>
 
-      {offers.length ? (
-        <div className="mt-3 divide-y divide-slate-100/80 border-t border-slate-100/80 sm:mt-3.5">
-          {offers.map((offer) => {
-            const priceDisplay =
-              typeof offer.price === "number" && offer.currency
-                ? formatDisplayPrice({
-                    amount: offer.price,
-                    sourceCurrency: offer.currency,
-                    displayCurrency: selectedCurrency,
-                    convertUsdEstimate: true,
-                    rates: currencyRates,
-                    isFallbackRate,
-                  })
-                : null;
-            const details = [
-              offer.cabinClass ? formatCabinClass(offer.cabinClass) : null,
-              offer.baggageInfo ? formatBaggageValue(offer.baggageInfo) : null,
-              typeof offer.stops === "number" ? formatStops(offer.stops) : null,
-              offer.duration,
-            ].filter(
-              (detail): detail is string =>
-                Boolean(detail) && detail !== "Confirmed by provider",
-            );
-            const providerUrl = offer.partnerRedirectUrl || offer.bookingUrl;
-            const canBook =
-              offer.useSelectedFlightRedirect || Boolean(providerUrl);
-            const showProviderByline =
-              offer.providerName &&
-              normalizeAirlineName(offer.providerName) !==
-                normalizeAirlineName(offer.title);
+      <div className="mt-3 rounded-xl border border-slate-200/70 bg-white/70 p-3 shadow-none sm:mt-3.5 sm:p-4">
+        {offers.length ? (
+          <div className="divide-y divide-slate-100/80">
+            {offers.map((offer) => {
+              const priceDisplay =
+                typeof offer.price === "number" && offer.currency
+                  ? formatDisplayPrice({
+                      amount: offer.price,
+                      sourceCurrency: offer.currency,
+                      displayCurrency: selectedCurrency,
+                      convertUsdEstimate: true,
+                      rates: currencyRates,
+                      isFallbackRate,
+                    })
+                  : null;
+              const details = [
+                offer.cabinClass ? formatCabinClass(offer.cabinClass) : null,
+                offer.baggageInfo ? formatBaggageValue(offer.baggageInfo) : null,
+                typeof offer.stops === "number" ? formatStops(offer.stops) : null,
+                offer.duration,
+              ].filter(
+                (detail): detail is string =>
+                  Boolean(detail) && detail !== "Confirmed by provider",
+              );
+              const providerUrl = offer.partnerRedirectUrl || offer.bookingUrl;
+              const canBook =
+                offer.useSelectedFlightRedirect || Boolean(providerUrl);
+              const showProviderByline =
+                offer.providerName &&
+                normalizeAirlineName(offer.providerName) !==
+                  normalizeAirlineName(offer.title);
 
-            return (
-              <div
-                key={offer.key}
-                className="flex min-w-0 flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex min-w-0 items-start gap-3">
-                  {offer.logoUrl ? (
-                    <Image
-                      src={offer.logoUrl}
-                      alt={`${offer.title} logo`}
-                      width={36}
-                      height={36}
-                      className="h-8 w-8 shrink-0 rounded-full border border-slate-100 bg-white object-contain p-1"
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : null}
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900">
-                      {offer.title}
-                    </p>
-                    {details.length ? (
-                      <p className="mt-1 line-clamp-2 text-xs leading-4 text-slate-500">
-                        {details.join(" · ")}
+              return (
+                <div
+                  key={offer.key}
+                  className="flex min-w-0 flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="flex min-w-0 items-start gap-3">
+                    {offer.logoUrl ? (
+                      <Image
+                        src={offer.logoUrl}
+                        alt={`${offer.title} logo`}
+                        width={36}
+                        height={36}
+                        className="h-8 w-8 shrink-0 rounded-full border border-slate-100 bg-white object-contain p-1"
+                        onError={(event) => {
+                          event.currentTarget.style.display = "none";
+                        }}
+                      />
+                    ) : null}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {offer.title}
+                      </p>
+                      {details.length ? (
+                        <p className="mt-1 line-clamp-2 text-xs leading-4 text-slate-500">
+                          {details.join(" · ")}
+                        </p>
+                      ) : null}
+                      {showProviderByline ? (
+                        <p className="mt-1 truncate text-[11px] leading-4 text-slate-400">
+                          Provided by {offer.providerName}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                    {priceDisplay ? (
+                      <p
+                        className="text-sm font-semibold text-slate-900"
+                        aria-label={priceDisplay.ariaLabel}
+                        title={priceDisplay.title}
+                      >
+                        {priceDisplay.formatted}
                       </p>
                     ) : null}
-                    {showProviderByline ? (
-                      <p className="mt-1 truncate text-[11px] leading-4 text-slate-400">
-                        Provided by {offer.providerName}
-                      </p>
+                    {canBook ? (
+                      <Button
+                        variant="accent"
+                        size="sm"
+                        className="rounded-full bg-indigo-600 px-3 text-xs font-semibold shadow-none hover:bg-indigo-700"
+                        onClick={() => {
+                          if (offer.useSelectedFlightRedirect) {
+                            onContinueToProvider();
+                            return;
+                          }
+
+                          if (providerUrl) window.location.href = providerUrl;
+                        }}
+                      >
+                        Book now
+                      </Button>
                     ) : null}
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
-                  {priceDisplay ? (
-                    <p
-                      className="text-sm font-semibold text-slate-900"
-                      aria-label={priceDisplay.ariaLabel}
-                      title={priceDisplay.title}
-                    >
-                      {priceDisplay.formatted}
-                    </p>
-                  ) : null}
-                  {canBook ? (
-                    <Button
-                      variant="accent"
-                      size="sm"
-                      className="rounded-full bg-indigo-600 px-3 text-xs font-semibold shadow-none hover:bg-indigo-700"
-                      onClick={() => {
-                        if (offer.useSelectedFlightRedirect) {
-                          onContinueToProvider();
-                          return;
-                        }
-
-                        if (providerUrl) window.location.href = providerUrl;
-                      }}
-                    >
-                      Book now
-                    </Button>
-                  ) : null}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="mt-2.5 rounded-lg border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-sm leading-5 text-slate-700 sm:mt-3.5 sm:py-2.5 sm:leading-6">
-          No additional live provider options are available for this flight
-          right now.
-        </p>
-      )}
+              );
+            })}
+          </div>
+        ) : (
+          <p className="rounded-lg bg-slate-50/70 px-3 py-2 text-sm leading-5 text-slate-700 sm:py-2.5 sm:leading-6">
+            No additional live provider options are available for this flight
+            right now.
+          </p>
+        )}
+      </div>
     </aside>
   );
 }
