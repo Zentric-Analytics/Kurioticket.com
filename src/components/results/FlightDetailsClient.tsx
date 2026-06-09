@@ -129,17 +129,18 @@ export function FlightDetailsClient({ id }: { id: string }) {
           <div className="mx-auto w-full max-w-5xl">
             <div className="grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-5">
               <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-                <SelectedFlightSummary
-                  itineraryLegs={itineraryLegs}
-                  fallbackAirlineName={flight.airlineName}
-                  fallbackAirlineLogo={getAirlineLogo(flight)}
-                  fallbackFlightNumber={flight.flightNumber}
-                  routeHeading={routeHeading}
-                />
+                <Card className="min-w-0 rounded-2xl border-slate-200/80 bg-white p-4 shadow-none sm:p-5 lg:p-6">
+                  <SelectedFlightSummary
+                    itineraryLegs={itineraryLegs}
+                    fallbackAirlineName={flight.airlineName}
+                    fallbackAirlineLogo={getAirlineLogo(flight)}
+                    fallbackFlightNumber={flight.flightNumber}
+                    routeHeading={routeHeading}
+                  />
 
-                <Card className="mt-5 overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
-                  <div className="grid grid-cols-1 items-stretch gap-0">
-                    <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
+                  <Card className="mt-5 overflow-hidden border-slate-200/80 bg-white p-0 shadow-none">
+                    <div className="grid grid-cols-1 items-stretch gap-0">
+                      <div className="min-w-0 bg-slate-50/70 p-3 sm:p-3.5 lg:p-4">
                       <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
                         <div className="min-w-0 space-y-1">
                           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -198,7 +199,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       </div>
                     </div>
 
-                    <aside className="flex items-center justify-center border-t border-indigo-100 bg-white px-3 py-3 sm:px-3 sm:py-2 lg:px-3.5 lg:py-2.5">
+                      <aside className="flex items-center justify-center border-t border-slate-200/80 bg-white px-3 py-3 sm:px-3 sm:py-2 lg:px-3.5 lg:py-2.5">
                       <div className="mx-auto flex w-full max-w-[20rem] flex-col items-stretch gap-1.5 text-center sm:max-w-[320px] sm:gap-1 lg:max-w-[320px]">
                         <div className="w-full rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2 text-center shadow-sm sm:px-2.5 sm:py-1">
                           <p className="text-[10px] font-semibold uppercase leading-3 tracking-wide text-slate-500">
@@ -235,8 +236,9 @@ export function FlightDetailsClient({ id }: { id: string }) {
                           <span className="min-w-0">{providerDisclaimer}</span>
                         </p>
                       </div>
-                    </aside>
-                  </div>
+                      </aside>
+                    </div>
+                  </Card>
                 </Card>
               </div>
 
@@ -275,33 +277,29 @@ function SelectedFlightSummary({
       <h2 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
         Selected Flights
       </h2>
-      <h1 className="mt-2 text-2xl font-medium leading-snug text-slate-800 sm:text-2xl">
+      <h1 className="mt-2 text-balance text-2xl font-medium leading-snug text-slate-800 sm:text-2xl">
         {routeHeading}
       </h1>
-      <div className="mt-3.5 rounded-2xl border border-slate-200/80 bg-white/50 px-4 py-4 sm:px-5">
-        <div className="relative border-l border-slate-200 pl-5 sm:pl-6">
-          {itineraryLegs.map((leg, legIndex) => (
-            <div
-              key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
-              className={`relative ${legIndex > 0 ? "mt-4 border-t border-slate-200/80 pt-4" : ""}`}
-            >
-              <span
-                className={`absolute -left-[1.8125rem] h-3 w-3 rounded-full border-2 border-white bg-slate-400 shadow-[0_0_0_1px_rgba(148,163,184,0.42)] sm:-left-[2.0625rem] ${
-                  legIndex > 0 ? "top-5" : "top-1"
-                }`}
-                aria-hidden="true"
-              />
-              <CompactLegSection
-                leg={leg}
-                legIndex={legIndex}
-                legCount={itineraryLegs.length}
-                fallbackAirlineName={fallbackAirlineName}
-                fallbackAirlineLogo={fallbackAirlineLogo}
-                fallbackFlightNumber={fallbackFlightNumber}
-              />
-            </div>
-          ))}
-        </div>
+      <div className="mt-5 relative border-l border-slate-200 pl-4 sm:pl-5">
+        {itineraryLegs.map((leg, legIndex) => (
+          <div
+            key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
+            className={`relative ${legIndex > 0 ? "mt-4" : ""}`}
+          >
+            <span
+              className="absolute -left-[1.4375rem] top-4 h-3 w-3 rounded-full border-2 border-white bg-slate-400 shadow-[0_0_0_1px_rgba(148,163,184,0.42)] sm:-left-[1.6875rem]"
+              aria-hidden="true"
+            />
+            <CompactLegSection
+              leg={leg}
+              legIndex={legIndex}
+              legCount={itineraryLegs.length}
+              fallbackAirlineName={fallbackAirlineName}
+              fallbackAirlineLogo={fallbackAirlineLogo}
+              fallbackFlightNumber={fallbackFlightNumber}
+            />
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -1252,21 +1250,24 @@ function CompactLegSection({
   const directionLabel = formatLegDirection(leg.direction, legIndex, legCount);
 
   return (
-    <section aria-label={directionLabel}>
-      <div className="mb-1 flex flex-col gap-0.5 sm:flex-row sm:items-center sm:justify-between">
+    <section
+      className="min-w-0 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-3 sm:px-4"
+      aria-label={directionLabel}
+    >
+      <div className="mb-2 flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700">
             {directionLabel}
           </p>
-          <p className="text-xs font-semibold tracking-wide text-slate-600">
+          <p className="whitespace-nowrap text-xs font-semibold tracking-wide text-slate-600">
             {leg.originAirport} to {leg.destinationAirport}
           </p>
         </div>
-        <p className="text-xs font-medium leading-5 text-slate-500">
+        <p className="whitespace-nowrap text-xs font-medium leading-5 text-slate-500">
           {leg.duration} · {formatStops(leg.stops)}
         </p>
       </div>
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 rounded-lg bg-white px-2 sm:px-3">
         {segments.map((segment, segmentIndex) => {
           const airlineName = segment.airlineName || fallbackAirlineName;
           const matchesFallbackAirline =
@@ -1318,7 +1319,7 @@ function CompactFlightRow({
   flightNumber?: string;
 }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_2rem_minmax(0,1fr)] items-center gap-2 py-1 sm:grid-cols-[minmax(0,1fr)_5rem_minmax(0,1fr)] sm:gap-3">
+    <div className="grid grid-cols-[minmax(0,1fr)_2rem_minmax(0,1fr)] items-center gap-2 py-2 sm:grid-cols-[minmax(0,1fr)_5rem_minmax(0,1fr)] sm:gap-3">
       <div className="min-w-0">
         <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-tight">
           <span className="truncate text-base font-semibold text-slate-900 sm:text-lg">
@@ -1380,7 +1381,7 @@ function LayoverSeparator({
   layover: FlightLeg["layovers"][number];
 }) {
   return (
-    <div className="py-1 text-xs font-medium leading-4 text-slate-500">
+    <div className="py-2 text-xs font-medium leading-4 text-slate-500">
       Layover in {layover.airport} · {layover.duration}
       {layover.quality !== "unknown" ? ` · ${layover.quality} connection` : ""}
     </div>
