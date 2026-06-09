@@ -52,27 +52,28 @@ const quickActions = [
   },
   {
     title: "Search cars",
-    body: "Find the best car rental deals",
+    body: "Compare car rental deals",
     href: "/cars",
     icon: Car,
   },
   {
     title: "View saved trips",
-    body: "See your saved itineraries",
+    body: "See your saved trips and ideas",
     href: "/dashboard/saved",
     icon: Bookmark,
   },
 ];
 
 const snapshotItems = [
-  { label: "Trips", value: "0", href: "/dashboard/trips", linkText: "View trips →", icon: BriefcaseBusiness },
-  { label: "Saved", value: "0", href: "/dashboard/saved", linkText: "View saved →", icon: Bookmark },
-  { label: "Price alerts", value: "0", href: "/dashboard/alerts", linkText: "View price alerts →", icon: Bell },
-  { label: "Recent searches", value: "0", href: "/flights/results", linkText: "Start searching →", icon: Clock3 },
+  { label: "Trips", value: "0", href: "/dashboard/trips", linkText: "View all", icon: BriefcaseBusiness },
+  { label: "Saved", value: "0", href: "/dashboard/saved", linkText: "View all", icon: Bookmark },
+  { label: "Price alerts", value: "0", href: "/dashboard/alerts", linkText: "View all", icon: Bell },
+  { label: "Recent searches", value: "0", href: "/flights/results", linkText: "View all", icon: Clock3 },
 ];
 
 type AccountDashboardFrameProps = {
   children: ReactNode;
+  mobileOverviewTabs?: boolean;
 };
 
 type DashboardOverviewProps = {
@@ -102,7 +103,7 @@ function TravelIllustration({ compact = false, variant = "luggage" }: { compact?
     <div
       className={cn(
         "relative isolate flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100/70 text-violet-700",
-        compact ? "size-20" : "size-24 sm:size-28",
+        compact ? "size-20" : "size-20 sm:size-28",
       )}
       aria-hidden="true"
     >
@@ -119,22 +120,29 @@ function TravelIllustration({ compact = false, variant = "luggage" }: { compact?
       ) : (
         <>
           <div className="absolute bottom-7 h-3 w-20 rounded-full bg-violet-300/30 blur-sm" />
-          <Luggage className={cn("relative fill-violet-500/20 text-violet-700 drop-shadow-sm", compact ? "size-12" : "size-14 sm:size-16")} />
+          <Luggage className={cn("relative fill-violet-500/20 text-violet-700 drop-shadow-sm", compact ? "size-12" : "size-12 sm:size-16")} />
         </>
       )}
     </div>
   );
 }
 
-export function AccountDashboardFrame({ children }: AccountDashboardFrameProps) {
+export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: AccountDashboardFrameProps) {
   const pathname = usePathname();
 
   return (
-    <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15.75rem_minmax(0,1fr)]">
+    <div className={cn("grid min-w-0 items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15.75rem_minmax(0,1fr)]", mobileOverviewTabs && "gap-3 sm:gap-4")}>
       <aside className="min-w-0 lg:sticky lg:top-5 lg:self-start" aria-label="Account navigation">
-        <div className="rounded-[1.25rem] border border-violet-100/80 bg-white p-2 shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)] lg:min-h-[calc(100vh-7.25rem)] lg:p-2.5">
+        <div
+          className={cn(
+            "border border-violet-100/80 bg-white shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)] lg:min-h-[calc(100vh-7.25rem)]",
+            mobileOverviewTabs
+              ? "-mx-4 border-x-0 px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:p-2.5 lg:shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]"
+              : "rounded-[1.25rem] p-2 lg:p-2.5",
+          )}
+        >
           <nav className="overflow-x-auto lg:overflow-visible">
-            <div className="flex min-w-max gap-2 lg:min-w-0 lg:flex-col lg:gap-1.5">
+            <div className={cn("flex min-w-max lg:min-w-0 lg:flex-col lg:gap-1.5", mobileOverviewTabs ? "gap-7 lg:gap-1.5" : "gap-2")}>
               {navItems.map((item) => {
                 const active = isActiveDashboardRoute(pathname, item.href);
                 const Icon = item.icon;
@@ -145,11 +153,18 @@ export function AccountDashboardFrame({ children }: AccountDashboardFrameProps) 
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "focus-ring flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition hover:bg-violet-50 hover:text-violet-700",
-                      active ? "bg-violet-50 text-violet-700 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]" : "text-slate-900",
+                      "focus-ring flex items-center gap-2.5 text-[13px] font-semibold transition hover:bg-violet-50 hover:text-violet-700 lg:rounded-xl lg:px-3.5 lg:py-2.5",
+                      mobileOverviewTabs && "relative whitespace-nowrap rounded-none px-0 py-3.5 text-[13px] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent lg:rounded-xl lg:px-3.5 lg:py-2.5 lg:after:hidden",
+                      !mobileOverviewTabs && "rounded-xl px-3.5 py-2.5",
+                      active
+                        ? cn(
+                          "text-violet-700 lg:bg-violet-50 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]",
+                          mobileOverviewTabs && "after:bg-violet-700 lg:bg-violet-50 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]",
+                        )
+                        : "text-slate-900",
                     )}
                   >
-                    <Icon className="size-4 shrink-0" strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
+                    <Icon className={cn("size-4 shrink-0", mobileOverviewTabs && "hidden lg:block")} strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -196,13 +211,31 @@ function QuickActionTile({ title, body, href, icon: Icon }: { title: string; bod
   );
 }
 
+function QuickActionListRow({ title, body, href, icon: Icon }: { title: string; body: string; href: string; icon: LucideIcon }) {
+  return (
+    <Link
+      href={href}
+      className="focus-ring group flex min-w-0 items-center gap-3 border-b border-slate-200 px-3 py-3 transition last:border-b-0 hover:bg-violet-50/60"
+    >
+      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-100/70 text-violet-700">
+        <Icon className="size-5" strokeWidth={2.3} aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-slate-950">{title}</span>
+        <span className="mt-0.5 block text-sm leading-5 text-slate-700">{body}</span>
+      </span>
+      <ChevronRight className="size-4 shrink-0 text-slate-950 transition group-hover:translate-x-0.5 group-hover:text-violet-800" strokeWidth={2.5} aria-hidden="true" />
+    </Link>
+  );
+}
+
 function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
   return (
     <section
       className="overflow-hidden rounded-2xl border border-slate-300/80 bg-[linear-gradient(135deg,#ffffff_0%,#faf8ff_58%,#f8fafc_100%)] shadow-[0_24px_66px_-46px_rgba(49,46,129,0.62)]"
       aria-labelledby="dashboard-title"
     >
-      <div className="flex min-w-0 flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5 lg:p-5">
+      <div className="flex min-w-0 items-center gap-4 p-4 sm:p-5 lg:p-5">
         <div
           className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-2xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
           aria-hidden="true"
@@ -215,7 +248,7 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
           </h1>
           {userEmail ? <p className="mt-1.5 break-words text-xs font-semibold text-slate-600 sm:text-sm">{userEmail}</p> : null}
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
-            Manage your trips, saved travel plans, alerts, and account preferences from one place.
+            Manage your trips, saved items, and preferences.
           </p>
         </div>
       </div>
@@ -225,25 +258,42 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
 
 function QuickActionsRow() {
   return (
-    <section aria-label="Quick actions" className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {quickActions.map((action) => (
-        <QuickActionTile key={action.title} {...action} />
-      ))}
-    </section>
+    <>
+      <section
+        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_20px_60px_-48px_rgba(49,46,129,0.6)] lg:hidden"
+        aria-labelledby="quick-actions-title"
+      >
+        <div className="px-4 pt-3.5">
+          <h2 id="quick-actions-title" className="text-base font-semibold text-slate-950">Quick actions</h2>
+        </div>
+        <div className="m-3 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          {quickActions.map((action) => (
+            <QuickActionListRow key={action.title} {...action} />
+          ))}
+        </div>
+      </section>
+
+      <section aria-label="Quick actions" className="hidden min-w-0 gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-4">
+        {quickActions.map((action) => (
+          <QuickActionTile key={action.title} {...action} />
+        ))}
+      </section>
+    </>
   );
 }
 
 function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: string; value: string; href?: string; linkText: string; icon: LucideIcon }) {
   const content = (
-    <div className="flex min-w-0 items-center gap-3 px-3.5 py-3 sm:px-4 lg:min-h-20 lg:border-l lg:border-slate-300/80 lg:first:border-l-0">
+    <div className="flex min-w-0 items-center gap-2.5 px-2.5 py-3 sm:gap-3 sm:px-4 lg:min-h-20 lg:border-l lg:border-slate-300/80 lg:first:border-l-0">
       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/75 text-violet-800">
         <Icon className="size-5" strokeWidth={2.25} aria-hidden="true" />
       </span>
-      <div className="min-w-0">
-        <dt className="text-xs font-semibold text-slate-800">{label}</dt>
+      <div className="min-w-0 flex-1">
+        <dt className="truncate text-xs font-semibold text-slate-800">{label}</dt>
         <dd className="mt-1 text-xl font-bold leading-none text-slate-950">{value}</dd>
-        <p className="mt-1.5 text-xs font-bold text-violet-800">{linkText}</p>
       </div>
+      <p className="shrink-0 text-[11px] font-bold text-violet-800 sm:text-xs">{linkText}</p>
+      <ChevronRight className="size-3.5 shrink-0 text-slate-700" strokeWidth={2.4} aria-hidden="true" />
     </div>
   );
 
@@ -252,7 +302,7 @@ function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: str
   }
 
   return (
-    <Link href={href} className="focus-ring block rounded-2xl transition hover:bg-violet-50/70">
+    <Link href={href} className="focus-ring block rounded-2xl border border-slate-200 transition hover:bg-violet-50/70 lg:border-0">
       {content}
     </Link>
   );
@@ -309,25 +359,32 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
 
       <section
         className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
-        aria-labelledby="travel-status-title"
+        aria-label="Your travel status"
       >
-        <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center xl:px-7 xl:py-7">
+        <div className="px-5 pt-4 lg:hidden">
+          <h2 className="text-base font-semibold text-slate-950">Your travel status</h2>
+        </div>
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 p-5 pt-4 sm:gap-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] xl:px-7 xl:py-7">
           <TravelIllustration />
           <div className="min-w-0">
-            <h2 id="travel-status-title" className="text-base font-semibold text-slate-950">Your travel status</h2>
-            <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-950 sm:text-[1.6rem]">No upcoming trips yet</h3>
-            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-700">
+            <h2 className="hidden text-base font-semibold text-slate-950 lg:block">Your travel status</h2>
+            <h3 className="mt-0 text-lg font-bold tracking-tight text-slate-950 sm:text-[1.6rem] lg:mt-3">No upcoming trips yet</h3>
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-700 lg:mt-2.5">
               Trips you book or save will appear here when available.
             </p>
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <LinkButton href="/flights/results" className="bg-violet-700 hover:bg-violet-800">
-                <Plane className="size-4" aria-hidden="true" />
+            <div className="mt-4 flex flex-row gap-2.5 lg:mt-5 lg:gap-3">
+              <Link
+                href="/flights/results"
+                className="focus-ring inline-flex h-10 items-center justify-center rounded-xl bg-violet-700 px-4 text-sm font-bold text-white transition hover:bg-violet-800"
+              >
                 Search flights
-              </LinkButton>
-              <LinkButton href="/hotels" variant="secondary" className="border-violet-300 text-violet-700 hover:border-violet-500 hover:bg-violet-50">
-                <Building2 className="size-4" aria-hidden="true" />
+              </Link>
+              <Link
+                href="/hotels"
+                className="focus-ring inline-flex h-10 items-center justify-center rounded-xl border border-violet-500 bg-white px-4 text-sm font-bold text-violet-700 transition hover:bg-violet-50"
+              >
                 Search hotels
-              </LinkButton>
+              </Link>
             </div>
           </div>
           <div className="hidden lg:flex">
@@ -343,7 +400,7 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
         <div className="px-5 pt-4 sm:px-6">
           <h2 id="snapshot-title" className="text-base font-semibold text-slate-950">Account snapshot</h2>
         </div>
-        <dl className="grid gap-1 p-2.5 sm:p-3 md:grid-cols-2 lg:grid-cols-4 lg:gap-0">
+        <dl className="grid grid-cols-2 gap-1.5 p-2.5 sm:p-3 lg:grid-cols-4 lg:gap-0">
           {snapshotItems.map((item) => (
             <SnapshotLink key={item.label} {...item} />
           ))}
@@ -360,13 +417,13 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
         <div className="divide-y divide-slate-300/80">
           <SetupRow
             title="Personal details"
-            body="Add or update your personal information"
+            body="Add your name, phone number and more"
             href="/dashboard/preferences"
             icon={UserRound}
           />
           <SetupRow
             title="Travel preferences"
-            body="Set your passengers, seat preference and more"
+            body="Set your preferred travel options"
             href="/dashboard/preferences"
             icon={Plane}
           />
