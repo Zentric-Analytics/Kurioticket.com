@@ -58,7 +58,7 @@ export default function ServiceGuaranteePage() {
       <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
         <section className="max-w-3xl">
           <p className="text-sm font-semibold text-teal-dark">Kurioticket service commitment</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">Service Guarantee</h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl">Service Guarantee</h1>
           <p className="mt-4 text-sm leading-6 text-muted sm:text-base">
             We want travelers to understand how Kurioticket works and what they can expect when using our platform.
           </p>
@@ -70,7 +70,7 @@ export default function ServiceGuaranteePage() {
               <HelpCircle size={22} />
             </div>
             <div>
-              <h2 id="service-faq-heading" className="text-2xl font-bold tracking-tight text-navy">
+              <h2 id="service-faq-heading" className="text-xl font-bold tracking-tight text-navy sm:text-2xl">
                 Frequently asked questions
               </h2>
               <p className="mt-2 text-sm leading-6 text-muted sm:text-base">

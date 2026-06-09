@@ -21,10 +21,10 @@ export default function FaqPage() {
             <p className="text-sm font-bold uppercase tracking-[0.22em] text-indigo-700">
               Help center
             </p>
-            <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
               Frequently asked questions
             </h1>
-            <p className="mt-4 text-base font-medium leading-7 text-slate-700 sm:text-lg sm:leading-8">
+            <p className="mt-4 text-sm font-medium leading-6 text-slate-700 sm:text-base sm:leading-7">
               Learn how Kurioticket helps you compare flights, hotels, and
               travel options before booking with trusted providers.
             </p>

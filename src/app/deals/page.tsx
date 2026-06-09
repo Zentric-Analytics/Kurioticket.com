@@ -660,10 +660,10 @@ export default function DealsPage() {
 
           <div className="page-shell relative z-10 pt-10 sm:pt-14">
             <div className="max-w-[1040px]">
-              <h1 className="max-w-none text-balance text-4xl font-semibold leading-[1.12] tracking-[-0.015em] text-slate-800 sm:text-5xl lg:whitespace-nowrap lg:text-5xl lg:leading-[1.08]">
+              <h1 className="max-w-none text-balance text-3xl font-semibold leading-[1.12] tracking-[-0.015em] text-slate-800 sm:text-4xl lg:whitespace-nowrap lg:text-4xl lg:leading-[1.08]">
                 {dictionary.title}
               </h1>
-              <p className="mt-4 max-w-2xl text-lg font-medium leading-8 text-slate-700">
+              <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-700">
                 {dictionary.subtitle}
               </p>
             </div>
@@ -1097,7 +1097,7 @@ export default function DealsPage() {
         <section className="page-shell pt-12 sm:pt-16 lg:pt-20">
           <div className="border-t border-slate-200/80 pt-8 sm:pt-10">
             <div className="max-w-2xl">
-              <h2 className="text-2xl font-extrabold [letter-spacing:-0.025em] text-slate-950">
+              <h2 className="text-xl font-extrabold [letter-spacing:-0.025em] text-slate-950 sm:text-2xl">
                 {dictionary.destinationIdeasTitle}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -1123,7 +1123,7 @@ export default function DealsPage() {
                     />
                   </div>
                   <div className="p-3.5 sm:p-4">
-                    <p className="text-base font-extrabold text-slate-950 sm:text-lg">
+                    <p className="text-sm font-extrabold text-slate-950 sm:text-base">
                       {idea.city}
                     </p>
                     <p className="mt-1 text-sm font-medium text-slate-600">

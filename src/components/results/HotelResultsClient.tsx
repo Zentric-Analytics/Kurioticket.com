@@ -864,8 +864,8 @@ export function HotelResultsClient() {
                 onRemove={removeFilterChip}
                 onClearAll={resetFilters}
               />
-              <div className="rounded-2xl border border-indigo-100 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
-                <p className="text-lg font-bold text-indigo-950">
+              <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
+                <p className="text-base font-bold text-indigo-950">
                   No stays match these filters
                 </p>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">

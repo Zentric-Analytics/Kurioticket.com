@@ -52,7 +52,7 @@ export default function SupportPage() {
       <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
         <section className="max-w-3xl">
           <p className="text-sm font-semibold text-teal-dark">Kurioticket help desk</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">Customer support</h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl">Customer support</h1>
         </section>
 
         <section className="mt-6 max-w-3xl">
@@ -74,7 +74,7 @@ export default function SupportPage() {
         </section>
 
         <section aria-labelledby="support-faq-heading" className="mt-10 max-w-3xl">
-          <h2 id="support-faq-heading" className="text-2xl font-bold tracking-tight text-navy">
+          <h2 id="support-faq-heading" className="text-xl font-bold tracking-tight text-navy sm:text-2xl">
             Frequently asked questions
           </h2>
 

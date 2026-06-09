@@ -42,7 +42,7 @@ export default function LegalCenterPage() {
       <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
         <section className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-semibold text-teal-dark">Legal Information</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy sm:text-5xl">
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl">
             Legal Center
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-muted sm:text-base">
@@ -54,7 +54,7 @@ export default function LegalCenterPage() {
           <div className="rounded-3xl border border-border bg-white/80 p-5 shadow-sm sm:p-6 lg:p-7">
             <div className="flex flex-col gap-3 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
               <div className="max-w-2xl">
-                <h2 id="legal-resources-heading" className="text-2xl font-bold tracking-tight text-navy">
+                <h2 id="legal-resources-heading" className="text-xl font-bold tracking-tight text-navy sm:text-2xl">
                   Legal resources
                 </h2>
                 <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
@@ -80,7 +80,7 @@ export default function LegalCenterPage() {
                     </div>
 
                     <div className="min-w-0">
-                      <h3 className="text-lg font-bold text-navy sm:text-xl">{item.title}</h3>
+                      <h3 className="text-base font-bold text-navy sm:text-lg">{item.title}</h3>
                       <p className="mt-2 text-sm leading-6 text-muted sm:text-[15px]">{item.description}</p>
                     </div>
 

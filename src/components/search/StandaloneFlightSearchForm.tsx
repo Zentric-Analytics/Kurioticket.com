@@ -702,7 +702,7 @@ export function StandaloneFlightSearchForm() {
                 >
                   <Minus className="h-4 w-4" aria-hidden="true" />
                 </button>
-                <span className="min-w-8 text-center text-lg font-black text-slate-950">{row.count}</span>
+                <span className="min-w-8 text-center text-base font-bold text-slate-950">{row.count}</span>
                 <button
                   type="button"
                   onClick={() => {

@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
       <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
         <section className="max-w-3xl">
           <p className="text-sm font-semibold text-teal-dark">How Kurioticket works</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">How Kurioticket Works</h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl">How Kurioticket Works</h1>
           <p className="mt-4 text-sm leading-6 text-muted sm:text-base">
             Kurioticket helps travelers move from search to comparison, then on to the provider
             when an offer is selected.
@@ -53,7 +53,7 @@ export default function HowItWorksPage() {
         </section>
 
         <section aria-labelledby="how-it-works-steps" className="mt-10 max-w-3xl">
-          <h2 id="how-it-works-steps" className="text-2xl font-bold tracking-tight text-navy">
+          <h2 id="how-it-works-steps" className="text-xl font-bold tracking-tight text-navy sm:text-2xl">
             Basic flow
           </h2>
 
@@ -76,7 +76,7 @@ export default function HowItWorksPage() {
                   </div>
 
                   <div>
-                    <h3 className="text-lg font-bold text-navy sm:text-xl">{step.title}</h3>
+                    <h3 className="text-base font-bold text-navy sm:text-lg">{step.title}</h3>
                     <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{step.description}</p>
                   </div>
                 </article>

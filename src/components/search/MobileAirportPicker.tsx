@@ -95,7 +95,7 @@ export function MobileAirportPicker({
               onChange={(event) => onChange(event.target.value)}
               placeholder="Search airports or cities"
               autoComplete="off"
-              className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 pl-4 pr-14 text-lg font-semibold text-slate-900 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/15"
+              className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 pl-4 pr-14 text-base font-semibold text-slate-900 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/15"
             />
             {value.trim() ? (
               <button

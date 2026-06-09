@@ -123,7 +123,7 @@ export function FlightMobilePickerShell({
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               Back
             </button>
-            <h2 id={titleId} className="min-w-0 truncate text-lg font-black text-slate-950">
+            <h2 id={titleId} className="min-w-0 truncate text-base font-bold text-slate-950">
               {title}
             </h2>
             <button

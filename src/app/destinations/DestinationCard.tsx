@@ -33,7 +33,7 @@ export function DestinationCard({
   return (
     <Link
       href={href}
-      className="group relative min-h-[19rem] overflow-hidden rounded-[1.45rem] bg-white p-4 text-white shadow-xl shadow-violet-100/70 outline-none ring-1 ring-white/80 transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-fuchsia-200/60 focus-visible:ring-4 focus-visible:ring-violet-200 sm:min-h-[21rem]"
+      className="group relative min-h-[18rem] overflow-hidden rounded-[1.45rem] bg-white p-4 text-white shadow-xl shadow-violet-100/70 outline-none ring-1 ring-white/80 transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-fuchsia-200/60 focus-visible:ring-4 focus-visible:ring-violet-200 sm:min-h-[19.5rem]"
       aria-label={`Search flights to ${name}`}
     >
       <Image
@@ -55,7 +55,7 @@ export function DestinationCard({
       <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-violet-950/55 via-slate-950/16 to-transparent" />
       <div className="absolute -right-12 -top-12 h-28 w-28 rounded-full bg-white/24 blur-2xl transition duration-500 group-hover:scale-110" />
 
-      <div className="relative flex h-full min-h-[17rem] flex-col justify-between sm:min-h-[19rem]">
+      <div className="relative flex h-full min-h-[16rem] flex-col justify-between sm:min-h-[18rem]">
         <div className="flex items-center justify-between gap-3">
           <span className="rounded-full bg-white/30 px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.13em] text-white shadow-sm ring-1 ring-white/45 backdrop-blur-md">
             {country}
@@ -69,7 +69,7 @@ export function DestinationCard({
           <p className="mb-1.5 text-[0.7rem] font-black uppercase tracking-[0.16em] text-amber-100">
             {tag}
           </p>
-          <h3 className="text-2xl font-black tracking-tight drop-shadow-md sm:text-[1.7rem]">
+          <h3 className="text-xl font-black tracking-tight drop-shadow-md sm:text-2xl">
             {name}
           </h3>
           <p className="mt-1.5 text-sm font-semibold leading-5 text-white/95 drop-shadow-sm">
