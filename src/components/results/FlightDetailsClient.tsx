@@ -203,21 +203,21 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </div>
 
                 <div className="contents min-w-0 lg:flex lg:flex-col">
-                  <aside className="order-2 border-t border-indigo-100 bg-white p-2.5 sm:p-3 lg:border-l lg:border-t-0 lg:p-3.5">
-                    <div className="flex h-full flex-col justify-center gap-2.5 lg:ml-auto lg:max-w-[280px]">
-                      <div className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <aside className="order-2 border-t border-indigo-100 bg-white p-2.5 sm:p-3 lg:border-l lg:border-t-0 lg:p-3">
+                    <div className="flex flex-col gap-2 lg:ml-auto lg:max-w-[260px]">
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-center shadow-sm">
+                        <p className="text-[11px] font-semibold uppercase leading-4 tracking-wide text-slate-500">
                           From
                         </p>
                         <div
-                          className="mt-0.5 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl"
+                          className="text-xl font-semibold tracking-tight text-slate-900 sm:text-[1.375rem] sm:leading-7"
                           aria-label={displayPrice.ariaLabel}
                           title={displayPrice.title}
                         >
                           {displayPrice.formatted}
                         </div>
                         {displayPrice.isConvertedEstimate ? (
-                          <p className="mt-1 text-xs font-medium leading-5 text-slate-600">
+                          <p className="mt-0.5 text-xs font-medium leading-4 text-slate-600">
                             Estimate shown. Provider price:{" "}
                             {displayPrice.providerFormatted}.
                           </p>
@@ -226,14 +226,14 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       <Button
                         variant="accent"
                         size="lg"
-                        className="w-full rounded-xl px-6 text-sm font-semibold sm:text-base"
+                        className="h-11 w-full rounded-lg px-4 text-sm font-semibold"
                         onClick={continueToProvider}
                         disabled={!hasProviderLink}
                       >
-                        Continue to Provider <ArrowRight size={18} />
+                        Continue to Provider <ArrowRight size={17} />
                       </Button>
                       <p className="flex items-start gap-1.5 text-xs leading-4 text-slate-500">
-                        <Info size={15} className="mt-0.5 shrink-0 text-blue" />
+                        <Info size={14} className="mt-0.5 shrink-0 text-blue" />
                         <span>{providerDisclaimer}</span>
                       </p>
                     </div>
