@@ -319,20 +319,20 @@ function ProviderComparisonPanel({
 }) {
   return (
     <aside
-      className="min-w-0 rounded-xl border border-slate-200/70 bg-white/70 p-3.5 shadow-none sm:p-4 lg:mt-1"
+      className="min-w-0 rounded-xl border border-slate-200/70 bg-white/70 p-3 shadow-none sm:p-4 lg:mt-1"
       aria-label="Compare more providers"
     >
       <div>
         <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-900 sm:text-lg">
           Compare more providers
         </h2>
-        <p className="mt-2 text-sm leading-6 text-slate-700">
+        <p className="mt-1.5 text-sm leading-5 text-slate-700 sm:mt-2 sm:leading-6">
           Kurioticket can compare from different providers
         </p>
       </div>
 
       {offers.length ? (
-        <div className="mt-3.5 divide-y divide-slate-100/80 border-t border-slate-100/80">
+        <div className="mt-3 divide-y divide-slate-100/80 border-t border-slate-100/80 sm:mt-3.5">
           {offers.map((offer) => {
             const priceDisplay =
               typeof offer.price === "number" && offer.currency
@@ -429,7 +429,7 @@ function ProviderComparisonPanel({
           })}
         </div>
       ) : (
-        <p className="mt-3.5 rounded-lg border border-slate-200/70 bg-slate-50/70 px-3 py-2.5 text-sm leading-6 text-slate-700">
+        <p className="mt-2.5 rounded-lg border border-slate-200/70 bg-slate-50/70 px-3 py-2 text-sm leading-5 text-slate-700 sm:mt-3.5 sm:py-2.5 sm:leading-6">
           No additional live provider options are available for this flight
           right now.
         </p>
