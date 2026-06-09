@@ -129,7 +129,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
           <div className="mx-auto w-full max-w-5xl">
             <div className="grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-5">
               <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-                <h1 className="text-2xl font-medium text-slate-800 sm:text-3xl">
+                <h1 className="text-2xl font-medium leading-snug text-slate-800 sm:text-2xl">
                   {routeHeading}
                 </h1>
                 <Card className="mt-2.5 overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
@@ -156,7 +156,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                               </>
                             ) : null}
                           </div>
-                          <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-medium leading-tight tracking-tight text-slate-900 sm:text-4xl lg:font-semibold">
+                          <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-medium leading-tight tracking-tight text-slate-900 sm:text-3xl lg:text-2xl lg:font-semibold">
                             <span>{flight.originAirport}</span>
                             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
                               <ArrowRight size={16} aria-hidden="true" />
