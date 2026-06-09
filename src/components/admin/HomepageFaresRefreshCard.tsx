@@ -8,6 +8,8 @@ import { Card } from "@/components/ui/Card";
 import {
   buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
+  paginateAdminHomepageFareRoutes,
+  splitAdminHomepageFareMarketRouteGroups,
   type AdminHomepageFareRouteGroupFilter,
   type AdminHomepageFareMarketRouteGroup,
 } from "@/lib/admin/homepageFareRouteGrouping";
@@ -408,7 +410,7 @@ export function HomepageFaresRefreshCard() {
     loading: true,
     error: "",
   });
-  const [selectedMarketCode, setSelectedMarketCode] = useState("ALL");
+  const [selectedMarketCode, setSelectedMarketCode] = useState<string | null>(null);
   const [routeFilter, setRouteFilter] =
     useState<AdminHomepageFareRouteGroupFilter>("all");
 
@@ -501,6 +503,7 @@ export function HomepageFaresRefreshCard() {
         routes: statusPayload.routes,
         markets: statusPayload.marketReadinessSummary,
         filter: routeFilter,
+        includeEmptyGroups: true,
       }),
     [routeFilter, statusPayload.marketReadinessSummary, statusPayload.routes],
   );
@@ -511,9 +514,11 @@ export function HomepageFaresRefreshCard() {
   const selectedRouteGroup =
     selectedMarketCode === "ALL"
       ? allRoutesGroup
-      : marketRouteGroups.find((group) => group.marketCode === selectedMarketCode) ??
-        marketRouteGroups[0] ??
-        allRoutesGroup;
+      : selectedMarketCode
+        ? marketRouteGroups.find((group) => group.marketCode === selectedMarketCode) ?? null
+        : null;
+  const { publicGroups: publicRouteGroups, fallbackGroups: fallbackRouteGroups } =
+    splitAdminHomepageFareMarketRouteGroups(marketRouteGroups);
 
   const publicMarkets = statusPayload.marketReadinessSummary.filter(
     (market) => !isFallbackMarket(market),
@@ -592,7 +597,8 @@ export function HomepageFaresRefreshCard() {
           <MarketReadinessDashboard markets={publicMarkets} onInspectMarket={setSelectedMarketCode} />
 
           <MarketRouteInspector
-            groups={marketRouteGroups}
+            publicGroups={publicRouteGroups}
+            fallbackGroups={fallbackRouteGroups}
             allRoutesGroup={allRoutesGroup}
             selectedMarketCode={selectedMarketCode}
             selectedGroup={selectedRouteGroup}
@@ -1115,7 +1121,8 @@ function RawDebugDetails({
 }
 
 function MarketRouteInspector({
-  groups,
+  publicGroups,
+  fallbackGroups,
   allRoutesGroup,
   selectedMarketCode,
   selectedGroup,
@@ -1124,39 +1131,54 @@ function MarketRouteInspector({
   onSelectMarket,
   onFilterChange,
 }: {
-  groups: AdminHomepageFareMarketRouteGroup[];
+  publicGroups: AdminHomepageFareMarketRouteGroup[];
+  fallbackGroups: AdminHomepageFareMarketRouteGroup[];
   allRoutesGroup: AdminHomepageFareMarketRouteGroup;
-  selectedMarketCode: string;
-  selectedGroup: AdminHomepageFareMarketRouteGroup;
+  selectedMarketCode: string | null;
+  selectedGroup: AdminHomepageFareMarketRouteGroup | null;
   filter: AdminHomepageFareRouteGroupFilter;
   loading: boolean;
   onSelectMarket: (marketCode: string) => void;
   onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
 }) {
-  const marketButtons = [allRoutesGroup, ...groups];
+  const [routePage, setRoutePage] = useState(1);
+
+  const handleSelectMarket = (marketCode: string) => {
+    setRoutePage(1);
+    onSelectMarket(marketCode);
+  };
+  const handleFilterChange = (nextFilter: AdminHomepageFareRouteGroupFilter) => {
+    setRoutePage(1);
+    onFilterChange(nextFilter);
+  };
 
   return (
-    <section className="mt-5 rounded-2xl border border-border bg-white p-3 sm:p-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h4 className="text-sm font-extrabold uppercase tracking-wide text-navy">
-            Grouped market route inspector
-          </h4>
-          <p className="mt-1 text-xs leading-5 text-muted">
-            View All keeps every configured route available for debugging. Market cards isolate routes by the configured country, regional, or global market.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
+    <section className="mt-6 rounded-3xl border border-slate-200/80 bg-gradient-to-br from-slate-50 via-white to-sky-50/40 p-4 shadow-sm sm:p-5">
+      <div className="max-w-4xl">
+        <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-teal-dark">
+          Route coverage
+        </p>
+        <h4 className="mt-2 text-xl font-extrabold text-navy">
+          Grouped Market Route Inspector
+        </h4>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Inspect homepage fare routes by market, status, and coverage. Select a market below to view route details.
+        </p>
+      </div>
+
+      <div className="mt-5 overflow-x-auto pb-1" aria-label="Route status filters">
+        <div className="flex min-w-max gap-2">
           {ROUTE_FILTERS.map((item) => (
             <button
               key={item.key}
               type="button"
-              onClick={() => onFilterChange(item.key)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+              onClick={() => handleFilterChange(item.key)}
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold transition ${
                 filter === item.key
-                  ? "border-navy bg-navy text-white"
-                  : "border-border bg-white text-navy hover:border-navy/40"
+                  ? "border-navy bg-navy text-white shadow-sm"
+                  : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white"
               }`}
+              aria-pressed={filter === item.key}
             >
               {item.label}
             </button>
@@ -1164,67 +1186,203 @@ function MarketRouteInspector({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 xl:grid-cols-[22rem_minmax(0,1fr)]">
-        <div className="space-y-2 xl:max-h-[720px] xl:overflow-y-auto xl:pr-1">
-          {marketButtons.length ? (
-            marketButtons.map((group) => (
-              <button
-                key={group.marketCode}
-                type="button"
-                onClick={() => onSelectMarket(group.marketCode)}
-                className={`w-full rounded-xl border p-3 text-left transition ${
-                  selectedMarketCode === group.marketCode
-                    ? "border-navy bg-slate-50 shadow-sm"
-                    : "border-border bg-white hover:border-navy/30 hover:bg-slate-50/70"
-                }`}
-                aria-expanded={selectedMarketCode === group.marketCode}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-extrabold text-navy">
-                      {group.displayName}
-                    </p>
-                    <p className="mt-1 text-xs font-semibold text-muted">
-                      {group.routes.length} routes · {group.freshFaresCount} fresh · {group.missingRoutesCount} missing
-                    </p>
-                  </div>
-                  <MarketGroupStatusBadge status={group.status} />
-                </div>
-                <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                  <MarketMiniMetric label="Popular" value={group.popularCoverageCount} />
-                  <MarketMiniMetric label="Discovery" value={group.discoveryCoverageCount} />
-                  <MarketMiniMetric label="Backup" value={group.backupCoverageCount} />
-                  <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
-                  <MarketMiniMetric label="Failed" value={group.failedUnavailableRoutesCount} />
-                  <MarketMiniMetric label="Stale" value={group.staleRoutesCount} />
-                </dl>
-              </button>
-            ))
+      <div className="mt-5 space-y-5">
+        <div>
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h5 className="text-sm font-extrabold uppercase tracking-wide text-navy">
+                Public market coverage
+              </h5>
+              <p className="mt-1 text-xs font-semibold text-muted">
+                Country display targets stay separate from fallback-only pools.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSelectMarket(allRoutesGroup.marketCode)}
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold transition ${
+                selectedMarketCode === allRoutesGroup.marketCode
+                  ? "border-navy bg-navy text-white"
+                  : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white"
+              }`}
+            >
+              View All
+            </button>
+          </div>
+
+          {publicGroups.length ? (
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {publicGroups.map((group) => (
+                <MarketRouteGroupCard
+                  key={group.marketCode}
+                  group={group}
+                  selected={selectedMarketCode === group.marketCode}
+                  onSelect={handleSelectMarket}
+                />
+              ))}
+            </div>
           ) : (
-            <p className="rounded-xl border border-border p-4 text-sm font-semibold text-muted">
-              {loading ? "Loading market route groups…" : "No route groups match this filter."}
+            <p className="rounded-2xl border border-dashed border-slate-300 bg-white/50 p-4 text-sm font-semibold text-muted">
+              {loading ? "Loading market route groups…" : "No public market route groups match this filter."}
             </p>
           )}
         </div>
 
-        <div className="min-w-0 overflow-hidden rounded-xl border border-border">
-          <div className="border-b border-border bg-slate-50 px-4 py-3">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h5 className="text-sm font-extrabold text-navy">
-                  {selectedGroup.displayName}
-                </h5>
-                <p className="text-xs font-semibold text-muted">
-                  {selectedGroup.marketCode === "ALL" ? "Debug view across all markets" : selectedGroup.marketCode}
-                </p>
-              </div>
-              <MarketGroupStatusBadge status={selectedGroup.status} />
+        {fallbackGroups.length ? (
+          <div className="rounded-2xl border border-dashed border-slate-300/90 bg-white/45 p-3">
+            <div className="mb-3">
+              <h5 className="text-sm font-extrabold uppercase tracking-wide text-navy">
+                Fallback-only debugging pools
+              </h5>
+              <p className="mt-1 text-xs font-semibold text-muted">
+                These pools have no public display target and are not counted as normal public market readiness.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {fallbackGroups.map((group) => (
+                <MarketRouteGroupCard
+                  key={group.marketCode}
+                  group={group}
+                  selected={selectedMarketCode === group.marketCode}
+                  onSelect={handleSelectMarket}
+                  fallbackOnly
+                />
+              ))}
             </div>
           </div>
-          <RouteDetailsTable group={selectedGroup} loading={loading} />
+        ) : null}
+      </div>
+
+      <SelectedRouteDetails
+        group={selectedGroup}
+        selectedMarketCode={selectedMarketCode}
+        loading={loading}
+        routePage={routePage}
+        onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
+        onNextPage={() => setRoutePage((page) => page + 1)}
+      />
+    </section>
+  );
+}
+
+function MarketRouteGroupCard({
+  group,
+  selected,
+  onSelect,
+  fallbackOnly = false,
+}: {
+  group: AdminHomepageFareMarketRouteGroup;
+  selected: boolean;
+  onSelect: (marketCode: string) => void;
+  fallbackOnly?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(group.marketCode)}
+      className={`h-full rounded-2xl border p-4 text-left transition ${
+        selected
+          ? "border-navy bg-white shadow-md ring-2 ring-navy/10"
+          : "border-slate-200 bg-white/70 hover:border-navy/30 hover:bg-white hover:shadow-sm"
+      }`}
+      aria-expanded={selected}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-base font-extrabold text-navy">{group.marketLabel}</p>
+          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
+            {fallbackOnly ? "Fallback only · No public display target" : group.marketGroup}
+          </p>
+        </div>
+        <MarketGroupStatusBadge status={group.status} />
+      </div>
+      <p className="mt-3 text-sm font-semibold text-muted">
+        {group.routes.length} total routes · {group.freshFaresCount} fresh · {group.lastKnownGoodFaresCount} last-known-good
+      </p>
+      <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
+        <MarketMiniMetric label="Popular" value={group.popularCoverageCount} />
+        <MarketMiniMetric label="Discovery" value={group.discoveryCoverageCount} />
+        <MarketMiniMetric label="Backup" value={group.backupCoverageCount} />
+        <MarketMiniMetric label="Fresh" value={group.freshFaresCount} />
+        <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
+        <MarketMiniMetric label="Failed/missing" value={group.failedUnavailableRoutesCount + group.missingRoutesCount} />
+      </dl>
+    </button>
+  );
+}
+
+function SelectedRouteDetails({
+  group,
+  selectedMarketCode,
+  loading,
+  routePage,
+  onPreviousPage,
+  onNextPage,
+}: {
+  group: AdminHomepageFareMarketRouteGroup | null;
+  selectedMarketCode: string | null;
+  loading: boolean;
+  routePage: number;
+  onPreviousPage: () => void;
+  onNextPage: () => void;
+}) {
+  if (!selectedMarketCode || !group) {
+    return (
+      <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center">
+        <p className="text-sm font-extrabold text-navy">
+          Select a market to inspect its routes, or choose View All.
+        </p>
+        <p className="mt-2 text-xs font-semibold text-muted">
+          Route rows stay hidden until a market context is selected.
+        </p>
+      </div>
+    );
+  }
+
+  const page = paginateAdminHomepageFareRoutes(group.routes, routePage);
+  const isViewAll = group.marketCode === "ALL";
+
+  return (
+    <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white/80 shadow-sm">
+      <div className="border-b border-slate-200 bg-slate-50/90 px-4 py-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h5 className="text-base font-extrabold text-navy">
+              {isViewAll ? "All routes" : group.displayName} — {page.totalRoutes} total routes
+            </h5>
+            <p className="mt-1 text-sm font-semibold text-muted">
+              Showing {page.start}–{page.end} of {page.totalRoutes}
+              {isViewAll ? " · Debug view across all markets" : ` · ${group.marketCode}`}
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <MarketGroupStatusBadge status={group.status} />
+            <div className="flex items-center gap-2 text-sm font-bold text-muted">
+              <button
+                type="button"
+                onClick={onPreviousPage}
+                disabled={!page.hasPreviousPage}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-navy transition disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="min-w-16 text-center">
+                Page {page.currentPage} of {page.totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={onNextPage}
+                disabled={!page.hasNextPage}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-navy transition disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </section>
+      <RouteDetailsTable group={group} routes={page.routes} loading={loading} />
+    </div>
   );
 }
 
@@ -1239,12 +1397,14 @@ function MarketMiniMetric({ label, value }: { label: string; value: number }) {
 
 function RouteDetailsTable({
   group,
+  routes,
   loading,
 }: {
   group: AdminHomepageFareMarketRouteGroup;
+  routes: AdminHomepageFareMarketRouteGroup["routes"];
   loading: boolean;
 }) {
-  if (!group.routes.length) {
+  if (!routes.length) {
     return (
       <p className="p-4 text-sm font-semibold text-muted">
         {loading ? "Loading homepage fare snapshot status…" : "No routes to display for this market/filter."}
@@ -1271,7 +1431,7 @@ function RouteDetailsTable({
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {group.routes.map((route) => (
+          {routes.map((route) => (
             <tr key={`${group.marketCode}-${route.id}`} className="align-top">
               <td className="px-3 py-3 font-bold text-navy">{route.market}</td>
               <td className="px-3 py-3 font-bold text-navy">{route.label}</td>

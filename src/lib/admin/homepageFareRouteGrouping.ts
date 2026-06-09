@@ -69,6 +69,8 @@ export type AdminHomepageFareRouteGroupFilter =
   | "fresh"
   | "unavailable";
 
+export const ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE = 10;
+
 export type AdminHomepageFareMarketRouteGroup = {
   marketCode: string;
   marketLabel: string;
@@ -93,10 +95,12 @@ export function buildAdminHomepageFareRouteGroups({
   routes,
   markets,
   filter = "all",
+  includeEmptyGroups = false,
 }: {
   routes: AdminHomepageFareRoute[];
   markets: AdminHomepageFareMarket[];
   filter?: AdminHomepageFareRouteGroupFilter;
+  includeEmptyGroups?: boolean;
 }) {
   const marketByCode = new Map(markets.map((market) => [market.marketCode, market]));
   const marketCodes = new Set([
@@ -114,7 +118,7 @@ export function buildAdminHomepageFareRouteGroups({
       return group;
     })
     .filter((group) => group.routes.length > 0 || Boolean(marketByCode.get(group.marketCode)))
-    .filter((group) => groupMatchesFilter(group, filter))
+    .filter((group) => includeEmptyGroups || groupMatchesFilter(group, filter))
     .sort(compareGroups);
 }
 
@@ -142,6 +146,38 @@ export function buildAdminHomepageFareAllRoutesGroup(
     discoveryVisibleTarget: 0,
     backupTarget: 0,
   });
+}
+
+export function splitAdminHomepageFareMarketRouteGroups(
+  groups: AdminHomepageFareMarketRouteGroup[],
+) {
+  return {
+    publicGroups: groups.filter((group) => !group.isFallbackPool),
+    fallbackGroups: groups.filter((group) => group.isFallbackPool),
+  };
+}
+
+export function paginateAdminHomepageFareRoutes<T>(
+  routes: T[],
+  page: number,
+  pageSize = ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE,
+) {
+  const safePageSize = Math.max(1, Math.floor(pageSize));
+  const totalPages = Math.max(1, Math.ceil(routes.length / safePageSize));
+  const currentPage = Math.min(Math.max(1, Math.floor(page)), totalPages);
+  const startIndex = (currentPage - 1) * safePageSize;
+  const endIndex = Math.min(startIndex + safePageSize, routes.length);
+
+  return {
+    routes: routes.slice(startIndex, endIndex),
+    currentPage,
+    totalPages,
+    totalRoutes: routes.length,
+    start: routes.length === 0 ? 0 : startIndex + 1,
+    end: endIndex,
+    hasPreviousPage: currentPage > 1,
+    hasNextPage: currentPage < totalPages,
+  };
 }
 
 function createGroup(
