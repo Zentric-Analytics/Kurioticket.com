@@ -1248,54 +1248,112 @@ function CompactLegSection({
       ];
 
   const directionLabel = formatLegDirection(leg.direction, legIndex, legCount);
+  const firstSegment = segments[0];
+  const firstAirlineName = firstSegment?.airlineName || fallbackAirlineName;
+  const firstMatchesFallbackAirline =
+    normalizeAirlineName(firstAirlineName) ===
+    normalizeAirlineName(fallbackAirlineName);
+  const firstAirlineLogo =
+    (firstSegment ? getAirlineLogo(firstSegment) : undefined) ??
+    (firstMatchesFallbackAirline ? fallbackAirlineLogo : undefined);
+  const firstFlightNumber = firstSegment?.flightNumber || fallbackFlightNumber;
+  const hasMultipleSegments = segments.length > 1;
 
   return (
     <section
-      className="min-w-0 rounded-xl border border-slate-200/80 bg-slate-50/70 px-3 py-3 sm:px-4"
+      className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 shadow-sm shadow-slate-200/40 sm:p-3"
       aria-label={directionLabel}
     >
-      <div className="mb-2 flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700">
-            {directionLabel}
-          </p>
-          <p className="whitespace-nowrap text-xs font-semibold tracking-wide text-slate-600">
-            {leg.originAirport} to {leg.destinationAirport}
-          </p>
+      <div className="flex min-w-0 gap-2.5">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm">
+          {firstAirlineLogo ? (
+            <Image
+              src={firstAirlineLogo}
+              alt={`${firstAirlineName} logo`}
+              width={28}
+              height={28}
+              className="h-7 w-7 object-contain"
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
+          ) : (
+            <Plane className="h-4 w-4 text-indigo-600" aria-hidden="true" />
+          )}
         </div>
-        <p className="whitespace-nowrap text-xs font-medium leading-5 text-slate-500">
-          {leg.duration} · {formatStops(leg.stops)}
-        </p>
-      </div>
-      <div className="divide-y divide-slate-100 rounded-lg bg-white px-2 sm:px-3">
-        {segments.map((segment, segmentIndex) => {
-          const airlineName = segment.airlineName || fallbackAirlineName;
-          const matchesFallbackAirline =
-            normalizeAirlineName(airlineName) ===
-            normalizeAirlineName(fallbackAirlineName);
-          const airlineLogo =
-            getAirlineLogo(segment) ??
-            (matchesFallbackAirline ? fallbackAirlineLogo : undefined);
 
-          return (
-            <div
-              key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
-            >
-              <CompactFlightRow
-                originAirport={segment.originAirport}
-                destinationAirport={segment.destinationAirport}
-                departureTime={segment.departureTime}
-                arrivalTime={segment.arrivalTime}
-                airlineName={airlineName}
-                airlineLogo={airlineLogo}
-                flightNumber={segment.flightNumber || fallbackFlightNumber}
-              />
-              {leg.layovers[segmentIndex] ? (
-                <LayoverSeparator layover={leg.layovers[segmentIndex]} />
-              ) : null}
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex min-w-0 items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-indigo-700">
+                {directionLabel}
+              </p>
+              <p className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs font-medium leading-4 text-slate-600">
+                <span className="min-w-0 truncate">{firstAirlineName}</span>
+                {firstFlightNumber ? (
+                  <>
+                    <span
+                      className="h-1 w-1 shrink-0 rounded-full bg-slate-300"
+                      aria-hidden="true"
+                    />
+                    <span className="shrink-0 whitespace-nowrap">
+                      {firstFlightNumber}
+                    </span>
+                  </>
+                ) : null}
+              </p>
             </div>
-          );
-        })}
+            <p className="min-w-0 truncate whitespace-nowrap text-right text-xs font-semibold tracking-wide text-slate-600">
+              {leg.originAirport} → {leg.destinationAirport}
+            </p>
+          </div>
+
+          <CompactFlightRow
+            originAirport={leg.originAirport}
+            destinationAirport={leg.destinationAirport}
+            departureTime={leg.departureTime}
+            arrivalTime={leg.arrivalTime}
+            airlineName={hasMultipleSegments ? undefined : firstAirlineName}
+            airlineLogo={hasMultipleSegments ? undefined : firstAirlineLogo}
+            flightNumber={hasMultipleSegments ? undefined : firstFlightNumber}
+            duration={leg.duration}
+            stops={formatStops(leg.stops)}
+          />
+
+          {hasMultipleSegments ? (
+            <div className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-100 bg-white px-2 sm:px-3">
+              {segments.map((segment, segmentIndex) => {
+                const airlineName = segment.airlineName || fallbackAirlineName;
+                const matchesFallbackAirline =
+                  normalizeAirlineName(airlineName) ===
+                  normalizeAirlineName(fallbackAirlineName);
+                const airlineLogo =
+                  getAirlineLogo(segment) ??
+                  (matchesFallbackAirline ? fallbackAirlineLogo : undefined);
+
+                return (
+                  <div
+                    key={`${segment.originAirport}-${segment.destinationAirport}-${segmentIndex}`}
+                  >
+                    <CompactFlightRow
+                      originAirport={segment.originAirport}
+                      destinationAirport={segment.destinationAirport}
+                      departureTime={segment.departureTime}
+                      arrivalTime={segment.arrivalTime}
+                      airlineName={airlineName}
+                      airlineLogo={airlineLogo}
+                      flightNumber={segment.flightNumber || fallbackFlightNumber}
+                      compact
+                    />
+                    {leg.layovers[segmentIndex] ? (
+                      <LayoverSeparator layover={leg.layovers[segmentIndex]} />
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
       </div>
     </section>
   );
@@ -1309,6 +1367,9 @@ function CompactFlightRow({
   airlineName,
   airlineLogo,
   flightNumber,
+  duration,
+  stops,
+  compact = false,
 }: {
   originAirport: string;
   destinationAirport: string;
@@ -1317,18 +1378,23 @@ function CompactFlightRow({
   airlineName?: string;
   airlineLogo?: string;
   flightNumber?: string;
+  duration?: string;
+  stops?: string;
+  compact?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_2rem_minmax(0,1fr)] items-center gap-2 py-2 sm:grid-cols-[minmax(0,1fr)_5rem_minmax(0,1fr)] sm:gap-3">
+    <div
+      className={`grid grid-cols-[minmax(0,1fr)_minmax(4.25rem,auto)_minmax(0,1fr)] items-center gap-2 sm:gap-3 ${
+        compact ? "py-2" : "rounded-lg bg-white px-2.5 py-2.5 sm:px-3"
+      }`}
+    >
       <div className="min-w-0">
-        <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 leading-tight">
-          <span className="truncate text-base font-semibold text-slate-900 sm:text-lg">
-            {originAirport}
-          </span>
-          <span className="text-sm font-medium text-slate-700">
-            {formatTime(departureTime)}
-          </span>
-        </p>
+        <div className="whitespace-nowrap text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
+          {formatTime(departureTime)}
+        </div>
+        <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
+          {originAirport}
+        </div>
         {airlineName || flightNumber ? (
           <p className="mt-1 flex min-w-0 items-center gap-1.5 text-xs font-medium leading-4">
             {airlineName ? (
@@ -1353,23 +1419,35 @@ function CompactFlightRow({
           </p>
         ) : null}
       </div>
-      <div className="flex min-w-0 items-center justify-center gap-1.5 self-center text-teal">
-        <span className="hidden h-px flex-1 bg-slate-200 sm:block" />
-        <Plane
-          className="h-3.5 w-3.5 shrink-0 text-indigo-600"
-          aria-hidden="true"
-        />
-        <span className="hidden h-px flex-1 bg-slate-200 sm:block" />
+
+      <div className="min-w-[68px] text-center sm:min-w-24">
+        <div className="flex items-center justify-center text-teal">
+          <span className="h-px flex-1 bg-slate-200" />
+          <Plane
+            className="mx-1.5 h-3.5 w-3.5 shrink-0 text-indigo-600"
+            aria-hidden="true"
+          />
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+        {duration ? (
+          <div className="mt-0.5 whitespace-nowrap text-xs font-semibold leading-4 text-slate-800">
+            {duration}
+          </div>
+        ) : null}
+        {stops ? (
+          <div className="whitespace-nowrap text-[11px] font-medium leading-4 text-slate-600">
+            {stops}
+          </div>
+        ) : null}
       </div>
+
       <div className="min-w-0 text-right">
-        <p className="flex min-w-0 flex-wrap items-baseline justify-end gap-x-2 gap-y-0.5 leading-tight">
-          <span className="text-sm font-medium text-slate-700">
-            {formatTime(arrivalTime)}
-          </span>
-          <span className="truncate text-base font-semibold text-slate-900 sm:text-lg">
-            {destinationAirport}
-          </span>
-        </p>
+        <div className="whitespace-nowrap text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
+          {formatTime(arrivalTime)}
+        </div>
+        <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
+          {destinationAirport}
+        </div>
       </div>
     </div>
   );
