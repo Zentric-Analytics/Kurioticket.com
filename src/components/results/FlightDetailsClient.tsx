@@ -228,7 +228,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </aside>
               </div>
 
-              <div className="grid w-full grid-cols-1 items-start gap-4 lg:-mt-8 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-5">
+              <div className="grid w-full grid-cols-1 items-start gap-4 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-5">
                 <div className="min-w-0">
                   <SelectedFlightSummary
                     itineraryLegs={itineraryLegs}
@@ -278,9 +278,7 @@ function SelectedFlightSummary({
             <div
               key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
               className={
-                legIndex > 0
-                  ? "mt-2 border-t border-violet-500/80 pt-2"
-                  : ""
+                legIndex > 0 ? "mt-2 border-t border-violet-500/80 pt-2" : ""
               }
             >
               <CompactLegSection
@@ -301,9 +299,13 @@ function SelectedFlightSummary({
 
 type ProviderComparisonOffer = {
   key: string;
-  providerName: string;
+  title: string;
+  providerName?: string;
+  logoUrl?: string;
   baggageInfo?: string;
   cabinClass?: string;
+  stops?: number;
+  duration?: string;
   price?: number;
   currency?: string;
   bookingUrl?: string;
@@ -339,7 +341,7 @@ function ProviderComparisonPanel({
       </div>
 
       {offers.length ? (
-        <div className="mt-3 divide-y divide-slate-200 border-t border-slate-200">
+        <div className="mt-3 grid gap-2 border-t border-slate-200 pt-3">
           {offers.map((offer) => {
             const priceDisplay =
               typeof offer.price === "number" && offer.currency
@@ -353,29 +355,55 @@ function ProviderComparisonPanel({
                   })
                 : null;
             const details = [
-              offer.baggageInfo ? formatBaggageValue(offer.baggageInfo) : null,
               offer.cabinClass ? formatCabinClass(offer.cabinClass) : null,
+              offer.baggageInfo ? formatBaggageValue(offer.baggageInfo) : null,
+              typeof offer.stops === "number" ? formatStops(offer.stops) : null,
+              offer.duration,
             ].filter(
               (detail): detail is string =>
                 Boolean(detail) && detail !== "Confirmed by provider",
             );
             const providerUrl = offer.partnerRedirectUrl || offer.bookingUrl;
-            const canBook = offer.useSelectedFlightRedirect || Boolean(providerUrl);
+            const canBook =
+              offer.useSelectedFlightRedirect || Boolean(providerUrl);
+            const showProviderByline =
+              offer.providerName &&
+              normalizeAirlineName(offer.providerName) !==
+                normalizeAirlineName(offer.title);
 
             return (
               <div
                 key={offer.key}
-                className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                className="flex min-w-0 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:flex-row sm:items-center sm:justify-between"
               >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-slate-900">
-                    {offer.providerName}
-                  </p>
-                  {details.length ? (
-                    <p className="mt-1 line-clamp-2 text-xs font-medium leading-4 text-slate-500">
-                      {details.join(" / ")}
-                    </p>
+                <div className="flex min-w-0 items-start gap-3">
+                  {offer.logoUrl ? (
+                    <Image
+                      src={offer.logoUrl}
+                      alt={`${offer.title} logo`}
+                      width={36}
+                      height={36}
+                      className="h-9 w-9 shrink-0 rounded-full border border-slate-100 bg-white object-contain p-1"
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                    />
                   ) : null}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-900">
+                      {offer.title}
+                    </p>
+                    {details.length ? (
+                      <p className="mt-1 line-clamp-2 text-xs font-medium leading-4 text-slate-500">
+                        {details.join(" · ")}
+                      </p>
+                    ) : null}
+                    {showProviderByline ? (
+                      <p className="mt-1 truncate text-[11px] font-medium leading-4 text-slate-400">
+                        Provided by {offer.providerName}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
                   {priceDisplay ? (
@@ -411,7 +439,8 @@ function ProviderComparisonPanel({
         </div>
       ) : (
         <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-white px-3 py-3 text-sm leading-5 text-slate-500">
-          Provider options will appear when available.
+          No additional live provider options are available for this flight
+          right now.
         </p>
       )}
     </aside>
@@ -421,15 +450,41 @@ function ProviderComparisonPanel({
 function buildProviderComparisonOffers(
   flight: PublicFlightResult,
 ): ProviderComparisonOffer[] {
+  const selectedOffer = normalizeSelectedProviderComparisonOffer(flight);
   const offers = getNestedProviderOffers(flight)
-    .map((offer, index) => normalizeProviderComparisonOffer(offer, index))
+    .map((offer, index) =>
+      normalizeProviderComparisonOffer(offer, index, flight),
+    )
     .filter((offer): offer is ProviderComparisonOffer => Boolean(offer));
 
-  offers.push({
-    key: `selected-${flight.provider}-${flight.price}-${flight.currency}`,
+  const seen = new Set<string>();
+  const uniqueOffers = offers.filter((offer) => {
+    const dedupeKey = buildProviderComparisonDedupeKey(offer);
+
+    if (seen.has(dedupeKey)) return false;
+    seen.add(dedupeKey);
+    return true;
+  });
+
+  const alternatives = uniqueOffers.filter(
+    (offer) => !providerComparisonOffersMatch(offer, selectedOffer),
+  );
+
+  return alternatives.length > 0 ? alternatives : [];
+}
+
+function normalizeSelectedProviderComparisonOffer(
+  flight: PublicFlightResult,
+): ProviderComparisonOffer {
+  return {
+    key: `selected-${flight.id}`,
+    title: flight.airlineName,
     providerName: flight.provider,
+    logoUrl: getProviderComparisonLogo(flight),
     baggageInfo: flight.baggageInfo,
     cabinClass: flight.cabinClass,
+    stops: flight.stops,
+    duration: flight.duration,
     price: flight.price,
     currency: flight.currency,
     bookingUrl: flight.bookingUrl,
@@ -437,23 +492,42 @@ function buildProviderComparisonOffers(
     useSelectedFlightRedirect: Boolean(
       flight.partnerRedirectUrl || flight.bookingUrl,
     ),
-  });
+  };
+}
 
-  const seen = new Set<string>();
+function buildProviderComparisonDedupeKey(offer: ProviderComparisonOffer) {
+  return [
+    offer.title.trim().toLowerCase(),
+    offer.providerName?.trim().toLowerCase() ?? "",
+    offer.price ?? "",
+    offer.currency ?? "",
+    offer.bookingUrl ?? "",
+    offer.partnerRedirectUrl ?? "",
+  ].join("|");
+}
 
-  return offers.filter((offer) => {
-    const dedupeKey = [
-      offer.providerName.trim().toLowerCase(),
-      offer.price ?? "",
-      offer.currency ?? "",
-      offer.bookingUrl ?? "",
-      offer.partnerRedirectUrl ?? "",
-    ].join("|");
+function providerComparisonOffersMatch(
+  offer: ProviderComparisonOffer,
+  selectedOffer: ProviderComparisonOffer,
+) {
+  const sameUrl = Boolean(
+    (offer.bookingUrl && offer.bookingUrl === selectedOffer.bookingUrl) ||
+    (offer.partnerRedirectUrl &&
+      offer.partnerRedirectUrl === selectedOffer.partnerRedirectUrl),
+  );
+  const samePrice =
+    typeof offer.price === "number" &&
+    typeof selectedOffer.price === "number" &&
+    offer.price === selectedOffer.price &&
+    offer.currency === selectedOffer.currency;
+  const sameTitle =
+    normalizeAirlineName(offer.title) ===
+    normalizeAirlineName(selectedOffer.title);
+  const sameProvider =
+    normalizeAirlineName(offer.providerName) ===
+    normalizeAirlineName(selectedOffer.providerName);
 
-    if (seen.has(dedupeKey)) return false;
-    seen.add(dedupeKey);
-    return true;
-  });
+  return sameUrl || (samePrice && (sameTitle || sameProvider));
 }
 
 function getNestedProviderOffers(flight: PublicFlightResult) {
@@ -463,36 +537,46 @@ function getNestedProviderOffers(flight: PublicFlightResult) {
     "providerOptions",
     "bookingOptions",
     "bookingOffers",
+    "alternativeOffers",
+    "alternatives",
+    "alternativeFlights",
+    "flightAlternatives",
+    "results",
     "offers",
     "fares",
   ];
 
-  for (const key of offerKeys) {
+  return offerKeys.flatMap((key) => {
     const value = fields[key];
-    if (Array.isArray(value)) return value;
-  }
-
-  return [];
+    return Array.isArray(value) ? value : [];
+  });
 }
 
 function normalizeProviderComparisonOffer(
   source: unknown,
   index: number,
+  selectedFlight: PublicFlightResult,
 ): ProviderComparisonOffer | null {
   if (!source || typeof source !== "object") return null;
 
   const fields = source as Record<string, unknown>;
   const providerName = getFirstStringValue(fields, [
-    "provider",
+    "providerDisplayName",
+    "offerDisplayName",
+    "displayName",
     "providerName",
+    "provider",
     "name",
-    "partner",
     "partnerName",
-    "supplier",
+    "partner",
     "supplierName",
+    "supplier",
+    "sourceName",
+    "source",
   ]);
+  const title = getCustomerFacingOfferName(fields) ?? providerName;
 
-  if (!providerName) return null;
+  if (!title) return null;
 
   const price = getNumericValue(fields, [
     "price",
@@ -510,8 +594,10 @@ function normalizeProviderComparisonOffer(
   ]);
 
   return {
-    key: `offer-${providerName}-${price ?? ""}-${currency ?? ""}-${index}`,
+    key: `offer-${title}-${providerName ?? "provider"}-${price ?? ""}-${currency ?? ""}-${index}`,
+    title,
     providerName,
+    logoUrl: getProviderComparisonLogo(source, selectedFlight),
     baggageInfo: getFirstStringValue(fields, [
       "baggageInfo",
       "baggage",
@@ -525,6 +611,8 @@ function normalizeProviderComparisonOffer(
       "fareType",
       "fareFamily",
     ]),
+    stops: getNumericValue(fields, ["stops", "stopCount", "numberOfStops"]),
+    duration: getFirstStringValue(fields, ["duration", "totalDuration"]),
     price,
     currency,
     bookingUrl: getFirstStringValue(fields, [
@@ -542,7 +630,161 @@ function normalizeProviderComparisonOffer(
   };
 }
 
-function getFirstStringValue(fields: Record<string, unknown>, keys: string[]) {
+function getCustomerFacingOfferName(
+  fields: Record<string, unknown>,
+): string | undefined {
+  return (
+    getFirstStringValue(fields, ["airlineName", "airline", "carrierName"]) ??
+    getNestedString(
+      fields,
+      ["airline", "carrier"],
+      ["displayName", "name", "label"],
+    ) ??
+    getFirstStringValue(fields, [
+      "marketingCarrierName",
+      "marketingCarrier",
+      "marketingAirlineName",
+    ]) ??
+    getNestedString(
+      fields,
+      ["marketingCarrier", "marketingAirline"],
+      ["displayName", "name", "label"],
+    ) ??
+    getFirstStringValue(fields, [
+      "validatingCarrierName",
+      "validatingCarrier",
+      "validatingAirlineName",
+    ]) ??
+    getNestedString(
+      fields,
+      ["validatingCarrier", "validatingAirline"],
+      ["displayName", "name", "label"],
+    ) ??
+    getItineraryCarrierName(fields) ??
+    getFirstStringValue(fields, ["offerDisplayName", "displayName", "name"])
+  );
+}
+
+function getItineraryCarrierName(
+  fields: Record<string, unknown>,
+): string | undefined {
+  for (const candidate of getItineraryCarrierCandidates(fields)) {
+    const carrierName = getCustomerFacingOfferName(candidate);
+    if (carrierName) return carrierName;
+  }
+
+  return undefined;
+}
+
+function getItineraryCarrierLogo(
+  fields: Record<string, unknown>,
+): string | undefined {
+  for (const candidate of getItineraryCarrierCandidates(fields)) {
+    const logo = getAirlineLogo(candidate);
+    if (logo) return logo;
+  }
+
+  return undefined;
+}
+
+function getItineraryCarrierCandidates(fields: Record<string, unknown>) {
+  const candidates: Record<string, unknown>[] = [];
+  const directSegments = fields.segments;
+
+  if (Array.isArray(directSegments)) {
+    candidates.push(...getRecordItems(directSegments));
+  }
+
+  const legs = fields.legs;
+
+  if (Array.isArray(legs)) {
+    for (const leg of getRecordItems(legs)) {
+      const legSegments = leg.segments;
+
+      if (Array.isArray(legSegments)) {
+        candidates.push(...getRecordItems(legSegments));
+      }
+    }
+  }
+
+  return candidates;
+}
+
+function getRecordItems(values: unknown[]) {
+  return values.filter(
+    (value): value is Record<string, unknown> =>
+      Boolean(value) && typeof value === "object",
+  );
+}
+
+function getProviderComparisonLogo(
+  source: unknown,
+  selectedFlight?: PublicFlightResult,
+): string | undefined {
+  const directLogo = getAirlineLogo(source);
+  if (directLogo) return directLogo;
+
+  if (!source || typeof source !== "object") return undefined;
+
+  const fields = source as Record<string, unknown>;
+  const itineraryLogo = getItineraryCarrierLogo(fields);
+  if (itineraryLogo) return itineraryLogo;
+
+  const providerLogo =
+    getFirstStringValue(fields, [
+      "providerLogo",
+      "providerLogoUrl",
+      "partnerLogo",
+      "partnerLogoUrl",
+      "supplierLogo",
+      "supplierLogoUrl",
+    ]) ?? getNestedLogo(fields, ["provider", "partner", "supplier"]);
+  if (providerLogo) return providerLogo;
+
+  const sourceAirlineName = getCustomerFacingOfferName(fields);
+  const selectedAirlineName = selectedFlight?.airlineName;
+
+  if (
+    selectedFlight &&
+    sourceAirlineName &&
+    selectedAirlineName &&
+    normalizeAirlineName(sourceAirlineName) ===
+      normalizeAirlineName(selectedAirlineName)
+  ) {
+    return getAirlineLogo(selectedFlight);
+  }
+
+  return undefined;
+}
+
+function getNestedString(
+  fields: Record<string, unknown>,
+  objectKeys: string[],
+  nestedKeys: string[],
+): string | undefined {
+  for (const objectKey of objectKeys) {
+    const value = fields[objectKey];
+
+    if (!value || typeof value !== "object") continue;
+
+    const nested = value as Record<string, unknown>;
+
+    for (const nestedKey of nestedKeys) {
+      const nestedValue = nested[nestedKey];
+
+      if (typeof nestedValue === "string" && nestedValue.trim()) {
+        return nestedValue.trim();
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function getFirstStringValue(
+  fields: Record<string, unknown>,
+  keys: string[],
+): string | undefined {
   for (const key of keys) {
     const value = fields[key];
 
@@ -925,7 +1167,11 @@ function getAirlineLogo(source: unknown) {
     "carrierLogoUrl",
     "logoUrl",
     "marketingCarrierLogo",
+    "marketingCarrierLogoUrl",
+    "validatingCarrierLogo",
+    "validatingCarrierLogoUrl",
     "operatingCarrierLogo",
+    "operatingCarrierLogoUrl",
   ];
 
   for (const key of logoKeys) {
@@ -940,6 +1186,7 @@ function getAirlineLogo(source: unknown) {
     "airline",
     "carrier",
     "marketingCarrier",
+    "validatingCarrier",
     "operatingCarrier",
   ]);
 }
