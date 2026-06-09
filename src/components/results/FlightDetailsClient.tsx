@@ -131,7 +131,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
               {routeHeading}
             </h1>
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
-              <div className="grid grid-cols-1 items-start gap-0 lg:grid-cols-[58%_minmax(0,1fr)]">
+              <div className="grid grid-cols-1 items-stretch gap-0 lg:grid-cols-[58%_minmax(0,1fr)]">
                 <div className="contents min-w-0 lg:flex lg:flex-col">
                   <div className="order-1 min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
                     <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
@@ -203,9 +203,9 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </div>
 
                 <div className="contents min-w-0 lg:flex lg:flex-col">
-                  <aside className="order-2 border-t border-indigo-100 bg-white p-2.5 sm:p-3 lg:border-l lg:border-t-0 lg:p-3">
-                    <div className="flex flex-col gap-2 lg:ml-auto lg:max-w-[260px]">
-                      <div className="rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-center shadow-sm">
+                  <aside className="order-2 flex items-center justify-center border-t border-indigo-100 bg-white px-3 py-2.5 sm:px-3.5 lg:border-l lg:border-t-0 lg:px-4 lg:py-3">
+                    <div className="mx-auto flex w-full max-w-[280px] flex-col items-center gap-1.5 text-center">
+                      <div className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-center shadow-sm">
                         <p className="text-[11px] font-semibold uppercase leading-4 tracking-wide text-slate-500">
                           From
                         </p>
@@ -226,13 +226,13 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       <Button
                         variant="accent"
                         size="lg"
-                        className="h-11 w-full rounded-lg px-4 text-sm font-semibold"
+                        className="h-10 w-full rounded-lg px-4 text-sm font-semibold"
                         onClick={continueToProvider}
                         disabled={!hasProviderLink}
                       >
                         Continue to Provider <ArrowRight size={17} />
                       </Button>
-                      <p className="flex items-start gap-1.5 text-xs leading-4 text-slate-500">
+                      <p className="flex items-start justify-center gap-1.5 text-center text-xs leading-4 text-slate-500">
                         <Info size={14} className="mt-0.5 shrink-0 text-blue" />
                         <span>{providerDisclaimer}</span>
                       </p>
