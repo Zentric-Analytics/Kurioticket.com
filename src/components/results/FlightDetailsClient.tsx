@@ -229,7 +229,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
               </div>
             </Card>
 
-            <div className="mt-4 grid w-full grid-cols-1 items-start gap-4 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-5">
+            <div className="mt-5 grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-6">
               <SelectedFlightSummary
                 itineraryLegs={itineraryLegs}
                 fallbackAirlineName={flight.airlineName}
@@ -267,11 +267,11 @@ function SelectedFlightSummary({
       <h2 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
         Selected Flights
       </h2>
-      <div className="mt-3 grid gap-4 border-t border-slate-200 pt-4">
+      <div className="mt-3.5 grid gap-4 border-t border-slate-200/80 pt-4">
         {itineraryLegs.map((leg, legIndex) => (
           <div
             key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
-            className={legIndex > 0 ? "border-t border-slate-200 pt-4" : ""}
+            className={legIndex > 0 ? "border-t border-slate-200/80 pt-4" : ""}
           >
             <CompactLegSection
               leg={leg}
@@ -319,7 +319,7 @@ function ProviderComparisonPanel({
 }) {
   return (
     <aside
-      className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+      className="min-w-0 rounded-xl border border-slate-200/70 bg-white/70 p-3.5 shadow-none sm:p-4 lg:mt-1"
       aria-label="Compare more providers"
     >
       <div>
@@ -332,7 +332,7 @@ function ProviderComparisonPanel({
       </div>
 
       {offers.length ? (
-        <div className="mt-3 divide-y divide-slate-100 border-t border-slate-100">
+        <div className="mt-3.5 divide-y divide-slate-100/80 border-t border-slate-100/80">
           {offers.map((offer) => {
             const priceDisplay =
               typeof offer.price === "number" && offer.currency
@@ -429,7 +429,7 @@ function ProviderComparisonPanel({
           })}
         </div>
       ) : (
-        <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm leading-6 text-slate-700">
+        <p className="mt-3.5 rounded-lg border border-slate-200/70 bg-slate-50/70 px-3 py-2.5 text-sm leading-6 text-slate-700">
           No additional live provider options are available for this flight
           right now.
         </p>
