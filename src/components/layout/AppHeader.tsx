@@ -274,17 +274,17 @@ export function AppHeader({
     const rawName = session?.user?.name?.trim();
 
     if (rawName) {
-      return rawName.split(/\s+/)[0] || "Account";
+      return rawName.split(/\s+/)[0] || t.account;
     }
 
-    return session?.user?.email?.split("@")[0] || "Account";
-  }, [session?.user?.email, session?.user?.name]);
+    return session?.user?.email?.split("@")[0] || t.account;
+  }, [session?.user?.email, session?.user?.name, t.account]);
 
   const accountInitials = useMemo(() => {
     const source =
       session?.user?.name?.trim() ||
       session?.user?.email?.trim() ||
-      "Account";
+      t.account;
 
     return source
       .split(/[\s@._-]+/)
@@ -292,7 +292,7 @@ export function AppHeader({
       .slice(0, 2)
       .map((part) => part.charAt(0).toUpperCase())
       .join("") || "A";
-  }, [session?.user?.email, session?.user?.name]);
+  }, [session?.user?.email, session?.user?.name, t.account]);
 
   const filteredLanguages = useMemo(() => {
     const query = languageQuery.trim().toLowerCase();
@@ -325,7 +325,7 @@ export function AppHeader({
       },
       {
         href: "/cars",
-        label: "Cars",
+        label: t.cars,
         icon: Car,
       },
       {
@@ -345,7 +345,7 @@ export function AppHeader({
       },
       {
         href: "/saved",
-        label: "Saved",
+        label: t.saved,
         icon: SavedHeartIcon,
       },
       ...(isSignedIn
@@ -504,7 +504,7 @@ export function AppHeader({
   const handleLanguageSelect = (option: (typeof locales)[number]) => {
     if (option.status !== "available") {
       setLanguageStatusMessage(
-        `${option.nativeLabel} is not available yet. Translation support is being expanded.`
+        t.languageUnavailableMessage.replace("{{language}}", option.nativeLabel)
       );
       return;
     }
@@ -566,7 +566,7 @@ export function AppHeader({
                     aria-haspopup="dialog"
                     aria-expanded={languageOpen}
                     aria-controls={languageOpen ? languageDialogId : undefined}
-                    aria-label={`Open language preferences, current language ${selectedLanguageDisplayName}`}
+                    aria-label={t.openLanguagePreferences.replace("{{language}}", selectedLanguageDisplayName)}
                     className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-none border-0 bg-transparent px-4 text-sm font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     <span>{selectedLanguageDisplayName}</span>
@@ -669,7 +669,7 @@ export function AppHeader({
                           <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                             <LogOut size={17} aria-hidden="true" />
                           </span>
-                          {isSigningOut ? "Signing out…" : t.logout}
+                          {isSigningOut ? t.signingOut : t.logout}
                         </button>
                       </div>
                     </div>
@@ -724,7 +724,7 @@ export function AppHeader({
             {isSignedIn ? (
               <button
                 type="button"
-                aria-label="Open account menu"
+                aria-label={t.openAccountMenu}
                 aria-expanded={open}
                 aria-haspopup="menu"
                 onClick={() => setOpen((value) => !value)}
@@ -743,7 +743,7 @@ export function AppHeader({
             ) : (
               <Link
                 href="/auth/signin"
-                aria-label="Sign in"
+                aria-label={t.signIn}
                 onClick={(event) => handleRouteLinkClick(event, "/auth/signin")}
                 className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               >
@@ -753,7 +753,7 @@ export function AppHeader({
 
             <button
               type="button"
-              aria-label={open ? "Close mobile menu" : "Open mobile menu"}
+              aria-label={open ? t.closeMobileMenu : t.openMobileMenu}
               aria-expanded={open}
               aria-controls={open ? "mobile-menu-drawer" : undefined}
               className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
@@ -783,19 +783,19 @@ export function AppHeader({
                     <div className="mb-5 flex items-start justify-between gap-4">
                       <div>
                         <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-600">
-                          Global language
+                          {t.globalLanguage}
                         </p>
                         <h2
                           id={languageTitleId}
                           className="mt-1 text-2xl font-black text-slate-950"
                         >
-                          Select your website language
+                          {t.websiteLanguageTitle}
                         </h2>
                         <p
                           id={languageDescriptionId}
                           className="mt-1 max-w-2xl text-sm leading-6 text-slate-600"
                         >
-                          English (United States) is the default website language. Kurioticket only changes language after you choose an available option.
+                          {t.websiteLanguageDescription}
                         </p>
                       </div>
 
@@ -803,7 +803,7 @@ export function AppHeader({
                         type="button"
                         onClick={closeLanguageDialog}
                         className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-                        aria-label="Close language selector"
+                        aria-label={t.closeLanguageSelector}
                       >
                         <X size={18} aria-hidden="true" />
                       </button>
@@ -811,10 +811,10 @@ export function AppHeader({
 
                     <div className="mb-4 rounded-none border border-slate-200 bg-slate-50 px-4 py-3">
                       <p className="text-sm font-bold text-slate-950">
-                        Current language: {selectedLanguageDisplayName}
+                        {t.currentLanguage.replace("{{language}}", selectedLanguageDisplayName)}
                       </p>
                       <p className="mt-1 text-xs font-medium text-slate-600">
-                        More languages are being prepared. Unavailable options do not translate the site yet.
+                        {t.languagePreparingNotice}
                       </p>
                     </div>
 
@@ -822,7 +822,7 @@ export function AppHeader({
                       htmlFor={languageSearchId}
                       className="mb-2 block text-sm font-bold text-slate-900"
                     >
-                      Search language
+                      {t.languageSearchLabel}
                     </label>
 
                     <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
@@ -836,7 +836,7 @@ export function AppHeader({
                           setLanguageQuery(event.target.value);
                           setLanguageStatusMessage("");
                         }}
-                        placeholder="Search English, Español, Français, Deutsch..."
+                        placeholder={t.languageSearchPlaceholder}
                         className="w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                       />
                     </div>
@@ -849,7 +849,7 @@ export function AppHeader({
 
                     <div
                       role="radiogroup"
-                      aria-label="Language options"
+                      aria-label={t.languageOptionsLabel}
                       className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
                     >
                       {filteredLanguages.map((option) => {
@@ -863,7 +863,11 @@ export function AppHeader({
                             role="radio"
                             aria-checked={active}
                             aria-disabled={!available}
-                            aria-label={available ? `Select ${option.nativeLabel}` : `${option.nativeLabel} translations are being prepared`}
+                            aria-label={
+                              available
+                                ? t.selectLanguageOption.replace("{{language}}", option.nativeLabel)
+                                : t.languagePreparingAria.replace("{{language}}", option.nativeLabel)
+                            }
                             onClick={() => handleLanguageSelect(option)}
                             className={`flex min-h-[4.75rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                               active
@@ -885,7 +889,7 @@ export function AppHeader({
                                 </span>
                                 {!available ? (
                                   <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
-                                    Preparing
+                                    {t.preparing}
                                   </span>
                                 ) : null}
                               </span>
@@ -992,7 +996,7 @@ export function AppHeader({
                       aria-haspopup="dialog"
                       aria-expanded={languageOpen}
                       aria-controls={languageOpen ? languageDialogId : undefined}
-                      aria-label={`Open language preferences, current language ${selectedLanguageDisplayName}`}
+                      aria-label={t.openLanguagePreferences.replace("{{language}}", selectedLanguageDisplayName)}
                       className="inline-flex min-h-11 cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     >
                       <span className="inline-flex items-center gap-2">
@@ -1074,7 +1078,7 @@ export function AppHeader({
                             className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                           >
                             <LogOut size={16} aria-hidden="true" />
-                            {isSigningOut ? "Signing out…" : t.logout}
+                            {isSigningOut ? t.signingOut : t.logout}
                           </button>
                         </div>
                       </section>

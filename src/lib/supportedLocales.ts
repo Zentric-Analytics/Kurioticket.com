@@ -41,10 +41,10 @@ export const supportedLocales: SupportedLocale[] = [
     label: "Spanish",
     nativeLabel: "Español",
     direction: "ltr",
-    status: preparing,
+    status: "available",
     countryCode: "ES",
     fallbackText: "ES",
-    translationStatus: "partial",
+    translationStatus: "ready",
   },
   {
     code: "fr-fr",

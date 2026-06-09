@@ -1570,14 +1570,14 @@ export function SearchTabs({
         }}
         className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
       >
-        Clear
+        {t.clear || "Clear"}
       </button>
       <button
         type="button"
         onClick={() => setFlightDatesOpen(false)}
         className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
       >
-        Done
+        {t.done || "Done"}
       </button>
     </div>
   );
@@ -1835,7 +1835,7 @@ export function SearchTabs({
                     className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
                   >
                     <span className={cn("truncate", !from.trim() && "text-slate-400")}>
-                      {from.trim() || "From?"}
+                      {from.trim() || t.fromPlaceholder || "From?"}
                     </span>
                   </button>
                   <input
@@ -1876,7 +1876,7 @@ export function SearchTabs({
                         true
                       )
                     }
-                    placeholder="From?"
+                    placeholder={t.fromPlaceholder || "From?"}
                     className="focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
                   />
                   {from.trim() ? (
@@ -1948,7 +1948,7 @@ export function SearchTabs({
                   type="button"
                   onClick={onSwapAirports}
                   className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
-                  aria-label="Swap origin and destination"
+                  aria-label={t.swapOriginDestination || "Swap origin and destination"}
                 >
                   <ArrowRightLeft size={14} />
                 </button>
@@ -1976,7 +1976,7 @@ export function SearchTabs({
                     className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
                   >
                     <span className={cn("truncate", !to.trim() && "text-slate-400")}>
-                      {to.trim() || "To?"}
+                      {to.trim() || t.toPlaceholder || "To?"}
                     </span>
                   </button>
                   <input
@@ -2011,7 +2011,7 @@ export function SearchTabs({
                         false
                       )
                     }
-                    placeholder="To?"
+                    placeholder={t.toPlaceholder || "To?"}
                     className="focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
                   />
                   {to.trim() ? (
@@ -2334,7 +2334,7 @@ export function SearchTabs({
                         }}
                         className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                       >
-                        Clear
+                        {t.clear || "Clear"}
                       </button>
                       <button
                         type="button"
@@ -2345,7 +2345,7 @@ export function SearchTabs({
                         }
                         className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
                       >
-                        Done
+                        {t.done || "Done"}
                       </button>
                     </div>
                   </div>
@@ -2404,7 +2404,7 @@ export function SearchTabs({
                             onClick={applyTravelersDraft}
                             className="focus-ring rounded-xl bg-indigo-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600"
                           >
-                            Done
+                            {t.done || "Done"}
                           </button>
                         </div>
                       }
@@ -2455,7 +2455,7 @@ export function SearchTabs({
                       </div>
                     </div>
                     <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
-                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-600">Done</button>
+                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
                     </div>
                   </div>
                   </>
@@ -2471,7 +2471,7 @@ export function SearchTabs({
                   className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
                   {isFlightSubmitting
-                    ? "Searching flights..."
+                    ? t.searchingFlights || "Searching flights..."
                     : t.search ||
                       "Search"}
                 </Button>
@@ -2487,7 +2487,7 @@ export function SearchTabs({
                   className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
                 >
                   <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-                  Clear all
+                  {t.clearAll || t.clear || "Clear all"}
                 </button>
               </div>
             </div>
@@ -2577,11 +2577,11 @@ export function SearchTabs({
                   }}
                   aria-haspopup="dialog"
                   aria-expanded={hotelDestinationMobilePickerOpen}
-                  aria-label="Choose hotel destination"
+                  aria-label={t.chooseHotelDestination || "Choose hotel destination"}
                   className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
                 >
                   <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
-                    {destination.trim() || "City or hotel"}
+                    {destination.trim() || t.cityOrHotel || "City or hotel"}
                   </span>
                   <ChevronDown
                     size={16}
@@ -2605,7 +2605,7 @@ export function SearchTabs({
                         .value
                     )
                   }
-                  placeholder="City or hotel"
+                  placeholder={t.cityOrHotel || "City or hotel"}
                   className="focus-ring hidden h-8 w-full rounded-md border-0 bg-transparent px-0 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
                   required
                 />
@@ -2827,7 +2827,7 @@ export function SearchTabs({
                         }}
                         className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                       >
-                        Clear
+                        {t.clear || "Clear"}
                       </button>
                       <button
                         type="button"
@@ -2838,7 +2838,7 @@ export function SearchTabs({
                         }
                         className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
                       >
-                        Done
+                        {t.done || "Done"}
                       </button>
                     </div>
                   </div>
@@ -3024,7 +3024,7 @@ export function SearchTabs({
                   className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
                 >
                   {isHotelSubmitting
-                    ? "Searching hotels..."
+                    ? t.searchingHotels || "Searching hotels..."
                     : t.search ||
                       "Search"}
                 </Button>
@@ -3060,14 +3060,14 @@ export function SearchTabs({
                   }}
                   className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 >
-                  Clear
+                  {t.clear || "Clear"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setHotelDatesOpen(false)}
                   className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
                 >
-                  Done
+                  {t.done || "Done"}
                 </button>
               </div>
             }
@@ -3182,7 +3182,7 @@ export function SearchTabs({
                   onClick={() => setHotelGuestsRoomsOpen(false)}
                   className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
                 >
-                  Done
+                  {t.done || "Done"}
                 </button>
               </div>
             }
