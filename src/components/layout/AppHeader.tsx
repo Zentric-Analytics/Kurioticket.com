@@ -500,7 +500,8 @@ export function AppHeader({
   };
 
   const handleMobileCountryCurrencyBeforeOpen = () => {
-    setOpen(false);
+    setLanguageOpen(false);
+    setAccountOpen(false);
   };
 
   const handleSignOut = async () => {
@@ -904,7 +905,7 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label="Mobile menu"
-                  className="fixed inset-y-0 right-0 z-[80] flex h-screen w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                  className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
                   <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-4">
                     <Link
@@ -926,7 +927,7 @@ export function AppHeader({
                     </button>
                   </div>
 
-                  <nav className="page-shell grid min-h-0 flex-1 gap-2 overflow-y-auto overflow-x-hidden py-4">
+                  <nav className="page-shell grid min-h-0 flex-1 gap-2 overflow-y-auto overflow-x-hidden overscroll-contain py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
                     <div className="pb-2">
                       <CountryCurrencySelector
                         variant="mobile"
