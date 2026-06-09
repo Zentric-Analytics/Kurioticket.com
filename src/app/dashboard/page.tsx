@@ -23,13 +23,14 @@ export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   const userName = session?.user?.name?.trim();
   const userEmail = session?.user?.email?.trim();
-  const displayName = userName || "traveler";
+  const firstName = userName?.split(/\s+/).filter(Boolean)[0];
+  const displayName = firstName || "traveler";
   const initials = getInitials(userName, userEmail);
 
   return (
     <>
       <AppHeader />
-      <main className="flex-1 bg-[radial-gradient(circle_at_top,rgba(20,184,166,0.12),transparent_34%),linear-gradient(180deg,#f8fbfc_0%,#ffffff_48%,#f8fafc_100%)] pb-10 pt-24 sm:pt-28 lg:pt-28">
+      <main className="flex-1 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.08),transparent_30%),linear-gradient(180deg,#fbfaff_0%,#ffffff_48%,#f8fafc_100%)] pb-10 pt-24 sm:pt-28 lg:pt-28">
         <div className="page-shell min-w-0">
           <AccountDashboardFrame>
             <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} />
