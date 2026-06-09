@@ -100,14 +100,21 @@ export type HomepageFareSnapshotStatusRoute = {
   label: string;
   origin: string;
   destination: string;
+  originCity?: string;
+  destinationCity?: string;
+  section: "popular" | "discovery" | "backup" | "fallback";
   price?: number;
   currency?: string;
+  providerNativePrice?: number;
+  providerNativeCurrency?: string;
+  provider?: string;
   status: HomepageFareSnapshotStatusValue;
   providerBacked: boolean;
   searchedAt?: string;
   expiresAt?: string;
   errorReason?: SafeHomepageFareErrorReason;
   errorCategory?: SafeHomepageFareErrorCategory;
+  replacementCandidateUsed?: string;
 };
 
 export type HomepageFareSnapshotStatusSummary = Record<
@@ -3042,12 +3049,16 @@ function formatHomepageFareSnapshotStatusRoute({
   now: Date;
   currency: string;
 }): HomepageFareSnapshotStatusRoute {
+  const section = getHomepageFareStatusRouteSection(route);
   const base = {
     id: route.id,
     market: route.market ?? "GLOBAL",
     label: route.label ?? `${route.origin} → ${route.destination}`,
     origin: route.origin,
     destination: route.destination,
+    destinationCity: route.label,
+    section,
+    ...(section === "backup" ? { replacementCandidateUsed: "Backup route candidate" } : {}),
   };
 
   if (!snapshot) {
@@ -3084,14 +3095,19 @@ function formatHomepageFareSnapshotStatusRoute({
       ? readSafeHomepageFareSnapshotError(snapshot.payload)
       : undefined;
 
+  const provider = readHomepageFareSnapshotProvider(snapshot.payload);
+
   return {
     ...base,
     ...((isFresh || isLastKnownGood) && price
       ? {
           price,
           currency: snapshot.currency,
+          providerNativePrice: price,
+          providerNativeCurrency: snapshot.currency,
         }
       : {}),
+    ...(provider ? { provider } : {}),
     status,
     providerBacked: snapshot.providerBacked === true,
     searchedAt: snapshot.searchedAt.toISOString(),
@@ -3103,6 +3119,30 @@ function formatHomepageFareSnapshotStatusRoute({
         }
       : {}),
   };
+}
+
+
+function getHomepageFareStatusRouteSection(
+  route: HomepageFareRoute,
+): HomepageFareSnapshotStatusRoute["section"] {
+  if ("isPopular" in route && route.isPopular === true) return "popular";
+  if ("visibility" in route && route.visibility === "backup") return "backup";
+  if ("visibility" in route && route.visibility === "fallback") return "fallback";
+  if ("isDiscover" in route && route.isDiscover === true) return "discovery";
+  if (route.id.startsWith("popular-")) return "popular";
+  if (route.id.startsWith("discover-")) return "discovery";
+  return "fallback";
+}
+
+function readHomepageFareSnapshotProvider(payload: unknown) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    return undefined;
+  }
+
+  const provider = (payload as { provider?: unknown }).provider;
+  return typeof provider === "string" && provider.trim().length <= 80
+    ? provider.trim()
+    : undefined;
 }
 
 function readSafeHomepageFareSnapshotError(payload: unknown):

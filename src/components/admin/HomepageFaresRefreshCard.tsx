@@ -1,10 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RefreshCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import {
+  buildAdminHomepageFareAllRoutesGroup,
+  buildAdminHomepageFareRouteGroups,
+  type AdminHomepageFareRouteGroupFilter,
+  type AdminHomepageFareMarketRouteGroup,
+} from "@/lib/admin/homepageFareRouteGrouping";
 
 const DEFAULT_REFRESH_BUDGET: RefreshBudget = {
   popularVisibleTarget: 8,
@@ -238,13 +244,22 @@ type HomepageFareSnapshotStatus =
   | "failed"
   | "missing";
 
+type HomepageFareRouteSection = "popular" | "discovery" | "backup" | "fallback";
+
 type HomepageFareStatusRoute = {
   id: string;
+  market: string;
   label: string;
   origin: string;
   destination: string;
+  originCity?: string;
+  destinationCity?: string;
+  section: HomepageFareRouteSection;
   price?: number;
   currency?: string;
+  providerNativePrice?: number;
+  providerNativeCurrency?: string;
+  provider?: string;
   status: HomepageFareSnapshotStatus;
   providerBacked: boolean;
   cachedProviderBacked?: boolean;
@@ -252,6 +267,7 @@ type HomepageFareStatusRoute = {
   expiresAt?: string;
   errorReason?: SafeHomepageFareErrorReason;
   errorCategory?: SafeHomepageFareErrorCategory;
+  replacementCandidateUsed?: string;
 };
 
 type HomepageFareStatusSummary = Record<HomepageFareSnapshotStatus, number> & {
@@ -322,6 +338,9 @@ export function HomepageFaresRefreshCard() {
     loading: true,
     error: "",
   });
+  const [selectedMarketCode, setSelectedMarketCode] = useState("ALL");
+  const [routeFilter, setRouteFilter] =
+    useState<AdminHomepageFareRouteGroupFilter>("all");
 
   const loadStatus = useCallback(async () => {
     setStatusState((current) => ({ ...current, loading: true, error: "" }));
@@ -406,6 +425,25 @@ export function HomepageFaresRefreshCard() {
     refreshBudget: DEFAULT_REFRESH_BUDGET,
     ...DEFAULT_MARKET_STATUS_FIELDS,
   };
+  const marketRouteGroups = useMemo(
+    () =>
+      buildAdminHomepageFareRouteGroups({
+        routes: statusPayload.routes,
+        markets: statusPayload.marketReadinessSummary,
+        filter: routeFilter,
+      }),
+    [routeFilter, statusPayload.marketReadinessSummary, statusPayload.routes],
+  );
+  const allRoutesGroup = useMemo(
+    () => buildAdminHomepageFareAllRoutesGroup(statusPayload.routes),
+    [statusPayload.routes],
+  );
+  const selectedRouteGroup =
+    selectedMarketCode === "ALL"
+      ? allRoutesGroup
+      : marketRouteGroups.find((group) => group.marketCode === selectedMarketCode) ??
+        marketRouteGroups[0] ??
+        allRoutesGroup;
 
   return (
     <Card className="p-5">
@@ -583,52 +621,16 @@ export function HomepageFaresRefreshCard() {
 
         <MarketReadinessTable markets={statusPayload.marketReadinessSummary} />
 
-        <div className="mt-4 overflow-hidden rounded-xl border border-border">
-          <div className="hidden grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr] gap-3 bg-slate-50 px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-muted md:grid">
-            <span>Route</span>
-            <span>Pair</span>
-            <span>Price</span>
-            <span>Status</span>
-          </div>
-          {statusPayload.routes.length ? (
-            <div className="divide-y divide-border">
-              {statusPayload.routes.map((route) => (
-                <div
-                  key={route.id}
-                  className="grid gap-3 px-4 py-3 text-sm md:grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr] md:items-center"
-                >
-                  <div>
-                    <p className="font-bold text-navy">{route.label}</p>
-                    <p className="mt-1 text-xs text-muted">
-                      {formatSnapshotTime(route.searchedAt)}
-                    </p>
-                  </div>
-                  <p className="font-semibold text-navy">
-                    {route.origin} → {route.destination}
-                  </p>
-                  <p className="font-semibold text-navy">
-                    {formatRoutePrice(route)}
-                  </p>
-                  <div>
-                    <StatusBadge status={route.status} />
-                    {route.expiresAt ? (
-                      <p className="mt-1 text-xs text-muted">
-                        Expires {formatDateTime(route.expiresAt)}
-                      </p>
-                    ) : null}
-                    <SafeFailureReason route={route} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="p-4 text-sm font-semibold text-muted">
-              {statusState.loading
-                ? "Loading homepage fare snapshot status…"
-                : "No homepage fare routes are configured for the status panel."}
-            </p>
-          )}
-        </div>
+        <MarketRouteInspector
+          groups={marketRouteGroups}
+          allRoutesGroup={allRoutesGroup}
+          selectedMarketCode={selectedMarketCode}
+          selectedGroup={selectedRouteGroup}
+          filter={routeFilter}
+          loading={statusState.loading}
+          onSelectMarket={setSelectedMarketCode}
+          onFilterChange={setRouteFilter}
+        />
       </div>
     </Card>
   );
@@ -675,6 +677,234 @@ const HEALTH_SUMMARY_STYLES: Record<HomepageFareHealthStatus, string> = {
   warning: "border-amber/20 bg-amber/10 text-amber",
   attention: "border-red-100 bg-red-50 text-danger",
 };
+
+
+const ROUTE_FILTERS: Array<{
+  key: AdminHomepageFareRouteGroupFilter;
+  label: string;
+}> = [
+  { key: "all", label: "All" },
+  { key: "ready", label: "Ready" },
+  { key: "underfilled", label: "Underfilled" },
+  { key: "failed", label: "Failed" },
+  { key: "stale", label: "Stale" },
+  { key: "missing", label: "Missing" },
+];
+
+function MarketRouteInspector({
+  groups,
+  allRoutesGroup,
+  selectedMarketCode,
+  selectedGroup,
+  filter,
+  loading,
+  onSelectMarket,
+  onFilterChange,
+}: {
+  groups: AdminHomepageFareMarketRouteGroup[];
+  allRoutesGroup: AdminHomepageFareMarketRouteGroup;
+  selectedMarketCode: string;
+  selectedGroup: AdminHomepageFareMarketRouteGroup;
+  filter: AdminHomepageFareRouteGroupFilter;
+  loading: boolean;
+  onSelectMarket: (marketCode: string) => void;
+  onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
+}) {
+  const marketButtons = [allRoutesGroup, ...groups];
+
+  return (
+    <section className="mt-5 rounded-2xl border border-border bg-white p-3 sm:p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h4 className="text-sm font-extrabold uppercase tracking-wide text-navy">
+            Grouped market route inspector
+          </h4>
+          <p className="mt-1 text-xs leading-5 text-muted">
+            View All keeps every configured route available for debugging. Market cards isolate routes by the configured country, regional, or global market.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {ROUTE_FILTERS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => onFilterChange(item.key)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-bold transition ${
+                filter === item.key
+                  ? "border-navy bg-navy text-white"
+                  : "border-border bg-white text-navy hover:border-navy/40"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 xl:grid-cols-[22rem_minmax(0,1fr)]">
+        <div className="space-y-2 xl:max-h-[720px] xl:overflow-y-auto xl:pr-1">
+          {marketButtons.length ? (
+            marketButtons.map((group) => (
+              <button
+                key={group.marketCode}
+                type="button"
+                onClick={() => onSelectMarket(group.marketCode)}
+                className={`w-full rounded-xl border p-3 text-left transition ${
+                  selectedMarketCode === group.marketCode
+                    ? "border-navy bg-slate-50 shadow-sm"
+                    : "border-border bg-white hover:border-navy/30 hover:bg-slate-50/70"
+                }`}
+                aria-expanded={selectedMarketCode === group.marketCode}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-extrabold text-navy">
+                      {group.displayName}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-muted">
+                      {group.routes.length} routes · {group.freshFaresCount} fresh · {group.missingRoutesCount} missing
+                    </p>
+                  </div>
+                  <MarketGroupStatusBadge status={group.status} />
+                </div>
+                <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                  <MarketMiniMetric label="Popular" value={group.popularCoverageCount} />
+                  <MarketMiniMetric label="Discovery" value={group.discoveryCoverageCount} />
+                  <MarketMiniMetric label="Backup" value={group.backupCoverageCount} />
+                  <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
+                  <MarketMiniMetric label="Failed" value={group.failedUnavailableRoutesCount} />
+                  <MarketMiniMetric label="Stale" value={group.staleRoutesCount} />
+                </dl>
+              </button>
+            ))
+          ) : (
+            <p className="rounded-xl border border-border p-4 text-sm font-semibold text-muted">
+              {loading ? "Loading market route groups…" : "No route groups match this filter."}
+            </p>
+          )}
+        </div>
+
+        <div className="min-w-0 overflow-hidden rounded-xl border border-border">
+          <div className="border-b border-border bg-slate-50 px-4 py-3">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h5 className="text-sm font-extrabold text-navy">
+                  {selectedGroup.displayName}
+                </h5>
+                <p className="text-xs font-semibold text-muted">
+                  {selectedGroup.marketCode === "ALL" ? "Debug view across all markets" : selectedGroup.marketCode}
+                </p>
+              </div>
+              <MarketGroupStatusBadge status={selectedGroup.status} />
+            </div>
+          </div>
+          <RouteDetailsTable group={selectedGroup} loading={loading} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MarketMiniMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg bg-white/80 p-2 ring-1 ring-slate-100">
+      <dt className="font-bold uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-0.5 font-extrabold text-navy">{value}</dd>
+    </div>
+  );
+}
+
+function RouteDetailsTable({
+  group,
+  loading,
+}: {
+  group: AdminHomepageFareMarketRouteGroup;
+  loading: boolean;
+}) {
+  if (!group.routes.length) {
+    return (
+      <p className="p-4 text-sm font-semibold text-muted">
+        {loading ? "Loading homepage fare snapshot status…" : "No routes to display for this market/filter."}
+      </p>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-[1120px] divide-y divide-border text-left text-sm">
+        <thead className="bg-white text-xs font-extrabold uppercase tracking-wide text-muted">
+          <tr>
+            <th className="px-3 py-3">Route</th>
+            <th className="px-3 py-3">Origin</th>
+            <th className="px-3 py-3">Destination</th>
+            <th className="px-3 py-3">Section</th>
+            <th className="px-3 py-3">Status</th>
+            <th className="px-3 py-3">Display price</th>
+            <th className="px-3 py-3">Provider native</th>
+            <th className="px-3 py-3">Provider</th>
+            <th className="px-3 py-3">Last refreshed</th>
+            <th className="px-3 py-3">Reason / replacement</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-border">
+          {group.routes.map((route) => (
+            <tr key={`${group.marketCode}-${route.id}`} className="align-top">
+              <td className="px-3 py-3 font-bold text-navy">{route.label}</td>
+              <td className="px-3 py-3 font-semibold text-navy">
+                {route.origin}
+                {route.originCity ? <span className="block text-xs font-medium text-muted">{route.originCity}</span> : null}
+              </td>
+              <td className="px-3 py-3 font-semibold text-navy">
+                {route.destination}
+                {route.destinationCity ? <span className="block text-xs font-medium text-muted">{route.destinationCity}</span> : null}
+              </td>
+              <td className="px-3 py-3 capitalize text-navy">{route.section}</td>
+              <td className="px-3 py-3">
+                <StatusBadge status={route.status} />
+              </td>
+              <td className="px-3 py-3 font-semibold text-navy">{formatRoutePrice(route)}</td>
+              <td className="px-3 py-3 font-semibold text-navy">{formatProviderNativePrice(route)}</td>
+              <td className="px-3 py-3 text-navy">{route.provider ?? "—"}</td>
+              <td className="px-3 py-3 text-xs font-semibold text-muted">
+                {formatSnapshotTime(route.searchedAt)}
+                {route.expiresAt ? <span className="block">Expires {formatDateTime(route.expiresAt)}</span> : null}
+              </td>
+              <td className="max-w-xs px-3 py-3 text-xs font-semibold text-muted">
+                <SafeFailureReason route={route} />
+                {route.replacementCandidateUsed ? (
+                  <span className="block">Replacement: {route.replacementCandidateUsed}</span>
+                ) : !route.errorReason ? (
+                  "—"
+                ) : null}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function MarketGroupStatusBadge({
+  status,
+}: {
+  status: AdminHomepageFareMarketRouteGroup["status"];
+}) {
+  const styles =
+    status === "Ready"
+      ? "bg-teal/10 text-teal-dark"
+      : status === "Failed"
+        ? "bg-red-50 text-danger"
+        : status === "Partially ready"
+          ? "bg-sky-50 text-sky-700"
+          : "bg-amber/10 text-amber";
+
+  return (
+    <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${styles}`}>
+      {status}
+    </span>
+  );
+}
 
 function DisplayReadinessSummary({ readiness }: { readiness: DisplayReadiness }) {
   return (
@@ -1040,16 +1270,32 @@ function normalizeStatusRoute(
 
   return {
     id: route.id,
+    market: typeof route.market === "string" ? route.market : "GLOBAL",
     label: typeof route.label === "string" ? route.label : `${origin} → ${destination}`,
     origin,
     destination,
+    originCity: typeof route.originCity === "string" ? route.originCity : undefined,
+    destinationCity:
+      typeof route.destinationCity === "string" ? route.destinationCity : undefined,
+    section: readRouteSection(route.section),
     price: typeof route.price === "number" && Number.isFinite(route.price) ? route.price : undefined,
     currency: readCode(route.currency),
+    providerNativePrice:
+      typeof route.providerNativePrice === "number" &&
+      Number.isFinite(route.providerNativePrice)
+        ? route.providerNativePrice
+        : undefined,
+    providerNativeCurrency: readCode(route.providerNativeCurrency),
+    provider: typeof route.provider === "string" ? route.provider : undefined,
     status,
     providerBacked: route.providerBacked === true,
     cachedProviderBacked: route.cachedProviderBacked === true,
     searchedAt: typeof route.searchedAt === "string" ? route.searchedAt : undefined,
     expiresAt: typeof route.expiresAt === "string" ? route.expiresAt : undefined,
+    replacementCandidateUsed:
+      typeof route.replacementCandidateUsed === "string"
+        ? route.replacementCandidateUsed
+        : undefined,
     ...readSafeHomepageFareStatusRouteError({
       status,
       errorReason: route.errorReason,
@@ -1058,7 +1304,7 @@ function normalizeStatusRoute(
   };
 }
 
-function SafeFailureReason({ route }: { route: HomepageFareStatusRoute }) {
+function SafeFailureReason({ route }: { route: { status: HomepageFareSnapshotStatus; errorReason?: string; errorCategory?: string } }) {
   if (
     (route.status !== "failed" && route.status !== "unavailable") ||
     !route.errorReason ||
@@ -1288,6 +1534,16 @@ function normalizeMarketReadiness(value: unknown): MarketReadiness | undefined {
   };
 }
 
+
+function readRouteSection(value: unknown): HomepageFareRouteSection {
+  return value === "popular" ||
+    value === "discovery" ||
+    value === "backup" ||
+    value === "fallback"
+    ? value
+    : "fallback";
+}
+
 function readSnapshotStatus(
   value: unknown,
 ): HomepageFareSnapshotStatus | undefined {
@@ -1315,14 +1571,30 @@ function readCount(value: unknown) {
     : 0;
 }
 
-function formatRoutePrice(route: HomepageFareStatusRoute) {
-  if (route.status !== "fresh" || !route.price || !route.currency) return "—";
+function formatRoutePrice(route: { status: HomepageFareSnapshotStatus; price?: number; currency?: string }) {
+  if (
+    (route.status !== "fresh" && route.status !== "last_known_good") ||
+    !route.price ||
+    !route.currency
+  ) {
+    return "—";
+  }
 
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: route.currency,
     maximumFractionDigits: 0,
   }).format(route.price);
+}
+
+function formatProviderNativePrice(route: { providerNativePrice?: number; providerNativeCurrency?: string }) {
+  if (!route.providerNativePrice || !route.providerNativeCurrency) return "—";
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: route.providerNativeCurrency,
+    maximumFractionDigits: 0,
+  }).format(route.providerNativePrice);
 }
 
 function formatSnapshotTime(value?: string) {
