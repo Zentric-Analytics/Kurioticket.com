@@ -132,125 +132,118 @@ export function FlightDetailsClient({ id }: { id: string }) {
             </h1>
             <Card className="overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
               <div className="grid grid-cols-1 items-stretch gap-0 lg:grid-cols-[58%_minmax(0,1fr)]">
-                <div className="contents min-w-0 lg:flex lg:flex-col">
-                  <div className="order-1 min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
-                    <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <AirlineNameWithLogo
-                            airlineName={flight.airlineName}
-                            airlineLogoUrl={getAirlineLogo(flight)}
-                            className="text-sm font-medium text-slate-700"
-                            logoClassName="h-6 w-6"
-                          />
-                          {flight.flightNumber ? (
-                            <>
-                              <span
-                                className="h-1 w-1 rounded-full bg-slate-300"
-                                aria-hidden="true"
-                              />
-                              <span className="text-sm font-medium text-slate-700">
-                                Flight {flight.flightNumber}
-                              </span>
-                            </>
-                          ) : null}
-                        </div>
-                        <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
-                          <span>{flight.originAirport}</span>
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
-                            <ArrowRight size={16} aria-hidden="true" />
-                          </span>
-                          <span>{flight.destinationAirport}</span>
-                        </h1>
-                      </div>
-
-                      <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium leading-5 text-slate-600">
-                        {heroDetails.map((detail) => {
-                          const Icon = detail.icon;
-
-                          return (
+                <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
+                  <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <AirlineNameWithLogo
+                          airlineName={flight.airlineName}
+                          airlineLogoUrl={getAirlineLogo(flight)}
+                          className="text-sm font-medium text-slate-700"
+                          logoClassName="h-6 w-6"
+                        />
+                        {flight.flightNumber ? (
+                          <>
                             <span
-                              key={detail.label}
-                              className="inline-flex min-w-0 items-center gap-1.5"
-                            >
-                              <Icon
-                                className="h-3.5 w-3.5 shrink-0 text-indigo-600"
-                                aria-hidden="true"
-                              />
-                              <span className="min-w-0">
-                                <span className="font-semibold text-slate-800">
-                                  {detail.label}:
-                                </span>{" "}
-                                <span className="font-medium text-slate-600">
-                                  {detail.value}
-                                </span>
-                              </span>
+                              className="h-1 w-1 rounded-full bg-slate-300"
+                              aria-hidden="true"
+                            />
+                            <span className="text-sm font-medium text-slate-700">
+                              Flight {flight.flightNumber}
                             </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="order-3 min-w-0">
-                    <SelectedFlightSummary
-                      itineraryLegs={itineraryLegs}
-                      fallbackAirlineName={flight.airlineName}
-                      fallbackAirlineLogo={getAirlineLogo(flight)}
-                      fallbackFlightNumber={flight.flightNumber}
-                    />
-                  </div>
-                </div>
-
-                <div className="contents min-w-0 lg:flex lg:flex-col">
-                  <aside className="order-2 flex items-center justify-center border-t border-indigo-100 bg-white px-3 py-2.5 sm:px-3.5 lg:border-l lg:border-t-0 lg:px-4 lg:py-3">
-                    <div className="mx-auto flex w-full max-w-[280px] flex-col items-center gap-1.5 text-center">
-                      <div className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-center shadow-sm">
-                        <p className="text-[11px] font-semibold uppercase leading-4 tracking-wide text-slate-500">
-                          From
-                        </p>
-                        <div
-                          className="text-xl font-semibold tracking-tight text-slate-900 sm:text-[1.375rem] sm:leading-7"
-                          aria-label={displayPrice.ariaLabel}
-                          title={displayPrice.title}
-                        >
-                          {displayPrice.formatted}
-                        </div>
-                        {displayPrice.isConvertedEstimate ? (
-                          <p className="mt-0.5 text-xs font-medium leading-4 text-slate-600">
-                            Estimate shown. Provider price:{" "}
-                            {displayPrice.providerFormatted}.
-                          </p>
+                          </>
                         ) : null}
                       </div>
-                      <Button
-                        variant="accent"
-                        size="lg"
-                        className="h-10 w-full rounded-lg px-4 text-sm font-semibold"
-                        onClick={continueToProvider}
-                        disabled={!hasProviderLink}
-                      >
-                        Continue to Provider <ArrowRight size={17} />
-                      </Button>
-                      <p className="flex items-start justify-center gap-1.5 text-center text-xs leading-4 text-slate-500">
-                        <Info size={14} className="mt-0.5 shrink-0 text-blue" />
-                        <span>{providerDisclaimer}</span>
-                      </p>
+                      <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-4xl">
+                        <span>{flight.originAirport}</span>
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
+                          <ArrowRight size={16} aria-hidden="true" />
+                        </span>
+                        <span>{flight.destinationAirport}</span>
+                      </h1>
                     </div>
-                  </aside>
 
-                  <div className="order-4 border-t border-indigo-100 bg-white p-3 sm:p-3.5 lg:border-l lg:p-4">
-                    <ProviderComparisonPanel
-                      offers={providerOffers}
-                      selectedCurrency={selectedOption.currency}
-                      currencyRates={currencyRates.rates}
-                      isFallbackRate={currencyRates.isFallback}
-                      onContinueToProvider={continueToProvider}
-                    />
+                    <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium leading-5 text-slate-600">
+                      {heroDetails.map((detail) => {
+                        const Icon = detail.icon;
+
+                        return (
+                          <span
+                            key={detail.label}
+                            className="inline-flex min-w-0 items-center gap-1.5"
+                          >
+                            <Icon
+                              className="h-3.5 w-3.5 shrink-0 text-indigo-600"
+                              aria-hidden="true"
+                            />
+                            <span className="min-w-0">
+                              <span className="font-semibold text-slate-800">
+                                {detail.label}:
+                              </span>{" "}
+                              <span className="font-medium text-slate-600">
+                                {detail.value}
+                              </span>
+                            </span>
+                          </span>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
+
+                <aside className="flex items-center justify-center border-t border-indigo-100 bg-white px-3 py-2.5 sm:px-3.5 lg:border-l lg:border-t-0 lg:px-4 lg:py-3">
+                  <div className="mx-auto flex w-full max-w-[280px] flex-col items-center gap-1.5 text-center">
+                    <div className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-center shadow-sm">
+                      <p className="text-[11px] font-semibold uppercase leading-4 tracking-wide text-slate-500">
+                        From
+                      </p>
+                      <div
+                        className="text-xl font-semibold tracking-tight text-slate-900 sm:text-[1.375rem] sm:leading-7"
+                        aria-label={displayPrice.ariaLabel}
+                        title={displayPrice.title}
+                      >
+                        {displayPrice.formatted}
+                      </div>
+                      {displayPrice.isConvertedEstimate ? (
+                        <p className="mt-0.5 text-xs font-medium leading-4 text-slate-600">
+                          Estimate shown. Provider price:{" "}
+                          {displayPrice.providerFormatted}.
+                        </p>
+                      ) : null}
+                    </div>
+                    <Button
+                      variant="accent"
+                      size="lg"
+                      className="h-10 w-full rounded-lg px-4 text-sm font-semibold"
+                      onClick={continueToProvider}
+                      disabled={!hasProviderLink}
+                    >
+                      Continue to Provider <ArrowRight size={17} />
+                    </Button>
+                    <p className="flex items-start justify-center gap-1.5 text-center text-xs leading-4 text-slate-500">
+                      <Info size={14} className="mt-0.5 shrink-0 text-blue" />
+                      <span>{providerDisclaimer}</span>
+                    </p>
+                  </div>
+                </aside>
               </div>
             </Card>
+
+            <div className="mt-4 grid w-full grid-cols-1 items-start gap-4 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-5">
+              <SelectedFlightSummary
+                itineraryLegs={itineraryLegs}
+                fallbackAirlineName={flight.airlineName}
+                fallbackAirlineLogo={getAirlineLogo(flight)}
+                fallbackFlightNumber={flight.flightNumber}
+              />
+              <ProviderComparisonPanel
+                offers={providerOffers}
+                selectedCurrency={selectedOption.currency}
+                currencyRates={currencyRates.rates}
+                isFallbackRate={currencyRates.isFallback}
+                onContinueToProvider={continueToProvider}
+              />
+            </div>
           </div>
         </div>
       </section>
@@ -271,7 +264,7 @@ function SelectedFlightSummary({
 }) {
   return (
     <section
-      className="border-t border-indigo-100 bg-white/95"
+      className="min-w-0 rounded-2xl border border-slate-200 bg-white shadow-sm"
       aria-label="Selected flight itinerary"
     >
       <div className="px-3 pb-3 pt-2.5 sm:px-3.5 sm:pb-3.5 sm:pt-3 lg:px-4 lg:pb-4 lg:pt-3">
