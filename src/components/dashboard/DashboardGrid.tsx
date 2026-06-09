@@ -27,10 +27,11 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "Overview", href: "/dashboard", icon: Grid2X2 },
-  { label: "Trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
+  { label: "My Trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
   { label: "Saved", href: "/dashboard/saved", icon: Bookmark },
   { label: "Price alerts", href: "/dashboard/alerts", icon: Bell },
-  { label: "Preferences", href: "/dashboard/preferences", icon: Settings },
+  { label: "Preference", href: "/dashboard/preferences", icon: Settings },
+  { label: "Security", href: "/dashboard/security", icon: ShieldCheck },
   { label: "Support", href: "/dashboard/support", icon: LifeBuoy },
 ];
 
@@ -426,8 +427,8 @@ export function TripsDashboardPage() {
   return (
     <Card className="overflow-hidden p-0">
       <div className="border-b border-border bg-surface-muted/70 px-5 py-5 sm:px-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Trips</p>
-        <h1 className="mt-2 text-3xl font-bold text-navy">Trips</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">My Trips</p>
+        <h1 className="mt-2 text-3xl font-bold text-navy">My Trips</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
           Booked and saved trip activity tied to your account will appear here when it exists.
         </p>
@@ -492,6 +493,26 @@ export function PreferencesDashboardPage() {
         <ListRow title="Notification preferences" body="Manage email and alert preferences as notification controls are added." icon={Mail} status="Coming soon" />
         <ListRow title="Travel preferences" body="Keep preferred planning defaults easy to find for future account settings." icon={Settings} status="Coming soon" />
         <ListRow title="Security and privacy" body="Review current privacy and platform policy information." href="/legal" icon={ShieldCheck} />
+      </div>
+    </section>
+  );
+}
+
+export function SecurityDashboardPage() {
+  return (
+    <section aria-labelledby="security-title" className="space-y-4">
+      <div className="max-w-3xl">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Security</p>
+        <h1 id="security-title" className="mt-2 text-3xl font-bold text-navy">Security</h1>
+        <p className="mt-3 text-sm leading-6 text-muted">
+          Manage your account security and privacy settings.
+        </p>
+      </div>
+      <div className="grid gap-3">
+        <ListRow title="Password" body="Manage your password and sign-in security." icon={LockKeyhole} status="Coming soon" />
+        <ListRow title="Two-step verification" body="Add an extra layer of protection to your account." icon={ShieldCheck} status="Coming soon" />
+        <ListRow title="Active sessions" body="Review devices signed in to your account." icon={UserRound} status="Coming soon" />
+        <ListRow title="Privacy" body="Review how your account information is used." href="/legal" icon={LockKeyhole} />
       </div>
     </section>
   );
