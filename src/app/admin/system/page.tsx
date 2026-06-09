@@ -1,5 +1,4 @@
-import { AdminPageShell, StatusPill } from "@/components/admin/AdminPageShell";
-import { Card } from "@/components/ui/Card";
+import { AdminPageShell, AdminSectionCard, AdminStatusBadge } from "@/components/admin/AdminPageShell";
 import { getSafeSystemStatus } from "@/lib/admin-data";
 
 export const metadata = { title: "Admin System" };
@@ -7,24 +6,33 @@ export const metadata = { title: "Admin System" };
 export default async function AdminSystemPage() {
   const system = await getSafeSystemStatus();
   const rows = [
-    ["App environment", system.appEnvironment],
-    ["Node environment", system.nodeEnv],
-    ["Render/runtime", system.renderService],
-    ["App URL configured", system.appUrlConfigured ? "Yes" : "No"],
-    ["Database configured", system.databaseConfigured ? "Yes" : "No"],
-    ["Database connected", system.databaseConnected ? "Yes" : "No"],
-    ["Auth secret configured", system.authSecretConfigured ? "Yes" : "No"],
-    ["Google auth configured", system.googleAuthConfigured ? "Yes" : "No"],
-    ["Duffel configured", system.duffelConfigured ? "Yes" : "No"],
-  ];
+    ["App environment", system.appEnvironment, true],
+    ["Database", system.databaseConnected ? "Connected" : system.databaseConfigured ? "Configured, disconnected" : "Disconnected", system.databaseConnected],
+    ["Auth configured", system.authConfigured ? "Yes" : "No", system.authConfigured],
+    ["Session secret configured", system.sessionConfigured ? "Yes" : "No", system.sessionConfigured],
+    ["Email configured", system.emailConfigured ? "Yes" : "No", system.emailConfigured],
+    ["Provider configs present", system.providerCredentialsPresent ? "Yes" : "No", system.providerCredentialsPresent],
+    ["Webhook configured", system.webhookConfigured ? "Yes" : "No", system.webhookConfigured],
+    ["Admin emails configured", system.adminEmailsConfigured ? "Yes" : "No", system.adminEmailsConfigured],
+  ] as const;
+
   return (
-    <AdminPageShell title="System" description="Safe operational status only. Secret values, database URLs, and API keys are never displayed.">
-      <Card className="p-5">
+    <AdminPageShell title="System" description="Safe operational status only. Secret values, database URLs, API keys, tokens, and raw environment variables are never displayed.">
+      <AdminSectionCard className="p-5">
         <div className="grid gap-3 md:grid-cols-2">
-          {rows.map(([label, value]) => <div key={label} className="flex items-center justify-between gap-3 rounded-md bg-slate-50 p-3"><span className="text-sm text-muted">{label}</span><b className="text-sm text-navy">{value}</b></div>)}
+          {rows.map(([label, value, ok]) => (
+            <div key={label} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3">
+              <span className="text-sm font-semibold text-slate-600">{label}</span>
+              <AdminStatusBadge tone={ok ? "good" : "neutral"}>{value}</AdminStatusBadge>
+            </div>
+          ))}
         </div>
-        <div className="mt-5 flex flex-wrap gap-2"><StatusPill tone="good">No secrets shown</StatusPill><StatusPill>Database URL hidden</StatusPill><StatusPill>API keys hidden</StatusPill></div>
-      </Card>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <AdminStatusBadge tone="good">No secrets shown</AdminStatusBadge>
+          <AdminStatusBadge>Database URL hidden</AdminStatusBadge>
+          <AdminStatusBadge>API keys hidden</AdminStatusBadge>
+        </div>
+      </AdminSectionCard>
     </AdminPageShell>
   );
 }
