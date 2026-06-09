@@ -139,105 +139,107 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   />
 
                   <Card className="mt-5 overflow-hidden border-slate-200/80 bg-white p-0 shadow-none">
-                    <div className="grid grid-cols-1 items-stretch gap-0">
+                    <div className="grid grid-cols-1 items-stretch gap-0 md:grid-cols-[minmax(0,1fr)_minmax(14rem,16rem)]">
                       <div className="min-w-0 bg-slate-50/70 p-3 sm:p-3.5 lg:p-4">
-                      <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
-                        <div className="min-w-0 space-y-1">
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <AirlineNameWithLogo
-                              airlineName={flight.airlineName}
-                              airlineLogoUrl={getAirlineLogo(flight)}
-                              className="text-sm font-medium text-slate-700"
-                              logoClassName="h-6 w-6"
-                            />
-                            {flight.flightNumber ? (
-                              <>
-                                <span
-                                  className="h-1 w-1 rounded-full bg-slate-300"
-                                  aria-hidden="true"
-                                />
-                                <span className="text-sm font-medium text-slate-700">
-                                  Flight {flight.flightNumber}
-                                </span>
-                              </>
-                            ) : null}
+                        <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <AirlineNameWithLogo
+                                airlineName={flight.airlineName}
+                                airlineLogoUrl={getAirlineLogo(flight)}
+                                className="text-sm font-medium text-slate-700"
+                                logoClassName="h-6 w-6"
+                              />
+                              {flight.flightNumber ? (
+                                <>
+                                  <span
+                                    className="h-1 w-1 rounded-full bg-slate-300"
+                                    aria-hidden="true"
+                                  />
+                                  <span className="text-sm font-medium text-slate-700">
+                                    Flight {flight.flightNumber}
+                                  </span>
+                                </>
+                              ) : null}
+                            </div>
+                            <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-medium leading-tight tracking-tight text-slate-900 sm:text-3xl lg:text-2xl lg:font-semibold">
+                              <span>{flight.originAirport}</span>
+                              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
+                                <ArrowRight size={16} aria-hidden="true" />
+                              </span>
+                              <span>{flight.destinationAirport}</span>
+                            </h1>
                           </div>
-                          <h1 className="flex min-w-0 flex-wrap items-center gap-2 text-3xl font-medium leading-tight tracking-tight text-slate-900 sm:text-3xl lg:text-2xl lg:font-semibold">
-                            <span>{flight.originAirport}</span>
-                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-blue shadow-sm sm:h-8 sm:w-8">
-                              <ArrowRight size={16} aria-hidden="true" />
-                            </span>
-                            <span>{flight.destinationAirport}</span>
-                          </h1>
-                        </div>
 
-                        <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium leading-5 text-slate-600">
-                          {heroDetails.map((detail) => {
-                            const Icon = detail.icon;
+                          <div className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium leading-5 text-slate-600">
+                            {heroDetails.map((detail) => {
+                              const Icon = detail.icon;
 
-                            return (
-                              <span
-                                key={detail.label}
-                                className="inline-flex min-w-0 items-center gap-1.5"
-                              >
-                                <Icon
-                                  className="h-3.5 w-3.5 shrink-0 text-indigo-600"
-                                  aria-hidden="true"
-                                />
-                                <span className="min-w-0">
-                                  <span className="font-semibold text-slate-800">
-                                    {detail.label}:
-                                  </span>{" "}
-                                  <span className="font-medium text-slate-600">
-                                    {detail.value}
+                              return (
+                                <span
+                                  key={detail.label}
+                                  className="inline-flex min-w-0 items-center gap-1.5"
+                                >
+                                  <Icon
+                                    className="h-3.5 w-3.5 shrink-0 text-indigo-600"
+                                    aria-hidden="true"
+                                  />
+                                  <span className="min-w-0">
+                                    <span className="font-semibold text-slate-800">
+                                      {detail.label}:
+                                    </span>{" "}
+                                    <span className="font-medium text-slate-600">
+                                      {detail.value}
+                                    </span>
                                   </span>
                                 </span>
-                              </span>
-                            );
-                          })}
-                        </div>
-
-                        <p className="flex max-w-2xl items-start gap-1.5 text-xs font-medium leading-5 text-slate-600">
-                          <Info
-                            size={14}
-                            className="mt-0.5 shrink-0 text-blue"
-                            aria-hidden="true"
-                          />
-                          <span className="min-w-0">{providerDisclaimer}</span>
-                        </p>
-                      </div>
-                    </div>
-
-                      <aside className="flex items-center justify-center border-t border-slate-200/80 bg-white px-3 py-3 sm:px-3 sm:py-2 lg:px-3.5 lg:py-2.5">
-                      <div className="mx-auto flex w-full max-w-[20rem] flex-col items-stretch gap-1.5 text-center sm:max-w-[320px] sm:gap-1 lg:max-w-[320px]">
-                        <div className="w-full rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2 text-center shadow-sm sm:px-2.5 sm:py-1">
-                          <p className="text-[10px] font-semibold uppercase leading-3 tracking-wide text-slate-500">
-                            From
-                          </p>
-                          <div
-                            className="whitespace-nowrap text-center text-[1.125rem] font-medium leading-5 tracking-tight text-slate-900 sm:text-[1.2rem] sm:leading-6 lg:font-semibold"
-                            aria-label={displayPrice.ariaLabel}
-                            title={displayPrice.title}
-                          >
-                            {displayPrice.formatted}
+                              );
+                            })}
                           </div>
-                          {displayPrice.isConvertedEstimate ? (
-                            <p className="mx-auto mt-1 max-w-[17rem] text-center text-[11px] font-medium leading-[0.95rem] text-slate-600 sm:mt-0.5">
-                              Estimate shown. Provider price:{" "}
-                              {displayPrice.providerFormatted}.
-                            </p>
-                          ) : null}
+
+                          <p className="flex max-w-2xl items-start gap-1.5 text-xs font-medium leading-5 text-slate-600">
+                            <Info
+                              size={14}
+                              className="mt-0.5 shrink-0 text-blue"
+                              aria-hidden="true"
+                            />
+                            <span className="min-w-0">
+                              {providerDisclaimer}
+                            </span>
+                          </p>
                         </div>
-                        <Button
-                          variant="accent"
-                          size="lg"
-                          className="h-11 w-full justify-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm font-semibold sm:h-9 sm:text-[13px]"
-                          onClick={continueToProvider}
-                          disabled={!hasProviderLink}
-                        >
-                          Continue to Provider <ArrowRight size={16} />
-                        </Button>
                       </div>
+
+                      <aside className="flex items-center justify-center border-t border-slate-200/80 bg-white px-3 py-3 sm:px-3 sm:py-3 md:border-l md:border-t-0 lg:px-3.5 lg:py-4">
+                        <div className="mx-auto flex w-full max-w-[20rem] flex-col items-stretch gap-2 text-center sm:max-w-[320px] md:max-w-[15rem] lg:max-w-[15.5rem]">
+                          <div className="w-full rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-center shadow-sm sm:px-3 sm:py-2">
+                            <p className="text-[10px] font-semibold uppercase leading-3 tracking-wide text-slate-500">
+                              From
+                            </p>
+                            <div
+                              className="whitespace-nowrap text-center text-[1.125rem] font-medium leading-5 tracking-tight text-slate-900 sm:text-[1.2rem] sm:leading-6 lg:font-semibold"
+                              aria-label={displayPrice.ariaLabel}
+                              title={displayPrice.title}
+                            >
+                              {displayPrice.formatted}
+                            </div>
+                            {displayPrice.isConvertedEstimate ? (
+                              <p className="mx-auto mt-1 max-w-[17rem] text-center text-[11px] font-medium leading-[0.95rem] text-slate-600 sm:mt-0.5">
+                                Estimate shown. Provider price:{" "}
+                                {displayPrice.providerFormatted}.
+                              </p>
+                            ) : null}
+                          </div>
+                          <Button
+                            variant="accent"
+                            size="lg"
+                            className="h-11 w-full justify-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-sm font-semibold sm:h-10 sm:text-[13px]"
+                            onClick={continueToProvider}
+                            disabled={!hasProviderLink}
+                          >
+                            Continue to Provider <ArrowRight size={16} />
+                          </Button>
+                        </div>
                       </aside>
                     </div>
                   </Card>
