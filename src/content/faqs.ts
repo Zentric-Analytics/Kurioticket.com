@@ -34,7 +34,7 @@ export const generalFaqs: FaqItem[] = [
   {
     question: "Can I set currency and language preferences?",
     answer:
-      "Yes. Kurioticket supports language and region preferences so the experience can feel more relevant based on how you prefer to search and compare travel options.",
+      "Yes. Kurioticket lets you set display country/currency preferences, and English (United States) is the current website language while more translations are prepared.",
   },
   {
     question: "Are search results live or cached?",

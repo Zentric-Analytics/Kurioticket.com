@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -12,48 +13,55 @@ import {
   getTranslations,
   localeOptions,
   publicLocaleOptions,
-  type LocaleCode,
 } from "@/lib/i18n";
 
 import {
   getStoredLocale,
   setStoredLocale,
 } from "@/lib/preferences/preferences";
-import { normalizeLanguage } from "@/lib/language";
+import {
+  findLanguageOption,
+  isAvailableLanguage,
+  normalizeLanguage,
+  type LanguageCode,
+} from "@/lib/language";
 
 type LocaleContextValue = {
-  locale: LocaleCode;
-  setLocale: (locale: LocaleCode) => void;
+  locale: LanguageCode;
+  setLocale: (locale: string) => boolean;
   t: ReturnType<typeof getTranslations>;
-  locales: typeof publicLocaleOptions;
+  locales: typeof localeOptions;
 };
 
 const LocaleContext =
   createContext<LocaleContextValue | null>(null);
 
-const DEFAULT_LOCALE: LocaleCode =
+const DEFAULT_LOCALE: LanguageCode =
   "en-us";
 
 function isSupportedLocale(
   value: string | null | undefined
-): value is LocaleCode {
+): value is LanguageCode {
   return Boolean(
     value &&
       localeOptions.some(
         (option) =>
-          option.code === value
+          option.code === value ||
+          option.locale.toLowerCase() === value.toLowerCase()
       )
   );
 }
 
-
 function getTextDirection(
-  locale: LocaleCode
+  locale: LanguageCode
 ) {
-  return locale.startsWith("ar") ||
-    locale.startsWith("he")
-    ? "rtl"
-    : "ltr";
+  return findLanguageOption(locale)?.direction ?? "ltr";
+}
+
+function getDocumentLanguage(
+  locale: LanguageCode
+) {
+  return findLanguageOption(locale)?.locale ?? "en-US";
 }
 
 export function LocaleProvider({
@@ -62,36 +70,35 @@ export function LocaleProvider({
   children: React.ReactNode;
 }) {
   const [locale, setLocaleState] =
-    useState<LocaleCode>(() => {
-    const savedLocale =
+    useState<LanguageCode>(() => {
+      const savedLocale =
         getStoredLocale();
 
       return isSupportedLocale(savedLocale) && isPublicLocale(savedLocale)
-        ? savedLocale
+        ? normalizeLanguage(savedLocale)
         : DEFAULT_LOCALE;
     });
 
-  const setLocale = (
-    nextLocale: LocaleCode
+  const setLocale = useCallback((
+    nextLocale: string
   ) => {
     const normalized =
-      normalizeLanguage(nextLocale) as LocaleCode;
+      normalizeLanguage(nextLocale);
 
     if (!isPublicLocale(normalized)) {
-      setLocaleState(DEFAULT_LOCALE);
-      setStoredLocale(DEFAULT_LOCALE);
-      return;
+      return false;
     }
 
     setLocaleState(normalized);
     setStoredLocale(normalized);
-  };
+    return true;
+  }, []);
 
   useEffect(() => {
     setStoredLocale(locale);
 
     document.documentElement.lang =
-      locale;
+      getDocumentLanguage(locale);
 
     document.documentElement.dir =
       getTextDirection(locale);
@@ -107,7 +114,7 @@ export function LocaleProvider({
         {
           locale,
           source:
-            "cookie/localStorage/default",
+            "manual-selection/localStorage/default",
         }
       );
     }
@@ -119,9 +126,9 @@ export function LocaleProvider({
         locale,
         setLocale,
         t: getTranslations(locale),
-        locales: publicLocaleOptions,
+        locales: localeOptions,
       }),
-      [locale]
+      [locale, setLocale]
     );
 
   return (
@@ -148,12 +155,13 @@ export function useLocale() {
 
 function isPublicLocale(
   value: string | null | undefined
-): value is LocaleCode {
+): value is LanguageCode {
   return Boolean(
     value &&
+      isAvailableLanguage(value) &&
       publicLocaleOptions.some(
         (option) =>
-          option.code === value
+          option.code === normalizeLanguage(value)
       )
   );
 }

@@ -53,9 +53,48 @@ export const dictionaries: Record<string, TranslationDictionary> = {
 
 export type LocaleCode = keyof typeof dictionaries;
 export const localeOptions = supportedLocales.map((locale) => ({ ...locale }));
-export const publicLocaleOptions = localeOptions.filter((locale) => locale.translationStatus === "ready");
+export const availableLocaleOptions = localeOptions.filter((locale) => locale.status === "available");
+export const publicLocaleOptions = availableLocaleOptions;
 const fallbackLocale: LocaleCode = "en-us";
-const localeAliases: Record<string, string> = { en: "en-us", fr: "fr-fr", es: "es-es", ar: "ar-sa", pt: "pt-pt", zh: "zh-cn" };
+const localeAliases: Record<string, string> = {
+  en: "en-us",
+  "en-us": "en-us",
+  fr: "fr-fr",
+  "fr-fr": "fr-fr",
+  es: "es-es",
+  "es-es": "es-es",
+  de: "de",
+  "de-de": "de",
+  it: "it",
+  "it-it": "it",
+  nl: "nl",
+  "nl-nl": "nl",
+  ar: "ar-sa",
+  "ar-sa": "ar-sa",
+  pt: "pt-pt",
+  "pt-pt": "pt-pt",
+  "pt-br": "pt-br",
+  zh: "zh-cn",
+  "zh-cn": "zh-cn",
+  ja: "ja",
+  "ja-jp": "ja",
+  ko: "ko",
+  "ko-kr": "ko",
+  hi: "hi",
+  "hi-in": "hi",
+  tr: "tr",
+  "tr-tr": "tr",
+  pl: "pl",
+  "pl-pl": "pl",
+  sv: "sv",
+  "sv-se": "sv",
+  id: "id",
+  "id-id": "id",
+  th: "th",
+  "th-th": "th",
+  vi: "vi",
+  "vi-vn": "vi",
+};
 export function getTranslations(locale?: string | null): TranslationDictionary {
   if (!locale) return dictionaries[fallbackLocale];
   const normalized = locale.trim().toLowerCase();
