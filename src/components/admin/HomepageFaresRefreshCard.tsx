@@ -60,6 +60,11 @@ const DEFAULT_COUNTS: RefreshCounts = {
   replacementCandidatesUsedByMarket: {},
   timeoutByMarket: {},
   lastKnownGoodByMarket: {},
+  targetedMarkets: [],
+  visibleGapsAttempted: [],
+  replacementsUsed: [],
+  marketsNeedingAnotherRun: [],
+  underfillCauseByMarket: {},
   readinessBefore: DEFAULT_READINESS_COUNTS,
   readinessAfter: DEFAULT_READINESS_COUNTS,
   refreshBudget: DEFAULT_REFRESH_BUDGET,
@@ -118,6 +123,11 @@ const DEFAULT_MARKET_STATUS_FIELDS = {
   lastRefreshAt: undefined,
   cronConfigured: false,
   nextExpectedCronRefresh: undefined,
+  targetedMarkets: [],
+  visibleGapsAttempted: [],
+  replacementsUsed: [],
+  marketsNeedingAnotherRun: [],
+  underfillCauseByMarket: {},
 };
 
 const SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES = {
@@ -145,6 +155,8 @@ type RefreshStoppedReason =
   | "route_budget_exhausted"
   | "provider_budget_exhausted"
   | "completed"
+  | "candidate_pool_exhausted"
+  | "provider_unavailable_no_offers"
   | "all_remaining_cooldown_or_unavailable";
 
 type GlobalReadinessStatus = "ready" | "partial" | "not_ready";
@@ -205,6 +217,40 @@ type MarketReadiness = {
   replacementCandidatesUsed?: number;
 };
 
+type UnderfillCause =
+  | "none"
+  | "budget_exhausted"
+  | "candidate_pool_exhausted"
+  | "provider_unavailable_no_offers"
+  | "provider_failure"
+  | "cooldown"
+  | "underfilled";
+
+type VisibleGapAttempt = {
+  market: string;
+  routeId: string;
+  origin: string;
+  destination: string;
+  section: "popular" | "discovery" | "backup" | "fallback";
+  result: RefreshStoppedReason | string;
+  replacementForRouteId?: string;
+};
+
+type ReplacementUsage = {
+  market: string;
+  failedRouteId: string;
+  replacementRouteId: string;
+  origin: string;
+  destination: string;
+  result: string;
+};
+
+type MarketNextRunNeed = {
+  market: string;
+  needed: boolean;
+  reason: UnderfillCause;
+};
+
 type RefreshCounts = {
   refreshed: number;
   unavailable: number;
@@ -236,6 +282,11 @@ type RefreshCounts = {
   replacementCandidatesUsedByMarket: Record<string, number>;
   timeoutByMarket: Record<string, number>;
   lastKnownGoodByMarket: Record<string, number>;
+  targetedMarkets: string[];
+  visibleGapsAttempted: VisibleGapAttempt[];
+  replacementsUsed: ReplacementUsage[];
+  marketsNeedingAnotherRun: MarketNextRunNeed[];
+  underfillCauseByMarket: Record<string, UnderfillCause>;
 };
 
 type RefreshState = {
@@ -327,6 +378,11 @@ type HomepageFareStatusPayload = {
   timeoutByMarket: Record<string, number>;
   lastKnownGoodByMarket: Record<string, number>;
   replacementCandidatesUsedByMarket: Record<string, number>;
+  targetedMarkets: string[];
+  visibleGapsAttempted: VisibleGapAttempt[];
+  replacementsUsed: ReplacementUsage[];
+  marketsNeedingAnotherRun: MarketNextRunNeed[];
+  underfillCauseByMarket: Record<string, UnderfillCause>;
   lastRefreshAt?: string;
   cronConfigured?: boolean;
   nextExpectedCronRefresh?: string;
@@ -638,6 +694,15 @@ export function HomepageFaresRefreshCard() {
         <p className="mt-3 text-xs font-semibold text-muted">
           Candidate pool health: {statusPayload.candidatePoolHealth.failed} failed and {statusPayload.candidatePoolHealth.unavailable} unavailable routes remain visible here without forcing public display readiness to attention.
         </p>
+
+        {refreshState.counts ? (
+          <div className="mt-3 rounded-lg bg-slate-50 p-3 text-xs leading-5 text-muted">
+            <p><strong className="text-navy">Executor targets:</strong> {formatStringList(refreshState.counts.targetedMarkets, "none")}</p>
+            <p><strong className="text-navy">Visible gaps attempted:</strong> {refreshState.counts.visibleGapsAttempted.length}</p>
+            <p><strong className="text-navy">Immediate replacements attempted:</strong> {refreshState.counts.replacementsUsed.length}</p>
+            <p><strong className="text-navy">Markets needing another run:</strong> {formatMarketsNeedingRun(refreshState.counts.marketsNeedingAnotherRun)}</p>
+          </div>
+        ) : null}
 
         <MarketReadinessTable markets={statusPayload.marketReadinessSummary} />
 
@@ -1104,6 +1169,11 @@ function normalizeRefreshCounts(payload: unknown): RefreshCounts {
     replacementCandidatesUsedByMarket: normalizeCountRecord(counts.replacementCandidatesUsedByMarket),
     timeoutByMarket: normalizeCountRecord(counts.timeoutByMarket),
     lastKnownGoodByMarket: normalizeCountRecord(counts.lastKnownGoodByMarket),
+    targetedMarkets: readStringArray(counts.targetedMarkets),
+    visibleGapsAttempted: normalizeVisibleGapAttempts(counts.visibleGapsAttempted),
+    replacementsUsed: normalizeReplacementUsages(counts.replacementsUsed),
+    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(counts.marketsNeedingAnotherRun),
+    underfillCauseByMarket: normalizeUnderfillCauseRecord(counts.underfillCauseByMarket),
     readinessBefore: normalizeRefreshReadiness(counts.readinessBefore),
     readinessAfter: normalizeRefreshReadiness(counts.readinessAfter),
     refreshBudget: normalizeRefreshBudget(counts.refreshBudget),
@@ -1150,6 +1220,11 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     timeoutByMarket?: unknown;
     lastKnownGoodByMarket?: unknown;
     lastRefreshAt?: unknown;
+    targetedMarkets?: unknown;
+    visibleGapsAttempted?: unknown;
+    replacementsUsed?: unknown;
+    marketsNeedingAnotherRun?: unknown;
+    underfillCauseByMarket?: unknown;
     cronConfigured?: unknown;
     nextExpectedCronRefresh?: unknown;
   };
@@ -1190,6 +1265,11 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     replacementCandidatesUsedByMarket: normalizeCountRecord(candidate.replacementCandidatesUsedByMarket),
     timeoutByMarket: normalizeCountRecord(candidate.timeoutByMarket),
     lastKnownGoodByMarket: normalizeCountRecord(candidate.lastKnownGoodByMarket),
+    targetedMarkets: readStringArray(candidate.targetedMarkets),
+    visibleGapsAttempted: normalizeVisibleGapAttempts(candidate.visibleGapsAttempted),
+    replacementsUsed: normalizeReplacementUsages(candidate.replacementsUsed),
+    marketsNeedingAnotherRun: normalizeMarketsNeedingAnotherRun(candidate.marketsNeedingAnotherRun),
+    underfillCauseByMarket: normalizeUnderfillCauseRecord(candidate.underfillCauseByMarket),
     lastRefreshAt: typeof candidate.lastRefreshAt === "string" ? candidate.lastRefreshAt : undefined,
     cronConfigured: candidate.cronConfigured === true,
     nextExpectedCronRefresh:
@@ -1430,6 +1510,8 @@ function readStoppedReason(value: unknown): RefreshStoppedReason {
   return value === "target_met" ||
     value === "route_budget_exhausted" ||
     value === "provider_budget_exhausted" ||
+    value === "candidate_pool_exhausted" ||
+    value === "provider_unavailable_no_offers" ||
     value === "all_remaining_cooldown_or_unavailable" ||
     value === "completed"
     ? value
@@ -1460,6 +1542,10 @@ function formatStoppedReason(reason: RefreshStoppedReason) {
       return "Route budget exhausted";
     case "provider_budget_exhausted":
       return "Provider budget exhausted";
+    case "candidate_pool_exhausted":
+      return "Candidate pool exhausted";
+    case "provider_unavailable_no_offers":
+      return "Provider unavailable / no offers";
     case "all_remaining_cooldown_or_unavailable":
       return "Cooldown / unavailable";
     case "completed":
@@ -1467,6 +1553,38 @@ function formatStoppedReason(reason: RefreshStoppedReason) {
   }
 }
 
+
+
+function formatStringList(values: string[], emptyLabel: string) {
+  return values.length ? values.join(", ") : emptyLabel;
+}
+
+function formatMarketsNeedingRun(markets: MarketNextRunNeed[]) {
+  const needed = markets.filter((market) => market.needed);
+
+  return needed.length
+    ? needed.map((market) => `${market.market} (${formatUnderfillCause(market.reason)})`).join(", ")
+    : "none";
+}
+
+function formatUnderfillCause(cause: UnderfillCause) {
+  switch (cause) {
+    case "none":
+      return "none";
+    case "budget_exhausted":
+      return "budget exhausted";
+    case "candidate_pool_exhausted":
+      return "candidate pool exhausted";
+    case "provider_unavailable_no_offers":
+      return "provider unavailable/no offers";
+    case "provider_failure":
+      return "provider failure";
+    case "cooldown":
+      return "cooldown";
+    case "underfilled":
+      return "underfilled";
+  }
+}
 
 function readGlobalReadinessStatus(value: unknown): GlobalReadinessStatus {
   return value === "ready" || value === "partial" || value === "not_ready"
@@ -1488,6 +1606,99 @@ function readStringArray(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
     : [];
+}
+
+
+function readUnderfillCause(value: unknown): UnderfillCause {
+  return value === "none" ||
+    value === "budget_exhausted" ||
+    value === "candidate_pool_exhausted" ||
+    value === "provider_unavailable_no_offers" ||
+    value === "provider_failure" ||
+    value === "cooldown" ||
+    value === "underfilled"
+    ? value
+    : "underfilled";
+}
+
+function normalizeUnderfillCauseRecord(value: unknown): Record<string, UnderfillCause> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, cause]) => [key, readUnderfillCause(cause)]),
+  );
+}
+
+function normalizeVisibleGapAttempts(value: unknown): VisibleGapAttempt[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const candidate = item as Record<string, unknown>;
+    const market = typeof candidate.market === "string" ? candidate.market : "";
+    const routeId = typeof candidate.routeId === "string" ? candidate.routeId : "";
+    const origin = typeof candidate.origin === "string" ? candidate.origin : "";
+    const destination = typeof candidate.destination === "string" ? candidate.destination : "";
+    const section = candidate.section === "popular" || candidate.section === "discovery" || candidate.section === "backup" || candidate.section === "fallback"
+      ? candidate.section
+      : "fallback";
+
+    if (!market || !routeId || !origin || !destination) return [];
+
+    return [{
+      market,
+      routeId,
+      origin,
+      destination,
+      section,
+      result: typeof candidate.result === "string" ? candidate.result : "skipped",
+      ...(typeof candidate.replacementForRouteId === "string"
+        ? { replacementForRouteId: candidate.replacementForRouteId }
+        : {}),
+    }];
+  });
+}
+
+function normalizeReplacementUsages(value: unknown): ReplacementUsage[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const candidate = item as Record<string, unknown>;
+    const market = typeof candidate.market === "string" ? candidate.market : "";
+    const failedRouteId = typeof candidate.failedRouteId === "string" ? candidate.failedRouteId : "";
+    const replacementRouteId = typeof candidate.replacementRouteId === "string" ? candidate.replacementRouteId : "";
+    const origin = typeof candidate.origin === "string" ? candidate.origin : "";
+    const destination = typeof candidate.destination === "string" ? candidate.destination : "";
+
+    if (!market || !failedRouteId || !replacementRouteId || !origin || !destination) return [];
+
+    return [{
+      market,
+      failedRouteId,
+      replacementRouteId,
+      origin,
+      destination,
+      result: typeof candidate.result === "string" ? candidate.result : "skipped",
+    }];
+  });
+}
+
+function normalizeMarketsNeedingAnotherRun(value: unknown): MarketNextRunNeed[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const candidate = item as Record<string, unknown>;
+    const market = typeof candidate.market === "string" ? candidate.market : "";
+    if (!market) return [];
+
+    return [{
+      market,
+      needed: candidate.needed === true,
+      reason: readUnderfillCause(candidate.reason),
+    }];
+  });
 }
 
 function normalizeCountRecord(value: unknown): Record<string, number> {
