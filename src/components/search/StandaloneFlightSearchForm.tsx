@@ -19,6 +19,12 @@ import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerS
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { type AirportOption, formatAirportLabel } from "@/data/airports";
+import {
+  applyDefaultOrigin,
+  canApplyDefaultOrigin,
+  markOriginManualInput,
+  type OriginFieldState,
+} from "@/lib/flights/defaultOrigin";
 import { cn } from "@/lib/utils";
 
 type TripType = "round-trip" | "one-way";
@@ -27,6 +33,7 @@ type AirportField = "origin" | "destination";
 
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
+  defaultOriginAirport?: AirportOption | null;
 };
 
 type LocationApiResponse = {
@@ -149,8 +156,14 @@ export function StandaloneFlightSearchForm() {
   const travelersLauncherRef = useRef<HTMLButtonElement>(null);
 
   const [tripType, setTripType] = useState<TripType>("round-trip");
-  const [origin, setOrigin] = useState("");
-  const [originCode, setOriginCode] = useState("");
+  const [originState, setOriginState] = useState<OriginFieldState>({
+    input: "",
+    code: "",
+    source: "empty",
+    userInteracted: false,
+  });
+  const origin = originState.input;
+  const originCode = originState.code;
   const [destination, setDestination] = useState("");
   const [destinationCode, setDestinationCode] = useState("");
   const [originOpen, setOriginOpen] = useState(false);
@@ -235,9 +248,10 @@ export function StandaloneFlightSearchForm() {
   }, [adultCount, cabinClassLabel, childCount, infantCount, travelerCount]);
 
   const buildPlacesUrl = useCallback(
-    (query: string, context: AirportField) => {
+    (query: string, context: AirportField, requestDefault = false) => {
       const params = new URLSearchParams();
       if (query.length >= 2) params.set("q", query);
+      if (requestDefault) params.set("default", "true");
       params.set("context", context);
       if (context === "origin" && countryHint) params.set("countryCode", countryHint);
       if (typeof navigator !== "undefined" && navigator.language) params.set("locale", navigator.language);
@@ -269,6 +283,39 @@ export function StandaloneFlightSearchForm() {
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!canApplyDefaultOrigin(originState)) return;
+
+    const controller = new AbortController();
+
+    const loadDefaultOrigin = async () => {
+      try {
+        const response = await fetch(buildPlacesUrl("", "origin", true), {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as PlacesApiResponse;
+        const defaultAirport = payload.defaultOriginAirport ?? null;
+        setOriginState((current) => applyDefaultOrigin(current, defaultAirport));
+        if (Array.isArray(payload.suggestions)) {
+          setOriginSuggestions(
+            dedupeSuggestions(payload.suggestions)
+              .filter((item) => !!item?.code && !!item?.city && !!item?.airport)
+              .slice(0, 7),
+          );
+        }
+      } catch {
+        // The search form keeps its existing empty origin behavior if defaults are unavailable.
+      }
+    };
+
+    void loadDefaultOrigin();
+
+    return () => controller.abort();
+  }, [buildPlacesUrl, originState]);
 
   useAirportSuggestions({
     query: origin,
@@ -347,8 +394,7 @@ export function StandaloneFlightSearchForm() {
 
   const selectAirport = (field: AirportField, option: AirportOption) => {
     if (field === "origin") {
-      setOrigin(formatAirportLabel(option));
-      setOriginCode(option.code);
+      setOriginState((current) => markOriginManualInput(current, formatAirportLabel(option), option.code));
       setOriginOpen(false);
     } else {
       setDestination(formatAirportLabel(option));
@@ -360,8 +406,7 @@ export function StandaloneFlightSearchForm() {
 
   const clearAirport = (field: AirportField) => {
     if (field === "origin") {
-      setOrigin("");
-      setOriginCode("");
+      setOriginState((current) => markOriginManualInput(current, ""));
       setOriginSuggestions([]);
       setOriginLoading(false);
       setOriginOpen(false);
@@ -739,8 +784,7 @@ export function StandaloneFlightSearchForm() {
             onMobileOpen={() => setActiveMobileAirportPicker("origin")}
             onDesktopFocus={() => setOriginOpen(true)}
             onChange={(nextValue) => {
-              setOrigin(nextValue);
-              setOriginCode("");
+              setOriginState((current) => markOriginManualInput(current, nextValue));
               setOriginHighlight(0);
               if (nextValue.trim().length < 2) {
                 setOriginSuggestions([]);
@@ -954,8 +998,7 @@ export function StandaloneFlightSearchForm() {
           isLoading={originQuery.length >= 2 && originLoading}
           launcherRef={originMobileLauncherRef}
           onChange={(nextValue) => {
-            setOrigin(nextValue);
-            setOriginCode("");
+            setOriginState((current) => markOriginManualInput(current, nextValue));
             setOriginHighlight(0);
             if (nextValue.trim().length < 2) {
               setOriginSuggestions([]);
@@ -1085,7 +1128,7 @@ function useAirportSuggestions({
 }: {
   query: string;
   context: AirportField;
-  buildPlacesUrl: (query: string, context: AirportField) => string;
+  buildPlacesUrl: (query: string, context: AirportField, requestDefault?: boolean) => string;
   setLoading: (loading: boolean) => void;
   setSuggestions: (suggestions: AirportOption[]) => void;
 }) {

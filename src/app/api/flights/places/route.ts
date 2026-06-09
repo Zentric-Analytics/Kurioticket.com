@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 
 import { getDefaultAirports } from "@/data/airports";
-import { getCityAwareOriginAirports, prioritizeOriginSuggestions } from "@/lib/flights/originAirportSuggestions";
+import { getDefaultOriginAirport } from "@/lib/flights/defaultOrigin";
+import { prioritizeOriginSuggestions } from "@/lib/flights/originAirportSuggestions";
 import { normalizeCountryCode } from "@/lib/geo/context";
 import { resolveMaxMindGeoIpLocationForRequest } from "@/lib/geo/maxmind";
 import { extractVisitorIp, resolveIpinfoLiteCountryContext } from "@/lib/geo/ipinfo";
@@ -97,11 +98,17 @@ export async function GET(request: Request) {
   }
 
   if (isDefault && query.length === 0) {
+    const defaultOrigin = context === "origin" && maxMindLocation
+      ? getDefaultOriginAirport(maxMindLocation, 8)
+      : null;
+    const suggestions = defaultOrigin
+      ? defaultOrigin.suggestions
+      : getDefaultAirports({ context, countryCode, lat: resolvedLat, lon: resolvedLng, limit: 8 });
+
     return NextResponse.json(
       {
-        suggestions: context === "origin" && maxMindLocation
-          ? getCityAwareOriginAirports(maxMindLocation, 8)
-          : getDefaultAirports({ context, countryCode, lat: resolvedLat, lon: resolvedLng, limit: 8 }),
+        suggestions,
+        defaultOriginAirport: context === "origin" ? defaultOrigin?.airport ?? null : undefined,
         source: "curated",
       },
       { headers: { "Cache-Control": context === "origin" ? "private, no-store" : "no-store" } },
