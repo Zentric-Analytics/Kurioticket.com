@@ -1,25 +1,68 @@
-import { AdminPageShell, EmptyState } from "@/components/admin/AdminPageShell";
-import { Card } from "@/components/ui/Card";
-import { getPrisma } from "@/lib/prisma";
+import { AdminDataTable, AdminEmptyState, AdminPageShell, AdminStatusBadge } from "@/components/admin/AdminPageShell";
+import { formatDateTime } from "@/lib/admin-data";
+import { withOptionalDb } from "@/lib/prisma";
 
 export const metadata = { title: "Admin Searches" };
 
 export default async function AdminSearchesPage() {
-  const searches = await getPrisma().searchHistory.findMany({ where: { type: "FLIGHT" }, orderBy: { createdAt: "desc" }, take: 100 });
+  const searches = await withOptionalDb(
+    (db) => db.searchHistory.findMany({ orderBy: { createdAt: "desc" }, take: 100 }),
+    [],
+  );
+
   return (
-    <AdminPageShell title="Searches" description="Recent flight metasearch activity recorded by the backend.">
-      {searches.length === 0 ? <EmptyState message="No searches recorded yet." /> : (
-        <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="bg-slate-50 text-xs uppercase text-muted"><tr><th className="p-3">Route</th><th className="p-3">Origin</th><th className="p-3">Destination</th><th className="p-3">Departure</th><th className="p-3">Return</th><th className="p-3">Travelers</th><th className="p-3">Cabin</th><th className="p-3">Provider</th><th className="p-3">Results</th><th className="p-3">Latency</th><th className="p-3">Created</th></tr></thead>
-            <tbody>{searches.map((search) => {
-              const query = search.query as Record<string, unknown>;
-              return <tr key={search.id} className="border-t border-border"><td className="p-3 font-bold text-navy">{search.origin || "—"} → {search.destination || "—"}</td><td className="p-3">{search.origin || "—"}</td><td className="p-3">{search.destination || "—"}</td><td className="p-3">{String(query.departureDate || "—")}</td><td className="p-3">{String(query.returnDate || "—")}</td><td className="p-3">{String(query.travelers || "—")}</td><td className="p-3">{String(query.cabinClass || "—")}</td><td className="p-3">Duffel foundation</td><td className="p-3">{search.resultCount}</td><td className="p-3">{search.latencyMs ? `${search.latencyMs}ms` : "—"}</td><td className="p-3">{formatDate(search.createdAt)}</td></tr>;
-            })}</tbody>
-          </table>
-        </Card>
+    <AdminPageShell
+      title="Search Operations"
+      description="Real search logs only. If logging is unavailable, this page stays empty rather than inventing search volume."
+    >
+      {searches.length === 0 ? (
+        <AdminEmptyState
+          title="No search logs available"
+          message="Search analytics will appear after search logging is enabled and real users run searches. No fake routes, destinations, providers, result counts, or statuses are displayed."
+        />
+      ) : (
+        <AdminDataTable
+          columns={["Date/time", "Product", "Query / route / destination", "Country / currency", "Result count", "Provider", "Status", "Duration"]}
+          rows={searches.map((search) => {
+            const query = normalizeQuery(search.query);
+            return {
+              id: search.id,
+              cells: [
+                formatDateTime(search.createdAt),
+                search.type,
+                query.route || `${search.origin || "—"}${search.destination ? ` → ${search.destination}` : ""}`,
+                `${query.country || "—"} / ${query.currency || "—"}`,
+                search.resultCount,
+                query.provider || providerForProduct(search.type),
+                <AdminStatusBadge key="status" tone={search.status === "SUCCESS" ? "good" : search.status === "FAILED" ? "bad" : "warn"}>{search.status}</AdminStatusBadge>,
+                search.latencyMs ? `${search.latencyMs}ms` : "—",
+              ],
+            };
+          })}
+        />
       )}
     </AdminPageShell>
   );
 }
-function formatDate(date: Date) { return new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "short" }).format(date); }
+
+function normalizeQuery(query: unknown) {
+  const data = query && typeof query === "object" ? (query as Record<string, unknown>) : {};
+  const origin = stringValue(data.origin) || stringValue(data.originAirport);
+  const destination = stringValue(data.destination) || stringValue(data.destinationAirport) || stringValue(data.destinationName);
+  return {
+    route: origin || destination ? `${origin || "—"} → ${destination || "—"}` : stringValue(data.label),
+    country: stringValue(data.country) || stringValue(data.market) || stringValue(data.region),
+    currency: stringValue(data.currency),
+    provider: stringValue(data.provider),
+  };
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+function providerForProduct(type: string) {
+  if (type === "FLIGHT") return "Configured flight provider";
+  if (type === "HOTEL") return "Configured hotel provider";
+  return "Unavailable";
+}
