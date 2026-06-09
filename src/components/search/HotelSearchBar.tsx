@@ -945,14 +945,14 @@ export function HotelSearchBar({
         {compact ? (
           <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-black tracking-tight text-slate-950">
+              <h2 className="text-base font-bold tracking-tight text-slate-950">
                 Edit hotel search
               </h2>
               <button
                 type="button"
                 aria-label="Close search form"
                 onClick={closeMobileSearchPanel}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-base font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
               >
                 ×
               </button>
@@ -1681,7 +1681,7 @@ export function HotelSearchBar({
                   >
                     <Minus className="h-5 w-5" aria-hidden="true" />
                   </button>
-                  <span className="min-w-8 text-center text-lg font-black text-slate-950">
+                  <span className="min-w-8 text-center text-base font-bold text-slate-950">
                     {row.value}
                   </span>
                   <button

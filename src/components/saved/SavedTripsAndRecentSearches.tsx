@@ -365,7 +365,7 @@ export function SavedTripsAndRecentSearches() {
         <section className="space-y-4 md:space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
+              <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
                 Saved trips ❤️
               </h2>
               <p className="mt-1 text-sm text-slate-600">
@@ -390,7 +390,7 @@ export function SavedTripsAndRecentSearches() {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.45)]">
                 <Heart className="h-7 w-7 fill-rose-500 text-rose-500" />
               </div>
-              <h3 className="mt-5 text-xl font-black tracking-tight text-slate-900">
+              <h3 className="mt-5 text-lg font-black tracking-tight text-slate-900">
                 Save destinations you love
               </h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
@@ -441,7 +441,7 @@ export function SavedTripsAndRecentSearches() {
                     )}
 
                     <div className="space-y-3 p-5">
-                      <h3 className="pr-12 text-xl font-black leading-tight tracking-tight text-slate-900">
+                      <h3 className="pr-12 text-lg font-black leading-tight tracking-tight text-slate-900">
                         {trip.title}
                       </h3>
                       <p className="line-clamp-2 text-[11px] font-semibold uppercase tracking-[0.11em] text-slate-600">
@@ -468,7 +468,7 @@ export function SavedTripsAndRecentSearches() {
                                 ? "Provider fare"
                                 : "Current options"}
                             </p>
-                            <p className="text-lg font-black leading-tight text-slate-950">
+                            <p className="text-base font-black leading-tight text-slate-950">
                               {hasProviderFare ? (
                                 <PriceText
                                   amountUsd={fare.price}
@@ -500,7 +500,7 @@ export function SavedTripsAndRecentSearches() {
         <section className="space-y-4 md:space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
+              <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
                 Recent searches 🕘
               </h2>
               <p className="mt-1 text-sm text-slate-600">
@@ -525,7 +525,7 @@ export function SavedTripsAndRecentSearches() {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.45)]">
                 <Search className="h-7 w-7 text-slate-400" />
               </div>
-              <h3 className="mt-5 text-xl font-black tracking-tight text-slate-900">
+              <h3 className="mt-5 text-lg font-black tracking-tight text-slate-900">
                 Start a search to build momentum
               </h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">

@@ -541,7 +541,7 @@ function CarsSearchPage() {
             <div className="px-1">
               <h1
                 id="cars-search-heading"
-                className="text-[1.65rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[2rem] lg:whitespace-nowrap lg:text-[2.15rem] xl:text-[2.3rem]"
+                className="text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
               >
                 Search rental cars for every part of your trip
               </h1>
@@ -566,7 +566,7 @@ function CarsSearchPage() {
               <div>
                 <h2
                   id="car-trip-style-heading"
-                  className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+                  className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
                 >
                   Explore rental cars by trip style
                 </h2>
@@ -624,7 +624,7 @@ function CarsSearchPage() {
               <div>
                 <h2
                   id="car-pickup-ideas-heading"
-                  className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+                  className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
                 >
                   Start with popular car pickup points
                 </h2>
@@ -658,7 +658,7 @@ function CarsFaqSection() {
       <div className="max-w-2xl">
         <h2
           id="cars-faq-heading"
-          className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+          className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
         >
           Cars Frequently asked questions
         </h2>
@@ -953,7 +953,7 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-full min-h-12 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-indigo-600 lg:min-h-14"
+                className="focus-ring inline-flex h-full min-h-11 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-indigo-600 lg:min-h-12"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
@@ -1036,7 +1036,7 @@ function CarImageCardLink({ card }: { card: CarImageCard }) {
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
       <div className="flex flex-1 flex-col p-4 md:p-5">
-        <p className="text-lg font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-xl">
+        <p className="text-base font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-lg">
           {card.title}
         </p>
         <p className="mt-2 text-sm font-medium leading-5 text-slate-600">
@@ -1360,7 +1360,7 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[64px] border border-transparent bg-white px-2.5 py-2 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:min-h-[78px] lg:px-3 lg:py-2.5 ${className}`}
+      className={`min-h-[58px] border border-transparent bg-white px-2.5 py-1.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:min-h-[66px] lg:px-3 lg:py-2 ${className}`}
     >
       <label className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 lg:mb-1">
         {label}

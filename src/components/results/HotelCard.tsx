@@ -235,7 +235,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
             </div>
           )}
         </div>
-        <div className="flex min-h-[220px] flex-col px-4 py-4 md:min-h-0 md:px-3 md:py-3">
+        <div className="flex min-h-[200px] flex-col px-3.5 py-3.5 md:min-h-0 md:px-3 md:py-3">
           <div className="flex flex-1 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <div>
@@ -250,7 +250,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                     </span>
                   </div>
                 ) : null}
-                <h2 className="text-[17px] font-bold leading-6 text-slate-950 lg:text-lg">
+                <h2 className="text-base font-bold leading-6 text-slate-950 lg:text-[17px]">
                   {hotel.name}
                 </h2>
                 <p className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold leading-5 text-indigo-700 lg:text-sm">
@@ -296,7 +296,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
             </div>
             <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-right">
               <div className="text-left min-[380px]:text-right lg:text-right">
-                <div className="text-[21px] font-bold tracking-[-0.01em] text-slate-950">
+                <div className="text-xl font-bold tracking-[-0.01em] text-slate-950">
                   {formatCurrency(hotel.totalPrice, hotel.currency)}
                 </div>
                 <div className="text-xs font-medium leading-4 text-slate-500">

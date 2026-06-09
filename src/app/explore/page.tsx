@@ -139,16 +139,16 @@ export default function ExplorePage() {
             <p className="text-sm font-bold uppercase tracking-[0.24em] text-indigo-600">
               Travel discovery
             </p>
-            <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-indigo-950 sm:text-5xl">
+            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-indigo-950 sm:text-4xl">
               {c.title}
             </h1>
-            <p className="mt-4 text-lg leading-8 text-slate-600">
+            <p className="mt-4 text-base leading-7 text-slate-600">
               {c.subtitle}
             </p>
           </div>
 
           <section className="mt-8">
-            <h2 className="text-2xl font-extrabold tracking-tight text-indigo-950">
+            <h2 className="text-xl font-extrabold tracking-tight text-indigo-950 sm:text-2xl">
               {c.waysTitle}
             </h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -170,7 +170,7 @@ export default function ExplorePage() {
           </section>
 
           <section className="mt-10 rounded-3xl border border-indigo-100 bg-white/85 p-5 shadow-[0_24px_70px_-45px_rgba(67,56,202,0.55)] sm:p-6">
-            <h2 className="text-2xl font-extrabold tracking-tight text-indigo-950">
+            <h2 className="text-xl font-extrabold tracking-tight text-indigo-950 sm:text-2xl">
               {c.needsTitle}
             </h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -192,7 +192,7 @@ export default function ExplorePage() {
 
           <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
             <Card className="border-indigo-100 p-6">
-              <h2 className="text-2xl font-extrabold tracking-tight text-indigo-950">
+              <h2 className="text-xl font-extrabold tracking-tight text-indigo-950 sm:text-2xl">
                 {c.checklistTitle}
               </h2>
               <ul className="mt-4 grid gap-3 sm:grid-cols-2">

@@ -3225,28 +3225,28 @@ export function SearchTabs({
                 return (
                   <div
                     key={row.key}
-                    className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 last:border-b-0 last:pb-0"
+                    className="flex items-center justify-between gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
                   >
-                    <span className="text-base font-black text-slate-950">{row.label}</span>
+                    <span className="text-sm font-bold text-slate-950">{row.label}</span>
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
                         onClick={row.onDecrement}
                         disabled={!canDecrement}
-                        className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        <Minus className="h-5 w-5" aria-hidden="true" />
+                        <Minus className="h-4 w-4" aria-hidden="true" />
                       </button>
-                      <span className="min-w-8 text-center text-lg font-black text-slate-950">
+                      <span className="min-w-8 text-center text-base font-bold text-slate-950">
                         {row.value}
                       </span>
                       <button
                         type="button"
                         onClick={row.onIncrement}
                         disabled={!canIncrement}
-                        className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
-                        <Plus className="h-5 w-5" aria-hidden="true" />
+                        <Plus className="h-4 w-4" aria-hidden="true" />
                       </button>
                     </div>
                   </div>
@@ -3254,7 +3254,7 @@ export function SearchTabs({
               })}
               <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-3">
                 <div>
-                  <p className="text-base font-black text-slate-950">Pet-friendly</p>
+                  <p className="text-sm font-bold text-slate-950">Pet-friendly</p>
                   <p className="text-sm leading-5 text-slate-600">
                     Only show stays that allow pets
                   </p>

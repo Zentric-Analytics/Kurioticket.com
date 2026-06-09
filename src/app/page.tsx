@@ -432,11 +432,11 @@ export default function Home() {
           <div className="page-shell relative pb-5 pt-8 sm:pb-6 sm:pt-10 lg:pt-12">
             <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
               <div className="space-y-2.5 pt-1">
-                <h1 className="max-w-3xl text-[2rem] font-semibold leading-[1.08] tracking-[-0.025em] text-slate-900 sm:text-[2.4rem] lg:text-[3rem]">
+                <h1 className="max-w-3xl text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.022em] text-slate-900 sm:text-[2.15rem] lg:text-[2.65rem]">
                   {t("homeHeroTitle")}
                 </h1>
 
-                <p className="max-w-xl text-base font-semibold leading-7 text-slate-700 sm:text-lg sm:leading-8">
+                <p className="max-w-xl text-sm font-semibold leading-6 text-slate-700 sm:text-base sm:leading-7">
                   {t("homeHeroSubtitle")}
                 </p>
               </div>
@@ -453,7 +453,7 @@ export default function Home() {
 
         <section className="page-shell py-5">
           <div className="flex items-center">
-            <h2 className="text-2xl font-bold tracking-normal text-slate-900">
+            <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
               {t("homePopularDestinations")}
             </h2>
           </div>
@@ -479,7 +479,7 @@ export default function Home() {
 
             <div
               ref={destinationsRailRef}
-              className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {visiblePopularDestinations.map((destination) => {
                 const price = destinationPriceState.prices[destination.id];
@@ -516,7 +516,7 @@ export default function Home() {
         <section className="page-shell bg-transparent py-5 sm:py-6">
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
-              <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
+              <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
                 Discover your next adventure here
               </h2>
               <p className="text-sm font-normal leading-6 text-slate-600 sm:text-base">
@@ -605,7 +605,7 @@ export default function Home() {
         <section className="page-shell bg-transparent py-4 sm:py-5">
           <div className="space-y-3">
             <div className="max-w-3xl space-y-1.5">
-              <h2 className="text-2xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-3xl">
+              <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
                 {t("homeTrustTitle")}
               </h2>
               <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
@@ -681,7 +681,7 @@ export default function Home() {
 
         <section className="page-shell pb-12 pt-2 sm:pt-3">
           <div className="max-w-3xl space-y-2">
-            <h2 className="text-2xl font-semibold tracking-normal text-slate-800 sm:font-bold sm:text-slate-900">
+            <h2 className="text-xl font-semibold tracking-normal text-slate-800 sm:font-bold sm:text-slate-900">
               Frequently asked questions
             </h2>
             <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
@@ -1158,7 +1158,7 @@ function DestinationCard({
           </button>
 
           <div className="absolute bottom-4 left-4 pr-4 text-white">
-            <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">
+            <h3 className="text-xl font-black tracking-tight drop-shadow-sm sm:text-2xl">
               {city}
             </h3>
             <p className="text-sm font-semibold text-white/95 drop-shadow-sm">
@@ -1276,7 +1276,7 @@ function PromoPanel({
       }`}
     >
       <div className="relative z-10 max-w-xs">
-        <h2 className="text-2xl font-semibold leading-tight text-slate-800 sm:font-bold sm:text-slate-900">
+        <h2 className="text-xl font-semibold leading-tight text-slate-800 sm:font-bold sm:text-slate-900">
           {title}
         </h2>
 

@@ -596,10 +596,10 @@ export default function DestinationsPage() {
               <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-violet-50 shadow-sm shadow-black/10 backdrop-blur">
                 Destination discovery
               </p>
-              <h1 className="mt-4 text-4xl font-black tracking-[-0.04em] text-white drop-shadow-sm sm:text-5xl lg:text-6xl">
+              <h1 className="mt-4 text-3xl font-black tracking-[-0.035em] text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
                 Where do you want to go next?
               </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-violet-50/90 sm:text-lg">
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-violet-50/90 sm:text-base">
                 Browse brighter, hand-picked city views, compare flights, and
                 find travel deals in minutes.
               </p>
@@ -643,7 +643,7 @@ export default function DestinationsPage() {
                   <div
                     className={`mb-3 h-1.5 w-16 rounded-full bg-gradient-to-r ${section.accent}`}
                   />
-                  <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+                  <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
                     {section.region}
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">

@@ -213,12 +213,12 @@ const getDriverAgeOptionLabel = (age: string) =>
   age === defaultDriverAge ? driverAgeRangeLabel : `${age} years old`;
 
 const fieldShellClass =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
+  "relative min-h-[50px] rounded-xl border border-slate-300 bg-white px-3 py-1 transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
 
 const searchFormGridClass =
   "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.16fr)_minmax(0,1.08fr)_minmax(0,1.28fr)_minmax(0,1.08fr)_minmax(7rem,0.62fr)_104px] lg:gap-0";
 
-const compactFieldShellClass = "min-h-[48px] py-1 lg:min-h-[46px]";
+const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[44px]";
 
 const fieldLabelClass =
   "mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600";
@@ -493,7 +493,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             ? `Open filters, ${activeFilterLabel}`
             : "Open filters"
         }
-        className="relative h-16 w-[72px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+        className="relative h-14 w-[68px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
         onClick={() => setFiltersOpen(true)}
       >
         <span className="flex flex-col items-center justify-center gap-1 leading-none">
@@ -510,10 +510,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       <button
         type="button"
         onClick={openMobileSearchDrawer}
-        className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+        className="flex h-14 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-          <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
+          <span className="block truncate text-sm font-bold leading-5 text-slate-950">
             {pickupSummary} → {returnSummary}
           </span>
           <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-600">
@@ -761,7 +761,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
                 Edit search
               </p>
-              <h2 className="mt-1 text-lg font-bold text-slate-950">
+              <h2 className="mt-1 text-base font-bold text-slate-950">
                 Car rental search
               </h2>
             </div>
@@ -925,7 +925,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           ) : null}
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
+            className="h-11 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-sm font-bold text-white shadow-lg shadow-indigo-700/20"
             onClick={() => setFiltersOpen(false)}
           >
             Done{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""}

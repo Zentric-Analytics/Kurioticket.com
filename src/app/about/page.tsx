@@ -12,7 +12,7 @@ export default function AboutPage() {
       <main className="page-shell flex-1 pt-8 pb-10 sm:pt-10 lg:pt-12">
         <section className="max-w-3xl">
           <p className="text-sm font-semibold text-teal-dark">About Kurioticket</p>
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-navy">About Us</h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl">About Us</h1>
           <p className="mt-4 text-sm leading-6 text-muted sm:text-base">
             Kurioticket is a travel search and comparison platform that helps travelers search,
             compare, and discover flights, hotels, cars, and travel deals.

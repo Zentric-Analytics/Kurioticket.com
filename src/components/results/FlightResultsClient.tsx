@@ -3919,7 +3919,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-4 pb-5 pt-4 sm:pt-5 lg:grid-cols-[232px_minmax(0,1fr)]">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <Filters
             layout="desktop"
@@ -4085,7 +4085,7 @@ export function FlightResultsClient() {
 
               {warnings.length > 0 ? (
                 <div
-                  className="w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900 shadow-sm"
+                  className="w-full rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold leading-6 text-amber-900 shadow-sm"
                   role="status"
                 >
                   Some provider checks may be limited for this search. Review
@@ -4115,7 +4115,7 @@ export function FlightResultsClient() {
                   />
                 ))
               ) : (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
+                <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-muted shadow-sm">
                   No flights match these filters. Widen your filters to see more
                   live options.
                 </div>
@@ -4737,7 +4737,7 @@ function DatePickerPopover({
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               Travel dates
             </p>
-            <h3 className="text-lg font-bold text-slate-950">
+            <h3 className="text-base font-bold text-slate-950">
               {tripType !== "round-trip" || activePicker === "departure"
                 ? "Select departure"
                 : "Select return"}
@@ -4871,7 +4871,7 @@ function TravelerCabinPopover({
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
               Travelers
             </p>
-            <h3 className="text-lg font-bold text-slate-950">
+            <h3 className="text-base font-bold text-slate-950">
               Travelers and cabin
             </h3>
           </div>

@@ -541,7 +541,7 @@ export function AppHeader({
   return (
     <>
       <header className="relative z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
-        <div className="page-shell flex min-h-[104px] items-center justify-between gap-6 py-5">
+        <div className="page-shell flex min-h-[88px] items-center justify-between gap-5 py-4">
           <Link
             href="/"
             aria-label="Kurioticket home"
@@ -553,7 +553,7 @@ export function AppHeader({
 
           <div className="hidden flex-1 flex-col gap-3 md:flex">
             <div className="flex items-center justify-end gap-3">
-              <div className="inline-flex h-12 items-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
+              <div className="inline-flex h-10 items-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
                 <CountryCurrencySelector variant="header" grouped />
 
                 <span className="pointer-events-none h-6 w-px bg-white/20" aria-hidden="true" />
@@ -567,7 +567,7 @@ export function AppHeader({
                     aria-expanded={languageOpen}
                     aria-controls={languageOpen ? languageDialogId : undefined}
                     aria-label={t.openLanguagePreferences.replace("{{language}}", selectedLanguageDisplayName)}
-                    className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-none border-0 bg-transparent px-4 text-sm font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-none border-0 bg-transparent px-3 text-xs font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     <span>{selectedLanguageDisplayName}</span>
 
@@ -583,9 +583,9 @@ export function AppHeader({
                     aria-haspopup="menu"
                     aria-expanded={accountOpen}
                     onClick={() => setAccountOpen((value) => !value)}
-                    className="inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-white/25 bg-white/10 px-2.5 pr-3.5 text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-white/25 bg-white/10 px-2 pr-3 text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
-                    <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white text-xs font-black text-indigo-700 shadow-sm">
+                    <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-xs font-black text-indigo-700 shadow-sm">
                       {session?.user?.image ? (
                         <RawImage
                           src={session.user.image}
@@ -680,7 +680,7 @@ export function AppHeader({
                   <Link
                     href="/auth/signin"
                     onClick={(event) => handleRouteLinkClick(event, "/auth/signin")}
-                    className="inline-flex h-12 cursor-pointer items-center rounded-full px-4 text-sm font-semibold text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    className="inline-flex h-10 cursor-pointer items-center rounded-full px-3.5 text-sm font-semibold text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     {t.login}
                   </Link>
@@ -688,7 +688,7 @@ export function AppHeader({
                   <Link
                     href="/auth/signup"
                     onClick={(event) => handleRouteLinkClick(event, "/auth/signup")}
-                    className="inline-flex h-12 cursor-pointer items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    className="inline-flex h-10 cursor-pointer items-center rounded-full bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     {t.signUp}
                   </Link>
@@ -706,7 +706,7 @@ export function AppHeader({
                     key={item.href}
                     href={item.href}
                     onClick={(event) => handleRouteLinkClick(event, item.href)}
-                    className={`inline-flex cursor-pointer items-center gap-2 rounded-full px-3.5 py-2 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                       active
                         ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
                         : "text-indigo-50 hover:bg-white/10 hover:text-white"
@@ -787,7 +787,7 @@ export function AppHeader({
                         </p>
                         <h2
                           id={languageTitleId}
-                          className="mt-1 text-2xl font-black text-slate-950"
+                          className="mt-1 text-xl font-black text-slate-950"
                         >
                           {t.websiteLanguageTitle}
                         </h2>
@@ -869,7 +869,7 @@ export function AppHeader({
                                 : t.languagePreparingAria.replace("{{language}}", option.nativeLabel)
                             }
                             onClick={() => handleLanguageSelect(option)}
-                            className={`flex min-h-[4.75rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                            className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                               active
                                 ? "border-violet-500 bg-violet-50 ring-2 ring-violet-100"
                                 : available

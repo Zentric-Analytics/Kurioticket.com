@@ -66,8 +66,8 @@ export function FlightCard({
           className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500/55 via-purple-500/45 to-teal/40"
         />
       ) : null}
-      <div className="p-3 sm:p-3.5">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px] lg:items-stretch">
+      <div className="p-2.5 sm:p-3">
+        <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_132px] lg:items-stretch">
           <div className="min-w-0 space-y-2">
             <div className="flex min-w-0 items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
@@ -93,10 +93,10 @@ export function FlightCard({
             <FlightDetailLines details={details} />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[132px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
-            <div className="min-w-0 lg:flex lg:min-h-[82px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[118px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
+            <div className="min-w-0 lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
               <div
-                className="text-xl font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-[1.35rem]"
+                className="text-lg font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-xl"
                 aria-label={displayPrice.ariaLabel}
                 title={displayPrice.title}
               >
@@ -145,8 +145,8 @@ function FlightLegRow({
     <section
       aria-label={formatLegTitle(leg)}
       className={cn(
-        "rounded-xl border border-slate-200 bg-slate-50/60 p-2.5",
-        compact ? "sm:p-2.5" : "sm:p-3",
+        "rounded-xl border border-slate-200 bg-slate-50/60 p-2",
+        compact ? "sm:p-2" : "sm:p-2.5",
       )}
     >
       <div className="flex min-w-0 gap-2.5">
@@ -164,7 +164,7 @@ function FlightLegRow({
 
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
             <div className="min-w-0">
-              <div className="text-[17px] font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-lg">
+              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
                 {formatTime(leg.departureTime)}
               </div>
               <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
@@ -187,7 +187,7 @@ function FlightLegRow({
             </div>
 
             <div className="min-w-0 text-right">
-              <div className="text-[17px] font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-lg">
+              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
                 {formatTime(leg.arrivalTime)}
               </div>
               <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
