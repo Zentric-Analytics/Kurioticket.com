@@ -36,9 +36,9 @@ import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
 } from "@/data/marketHomeContent";
-import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
 import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
 import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
@@ -497,9 +497,11 @@ export default function Home() {
                     displayCurrency={selectedOption.currency}
                     originCode={destination.originCode}
                     destinationCode={destination.code}
-                    href={buildDestinationCardHref(price, destination.city, {
+                    href={buildDestinationCardHref(price, {
                       originCode: destination.originCode,
                       destinationCode: destination.code,
+                      displayCurrency: selectedOption.currency,
+                      market: regionCode,
                     })}
                     isPriceLoading={destinationPriceState.loading}
                     isSaved={savedTripIds.includes(destination.id)}
@@ -538,14 +540,12 @@ export default function Home() {
                     return (
                       <DiscoverySuggestionCard
                         key={card.item.id}
-                        href={buildDiscoveryCardHref(
-                          card.fare,
-                          buildDiscoveryLink(card.item),
-                          {
-                            originCode: card.item.originCode,
-                            destinationCode: card.item.destinationCode,
-                          },
-                        )}
+                        href={buildDiscoveryCardHref(card.fare, {
+                          originCode: card.item.originCode,
+                          destinationCode: card.item.destinationCode,
+                          displayCurrency: selectedOption.currency,
+                          market: regionCode,
+                        })}
                         itemId={card.item.id}
                         image={card.item.image}
                         imageAlt={card.item.imageAlt}
@@ -574,14 +574,12 @@ export default function Home() {
                 return (
                   <DiscoverySuggestionCard
                     key={card.item.id}
-                    href={buildDiscoveryCardHref(
-                      card.fare,
-                      buildDiscoveryLink(card.item),
-                      {
-                        originCode: card.item.originCode,
-                        destinationCode: card.item.destinationCode,
-                      },
-                    )}
+                    href={buildDiscoveryCardHref(card.fare, {
+                      originCode: card.item.originCode,
+                      destinationCode: card.item.destinationCode,
+                      displayCurrency: selectedOption.currency,
+                      market: regionCode,
+                    })}
                     itemId={card.item.id}
                     image={card.item.image}
                     imageAlt={card.item.imageAlt}
@@ -976,52 +974,53 @@ function hasFreshProviderPrice(
 
 function buildDestinationCardHref(
   price: HomepageFare | undefined,
-  fallbackCity: string,
-  expectedRoute?: { originCode?: string; destinationCode?: string },
+  options: {
+    originCode: string;
+    destinationCode: string;
+    displayCurrency: string;
+    market: string;
+  },
 ) {
-  const search = hasFreshProviderPrice(price, expectedRoute)
-    ? price?.search
-    : undefined;
-
-  return search
-    ? buildFlightResultsHref(search)
-    : `/hotels/results?destination=${encodeURIComponent(fallbackCity)}`;
+  return buildRouteCardHref(price, options);
 }
 
 function buildDiscoveryCardHref(
   price: HomepageFare | undefined,
-  fallbackHref: ComponentProps<typeof Link>["href"],
-  expectedRoute?: { originCode?: string; destinationCode?: string },
+  options: {
+    originCode: string;
+    destinationCode: string;
+    displayCurrency: string;
+    market: string;
+  },
 ) {
-  const search = hasFreshProviderPrice(price, expectedRoute)
-    ? price?.search
-    : undefined;
-
-  return search ? buildFlightResultsHref(search) : fallbackHref;
+  return buildRouteCardHref(price, options);
 }
 
-function buildFlightResultsHref(search: DestinationPriceSearch) {
-  const query: Record<string, string> = {
-    tripType: search.tripType,
-    origin: search.origin,
-    destination: search.destination,
-    departureDate: search.departureDate,
-    travelers: String(search.travelers),
-    adults: String(search.adults),
-    children: String(search.children),
-    infants: String(search.infants),
-    cabinClass: search.cabinClass,
-    currency: search.currency,
+function buildRouteCardHref(
+  price: HomepageFare | undefined,
+  options: {
+    originCode: string;
+    destinationCode: string;
+    displayCurrency: string;
+    market: string;
+  },
+) {
+  const expectedRoute = {
+    originCode: options.originCode,
+    destinationCode: options.destinationCode,
   };
+  const fareSearch = hasFreshProviderPrice(price, expectedRoute)
+    ? price.search
+    : undefined;
 
-  if (search.returnDate) {
-    query.returnDate = search.returnDate;
-  }
-
-  return {
-    pathname: "/flights/results",
-    query,
-  };
+  return (
+    buildHomepageRouteCardFlightHref({
+      fareSearch,
+      route: expectedRoute,
+      displayCurrency: options.displayCurrency,
+      market: options.market,
+    }) ?? "/flights"
+  );
 }
 
 function DiscoveryPricePill({
