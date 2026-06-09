@@ -36,9 +36,11 @@ export const HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS = {
   popularVisibleTarget: 8,
   discoverVisibleTarget: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
   discoverBackupFreshTarget: 3,
-  maxRouteAttemptsPerRun: 144,
-  maxProviderCallsPerRun: 144,
+  maxRouteAttemptsPerRun: 288,
+  maxProviderCallsPerRun: 288,
+  maxRouteAttemptsPerMarket: 36,
   maxDateCandidatesPerRoute: 3,
+  lastKnownGoodTtlHours: 168,
 } as const;
 
 const HOMEPAGE_FARE_REFRESH_MARKETS = HOMEPAGE_REFRESH_MARKET_CODES;
@@ -86,6 +88,7 @@ export type HomepageFareRoute = {
 
 export type HomepageFareSnapshotStatusValue =
   | "fresh"
+  | "last_known_good"
   | "expired"
   | "unavailable"
   | "failed"
@@ -153,7 +156,9 @@ export type HomepageFareRefreshBudget = {
   discoverBackupFreshTarget: number;
   maxRouteAttemptsPerRun: number;
   maxProviderCallsPerRun: number;
+  maxRouteAttemptsPerMarket: number;
   maxDateCandidatesPerRoute: number;
+  lastKnownGoodTtlHours: number;
 };
 
 export type HomepageFareSnapshotStatusResponse = {
@@ -173,6 +178,8 @@ export type HomepageFareSnapshotStatusResponse = {
   popularFreshByMarket: Record<string, number>;
   discoveryFreshByMarket: Record<string, number>;
   backupFreshByMarket: Record<string, number>;
+  lastKnownGoodByMarket: Record<string, number>;
+  timeoutByMarket: Record<string, number>;
   candidatePoolSizeByMarket: Record<string, number>;
   routeAttemptsByMarket: Record<string, number>;
   providerCallsByMarket: Record<string, number>;
@@ -205,6 +212,8 @@ export type HomepageFareSnapshotResponseEntry = {
   expiresAt?: string;
   search?: HomepageFareSearch;
   unavailable?: boolean;
+  priceState?: "fresh" | "last_known_good" | "none";
+  cachedProviderBacked?: boolean;
 };
 
 export type HomepageFareDateStrategy = {
@@ -228,7 +237,7 @@ export type HomepageDiscoveryFareCardItem = Pick<
 export type HomepageDiscoveryFareCard = {
   item: HomepageDiscoveryFareCardItem;
   fare?: Omit<HomepageFareSnapshotResponseEntry, "id" | "code" | "unavailable">;
-  priceState: "fresh" | "none";
+  priceState: "fresh" | "last_known_good" | "none";
 };
 
 export type HomepageDiscoveryFareFallbackReason =
@@ -344,6 +353,8 @@ export type HomepageFareRefreshCounts = {
   visiblePopularPricedByMarket: Record<string, number>;
   visibleDiscoveryPricedByMarket: Record<string, number>;
   backupFreshByMarket: Record<string, number>;
+  lastKnownGoodByMarket: Record<string, number>;
+  timeoutByMarket: Record<string, number>;
   candidatePoolSizeByMarket: Record<string, number>;
   replacementCandidatesUsedByMarket: Record<string, number>;
   popularFreshByMarket: Record<string, number>;
@@ -667,6 +678,27 @@ function computeFreshCountsByMarket(
   };
 }
 
+function computeLastKnownGoodCountsByMarket(
+  routes: HomepageRefreshRoute[],
+  snapshotsByRouteId: Map<string, HomepageFareSnapshotRecord>,
+  now: Date,
+) {
+  const counts = createEmptyRefreshMarketCounts();
+
+  for (const route of routes) {
+    if (
+      isLastKnownGoodHomepageFareSnapshotRecord({
+        snapshot: snapshotsByRouteId.get(route.id),
+        now,
+        currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+      })
+    ) {
+      counts[route.market] = (counts[route.market] ?? 0) + 1;
+    }
+  }
+
+  return counts;
+}
 
 const HOMEPAGE_FARE_MARKET_METADATA: Record<
   string,
@@ -1019,7 +1051,7 @@ export async function refreshPhase3AHomepageFareSnapshots({
   const freshRouteIds = new Set(
     allCandidateRoutes
       .filter((route) =>
-        isFreshHomepageFareSnapshotRecord({
+        isUsableHomepageFareSnapshotRecord({
           snapshot: snapshotsByRouteId.get(route.id),
           now,
           currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
@@ -1066,8 +1098,15 @@ export async function refreshPhase3AHomepageFareSnapshots({
     failedByMarket: createEmptyRefreshMarketCounts(),
     unavailableByMarket: createEmptyRefreshMarketCounts(),
     skippedCooldownByMarket: createEmptyRefreshMarketCounts(),
+    timeoutByMarket: createEmptyRefreshMarketCounts(),
+    lastKnownGoodByMarket: createEmptyRefreshMarketCounts(),
     skippedByMarket: createEmptyRefreshMarketCounts(),
   };
+  counts.lastKnownGoodByMarket = computeLastKnownGoodCountsByMarket(
+    allCandidateRoutes,
+    snapshotsByRouteId,
+    now,
+  );
   updateRefreshMarketFreshMetadata(counts, allCandidateRoutes, freshRouteIds);
   updateRefreshMarketTargetMetadata(
     counts,
@@ -1152,6 +1191,16 @@ export async function refreshPhase3AHomepageFareSnapshots({
     if (counts.providerCalls >= refreshBudget.maxProviderCallsPerRun) {
       counts.stoppedReason = "provider_budget_exhausted";
       break;
+    }
+
+    if (
+      (counts.routeAttemptsByMarket[route.market] ?? 0) >=
+      refreshBudget.maxRouteAttemptsPerMarket
+    ) {
+      counts.skipped += 1;
+      counts.skippedByMarket[route.market] =
+        (counts.skippedByMarket[route.market] ?? 0) + 1;
+      continue;
     }
 
     if (providerIncidentDetected) {
@@ -1264,11 +1313,19 @@ async function refreshHomepageFareRoute({
   refreshBudget: HomepageFareRefreshBudget;
 }): Promise<HomepageFareRefreshRouteResult> {
   const { origin, destination } = route;
+  const now = new Date();
   const existingFresh = isFreshHomepageFareSnapshotRecord({
     snapshot: existingSnapshot,
-    now: new Date(),
+    now,
     currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
   });
+  const existingLastKnownGood = isLastKnownGoodHomepageFareSnapshotRecord({
+    snapshot: existingSnapshot,
+    now,
+    currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+    ttlHours: refreshBudget.lastKnownGoodTtlHours,
+  });
+  const existingUsable = existingFresh || existingLastKnownGood;
 
   if (isSameHomepageFareRoute(origin, destination)) {
     counts.skipped += 1;
@@ -1355,7 +1412,7 @@ async function refreshHomepageFareRoute({
     }
 
     if (terminalResult?.status === HomepageFareSnapshotStatus.UNAVAILABLE) {
-      if (existingFresh) {
+      if (existingUsable) {
         counts.retained += 1;
         return "retained";
       }
@@ -1374,7 +1431,7 @@ async function refreshHomepageFareRoute({
       return "unavailable";
     }
 
-    if (existingFresh) {
+    if (existingUsable) {
       counts.retained += 1;
       return terminalResult && isProviderWideHomepageFareIncident(terminalResult.reason)
         ? "provider_incident"
@@ -1392,12 +1449,16 @@ async function refreshHomepageFareRoute({
     counts.failed += 1;
     counts.failedByMarket[route.market] =
       (counts.failedByMarket[route.market] ?? 0) + 1;
+    if (terminalResult?.reason === "provider_timeout") {
+      counts.timeoutByMarket[route.market] =
+        (counts.timeoutByMarket[route.market] ?? 0) + 1;
+    }
 
     return terminalResult && isProviderWideHomepageFareIncident(terminalResult.reason)
       ? "provider_incident"
       : "failed";
   } catch {
-    if (existingFresh) {
+    if (existingUsable) {
       counts.retained += 1;
       return "retained";
     }
@@ -1531,7 +1592,69 @@ function dedupeRefreshRoutes(routes: HomepageRefreshRoute[]) {
 }
 
 function getHomepageFareSmartRefreshBudget(): HomepageFareRefreshBudget {
-  return { ...HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS };
+  return {
+    popularVisibleTarget: readHomepageFareIntegerEnv(
+      "HOMEPAGE_FARE_TARGET_POPULAR",
+      HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS.popularVisibleTarget,
+      1,
+      48,
+    ),
+    discoverVisibleTarget: readHomepageFareIntegerEnv(
+      "HOMEPAGE_FARE_TARGET_DISCOVERY",
+      HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS.discoverVisibleTarget,
+      1,
+      48,
+    ),
+    discoverBackupFreshTarget: readHomepageFareIntegerEnv(
+      "HOMEPAGE_FARE_TARGET_BACKUP",
+      HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS.discoverBackupFreshTarget,
+      0,
+      48,
+    ),
+    maxRouteAttemptsPerRun: readHomepageFareIntegerEnv(
+      "HOMEPAGE_FARE_MAX_ATTEMPTS_PER_RUN",
+      HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS.maxRouteAttemptsPerRun,
+      1,
+      1000,
+    ),
+    maxProviderCallsPerRun: readHomepageFareIntegerEnv(
+      "HOMEPAGE_FARE_MAX_PROVIDER_CALLS_PER_RUN",
+      HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS.maxProviderCallsPerRun,
+      1,
+      1000,
+    ),
+    maxRouteAttemptsPerMarket: readHomepageFareIntegerEnv(
+      "HOMEPAGE_FARE_MAX_ATTEMPTS_PER_MARKET",
+      HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS.maxRouteAttemptsPerMarket,
+      1,
+      200,
+    ),
+    maxDateCandidatesPerRoute: readHomepageFareIntegerEnv(
+      "HOMEPAGE_FARE_MAX_DATE_CANDIDATES_PER_ROUTE",
+      HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS.maxDateCandidatesPerRoute,
+      1,
+      5,
+    ),
+    lastKnownGoodTtlHours: readHomepageFareIntegerEnv(
+      "HOMEPAGE_FARE_LAST_KNOWN_GOOD_TTL_HOURS",
+      HOMEPAGE_FARE_SMART_REFRESH_DEFAULTS.lastKnownGoodTtlHours,
+      1,
+      24 * 30,
+    ),
+  };
+}
+
+function readHomepageFareIntegerEnv(
+  name: string,
+  fallback: number,
+  min: number,
+  max: number,
+) {
+  const value = Number(process.env[name]);
+
+  if (!Number.isFinite(value)) return fallback;
+
+  return Math.min(max, Math.max(min, Math.floor(value)));
 }
 
 function computeHomepageFareRefreshReadiness(
@@ -1871,6 +1994,47 @@ function isFreshHomepageFareSnapshotRecord({
   );
 }
 
+
+function isLastKnownGoodHomepageFareSnapshotRecord({
+  snapshot,
+  now,
+  currency,
+  ttlHours = getHomepageFareSmartRefreshBudget().lastKnownGoodTtlHours,
+}: {
+  snapshot?: HomepageFareSnapshotRecord;
+  now: Date;
+  currency: string;
+  ttlHours?: number;
+}) {
+  const price = readFinitePrice(snapshot?.price);
+  const maxAgeMs = ttlHours * 60 * 60 * 1000;
+
+  return Boolean(
+    snapshot &&
+      snapshot.providerBacked === true &&
+      snapshot.status === HomepageFareSnapshotStatus.ACTIVE &&
+      snapshot.expiresAt.getTime() <= now.getTime() &&
+      now.getTime() - snapshot.searchedAt.getTime() <= maxAgeMs &&
+      price &&
+      normalizeHomepageFareCurrency(snapshot.currency) === currency,
+  );
+}
+
+function isUsableHomepageFareSnapshotRecord({
+  snapshot,
+  now,
+  currency,
+}: {
+  snapshot?: HomepageFareSnapshotRecord;
+  now: Date;
+  currency: string;
+}) {
+  return (
+    isFreshHomepageFareSnapshotRecord({ snapshot, now, currency }) ||
+    isLastKnownGoodHomepageFareSnapshotRecord({ snapshot, now, currency })
+  );
+}
+
 export async function readHomepageFareSnapshotResponseEntries({
   routes,
   departureDate,
@@ -2009,12 +2173,12 @@ export async function readHomepageDiscoveryFareCards({
   });
   const requestedFreshCount = pooledResult.cards.filter(
     (card) =>
-      card.priceState === "fresh" &&
+      (card.priceState === "fresh" || card.priceState === "last_known_good") &&
       requestedCandidates.some((candidate) => candidate.id === card.item.id),
   ).length;
   const regionalFreshCount = pooledResult.cards.filter(
     (card) =>
-      card.priceState === "fresh" &&
+      (card.priceState === "fresh" || card.priceState === "last_known_good") &&
       regionalCandidates.some((candidate) => candidate.id === card.item.id),
   ).length;
   const fallbackReason: HomepageDiscoveryFareFallbackReason =
@@ -2097,7 +2261,7 @@ async function buildHomepageDiscoveryFareCardsForCandidates({
     const fare = faresById.get(candidate.id);
     const item = toPublicHomepageDiscoveryFareCardItem(candidate);
 
-    if (isFreshHomepageDiscoveryFareForCandidate(candidate, fare)) {
+    if (isUsableHomepageDiscoveryFareForCandidate(candidate, fare)) {
       freshCards.push({
         item,
         fare: {
@@ -2107,8 +2271,10 @@ async function buildHomepageDiscoveryFareCardsForCandidates({
           searchedAt: fare.searchedAt,
           expiresAt: fare.expiresAt,
           search: fare.search,
+          priceState: fare.priceState,
+          cachedProviderBacked: fare.cachedProviderBacked,
         },
-        priceState: "fresh",
+        priceState: fare.priceState === "last_known_good" ? "last_known_good" : "fresh",
       });
       continue;
     }
@@ -2124,7 +2290,7 @@ async function buildHomepageDiscoveryFareCardsForCandidates({
   return {
     cards,
     candidateCount: candidates.length,
-    freshCount: cards.filter((card) => card.priceState === "fresh").length,
+    freshCount: cards.filter((card) => card.priceState === "fresh" || card.priceState === "last_known_good").length,
   };
 }
 
@@ -2192,7 +2358,9 @@ function buildHomepageDiscoveryFareCardsResponse({
   currencyRequested: string;
   snapshotCurrency: string;
 }): HomepageDiscoveryFareCardsResponse {
-  const freshCount = cards.filter((card) => card.priceState === "fresh").length;
+  const freshCount = cards.filter(
+    (card) => card.priceState === "fresh" || card.priceState === "last_known_good",
+  ).length;
   const neutralCount = cards.length - freshCount;
 
   const fallbackLevel = getHomepageDiscoveryFallbackLevel(fallbackScope);
@@ -2254,7 +2422,7 @@ function normalizeHomepageDiscoveryRegionCode(regionCode: string) {
     : DEFAULT_HOME_DISCOVERY_REGION;
 }
 
-function isFreshHomepageDiscoveryFareForCandidate(
+function isUsableHomepageDiscoveryFareForCandidate(
   candidate: HomeDiscoveryFareCandidate,
   fare: HomepageFareSnapshotResponseEntry | undefined,
 ): fare is HomepageFareSnapshotResponseEntry & {
@@ -2265,11 +2433,10 @@ function isFreshHomepageDiscoveryFareForCandidate(
   search: HomepageFareSearch;
 } {
   return (
-    isFreshHomepageFareSnapshotResponseEntry(fare) &&
+    isUsableHomepageFareSnapshotResponseEntry(fare) &&
     fare.search.origin === candidate.originCode &&
     fare.search.destination === candidate.destinationCode &&
-    fare.search.currency === fare.currency &&
-    Date.parse(fare.expiresAt) > Date.now()
+    fare.search.currency === fare.currency
   );
 }
 
@@ -2289,7 +2456,7 @@ function toPublicHomepageDiscoveryFareCardItem(
   };
 }
 
-function isFreshHomepageFareSnapshotResponseEntry(
+function isUsableHomepageFareSnapshotResponseEntry(
   fare: HomepageFareSnapshotResponseEntry | undefined,
 ): fare is HomepageFareSnapshotResponseEntry & {
   price: number;
@@ -2366,6 +2533,8 @@ export async function readHomepageFareSnapshotStatus({
       popularFreshByMarket: createEmptyRefreshMarketCounts(),
       discoveryFreshByMarket: createEmptyRefreshMarketCounts(),
       backupFreshByMarket: createEmptyRefreshMarketCounts(),
+      lastKnownGoodByMarket: createEmptyRefreshMarketCounts(),
+      timeoutByMarket: createEmptyRefreshMarketCounts(),
       candidatePoolSizeByMarket: createEmptyRefreshMarketCounts(),
       routeAttemptsByMarket: createEmptyRefreshMarketCounts(),
       providerCallsByMarket: createEmptyRefreshMarketCounts(),
@@ -2437,7 +2606,7 @@ export async function readHomepageFareSnapshotStatus({
   const refreshBudget = getHomepageFareSmartRefreshBudget();
   const freshRouteIds = new Set(
     statusRoutes
-      .filter((route) => route.status === "fresh")
+      .filter((route) => route.status === "fresh" || route.status === "last_known_good")
       .map((route) => route.id),
   );
   const refreshRoutes = eligibleRoutes.filter(
@@ -2453,6 +2622,19 @@ export async function readHomepageFareSnapshotStatus({
     refreshRoutes,
   );
   const emptyMarketCounts = createEmptyRefreshMarketCounts();
+  const lastKnownGoodByMarket = createEmptyRefreshMarketCounts();
+  const timeoutByMarket = createEmptyRefreshMarketCounts();
+
+  for (const route of statusRoutes) {
+    if (route.status === "last_known_good") {
+      lastKnownGoodByMarket[route.market] =
+        (lastKnownGoodByMarket[route.market] ?? 0) + 1;
+    }
+    if (route.errorReason === "provider_timeout") {
+      timeoutByMarket[route.market] = (timeoutByMarket[route.market] ?? 0) + 1;
+    }
+  }
+
   const marketTargets = computeHomepageFareMarketTargets(
     refreshRoutes,
     freshRouteIds,
@@ -2493,6 +2675,8 @@ export async function readHomepageFareSnapshotStatus({
     popularFreshByMarket,
     discoveryFreshByMarket: visibleDiscoveryPricedByMarket,
     backupFreshByMarket,
+    lastKnownGoodByMarket,
+    timeoutByMarket,
     candidatePoolSizeByMarket,
     routeAttemptsByMarket: emptyMarketCounts,
     providerCallsByMarket: emptyMarketCounts,
@@ -2744,7 +2928,7 @@ async function upsertHomepageFareSnapshot(input: SnapshotWriteInput) {
 }
 
 type HomepageFareSnapshotRecord = {
-  snapshotKey: string;
+  snapshotKey?: string;
   origin: string;
   destination: string;
   currency: string;
@@ -2759,6 +2943,7 @@ type HomepageFareSnapshotRecord = {
 function createEmptyHomepageFareSnapshotStatusSummary(): HomepageFareSnapshotStatusSummary {
   return {
     fresh: 0,
+    last_known_good: 0,
     expired: 0,
     unavailable: 0,
     failed: 0,
@@ -2773,10 +2958,12 @@ function classifyHomepageFareDisplayReadiness(
   marketTargets?: Record<string, HomepageFareMarketTarget>,
 ): HomepageFareDisplayReadiness {
   const popularFresh = routes.filter(
-    (route) => route.id.startsWith("popular-") && route.status === "fresh",
+    (route) => route.id.startsWith("popular-") &&
+      (route.status === "fresh" || route.status === "last_known_good"),
   ).length;
   const discoverFresh = routes.filter(
-    (route) => route.id.startsWith("discover-") && route.status === "fresh",
+    (route) => route.id.startsWith("discover-") &&
+      (route.status === "fresh" || route.status === "last_known_good"),
   ).length;
   const discoverDisplayedFresh = Math.min(
     discoverFresh,
@@ -2880,10 +3067,16 @@ function formatHomepageFareSnapshotStatusRoute({
     !isExpired &&
     Boolean(price) &&
     normalizeHomepageFareCurrency(snapshot.currency) === currency;
+  const isLastKnownGood = isLastKnownGoodHomepageFareSnapshotRecord({
+    snapshot,
+    now,
+    currency,
+  });
   const status = getOperationalSnapshotStatus({
     snapshotStatus: snapshot.status,
     isExpired,
     isFresh,
+    isLastKnownGood,
   });
 
   const safeError =
@@ -2893,7 +3086,7 @@ function formatHomepageFareSnapshotStatusRoute({
 
   return {
     ...base,
-    ...(isFresh && price
+    ...((isFresh || isLastKnownGood) && price
       ? {
           price,
           currency: snapshot.currency,
@@ -2943,12 +3136,15 @@ function getOperationalSnapshotStatus({
   snapshotStatus,
   isExpired,
   isFresh,
+  isLastKnownGood = false,
 }: {
   snapshotStatus: HomepageFareSnapshotStatus;
   isExpired: boolean;
   isFresh: boolean;
+  isLastKnownGood?: boolean;
 }): HomepageFareSnapshotStatusValue {
   if (isFresh) return "fresh";
+  if (isLastKnownGood) return "last_known_good";
   if (isExpired || snapshotStatus === HomepageFareSnapshotStatus.STALE) {
     return "expired";
   }
@@ -2998,14 +3194,23 @@ function formatHomepageFareSnapshotResponseEntry({
 
   const price = readFinitePrice(snapshot.price);
   const expiresAtMs = snapshot.expiresAt.getTime();
+  const normalizedSnapshotCurrency = normalizeHomepageFareCurrency(snapshot.currency);
   const providerBacked =
     snapshot.providerBacked === true &&
     snapshot.status === HomepageFareSnapshotStatus.ACTIVE &&
-    expiresAtMs > now.getTime() &&
     Boolean(price) &&
-    normalizeHomepageFareCurrency(snapshot.currency) === currency;
+    normalizedSnapshotCurrency === currency;
+  const isFresh = providerBacked && expiresAtMs > now.getTime();
+  const isLastKnownGood =
+    providerBacked &&
+    !isFresh &&
+    isLastKnownGoodHomepageFareSnapshotRecord({
+      snapshot,
+      now,
+      currency,
+    });
 
-  if (!providerBacked || !price) return unavailableEntry;
+  if ((!isFresh && !isLastKnownGood) || !price) return unavailableEntry;
 
   const search = buildHomepageFareSearch({
     origin: snapshot.origin,
@@ -3023,6 +3228,8 @@ function formatHomepageFareSnapshotResponseEntry({
     searchedAt: snapshot.searchedAt.toISOString(),
     expiresAt: snapshot.expiresAt.toISOString(),
     search,
+    priceState: isLastKnownGood ? "last_known_good" : "fresh",
+    ...(isLastKnownGood ? { cachedProviderBacked: true } : {}),
   };
 }
 

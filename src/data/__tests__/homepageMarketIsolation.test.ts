@@ -150,3 +150,58 @@ test("manual country/market changes intentionally change homepage market", () =>
     ids(getHomeDiscoveryByRegion("NG")),
   );
 });
+
+test("homepage fare candidate pools provide same-market or regional replacements only", () => {
+  const expectations = [
+    ["US", ["us-"], [/^(ng|ke|za|de|gb|ae|jp|br)-/]],
+    ["NG", ["ng-", "ke-", "za-"], [/^us-/]],
+    ["DE", ["de-"], [/^(us|ng|ke|za|ae|jp|br)-/]],
+    ["AE", ["ae-"], [/^(us|ng|ke|za|de|gb|jp|br)-/]],
+    ["JP", ["jp-"], [/^(us|ng|ke|za|de|gb|ae|br)-/]],
+    ["BR", ["br-"], [/^(us|ng|ke|za|de|gb|ae|jp)-/]],
+  ] as const;
+
+  for (const [regionCode, allowedPrefixes, blockedPatterns] of expectations) {
+    const popularIds = ids(
+      getPopularDestinationFareCandidatesByRegion(regionCode).items,
+    );
+    const discoveryIds = ids([
+      ...getHomeDiscoveryFareCandidates(regionCode),
+      ...getRegionalHomeDiscoveryFareCandidates(regionCode),
+    ]);
+
+    assert.ok(
+      popularIds.length >= 8,
+      `${regionCode} should have enough popular fare candidates for replacement coverage`,
+    );
+    assert.ok(
+      discoveryIds.length >= 16,
+      `${regionCode} should have enough discovery fare candidates for visible coverage`,
+    );
+    assert.deepEqual(
+      [...popularIds, ...discoveryIds].filter((id) =>
+        blockedPatterns.some((pattern) => pattern.test(id)),
+      ),
+      [],
+      `${regionCode} fare coverage candidates leaked unrelated market routes`,
+    );
+    assert.deepEqual(
+      popularIds.filter(
+        (id) => !allowedPrefixes.some((prefix) => id.startsWith(prefix)),
+      ),
+      [],
+      `${regionCode} popular replacement candidates must stay market-relevant`,
+    );
+  }
+});
+
+test("currency display changes do not alter fare candidate market pools", () => {
+  assert.deepEqual(
+    ids(getPopularDestinationFareCandidatesByRegion("US").items),
+    ids(getPopularDestinationFareCandidatesByRegion("US").items),
+  );
+  assert.deepEqual(
+    ids(getHomeDiscoveryFareCandidates("DE")),
+    ids(getHomeDiscoveryFareCandidates("DE")),
+  );
+});
