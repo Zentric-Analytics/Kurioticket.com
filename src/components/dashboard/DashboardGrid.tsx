@@ -120,7 +120,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
       <aside className="min-w-0 lg:sticky lg:top-5 lg:self-start" aria-label="Account navigation">
         <div
           className={cn(
-            "border border-violet-100/80 bg-white shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)] lg:min-h-[calc(100vh-7.25rem)]",
+            "border border-violet-100/80 bg-white shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)] lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-width:thin]",
             mobileOverviewTabs
               ? "-mx-4 border-x-0 px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:p-2.5 lg:shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]"
               : "rounded-[1.25rem] p-2 lg:p-2.5",
