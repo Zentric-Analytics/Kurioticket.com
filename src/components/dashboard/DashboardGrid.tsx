@@ -95,7 +95,7 @@ function TravelIllustration({ variant = "luggage" }: { variant?: "luggage" | "gl
     <div
       className={cn(
         "relative isolate flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100/70 text-violet-700",
-        variant === "globe" ? "size-28 sm:size-36" : "size-28 sm:size-32",
+        variant === "globe" ? "size-24 sm:size-28" : "size-24 sm:size-28",
       )}
       aria-hidden="true"
     >
@@ -105,14 +105,14 @@ function TravelIllustration({ variant = "luggage" }: { variant?: "luggage" | "gl
       {variant === "globe" ? (
         <>
           <div className="absolute inset-4 rounded-full border border-violet-300/60" />
-          <div className="absolute h-24 w-24 rounded-full border-l border-violet-300/70 sm:h-28 sm:w-28" />
-          <div className="absolute h-16 w-28 rotate-12 rounded-[100%] border-t border-dashed border-violet-400/80 sm:w-32" />
-          <Plane className="absolute right-3 top-9 size-9 rotate-45 fill-violet-700 text-violet-700" />
+          <div className="absolute h-20 w-20 rounded-full border-l border-violet-300/70 sm:h-24 sm:w-24" />
+          <div className="absolute h-14 w-24 rotate-12 rounded-[100%] border-t border-dashed border-violet-400/80 sm:w-28" />
+          <Plane className="absolute right-3 top-8 size-7 rotate-45 fill-violet-700 text-violet-700" />
         </>
       ) : (
         <>
           <div className="absolute bottom-7 h-3 w-20 rounded-full bg-violet-300/30 blur-sm" />
-          <Luggage className="relative size-16 fill-violet-500/20 text-violet-700 drop-shadow-sm sm:size-20" />
+          <Luggage className="relative size-14 fill-violet-500/20 text-violet-700 drop-shadow-sm sm:size-16" />
         </>
       )}
     </div>
@@ -123,9 +123,9 @@ export function AccountDashboardFrame({ children }: AccountDashboardFrameProps) 
   const pathname = usePathname();
 
   return (
-    <div className="grid min-w-0 gap-5 lg:grid-cols-[16.5rem_minmax(0,1fr)] xl:grid-cols-[17.5rem_minmax(0,1fr)]">
-      <aside className="min-w-0 lg:sticky lg:top-28 lg:self-start" aria-label="Account navigation">
-        <div className="rounded-[1.75rem] border border-violet-100/80 bg-white p-2 shadow-[0_24px_70px_-48px_rgba(49,46,129,0.55)] lg:min-h-[calc(100vh-9rem)] lg:p-3">
+    <div className="grid min-w-0 gap-4 lg:grid-cols-[15.5rem_minmax(0,1fr)] xl:grid-cols-[16rem_minmax(0,1fr)]">
+      <aside className="min-w-0 lg:sticky lg:top-6 lg:self-start" aria-label="Account navigation">
+        <div className="rounded-[1.4rem] border border-violet-100/80 bg-white p-2 shadow-[0_24px_70px_-50px_rgba(49,46,129,0.45)] lg:min-h-[calc(100vh-8rem)] lg:p-2.5">
           <nav className="overflow-x-auto lg:overflow-visible">
             <div className="flex min-w-max gap-2 lg:min-w-0 lg:flex-col lg:gap-1.5">
               {navItems.map((item) => {
@@ -138,11 +138,11 @@ export function AccountDashboardFrame({ children }: AccountDashboardFrameProps) 
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "focus-ring flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition hover:bg-violet-50 hover:text-violet-700",
+                      "focus-ring flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-[13px] font-semibold transition hover:bg-violet-50 hover:text-violet-700",
                       active ? "bg-violet-50 text-violet-700 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.04)]" : "text-slate-950",
                     )}
                   >
-                    <Icon className="size-5 shrink-0" strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
+                    <Icon className="size-4 shrink-0" strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -150,22 +150,22 @@ export function AccountDashboardFrame({ children }: AccountDashboardFrameProps) 
             </div>
           </nav>
 
-          <div className="mt-6 hidden rounded-2xl border border-violet-100 bg-gradient-to-b from-violet-50 to-white p-5 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-28 xl:mt-36">
-            <div className="mx-auto mb-4 flex justify-center">
+          <div className="mt-5 hidden rounded-2xl border border-violet-100 bg-gradient-to-b from-violet-50 to-white p-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-20 xl:mt-24">
+            <div className="mx-auto mb-3 flex justify-center">
               <TravelIllustration />
             </div>
-            <h2 className="text-base font-bold text-slate-950">Book your next trip</h2>
-            <p className="mx-auto mt-3 max-w-40 text-sm leading-6 text-slate-600">Find great deals on flights and hotels.</p>
+            <h2 className="text-sm font-semibold text-slate-950">Book your next trip</h2>
+            <p className="mx-auto mt-2 max-w-40 text-xs leading-5 text-slate-600">Find great deals on flights and hotels.</p>
             <Link
               href="/flights/results"
-              className="focus-ring mt-5 inline-flex h-11 w-full items-center justify-center rounded-lg border border-violet-300 bg-white px-4 text-sm font-bold text-violet-700 transition hover:border-violet-500 hover:bg-violet-50"
+              className="focus-ring mt-4 inline-flex h-10 w-full items-center justify-center rounded-lg border border-violet-300 bg-white px-4 text-sm font-semibold text-violet-700 transition hover:border-violet-500 hover:bg-violet-50"
             >
               Search flights
             </Link>
           </div>
         </div>
       </aside>
-      <div className="min-w-0 space-y-4 sm:space-y-5">{children}</div>
+      <div className="min-w-0 space-y-3.5 sm:space-y-4">{children}</div>
     </div>
   );
 }
@@ -174,17 +174,17 @@ function QuickActionTile({ title, body, href, icon: Icon }: { title: string; bod
   return (
     <Link
       href={href}
-      className="focus-ring group flex min-h-32 min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_45px_-36px_rgba(30,27,75,0.55)] transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_22px_52px_-34px_rgba(79,70,229,0.45)]"
+      className="focus-ring group flex min-h-24 min-w-0 flex-col justify-between rounded-xl border border-slate-200 bg-white p-3 shadow-[0_18px_45px_-38px_rgba(30,27,75,0.48)] transition hover:-translate-y-0.5 hover:border-violet-200 hover:shadow-[0_22px_52px_-34px_rgba(79,70,229,0.45)]"
     >
       <div className="flex items-start justify-between gap-3">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-          <Icon className="size-5" aria-hidden="true" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
+          <Icon className="size-4" aria-hidden="true" />
         </span>
-        <ChevronRight className="mt-2 size-4 shrink-0 text-slate-950 transition group-hover:translate-x-0.5 group-hover:text-violet-700" aria-hidden="true" />
+        <ChevronRight className="mt-1 size-4 shrink-0 text-slate-950 transition group-hover:translate-x-0.5 group-hover:text-violet-700" aria-hidden="true" />
       </div>
-      <div className="mt-5">
-        <h2 className="text-base font-extrabold text-slate-950">{title}</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
+      <div className="mt-3">
+        <h2 className="text-sm font-semibold text-slate-950">{title}</h2>
+        <p className="mt-1.5 text-xs leading-5 text-slate-600">{body}</p>
       </div>
     </Link>
   );
@@ -193,28 +193,28 @@ function QuickActionTile({ title, body, href, icon: Icon }: { title: string; bod
 function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.55)]"
+      className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_22px_62px_-50px_rgba(49,46,129,0.48)]"
       aria-labelledby="dashboard-title"
     >
-      <div className="grid gap-6 p-5 sm:p-7 xl:grid-cols-[minmax(0,1fr)_minmax(34rem,0.95fr)] xl:items-center">
-        <div className="flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
+      <div className="grid gap-5 p-4 sm:p-5 lg:p-6 xl:grid-cols-[minmax(0,1fr)_minmax(29rem,0.9fr)] xl:items-center">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
           <div
-            className="flex size-20 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-700 text-3xl font-extrabold text-white shadow-[0_20px_42px_-24px_rgba(79,70,229,0.85)] sm:size-24 sm:text-4xl"
+            className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-700 text-2xl font-bold text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.8)] sm:size-20 sm:text-3xl"
             aria-hidden="true"
           >
             {initials}
           </div>
           <div className="min-w-0">
-            <h1 id="dashboard-title" className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
+            <h1 id="dashboard-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
               Welcome back, {displayName} 👋
             </h1>
-            {userEmail ? <p className="mt-2 break-words text-sm font-semibold text-slate-500">{userEmail}</p> : null}
-            <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
+            {userEmail ? <p className="mt-1.5 break-words text-xs font-medium text-slate-500 sm:text-sm">{userEmail}</p> : null}
+            <p className="mt-3 max-w-lg text-sm leading-6 text-slate-600">
               Manage your trips, saved travel plans, alerts, and account preferences from one place.
             </p>
           </div>
         </div>
-        <div className="grid gap-3 border-slate-200 xl:grid-cols-3 xl:border-l xl:pl-7">
+        <div className="grid gap-2.5 border-slate-200 sm:grid-cols-3 xl:border-l xl:pl-5">
           {quickActions.map((action) => (
             <QuickActionTile key={action.title} {...action} />
           ))}
@@ -226,14 +226,14 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
 
 function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: string; value: string; href?: string; linkText: string; icon: LucideIcon }) {
   const content = (
-    <div className="flex min-w-0 items-center gap-4 px-4 py-3 sm:px-5 lg:min-h-24 lg:border-l lg:border-slate-200 lg:first:border-l-0">
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-violet-700">
-        <Icon className="size-6" aria-hidden="true" />
+    <div className="flex min-w-0 items-center gap-3 px-3.5 py-3 sm:px-4 lg:min-h-20 lg:border-l lg:border-slate-200 lg:first:border-l-0">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+        <Icon className="size-5" aria-hidden="true" />
       </span>
       <div className="min-w-0">
-        <dt className="text-sm font-extrabold text-slate-950">{label}</dt>
-        <dd className="mt-1 text-2xl font-extrabold leading-none text-slate-950">{value}</dd>
-        <p className="mt-2 text-sm font-bold text-violet-700">{linkText}</p>
+        <dt className="text-xs font-semibold text-slate-950">{label}</dt>
+        <dd className="mt-1 text-xl font-bold leading-none text-slate-950">{value}</dd>
+        <p className="mt-1.5 text-xs font-semibold text-violet-700">{linkText}</p>
       </div>
     </div>
   );
@@ -251,15 +251,15 @@ function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: str
 
 function SetupRow({ title, body, href, icon: Icon }: { title: string; body: string; href: string; icon: LucideIcon }) {
   return (
-    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-4 px-5 py-4 transition hover:bg-violet-50/45 sm:px-6">
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
-        <Icon className="size-5" aria-hidden="true" />
+    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-3 px-5 py-3.5 transition hover:bg-violet-50/45 sm:px-6">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700">
+        <Icon className="size-4" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-base font-extrabold text-slate-950">{title}</span>
-        <span className="mt-1 block text-sm leading-6 text-slate-600">{body}</span>
+        <span className="block text-sm font-semibold text-slate-950">{title}</span>
+        <span className="mt-1 block text-xs leading-5 text-slate-600">{body}</span>
       </span>
-      <ChevronRight className="size-5 shrink-0 text-slate-950 transition group-hover:translate-x-0.5 group-hover:text-violet-700" aria-hidden="true" />
+      <ChevronRight className="size-4 shrink-0 text-slate-950 transition group-hover:translate-x-0.5 group-hover:text-violet-700" aria-hidden="true" />
     </Link>
   );
 }
@@ -301,15 +301,15 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-50px_rgba(49,46,129,0.52)]"
         aria-labelledby="travel-status-title"
       >
-        <div className="grid gap-7 p-6 sm:p-8 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center xl:px-9 xl:py-8">
+        <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center xl:px-7 xl:py-6">
           <TravelIllustration />
           <div className="min-w-0">
-            <h2 id="travel-status-title" className="text-lg font-extrabold text-slate-950">Your travel status</h2>
-            <h3 className="mt-4 text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">No upcoming trips yet</h3>
-            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
+            <h2 id="travel-status-title" className="text-base font-semibold text-slate-950">Your travel status</h2>
+            <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">No upcoming trips yet</h3>
+            <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-600">
               Trips you book or save will appear here when available.
             </p>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               <LinkButton href="/flights/results" className="bg-violet-700 hover:bg-violet-800">
                 <Plane className="size-4" aria-hidden="true" />
                 Search flights
@@ -330,10 +330,10 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-50px_rgba(49,46,129,0.52)]"
         aria-labelledby="snapshot-title"
       >
-        <div className="px-5 pt-5 sm:px-6">
-          <h2 id="snapshot-title" className="text-lg font-extrabold text-slate-950">Account snapshot</h2>
+        <div className="px-5 pt-4 sm:px-6">
+          <h2 id="snapshot-title" className="text-base font-semibold text-slate-950">Account snapshot</h2>
         </div>
-        <dl className="grid gap-1 p-3 sm:p-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-0">
+        <dl className="grid gap-1 p-2.5 sm:p-3 md:grid-cols-2 lg:grid-cols-4 lg:gap-0">
           {snapshotItems.map((item) => (
             <SnapshotLink key={item.label} {...item} />
           ))}
@@ -344,8 +344,8 @@ export function DashboardOverview({ initials, displayName, userEmail }: Dashboar
         className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_70px_-50px_rgba(49,46,129,0.52)]"
         aria-labelledby="setup-title"
       >
-        <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
-          <h2 id="setup-title" className="text-lg font-extrabold text-slate-950">Finish setting up your account</h2>
+        <div className="border-b border-slate-200 px-5 py-3.5 sm:px-6">
+          <h2 id="setup-title" className="text-base font-semibold text-slate-950">Finish setting up your account</h2>
         </div>
         <div className="divide-y divide-slate-200">
           <SetupRow
