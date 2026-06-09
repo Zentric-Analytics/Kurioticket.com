@@ -115,6 +115,9 @@ const DEFAULT_MARKET_STATUS_FIELDS = {
   replacementCandidatesUsedByMarket: {},
   timeoutByMarket: {},
   lastKnownGoodByMarket: {},
+  lastRefreshAt: undefined,
+  cronConfigured: false,
+  nextExpectedCronRefresh: undefined,
 };
 
 const SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES = {
@@ -195,6 +198,11 @@ type MarketReadiness = {
   unavailable: number;
   skippedCooldown: number;
   candidatePoolSize: number;
+  freshCount?: number;
+  lastKnownGoodCount?: number;
+  missingCount?: number;
+  timeoutCount?: number;
+  replacementCandidatesUsed?: number;
 };
 
 type RefreshCounts = {
@@ -318,6 +326,10 @@ type HomepageFareStatusPayload = {
   skippedCooldownByMarket: Record<string, number>;
   timeoutByMarket: Record<string, number>;
   lastKnownGoodByMarket: Record<string, number>;
+  replacementCandidatesUsedByMarket: Record<string, number>;
+  lastRefreshAt?: string;
+  cronConfigured?: boolean;
+  nextExpectedCronRefresh?: string;
 };
 
 type StatusLoadState = {
@@ -577,6 +589,14 @@ export function HomepageFaresRefreshCard() {
             value={refreshState.counts?.providerCalls ?? "—"}
           />
           <MetricCard
+            label="Last refresh time"
+            value={formatSnapshotTime(statusPayload.lastRefreshAt)}
+          />
+          <MetricCard
+            label="Cron status"
+            value={formatCronStatus(statusPayload)}
+          />
+          <MetricCard
             label="Stopped reason"
             value={refreshState.counts ? formatStoppedReason(refreshState.counts.stoppedReason) : "—"}
           />
@@ -612,7 +632,7 @@ export function HomepageFaresRefreshCard() {
         </dl>
 
         <p className="mt-3 text-xs font-semibold text-muted">
-          Next expected cron refresh: configure an external scheduler to POST /api/internal/homepage-fares/refresh with HOMEPAGE_FARES_CRON_SECRET; this panel reports the last completed manual or cron run returned by the API.
+          Next expected cron refresh: {statusPayload.nextExpectedCronRefresh ?? (statusPayload.cronConfigured ? "external scheduler configured; set HOMEPAGE_FARES_CRON_SCHEDULE_NOTE to show an exact cadence here" : "cron is not configured; set HOMEPAGE_FARES_CRON_SECRET and schedule POST /api/internal/homepage-fares/refresh")}.
         </p>
 
         <p className="mt-3 text-xs font-semibold text-muted">
@@ -937,8 +957,13 @@ function MarketReadinessTable({ markets }: { markets: MarketReadiness[] }) {
             <th className="px-3 py-3">Status</th>
             <th className="px-3 py-3">Attempts</th>
             <th className="px-3 py-3">Provider calls</th>
+            <th className="px-3 py-3">Fresh</th>
+            <th className="px-3 py-3">LKG</th>
+            <th className="px-3 py-3">Missing</th>
             <th className="px-3 py-3">Failed</th>
             <th className="px-3 py-3">Unavailable</th>
+            <th className="px-3 py-3">Timeout</th>
+            <th className="px-3 py-3">Replacements</th>
             <th className="px-3 py-3">Cooldown</th>
             <th className="px-3 py-3">Underfill reason</th>
           </tr>
@@ -967,8 +992,13 @@ function MarketReadinessTable({ markets }: { markets: MarketReadiness[] }) {
                 </td>
                 <td className="px-3 py-3 text-navy">{market.routeAttempts}</td>
                 <td className="px-3 py-3 text-navy">{market.providerCalls}</td>
+                <td className="px-3 py-3 text-navy">{market.freshCount ?? 0}</td>
+                <td className="px-3 py-3 text-navy">{market.lastKnownGoodCount ?? 0}</td>
+                <td className="px-3 py-3 text-navy">{market.missingCount ?? 0}</td>
                 <td className="px-3 py-3 text-navy">{market.failed}</td>
                 <td className="px-3 py-3 text-navy">{market.unavailable}</td>
+                <td className="px-3 py-3 text-navy">{market.timeoutCount ?? 0}</td>
+                <td className="px-3 py-3 text-navy">{market.replacementCandidatesUsed ?? 0}</td>
                 <td className="px-3 py-3 text-navy">{market.skippedCooldown}</td>
                 <td className="max-w-xs px-3 py-3 text-xs font-semibold text-muted">
                   {market.underfillReason ?? "—"}
@@ -977,7 +1007,7 @@ function MarketReadinessTable({ markets }: { markets: MarketReadiness[] }) {
             ))
           ) : (
             <tr>
-              <td className="px-3 py-4 font-semibold text-muted" colSpan={11}>
+              <td className="px-3 py-4 font-semibold text-muted" colSpan={15}>
                 No market readiness metadata was returned.
               </td>
             </tr>
@@ -1119,6 +1149,9 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     replacementCandidatesUsedByMarket?: unknown;
     timeoutByMarket?: unknown;
     lastKnownGoodByMarket?: unknown;
+    lastRefreshAt?: unknown;
+    cronConfigured?: unknown;
+    nextExpectedCronRefresh?: unknown;
   };
   const routes = Array.isArray(candidate.routes)
     ? candidate.routes
@@ -1154,8 +1187,15 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     failedByMarket: normalizeCountRecord(candidate.failedByMarket),
     unavailableByMarket: normalizeCountRecord(candidate.unavailableByMarket),
     skippedCooldownByMarket: normalizeCountRecord(candidate.skippedCooldownByMarket),
+    replacementCandidatesUsedByMarket: normalizeCountRecord(candidate.replacementCandidatesUsedByMarket),
     timeoutByMarket: normalizeCountRecord(candidate.timeoutByMarket),
     lastKnownGoodByMarket: normalizeCountRecord(candidate.lastKnownGoodByMarket),
+    lastRefreshAt: typeof candidate.lastRefreshAt === "string" ? candidate.lastRefreshAt : undefined,
+    cronConfigured: candidate.cronConfigured === true,
+    nextExpectedCronRefresh:
+      typeof candidate.nextExpectedCronRefresh === "string"
+        ? candidate.nextExpectedCronRefresh
+        : undefined,
   };
 }
 
@@ -1614,4 +1654,9 @@ function formatDateTime(value: string) {
     hour: "numeric",
     minute: "2-digit",
   }).format(date);
+}
+
+function formatCronStatus(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
+  if (!status.cronConfigured) return "Not configured";
+  return status.nextExpectedCronRefresh ? "Configured" : "Configured (cadence note missing)";
 }

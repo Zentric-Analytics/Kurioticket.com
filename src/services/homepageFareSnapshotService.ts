@@ -193,6 +193,10 @@ export type HomepageFareSnapshotStatusResponse = {
   failedByMarket: Record<string, number>;
   unavailableByMarket: Record<string, number>;
   skippedCooldownByMarket: Record<string, number>;
+  replacementCandidatesUsedByMarket: Record<string, number>;
+  lastRefreshAt?: string;
+  cronConfigured: boolean;
+  nextExpectedCronRefresh?: string;
 };
 
 export type HomepageFareSearch = {
@@ -315,6 +319,11 @@ export type HomepageFareMarketTarget = {
   unavailable: number;
   skippedCooldown: number;
   candidatePoolSize: number;
+  freshCount: number;
+  lastKnownGoodCount: number;
+  missingCount: number;
+  timeoutCount: number;
+  replacementCandidatesUsed: number;
 };
 
 export type HomepageFareUnderfilledMarket = HomepageFareMarketTarget & {
@@ -867,6 +876,9 @@ function updateRefreshMarketTargetMetadata(
       unavailableByMarket: counts.unavailableByMarket,
       skippedCooldownByMarket: counts.skippedCooldownByMarket,
       candidatePoolSizeByMarket: counts.candidatePoolSizeByMarket,
+      replacementCandidatesUsedByMarket: counts.replacementCandidatesUsedByMarket,
+      lastKnownGoodByMarket: counts.lastKnownGoodByMarket,
+      timeoutByMarket: counts.timeoutByMarket,
       stoppedReason: counts.stoppedReason,
     },
   );
@@ -895,6 +907,9 @@ function computeHomepageFareMarketTargets(
     unavailableByMarket?: Record<string, number>;
     skippedCooldownByMarket?: Record<string, number>;
     candidatePoolSizeByMarket?: Record<string, number>;
+    replacementCandidatesUsedByMarket?: Record<string, number>;
+    lastKnownGoodByMarket?: Record<string, number>;
+    timeoutByMarket?: Record<string, number>;
     stoppedReason?: HomepageFareRefreshStoppedReason;
   } = {},
 ): Record<string, HomepageFareMarketTarget> {
@@ -955,9 +970,20 @@ function computeHomepageFareMarketTargets(
       const skippedCooldown = metrics.skippedCooldownByMarket?.[market] ?? 0;
       const candidatePoolSize =
         metrics.candidatePoolSizeByMarket?.[market] ?? marketRoutes.length;
+      const lastKnownGoodCount = metrics.lastKnownGoodByMarket?.[market] ?? 0;
+      const timeoutCount = metrics.timeoutByMarket?.[market] ?? 0;
+      const replacementCandidatesUsed =
+        metrics.replacementCandidatesUsedByMarket?.[market] ??
+        computeReplacementCandidatesUsedByMarket(routes, freshRouteIds)[market] ??
+        0;
+      const freshCount = Math.max(
+        0,
+        popularVisibleFresh + discoveryVisibleFresh + backupFresh - lastKnownGoodCount,
+      );
+      const missingCount = missingPopular + missingDiscovery + missingBackup;
       const underfillReason = targetMet
         ? undefined
-        : `missing ${missingPopular} visible popular, ${missingDiscovery} visible discovery, and ${missingBackup} backup fresh fares`;
+        : `missing ${missingPopular} visible popular, ${missingDiscovery} visible discovery, and ${missingBackup} backup provider-backed fares`;
       const metadata = getHomepageFareMarketMetadata(market);
       const status = classifyHomepageFareMarketReadinessStatus({
         targetMet,
@@ -997,6 +1023,11 @@ function computeHomepageFareMarketTargets(
           unavailable,
           skippedCooldown,
           candidatePoolSize,
+          freshCount,
+          lastKnownGoodCount,
+          missingCount,
+          timeoutCount,
+          replacementCandidatesUsed,
         },
       ];
     }),
@@ -2548,6 +2579,9 @@ export async function readHomepageFareSnapshotStatus({
       failedByMarket: createEmptyRefreshMarketCounts(),
       unavailableByMarket: createEmptyRefreshMarketCounts(),
       skippedCooldownByMarket: createEmptyRefreshMarketCounts(),
+      replacementCandidatesUsedByMarket: createEmptyRefreshMarketCounts(),
+      cronConfigured: Boolean(process.env.HOMEPAGE_FARES_CRON_SECRET),
+      nextExpectedCronRefresh: process.env.HOMEPAGE_FARES_CRON_SCHEDULE_NOTE,
     };
   }
 
@@ -2631,14 +2665,31 @@ export async function readHomepageFareSnapshotStatus({
   const emptyMarketCounts = createEmptyRefreshMarketCounts();
   const lastKnownGoodByMarket = createEmptyRefreshMarketCounts();
   const timeoutByMarket = createEmptyRefreshMarketCounts();
+  const failedByMarket = createEmptyRefreshMarketCounts();
+  const unavailableByMarket = createEmptyRefreshMarketCounts();
+  const replacementCandidatesUsedByMarket = computeReplacementCandidatesUsedByMarket(
+    refreshRoutes,
+    freshRouteIds,
+  );
+  let lastRefreshAt: string | undefined;
 
   for (const route of statusRoutes) {
     if (route.status === "last_known_good") {
       lastKnownGoodByMarket[route.market] =
         (lastKnownGoodByMarket[route.market] ?? 0) + 1;
     }
+    if (route.status === "failed") {
+      failedByMarket[route.market] = (failedByMarket[route.market] ?? 0) + 1;
+    }
+    if (route.status === "unavailable") {
+      unavailableByMarket[route.market] =
+        (unavailableByMarket[route.market] ?? 0) + 1;
+    }
     if (route.errorReason === "provider_timeout") {
       timeoutByMarket[route.market] = (timeoutByMarket[route.market] ?? 0) + 1;
+    }
+    if (route.searchedAt && (!lastRefreshAt || Date.parse(route.searchedAt) > Date.parse(lastRefreshAt))) {
+      lastRefreshAt = route.searchedAt;
     }
   }
 
@@ -2646,7 +2697,14 @@ export async function readHomepageFareSnapshotStatus({
     refreshRoutes,
     freshRouteIds,
     refreshBudget,
-    { candidatePoolSizeByMarket },
+    {
+      candidatePoolSizeByMarket,
+      replacementCandidatesUsedByMarket,
+      lastKnownGoodByMarket,
+      timeoutByMarket,
+      failedByMarket,
+      unavailableByMarket,
+    },
   );
   const displayReadiness = classifyHomepageFareDisplayReadiness(
     statusRoutes,
@@ -2690,6 +2748,10 @@ export async function readHomepageFareSnapshotStatus({
     failedByMarket: emptyMarketCounts,
     unavailableByMarket: emptyMarketCounts,
     skippedCooldownByMarket: emptyMarketCounts,
+    replacementCandidatesUsedByMarket,
+    lastRefreshAt,
+    cronConfigured: Boolean(process.env.HOMEPAGE_FARES_CRON_SECRET),
+    nextExpectedCronRefresh: process.env.HOMEPAGE_FARES_CRON_SCHEDULE_NOTE,
   };
 }
 
@@ -3338,3 +3400,14 @@ function parseDateKey(value: string | Date) {
 
   return new Date(`${value.slice(0, 10)}T00:00:00.000Z`);
 }
+
+
+export const __homepageFareCoverageTest = {
+  getRefreshRoutes,
+  computeHomepageFareMarketTargets,
+  computeFreshCountsByMarket,
+  getHomepageFareSmartRefreshBudget,
+  isFreshHomepageFareSnapshotRecord,
+  isLastKnownGoodHomepageFareSnapshotRecord,
+  isUsableHomepageFareSnapshotRecord,
+};
