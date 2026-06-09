@@ -907,7 +907,7 @@ export function AppHeader({
                   aria-label="Mobile menu"
                   className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
-                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-4">
+                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-2.5">
                     <Link
                       href="/"
                       aria-label="Kurioticket home"
@@ -920,15 +920,15 @@ export function AppHeader({
                     <button
                       type="button"
                       onClick={() => setOpen(false)}
-                      className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-slate-200 text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:border-slate-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                       aria-label="Close mobile menu"
                     >
                       <X size={18} aria-hidden="true" />
                     </button>
                   </div>
 
-                  <nav className="page-shell grid min-h-0 flex-1 gap-2 overflow-y-auto overflow-x-hidden overscroll-contain py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
-                    <div className="pb-2">
+                  <nav className="page-shell grid min-h-0 flex-1 content-start gap-1 overflow-y-auto overflow-x-hidden overscroll-contain py-3 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                    <div className="pb-1">
                       <CountryCurrencySelector
                         variant="mobile"
                         onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
@@ -946,7 +946,7 @@ export function AppHeader({
                       aria-expanded={languageOpen}
                       aria-controls={languageOpen ? languageDialogId : undefined}
                       aria-label={`Open language preferences, current language ${selectedLanguageDisplayName}`}
-                      className="inline-flex h-12 cursor-pointer items-center justify-between rounded-none border border-slate-200 px-4 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      className="inline-flex min-h-11 cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     >
                       <span className="inline-flex items-center gap-2">
                         {renderFlag(
@@ -967,7 +967,7 @@ export function AppHeader({
                           key={item.href}
                           href={item.href}
                           onClick={(event) => handleRouteLinkClick(event, item.href, () => setOpen(false))}
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-[15px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                          className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                         >
                           {Icon ? <Icon size={16} aria-hidden="true" /> : null}
                           <span>{item.label}</span>
@@ -976,9 +976,9 @@ export function AppHeader({
                     })}
 
                     {isSignedIn ? (
-                      <section className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-3" aria-label="Account">
-                        <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
-                          <span className="inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-sm font-black text-white shadow-sm">
+                      <section className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-2" aria-label="Account">
+                        <div className="flex items-center gap-2.5 border-b border-slate-200 pb-2">
+                          <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-black text-white shadow-sm">
                             {session?.user?.image ? (
                               <RawImage
                                 src={session.user.image}
@@ -1000,7 +1000,7 @@ export function AppHeader({
                           </span>
                         </div>
 
-                        <div className="mt-2 grid gap-1">
+                        <div className="mt-1.5 grid gap-0.5">
                           {signedInAccountMenuItems.map((item) => {
                             const Icon = item.icon;
 
@@ -1011,7 +1011,7 @@ export function AppHeader({
                                 onClick={(event) =>
                                   handleRouteLinkClick(event, item.href, () => setOpen(false))
                                 }
-                                className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                               >
                                 <Icon size={16} aria-hidden="true" />
                                 <span>{item.label}</span>
@@ -1024,7 +1024,7 @@ export function AppHeader({
                             onClick={handleSignOut}
                             disabled={isSigningOut}
                             aria-busy={isSigningOut}
-                            className="inline-flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                            className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                           >
                             <LogOut size={16} aria-hidden="true" />
                             {isSigningOut ? "Signing out…" : t.logout}
