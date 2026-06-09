@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/Card";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import { formatTime } from "@/lib/utils";
 
 export function FlightDetailsClient({ id }: { id: string }) {
@@ -119,6 +120,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
   );
   const providerDisclaimer =
     "Final price, availability, booking, and fare rules are confirmed by the provider.";
+  const providerOffers = buildProviderComparisonOffers(flight);
 
   return (
     <main className="flex-1 bg-surface-muted/40">
@@ -226,12 +228,21 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </aside>
               </div>
 
-              <div className="w-full lg:-mt-8 lg:w-[58%]">
-                <SelectedFlightSummary
-                  itineraryLegs={itineraryLegs}
-                  fallbackAirlineName={flight.airlineName}
-                  fallbackAirlineLogo={getAirlineLogo(flight)}
-                  fallbackFlightNumber={flight.flightNumber}
+              <div className="grid w-full grid-cols-1 items-start gap-4 lg:-mt-8 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-5">
+                <div className="min-w-0">
+                  <SelectedFlightSummary
+                    itineraryLegs={itineraryLegs}
+                    fallbackAirlineName={flight.airlineName}
+                    fallbackAirlineLogo={getAirlineLogo(flight)}
+                    fallbackFlightNumber={flight.flightNumber}
+                  />
+                </div>
+                <ProviderComparisonPanel
+                  offers={providerOffers}
+                  selectedCurrency={selectedOption.currency}
+                  currencyRates={currencyRates.rates}
+                  isFallbackRate={currencyRates.isFallback}
+                  onContinueToProvider={continueToProvider}
                 />
               </div>
             </Card>
@@ -286,6 +297,297 @@ function SelectedFlightSummary({
       </div>
     </section>
   );
+}
+
+type ProviderComparisonOffer = {
+  key: string;
+  providerName: string;
+  baggageInfo?: string;
+  cabinClass?: string;
+  price?: number;
+  currency?: string;
+  bookingUrl?: string;
+  partnerRedirectUrl?: string;
+  useSelectedFlightRedirect?: boolean;
+};
+
+function ProviderComparisonPanel({
+  offers,
+  selectedCurrency,
+  currencyRates,
+  isFallbackRate,
+  onContinueToProvider,
+}: {
+  offers: ProviderComparisonOffer[];
+  selectedCurrency: string;
+  currencyRates: ExchangeRates;
+  isFallbackRate: boolean;
+  onContinueToProvider: () => void;
+}) {
+  return (
+    <aside
+      className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm"
+      aria-label="Compare more providers"
+    >
+      <div>
+        <h2 className="text-base font-semibold tracking-tight text-slate-900">
+          Compare more providers
+        </h2>
+        <p className="mt-1 text-sm leading-5 text-slate-600">
+          Kurioticket can compare from different providers
+        </p>
+      </div>
+
+      {offers.length ? (
+        <div className="mt-3 divide-y divide-slate-200 border-t border-slate-200">
+          {offers.map((offer) => {
+            const priceDisplay =
+              typeof offer.price === "number" && offer.currency
+                ? formatDisplayPrice({
+                    amount: offer.price,
+                    sourceCurrency: offer.currency,
+                    displayCurrency: selectedCurrency,
+                    convertUsdEstimate: true,
+                    rates: currencyRates,
+                    isFallbackRate,
+                  })
+                : null;
+            const details = [
+              offer.baggageInfo ? formatBaggageValue(offer.baggageInfo) : null,
+              offer.cabinClass ? formatCabinClass(offer.cabinClass) : null,
+            ].filter(
+              (detail): detail is string =>
+                Boolean(detail) && detail !== "Confirmed by provider",
+            );
+            const providerUrl = offer.partnerRedirectUrl || offer.bookingUrl;
+            const canBook = offer.useSelectedFlightRedirect || Boolean(providerUrl);
+
+            return (
+              <div
+                key={offer.key}
+                className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {offer.providerName}
+                  </p>
+                  {details.length ? (
+                    <p className="mt-1 line-clamp-2 text-xs font-medium leading-4 text-slate-500">
+                      {details.join(" / ")}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                  {priceDisplay ? (
+                    <p
+                      className="text-sm font-semibold text-slate-900"
+                      aria-label={priceDisplay.ariaLabel}
+                      title={priceDisplay.title}
+                    >
+                      {priceDisplay.formatted}
+                    </p>
+                  ) : null}
+                  {canBook ? (
+                    <Button
+                      variant="accent"
+                      size="sm"
+                      className="rounded-full bg-indigo-600 px-4 text-xs font-semibold hover:bg-indigo-700"
+                      onClick={() => {
+                        if (offer.useSelectedFlightRedirect) {
+                          onContinueToProvider();
+                          return;
+                        }
+
+                        if (providerUrl) window.location.href = providerUrl;
+                      }}
+                    >
+                      Book now
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-white px-3 py-3 text-sm leading-5 text-slate-500">
+          Provider options will appear when available.
+        </p>
+      )}
+    </aside>
+  );
+}
+
+function buildProviderComparisonOffers(
+  flight: PublicFlightResult,
+): ProviderComparisonOffer[] {
+  const offers = getNestedProviderOffers(flight)
+    .map((offer, index) => normalizeProviderComparisonOffer(offer, index))
+    .filter((offer): offer is ProviderComparisonOffer => Boolean(offer));
+
+  offers.push({
+    key: `selected-${flight.provider}-${flight.price}-${flight.currency}`,
+    providerName: flight.provider,
+    baggageInfo: flight.baggageInfo,
+    cabinClass: flight.cabinClass,
+    price: flight.price,
+    currency: flight.currency,
+    bookingUrl: flight.bookingUrl,
+    partnerRedirectUrl: flight.partnerRedirectUrl,
+    useSelectedFlightRedirect: Boolean(
+      flight.partnerRedirectUrl || flight.bookingUrl,
+    ),
+  });
+
+  const seen = new Set<string>();
+
+  return offers.filter((offer) => {
+    const dedupeKey = [
+      offer.providerName.trim().toLowerCase(),
+      offer.price ?? "",
+      offer.currency ?? "",
+      offer.bookingUrl ?? "",
+      offer.partnerRedirectUrl ?? "",
+    ].join("|");
+
+    if (seen.has(dedupeKey)) return false;
+    seen.add(dedupeKey);
+    return true;
+  });
+}
+
+function getNestedProviderOffers(flight: PublicFlightResult) {
+  const fields = flight as Record<string, unknown>;
+  const offerKeys = [
+    "providerOffers",
+    "providerOptions",
+    "bookingOptions",
+    "bookingOffers",
+    "offers",
+    "fares",
+  ];
+
+  for (const key of offerKeys) {
+    const value = fields[key];
+    if (Array.isArray(value)) return value;
+  }
+
+  return [];
+}
+
+function normalizeProviderComparisonOffer(
+  source: unknown,
+  index: number,
+): ProviderComparisonOffer | null {
+  if (!source || typeof source !== "object") return null;
+
+  const fields = source as Record<string, unknown>;
+  const providerName = getFirstStringValue(fields, [
+    "provider",
+    "providerName",
+    "name",
+    "partner",
+    "partnerName",
+    "supplier",
+    "supplierName",
+  ]);
+
+  if (!providerName) return null;
+
+  const price = getNumericValue(fields, [
+    "price",
+    "amount",
+    "totalPrice",
+    "totalAmount",
+    "grandTotal",
+    "total_amount",
+  ]);
+  const currency = getFirstStringValue(fields, [
+    "currency",
+    "priceCurrency",
+    "totalCurrency",
+    "total_currency",
+  ]);
+
+  return {
+    key: `offer-${providerName}-${price ?? ""}-${currency ?? ""}-${index}`,
+    providerName,
+    baggageInfo: getFirstStringValue(fields, [
+      "baggageInfo",
+      "baggage",
+      "includedBaggage",
+      "includedCheckedBags",
+    ]),
+    cabinClass: getFirstStringValue(fields, [
+      "cabinClass",
+      "cabin",
+      "fareClass",
+      "fareType",
+      "fareFamily",
+    ]),
+    price,
+    currency,
+    bookingUrl: getFirstStringValue(fields, [
+      "bookingUrl",
+      "booking_url",
+      "deepLink",
+      "deep_link",
+      "url",
+    ]),
+    partnerRedirectUrl: getFirstStringValue(fields, [
+      "partnerRedirectUrl",
+      "redirectUrl",
+      "redirect_url",
+    ]),
+  };
+}
+
+function getFirstStringValue(fields: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = fields[key];
+
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+
+    if (value && typeof value === "object") {
+      const nested = value as Record<string, unknown>;
+      const nestedValue = nested.amount ?? nested.value ?? nested.total;
+
+      if (typeof nestedValue === "string" && nestedValue.trim()) {
+        return nestedValue.trim();
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function getNumericValue(fields: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = fields[key];
+    const numericValue = readNumericValue(value);
+
+    if (typeof numericValue === "number") return numericValue;
+  }
+
+  return undefined;
+}
+
+function readNumericValue(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+
+  if (typeof value === "string" && value.trim()) {
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue)) return numericValue;
+  }
+
+  if (value && typeof value === "object") {
+    const nested = value as Record<string, unknown>;
+    return readNumericValue(nested.amount ?? nested.value ?? nested.total);
+  }
+
+  return undefined;
 }
 
 function buildRouteHeading(flight: PublicFlightResult) {
