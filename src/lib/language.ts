@@ -1,13 +1,19 @@
-import { localeOptions, getTranslations, type LocaleCode } from "@/lib/i18n";
+import { getTranslations, localeOptions } from "@/lib/i18n";
 
 export const LANGUAGE_STORAGE_KEY = "ct_language";
 export const LANGUAGE_CHANGE_EVENT = "kurioticket-language-change";
 
 export type LanguageDirection = "ltr" | "rtl";
+export type LanguageStatus = "available" | "preparing";
+export type LanguageCode = string;
 
 export type LanguageOption = {
   code: string;
+  locale: string;
   label: string;
+  nativeLabel: string;
+  direction: LanguageDirection;
+  status: LanguageStatus;
   dir: LanguageDirection;
   countryCode: string;
   fallbackText: string;
@@ -15,35 +21,60 @@ export type LanguageOption = {
 
 export const languageOptions: LanguageOption[] = localeOptions.map((item) => ({
   code: item.code,
+  locale: item.locale,
   label: item.label,
-  dir: item.rtl ? "rtl" : "ltr",
+  nativeLabel: item.nativeLabel,
+  direction: item.direction,
+  status: item.status,
+  dir: item.direction,
   countryCode: item.countryCode,
   fallbackText: item.fallbackText,
 }));
 
-export type LanguageCode = LocaleCode;
+export const availableLanguageOptions = languageOptions.filter(
+  (option) => option.status === "available"
+);
 
 export function getDefaultLanguage(): LanguageCode {
   return "en-us";
 }
 
+export function isAvailableLanguage(value?: string | null): boolean {
+  const normalized = String(value ?? "").trim().toLowerCase();
+
+  return availableLanguageOptions.some(
+    (option) =>
+      option.code === normalized || option.locale.toLowerCase() === normalized
+  );
+}
+
+export function findLanguageOption(value?: string | null) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+
+  return languageOptions.find(
+    (option) =>
+      option.code === normalized || option.locale.toLowerCase() === normalized
+  );
+}
+
 export function normalizeLanguage(value?: string | null): LanguageCode {
   const normalized = String(value ?? "").trim().toLowerCase();
-  if (languageOptions.some((option) => option.code === normalized)) {
-    return normalized as LanguageCode;
+  const exactAvailableMatch = availableLanguageOptions.find(
+    (option) =>
+      option.code === normalized || option.locale.toLowerCase() === normalized
+  );
+
+  if (exactAvailableMatch) {
+    return exactAvailableMatch.code;
   }
+
   if (normalized === "en") return "en-us";
-  if (normalized === "en-uk") return "en-gb";
-  if (normalized === "fr") return "fr-fr";
-  if (normalized === "es") return "es-es";
-  if (normalized === "ar") return "ar-sa";
-  if (normalized === "pt") return "pt-pt";
-  if (normalized === "zh") return "zh-cn";
+
   return getDefaultLanguage();
 }
 
 export function getLanguageOption(code?: string | null) {
-  return languageOptions.find((option) => option.code === normalizeLanguage(code));
+  return findLanguageOption(code) ?? findLanguageOption(normalizeLanguage(code));
 }
 
 export function getLanguageFromStorage(): LanguageCode {
@@ -52,21 +83,29 @@ export function getLanguageFromStorage(): LanguageCode {
 }
 
 export function getUiTranslations(code: LanguageCode) {
-  return getTranslations(code);
+  return getTranslations(normalizeLanguage(code));
 }
 
 export function applyLanguageToDocument(code: LanguageCode) {
   if (typeof document === "undefined") return;
-  const option = getLanguageOption(code);
-  document.documentElement.lang = code;
-  document.documentElement.dir = option?.dir ?? "ltr";
+
+  const normalized = normalizeLanguage(code);
+  const option = getLanguageOption(normalized);
+
+  document.documentElement.lang = option?.locale ?? "en-US";
+  document.documentElement.dir = option?.direction ?? "ltr";
 }
 
 export function setLanguageInStorage(code: LanguageCode) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(LANGUAGE_STORAGE_KEY, code);
-  applyLanguageToDocument(code);
-  window.dispatchEvent(new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: { code } }));
+
+  const normalized = normalizeLanguage(code);
+
+  window.localStorage.setItem(LANGUAGE_STORAGE_KEY, normalized);
+  applyLanguageToDocument(normalized);
+  window.dispatchEvent(
+    new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: { code: normalized } })
+  );
 }
 
 export function getSuggestedLanguages() {

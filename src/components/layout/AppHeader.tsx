@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useCallback,
   useEffect,
   useId,
   useMemo,
@@ -109,6 +110,9 @@ export function AppHeader({
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState("");
+  const [languageStatusMessage, setLanguageStatusMessage] = useState(
+    ""
+  );
   const [accountOpen, setAccountOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -132,13 +136,14 @@ export function AppHeader({
   const languageDescriptionId = useId();
   const languageSearchId = useId();
 
-  const closeLanguageDialog = () => {
+  const closeLanguageDialog = useCallback(() => {
     setLanguageOpen(false);
     setLanguageQuery("");
+    setLanguageStatusMessage("");
     window.setTimeout(() => {
       languageTriggerRef.current?.focus();
     }, 0);
-  };
+  }, []);
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
@@ -221,7 +226,7 @@ export function AppHeader({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [languageOpen]);
+  }, [closeLanguageDialog, languageOpen]);
 
   useEffect(() => {
     const closeMenuOnRouteChange = window.setTimeout(() => {
@@ -263,7 +268,7 @@ export function AppHeader({
   );
 
   const selectedLanguageDisplayName =
-    selectedLanguage.label;
+    selectedLanguage.nativeLabel;
 
   const accountDisplayName = useMemo(() => {
     const rawName = session?.user?.name?.trim();
@@ -299,6 +304,8 @@ export function AppHeader({
     return locales.filter((option) => {
       return (
         option.label.toLowerCase().includes(query) ||
+        option.nativeLabel.toLowerCase().includes(query) ||
+        option.locale.toLowerCase().includes(query) ||
         option.code.toLowerCase().includes(query)
       );
     });
@@ -494,9 +501,19 @@ export function AppHeader({
     afterStart?.();
   };
 
-  const handleLanguageSelect = (code: (typeof locales)[number]["code"]) => {
-    setLocale(code);
-    closeLanguageDialog();
+  const handleLanguageSelect = (option: (typeof locales)[number]) => {
+    if (option.status !== "available") {
+      setLanguageStatusMessage(
+        `${option.nativeLabel} is not available yet. Translation support is being expanded.`
+      );
+      return;
+    }
+
+    const didChangeLanguage = setLocale(option.code);
+
+    if (didChangeLanguage) {
+      closeLanguageDialog();
+    }
   };
 
   const handleMobileCountryCurrencyBeforeOpen = () => {
@@ -763,22 +780,22 @@ export function AppHeader({
                     aria-describedby={languageDescriptionId}
                     className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
                   >
-                    <div className="mb-4 flex items-start justify-between gap-4">
+                    <div className="mb-5 flex items-start justify-between gap-4">
                       <div>
                         <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-600">
-                          Preferences
+                          Global language
                         </p>
                         <h2
                           id={languageTitleId}
                           className="mt-1 text-2xl font-black text-slate-950"
                         >
-                          Language
+                          Select your website language
                         </h2>
                         <p
                           id={languageDescriptionId}
-                          className="mt-1 text-sm text-slate-600"
+                          className="mt-1 max-w-2xl text-sm leading-6 text-slate-600"
                         >
-                          Choose the language used across the site. This preference does not change airport suggestions.
+                          English (United States) is the default website language. Kurioticket only changes language after you choose an available option.
                         </p>
                       </div>
 
@@ -786,10 +803,19 @@ export function AppHeader({
                         type="button"
                         onClick={closeLanguageDialog}
                         className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-                        aria-label="Close preferences dialog"
+                        aria-label="Close language selector"
                       >
                         <X size={18} aria-hidden="true" />
                       </button>
+                    </div>
+
+                    <div className="mb-4 rounded-none border border-slate-200 bg-slate-50 px-4 py-3">
+                      <p className="text-sm font-bold text-slate-950">
+                        Current language: {selectedLanguageDisplayName}
+                      </p>
+                      <p className="mt-1 text-xs font-medium text-slate-600">
+                        More languages are being prepared. Unavailable options do not translate the site yet.
+                      </p>
                     </div>
 
                     <label
@@ -806,19 +832,29 @@ export function AppHeader({
                         ref={languageSearchInputRef}
                         id={languageSearchId}
                         value={languageQuery}
-                        onChange={(event) => setLanguageQuery(event.target.value)}
-                        placeholder="English (US) or English (UK)"
+                        onChange={(event) => {
+                          setLanguageQuery(event.target.value);
+                          setLanguageStatusMessage("");
+                        }}
+                        placeholder="Search English, Español, Français, Deutsch..."
                         className="w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
                       />
                     </div>
 
+                    {languageStatusMessage ? (
+                      <p className="mb-4 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900" role="status">
+                        {languageStatusMessage}
+                      </p>
+                    ) : null}
+
                     <div
                       role="radiogroup"
                       aria-label="Language options"
-                      className="grid gap-2 sm:grid-cols-2"
+                      className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
                     >
                       {filteredLanguages.map((option) => {
                         const active = option.code === locale;
+                        const available = option.status === "available";
 
                         return (
                           <button
@@ -826,27 +862,38 @@ export function AppHeader({
                             type="button"
                             role="radio"
                             aria-checked={active}
-                            aria-label={`Select ${option.label}`}
-                            onClick={() => handleLanguageSelect(option.code)}
-                            className={`flex cursor-pointer items-center justify-between rounded-none border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                            aria-disabled={!available}
+                            aria-label={available ? `Select ${option.nativeLabel}` : `${option.nativeLabel} translations are being prepared`}
+                            onClick={() => handleLanguageSelect(option)}
+                            className={`flex min-h-[4.75rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                               active
                                 ? "border-violet-500 bg-violet-50 ring-2 ring-violet-100"
-                                : "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+                                : available
+                                  ? "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+                                  : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
                             }`}
                           >
-                            <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-900">
+                            <span className="flex min-w-0 items-start gap-2.5">
                               {renderFlag(option.countryCode, option.fallbackText)}
 
-                              <span>{option.label}</span>
+                              <span className="min-w-0">
+                                <span className="block truncate text-sm font-black text-slate-950" dir={option.direction}>
+                                  {option.nativeLabel}
+                                </span>
+                                <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                                  {option.label} · {option.locale}
+                                </span>
+                                {!available ? (
+                                  <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
+                                    Preparing
+                                  </span>
+                                ) : null}
+                              </span>
                             </span>
 
-                            <span className="inline-flex items-center gap-2 text-xs text-slate-500">
-                              <span className="uppercase">{option.code}</span>
-
-                              {active ? (
-                                <Check size={16} className="text-violet-600" aria-hidden="true" />
-                              ) : null}
-                            </span>
+                            {active ? (
+                              <Check size={16} className="mt-0.5 shrink-0 text-violet-600" aria-hidden="true" />
+                            ) : null}
                           </button>
                         );
                       })}
