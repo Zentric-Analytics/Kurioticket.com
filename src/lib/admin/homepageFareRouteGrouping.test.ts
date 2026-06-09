@@ -22,6 +22,9 @@ const markets: AdminHomepageFareMarket[] = [
     failed: 0,
     unavailable: 0,
     candidatePoolSize: 2,
+    marketVisibility: "country",
+    popularVisibleTarget: 1,
+    discoveryVisibleTarget: 1,
   },
   {
     market: "NG",
@@ -36,6 +39,27 @@ const markets: AdminHomepageFareMarket[] = [
     failed: 0,
     unavailable: 0,
     candidatePoolSize: 2,
+    marketVisibility: "country",
+    popularVisibleTarget: 1,
+    discoveryVisibleTarget: 1,
+  },
+  {
+    market: "GLOBAL",
+    marketCode: "GLOBAL",
+    marketLabel: "Global fallback",
+    marketGroup: "Internal fallback",
+    popularVisibleFresh: 0,
+    discoveryVisibleFresh: 0,
+    backupFresh: 0,
+    targetMet: true,
+    status: "ready",
+    failed: 0,
+    unavailable: 0,
+    candidatePoolSize: 1,
+    marketVisibility: "global",
+    popularVisibleTarget: 0,
+    discoveryVisibleTarget: 0,
+    backupTarget: 0,
   },
 ];
 
@@ -76,6 +100,15 @@ const routes: AdminHomepageFareRoute[] = [
     section: "discovery",
     status: "last_known_good",
   },
+  {
+    id: "fallback-global-lhr-dxb",
+    market: "GLOBAL",
+    label: "Fallback Dubai",
+    origin: "LHR",
+    destination: "DXB",
+    section: "fallback",
+    status: "unavailable",
+  },
 ];
 
 test("admin grouping groups routes under correct market labels", () => {
@@ -83,6 +116,7 @@ test("admin grouping groups routes under correct market labels", () => {
   assert.deepEqual(groups.map((group) => group.displayName), [
     "United States / North America",
     "Nigeria / Africa",
+    "Global fallback / Internal fallback",
   ]);
 });
 
@@ -111,4 +145,79 @@ test("US route group does not include Africa routes and Africa group excludes US
 
   assert.deepEqual(usDestinations?.filter((code) => code === "ABV" || code === "NBO"), []);
   assert.deepEqual(ngOrigins?.filter((code) => code === "JFK" || code === "LAX"), []);
+});
+
+
+test("fallback-only pools are marked separately from public markets", () => {
+  const groups = buildAdminHomepageFareRouteGroups({ routes, markets });
+  const fallback = groups.find((group) => group.marketCode === "GLOBAL");
+  assert.equal(fallback?.isFallbackPool, true);
+  assert.equal(fallback?.status, "Fallback only");
+  assert.equal(fallback?.publicDisplayTarget, 0);
+
+  const publicGroups = groups.filter((group) => !group.isFallbackPool);
+  assert.deepEqual(publicGroups.map((group) => group.marketCode), ["US", "NG"]);
+});
+
+test("fallback pools do not count as public ready markets", () => {
+  const groups = buildAdminHomepageFareRouteGroups({ routes, markets });
+  const publicReadyMarkets = groups.filter((group) => !group.isFallbackPool && group.status === "Ready");
+  assert.deepEqual(publicReadyMarkets.map((group) => group.marketCode), ["NG"]);
+});
+
+test("market filters include fresh, last-known-good, unavailable, and do not mix market routes", () => {
+  const freshGroups = buildAdminHomepageFareRouteGroups({ routes, markets, filter: "fresh" });
+  assert.deepEqual(freshGroups.map((group) => group.marketCode), ["US", "NG"]);
+  assert.deepEqual(
+    freshGroups.find((group) => group.marketCode === "US")?.routes.map((route) => route.destination),
+    ["MIA"],
+  );
+
+  const lastKnownGoodGroups = buildAdminHomepageFareRouteGroups({ routes, markets, filter: "last_known_good" });
+  assert.deepEqual(lastKnownGoodGroups.map((group) => group.marketCode), ["NG"]);
+
+  const unavailableGroups = buildAdminHomepageFareRouteGroups({ routes, markets, filter: "unavailable" });
+  assert.deepEqual(unavailableGroups.map((group) => group.marketCode), ["GLOBAL"]);
+});
+
+test("readiness labels distinguish underfilled, exhausted, ready, and fallback-only groups", () => {
+  const exhaustedMarkets: AdminHomepageFareMarket[] = [
+    ...markets,
+    {
+      market: "CA",
+      marketCode: "CA",
+      marketLabel: "Canada",
+      marketGroup: "North America",
+      popularVisibleFresh: 0,
+      discoveryVisibleFresh: 0,
+      backupFresh: 0,
+      targetMet: false,
+      status: "provider_exhausted",
+      failed: 1,
+      unavailable: 0,
+      candidatePoolSize: 1,
+      marketVisibility: "country",
+      popularVisibleTarget: 1,
+      discoveryVisibleTarget: 1,
+      backupTarget: 1,
+    },
+  ];
+  const exhaustedRoutes: AdminHomepageFareRoute[] = [
+    ...routes,
+    {
+      id: "popular-ca-yyz-yvr",
+      market: "CA",
+      label: "Vancouver",
+      origin: "YYZ",
+      destination: "YVR",
+      section: "popular",
+      status: "failed",
+    },
+  ];
+
+  const groups = buildAdminHomepageFareRouteGroups({ routes: exhaustedRoutes, markets: exhaustedMarkets });
+  assert.equal(groups.find((group) => group.marketCode === "US")?.status, "Partially ready");
+  assert.equal(groups.find((group) => group.marketCode === "NG")?.status, "Ready");
+  assert.equal(groups.find((group) => group.marketCode === "CA")?.status, "Failed");
+  assert.equal(groups.find((group) => group.marketCode === "GLOBAL")?.status, "Fallback only");
 });

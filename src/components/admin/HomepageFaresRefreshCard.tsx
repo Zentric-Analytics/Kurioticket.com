@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { RefreshCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -166,6 +166,8 @@ type MarketReadinessStatus =
   | "underfilled"
   | "provider_exhausted"
   | "budget_exhausted"
+  | "candidate_exhausted"
+  | "failed"
   | "cooldown";
 
 type RefreshReadinessCounts = {
@@ -503,8 +505,8 @@ export function HomepageFaresRefreshCard() {
     [routeFilter, statusPayload.marketReadinessSummary, statusPayload.routes],
   );
   const allRoutesGroup = useMemo(
-    () => buildAdminHomepageFareAllRoutesGroup(statusPayload.routes),
-    [statusPayload.routes],
+    () => buildAdminHomepageFareAllRoutesGroup(statusPayload.routes, routeFilter),
+    [routeFilter, statusPayload.routes],
   );
   const selectedRouteGroup =
     selectedMarketCode === "ALL"
@@ -513,214 +515,108 @@ export function HomepageFaresRefreshCard() {
         marketRouteGroups[0] ??
         allRoutesGroup;
 
+  const publicMarkets = statusPayload.marketReadinessSummary.filter(
+    (market) => !isFallbackMarket(market),
+  );
+  const fallbackPools = statusPayload.marketReadinessSummary.filter(isFallbackMarket);
+  const latestCounts = refreshState.counts;
+  const providerCallsUsed = latestCounts?.providerCalls ?? sumCountRecord(statusPayload.providerCallsByMarket);
+  const replacementCandidatesUsed = latestCounts
+    ? sumCountRecord(latestCounts.replacementCandidatesUsedByMarket)
+    : sumCountRecord(statusPayload.replacementCandidatesUsedByMarket);
+  const timeoutCount = latestCounts
+    ? sumCountRecord(latestCounts.timeoutByMarket)
+    : sumCountRecord(statusPayload.timeoutByMarket);
+  const marketsNeedingAnotherRun = latestCounts?.marketsNeedingAnotherRun ?? statusPayload.marketsNeedingAnotherRun;
+
   return (
-    <Card className="p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="font-bold text-navy">Homepage fares</h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            Refresh cached provider-backed fares shown on homepage destination
-            cards and monitor the current snapshot health by route.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="accent"
-          onClick={refreshHomepageFares}
-          disabled={refreshing}
-          aria-busy={refreshing}
-          className="w-full sm:w-auto"
-        >
-          <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
-          {refreshing ? "Refreshing…" : "Refresh homepage fares"}
-        </Button>
-      </div>
-
-      {refreshState.message ? (
-        <div
-          className={
-            refreshState.status === "error"
-              ? "mt-4 rounded-lg bg-red-50 p-3 text-sm font-semibold text-danger"
-              : "mt-4 rounded-lg bg-teal/10 p-3 text-sm font-semibold text-teal-dark"
-          }
-          role="status"
-          aria-live="polite"
-        >
-          {refreshState.message}
-        </div>
-      ) : null}
-
-      {refreshState.counts ? (
-        <dl className="mt-4 grid gap-2 sm:grid-cols-4">
-          {COUNT_LABELS.map(({ key, label }) => (
-            <div key={key} className="rounded-lg bg-slate-50 p-3">
-              <dt className="text-xs font-bold uppercase tracking-wide text-muted">
-                {label}
-              </dt>
-              <dd className="mt-1 text-xl font-extrabold text-navy">
-                {refreshState.counts?.[key] ?? 0}
-              </dd>
+    <section className="space-y-5">
+      <Card className="overflow-hidden p-0">
+        <div className="border-b border-border bg-gradient-to-br from-white via-slate-50 to-sky-50/60 p-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-teal-dark">
+                Homepage fare operations
+              </p>
+              <h2 className="mt-2 text-2xl font-extrabold text-navy">
+                Production readiness dashboard
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">
+                Monitor provider-backed homepage fare coverage by public market, fallback pool,
+                route health, refresh state, and underfill cause without changing pricing logic.
+              </p>
             </div>
-          ))}
-        </dl>
-      ) : null}
+            <GlobalReadinessBadge status={statusPayload.displayReadiness.globalReadinessStatus} />
+          </div>
+        </div>
 
-      <div className="mt-5 border-t border-border pt-5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h3 className="text-sm font-extrabold uppercase tracking-wide text-navy">
-              Snapshot status
-            </h3>
-            <p className="mt-1 text-xs leading-5 text-muted">
-              Safe operational view of Phase 3A homepage routes. Missing means a
-              route does not have a current snapshot row.
+        <div className="space-y-5 p-5">
+          {statusState.error ? (
+            <p className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-danger">
+              {statusState.error}
             </p>
-          </div>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => void loadStatus()}
-            disabled={statusState.loading || refreshing}
-            aria-busy={statusState.loading}
-            className="w-full sm:w-auto"
+          ) : null}
+
+          <DashboardSection
+            eyebrow="Homepage fare status summary"
+            title="Global readiness at a glance"
+            description="Public readiness excludes fallback-only regional and global pools, so internal 0/0 coverage rows do not make the homepage look ready."
           >
-            <RefreshCcw
-              className={statusState.loading ? "animate-spin" : ""}
-              size={16}
-            />
-            {statusState.loading ? "Loading…" : "Reload status"}
-          </Button>
+            <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+              <SummaryMetricCard label="Global homepage readiness" value={formatGlobalReadinessStatus(statusPayload.displayReadiness.globalReadinessStatus)} tone={readinessTone(statusPayload.displayReadiness.globalReadinessStatus)} />
+              <SummaryMetricCard label="Fresh provider-backed fares" value={statusPayload.summary.fresh} tone="good" />
+              <SummaryMetricCard label="Last-known-good fares" value={statusPayload.summary.last_known_good} tone="info" />
+              <SummaryMetricCard label="Missing routes" value={statusPayload.summary.missing} tone={statusPayload.summary.missing ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Failed routes" value={statusPayload.summary.failed} tone={statusPayload.summary.failed ? "danger" : "neutral"} />
+              <SummaryMetricCard label="Unavailable routes" value={statusPayload.summary.unavailable} tone={statusPayload.summary.unavailable ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Timeout count" value={timeoutCount} tone={timeoutCount ? "warning" : "neutral"} />
+              <SummaryMetricCard label="Provider calls used" value={providerCallsUsed} />
+              <SummaryMetricCard label="Stopped reason" value={latestCounts ? formatStoppedReason(latestCounts.stoppedReason) : "No manual run yet"} />
+              <SummaryMetricCard label="Replacement candidates used" value={replacementCandidatesUsed} />
+              <SummaryMetricCard label="Markets needing another run" value={marketsNeedingAnotherRun.filter((market) => market.needed).length} tone={marketsNeedingAnotherRun.some((market) => market.needed) ? "warning" : "good"} />
+              <SummaryMetricCard label="Last refresh time" value={formatSnapshotTime(statusPayload.lastRefreshAt)} />
+              <SummaryMetricCard label="Cron status" value={formatCronStatus(statusPayload)} tone={statusPayload.cronConfigured ? "good" : "warning"} />
+            </dl>
+          </DashboardSection>
+
+          <RefreshCronPanel
+            refreshing={refreshing}
+            loading={statusState.loading}
+            refreshState={refreshState}
+            statusPayload={statusPayload}
+            onRefresh={refreshHomepageFares}
+            onReload={() => void loadStatus()}
+          />
+
+          <MarketReadinessDashboard markets={publicMarkets} onInspectMarket={setSelectedMarketCode} />
+
+          <MarketRouteInspector
+            groups={marketRouteGroups}
+            allRoutesGroup={allRoutesGroup}
+            selectedMarketCode={selectedMarketCode}
+            selectedGroup={selectedRouteGroup}
+            filter={routeFilter}
+            loading={statusState.loading}
+            onSelectMarket={setSelectedMarketCode}
+            onFilterChange={setRouteFilter}
+          />
+
+          <DiagnosticsPanel
+            markets={statusPayload.marketReadinessSummary}
+            marketsNeedingAnotherRun={marketsNeedingAnotherRun}
+            candidatePoolHealth={statusPayload.candidatePoolHealth}
+            stoppedReason={latestCounts?.stoppedReason}
+          />
+
+          <FallbackPoolsSection pools={fallbackPools} onInspectMarket={setSelectedMarketCode} />
+
+          <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
         </div>
-
-        {statusState.error ? (
-          <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm font-semibold text-danger">
-            {statusState.error}
-          </p>
-        ) : null}
-
-        <DisplayReadinessSummary readiness={statusPayload.displayReadiness} />
-
-        <p className="mt-3 text-xs leading-5 text-muted">
-          Ready means this market has enough fresh provider-backed fares to fill visible homepage pricing slots. Underfilled means this market still needs more provider-backed fare snapshots. Regional and global rows are fallback markets used when a supported country resolves to that market experience.
-        </p>
-
-        <dl className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            label="Popular fresh"
-            value={`${statusPayload.displayReadiness.popularFresh} / ${statusPayload.displayReadiness.popularTarget}`}
-          />
-          <MetricCard
-            label="Discover displayed"
-            value={`${statusPayload.displayReadiness.discoverDisplayedFresh} / ${statusPayload.displayReadiness.discoverVisibleTarget}`}
-          />
-          <MetricCard
-            label="Discover backup usable"
-            value={statusPayload.displayReadiness.discoverBackupFresh}
-          />
-          <MetricCard
-            label="Last-known-good"
-            value={statusPayload.summary.last_known_good}
-          />
-          <MetricCard
-            label="Total expired"
-            value={statusPayload.summary.expired}
-          />
-        </dl>
-
-        <dl className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard
-            label="Max route attempts"
-            value={statusPayload.refreshBudget.maxRouteAttemptsPerRun}
-          />
-          <MetricCard
-            label="Max provider calls"
-            value={statusPayload.refreshBudget.maxProviderCallsPerRun}
-          />
-          <MetricCard
-            label="Max attempts / market"
-            value={statusPayload.refreshBudget.maxRouteAttemptsPerMarket}
-          />
-          <MetricCard
-            label="Total provider calls"
-            value={refreshState.counts?.providerCalls ?? "—"}
-          />
-          <MetricCard
-            label="Last refresh time"
-            value={formatSnapshotTime(statusPayload.lastRefreshAt)}
-          />
-          <MetricCard
-            label="Cron status"
-            value={formatCronStatus(statusPayload)}
-          />
-          <MetricCard
-            label="Stopped reason"
-            value={refreshState.counts ? formatStoppedReason(refreshState.counts.stoppedReason) : "—"}
-          />
-          <MetricCard
-            label="Replacement candidates used"
-            value={
-              refreshState.counts
-                ? sumCountRecord(refreshState.counts.replacementCandidatesUsedByMarket)
-                : "—"
-            }
-          />
-        </dl>
-
-        <dl className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
-          {STATUS_LABELS.map(({ key, label }) => (
-            <div key={key} className="rounded-lg bg-slate-50 p-3">
-              <dt className="text-xs font-bold uppercase tracking-wide text-muted">
-                {label}
-              </dt>
-              <dd className="mt-1 text-xl font-extrabold text-navy">
-                {statusPayload.summary[key] ?? 0}
-              </dd>
-            </div>
-          ))}
-          <div className="rounded-lg bg-slate-50 p-3">
-            <dt className="text-xs font-bold uppercase tracking-wide text-muted">
-              Total
-            </dt>
-            <dd className="mt-1 text-xl font-extrabold text-navy">
-              {statusPayload.summary.total}
-            </dd>
-          </div>
-        </dl>
-
-        <p className="mt-3 text-xs font-semibold text-muted">
-          Next expected cron refresh: {statusPayload.nextExpectedCronRefresh ?? (statusPayload.cronConfigured ? "external scheduler configured; set HOMEPAGE_FARES_CRON_SCHEDULE_NOTE to show an exact cadence here" : "cron is not configured; set HOMEPAGE_FARES_CRON_SECRET and schedule POST /api/internal/homepage-fares/refresh")}.
-        </p>
-
-        <p className="mt-3 text-xs font-semibold text-muted">
-          Candidate pool health: {statusPayload.candidatePoolHealth.failed} failed and {statusPayload.candidatePoolHealth.unavailable} unavailable routes remain visible here without forcing public display readiness to attention.
-        </p>
-
-        {refreshState.counts ? (
-          <div className="mt-3 rounded-lg bg-slate-50 p-3 text-xs leading-5 text-muted">
-            <p><strong className="text-navy">Executor targets:</strong> {formatStringList(refreshState.counts.targetedMarkets, "none")}</p>
-            <p><strong className="text-navy">Visible gaps attempted:</strong> {refreshState.counts.visibleGapsAttempted.length}</p>
-            <p><strong className="text-navy">Immediate replacements attempted:</strong> {refreshState.counts.replacementsUsed.length}</p>
-            <p><strong className="text-navy">Markets needing another run:</strong> {formatMarketsNeedingRun(refreshState.counts.marketsNeedingAnotherRun)}</p>
-          </div>
-        ) : null}
-
-        <MarketReadinessTable markets={statusPayload.marketReadinessSummary} />
-
-        <MarketRouteInspector
-          groups={marketRouteGroups}
-          allRoutesGroup={allRoutesGroup}
-          selectedMarketCode={selectedMarketCode}
-          selectedGroup={selectedRouteGroup}
-          filter={routeFilter}
-          loading={statusState.loading}
-          onSelectMarket={setSelectedMarketCode}
-          onFilterChange={setRouteFilter}
-        />
-      </div>
-    </Card>
+      </Card>
+    </section>
   );
 }
-
 type RefreshCountMetricKey =
   | "refreshed"
   | "unavailable"
@@ -734,18 +630,6 @@ const COUNT_LABELS: Array<{ key: RefreshCountMetricKey; label: string }> = [
   { key: "failed", label: "Failed" },
   { key: "retained", label: "Retained" },
   { key: "skipped", label: "Skipped" },
-];
-
-const STATUS_LABELS: Array<{
-  key: HomepageFareSnapshotStatus;
-  label: string;
-}> = [
-  { key: "fresh", label: "Fresh" },
-  { key: "last_known_good", label: "Last-known-good" },
-  { key: "expired", label: "Expired" },
-  { key: "unavailable", label: "Unavailable" },
-  { key: "failed", label: "Failed" },
-  { key: "missing", label: "Missing" },
 ];
 
 const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
@@ -772,9 +656,463 @@ const ROUTE_FILTERS: Array<{
   { key: "ready", label: "Ready" },
   { key: "underfilled", label: "Underfilled" },
   { key: "failed", label: "Failed" },
-  { key: "stale", label: "Stale" },
   { key: "missing", label: "Missing" },
+  { key: "stale", label: "Stale" },
+  { key: "last_known_good", label: "Last-known-good" },
+  { key: "fresh", label: "Fresh" },
+  { key: "unavailable", label: "Unavailable" },
 ];
+
+
+
+function GlobalReadinessBadge({ status }: { status: GlobalReadinessStatus }) {
+  return (
+    <span className={`inline-flex w-fit rounded-full px-3 py-2 text-sm font-extrabold ${summaryToneClass(readinessTone(status))}`}>
+      {formatGlobalReadinessStatus(status)}
+    </span>
+  );
+}
+
+function SummaryMetricCard({
+  label,
+  value,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string | number;
+  tone?: SummaryTone;
+}) {
+  return (
+    <div className={`rounded-xl border p-3 ${summaryToneClass(tone)}`}>
+      <dt className="text-xs font-extrabold uppercase tracking-wide opacity-80">{label}</dt>
+      <dd className="mt-1 text-2xl font-extrabold leading-tight">{value}</dd>
+    </div>
+  );
+}
+
+type SummaryTone = "good" | "info" | "warning" | "danger" | "neutral";
+
+function summaryToneClass(tone: SummaryTone) {
+  switch (tone) {
+    case "good":
+      return "border-teal/20 bg-teal/10 text-teal-dark";
+    case "info":
+      return "border-sky-100 bg-sky-50 text-sky-700";
+    case "warning":
+      return "border-amber/20 bg-amber/10 text-amber";
+    case "danger":
+      return "border-red-100 bg-red-50 text-danger";
+    case "neutral":
+      return "border-border bg-slate-50 text-navy";
+  }
+}
+
+function CompactDetail({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div>
+      <dt className="text-xs font-extrabold uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-1 text-sm font-bold text-navy">{value}</dd>
+    </div>
+  );
+}
+
+function isFallbackMarket(market: MarketReadiness) {
+  return market.marketVisibility !== "country" || getPublicDisplayTarget(market) === 0;
+}
+
+function getPublicDisplayTarget(market: MarketReadiness) {
+  return market.popularVisibleTarget + market.discoveryVisibleTarget;
+}
+
+function readinessTone(status: GlobalReadinessStatus): SummaryTone {
+  if (status === "ready") return "good";
+  if (status === "partial") return "warning";
+  return "danger";
+}
+
+function formatGlobalReadinessStatus(status: GlobalReadinessStatus) {
+  switch (status) {
+    case "ready":
+      return "Ready";
+    case "partial":
+      return "Partially ready";
+    case "not_ready":
+      return "Not ready";
+  }
+}
+
+function formatNextExpectedCron(status: Pick<HomepageFareStatusPayload, "cronConfigured" | "nextExpectedCronRefresh">) {
+  if (status.nextExpectedCronRefresh) return status.nextExpectedCronRefresh;
+  return status.cronConfigured ? "Configured externally; cadence note not provided" : "Cron is not configured";
+}
+
+function buildDiagnostics(
+  markets: MarketReadiness[],
+  marketsNeedingAnotherRun: MarketNextRunNeed[],
+  stoppedReason?: RefreshStoppedReason,
+) {
+  const diagnostics: string[] = [];
+
+  for (const market of markets) {
+    if (market.targetMet && market.status === "ready" && !isFallbackMarket(market)) continue;
+
+    const subject = isFallbackMarket(market)
+      ? `${market.marketLabel} fallback`
+      : market.marketLabel;
+    const targetText = isFallbackMarket(market)
+      ? "but has no public display target"
+      : `before coverage reached ${market.popularVisibleFresh}/${market.popularVisibleTarget} popular, ${market.discoveryVisibleFresh}/${market.discoveryVisibleTarget} discovery, and ${market.backupFresh}/${market.backupTarget} backup`;
+    const reason = market.underfillReason ?? formatMarketStatus(market.status).toLowerCase();
+    diagnostics.push(`${subject} is ${formatMarketStatus(market.status).toLowerCase()} because ${reason} ${targetText}.`);
+  }
+
+  for (const need of marketsNeedingAnotherRun) {
+    if (!need.needed || diagnostics.some((item) => item.startsWith(need.market))) continue;
+    diagnostics.push(`${need.market} needs another run because ${formatUnderfillCause(need.reason)}.`);
+  }
+
+  if (stoppedReason && stoppedReason !== "completed" && stoppedReason !== "target_met") {
+    diagnostics.unshift(`The last executor run stopped because ${formatStoppedReason(stoppedReason).toLowerCase()}.`);
+  }
+
+  return diagnostics.slice(0, 12);
+}
+
+function DashboardSection({
+  eyebrow,
+  title,
+  description,
+  children,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-muted">{eyebrow}</p>
+        <h3 className="mt-1 text-lg font-extrabold text-navy">{title}</h3>
+        <p className="mt-1 max-w-4xl text-sm leading-6 text-muted">{description}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function RefreshCronPanel({
+  refreshing,
+  loading,
+  refreshState,
+  statusPayload,
+  onRefresh,
+  onReload,
+}: {
+  refreshing: boolean;
+  loading: boolean;
+  refreshState: RefreshState;
+  statusPayload: HomepageFareStatusPayload;
+  onRefresh: () => void;
+  onReload: () => void;
+}) {
+  const stoppedReason = refreshState.counts
+    ? formatStoppedReason(refreshState.counts.stoppedReason)
+    : "No manual refresh result in this session";
+
+  return (
+    <DashboardSection
+      eyebrow="Refresh and cron controls"
+      title="Refresh controls"
+      description="Run the existing homepage fare coverage executor and reload the current status snapshot from one dedicated operations panel."
+    >
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
+        <div className="rounded-xl border border-border bg-slate-50 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button
+              type="button"
+              variant="accent"
+              onClick={onRefresh}
+              disabled={refreshing}
+              aria-busy={refreshing}
+              className="w-full sm:w-auto"
+            >
+              <RefreshCcw className={refreshing ? "animate-spin" : ""} size={16} />
+              {refreshing ? "Refreshing…" : "Refresh homepage fares"}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onReload}
+              disabled={loading || refreshing}
+              aria-busy={loading}
+              className="w-full sm:w-auto"
+            >
+              <RefreshCcw className={loading ? "animate-spin" : ""} size={16} />
+              {loading ? "Loading…" : "Reload status"}
+            </Button>
+          </div>
+
+          {refreshState.message ? (
+            <div
+              className={
+                refreshState.status === "error"
+                  ? "mt-4 rounded-lg bg-red-50 p-3 text-sm font-semibold text-danger"
+                  : "mt-4 rounded-lg bg-teal/10 p-3 text-sm font-semibold text-teal-dark"
+              }
+              role="status"
+              aria-live="polite"
+            >
+              {refreshState.message}
+            </div>
+          ) : null}
+
+          {refreshState.counts ? (
+            <dl className="mt-4 grid gap-2 sm:grid-cols-5">
+              {COUNT_LABELS.map(({ key, label }) => (
+                <MetricCard key={key} label={label} value={refreshState.counts?.[key] ?? 0} />
+              ))}
+            </dl>
+          ) : null}
+        </div>
+
+        <dl className="grid gap-2 rounded-xl border border-border bg-white p-4 sm:grid-cols-2 lg:grid-cols-1">
+          <CompactDetail label="Last refresh time" value={formatSnapshotTime(statusPayload.lastRefreshAt)} />
+          <CompactDetail label="Cron status" value={formatCronStatus(statusPayload)} />
+          <CompactDetail label="Cron cadence note" value={statusPayload.nextExpectedCronRefresh ?? "Not configured"} />
+          <CompactDetail label="Next expected refresh" value={formatNextExpectedCron(statusPayload)} />
+          <CompactDetail label="Current stopped reason" value={stoppedReason} />
+        </dl>
+      </div>
+      {!statusPayload.cronConfigured ? (
+        <p className="mt-3 rounded-xl border border-amber/20 bg-amber/10 p-3 text-sm font-semibold text-amber">
+          Cron is not configured. Set HOMEPAGE_FARES_CRON_SECRET and schedule POST /api/internal/homepage-fares/refresh before relying on unattended production refreshes.
+        </p>
+      ) : null}
+    </DashboardSection>
+  );
+}
+
+function MarketReadinessDashboard({
+  markets,
+  onInspectMarket,
+}: {
+  markets: MarketReadiness[];
+  onInspectMarket: (marketCode: string) => void;
+}) {
+  return (
+    <DashboardSection
+      eyebrow="Market readiness"
+      title="Public market coverage"
+      description="Only public country markets with homepage display targets are shown here. Regional and global fallback pools are separated below."
+    >
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
+        {markets.length ? (
+          markets.map((market) => (
+            <MarketReadinessCard key={market.marketCode} market={market} onInspectMarket={onInspectMarket} />
+          ))
+        ) : (
+          <p className="rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
+            No public market readiness metadata was returned.
+          </p>
+        )}
+      </div>
+    </DashboardSection>
+  );
+}
+
+function MarketReadinessCard({
+  market,
+  onInspectMarket,
+}: {
+  market: MarketReadiness;
+  onInspectMarket: (marketCode: string) => void;
+}) {
+  return (
+    <article className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h4 className="text-lg font-extrabold text-navy">{market.marketLabel}</h4>
+          <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
+            {market.marketCode} · {market.marketGroup}
+          </p>
+        </div>
+        <MarketStatusBadge status={market.status} />
+      </div>
+      <dl className="mt-4 grid gap-2 sm:grid-cols-3">
+        <CoverageMetric label="Popular coverage" current={market.popularVisibleFresh} target={market.popularVisibleTarget} />
+        <CoverageMetric label="Discovery coverage" current={market.discoveryVisibleFresh} target={market.discoveryVisibleTarget} />
+        <CoverageMetric label="Backup coverage" current={market.backupFresh} target={market.backupTarget} />
+      </dl>
+      <dl className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+        <MarketMiniMetric label="Fresh" value={market.freshCount ?? 0} />
+        <MarketMiniMetric label="LKG" value={market.lastKnownGoodCount ?? 0} />
+        <MarketMiniMetric label="Missing" value={market.missingCount ?? 0} />
+        <MarketMiniMetric label="Failed" value={market.failed} />
+        <MarketMiniMetric label="Unavailable" value={market.unavailable} />
+        <MarketMiniMetric label="Timeout" value={market.timeoutCount ?? 0} />
+        <MarketMiniMetric label="Replacements" value={market.replacementCandidatesUsed ?? 0} />
+        <MarketMiniMetric label="Provider calls" value={market.providerCalls} />
+        <MarketMiniMetric label="Attempts" value={market.routeAttempts} />
+        <MarketMiniMetric label="Cooldown" value={market.skippedCooldown} />
+        <MarketMiniMetric label="Candidates" value={market.candidatePoolSize} />
+      </dl>
+      <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm leading-6 text-muted">
+        <strong className="text-navy">Underfill reason:</strong>{" "}
+        {market.underfillReason ?? (market.targetMet ? "Coverage target met." : "No executor reason returned.")}
+      </div>
+      <button
+        type="button"
+        onClick={() => onInspectMarket(market.marketCode)}
+        className="mt-3 text-sm font-extrabold text-teal-dark underline-offset-4 hover:underline"
+      >
+        Inspect {market.marketCode} routes
+      </button>
+    </article>
+  );
+}
+
+function CoverageMetric({ label, current, target }: { label: string; current: number; target: number }) {
+  const met = target === 0 ? current === 0 : current >= target;
+  return (
+    <div className="rounded-xl bg-slate-50 p-3">
+      <dt className="text-xs font-extrabold uppercase tracking-wide text-muted">{label}</dt>
+      <dd className="mt-1 text-xl font-extrabold text-navy">{current} / {target}</dd>
+      <p className={met ? "mt-1 text-xs font-bold text-teal-dark" : "mt-1 text-xs font-bold text-amber"}>
+        {met ? "Target met" : "Needs coverage"}
+      </p>
+    </div>
+  );
+}
+
+function DiagnosticsPanel({
+  markets,
+  marketsNeedingAnotherRun,
+  candidatePoolHealth,
+  stoppedReason,
+}: {
+  markets: MarketReadiness[];
+  marketsNeedingAnotherRun: MarketNextRunNeed[];
+  candidatePoolHealth: HomepageFareStatusSummary;
+  stoppedReason?: RefreshStoppedReason;
+}) {
+  const issues = buildDiagnostics(markets, marketsNeedingAnotherRun, stoppedReason);
+
+  return (
+    <DashboardSection
+      eyebrow="Provider failure / underfill diagnostics"
+      title="Why markets are not ready"
+      description="Plain-language operational diagnostics from existing executor metadata."
+    >
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="space-y-2">
+          {issues.length ? (
+            issues.map((issue) => (
+              <p key={issue} className="rounded-xl border border-border bg-slate-50 p-3 text-sm font-semibold leading-6 text-navy">
+                {issue}
+              </p>
+            ))
+          ) : (
+            <p className="rounded-xl border border-border bg-teal/10 p-3 text-sm font-semibold text-teal-dark">
+              No underfill diagnostics are currently reported for public markets.
+            </p>
+          )}
+        </div>
+        <dl className="grid gap-2 rounded-xl border border-border bg-white p-4 text-sm">
+          <CompactDetail label="Provider budget exhausted" value={stoppedReason === "provider_budget_exhausted" ? "Yes" : "No"} />
+          <CompactDetail label="Route budget exhausted" value={stoppedReason === "route_budget_exhausted" ? "Yes" : "No"} />
+          <CompactDetail label="Candidate pool exhausted" value={stoppedReason === "candidate_pool_exhausted" ? "Yes" : "No"} />
+          <CompactDetail label="Provider unavailable/no offers" value={stoppedReason === "provider_unavailable_no_offers" ? "Yes" : "No"} />
+          <CompactDetail label="Candidate pool failed" value={candidatePoolHealth.failed} />
+          <CompactDetail label="Candidate pool unavailable" value={candidatePoolHealth.unavailable} />
+        </dl>
+      </div>
+    </DashboardSection>
+  );
+}
+
+function FallbackPoolsSection({
+  pools,
+  onInspectMarket,
+}: {
+  pools: MarketReadiness[];
+  onInspectMarket: (marketCode: string) => void;
+}) {
+  return (
+    <DashboardSection
+      eyebrow="Fallback pools / internal regional pools"
+      title="Fallback-only coverage pools"
+      description="Regional and global pools remain available for debugging but are not counted as public homepage-ready markets."
+    >
+      <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+        {pools.length ? (
+          pools.map((pool) => (
+            <article key={pool.marketCode} className="rounded-xl border border-dashed border-border bg-slate-50 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h4 className="font-extrabold text-navy">{pool.marketLabel}</h4>
+                  <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
+                    {pool.marketCode} · {pool.marketGroup}
+                  </p>
+                </div>
+                <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-extrabold text-muted">
+                  Fallback only
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-semibold leading-6 text-muted">
+                No public display target. Coverage is retained for internal routing, replacement, and regional debugging.
+              </p>
+              <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                <MarketMiniMetric label="Fresh" value={pool.freshCount ?? 0} />
+                <MarketMiniMetric label="Missing" value={pool.missingCount ?? 0} />
+                <MarketMiniMetric label="Failed" value={pool.failed} />
+                <MarketMiniMetric label="Provider" value={pool.providerCalls} />
+                <MarketMiniMetric label="Attempts" value={pool.routeAttempts} />
+                <MarketMiniMetric label="Timeout" value={pool.timeoutCount ?? 0} />
+              </dl>
+              <button
+                type="button"
+                onClick={() => onInspectMarket(pool.marketCode)}
+                className="mt-3 text-sm font-extrabold text-teal-dark underline-offset-4 hover:underline"
+              >
+                Inspect fallback routes
+              </button>
+            </article>
+          ))
+        ) : (
+          <p className="rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
+            No fallback-only pools were returned.
+          </p>
+        )}
+      </div>
+    </DashboardSection>
+  );
+}
+
+function RawDebugDetails({
+  statusPayload,
+  refreshCounts,
+}: {
+  statusPayload: HomepageFareStatusPayload;
+  refreshCounts: RefreshCounts | null;
+}) {
+  return (
+    <details className="rounded-2xl border border-border bg-white p-4">
+      <summary className="cursor-pointer text-sm font-extrabold uppercase tracking-wide text-navy">
+        Raw debug / View All details
+      </summary>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard label="Configured routes" value={statusPayload.summary.total} />
+        <MetricCard label="Candidate pool failed" value={statusPayload.candidatePoolHealth.failed} />
+        <MetricCard label="Candidate pool unavailable" value={statusPayload.candidatePoolHealth.unavailable} />
+        <MetricCard label="Visible gaps attempted" value={refreshCounts?.visibleGapsAttempted.length ?? 0} />
+        <MetricCard label="Immediate replacements attempted" value={refreshCounts?.replacementsUsed.length ?? 0} />
+        <MetricCard label="Executor targets" value={refreshCounts ? formatStringList(refreshCounts.targetedMarkets, "none") : "No manual run yet"} />
+        <MetricCard label="Markets needing another run" value={refreshCounts ? formatMarketsNeedingRun(refreshCounts.marketsNeedingAnotherRun) : formatMarketsNeedingRun(statusPayload.marketsNeedingAnotherRun)} />
+      </div>
+    </details>
+  );
+}
 
 function MarketRouteInspector({
   groups,
@@ -919,6 +1257,7 @@ function RouteDetailsTable({
       <table className="min-w-[1120px] divide-y divide-border text-left text-sm">
         <thead className="bg-white text-xs font-extrabold uppercase tracking-wide text-muted">
           <tr>
+            <th className="px-3 py-3">Market</th>
             <th className="px-3 py-3">Route</th>
             <th className="px-3 py-3">Origin</th>
             <th className="px-3 py-3">Destination</th>
@@ -934,6 +1273,7 @@ function RouteDetailsTable({
         <tbody className="divide-y divide-border">
           {group.routes.map((route) => (
             <tr key={`${group.marketCode}-${route.id}`} className="align-top">
+              <td className="px-3 py-3 font-bold text-navy">{route.market}</td>
               <td className="px-3 py-3 font-bold text-navy">{route.label}</td>
               <td className="px-3 py-3 font-semibold text-navy">
                 {route.origin}
@@ -978,6 +1318,8 @@ function MarketGroupStatusBadge({
   const styles =
     status === "Ready"
       ? "bg-teal/10 text-teal-dark"
+      : status === "Fallback only"
+        ? "bg-slate-100 text-muted"
       : status === "Failed"
         ? "bg-red-50 text-danger"
         : status === "Partially ready"
@@ -1005,80 +1347,6 @@ function DisplayReadinessSummary({ readiness }: { readiness: DisplayReadiness })
       <p className="mt-2 text-sm font-semibold leading-6">
         {readiness.message}
       </p>
-    </div>
-  );
-}
-
-function MarketReadinessTable({ markets }: { markets: MarketReadiness[] }) {
-  return (
-    <div className="mt-4 overflow-x-auto rounded-xl border border-border">
-      <table className="min-w-full divide-y divide-border text-left text-sm">
-        <thead className="bg-slate-50 text-xs font-extrabold uppercase tracking-wide text-muted">
-          <tr>
-            <th className="px-3 py-3">Market</th>
-            <th className="px-3 py-3">Popular</th>
-            <th className="px-3 py-3">Discovery</th>
-            <th className="px-3 py-3">Backup</th>
-            <th className="px-3 py-3">Status</th>
-            <th className="px-3 py-3">Attempts</th>
-            <th className="px-3 py-3">Provider calls</th>
-            <th className="px-3 py-3">Fresh</th>
-            <th className="px-3 py-3">LKG</th>
-            <th className="px-3 py-3">Missing</th>
-            <th className="px-3 py-3">Failed</th>
-            <th className="px-3 py-3">Unavailable</th>
-            <th className="px-3 py-3">Timeout</th>
-            <th className="px-3 py-3">Replacements</th>
-            <th className="px-3 py-3">Cooldown</th>
-            <th className="px-3 py-3">Underfill reason</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {markets.length ? (
-            markets.map((market) => (
-              <tr key={market.marketCode} className="align-top">
-                <td className="px-3 py-3 font-bold text-navy">
-                  <span>{market.marketCode}</span>
-                  <span className="block text-xs font-semibold text-muted">
-                    {market.marketLabel} · {market.marketGroup}
-                  </span>
-                </td>
-                <td className="px-3 py-3 font-semibold text-navy">
-                  {market.popularVisibleFresh}/{market.popularVisibleTarget}
-                </td>
-                <td className="px-3 py-3 font-semibold text-navy">
-                  {market.discoveryVisibleFresh}/{market.discoveryVisibleTarget}
-                </td>
-                <td className="px-3 py-3 font-semibold text-navy">
-                  {market.backupFresh}/{market.backupTarget}
-                </td>
-                <td className="px-3 py-3">
-                  <MarketStatusBadge status={market.status} />
-                </td>
-                <td className="px-3 py-3 text-navy">{market.routeAttempts}</td>
-                <td className="px-3 py-3 text-navy">{market.providerCalls}</td>
-                <td className="px-3 py-3 text-navy">{market.freshCount ?? 0}</td>
-                <td className="px-3 py-3 text-navy">{market.lastKnownGoodCount ?? 0}</td>
-                <td className="px-3 py-3 text-navy">{market.missingCount ?? 0}</td>
-                <td className="px-3 py-3 text-navy">{market.failed}</td>
-                <td className="px-3 py-3 text-navy">{market.unavailable}</td>
-                <td className="px-3 py-3 text-navy">{market.timeoutCount ?? 0}</td>
-                <td className="px-3 py-3 text-navy">{market.replacementCandidatesUsed ?? 0}</td>
-                <td className="px-3 py-3 text-navy">{market.skippedCooldown}</td>
-                <td className="max-w-xs px-3 py-3 text-xs font-semibold text-muted">
-                  {market.underfillReason ?? "—"}
-                </td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td className="px-3 py-4 font-semibold text-muted" colSpan={15}>
-                No market readiness metadata was returned.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
     </div>
   );
 }
@@ -1527,6 +1795,10 @@ function formatMarketStatus(status: MarketReadinessStatus) {
       return "Provider exhausted";
     case "budget_exhausted":
       return "Budget exhausted";
+    case "candidate_exhausted":
+      return "Candidate exhausted";
+    case "failed":
+      return "Failed";
     case "cooldown":
       return "Cooldown";
     case "underfilled":
@@ -1597,6 +1869,8 @@ function readMarketReadinessStatus(value: unknown): MarketReadinessStatus {
     value === "underfilled" ||
     value === "provider_exhausted" ||
     value === "budget_exhausted" ||
+    value === "candidate_exhausted" ||
+    value === "failed" ||
     value === "cooldown"
     ? value
     : "underfilled";
@@ -1782,6 +2056,11 @@ function normalizeMarketReadiness(value: unknown): MarketReadiness | undefined {
     unavailable: readCount(market.unavailable),
     skippedCooldown: readCount(market.skippedCooldown),
     candidatePoolSize: readCount(market.candidatePoolSize),
+    freshCount: readCount(market.freshCount),
+    lastKnownGoodCount: readCount(market.lastKnownGoodCount),
+    missingCount: readCount(market.missingCount),
+    timeoutCount: readCount(market.timeoutCount),
+    replacementCandidatesUsed: readCount(market.replacementCandidatesUsed),
   };
 }
 
