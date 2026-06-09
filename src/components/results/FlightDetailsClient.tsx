@@ -127,8 +127,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
       <section className="border-b border-border bg-white">
         <div className="page-shell py-3 sm:py-4">
           <div className="mx-auto w-full max-w-5xl">
-            <div className="grid w-full grid-cols-1 items-start gap-2.5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-6">
-              <div className="min-w-0">
+            <div className="grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-5">
+              <div className="min-w-0 lg:col-start-1 lg:row-start-1">
                 <h1 className="text-2xl font-medium text-slate-800 sm:text-3xl">
                   {routeHeading}
                 </h1>
@@ -234,23 +234,25 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   </div>
                 </Card>
               </div>
-              <div className="hidden min-w-0 lg:block" aria-hidden="true" />
-            </div>
 
-            <div className="mt-5 grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-6">
-              <SelectedFlightSummary
-                itineraryLegs={itineraryLegs}
-                fallbackAirlineName={flight.airlineName}
-                fallbackAirlineLogo={getAirlineLogo(flight)}
-                fallbackFlightNumber={flight.flightNumber}
-              />
-              <ProviderComparisonPanel
-                offers={providerOffers}
-                selectedCurrency={selectedOption.currency}
-                currencyRates={currencyRates.rates}
-                isFallbackRate={currencyRates.isFallback}
-                onContinueToProvider={continueToProvider}
-              />
+              <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+                <SelectedFlightSummary
+                  itineraryLegs={itineraryLegs}
+                  fallbackAirlineName={flight.airlineName}
+                  fallbackAirlineLogo={getAirlineLogo(flight)}
+                  fallbackFlightNumber={flight.flightNumber}
+                />
+              </div>
+
+              <div className="min-w-0 lg:col-start-2 lg:row-start-1">
+                <ProviderComparisonPanel
+                  offers={providerOffers}
+                  selectedCurrency={selectedOption.currency}
+                  currencyRates={currencyRates.rates}
+                  isFallbackRate={currencyRates.isFallback}
+                  onContinueToProvider={continueToProvider}
+                />
+              </div>
             </div>
           </div>
         </div>
