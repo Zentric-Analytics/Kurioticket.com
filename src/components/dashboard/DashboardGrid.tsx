@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -43,6 +43,27 @@ type DashboardOverviewProps = {
   initials: string;
   displayName: string;
   userEmail?: string | null;
+  userName?: string | null;
+};
+
+type PersonalDetailsDraft = {
+  name: string;
+  displayName: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  nationality: string;
+  address: string;
+};
+
+type PersonalDetailRow = {
+  key: keyof PersonalDetailsDraft;
+  label: string;
+  fallback: string;
+  helper?: string;
+  inputType?: "text" | "tel" | "date" | "email";
+  multiline?: boolean;
+  readOnly?: boolean;
 };
 
 type ListRowProps = {
@@ -183,6 +204,187 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
   );
 }
 
+const personalDetailRows: PersonalDetailRow[] = [
+  { key: "name", label: "Name", fallback: "Add your name" },
+  { key: "displayName", label: "Display name", fallback: "Choose a display name" },
+  {
+    key: "email",
+    label: "Email address",
+    fallback: "Add your email address",
+    helper: "This is the email address you use to sign in. It is also where we send important account updates.",
+    inputType: "email",
+    readOnly: true,
+  },
+  {
+    key: "phone",
+    label: "Phone number",
+    fallback: "Add your phone number",
+    helper: "Travel providers may use this number if they need to contact you about a booking.",
+    inputType: "tel",
+  },
+  { key: "dateOfBirth", label: "Date of birth", fallback: "Add your date of birth", inputType: "date" },
+  { key: "nationality", label: "Nationality", fallback: "Add your nationality" },
+  { key: "address", label: "Address", fallback: "Add your address", multiline: true },
+];
+
+function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: DashboardOverviewProps): PersonalDetailsDraft {
+  const trimmedName = userName?.trim() ?? "";
+  const trimmedDisplayName = trimmedName ? displayName.trim() : "";
+
+  return {
+    name: trimmedName,
+    displayName: trimmedDisplayName,
+    email: userEmail?.trim() ?? "",
+    phone: "",
+    dateOfBirth: "",
+    nationality: "",
+    address: "",
+  };
+}
+
+function DetailValue({ value, fallback, helper }: { value: string; fallback: string; helper?: string }) {
+  return (
+    <div className="min-w-0 space-y-1 text-left sm:text-right">
+      <p className={cn("break-words text-sm font-semibold leading-6 text-slate-900", !value && "text-slate-500")}>{value || fallback}</p>
+      {helper ? <p className="max-w-xl text-sm leading-6 text-slate-500 sm:ml-auto">{helper}</p> : null}
+    </div>
+  );
+}
+
+function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: string; onChange: (key: keyof PersonalDetailsDraft, value: string) => void }) {
+  const baseClassName = cn(
+    "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100",
+    row.readOnly && "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
+  );
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    onChange(row.key, event.target.value);
+  };
+
+  if (row.multiline) {
+    return (
+      <textarea
+        className={cn(baseClassName, "min-h-28 resize-y")}
+        value={value}
+        onChange={handleChange}
+        placeholder={row.fallback}
+        readOnly={row.readOnly}
+        rows={4}
+      />
+    );
+  }
+
+  return (
+    <input
+      className={baseClassName}
+      type={row.inputType ?? "text"}
+      value={value}
+      onChange={handleChange}
+      placeholder={row.fallback}
+      readOnly={row.readOnly}
+    />
+  );
+}
+
+function PersonalDetailsSection(props: DashboardOverviewProps) {
+  const initialValues = getPersonalDetailsInitialValues(props);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState<PersonalDetailsDraft>(initialValues);
+
+  const handleEdit = () => {
+    setDraft(initialValues);
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setDraft(initialValues);
+    setIsEditing(false);
+  };
+
+  const updateDraft = (key: keyof PersonalDetailsDraft, value: string) => {
+    setDraft((current) => ({ ...current, [key]: value }));
+  };
+
+  return (
+    <section
+      className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-56px_rgba(49,46,129,0.5)]"
+      aria-labelledby="personal-details-title"
+    >
+      <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200 px-4 py-5 sm:px-6 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
+          <h2 id="personal-details-title" className="text-2xl font-bold tracking-tight text-slate-950">
+            Personal details
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Update your information and manage how it is used across Kurioticket.
+          </p>
+        </div>
+        <div
+          className="hidden size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-lg font-bold text-white shadow-[0_16px_34px_-20px_rgba(79,70,229,0.85)] ring-1 ring-white/80 md:flex"
+          aria-hidden="true"
+        >
+          {props.initials}
+        </div>
+      </div>
+
+      <div className="divide-y divide-slate-200">
+        {personalDetailRows.map((row) => {
+          const readOnlyValue = initialValues[row.key];
+          const editValue = draft[row.key];
+
+          return (
+            <div key={row.key} className="grid min-w-0 gap-3 px-4 py-4 sm:px-6 md:grid-cols-[13rem_minmax(0,1fr)] md:items-start md:gap-6">
+              <div className="text-sm font-semibold text-slate-700">{row.label}</div>
+              {isEditing ? (
+                <div className="min-w-0 space-y-2">
+                  <DetailInput row={row} value={editValue} onChange={updateDraft} />
+                  {row.helper ? <p className="text-sm leading-6 text-slate-500">{row.helper}</p> : null}
+                </div>
+              ) : (
+                <DetailValue value={readOnlyValue} fallback={row.fallback} helper={row.helper} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:px-6">
+        {isEditing ? (
+          <div className="flex min-w-0 flex-col gap-3 sm:items-end">
+            <p className="text-sm leading-6 text-slate-500 sm:text-right">Profile editing coming soon.</p>
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled
+                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 text-sm font-semibold text-slate-500"
+              >
+                Save changes
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-22px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 sm:w-auto"
+            >
+              Edit
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
   const row = (
     <div className="flex min-w-0 items-start gap-4 rounded-2xl border border-border bg-white p-4 transition hover:border-teal/40">
@@ -211,10 +413,11 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
   );
 }
 
-export function DashboardOverview({ initials, displayName, userEmail }: DashboardOverviewProps) {
+export function DashboardOverview({ initials, displayName, userEmail, userName }: DashboardOverviewProps) {
   return (
-    <div className="mx-auto min-w-0 max-w-[62rem] xl:max-w-[64rem]">
+    <div className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
       <AccountIdentityHeader initials={initials} displayName={displayName} userEmail={userEmail} />
+      <PersonalDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
     </div>
   );
 }
