@@ -196,6 +196,15 @@ export function FlightDetailsClient({ id }: { id: string }) {
                             );
                           })}
                         </div>
+
+                        <p className="flex max-w-2xl items-start gap-1.5 text-xs font-medium leading-5 text-slate-600">
+                          <Info
+                            size={14}
+                            className="mt-0.5 shrink-0 text-blue"
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0">{providerDisclaimer}</span>
+                        </p>
                       </div>
                     </div>
 
@@ -228,13 +237,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
                         >
                           Continue to Provider <ArrowRight size={16} />
                         </Button>
-                        <p className="flex w-full items-start justify-center gap-1.5 text-center text-xs leading-4 text-slate-500">
-                          <Info
-                            size={14}
-                            className="mt-0.5 shrink-0 text-blue"
-                          />
-                          <span className="min-w-0">{providerDisclaimer}</span>
-                        </p>
                       </div>
                       </aside>
                     </div>
