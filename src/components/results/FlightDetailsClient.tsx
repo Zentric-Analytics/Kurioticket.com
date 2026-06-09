@@ -278,22 +278,30 @@ function SelectedFlightSummary({
       <h1 className="mt-2 text-2xl font-medium leading-snug text-slate-800 sm:text-2xl">
         {routeHeading}
       </h1>
-      <div className="mt-3.5 grid gap-4 border-t border-slate-200/80 pt-4">
-        {itineraryLegs.map((leg, legIndex) => (
-          <div
-            key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
-            className={legIndex > 0 ? "border-t border-slate-200/80 pt-4" : ""}
-          >
-            <CompactLegSection
-              leg={leg}
-              legIndex={legIndex}
-              legCount={itineraryLegs.length}
-              fallbackAirlineName={fallbackAirlineName}
-              fallbackAirlineLogo={fallbackAirlineLogo}
-              fallbackFlightNumber={fallbackFlightNumber}
-            />
-          </div>
-        ))}
+      <div className="mt-3.5 rounded-2xl border border-slate-200/80 bg-white/50 px-4 py-4 sm:px-5">
+        <div className="relative border-l border-slate-200 pl-5 sm:pl-6">
+          {itineraryLegs.map((leg, legIndex) => (
+            <div
+              key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
+              className={`relative ${legIndex > 0 ? "mt-4 border-t border-slate-200/80 pt-4" : ""}`}
+            >
+              <span
+                className={`absolute -left-[1.8125rem] h-3 w-3 rounded-full border-2 border-white bg-slate-400 shadow-[0_0_0_1px_rgba(148,163,184,0.42)] sm:-left-[2.0625rem] ${
+                  legIndex > 0 ? "top-5" : "top-1"
+                }`}
+                aria-hidden="true"
+              />
+              <CompactLegSection
+                leg={leg}
+                legIndex={legIndex}
+                legCount={itineraryLegs.length}
+                fallbackAirlineName={fallbackAirlineName}
+                fallbackAirlineLogo={fallbackAirlineLogo}
+                fallbackFlightNumber={fallbackFlightNumber}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
