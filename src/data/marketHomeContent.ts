@@ -917,7 +917,7 @@ function getPopularDestinationCandidateMarketCodes(
     codes.push(regionalMarketCode);
   }
 
-  if (effectiveMarketCode !== "GLOBAL") {
+  if (effectiveMarketCode === "GLOBAL") {
     codes.push("GLOBAL");
   }
 
@@ -974,9 +974,26 @@ function resolveMarketContent<T>(
     };
   }
 
+  const regionalMarketCode = getRegionalBackupMarketCode(
+    marketProfile.contentMarketCode,
+  );
+  const regionalContent = regionalMarketCode
+    ? contentByMarket[regionalMarketCode]
+    : undefined;
+
+  if (regionalMarketCode && regionalContent?.length) {
+    return {
+      requestedRegionCode: marketProfile.countryCode,
+      effectiveMarketCode: regionalMarketCode,
+      fallbackLevel: "regional",
+      fallbackUsed: true,
+      items: regionalContent,
+    };
+  }
+
   const globalContent = contentByMarket.GLOBAL;
 
-  if (globalContent?.length) {
+  if (marketProfile.contentMarketCode === "GLOBAL" && globalContent?.length) {
     return {
       requestedRegionCode: marketProfile.countryCode,
       effectiveMarketCode: "GLOBAL",

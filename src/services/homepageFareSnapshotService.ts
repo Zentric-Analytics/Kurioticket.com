@@ -1989,9 +1989,10 @@ export async function readHomepageDiscoveryFareCards({
   const shouldTryRegionalFallback =
     regionalCandidates.length > 0 &&
     !areSameCandidateSets(requestedCandidates, regionalCandidates);
-  const globalCandidates = getGlobalHomeDiscoveryFareCandidates();
+  const globalCandidates = getMarketScopedGlobalHomeDiscoveryFareCandidates(
+    requestedRegionCode,
+  );
   const shouldTryGlobalFallback =
-    isNonUsRegion &&
     globalCandidates.length > 0 &&
     !areSameCandidateSets(requestedCandidates, globalCandidates) &&
     (!regionalCandidates.length ||
@@ -2239,10 +2240,16 @@ function getHomepageDiscoveryFallbackLevel(
   return "neutral";
 }
 
+function getMarketScopedGlobalHomeDiscoveryFareCandidates(regionCode: string) {
+  return regionCode === GLOBAL_HOME_DISCOVERY_REGION
+    ? getGlobalHomeDiscoveryFareCandidates()
+    : [];
+}
+
 function normalizeHomepageDiscoveryRegionCode(regionCode: string) {
   const normalized = regionCode.trim().toUpperCase();
 
-  return /^[A-Z]{2}$/.test(normalized)
+  return /^[A-Z_]{2,20}$/.test(normalized)
     ? normalized
     : DEFAULT_HOME_DISCOVERY_REGION;
 }

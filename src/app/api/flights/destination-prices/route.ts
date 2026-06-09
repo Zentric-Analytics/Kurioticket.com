@@ -2,9 +2,16 @@ import { NextResponse } from "next/server";
 
 import {
   DEFAULT_HOME_DISCOVERY_ELIGIBLE_FLIGHT_ROUTE_COUNT,
+  GLOBAL_HOME_DISCOVERY_REGION,
+  getGlobalHomeDiscoveryPriceRoutes,
+  getHomeDiscoveryFareCandidates,
   getHomeDiscoveryRouteAllowlist,
+  getRegionalHomeDiscoveryFareCandidates,
 } from "@/data/homeDiscovery";
-import { getPopularDestinationAllowlist } from "@/data/marketHomeContent";
+import {
+  getPopularDestinationAllowlist,
+  getPopularDestinationFareCandidatesByRegion,
+} from "@/data/marketHomeContent";
 import {
   getHomepageFareDateStrategy,
   HOMEPAGE_FARE_DEFAULT_CURRENCY,
@@ -66,7 +73,7 @@ export async function POST(request: Request) {
     readStringProperty(payload, "fallbackLevel"),
   );
   const fallbackUsed = readBooleanProperty(payload, "fallbackUsed");
-  const destinations = readDestinations(payload, origin);
+  const destinations = readDestinations(payload, origin, requestedRegionCode);
   const dateStrategy = getHomepageFareDateStrategy();
 
   if (!destinations.length) {
@@ -114,9 +121,19 @@ export async function POST(request: Request) {
   });
 }
 
-function readDestinations(payload: unknown, defaultOrigin: string) {
+function readDestinations(
+  payload: unknown,
+  defaultOrigin: string,
+  requestedRegionCode: string,
+) {
   if (!isRecord(payload) || !Array.isArray(payload.destinations)) return [];
 
+  const allowedPopularDestinationIds = getMarketScopedPopularDestinationIds(
+    requestedRegionCode,
+  );
+  const allowedDiscoveryRouteIds = getMarketScopedDiscoveryRouteIds(
+    requestedRegionCode,
+  );
   const seen = new Set<string>();
   const destinations: PriceDestination[] = [];
   let popularCount = 0;
@@ -131,6 +148,7 @@ function readDestinations(payload: unknown, defaultOrigin: string) {
       if (
         discoveryCount >= DISCOVER_PRICE_CAP ||
         seen.has(discoveryDestination.id) ||
+        !allowedDiscoveryRouteIds.has(discoveryDestination.id) ||
         discoveryDestination.origin === discoveryDestination.code
       )
         continue;
@@ -147,6 +165,7 @@ function readDestinations(payload: unknown, defaultOrigin: string) {
     if (
       popularCount >= MAX_POPULAR_DESTINATIONS ||
       seen.has(popularDestination.id) ||
+      !allowedPopularDestinationIds.has(popularDestination.id) ||
       popularDestination.origin === popularDestination.code
     )
       continue;
@@ -157,6 +176,26 @@ function readDestinations(payload: unknown, defaultOrigin: string) {
   }
 
   return destinations;
+}
+
+function getMarketScopedPopularDestinationIds(regionCode: string) {
+  return new Set(
+    getPopularDestinationFareCandidatesByRegion(regionCode).items.map(
+      (destination) => destination.id,
+    ),
+  );
+}
+
+function getMarketScopedDiscoveryRouteIds(regionCode: string) {
+  const routes = [
+    ...getHomeDiscoveryFareCandidates(regionCode),
+    ...getRegionalHomeDiscoveryFareCandidates(regionCode),
+    ...(regionCode === GLOBAL_HOME_DISCOVERY_REGION
+      ? getGlobalHomeDiscoveryPriceRoutes()
+      : []),
+  ];
+
+  return new Set(routes.map((route) => route.id));
 }
 
 function readPopularDestination(

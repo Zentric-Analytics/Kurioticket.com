@@ -171,10 +171,7 @@ export default function Home() {
     [regionCode],
   );
   const visiblePopularDestinations = useMemo(() => {
-    const selectionPool = destinationPriceState.loading
-      ? popularDestinations
-      : popularDestinationFareCandidates;
-    const destinationsWithIndex = selectionPool.map((destination, index) => {
+    const destinationsWithIndex = popularDestinations.map((destination, index) => {
       const price = destinationPriceState.prices[destination.id];
       const hasFreshPrice = hasFreshProviderPrice(price, {
         originCode: destination.originCode,
@@ -201,7 +198,6 @@ export default function Home() {
   }, [
     destinationPriceState.loading,
     destinationPriceState.prices,
-    popularDestinationFareCandidates,
     popularDestinations,
   ]);
 
