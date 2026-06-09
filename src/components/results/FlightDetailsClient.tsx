@@ -192,20 +192,20 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </div>
 
                 <aside className="flex items-center justify-center border-t border-indigo-100 bg-white px-3 py-2.5 sm:px-3.5 lg:border-l lg:border-t-0 lg:px-4 lg:py-3">
-                  <div className="mx-auto flex w-full max-w-[280px] flex-col items-center gap-1.5 text-center">
+                  <div className="mx-auto flex w-full max-w-full flex-col items-center gap-1.5 text-center sm:max-w-[280px] lg:max-w-[252px]">
                     <div className="w-full rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-1.5 text-center shadow-sm">
                       <p className="text-[11px] font-semibold uppercase leading-4 tracking-wide text-slate-500">
                         From
                       </p>
                       <div
-                        className="text-xl font-medium tracking-tight text-slate-900 sm:text-[1.375rem] sm:leading-7 lg:font-semibold"
+                        className="whitespace-nowrap text-[1.2rem] font-medium leading-6 tracking-tight text-slate-900 sm:text-[1.3rem] sm:leading-7 lg:font-semibold"
                         aria-label={displayPrice.ariaLabel}
                         title={displayPrice.title}
                       >
                         {displayPrice.formatted}
                       </div>
                       {displayPrice.isConvertedEstimate ? (
-                        <p className="mt-0.5 text-xs font-medium leading-4 text-slate-600">
+                        <p className="mt-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-[11px] lg:leading-[0.95rem]">
                           Estimate shown. Provider price:{" "}
                           {displayPrice.providerFormatted}.
                         </p>
@@ -214,7 +214,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     <Button
                       variant="accent"
                       size="lg"
-                      className="h-10 w-full rounded-lg px-4 text-sm font-semibold"
+                      className="h-10 w-full whitespace-nowrap rounded-lg px-3 text-sm font-semibold lg:text-[13px]"
                       onClick={continueToProvider}
                       disabled={!hasProviderLink}
                     >
