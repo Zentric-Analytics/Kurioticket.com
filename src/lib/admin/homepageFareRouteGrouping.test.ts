@@ -272,3 +272,67 @@ test("public market cards exclude fallback-only groups while fallback groups rem
   assert.equal(fallbackGroups[0]?.status, "Fallback only");
   assert.equal(fallbackGroups[0]?.routes.length, 1);
 });
+
+test("grouping renders empty admin state when route readiness arrays are missing", () => {
+  const groups = buildAdminHomepageFareRouteGroups({ routes: undefined, markets: undefined, includeEmptyGroups: true });
+  const allRoutes = buildAdminHomepageFareAllRoutesGroup(undefined);
+  const splitGroups = splitAdminHomepageFareMarketRouteGroups(undefined);
+  const firstPage = paginateAdminHomepageFareRoutes(undefined, 1);
+
+  assert.deepEqual(groups, []);
+  assert.equal(allRoutes.marketCode, "ALL");
+  assert.equal(allRoutes.routes.length, 0);
+  assert.equal(allRoutes.status, "Fallback only");
+  assert.deepEqual(splitGroups, { publicGroups: [], fallbackGroups: [] });
+  assert.deepEqual(firstPage, {
+    routes: [],
+    currentPage: 1,
+    totalPages: 1,
+    totalRoutes: 0,
+    start: 0,
+    end: 0,
+    hasPreviousPage: false,
+    hasNextPage: false,
+  });
+});
+
+test("grouping skips partial readiness rows and preserves valid fallback data", () => {
+  const partialMarkets = [
+    { marketCode: "US", marketLabel: "United States", marketGroup: "North America" },
+    null,
+    { marketLabel: "Missing code" },
+    {
+      market: "GLOBAL",
+      marketCode: "GLOBAL",
+      marketLabel: "Global fallback",
+      marketGroup: "Internal fallback",
+      marketVisibility: "global",
+      popularVisibleTarget: 0,
+      discoveryVisibleTarget: 0,
+      popularVisibleFresh: 0,
+      discoveryVisibleFresh: 0,
+      backupFresh: 0,
+      targetMet: false,
+      status: "underfilled",
+      failed: 0,
+      unavailable: 0,
+      candidatePoolSize: 0,
+    },
+  ] as unknown as AdminHomepageFareMarket[];
+  const partialRoutes = [
+    { id: "valid-us", market: "US", label: "Miami", origin: "JFK", destination: "MIA", status: "fresh" },
+    { id: "missing-market", label: "Broken", origin: "JFK", destination: "MIA", status: "fresh" },
+    null,
+  ] as unknown as AdminHomepageFareRoute[];
+
+  const groups = buildAdminHomepageFareRouteGroups({
+    routes: partialRoutes,
+    markets: partialMarkets,
+    includeEmptyGroups: true,
+  });
+
+  assert.deepEqual(groups.map((group) => group.marketCode), ["US", "GLOBAL"]);
+  assert.equal(groups.find((group) => group.marketCode === "US")?.routes.length, 1);
+  assert.equal(groups.find((group) => group.marketCode === "US")?.status, "Fallback only");
+  assert.equal(groups.find((group) => group.marketCode === "GLOBAL")?.isFallbackPool, true);
+});

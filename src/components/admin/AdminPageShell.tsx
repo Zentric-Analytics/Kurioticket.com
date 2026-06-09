@@ -2,55 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Activity,
-  Bell,
-  BookOpen,
-  Building2,
-  Car,
-  ChevronDown,
-  ClipboardList,
-  FileText,
-  Headphones,
-  Hotel,
-  LayoutDashboard,
-  LockKeyhole,
-  LogOut,
-  Plane,
-  Search,
-  Settings,
-  ShieldCheck,
-  Users,
-} from "lucide-react";
+import { Bell, Building2, ChevronDown, LogOut, Search, Settings, ShieldCheck } from "lucide-react";
 
 import { Card } from "@/components/ui/Card";
+import { adminNavigation, type AdminNavDefinition, type AdminRole } from "@/lib/adminNavigation";
 
-type AdminRole = "ADMIN" | "SUPPORT" | "USER";
 type StatusTone = "good" | "bad" | "warn" | "neutral" | "info";
-
-type AdminNavDefinition = {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string; size?: number }>;
-  roles: AdminRole[];
-  section: "operations" | "readiness" | "content" | "controls";
-};
-
-export const adminNavigation: AdminNavDefinition[] = [
-  { href: "/admin", label: "Overview", icon: LayoutDashboard, roles: ["ADMIN", "SUPPORT"], section: "operations" },
-  { href: "/admin/users", label: "Users", icon: Users, roles: ["ADMIN", "SUPPORT"], section: "operations" },
-  { href: "/admin/providers", label: "Providers", icon: Activity, roles: ["ADMIN"], section: "readiness" },
-  { href: "/admin/searches", label: "Searches", icon: Search, roles: ["ADMIN", "SUPPORT"], section: "operations" },
-  { href: "/admin/bookings", label: "Bookings", icon: ClipboardList, roles: ["ADMIN", "SUPPORT"], section: "operations" },
-  { href: "/admin/content", label: "Content", icon: FileText, roles: ["ADMIN"], section: "content" },
-  { href: "/admin/flights", label: "Flights", icon: Plane, roles: ["ADMIN"], section: "readiness" },
-  { href: "/admin/hotels", label: "Hotels", icon: Hotel, roles: ["ADMIN"], section: "readiness" },
-  { href: "/admin/cars", label: "Cars", icon: Car, roles: ["ADMIN"], section: "readiness" },
-  { href: "/admin/support", label: "Support", icon: Headphones, roles: ["ADMIN", "SUPPORT"], section: "operations" },
-  { href: "/admin/logs", label: "Logs", icon: BookOpen, roles: ["ADMIN"], section: "controls" },
-  { href: "/admin/system", label: "System", icon: LockKeyhole, roles: ["ADMIN"], section: "controls" },
-  { href: "/admin/settings", label: "Settings", icon: Settings, roles: ["ADMIN"], section: "controls" },
-];
 
 const sectionLabels = {
   operations: "Operations",
