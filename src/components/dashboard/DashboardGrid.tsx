@@ -116,14 +116,19 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
   const pathname = usePathname();
 
   return (
-    <div className={cn("grid min-w-0 items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15.75rem_minmax(0,1fr)]", mobileOverviewTabs && "gap-3 sm:gap-4")}>
-      <aside className="min-w-0 lg:sticky lg:top-5 lg:self-start" aria-label="Account navigation">
+    <div
+      className={cn(
+        "grid min-w-0 items-start gap-4 lg:h-[calc(100dvh-7.75rem)] lg:min-h-0 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-stretch lg:overflow-hidden xl:grid-cols-[15.75rem_minmax(0,1fr)]",
+        mobileOverviewTabs && "gap-3 sm:gap-4",
+      )}
+    >
+      <aside className="min-w-0 lg:min-h-0" aria-label="Account navigation">
         <div
           className={cn(
-            "border border-violet-100/80 bg-white shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)] lg:max-h-[calc(100dvh-2.5rem)] lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-width:thin]",
+            "border border-violet-100/80 bg-white shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)] lg:max-h-full lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain lg:[scrollbar-width:thin]",
             mobileOverviewTabs
-              ? "-mx-4 border-x-0 px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:p-2.5 lg:shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]"
-              : "rounded-[1.25rem] p-2 lg:p-2.5",
+              ? "-mx-4 border-x-0 px-4 py-0 shadow-none lg:mx-0 lg:h-full lg:rounded-[1.25rem] lg:border-x lg:p-2.5 lg:shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]"
+              : "rounded-[1.25rem] p-2 lg:h-full lg:p-2.5",
           )}
         >
           <nav className="overflow-x-auto lg:overflow-visible">
@@ -173,7 +178,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
           </div>
         </div>
       </aside>
-      <div className="min-w-0 space-y-3.5 sm:space-y-4">{children}</div>
+      <div className="min-w-0 space-y-3.5 sm:space-y-4 lg:min-h-0 lg:max-h-full lg:overflow-y-auto lg:overflow-x-hidden lg:overscroll-contain lg:pr-1 lg:[scrollbar-width:thin]">{children}</div>
     </div>
   );
 }
