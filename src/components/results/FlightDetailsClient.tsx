@@ -235,7 +235,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </Card>
               </div>
 
-              <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+              <div className="min-w-0 lg:col-start-1 lg:row-start-2 lg:self-start">
                 <SelectedFlightSummary
                   itineraryLegs={itineraryLegs}
                   fallbackAirlineName={flight.airlineName}
@@ -244,7 +244,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 />
               </div>
 
-              <div className="min-w-0 lg:col-start-2 lg:row-start-1">
+              <div className="min-w-0 lg:col-start-2 lg:row-start-1 lg:self-start">
                 <ProviderComparisonPanel
                   offers={providerOffers}
                   selectedCurrency={selectedOption.currency}
