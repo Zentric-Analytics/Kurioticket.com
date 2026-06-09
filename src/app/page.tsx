@@ -77,6 +77,8 @@ type DestinationPrice = {
   expiresAt?: string;
   search?: DestinationPriceSearch;
   unavailable?: boolean;
+  priceState?: "fresh" | "last_known_good" | "none";
+  cachedProviderBacked?: boolean;
 };
 
 type HomeDiscoveryCardItem = {
@@ -96,7 +98,7 @@ type HomepageFare = Omit<DestinationPrice, "id" | "code" | "unavailable">;
 type HomeDiscoveryFareCard = {
   item: HomeDiscoveryCardItem;
   fare?: HomepageFare;
-  priceState: "fresh" | "none";
+  priceState: "fresh" | "last_known_good" | "none";
 };
 
 type DestinationPriceState = {
@@ -171,7 +173,10 @@ export default function Home() {
     [regionCode],
   );
   const visiblePopularDestinations = useMemo(() => {
-    const destinationsWithIndex = popularDestinations.map((destination, index) => {
+    const replacementAwareDestinations = destinationPriceState.loading
+      ? popularDestinations
+      : popularDestinationFareCandidates;
+    const destinationsWithIndex = replacementAwareDestinations.map((destination, index) => {
       const price = destinationPriceState.prices[destination.id];
       const hasFreshPrice = hasFreshProviderPrice(price, {
         originCode: destination.originCode,
@@ -198,6 +203,7 @@ export default function Home() {
   }, [
     destinationPriceState.loading,
     destinationPriceState.prices,
+    popularDestinationFareCandidates,
     popularDestinations,
   ]);
 
@@ -958,6 +964,10 @@ function hasFreshProviderPrice(
       expectedRoute.destinationCode.toUpperCase()
   ) {
     return false;
+  }
+
+  if (price.priceState === "last_known_good" || price.cachedProviderBacked === true) {
+    return true;
   }
 
   const expiresAtMs = Date.parse(price.expiresAt);

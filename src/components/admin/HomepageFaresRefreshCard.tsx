@@ -10,9 +10,11 @@ const DEFAULT_REFRESH_BUDGET: RefreshBudget = {
   popularVisibleTarget: 8,
   discoverVisibleTarget: 16,
   discoverBackupFreshTarget: 3,
-  maxRouteAttemptsPerRun: 144,
-  maxProviderCallsPerRun: 144,
+  maxRouteAttemptsPerRun: 288,
+  maxProviderCallsPerRun: 288,
+  maxRouteAttemptsPerMarket: 36,
   maxDateCandidatesPerRoute: 3,
+  lastKnownGoodTtlHours: 168,
 };
 
 const DEFAULT_READINESS_COUNTS: RefreshReadinessCounts = {
@@ -49,6 +51,9 @@ const DEFAULT_COUNTS: RefreshCounts = {
   failedByMarket: {},
   unavailableByMarket: {},
   skippedCooldownByMarket: {},
+  replacementCandidatesUsedByMarket: {},
+  timeoutByMarket: {},
+  lastKnownGoodByMarket: {},
   readinessBefore: DEFAULT_READINESS_COUNTS,
   readinessAfter: DEFAULT_READINESS_COUNTS,
   refreshBudget: DEFAULT_REFRESH_BUDGET,
@@ -56,6 +61,7 @@ const DEFAULT_COUNTS: RefreshCounts = {
 
 const DEFAULT_STATUS_SUMMARY: HomepageFareStatusSummary = {
   fresh: 0,
+  last_known_good: 0,
   expired: 0,
   unavailable: 0,
   failed: 0,
@@ -100,6 +106,9 @@ const DEFAULT_MARKET_STATUS_FIELDS = {
   failedByMarket: {},
   unavailableByMarket: {},
   skippedCooldownByMarket: {},
+  replacementCandidatesUsedByMarket: {},
+  timeoutByMarket: {},
+  lastKnownGoodByMarket: {},
 };
 
 const SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES = {
@@ -153,7 +162,9 @@ type RefreshBudget = {
   discoverBackupFreshTarget: number;
   maxRouteAttemptsPerRun: number;
   maxProviderCallsPerRun: number;
+  maxRouteAttemptsPerMarket: number;
   maxDateCandidatesPerRoute: number;
+  lastKnownGoodTtlHours: number;
 };
 
 type MarketReadiness = {
@@ -208,6 +219,9 @@ type RefreshCounts = {
   failedByMarket: Record<string, number>;
   unavailableByMarket: Record<string, number>;
   skippedCooldownByMarket: Record<string, number>;
+  replacementCandidatesUsedByMarket: Record<string, number>;
+  timeoutByMarket: Record<string, number>;
+  lastKnownGoodByMarket: Record<string, number>;
 };
 
 type RefreshState = {
@@ -218,6 +232,7 @@ type RefreshState = {
 
 type HomepageFareSnapshotStatus =
   | "fresh"
+  | "last_known_good"
   | "expired"
   | "unavailable"
   | "failed"
@@ -232,6 +247,7 @@ type HomepageFareStatusRoute = {
   currency?: string;
   status: HomepageFareSnapshotStatus;
   providerBacked: boolean;
+  cachedProviderBacked?: boolean;
   searchedAt?: string;
   expiresAt?: string;
   errorReason?: SafeHomepageFareErrorReason;
@@ -284,6 +300,8 @@ type HomepageFareStatusPayload = {
   failedByMarket: Record<string, number>;
   unavailableByMarket: Record<string, number>;
   skippedCooldownByMarket: Record<string, number>;
+  timeoutByMarket: Record<string, number>;
+  lastKnownGoodByMarket: Record<string, number>;
 };
 
 type StatusLoadState = {
@@ -490,8 +508,12 @@ export function HomepageFaresRefreshCard() {
             value={`${statusPayload.displayReadiness.discoverDisplayedFresh} / ${statusPayload.displayReadiness.discoverVisibleTarget}`}
           />
           <MetricCard
-            label="Discover backup fresh"
+            label="Discover backup usable"
             value={statusPayload.displayReadiness.discoverBackupFresh}
+          />
+          <MetricCard
+            label="Last-known-good"
+            value={statusPayload.summary.last_known_good}
           />
           <MetricCard
             label="Total expired"
@@ -509,12 +531,24 @@ export function HomepageFaresRefreshCard() {
             value={statusPayload.refreshBudget.maxProviderCallsPerRun}
           />
           <MetricCard
+            label="Max attempts / market"
+            value={statusPayload.refreshBudget.maxRouteAttemptsPerMarket}
+          />
+          <MetricCard
             label="Total provider calls"
             value={refreshState.counts?.providerCalls ?? "—"}
           />
           <MetricCard
             label="Stopped reason"
             value={refreshState.counts ? formatStoppedReason(refreshState.counts.stoppedReason) : "—"}
+          />
+          <MetricCard
+            label="Replacement candidates used"
+            value={
+              refreshState.counts
+                ? sumCountRecord(refreshState.counts.replacementCandidatesUsedByMarket)
+                : "—"
+            }
           />
         </dl>
 
@@ -538,6 +572,10 @@ export function HomepageFaresRefreshCard() {
             </dd>
           </div>
         </dl>
+
+        <p className="mt-3 text-xs font-semibold text-muted">
+          Next expected cron refresh: configure an external scheduler to POST /api/internal/homepage-fares/refresh with HOMEPAGE_FARES_CRON_SECRET; this panel reports the last completed manual or cron run returned by the API.
+        </p>
 
         <p className="mt-3 text-xs font-semibold text-muted">
           Candidate pool health: {statusPayload.candidatePoolHealth.failed} failed and {statusPayload.candidatePoolHealth.unavailable} unavailable routes remain visible here without forcing public display readiness to attention.
@@ -616,6 +654,7 @@ const STATUS_LABELS: Array<{
   label: string;
 }> = [
   { key: "fresh", label: "Fresh" },
+  { key: "last_known_good", label: "Last-known-good" },
   { key: "expired", label: "Expired" },
   { key: "unavailable", label: "Unavailable" },
   { key: "failed", label: "Failed" },
@@ -624,6 +663,7 @@ const STATUS_LABELS: Array<{
 
 const STATUS_BADGE_STYLES: Record<HomepageFareSnapshotStatus, string> = {
   fresh: "bg-teal/10 text-teal-dark",
+  last_known_good: "bg-sky-50 text-sky-700",
   expired: "bg-amber/10 text-amber",
   unavailable: "bg-slate-100 text-muted",
   failed: "bg-red-50 text-danger",
@@ -801,6 +841,9 @@ function normalizeRefreshCounts(payload: unknown): RefreshCounts {
     failedByMarket: normalizeCountRecord(counts.failedByMarket),
     unavailableByMarket: normalizeCountRecord(counts.unavailableByMarket),
     skippedCooldownByMarket: normalizeCountRecord(counts.skippedCooldownByMarket),
+    replacementCandidatesUsedByMarket: normalizeCountRecord(counts.replacementCandidatesUsedByMarket),
+    timeoutByMarket: normalizeCountRecord(counts.timeoutByMarket),
+    lastKnownGoodByMarket: normalizeCountRecord(counts.lastKnownGoodByMarket),
     readinessBefore: normalizeRefreshReadiness(counts.readinessBefore),
     readinessAfter: normalizeRefreshReadiness(counts.readinessAfter),
     refreshBudget: normalizeRefreshBudget(counts.refreshBudget),
@@ -843,6 +886,9 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     failedByMarket?: unknown;
     unavailableByMarket?: unknown;
     skippedCooldownByMarket?: unknown;
+    replacementCandidatesUsedByMarket?: unknown;
+    timeoutByMarket?: unknown;
+    lastKnownGoodByMarket?: unknown;
   };
   const routes = Array.isArray(candidate.routes)
     ? candidate.routes
@@ -878,6 +924,8 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     failedByMarket: normalizeCountRecord(candidate.failedByMarket),
     unavailableByMarket: normalizeCountRecord(candidate.unavailableByMarket),
     skippedCooldownByMarket: normalizeCountRecord(candidate.skippedCooldownByMarket),
+    timeoutByMarket: normalizeCountRecord(candidate.timeoutByMarket),
+    lastKnownGoodByMarket: normalizeCountRecord(candidate.lastKnownGoodByMarket),
   };
 }
 
@@ -944,9 +992,15 @@ function normalizeRefreshBudget(value: unknown): RefreshBudget {
     maxProviderCallsPerRun:
       readCount(budget.maxProviderCallsPerRun) ||
       DEFAULT_REFRESH_BUDGET.maxProviderCallsPerRun,
+    maxRouteAttemptsPerMarket:
+      readCount(budget.maxRouteAttemptsPerMarket) ||
+      DEFAULT_REFRESH_BUDGET.maxRouteAttemptsPerMarket,
     maxDateCandidatesPerRoute:
       readCount(budget.maxDateCandidatesPerRoute) ||
       DEFAULT_REFRESH_BUDGET.maxDateCandidatesPerRoute,
+    lastKnownGoodTtlHours:
+      readCount(budget.lastKnownGoodTtlHours) ||
+      DEFAULT_REFRESH_BUDGET.lastKnownGoodTtlHours,
   };
 }
 
@@ -993,6 +1047,7 @@ function normalizeStatusRoute(
     currency: readCode(route.currency),
     status,
     providerBacked: route.providerBacked === true,
+    cachedProviderBacked: route.cachedProviderBacked === true,
     searchedAt: typeof route.searchedAt === "string" ? route.searchedAt : undefined,
     expiresAt: typeof route.expiresAt === "string" ? route.expiresAt : undefined,
     ...readSafeHomepageFareStatusRouteError({
@@ -1076,6 +1131,7 @@ function normalizeStatusSummary(
 
   return {
     fresh: readCount(summary.fresh),
+    last_known_good: readCount(summary.last_known_good),
     expired: readCount(summary.expired),
     unavailable: readCount(summary.unavailable),
     failed: readCount(summary.failed),
@@ -1236,6 +1292,7 @@ function readSnapshotStatus(
   value: unknown,
 ): HomepageFareSnapshotStatus | undefined {
   return value === "fresh" ||
+    value === "last_known_good" ||
     value === "expired" ||
     value === "unavailable" ||
     value === "failed" ||
@@ -1246,6 +1303,10 @@ function readSnapshotStatus(
 
 function readCode(value: unknown) {
   return typeof value === "string" && /^[A-Z]{3}$/.test(value) ? value : undefined;
+}
+
+function sumCountRecord(record: Record<string, number>) {
+  return Object.values(record).reduce((total, value) => total + value, 0);
 }
 
 function readCount(value: unknown) {
