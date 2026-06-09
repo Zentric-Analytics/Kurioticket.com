@@ -323,10 +323,10 @@ function ProviderComparisonPanel({
       aria-label="Compare more providers"
     >
       <div>
-        <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+        <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-900 sm:text-lg">
           Compare more providers
         </h2>
-        <p className="mt-1 text-xs leading-4 text-slate-500">
+        <p className="mt-2 text-sm leading-6 text-slate-700">
           Kurioticket can compare from different providers
         </p>
       </div>
@@ -429,7 +429,7 @@ function ProviderComparisonPanel({
           })}
         </div>
       ) : (
-        <p className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-5 text-slate-500">
+        <p className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm leading-6 text-slate-700">
           No additional live provider options are available for this flight
           right now.
         </p>
