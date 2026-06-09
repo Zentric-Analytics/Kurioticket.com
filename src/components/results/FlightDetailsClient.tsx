@@ -129,10 +129,15 @@ export function FlightDetailsClient({ id }: { id: string }) {
           <div className="mx-auto w-full max-w-5xl">
             <div className="grid w-full grid-cols-1 items-start gap-5 lg:grid-cols-[58%_minmax(0,1fr)] lg:gap-x-6 lg:gap-y-5">
               <div className="min-w-0 lg:col-start-1 lg:row-start-1">
-                <h1 className="text-2xl font-medium leading-snug text-slate-800 sm:text-2xl">
-                  {routeHeading}
-                </h1>
-                <Card className="mt-2.5 overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
+                <SelectedFlightSummary
+                  itineraryLegs={itineraryLegs}
+                  fallbackAirlineName={flight.airlineName}
+                  fallbackAirlineLogo={getAirlineLogo(flight)}
+                  fallbackFlightNumber={flight.flightNumber}
+                  routeHeading={routeHeading}
+                />
+
+                <Card className="mt-5 overflow-hidden border-indigo-100 p-0 shadow-[0_24px_60px_-34px_rgba(49,46,129,0.8)]">
                   <div className="grid grid-cols-1 items-stretch gap-0">
                     <div className="min-w-0 bg-gradient-to-br from-white via-white to-indigo-50/60 p-3 sm:p-3.5 lg:p-4">
                       <div className="flex min-w-0 flex-col gap-3 sm:gap-4">
@@ -235,15 +240,6 @@ export function FlightDetailsClient({ id }: { id: string }) {
                 </Card>
               </div>
 
-              <div className="min-w-0 lg:col-start-1 lg:row-start-2">
-                <SelectedFlightSummary
-                  itineraryLegs={itineraryLegs}
-                  fallbackAirlineName={flight.airlineName}
-                  fallbackAirlineLogo={getAirlineLogo(flight)}
-                  fallbackFlightNumber={flight.flightNumber}
-                />
-              </div>
-
               <div className="min-w-0 lg:col-start-2 lg:row-start-1">
                 <ProviderComparisonPanel
                   offers={providerOffers}
@@ -266,17 +262,22 @@ function SelectedFlightSummary({
   fallbackAirlineName,
   fallbackAirlineLogo,
   fallbackFlightNumber,
+  routeHeading,
 }: {
   itineraryLegs: FlightLeg[];
   fallbackAirlineName: string;
   fallbackAirlineLogo?: string;
   fallbackFlightNumber?: string;
+  routeHeading: string;
 }) {
   return (
     <section className="min-w-0" aria-label="Selected flight itinerary">
       <h2 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
         Selected Flights
       </h2>
+      <h1 className="mt-2 text-2xl font-medium leading-snug text-slate-800 sm:text-2xl">
+        {routeHeading}
+      </h1>
       <div className="mt-3.5 grid gap-4 border-t border-slate-200/80 pt-4">
         {itineraryLegs.map((leg, legIndex) => (
           <div
