@@ -5,12 +5,12 @@ import {
   AdminActivityList,
   AdminEmptyState,
   AdminMetricCard,
-  adminNavigation,
   AdminPageShell,
   AdminProviderStatusCard,
   AdminSectionCard,
   AdminStatusBadge,
 } from "@/components/admin/AdminPageShell";
+import { adminNavigation } from "@/lib/adminNavigation";
 import {
   getAdminMetrics,
   getProviderStatuses,

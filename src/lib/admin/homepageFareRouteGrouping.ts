@@ -97,21 +97,23 @@ export function buildAdminHomepageFareRouteGroups({
   filter = "all",
   includeEmptyGroups = false,
 }: {
-  routes: AdminHomepageFareRoute[];
-  markets: AdminHomepageFareMarket[];
+  routes?: AdminHomepageFareRoute[] | null;
+  markets?: AdminHomepageFareMarket[] | null;
   filter?: AdminHomepageFareRouteGroupFilter;
   includeEmptyGroups?: boolean;
 }) {
-  const marketByCode = new Map(markets.map((market) => [market.marketCode, market]));
+  const safeRoutes = Array.isArray(routes) ? routes.filter(isAdminHomepageFareRoute) : [];
+  const safeMarkets = Array.isArray(markets) ? markets.filter(isAdminHomepageFareMarket) : [];
+  const marketByCode = new Map(safeMarkets.map((market) => [market.marketCode, market]));
   const marketCodes = new Set([
-    ...markets.map((market) => market.marketCode),
-    ...routes.map((route) => route.market),
+    ...safeMarkets.map((market) => market.marketCode),
+    ...safeRoutes.map((route) => route.market),
   ]);
 
   return [...marketCodes]
     .map((marketCode) => {
       const market = marketByCode.get(marketCode);
-      const groupRoutes = routes
+      const groupRoutes = safeRoutes
         .filter((route) => route.market === marketCode)
         .filter((route) => routeMatchesFilter(route, filter));
       const group = createGroup(marketCode, groupRoutes, market);
@@ -123,10 +125,11 @@ export function buildAdminHomepageFareRouteGroups({
 }
 
 export function buildAdminHomepageFareAllRoutesGroup(
-  routes: AdminHomepageFareRoute[],
+  routes?: AdminHomepageFareRoute[] | null,
   filter: AdminHomepageFareRouteGroupFilter = "all",
 ): AdminHomepageFareMarketRouteGroup {
-  const filteredRoutes = routes.filter((route) => routeMatchesFilter(route, filter));
+  const safeRoutes = Array.isArray(routes) ? routes.filter(isAdminHomepageFareRoute) : [];
+  const filteredRoutes = safeRoutes.filter((route) => routeMatchesFilter(route, filter));
 
   return createGroup("ALL", filteredRoutes, {
     market: "ALL",
@@ -149,35 +152,46 @@ export function buildAdminHomepageFareAllRoutesGroup(
 }
 
 export function splitAdminHomepageFareMarketRouteGroups(
-  groups: AdminHomepageFareMarketRouteGroup[],
+  groups?: AdminHomepageFareMarketRouteGroup[] | null,
 ) {
+  const safeGroups = Array.isArray(groups) ? groups : [];
+
   return {
-    publicGroups: groups.filter((group) => !group.isFallbackPool),
-    fallbackGroups: groups.filter((group) => group.isFallbackPool),
+    publicGroups: safeGroups.filter((group) => !group.isFallbackPool),
+    fallbackGroups: safeGroups.filter((group) => group.isFallbackPool),
   };
 }
 
 export function paginateAdminHomepageFareRoutes<T>(
-  routes: T[],
+  routes: T[] | null | undefined,
   page: number,
   pageSize = ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE,
 ) {
+  const safeRoutes = Array.isArray(routes) ? routes : [];
   const safePageSize = Math.max(1, Math.floor(pageSize));
-  const totalPages = Math.max(1, Math.ceil(routes.length / safePageSize));
+  const totalPages = Math.max(1, Math.ceil(safeRoutes.length / safePageSize));
   const currentPage = Math.min(Math.max(1, Math.floor(page)), totalPages);
   const startIndex = (currentPage - 1) * safePageSize;
-  const endIndex = Math.min(startIndex + safePageSize, routes.length);
+  const endIndex = Math.min(startIndex + safePageSize, safeRoutes.length);
 
   return {
-    routes: routes.slice(startIndex, endIndex),
+    routes: safeRoutes.slice(startIndex, endIndex),
     currentPage,
     totalPages,
-    totalRoutes: routes.length,
-    start: routes.length === 0 ? 0 : startIndex + 1,
+    totalRoutes: safeRoutes.length,
+    start: safeRoutes.length === 0 ? 0 : startIndex + 1,
     end: endIndex,
     hasPreviousPage: currentPage > 1,
     hasNextPage: currentPage < totalPages,
   };
+}
+
+function isAdminHomepageFareRoute(route: AdminHomepageFareRoute | null | undefined): route is AdminHomepageFareRoute {
+  return Boolean(route?.id && route.market && route.origin && route.destination && route.status);
+}
+
+function isAdminHomepageFareMarket(market: AdminHomepageFareMarket | null | undefined): market is AdminHomepageFareMarket {
+  return Boolean(market?.marketCode);
 }
 
 function createGroup(
