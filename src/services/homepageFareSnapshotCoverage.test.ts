@@ -122,3 +122,69 @@ function snapshot({ searchedAt, expiresAt }: { searchedAt: string; expiresAt: st
     status: "ACTIVE",
   } as unknown as Parameters<typeof __homepageFareCoverageTest.isFreshHomepageFareSnapshotRecord>[0]["snapshot"];
 }
+
+test("replacement executor keeps US replacements out of Africa route pools", () => {
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
+  const failedRoute = routes.find((route) => route.market === "US" && route.visibility === "visible");
+  assert.ok(failedRoute);
+
+  const replacements = __homepageFareCoverageTest.getHomepageFareReplacementCandidates({
+    failedRoute,
+    routes,
+    snapshotsByRouteId: new Map(),
+    freshRouteIds: new Set(),
+    attemptedRouteIds: new Set([failedRoute.id]),
+    marketTargets: { US: { targetMet: false } } as never,
+    now: new Date("2026-06-09T00:00:00.000Z"),
+  });
+
+  assert.ok(replacements.length > 0);
+  assert.equal(replacements.some((route) => route.market === "AFRICA" || route.market === "NG" || route.market === "KE" || route.market === "ZA"), false);
+  assert.equal(replacements.every((route) => route.market === "US"), true);
+});
+
+test("replacement executor allows Nigeria to use same-market and Africa replacements but not US domestic", () => {
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
+  const failedRoute = routes.find((route) => route.market === "NG" && route.visibility === "visible");
+  assert.ok(failedRoute);
+
+  const replacements = __homepageFareCoverageTest.getHomepageFareReplacementCandidates({
+    failedRoute,
+    routes,
+    snapshotsByRouteId: new Map(),
+    freshRouteIds: new Set(),
+    attemptedRouteIds: new Set([failedRoute.id]),
+    marketTargets: { NG: { targetMet: false } } as never,
+    now: new Date("2026-06-09T00:00:00.000Z"),
+  });
+
+  assert.ok(replacements.length > 0);
+  assert.equal(replacements.some((route) => route.market === "US"), false);
+  assert.equal(replacements.every((route) => route.market === "NG" || route.market === "AFRICA"), true);
+});
+
+test("underfill execution metadata reports budget, candidate, and provider causes distinctly", () => {
+  const baseCounts = () => ({
+    marketTargetMet: { US: false },
+    stoppedReason: "completed",
+    skippedCooldownByMarket: {},
+    unavailableByMarket: {},
+    failedByMarket: {},
+    routeAttemptsByMarket: { US: 1 },
+    candidatePoolSizeByMarket: { US: 1 },
+    underfillCauseByMarket: {} as Record<string, string>,
+    marketsNeedingAnotherRun: [],
+  });
+
+  const budget = { ...baseCounts(), stoppedReason: "provider_budget_exhausted" };
+  __homepageFareCoverageTest.updateHomepageFareUnderfillExecutionMetadata(budget as never);
+  assert.equal(budget.underfillCauseByMarket.US, "budget_exhausted");
+
+  const candidates = { ...baseCounts(), stoppedReason: "candidate_pool_exhausted" };
+  __homepageFareCoverageTest.updateHomepageFareUnderfillExecutionMetadata(candidates as never);
+  assert.equal(candidates.underfillCauseByMarket.US, "candidate_pool_exhausted");
+
+  const noOffers = { ...baseCounts(), stoppedReason: "provider_unavailable_no_offers" };
+  __homepageFareCoverageTest.updateHomepageFareUnderfillExecutionMetadata(noOffers as never);
+  assert.equal(noOffers.underfillCauseByMarket.US, "provider_unavailable_no_offers");
+});

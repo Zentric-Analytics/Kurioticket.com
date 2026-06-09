@@ -296,6 +296,8 @@ export type HomepageFareRefreshStoppedReason =
   | "route_budget_exhausted"
   | "provider_budget_exhausted"
   | "completed"
+  | "candidate_pool_exhausted"
+  | "provider_unavailable_no_offers"
   | "all_remaining_cooldown_or_unavailable";
 
 export type HomepageFareMarketTarget = {
@@ -380,6 +382,46 @@ export type HomepageFareRefreshCounts = {
   unavailableByMarket: Record<string, number>;
   skippedCooldownByMarket: Record<string, number>;
   skippedByMarket: Record<string, number>;
+  targetedMarkets: string[];
+  visibleGapsAttempted: HomepageFareVisibleGapAttempt[];
+  replacementsUsed: HomepageFareReplacementUsage[];
+  marketsNeedingAnotherRun: HomepageFareMarketNextRunNeed[];
+  underfillCauseByMarket: Record<string, HomepageFareUnderfillCause>;
+};
+
+
+export type HomepageFareVisibleGapAttempt = {
+  market: string;
+  routeId: string;
+  origin: string;
+  destination: string;
+  section: "popular" | "discovery" | "backup" | "fallback";
+  result: HomepageFareRefreshRouteResult;
+  replacementForRouteId?: string;
+};
+
+export type HomepageFareReplacementUsage = {
+  market: string;
+  failedRouteId: string;
+  replacementRouteId: string;
+  origin: string;
+  destination: string;
+  result: HomepageFareRefreshRouteResult;
+};
+
+export type HomepageFareUnderfillCause =
+  | "none"
+  | "budget_exhausted"
+  | "candidate_pool_exhausted"
+  | "provider_unavailable_no_offers"
+  | "provider_failure"
+  | "cooldown"
+  | "underfilled";
+
+export type HomepageFareMarketNextRunNeed = {
+  market: string;
+  needed: boolean;
+  reason: HomepageFareUnderfillCause;
 };
 
 export type HomepageFareRefreshScope =
@@ -646,6 +688,12 @@ function createEmptyRefreshMarketCounts() {
   ) as Record<string, number>;
 }
 
+function createEmptyMarketUnderfillCauses() {
+  return Object.fromEntries(
+    HOMEPAGE_FARE_REFRESH_MARKETS.map((market) => [market, "none"]),
+  ) as Record<string, HomepageFareUnderfillCause>;
+}
+
 function computeFreshCountsByMarket(
   routes: HomepageRefreshRoute[],
   freshRouteIds: Set<string>,
@@ -777,6 +825,54 @@ function buildHomepageFareMarketReadinessSummary(
     market,
     ...marketTargets[market],
   })).filter((target) => Boolean(target.marketCode)) as HomepageFareMarketReadinessSummary[];
+}
+
+
+function updateHomepageFareUnderfillExecutionMetadata(
+  counts: HomepageFareRefreshCounts,
+) {
+  counts.underfillCauseByMarket = Object.fromEntries(
+    HOMEPAGE_FARE_REFRESH_MARKETS.map((market) => [
+      market,
+      getHomepageFareUnderfillCause(counts, market),
+    ]),
+  ) as Record<string, HomepageFareUnderfillCause>;
+  counts.marketsNeedingAnotherRun = HOMEPAGE_FARE_REFRESH_MARKETS.map(
+    (market) => ({
+      market,
+      needed: counts.marketTargetMet[market] !== true,
+      reason: counts.underfillCauseByMarket[market] ?? "underfilled",
+    }),
+  );
+}
+
+function getHomepageFareUnderfillCause(
+  counts: HomepageFareRefreshCounts,
+  market: string,
+): HomepageFareUnderfillCause {
+  if (counts.marketTargetMet[market] === true) return "none";
+  if (
+    counts.stoppedReason === "provider_budget_exhausted" ||
+    counts.stoppedReason === "route_budget_exhausted"
+  ) {
+    return "budget_exhausted";
+  }
+  if (counts.stoppedReason === "candidate_pool_exhausted") {
+    return "candidate_pool_exhausted";
+  }
+  if (counts.stoppedReason === "provider_unavailable_no_offers") {
+    return "provider_unavailable_no_offers";
+  }
+  if ((counts.skippedCooldownByMarket[market] ?? 0) > 0) return "cooldown";
+  if ((counts.unavailableByMarket[market] ?? 0) > 0) {
+    return "provider_unavailable_no_offers";
+  }
+  if ((counts.failedByMarket[market] ?? 0) > 0) return "provider_failure";
+  if ((counts.routeAttemptsByMarket[market] ?? 0) >= (counts.candidatePoolSizeByMarket[market] ?? 0)) {
+    return "candidate_pool_exhausted";
+  }
+
+  return "underfilled";
 }
 
 function updateRefreshGlobalReadinessMetadata(
@@ -1057,6 +1153,8 @@ function classifyHomepageFareMarketReadinessStatus({
   if (targetMet) return "ready";
   if (stoppedReason === "provider_budget_exhausted") return "budget_exhausted";
   if (stoppedReason === "route_budget_exhausted") return "budget_exhausted";
+  if (stoppedReason === "candidate_pool_exhausted") return "provider_exhausted";
+  if (stoppedReason === "provider_unavailable_no_offers") return "provider_exhausted";
   if (
     stoppedReason === "all_remaining_cooldown_or_unavailable" ||
     (skippedCooldown > 0 && routeAttempts === 0 && providerCalls === 0)
@@ -1139,6 +1237,11 @@ export async function refreshPhase3AHomepageFareSnapshots({
     timeoutByMarket: createEmptyRefreshMarketCounts(),
     lastKnownGoodByMarket: createEmptyRefreshMarketCounts(),
     skippedByMarket: createEmptyRefreshMarketCounts(),
+    targetedMarkets: [],
+    visibleGapsAttempted: [],
+    replacementsUsed: [],
+    marketsNeedingAnotherRun: [],
+    underfillCauseByMarket: createEmptyMarketUnderfillCauses(),
   };
   counts.lastKnownGoodByMarket = computeLastKnownGoodCountsByMarket(
     allCandidateRoutes,
@@ -1166,10 +1269,19 @@ export async function refreshPhase3AHomepageFareSnapshots({
         (counts.skippedByMarket[route.market] ?? 0) + 1;
     }
     counts.stoppedReason = "target_met";
+    updateHomepageFareUnderfillExecutionMetadata(counts);
     return counts;
   }
 
   let providerIncidentDetected = false;
+  const attemptedRouteIds = new Set<string>();
+  const targetedMarkets = new Set(
+    Object.values(counts.marketTargets)
+      .filter((target) => !target.targetMet)
+      .sort(compareHomepageFareMarketTargetsForExecution)
+      .map((target) => target.marketCode),
+  );
+  counts.targetedMarkets = [...targetedMarkets];
   const prioritizedRoutes = prioritizeHomepageFareRefreshRoutes({
     routes: refreshRoutes,
     snapshotsByRouteId,
@@ -1200,10 +1312,13 @@ export async function refreshPhase3AHomepageFareSnapshots({
       counts.skippedByMarket[route.market] =
         (counts.skippedByMarket[route.market] ?? 0) + 1;
     }
+    updateHomepageFareUnderfillExecutionMetadata(counts);
     return counts;
   }
 
   for (const route of prioritizedRoutes) {
+    if (attemptedRouteIds.has(route.id)) continue;
+
     counts.readinessAfter = computeHomepageFareRefreshReadiness(
       allCandidateRoutes,
       freshRouteIds,
@@ -1221,24 +1336,13 @@ export async function refreshPhase3AHomepageFareSnapshots({
       break;
     }
 
-    if (counts.routeAttempts >= refreshBudget.maxRouteAttemptsPerRun) {
-      counts.stoppedReason = "route_budget_exhausted";
+    const budgetStop = getHomepageFareRefreshBudgetStopReason(
+      counts,
+      refreshBudget,
+    );
+    if (budgetStop) {
+      counts.stoppedReason = budgetStop;
       break;
-    }
-
-    if (counts.providerCalls >= refreshBudget.maxProviderCallsPerRun) {
-      counts.stoppedReason = "provider_budget_exhausted";
-      break;
-    }
-
-    if (
-      (counts.routeAttemptsByMarket[route.market] ?? 0) >=
-      refreshBudget.maxRouteAttemptsPerMarket
-    ) {
-      counts.skipped += 1;
-      counts.skippedByMarket[route.market] =
-        (counts.skippedByMarket[route.market] ?? 0) + 1;
-      continue;
     }
 
     if (providerIncidentDetected) {
@@ -1246,18 +1350,16 @@ export async function refreshPhase3AHomepageFareSnapshots({
       break;
     }
 
-    counts.routeAttempts += 1;
-    counts.marketRoutesAttempted[route.market] =
-      (counts.marketRoutesAttempted[route.market] ?? 0) + 1;
-    counts.routeAttemptsByMarket[route.market] =
-      (counts.routeAttemptsByMarket[route.market] ?? 0) + 1;
-    const result = await refreshHomepageFareRoute({
+    const result = await executeHomepageFareRefreshRoute({
       route,
       departureDate: dateStrategy.departureDate,
       counts,
-      existingSnapshot: snapshotsByRouteId.get(route.id),
+      snapshotsByRouteId,
       refreshBudget,
+      attemptedRouteIds,
     });
+
+    recordHomepageFareVisibleGapAttempt(counts, route, result);
 
     if (result === "refreshed" || result === "retained") {
       freshRouteIds.add(route.id);
@@ -1274,13 +1376,81 @@ export async function refreshPhase3AHomepageFareSnapshots({
       );
     }
 
-    if (result === "skipped") {
-      counts.skippedByMarket[route.market] =
-        (counts.skippedByMarket[route.market] ?? 0) + 1;
-    }
-
     if (result === "provider_incident") {
       providerIncidentDetected = true;
+    }
+
+    if (
+      !providerIncidentDetected &&
+      shouldAttemptHomepageFareReplacement(result) &&
+      !counts.marketTargets[route.market]?.targetMet
+    ) {
+      const replacements = getHomepageFareReplacementCandidates({
+        failedRoute: route,
+        routes: allCandidateRoutes,
+        snapshotsByRouteId,
+        freshRouteIds,
+        attemptedRouteIds,
+        marketTargets: counts.marketTargets,
+        now,
+      });
+
+      for (const replacement of replacements) {
+        if (counts.marketTargets[route.market]?.targetMet) break;
+
+        const replacementBudgetStop = getHomepageFareRefreshBudgetStopReason(
+          counts,
+          refreshBudget,
+        );
+        if (replacementBudgetStop) {
+          counts.stoppedReason = replacementBudgetStop;
+          break;
+        }
+
+        const replacementResult = await executeHomepageFareRefreshRoute({
+          route: replacement,
+          departureDate: dateStrategy.departureDate,
+          counts,
+          snapshotsByRouteId,
+          refreshBudget,
+          attemptedRouteIds,
+        });
+
+        counts.replacementsUsed.push({
+          market: route.market,
+          failedRouteId: route.id,
+          replacementRouteId: replacement.id,
+          origin: replacement.origin,
+          destination: replacement.destination,
+          result: replacementResult,
+        });
+        recordHomepageFareVisibleGapAttempt(
+          counts,
+          replacement,
+          replacementResult,
+          route.id,
+        );
+
+        if (replacementResult === "refreshed" || replacementResult === "retained") {
+          freshRouteIds.add(replacement.id);
+          updateRefreshMarketFreshMetadata(
+            counts,
+            allCandidateRoutes,
+            freshRouteIds,
+          );
+          updateRefreshMarketTargetMetadata(
+            counts,
+            allCandidateRoutes,
+            freshRouteIds,
+            refreshBudget,
+          );
+        }
+
+        if (replacementResult === "provider_incident") {
+          providerIncidentDetected = true;
+          break;
+        }
+      }
     }
   }
 
@@ -1326,7 +1496,212 @@ export async function refreshPhase3AHomepageFareSnapshots({
     refreshBudget,
   );
 
+  if (counts.stoppedReason === "completed" && counts.underfilledMarkets.length) {
+    counts.stoppedReason = counts.unavailable > 0
+      ? "provider_unavailable_no_offers"
+      : "candidate_pool_exhausted";
+    updateRefreshMarketTargetMetadata(
+      counts,
+      allCandidateRoutes,
+      freshRouteIds,
+      refreshBudget,
+    );
+  }
+  updateHomepageFareUnderfillExecutionMetadata(counts);
+
   return counts;
+}
+
+
+function getHomepageFareRefreshBudgetStopReason(
+  counts: HomepageFareRefreshCounts,
+  refreshBudget: HomepageFareRefreshBudget,
+): HomepageFareRefreshStoppedReason | undefined {
+  if (counts.routeAttempts >= refreshBudget.maxRouteAttemptsPerRun) {
+    return "route_budget_exhausted";
+  }
+
+  if (counts.providerCalls >= refreshBudget.maxProviderCallsPerRun) {
+    return "provider_budget_exhausted";
+  }
+
+  return undefined;
+}
+
+async function executeHomepageFareRefreshRoute({
+  route,
+  departureDate,
+  counts,
+  snapshotsByRouteId,
+  refreshBudget,
+  attemptedRouteIds,
+}: {
+  route: HomepageRefreshRoute;
+  departureDate: string;
+  counts: HomepageFareRefreshCounts;
+  snapshotsByRouteId: Map<string, HomepageFareSnapshotRecord>;
+  refreshBudget: HomepageFareRefreshBudget;
+  attemptedRouteIds: Set<string>;
+}): Promise<HomepageFareRefreshRouteResult> {
+  if (attemptedRouteIds.has(route.id)) return "skipped";
+  attemptedRouteIds.add(route.id);
+
+  if (
+    (counts.routeAttemptsByMarket[route.market] ?? 0) >=
+    refreshBudget.maxRouteAttemptsPerMarket
+  ) {
+    counts.skipped += 1;
+    counts.skippedByMarket[route.market] =
+      (counts.skippedByMarket[route.market] ?? 0) + 1;
+    return "skipped";
+  }
+
+  counts.routeAttempts += 1;
+  counts.marketRoutesAttempted[route.market] =
+    (counts.marketRoutesAttempted[route.market] ?? 0) + 1;
+  counts.routeAttemptsByMarket[route.market] =
+    (counts.routeAttemptsByMarket[route.market] ?? 0) + 1;
+
+  const result = await refreshHomepageFareRoute({
+    route,
+    departureDate,
+    counts,
+    existingSnapshot: snapshotsByRouteId.get(route.id),
+    refreshBudget,
+  });
+
+  if (result === "skipped") {
+    counts.skippedByMarket[route.market] =
+      (counts.skippedByMarket[route.market] ?? 0) + 1;
+  }
+
+  return result;
+}
+
+function recordHomepageFareVisibleGapAttempt(
+  counts: HomepageFareRefreshCounts,
+  route: HomepageRefreshRoute,
+  result: HomepageFareRefreshRouteResult,
+  replacementForRouteId?: string,
+) {
+  if (route.visibility !== "visible" && route.visibility !== "backup" && route.visibility !== "fallback") {
+    return;
+  }
+
+  counts.visibleGapsAttempted.push({
+    market: route.market,
+    routeId: route.id,
+    origin: route.origin,
+    destination: route.destination,
+    section: route.isPopular
+      ? "popular"
+      : route.visibility === "backup"
+        ? "backup"
+        : route.visibility === "fallback"
+          ? "fallback"
+          : "discovery",
+    result,
+    ...(replacementForRouteId ? { replacementForRouteId } : {}),
+  });
+}
+
+function shouldAttemptHomepageFareReplacement(
+  result: HomepageFareRefreshRouteResult,
+) {
+  return result === "failed" || result === "unavailable" || result === "provider_incident";
+}
+
+function getHomepageFareReplacementCandidates({
+  failedRoute,
+  routes,
+  snapshotsByRouteId,
+  freshRouteIds,
+  attemptedRouteIds,
+  marketTargets,
+  now,
+}: {
+  failedRoute: HomepageRefreshRoute;
+  routes: HomepageRefreshRoute[];
+  snapshotsByRouteId: Map<string, HomepageFareSnapshotRecord>;
+  freshRouteIds: Set<string>;
+  attemptedRouteIds: Set<string>;
+  marketTargets: Record<string, HomepageFareMarketTarget>;
+  now: Date;
+}) {
+  const compatibleMarkets = getHomepageFareCompatibleReplacementMarkets(
+    failedRoute.market,
+  );
+
+  return routes
+    .filter((route) => {
+      if (route.id === failedRoute.id) return false;
+      if (attemptedRouteIds.has(route.id)) return false;
+      if (freshRouteIds.has(route.id)) return false;
+      if (!compatibleMarkets.has(route.market)) return false;
+      if (isRefreshCooldownSnapshot(snapshotsByRouteId.get(route.id), now)) {
+        return false;
+      }
+
+      return !marketTargets[failedRoute.market]?.targetMet;
+    })
+    .map((route) => ({
+      route,
+      score:
+        getHomepageFareReplacementMarketDistance(failedRoute.market, route.market) * 10 +
+        getHomepageFareRefreshPriorityScore({
+          route,
+          snapshot: snapshotsByRouteId.get(route.id),
+          target: marketTargets[route.market] ?? marketTargets[failedRoute.market],
+          now,
+        }),
+    }))
+    .sort(
+      (first, second) =>
+        first.score - second.score || first.route.priority - second.route.priority,
+    )
+    .map(({ route }) => route);
+}
+
+const HOMEPAGE_FARE_REPLACEMENT_REGIONAL_MARKETS: Record<string, string> = {
+  NG: "AFRICA",
+  KE: "AFRICA",
+  ZA: "AFRICA",
+  GB: "EUROPE",
+  DE: "EUROPE",
+  AE: "MIDDLE_EAST",
+  JP: "ASIA",
+  BR: "LATIN_AMERICA",
+};
+
+function getHomepageFareCompatibleReplacementMarkets(market: string) {
+  const compatible = new Set([market]);
+  const regionalMarket = HOMEPAGE_FARE_REPLACEMENT_REGIONAL_MARKETS[market];
+
+  if (regionalMarket) compatible.add(regionalMarket);
+  if (market === "GLOBAL") compatible.add("GLOBAL");
+
+  return compatible;
+}
+
+function getHomepageFareReplacementMarketDistance(
+  primaryMarket: string,
+  candidateMarket: string,
+) {
+  if (primaryMarket === candidateMarket) return 0;
+  return getHomepageFareCompatibleReplacementMarkets(primaryMarket).has(candidateMarket)
+    ? 1
+    : 99;
+}
+
+function compareHomepageFareMarketTargetsForExecution(
+  first: HomepageFareMarketTarget,
+  second: HomepageFareMarketTarget,
+) {
+  return (
+    Number(first.targetMet) - Number(second.targetMet) ||
+    second.missingCount - first.missingCount ||
+    first.marketCode.localeCompare(second.marketCode)
+  );
 }
 
 type HomepageFareRefreshRouteResult =
@@ -3410,4 +3785,7 @@ export const __homepageFareCoverageTest = {
   isFreshHomepageFareSnapshotRecord,
   isLastKnownGoodHomepageFareSnapshotRecord,
   isUsableHomepageFareSnapshotRecord,
+  getHomepageFareReplacementCandidates,
+  getHomepageFareCompatibleReplacementMarkets,
+  updateHomepageFareUnderfillExecutionMetadata,
 };
