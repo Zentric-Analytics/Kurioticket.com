@@ -244,9 +244,9 @@ function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: D
 
 function DetailValue({ value, fallback, helper }: { value: string; fallback: string; helper?: string }) {
   return (
-    <div className="min-w-0 space-y-1 text-left sm:text-right">
+    <div className="min-w-0 space-y-0.5 text-left">
       <p className={cn("break-words text-sm font-semibold leading-6 text-slate-900", !value && "text-slate-500")}>{value || fallback}</p>
-      {helper ? <p className="max-w-xl text-sm leading-6 text-slate-500 sm:ml-auto">{helper}</p> : null}
+      {helper ? <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p> : null}
     </div>
   );
 }
@@ -333,10 +333,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           const editValue = draft[row.key];
 
           return (
-            <div key={row.key} className="grid min-w-0 gap-3 px-4 py-4 sm:px-6 md:grid-cols-[13rem_minmax(0,1fr)] md:items-start md:gap-6">
+            <div key={row.key} className="grid min-w-0 gap-1.5 px-4 py-3 sm:px-6 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-4">
               <div className="text-sm font-semibold text-slate-700">{row.label}</div>
               {isEditing ? (
-                <div className="min-w-0 space-y-2">
+                <div className="min-w-0 space-y-1.5">
                   <DetailInput row={row} value={editValue} onChange={updateDraft} />
                   {row.helper ? <p className="text-sm leading-6 text-slate-500">{row.helper}</p> : null}
                 </div>
