@@ -333,20 +333,20 @@ function ProviderComparisonPanel({
 }) {
   return (
     <aside
-      className="min-w-0 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 shadow-sm"
+      className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
       aria-label="Compare more providers"
     >
       <div>
-        <h2 className="text-base font-semibold tracking-tight text-slate-900">
+        <h2 className="text-sm font-semibold tracking-tight text-slate-900">
           Compare more providers
         </h2>
-        <p className="mt-1 text-sm leading-5 text-slate-600">
+        <p className="mt-1 text-xs leading-4 text-slate-500">
           Kurioticket can compare from different providers
         </p>
       </div>
 
       {offers.length ? (
-        <div className="mt-3 grid gap-2 border-t border-slate-200 pt-3">
+        <div className="mt-3 divide-y divide-slate-100 border-t border-slate-100">
           {offers.map((offer) => {
             const priceDisplay =
               typeof offer.price === "number" && offer.currency
@@ -379,7 +379,7 @@ function ProviderComparisonPanel({
             return (
               <div
                 key={offer.key}
-                className="flex min-w-0 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-[0_10px_24px_-20px_rgba(15,23,42,0.35)] sm:flex-row sm:items-center sm:justify-between"
+                className="flex min-w-0 flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex min-w-0 items-start gap-3">
                   {offer.logoUrl ? (
@@ -388,7 +388,7 @@ function ProviderComparisonPanel({
                       alt={`${offer.title} logo`}
                       width={36}
                       height={36}
-                      className="h-9 w-9 shrink-0 rounded-full border border-slate-100 bg-white object-contain p-1"
+                      className="h-8 w-8 shrink-0 rounded-full border border-slate-100 bg-white object-contain p-1"
                       onError={(event) => {
                         event.currentTarget.style.display = "none";
                       }}
@@ -399,12 +399,12 @@ function ProviderComparisonPanel({
                       {offer.title}
                     </p>
                     {details.length ? (
-                      <p className="mt-1 line-clamp-2 text-xs font-medium leading-4 text-slate-500">
+                      <p className="mt-1 line-clamp-2 text-xs leading-4 text-slate-500">
                         {details.join(" · ")}
                       </p>
                     ) : null}
                     {showProviderByline ? (
-                      <p className="mt-1 truncate text-[11px] font-medium leading-4 text-slate-400">
+                      <p className="mt-1 truncate text-[11px] leading-4 text-slate-400">
                         Provided by {offer.providerName}
                       </p>
                     ) : null}
@@ -424,7 +424,7 @@ function ProviderComparisonPanel({
                     <Button
                       variant="accent"
                       size="sm"
-                      className="rounded-full bg-indigo-600 px-4 text-xs font-semibold hover:bg-indigo-700"
+                      className="rounded-full bg-indigo-600 px-3 text-xs font-semibold shadow-none hover:bg-indigo-700"
                       onClick={() => {
                         if (offer.useSelectedFlightRedirect) {
                           onContinueToProvider();
@@ -443,7 +443,7 @@ function ProviderComparisonPanel({
           })}
         </div>
       ) : (
-        <p className="mt-4 rounded-xl border border-dashed border-slate-200 bg-white px-3 py-3 text-sm leading-5 text-slate-500">
+        <p className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-5 text-slate-500">
           No additional live provider options are available for this flight
           right now.
         </p>
