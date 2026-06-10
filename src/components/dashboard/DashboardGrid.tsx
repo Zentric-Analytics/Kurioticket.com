@@ -228,6 +228,13 @@ const dateOfBirthMonths = [
   "December",
 ];
 
+const minDateOfBirthYear = 1900;
+const currentDateOfBirthYear = new Date().getFullYear();
+const dateOfBirthYears = Array.from(
+  { length: currentDateOfBirthYear - minDateOfBirthYear + 1 },
+  (_, index) => String(currentDateOfBirthYear - index),
+);
+
 const personalDetailRows: PersonalDetailRow[] = [
   { key: "name", label: "Name", fallback: "Add your name" },
   { key: "displayName", label: "Display name", fallback: "Choose a display name" },
@@ -347,17 +354,16 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
           </option>
         ))}
       </select>
-      <input
-        className={className}
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        maxLength={4}
-        value={parts.year}
-        onChange={(event) => updatePart("year", event.target.value)}
-        placeholder="YYYY"
-        aria-label="Date of birth year"
-      />
+      <select className={className} value={parts.year} onChange={(event) => updatePart("year", event.target.value)} aria-label="Date of birth year">
+        <option value="" disabled hidden>
+          YYYY
+        </option>
+        {dateOfBirthYears.map((year) => (
+          <option key={year} value={year}>
+            {year}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
