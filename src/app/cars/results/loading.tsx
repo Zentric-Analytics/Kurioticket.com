@@ -1,5 +1,6 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { LocalizedLoadingLabel } from "@/components/layout/LocalizedLoadingLabel";
 
 const summarySkeletons = Array.from({ length: 7 });
 const resultSkeletons = Array.from({ length: 3 });
@@ -13,8 +14,8 @@ export default function CarsResultsLoading() {
         className="flex-1 bg-slate-50 pb-8 pt-6 sm:pt-8 lg:pt-8"
         role="status"
         aria-live="polite"
-        aria-label="Loading car rental results"
       >
+        <LocalizedLoadingLabel labelKey="loadingCarRentalResults" className="sr-only" />
         <div className="sticky top-16 z-30 border-b border-border bg-white/95 backdrop-blur">
           <section className="page-shell py-3" aria-hidden="true">
             <div className="rounded-2xl border border-indigo-100 bg-white p-3 shadow-[0_16px_40px_-30px_rgba(30,27,75,0.42)]">

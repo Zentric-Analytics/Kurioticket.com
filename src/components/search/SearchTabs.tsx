@@ -781,7 +781,7 @@ export function SearchTabs({
 
 
   const guests = String(hotelAdultCount + hotelChildCount);
-  const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? "guest" : "guests"}, ${rooms} ${Number(rooms) === 1 ? "room" : "rooms"}`;
+  const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? t.guestSingular || "guest" : t.guestPlural || "guests"}, ${rooms} ${Number(rooms) === 1 ? t.roomSingular || "room" : t.roomPlural || "rooms"}`;
 
   const formatShortDate = (
     isoDate: string
@@ -834,7 +834,7 @@ export function SearchTabs({
         formatShortDate(returnDate);
 
       if (!departureSummary) {
-        return "Travel dates";
+        return t.travelDates || "Travel dates";
       }
 
       if (
@@ -851,6 +851,7 @@ export function SearchTabs({
       departureDate,
       returnDate,
       tripType,
+      t.travelDates,
     ]
   );
 
@@ -1586,9 +1587,9 @@ export function SearchTabs({
     <>
       <div className="divide-y divide-slate-200 rounded-2xl bg-white px-1 sm:rounded-none sm:bg-transparent sm:px-0">
         {[
-          { key: "adults", label: "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
-          { key: "children", label: "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
-          { key: "infants", label: "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
+          { key: "adults", label: t.adultPlural || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
+          { key: "children", label: t.childPlural || "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
+          { key: "infants", label: t.infantPlural || "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
         ].map((row) => {
           const draftTravelerCount = draftAdultCount + draftChildCount + draftInfantCount;
           const canDecrement = row.count > row.min;
@@ -1653,7 +1654,7 @@ export function SearchTabs({
           <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</p>
         </div>
         <div className="grid grid-cols-3 gap-1">
-          {[["economy", "Economy"], ["business", "Business"], ["first", "First"]].map(([value, label]) => (
+          {[["economy", t.economy || "Economy"], ["business", t.business || "Business"], ["first", t.first || "First"]].map(([value, label]) => (
             <button
               key={value}
               type="button"
@@ -1884,7 +1885,7 @@ export function SearchTabs({
                       type="button"
                       onClick={onClearOrigin}
                       onMouseDown={(event) => event.preventDefault()}
-                      aria-label="Clear origin"
+                      aria-label={t.clearOrigin || "Clear origin"}
                       className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
@@ -1960,7 +1961,7 @@ export function SearchTabs({
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
-                    "Destination"}
+                    t.destination || "Destination"}
                 </label>
                 <div className="relative h-8">
                   <button
@@ -2019,7 +2020,7 @@ export function SearchTabs({
                       type="button"
                       onClick={onClearDestination}
                       onMouseDown={(event) => event.preventDefault()}
-                      aria-label="Clear destination"
+                      aria-label={t.clearDestination || "Clear destination"}
                       className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
@@ -2089,7 +2090,7 @@ export function SearchTabs({
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
-                    "Travel dates"}
+                    t.travelDates || "Travel dates"}
                 </label>
                 <button
                   type="button"
@@ -2105,7 +2106,7 @@ export function SearchTabs({
                     flightDatesOpen
                   }
                   aria-haspopup="dialog"
-                  aria-label="Choose travel dates"
+                  aria-label={t.chooseTravelDates || "Choose travel dates"}
                   className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <Calendar
@@ -2121,7 +2122,7 @@ export function SearchTabs({
                     type="button"
                     onClick={onClearTravelDates}
                     onMouseDown={(event) => event.preventDefault()}
-                    aria-label="Clear travel dates"
+                    aria-label={t.clearTravelDates || "Clear travel dates"}
                     className="focus-ring absolute right-2 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
                   >
                     <X size={14} />
@@ -2132,7 +2133,7 @@ export function SearchTabs({
                   <>
                     <FlightMobilePickerShell
                       open={flightDatesOpen}
-                      title="Choose travel dates"
+                      title={t.chooseTravelDates || "Choose travel dates"}
                       titleId="homepage-flight-dates-title"
                       launcherRef={flightDatesLauncherRef}
                       footer={flightDatesFooter}
@@ -2141,9 +2142,9 @@ export function SearchTabs({
                     >
                       {renderFlightDateCalendar()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label="Choose travel dates" className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,560px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
+                    <div role="dialog" aria-label={t.chooseTravelDates || "Choose travel dates"} className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,560px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
                     <p className="mb-2.5 text-sm font-semibold text-slate-900">
-                      Choose travel dates
+                      {t.chooseTravelDates || "Choose travel dates"}
                     </p>
                     <div className="mb-3 flex items-center justify-between">
                       <button
@@ -2419,9 +2420,9 @@ export function SearchTabs({
                     </h3>
                     <div className="mt-3 divide-y divide-slate-100">
                       {[
-                        { key: "adults", label: "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
-                        { key: "children", label: "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
-                        { key: "infants", label: "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
+                        { key: "adults", label: t.adultPlural || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
+                        { key: "children", label: t.childPlural || "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
+                        { key: "infants", label: t.infantPlural || "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
                       ].map((row) => {
                         const draftTravelerCount = draftAdultCount + draftChildCount + draftInfantCount;
                         const canDecrement = row.count > row.min;
@@ -2449,7 +2450,7 @@ export function SearchTabs({
                         <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</p>
                       </div>
                       <div className="grid grid-cols-3 gap-1">
-                        {[["economy", "Economy"],["business", "Business"],["first", "First"]].map(([value, label]) => (
+                        {[["economy", t.economy || "Economy"],["business", t.business || "Business"],["first", t.first || "First"]].map(([value, label]) => (
                           <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-md border px-2 py-1 text-xs font-medium leading-4 transition-colors text-center sm:text-xs", draftCabinClass === value ? "border-indigo-400 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
                         ))}
                       </div>
@@ -2565,7 +2566,7 @@ export function SearchTabs({
               <div className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
-                    "Destination"}
+                    t.destination || "Destination"}
                 </label>
                 <button
                   ref={hotelDestinationMobileLauncherRef}
@@ -2616,7 +2617,7 @@ export function SearchTabs({
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
-                    "Travel dates"}
+                    t.travelDates || "Travel dates"}
                 </label>
                 <button
                   ref={hotelDatesMobileLauncherRef}
@@ -2630,7 +2631,7 @@ export function SearchTabs({
                     hotelDatesOpen
                   }
                   aria-haspopup="dialog"
-                  aria-label="Choose travel dates"
+                  aria-label={t.chooseTravelDates || "Choose travel dates"}
                   className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
                 >
                   <Calendar
@@ -2645,7 +2646,7 @@ export function SearchTabs({
                   <>
                     <div ref={hotelDatesPanelRef} className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,560px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
                     <p className="mb-2.5 text-sm font-semibold text-slate-900">
-                      Choose travel dates
+                      {t.chooseTravelDates || "Choose travel dates"}
                     </p>
                     <div className="mb-3 flex items-center justify-between">
                       <button
@@ -3045,7 +3046,7 @@ export function SearchTabs({
 
           <HotelMobilePickerShell
             open={hotelDatesOpen}
-            title="Choose travel dates"
+            title={t.chooseTravelDates || "Choose travel dates"}
             titleId="homepage-hotel-mobile-dates-title"
             launcherRef={hotelDatesMobileLauncherRef}
             onClose={() => setHotelDatesOpen(false)}

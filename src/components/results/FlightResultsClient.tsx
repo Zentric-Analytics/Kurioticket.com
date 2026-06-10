@@ -28,6 +28,7 @@ import { FlightCard } from "@/components/results/FlightCard";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { airports, type AirportOption } from "@/data/airports";
@@ -51,6 +52,7 @@ import {
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 const resultStackClass = "w-full max-w-[680px] lg:ml-4 xl:ml-6";
 const desktopFilterStickyTopClass =
@@ -91,43 +93,38 @@ const normalizeCabinClassValue = (
 ): CabinClassValue =>
   value === "business" || value === "first" ? value : "economy";
 
-const flightFaqItems: Array<{ question: string; answer: string }> = [
-  {
-    question: "When is the best time to book a flight?",
-    answer:
-      "Flight prices can change based on route, season, demand, and availability. It is usually helpful to compare several dates, check nearby airports when possible, and review the full itinerary before choosing a fare.",
-  },
-  {
-    question: "What should I check before booking?",
-    answer:
-      "Review the departure and arrival times, total travel time, stopovers, baggage rules, seat selection options, cancellation terms, and ticket-change policy before completing your booking with the provider.",
-  },
-  {
-    question: "What is a flexible fare?",
-    answer:
-      "A flexible fare may allow changes or cancellations with fewer restrictions than a basic fare, but the exact rules depend on the airline or booking provider. Always review the fare conditions before purchase.",
-  },
-  {
-    question: "Are nonstop flights always better?",
-    answer:
-      "Not always. Nonstop flights can save time, while one-stop routes may offer different departure times, arrival windows, or fare options. Compare total travel time, layover length, and convenience before deciding.",
-  },
-  {
-    question: "How do baggage rules work?",
-    answer:
-      "Baggage allowance can vary by airline, route, cabin, fare type, and provider. Check whether carry-on, checked bags, and personal items are included before booking.",
-  },
-  {
-    question: "Can I change or cancel my ticket?",
-    answer:
-      "Change and cancellation options depend on the fare rules and provider policies. Some tickets may be non-refundable or include fees, so review the terms carefully before booking.",
-  },
-  {
-    question: "What should I know about international flights?",
-    answer:
-      "For international travel, review passport validity, visa requirements, transit rules, baggage policies, and arrival requirements for your destination before booking.",
-  },
-];
+function getFlightFaqItems(t: (key: string) => string): Array<{ question: string; answer: string }> {
+  return [
+    {
+      question: t("flightFaqBestTimeQuestion"),
+      answer: t("flightFaqBestTimeAnswer"),
+    },
+    {
+      question: t("flightFaqBeforeBookingQuestion"),
+      answer: t("flightFaqBeforeBookingAnswer"),
+    },
+    {
+      question: t("flightFaqFlexibleFareQuestion"),
+      answer: t("flightFaqFlexibleFareAnswer"),
+    },
+    {
+      question: t("flightFaqNonstopQuestion"),
+      answer: t("flightFaqNonstopAnswer"),
+    },
+    {
+      question: t("flightFaqBaggageQuestion"),
+      answer: t("flightFaqBaggageAnswer"),
+    },
+    {
+      question: t("flightFaqChangeCancelQuestion"),
+      answer: t("flightFaqChangeCancelAnswer"),
+    },
+    {
+      question: t("flightFaqInternationalQuestion"),
+      answer: t("flightFaqInternationalAnswer"),
+    },
+  ];
+}
 
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
@@ -474,11 +471,14 @@ function SavedRouteCard({
     itemId: string,
   ) => void;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
   return (
     <article className="group relative min-w-[250px] snap-start overflow-hidden rounded-[1.45rem] border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl sm:min-w-[280px] md:min-w-0">
       <Link
         href={buildDiscoveryLink(item)}
-        aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+        aria-label={`${t("explore")} ${item.originCode} ${t("to").toLowerCase()} ${item.destinationCode}`}
         className="focus-ring flex h-full flex-col"
       >
         <div className="relative h-32 overflow-hidden bg-slate-200">
@@ -500,13 +500,13 @@ function SavedRouteCard({
             {item.title}
           </h3>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            {item.originCity} to {item.destinationCity}
+            {item.originCity} {t("to").toLowerCase()} {item.destinationCity}
           </p>
           <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
             {item.routeNote}
           </p>
           <span className="mt-4 inline-flex items-center justify-between rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white transition group-hover:bg-indigo-700 group-focus-visible:bg-indigo-700">
-            Explore route
+            {t("exploreRoute")}
             <ArrowRightLeft size={14} />
           </span>
         </div>
@@ -526,6 +526,9 @@ function SavedRouteCard({
 }
 
 function FlightBookingFaqSection() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
   return (
     <section aria-labelledby="flight-booking-faq-heading" className="mt-8">
       <div className="max-w-3xl">
@@ -533,15 +536,15 @@ function FlightBookingFaqSection() {
           id="flight-booking-faq-heading"
           className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl"
         >
-          Flight booking FAQs
+          {t("flightBookingFaqs")}
         </h2>
         <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
-          Review common flight-search details before continuing with a provider.
+          {t("flightBookingFaqIntro")}
         </p>
       </div>
 
       <FaqAccordion
-        items={flightFaqItems}
+        items={getFlightFaqItems(t)}
         columns="three"
         compact
         className="mt-4"
@@ -551,6 +554,8 @@ function FlightBookingFaqSection() {
 }
 
 export function FlightResultsClient() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const params = useSearchParams();
   const router = useRouter();
   const { selectedOption } = useRegion();
@@ -1763,6 +1768,9 @@ export function FlightResultsClient() {
     [results],
   );
 
+  const mixedProviderCurrenciesLabel =
+    dictionary.mixedProviderCurrencies ?? enTranslations.mixedProviderCurrencies ?? "";
+
   const formatResultPriceLabel = useMemo(
     () =>
       (amount: number, sourceCurrency = priceLabelCurrency) =>
@@ -1775,12 +1783,13 @@ export function FlightResultsClient() {
               rates: currencyRates.rates,
               isFallbackRate: currencyRates.isFallback,
             }).formatted
-          : "Mixed provider currencies",
+          : mixedProviderCurrenciesLabel,
     [
       currencyRates.isFallback,
       currencyRates.rates,
       priceLabelCurrency,
       selectedCurrency,
+      mixedProviderCurrenciesLabel,
     ],
   );
 
@@ -2218,7 +2227,7 @@ export function FlightResultsClient() {
     timeBounds.takeoff,
   ]);
 
-  const activeFilterLabel = `${activeFilterCount} active`;
+  const activeFilterLabel = `${t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}`;
 
   const filtered = useMemo(
     () =>
@@ -2416,13 +2425,12 @@ export function FlightResultsClient() {
             <div className="text-center">
               <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <h1 className="mx-auto w-max whitespace-nowrap text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-[clamp(1.9rem,5vw,2.75rem)]">
-                  Compare available flight options
+                  {t("compareAvailableFlightOptions")}
                 </h1>
               </div>
               <div className="mx-auto mt-3 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                 <p className="mx-auto w-max whitespace-nowrap text-center text-xs leading-6 text-slate-600 sm:text-base">
-                  Review fares and choose the route that fits your trip in a few
-                  taps.
+                  {t("flightResultsHeroSubtitle")}
                 </p>
               </div>
             </div>
@@ -2810,8 +2818,7 @@ export function FlightResultsClient() {
                   </p>
                 </div>
                 <p className="max-w-xs text-sm leading-6 text-slate-500">
-                  Jump back into route ideas you already liked—no account
-                  required.
+                  {t("quickResumeLatestSearchesBody")}
                 </p>
               </div>
 
@@ -2832,13 +2839,12 @@ export function FlightResultsClient() {
               <div className="mb-4 sm:max-w-3xl">
                 <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <h2 className="w-max whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
-                    Discover destinations from your region
+                    {t("discoverDestinationsFromRegion")}
                   </h2>
                 </div>
                 <div className="mt-1.5 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <p className="w-max whitespace-nowrap text-xs font-normal leading-6 text-slate-600 sm:text-base">
-                    Explore curated routes and start your next trip with
-                    confidence.
+                    {t("discoverDestinationsFromRegionBody")}
                   </p>
                 </div>
               </div>
@@ -2849,7 +2855,7 @@ export function FlightResultsClient() {
                     <Link
                       key={item.id}
                       href={buildDiscoveryLink(item)}
-                      aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                      aria-label={`${t("explore")} ${item.originCode} ${t("to").toLowerCase()} ${item.destinationCode}`}
                       className="group w-full overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     >
                       <article className="flex h-full flex-col">
@@ -2901,7 +2907,7 @@ export function FlightResultsClient() {
                         <Link
                           key={item.id}
                           href={buildDiscoveryLink(item)}
-                          aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                          aria-label={`${t("explore")} ${item.originCode} ${t("to").toLowerCase()} ${item.destinationCode}`}
                           className="group rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:p-3"
                         >
                           <article className="flex h-full flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
@@ -2936,13 +2942,12 @@ export function FlightResultsClient() {
               <div className="mb-4 sm:max-w-3xl">
                 <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <h2 className="w-max whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
-                    Beach vacations
+                    {t("beachVacations")}
                   </h2>
                 </div>
                 <div className="mt-1.5 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <p className="w-max whitespace-nowrap text-xs font-normal leading-6 text-slate-600 sm:text-base">
-                    Explore flight routes to sunny coastlines, island escapes,
-                    and warm-weather beach destinations.
+                    {t("beachVacationsBody")}
                   </p>
                 </div>
               </div>
@@ -2957,7 +2962,7 @@ export function FlightResultsClient() {
                         <Link
                           key={item.id}
                           href={buildDiscoveryLink(item)}
-                          aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                          aria-label={`${t("explore")} ${item.originCode} ${t("to").toLowerCase()} ${item.destinationCode}`}
                           className="group w-[10rem] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:w-auto"
                         >
                           <article className="flex h-full flex-col">
@@ -3786,7 +3791,7 @@ export function FlightResultsClient() {
         >
           <span className="flex flex-col items-center justify-center gap-1 leading-none">
             <SlidersHorizontal size={17} strokeWidth={2.3} />
-            <span>Filters</span>
+            <span>{t("filters")}</span>
           </span>
           {activeFilterCount > 0 ? (
             <span className="absolute right-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
@@ -4078,8 +4083,8 @@ export function FlightResultsClient() {
                 >
                   <SlidersHorizontal size={17} />
                   {activeFilterCount > 0
-                    ? `Filters · ${activeFilterCount}`
-                    : "Filters"}
+                    ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
+                    : t("filters")}
                 </Button>
               </div>
 
@@ -4143,7 +4148,7 @@ export function FlightResultsClient() {
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold text-slate-900">
-                Filters
+                {t("filters")}
               </h2>
               {activeFilterCount > 0 ? (
                 <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
@@ -5329,6 +5334,8 @@ function Filters({
   setFlexibleOnly: (value: boolean) => void;
   onFilterChange: () => void;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const currencyRates = useCurrencyRates();
   const filterRangeClass =
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
@@ -5342,7 +5349,7 @@ function Filters({
           rates: currencyRates.rates,
           isFallbackRate: currencyRates.isFallback,
         }).formatted
-      : "Mixed provider currencies";
+      : t("mixedProviderCurrencies");
 
   return (
     <div
@@ -5354,12 +5361,12 @@ function Filters({
     >
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
-          <h2 className="text-base font-semibold text-white/95">Filter by</h2>
+          <h2 className="text-base font-semibold text-white/95">{t("filterBy")}</h2>
         </div>
         <div className="flex items-center gap-2">
           {activeFilterCount > 0 ? (
             <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-white/70">
-              {activeFilterCount} active
+              {t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}
             </span>
           ) : null}
           <SlidersHorizontal className="text-white/90" size={18} />
@@ -5370,19 +5377,19 @@ function Filters({
         <section>
           {layout === "desktop" ? (
             <div className="mb-3">
-              <h3 className="text-sm font-semibold text-slate-900">Price</h3>
+              <h3 className="text-sm font-semibold text-slate-900">{t("price")}</h3>
             </div>
           ) : (
             <div className="mb-1.5 flex items-center justify-between gap-3 text-sm font-semibold leading-5 text-slate-800">
-              <span>Price</span>
+              <span>{t("price")}</span>
               <span className="shrink-0 text-xs font-medium text-navy">
                 {priceBounds.max
                   ? priceLabelCurrency
                     ? `${formatFilterPrice(priceBounds.min)} - ${formatFilterPrice(
                         Math.min(maxPrice, priceBounds.max),
                       )}`
-                    : "Mixed provider currencies"
-                  : "Loading prices"}
+                    : t("mixedProviderCurrencies")
+                  : t("loadingPrices")}
               </span>
             </div>
           )}
@@ -5437,18 +5444,18 @@ function Filters({
                   : "border-transparent text-slate-600 hover:text-slate-900",
               )}
             >
-              Landing
+              {t("landing")}
             </button>
           </div>
 
           {timeFilterMode === "takeoff" ? (
             <div className="mt-2">
               <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-                <span>Take-off time from origin</span>
+                <span>{t("takeoffTimeFromOrigin")}</span>
                 <span className="font-mono text-navy">
                   {timeBounds.takeoff && maxTakeoffMinutes !== null
                     ? formatTimeFromMinutes(maxTakeoffMinutes)
-                    : "Loading"}
+                    : t("loading")}
                 </span>
               </div>
               <input
@@ -5480,11 +5487,11 @@ function Filters({
           ) : (
             <div className="mt-2">
               <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-                <span>Landing time at destination</span>
+                <span>{t("landingTimeAtDestination")}</span>
                 <span className="font-mono text-navy">
                   {timeBounds.landing && maxLandingMinutes !== null
                     ? formatTimeFromMinutes(maxLandingMinutes)
-                    : "Loading"}
+                    : t("loading")}
                 </span>
               </div>
               <input
@@ -5516,13 +5523,13 @@ function Filters({
           )}
         </FilterSection>
 
-        <FilterSection title="Duration">
+        <FilterSection title={t("duration")}>
           <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-            <span>Total trip time</span>
+            <span>{t("totalTripTime")}</span>
             <span className="font-mono text-navy">
               {durationBounds && maxDurationMinutes !== null
                 ? formatDurationFromMinutes(maxDurationMinutes)
-                : "Loading"}
+                : t("loading")}
             </span>
           </div>
 

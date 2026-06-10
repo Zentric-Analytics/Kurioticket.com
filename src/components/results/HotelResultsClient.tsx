@@ -20,9 +20,11 @@ import {
 
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelCard } from "@/components/results/HotelCard";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { Skeleton } from "@/components/ui/Skeleton";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatCurrency } from "@/lib/utils";
 
 const hotelResultStackClass = "w-full max-w-[800px]";
@@ -313,6 +315,8 @@ type HotelMobileSearchDraft = {
 };
 
 export function HotelResultsClient() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const params = useSearchParams();
 
   const [results, setResults] = useState<PublicHotelResult[]>([]);
@@ -948,7 +952,7 @@ export function HotelResultsClient() {
           onScroll={showFilterScrollbarWhileScrolling}
         >
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-base font-bold text-navy">Filters</h2>
+            <h2 className="text-base font-bold text-navy">{t("filters")}</h2>
             <Button
               variant="ghost"
               className="h-10 w-10 px-0"

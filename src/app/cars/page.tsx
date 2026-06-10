@@ -27,7 +27,9 @@ import {
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 type CarsFormValues = {
   pickupLocation: string;
@@ -437,6 +439,8 @@ export default function CarsPage() {
 }
 
 function CarsSearchPage() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
   const searchParams = useSearchParams();
@@ -543,7 +547,7 @@ function CarsSearchPage() {
                 id="cars-search-heading"
                 className="text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
               >
-                Search rental cars for every part of your trip
+                {t("searchRentalCarsEveryPartTrip")}
               </h1>
             </div>
 
@@ -568,11 +572,10 @@ function CarsSearchPage() {
                   id="car-trip-style-heading"
                   className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
                 >
-                  Explore rental cars by trip style
+                  {t("exploreCarsByTripStyle")}
                 </h2>
                 <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  Choose a car type and we’ll open results with the search
-                  context ready.
+                  {t("carsTripStyleBody")}
                 </p>
               </div>
             </div>

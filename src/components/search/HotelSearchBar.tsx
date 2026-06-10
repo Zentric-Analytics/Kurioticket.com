@@ -22,9 +22,11 @@ import {
 } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { useRegion } from "@/components/region/RegionProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 const parseIsoDate = (value: string) => {
@@ -191,6 +193,8 @@ export function HotelSearchBar({
   onSubmitStart,
   className,
 }: HotelSearchBarProps) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -888,7 +892,7 @@ export function HotelSearchBar({
                     size={17}
                     strokeWidth={2.3}
                   />
-                  <span>Filters</span>
+                  <span>{t("filters")}</span>
                 </span>
               </button>
 

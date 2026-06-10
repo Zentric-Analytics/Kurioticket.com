@@ -144,7 +144,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     fallbackFlightNumber={flight.flightNumber}
                     routeHeading={routeHeading}
                     selectedFlightsLabel={
-                      t.selectedFlights || "Selected Flights"
+                      t.selectedFlights
                     }
                     selectedFlightItineraryLabel={
                       t.selectedFlightItinerary || "Selected flight itinerary"
@@ -258,7 +258,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                             onClick={continueToProvider}
                             disabled={!hasProviderLink}
                           >
-                            {t.continueToProvider || "Continue to Provider"}{" "}
+                            {t.continueToProvider}{" "}
                             <ArrowRight size={16} />
                           </Button>
                         </div>
@@ -277,7 +277,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   onContinueToProvider={continueToProvider}
                   labels={{
                     compareMoreProviders:
-                      t.compareMoreProviders || "Compare more providers",
+                      t.compareMoreProviders,
                     providerComparisonIntro:
                       t.providerComparisonIntro ||
                       "Kurioticket can compare from different providers.",
@@ -285,7 +285,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                       t.noAdditionalLiveProviderOptions ||
                       "No additional live provider options are available for this flight right now.",
                     continueToProvider:
-                      t.continueToProvider || "Continue to Provider",
+                      t.continueToProvider,
                     confirmedByProvider:
                       t.confirmedByProvider || "Confirmed by provider",
                     nonstop: t.nonstop || "Nonstop",
