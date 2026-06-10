@@ -441,6 +441,27 @@ export default function CarsPage() {
 function CarsSearchPage() {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const translateCarImageCard = (card: CarImageCard | CarPickupCard): CarImageCard => {
+    const key = "vehicleType" in card && card.vehicleType ? `carsTripStyle.${card.vehicleType}` : `carsPickup.${card.pickupLocation}`;
+
+    return {
+      ...card,
+      title: dictionary[`${key}.title`] ?? enTranslations[`${key}.title`] ?? card.title,
+      subtitle:
+        dictionary[`${key}.subtitle`] ??
+        enTranslations[`${key}.subtitle`] ??
+        card.subtitle,
+      cta: card.cta
+        ? dictionary[`${key}.cta`] ?? enTranslations[`${key}.cta`] ?? card.cta
+        : card.cta,
+      ariaLabel:
+        dictionary[`${key}.ariaLabel`] ??
+        enTranslations[`${key}.ariaLabel`] ??
+        ("ariaLabel" in card
+          ? card.ariaLabel
+          : `Open car results for ${card.pickupLocation} pickup`),
+    };
+  };
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
   const searchParams = useSearchParams();
@@ -583,7 +604,10 @@ function CarsSearchPage() {
             <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {tripStyleCards.map((card) => (
-                  <CarImageCardLink key={card.title} card={card} />
+                  <CarImageCardLink
+                    key={card.title}
+                    card={translateCarImageCard(card)}
+                  />
                 ))}
               </div>
             </div>
@@ -591,8 +615,16 @@ function CarsSearchPage() {
 
           <section className="relative isolate rounded-[1.5rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-2 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:rounded-[2rem] sm:p-4">
             <div className="grid gap-2.5 sm:gap-4 md:grid-cols-3">
-              {trustCards.map((card) => {
+              {trustCards.map((card, index) => {
                 const Icon = card.icon;
+                const translatedTitle =
+                  dictionary[`carsTrust.${index}.title`] ??
+                  enTranslations[`carsTrust.${index}.title`] ??
+                  card.title;
+                const translatedDescription =
+                  dictionary[`carsTrust.${index}.description`] ??
+                  enTranslations[`carsTrust.${index}.description`] ??
+                  card.description;
 
                 return (
                   <article
@@ -608,10 +640,10 @@ function CarsSearchPage() {
                       <Icon className="h-5 w-5 stroke-[1.8]" />
                     </div>
                     <h2 className="relative text-base font-semibold leading-snug tracking-[-0.01em] text-slate-800">
-                      {card.title}
+                      {translatedTitle}
                     </h2>
                     <p className="relative mt-2 text-sm leading-6 text-slate-700">
-                      {card.description}
+                      {translatedDescription}
                     </p>
                   </article>
                 );
@@ -629,11 +661,10 @@ function CarsSearchPage() {
                   id="car-pickup-ideas-heading"
                   className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
                 >
-                  Start with popular car pickup points
+                  {t("carsPickupPointsTitle")}
                 </h2>
                 <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  Choose a pickup style and we’ll open the cars results page
-                  with search details ready.
+                  {t("carsPickupPointsBody")}
                 </p>
               </div>
             </div>
@@ -641,7 +672,10 @@ function CarsSearchPage() {
             <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {pickupCards.map((card) => (
-                  <CarPickupCardLink key={card.title} card={card} />
+                  <CarPickupCardLink
+                    key={card.title}
+                    card={translateCarImageCard(card)}
+                  />
                 ))}
               </div>
             </div>
@@ -712,6 +746,8 @@ function CarsSearchBar({
   ) => void;
   values: CarsFormValues;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const pickupLocationRef = useRef<HTMLInputElement | null>(null);
   const dropoffLocationRef = useRef<HTMLInputElement | null>(null);
   const dateWrapRef = useRef<HTMLDivElement | null>(null);
@@ -960,7 +996,7 @@ function CarsSearchBar({
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
-                {isSubmitting ? "Searching cars..." : "Search"}
+                {isSubmitting ? t("searchingCars") : t("search")}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>

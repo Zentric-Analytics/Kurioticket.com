@@ -194,7 +194,10 @@ export function HotelSearchBar({
   className,
 }: HotelSearchBarProps) {
   const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const t = useCallback(
+    (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
+    [dictionary],
+  );
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -288,9 +291,9 @@ export function HotelSearchBar({
   }, [rooms, totalHotelGuests]);
 
   const mobileSearchSummary = useMemo(() => {
-    const trimmedDestination = destination.trim() || "Destination";
+    const trimmedDestination = destination.trim() || t("destination");
     return `${trimmedDestination} · ${dateSummary} · ${guestsRoomsSummary}`;
-  }, [dateSummary, destination, guestsRoomsSummary]);
+  }, [dateSummary, destination, guestsRoomsSummary, t]);
 
   const checkInParsed = parseIsoDate(checkIn);
   const checkOutParsed = parseIsoDate(checkOut);
@@ -903,7 +906,7 @@ export function HotelSearchBar({
               >
                 <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
                   <span className="block truncate text-[15px] font-bold leading-5 text-slate-950">
-                    {destination.trim() || "Destination"}
+                    {destination.trim() || t("destination")}
                   </span>
                   <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-700">
                     {dateSummary} · {guestsRoomsSummary}
@@ -1440,7 +1443,7 @@ export function HotelSearchBar({
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
-                {isSubmitting ? "Searching hotels..." : "Search"}
+                {isSubmitting ? t("searchingHotels") : t("search")}
               </button>
             </div>
           </div>

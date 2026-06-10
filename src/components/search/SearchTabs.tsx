@@ -125,7 +125,7 @@ const clampNumberInput = (
 };
 
 const normalizeCabinClass = (value: string) =>
-  value === "business" || value === "first"
+  value === "premium-economy" || value === "business" || value === "first"
     ? value
     : "economy";
 
@@ -1052,19 +1052,22 @@ export function SearchTabs({
   ) => {
     if (mode === "round-trip") {
       return (
+        t.roundTrip ||
         t.tripRound ||
-        "Round-trip"
+        t.roundTrip
       );
     }
 
     if (mode === "one-way") {
       return (
+        t.oneWay ||
         t.tripOneWay ||
-        "One-way"
+        t.oneWay
       );
     }
 
     return (
+      t.multiCity ||
       t.tripMulti ||
       "Multi-city"
     );
@@ -1088,30 +1091,33 @@ export function SearchTabs({
   const normalizedCabinClass =
     normalizeCabinClass(cabinClass);
   const cabinClassLabel =
-    normalizedCabinClass ===
-    "business"
-      ? "Business"
-      : normalizedCabinClass ===
-          "first"
-        ? "First"
-        : "Economy";
+    normalizedCabinClass === "premium-economy"
+      ? t.premiumEconomy || "Premium economy"
+      : normalizedCabinClass === "business"
+        ? t.business || "Business"
+        : normalizedCabinClass === "first"
+          ? t.first || "First"
+          : t.economy || "Economy";
 
   const travelerSummary = useMemo(() => {
     const parts: string[] = [];
 
     if (adultCount > 0) {
-      parts.push(`${adultCount} ${adultCount === 1 ? "adult" : "adults"}`);
+      parts.push(`${adultCount} ${adultCount === 1 ? t.adultSingular || "adult" : t.adultPlural || "adults"}`);
     }
     if (childCount > 0) {
-      parts.push(`${childCount} ${childCount === 1 ? "child" : "children"}`);
+      parts.push(`${childCount} ${childCount === 1 ? t.childSingular || "child" : t.childPlural || "children"}`);
     }
     if (infantCount > 0) {
-      parts.push(`${infantCount} ${infantCount === 1 ? "infant" : "infants"}`);
+      parts.push(`${infantCount} ${infantCount === 1 ? t.infantSingular || "infant" : t.infantPlural || "infants"}`);
     }
 
-    const baseSummary = parts.length > 0 ? parts.join(", ") : `${travelerCount} travelers`;
+    const baseSummary =
+      parts.length > 0
+        ? parts.join(", ")
+        : `${travelerCount} ${travelerCount === 1 ? t.travelerSingular || "traveler" : t.travelerPlural || t.travelers || "travelers"}`;
     return `${baseSummary}, ${cabinClassLabel}`;
-  }, [adultCount, childCount, infantCount, travelerCount, cabinClassLabel]);
+  }, [adultCount, childCount, infantCount, travelerCount, cabinClassLabel, t]);
 
   const onKeyNav = (
     event: ReactKeyboardEvent<HTMLInputElement>,
@@ -1651,10 +1657,10 @@ export function SearchTabs({
       </div>
       <div className="mt-5 rounded-2xl border-t border-slate-200 bg-white pt-5 sm:rounded-none sm:bg-transparent">
         <div className="mb-1.5 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</p>
+          <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">{t.cabinClass || "Cabin class"}</p>
         </div>
-        <div className="grid grid-cols-3 gap-1">
-          {[["economy", t.economy || "Economy"], ["business", t.business || "Business"], ["first", t.first || "First"]].map(([value, label]) => (
+        <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
+          {[["economy", t.economy || "Economy"], ["premium-economy", t.premiumEconomy || "Premium economy"], ["business", t.business || "Business"], ["first", t.first || "First"]].map(([value, label]) => (
             <button
               key={value}
               type="button"
@@ -1691,8 +1697,7 @@ export function SearchTabs({
           )}
         >
           <Plane size={16} />
-          {t.flights ||
-            "Flights"}
+          {t.flights}
         </button>
 
         <button
@@ -1708,8 +1713,7 @@ export function SearchTabs({
           )}
         >
           <BedDouble size={16} />
-          {t.hotels ||
-            "Hotels"}
+          {t.hotels}
         </button>
       </div>
 
@@ -1896,7 +1900,7 @@ export function SearchTabs({
                   <div className="absolute left-0 top-[calc(100%+6px)] z-50 hidden max-h-[min(50vh,280px)] w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-xl sm:block">
                     {isFromLoadingVisible ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
-                        Searching airports and cities…
+                        {t.searchingAirportsAndCities || "Searching airports and cities…"}
                       </div>
                     ) : fromSuggestions.length ? fromSuggestions.map(
                       (
@@ -1938,7 +1942,7 @@ export function SearchTabs({
                       )
                     ) : (
                       <div className="px-3 py-2 text-sm text-slate-500">
-                        No matching airports or cities
+                        {t.noMatchingAirportsOrCities || "No matching airports or cities"}
                       </div>
                     )}
                   </div>
@@ -1961,7 +1965,7 @@ export function SearchTabs({
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
-                    t.destination || "Destination"}
+                    t.destination}
                 </label>
                 <div className="relative h-8">
                   <button
@@ -2031,7 +2035,7 @@ export function SearchTabs({
                   <div className="absolute left-0 top-[calc(100%+6px)] z-50 hidden max-h-[min(50vh,280px)] w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-xl sm:block">
                     {isToLoadingVisible ? (
                       <div className="px-3 py-2 text-sm text-slate-500">
-                        Searching airports and cities…
+                        {t.searchingAirportsAndCities || "Searching airports and cities…"}
                       </div>
                     ) : toSuggestions.length ? toSuggestions.map(
                       (
@@ -2076,7 +2080,7 @@ export function SearchTabs({
                       )
                     ) : (
                       <div className="px-3 py-2 text-sm text-slate-500">
-                        No matching airports or cities
+                        {t.noMatchingAirportsOrCities || "No matching airports or cities"}
                       </div>
                     )}
                   </div>
@@ -2359,8 +2363,7 @@ export function SearchTabs({
                 className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
-                  {t.travelers ||
-                    "Travelers"}
+                  {t.travelers}
                 </label>
                 <button
                   type="button"
@@ -2395,7 +2398,7 @@ export function SearchTabs({
                   <>
                     <FlightMobilePickerShell
                       open={travelersMenuOpen}
-                      title="Travelers"
+                      title={t.travelers}
                       titleId="homepage-flight-travelers-title"
                       launcherRef={travelersLauncherRef}
                       footer={
@@ -2447,10 +2450,10 @@ export function SearchTabs({
                     </div>
                     <div className="mt-3 border-t border-slate-200 pt-3">
                       <div className="mb-1.5 flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">Cabin Class</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">{t.cabinClass || "Cabin class"}</p>
                       </div>
-                      <div className="grid grid-cols-3 gap-1">
-                        {[["economy", t.economy || "Economy"],["business", t.business || "Business"],["first", t.first || "First"]].map(([value, label]) => (
+                      <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
+                        {[["economy", t.economy || "Economy"],["premium-economy", t.premiumEconomy || "Premium economy"],["business", t.business || "Business"],["first", t.first || "First"]].map(([value, label]) => (
                           <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-md border px-2 py-1 text-xs font-medium leading-4 transition-colors text-center sm:text-xs", draftCabinClass === value ? "border-indigo-400 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
                         ))}
                       </div>
@@ -2474,7 +2477,7 @@ export function SearchTabs({
                   {isFlightSubmitting
                     ? t.searchingFlights || "Searching flights..."
                     : t.search ||
-                      "Search"}
+                      t.search}
                 </Button>
               </div>
             </div>
@@ -2488,7 +2491,7 @@ export function SearchTabs({
                   className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
                 >
                   <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-                  {t.clearAll || t.clear || "Clear all"}
+                  {t.clearAll || t.clear}
                 </button>
               </div>
             </div>
@@ -2496,7 +2499,7 @@ export function SearchTabs({
 
           <MobileAirportPicker
             open={activeMobileAirportPicker === "origin"}
-            title="Choose origin"
+            title={t.chooseOrigin || "Choose origin"}
             inputId="homepage-origin-picker-search"
             value={from}
             suggestions={fromSuggestions}
@@ -2524,7 +2527,7 @@ export function SearchTabs({
           />
           <MobileAirportPicker
             open={activeMobileAirportPicker === "destination"}
-            title="Choose destination"
+            title={t.chooseDestination || "Choose destination"}
             inputId="homepage-destination-picker-search"
             value={to}
             suggestions={toSuggestions}
@@ -2566,7 +2569,7 @@ export function SearchTabs({
               <div className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination ||
-                    t.destination || "Destination"}
+                    t.destination}
                 </label>
                 <button
                   ref={hotelDestinationMobileLauncherRef}
@@ -3027,7 +3030,7 @@ export function SearchTabs({
                   {isHotelSubmitting
                     ? t.searchingHotels || "Searching hotels..."
                     : t.search ||
-                      "Search"}
+                      t.search}
                 </Button>
               </div>
             </div>

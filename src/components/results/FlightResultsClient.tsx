@@ -38,6 +38,7 @@ import {
   type HomeDiscoveryItem,
 } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
+import { translateHomeDiscoveryCopy } from "@/lib/i18n/homeDiscovery";
 import {
   clearRecentSearches,
   readRecentSearches,
@@ -473,6 +474,7 @@ function SavedRouteCard({
 }) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const copy = translateHomeDiscoveryCopy(dictionary, item);
 
   return (
     <article className="group relative min-w-[250px] snap-start overflow-hidden rounded-[1.45rem] border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl sm:min-w-[280px] md:min-w-0">
@@ -497,13 +499,13 @@ function SavedRouteCard({
 
         <div className="flex flex-1 flex-col p-4">
           <h3 className="line-clamp-1 pr-8 text-base font-black leading-tight text-slate-950">
-            {item.title}
+            {copy.title}
           </h3>
           <p className="mt-1 text-sm font-semibold text-slate-500">
             {item.originCity} {t("to").toLowerCase()} {item.destinationCity}
           </p>
           <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
-            {item.routeNote}
+            {copy.routeNote}
           </p>
           <span className="mt-4 inline-flex items-center justify-between rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white transition group-hover:bg-indigo-700 group-focus-visible:bg-indigo-700">
             {t("exploreRoute")}
@@ -514,7 +516,7 @@ function SavedRouteCard({
 
       <button
         type="button"
-        aria-label={`Remove ${item.title} from saved routes`}
+        aria-label={`${t("remove")} ${copy.title}`}
         aria-pressed="true"
         onClick={(event) => onHeartToggle(event, item.id)}
         className="focus-ring absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-950/15 backdrop-blur transition hover:bg-rose-600"
@@ -754,12 +756,12 @@ export function FlightResultsClient() {
       ? destinationSuggestions
       : destinationFallbackSuggestions;
   const mobileTripTypeSummary =
-    tripTypeInput === "one-way" ? "One-way" : "Round-trip";
-  const mobileOriginSummary = (originCode || originInput || "Origin").trim();
+    tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip");
+  const mobileOriginSummary = (originCode || originInput || t("origin")).trim();
   const mobileDestinationSummary = (
     destinationCode ||
     destinationInput ||
-    "Destination"
+    t("destination")
   ).trim();
   const mobileRouteSummary = `${mobileOriginSummary} → ${mobileDestinationSummary}`;
   const mobileDateSummary = departureDateInput

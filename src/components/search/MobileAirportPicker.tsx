@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 type MobileAirportPickerProps = {
   open: boolean;
-  title: "Choose origin" | "Choose destination";
+  title: string;
   inputId: string;
   value: string;
   suggestions: AirportOption[];

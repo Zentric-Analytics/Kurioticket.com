@@ -380,6 +380,32 @@ hotelInspirationCategoryChips.forEach((category) => {
 export default function HotelsSearchPage() {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const translateHotelCard = <TCard extends HotelDestinationCard>(card: TCard) => ({
+    ...card,
+    title:
+      dictionary[`hotelDestination.${card.destinationQuery}.title`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.title`] ??
+      card.title,
+    subtitle:
+      dictionary[`hotelDestination.${card.destinationQuery}.subtitle`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.subtitle`] ??
+      card.subtitle,
+    linkLabel:
+      dictionary[`hotelDestination.${card.destinationQuery}.linkLabel`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.linkLabel`] ??
+      card.linkLabel,
+  });
+  const translateHotelInspirationCard = (card: HotelInspirationCard) => ({
+    ...translateHotelCard(card),
+    badge:
+      dictionary[`hotelInspirationBadge.${card.badge}`] ??
+      enTranslations[`hotelInspirationBadge.${card.badge}`] ??
+      card.badge,
+    detail:
+      dictionary[`hotelDestination.${card.destinationQuery}.detail`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.detail`] ??
+      card.detail,
+  });
   const [selectedInspirationCategory, setSelectedInspirationCategory] =
     useState<HotelInspirationCategory>("Beach");
 
@@ -398,43 +424,27 @@ export default function HotelsSearchPage() {
       }).toString()}`;
   }, []);
 
-  const hotelDestinationLinks = useMemo(
-    () =>
-      hotelDestinationCards.map((card) => ({
-        ...card,
-        href: destinationCardHref(card.destinationQuery),
-      })),
-    [destinationCardHref],
-  );
+  const hotelDestinationLinks = hotelDestinationCards.map((card) => ({
+    ...translateHotelCard(card),
+    href: destinationCardHref(card.destinationQuery),
+  }));
 
-  const moreHotelDestinationLinks = useMemo(
-    () =>
-      moreHotelDestinationCards.map((card) => ({
-        ...card,
-        href: destinationCardHref(card.destinationQuery),
-      })),
-    [destinationCardHref],
-  );
+  const moreHotelDestinationLinks = moreHotelDestinationCards.map((card) => ({
+    ...translateHotelCard(card),
+    href: destinationCardHref(card.destinationQuery),
+  }));
 
-  const globalHotelDestinationLinks = useMemo(
-    () =>
-      globalHotelDestinationCards.map((card) => ({
-        ...card,
-        href: destinationCardHref(card.destinationQuery),
-      })),
-    [destinationCardHref],
-  );
+  const globalHotelDestinationLinks = globalHotelDestinationCards.map((card) => ({
+    ...translateHotelCard(card),
+    href: destinationCardHref(card.destinationQuery),
+  }));
 
-  const hotelInspirationLinks = useMemo(
-    () =>
-      hotelInspirationCardsByCategory[selectedInspirationCategory].map(
-        (card) => ({
-          ...card,
-          href: destinationCardHref(card.destinationQuery),
-        }),
-      ),
-    [destinationCardHref, selectedInspirationCategory],
-  );
+  const hotelInspirationLinks = hotelInspirationCardsByCategory[
+    selectedInspirationCategory
+  ].map((card) => ({
+    ...translateHotelInspirationCard(card),
+    href: destinationCardHref(card.destinationQuery),
+  }));
 
   return (
     <>
@@ -549,17 +559,17 @@ export default function HotelsSearchPage() {
               {[
                 {
                   title: t("homeTrustCompareTitle"),
-                  body: "View hotel options from travel providers in one place before you continue.",
+                  body: t("hotelTrustCompareBody"),
                   icon: Building2,
                 },
                 {
-                  title: "Review stay details",
-                  body: "Check dates, guests, rooms, pricing context, and stay information before choosing.",
+                  title: t("hotelTrustReviewTitle"),
+                  body: t("hotelTrustReviewBody"),
                   icon: ClipboardCheck,
                 },
                 {
-                  title: "Continue with the provider",
-                  body: "When you choose an option, continue with the provider to confirm final price, availability, fees, and cancellation rules.",
+                  title: t("hotelTrustProviderTitle"),
+                  body: t("hotelTrustProviderBody"),
                   icon: Calendar,
                 },
               ].map((item, index) => {
