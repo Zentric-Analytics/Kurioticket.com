@@ -53,6 +53,7 @@ type PersonalDetailsDraft = {
   email: string;
   phone: string;
   dateOfBirth: string;
+  gender: string;
   nationality: string;
   address: string;
 };
@@ -63,6 +64,7 @@ type PersonalDetailRow = {
   fallback: string;
   helper?: string;
   inputType?: "text" | "tel" | "date" | "email";
+  options?: string[];
   multiline?: boolean;
   readOnly?: boolean;
 };
@@ -210,6 +212,8 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
   );
 }
 
+const genderOptions = ["Male", "Female", "I prefer not to say"];
+
 const personalDetailRows: PersonalDetailRow[] = [
   { key: "name", label: "Name", fallback: "Add your name" },
   { key: "displayName", label: "Display name", fallback: "Choose a display name" },
@@ -229,6 +233,7 @@ const personalDetailRows: PersonalDetailRow[] = [
     inputType: "tel",
   },
   { key: "dateOfBirth", label: "Date of birth", fallback: "Add your date of birth", inputType: "date" },
+  { key: "gender", label: "Gender", fallback: "Add your gender", options: genderOptions },
   { key: "nationality", label: "Nationality", fallback: "Add your nationality" },
   { key: "address", label: "Address", fallback: "Add your address", multiline: true },
 ];
@@ -243,6 +248,7 @@ function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: D
     email: userEmail?.trim() ?? "",
     phone: "",
     dateOfBirth: "",
+    gender: "",
     nationality: "",
     address: "",
   };
@@ -263,9 +269,24 @@ function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: 
     row.readOnly && "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
   );
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     onChange(row.key, event.target.value);
   };
+
+  if (row.options) {
+    return (
+      <select className={baseClassName} value={value} onChange={handleChange} disabled={row.readOnly} aria-label={row.label}>
+        <option value="" disabled hidden>
+          {row.fallback}
+        </option>
+        {row.options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    );
+  }
 
   if (row.multiline) {
     return (
