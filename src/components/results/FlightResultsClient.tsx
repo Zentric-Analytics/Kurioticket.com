@@ -1175,7 +1175,7 @@ export function FlightResultsClient() {
     if (normalizedSearchValues.toString() !== searchValues.toString()) {
       const nextQuery = normalizedSearchValues.toString();
       router.replace(
-        nextQuery ? `/flights/results?${nextQuery}` : "/flights/results",
+        nextQuery ? `/flights/results?${nextQuery}` : "/flights",
         {
           scroll: false,
         },
@@ -2147,7 +2147,7 @@ export function FlightResultsClient() {
     const nextQuery = nextParams.toString();
     lastWrittenFilterQueryStringRef.current = nextQuery;
     router.replace(
-      nextQuery ? `/flights/results?${nextQuery}` : "/flights/results",
+      nextQuery ? `/flights/results?${nextQuery}` : "/flights",
       {
         scroll: false,
       },

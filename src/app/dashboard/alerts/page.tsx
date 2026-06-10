@@ -169,7 +169,7 @@ export default async function AlertsPage() {
             )}
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              <LinkButton href="/flights/results">Search flights</LinkButton>
+              <LinkButton href="/flights">Search flights</LinkButton>
               <LinkButton href="/hotels" variant="secondary">Search hotels</LinkButton>
               <LinkButton href="/cars" variant="secondary">Search cars</LinkButton>
             </div>

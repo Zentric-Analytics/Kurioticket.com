@@ -110,7 +110,7 @@ const resolveSavedTrip = (
     imageAlt: matched.imageAlt,
     originCode: matched.originCode,
     destinationCode: matched.destinationCode,
-    href: `/flights/results?origin=${encodeURIComponent(matched.originCode)}&destination=${encodeURIComponent(matched.destinationCode)}`,
+    href: "/flights",
     unresolved: false,
   };
 };

@@ -543,7 +543,7 @@ function getRegionId(region: string) {
 }
 
 function getDestinationHref(destination: Destination) {
-  return `/flights/results?destination=${encodeURIComponent(destination.name)}`;
+  return `/flights?destination=${encodeURIComponent(destination.name)}`;
 }
 
 export default function DestinationsPage() {
