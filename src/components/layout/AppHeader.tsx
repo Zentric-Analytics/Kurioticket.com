@@ -581,10 +581,12 @@ export function AppHeader({
                       type="button"
                       aria-haspopup="menu"
                       aria-expanded={accountOpen}
+                      aria-label={t.openAccountMenu}
+                      title={t.openAccountMenu}
                       onClick={() => setAccountOpen((value) => !value)}
-                      className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-1.5 pr-2.5 text-[13px] font-semibold text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                     >
-                      <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
+                      <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
                         {session?.user?.image ? (
                           <RawImage
                             src={session.user.image}
@@ -595,16 +597,6 @@ export function AppHeader({
                           accountInitials
                         )}
                       </span>
-
-                      <span className="max-w-[8rem] truncate">
-                        {accountDisplayName}
-                      </span>
-
-                      <ChevronDown
-                        size={13}
-                        className={`text-indigo-100 transition-transform ${accountOpen ? "rotate-180" : ""}`}
-                        aria-hidden="true"
-                      />
                     </button>
 
                     {accountOpen ? (
@@ -924,7 +916,7 @@ export function AppHeader({
           </div>
 
           <nav className="hidden md:block">
-            <div className="flex min-h-[32px] items-center pb-0.5 md:pl-20 lg:pl-24">
+            <div className="flex min-h-[32px] items-center pb-0.5 md:pl-24 lg:pl-32">
               <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
                 {desktopPrimaryNavItems.map((item) => {
                   const Icon = item.icon;
@@ -937,13 +929,13 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, item.href)
                       }
-                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-[15px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                         active
                           ? "bg-white/10 text-white ring-1 ring-white/25"
                           : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
                       }`}
                     >
-                      {Icon ? <Icon size={16} aria-hidden="true" /> : null}
+                      {Icon ? <Icon size={17} aria-hidden="true" /> : null}
                       <span>{item.label}</span>
                     </Link>
                   );
