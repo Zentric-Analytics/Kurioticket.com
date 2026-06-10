@@ -312,6 +312,18 @@ type HomepageFareSnapshotStatus =
 
 type HomepageFareRouteSection = "popular" | "discovery" | "backup" | "fallback";
 
+type PublicPriceDiagnosis =
+  | "fresh_available"
+  | "last_known_good_used"
+  | "last_known_good_failed_safety_check"
+  | "fresh_missing"
+  | "last_known_good_missing"
+  | "exact_route_mismatch"
+  | "provider_failed"
+  | "provider_unavailable"
+  | "no_provider_backed_fare_ever"
+  | "price_invalid";
+
 type HomepageFareStatusRoute = {
   id: string;
   market: string;
@@ -334,6 +346,7 @@ type HomepageFareStatusRoute = {
   errorReason?: SafeHomepageFareErrorReason;
   errorCategory?: SafeHomepageFareErrorCategory;
   replacementCandidateUsed?: string;
+  publicPriceDiagnosis?: PublicPriceDiagnosis;
 };
 
 type HomepageFareStatusSummary = Record<HomepageFareSnapshotStatus, number> & {
@@ -384,6 +397,7 @@ type HomepageFareStatusPayload = {
   skippedCooldownByMarket: Record<string, number>;
   timeoutByMarket: Record<string, number>;
   lastKnownGoodByMarket: Record<string, number>;
+  publicPriceDiagnostics: Record<PublicPriceDiagnosis, number>;
   replacementCandidatesUsedByMarket: Record<string, number>;
   targetedMarkets: string[];
   visibleGapsAttempted: VisibleGapAttempt[];
@@ -522,6 +536,7 @@ export function HomepageFaresRefreshCard() {
     displayReadiness: DEFAULT_DISPLAY_READINESS,
     candidatePoolHealth: DEFAULT_STATUS_SUMMARY,
     refreshBudget: DEFAULT_REFRESH_BUDGET,
+    publicPriceDiagnostics: createEmptyPublicPriceDiagnostics(),
     ...DEFAULT_MARKET_STATUS_FIELDS,
   };
   const marketRouteGroups = useMemo(
@@ -645,6 +660,7 @@ export function HomepageFaresRefreshCard() {
             markets={statusPayload.marketReadinessSummary}
             marketsNeedingAnotherRun={marketsNeedingAnotherRun}
             candidatePoolHealth={statusPayload.candidatePoolHealth}
+            publicPriceDiagnostics={statusPayload.publicPriceDiagnostics}
             stoppedReason={latestCounts?.stoppedReason}
           />
 
@@ -1046,11 +1062,13 @@ function DiagnosticsPanel({
   markets,
   marketsNeedingAnotherRun,
   candidatePoolHealth,
+  publicPriceDiagnostics,
   stoppedReason,
 }: {
   markets: MarketReadiness[];
   marketsNeedingAnotherRun: MarketNextRunNeed[];
   candidatePoolHealth: HomepageFareStatusSummary;
+  publicPriceDiagnostics: Record<PublicPriceDiagnosis, number>;
   stoppedReason?: RefreshStoppedReason;
 }) {
   const issues = buildDiagnostics(markets, marketsNeedingAnotherRun, stoppedReason);
@@ -1082,6 +1100,11 @@ function DiagnosticsPanel({
           <CompactDetail label="Provider unavailable/no offers" value={stoppedReason === "provider_unavailable_no_offers" ? "Yes" : "No"} />
           <CompactDetail label="Candidate pool failed" value={candidatePoolHealth.failed} />
           <CompactDetail label="Candidate pool unavailable" value={candidatePoolHealth.unavailable} />
+          <CompactDetail label="Fresh used publicly" value={publicPriceDiagnostics.fresh_available} />
+          <CompactDetail label="LKG used publicly" value={publicPriceDiagnostics.last_known_good_used} />
+          <CompactDetail label="LKG failed safety" value={publicPriceDiagnostics.last_known_good_failed_safety_check} />
+          <CompactDetail label="Exact route mismatch" value={publicPriceDiagnostics.exact_route_mismatch} />
+          <CompactDetail label="No provider fare ever" value={publicPriceDiagnostics.no_provider_backed_fare_ever} />
         </dl>
       </div>
     </DashboardSection>
@@ -1690,6 +1713,7 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
       displayReadiness: DEFAULT_DISPLAY_READINESS,
       candidatePoolHealth: DEFAULT_STATUS_SUMMARY,
       refreshBudget: DEFAULT_REFRESH_BUDGET,
+      publicPriceDiagnostics: createEmptyPublicPriceDiagnostics(),
       ...DEFAULT_MARKET_STATUS_FIELDS,
     };
   }
@@ -1720,6 +1744,7 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     replacementCandidatesUsedByMarket?: unknown;
     timeoutByMarket?: unknown;
     lastKnownGoodByMarket?: unknown;
+    publicPriceDiagnostics?: unknown;
     lastRefreshAt?: unknown;
     targetedMarkets?: unknown;
     visibleGapsAttempted?: unknown;
@@ -1766,6 +1791,7 @@ function normalizeStatusPayload(payload: unknown): HomepageFareStatusPayload {
     replacementCandidatesUsedByMarket: normalizeCountRecord(candidate.replacementCandidatesUsedByMarket),
     timeoutByMarket: normalizeCountRecord(candidate.timeoutByMarket),
     lastKnownGoodByMarket: normalizeCountRecord(candidate.lastKnownGoodByMarket),
+    publicPriceDiagnostics: normalizePublicPriceDiagnostics(candidate.publicPriceDiagnostics),
     targetedMarkets: readStringArray(candidate.targetedMarkets),
     visibleGapsAttempted: normalizeVisibleGapAttempts(candidate.visibleGapsAttempted),
     replacementsUsed: normalizeReplacementUsages(candidate.replacementsUsed),
@@ -1984,6 +2010,35 @@ function isSafeHomepageFareErrorReason(
     typeof value === "string" &&
     value in SAFE_HOMEPAGE_FARE_ERROR_CATEGORIES
   );
+}
+
+function createEmptyPublicPriceDiagnostics(): Record<PublicPriceDiagnosis, number> {
+  return {
+    fresh_available: 0,
+    last_known_good_used: 0,
+    last_known_good_failed_safety_check: 0,
+    fresh_missing: 0,
+    last_known_good_missing: 0,
+    exact_route_mismatch: 0,
+    provider_failed: 0,
+    provider_unavailable: 0,
+    no_provider_backed_fare_ever: 0,
+    price_invalid: 0,
+  };
+}
+
+function normalizePublicPriceDiagnostics(value: unknown) {
+  const diagnostics = createEmptyPublicPriceDiagnostics();
+
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return diagnostics;
+  }
+
+  for (const key of Object.keys(diagnostics) as PublicPriceDiagnosis[]) {
+    diagnostics[key] = readCount((value as Record<string, unknown>)[key]);
+  }
+
+  return diagnostics;
 }
 
 function normalizeStatusSummary(
