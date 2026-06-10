@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject, type ReactNode } from "react";
 import { RefreshCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -415,6 +415,7 @@ export function HomepageFaresRefreshCard() {
   });
   const [selectedRouteScope, setSelectedRouteScope] = useState<string | null>(null);
   const [routePage, setRoutePage] = useState(1);
+  const routeDetailsRef = useRef<HTMLDivElement>(null);
   const [routeFilter, setRouteFilter] =
     useState<AdminHomepageFareRouteGroupFilter>("all");
   const selectRouteScope = useCallback((scope: string) => {
@@ -429,6 +430,16 @@ export function HomepageFaresRefreshCard() {
     setRoutePage(1);
     setRouteFilter(filter);
   }, []);
+
+  useEffect(() => {
+    if (!selectedRouteScope) return;
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      routeDetailsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [selectedRouteScope, routeFilter]);
 
   const loadStatus = useCallback(async () => {
     setStatusState((current) => ({ ...current, loading: true, error: "" }));
@@ -609,7 +620,11 @@ export function HomepageFaresRefreshCard() {
             onReload={() => void loadStatus()}
           />
 
-          <MarketReadinessDashboard markets={publicMarkets} onInspectMarket={selectRouteScope} />
+          <MarketReadinessDashboard
+            markets={publicMarkets}
+            selectedRouteScope={selectedRouteScope}
+            onInspectMarket={selectRouteScope}
+          />
 
           <MarketRouteInspector
             publicGroups={publicRouteGroups}
@@ -623,6 +638,7 @@ export function HomepageFaresRefreshCard() {
             onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
             onNextPage={() => setRoutePage((page) => page + 1)}
             onFilterChange={selectRouteFilter}
+            routeDetailsRef={routeDetailsRef}
           />
 
           <DiagnosticsPanel
@@ -632,7 +648,11 @@ export function HomepageFaresRefreshCard() {
             stoppedReason={latestCounts?.stoppedReason}
           />
 
-          <FallbackPoolsSection pools={fallbackPools} onInspectMarket={selectRouteScope} />
+          <FallbackPoolsSection
+            pools={fallbackPools}
+            selectedRouteScope={selectedRouteScope}
+            onInspectMarket={selectRouteScope}
+          />
 
           <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
         </div>
@@ -918,9 +938,11 @@ function RefreshCronPanel({
 
 function MarketReadinessDashboard({
   markets,
+  selectedRouteScope,
   onInspectMarket,
 }: {
   markets: MarketReadiness[];
+  selectedRouteScope: string | null;
   onInspectMarket: (marketCode: string) => void;
 }) {
   return (
@@ -932,7 +954,12 @@ function MarketReadinessDashboard({
       <div className="mt-4 grid gap-3 xl:grid-cols-2">
         {markets.length ? (
           markets.map((market) => (
-            <MarketReadinessCard key={market.marketCode} market={market} onInspectMarket={onInspectMarket} />
+            <MarketReadinessCard
+              key={market.marketCode}
+              market={market}
+              selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(market.marketCode)}
+              onInspectMarket={onInspectMarket}
+            />
           ))
         ) : (
           <p className="rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
@@ -946,13 +973,24 @@ function MarketReadinessDashboard({
 
 function MarketReadinessCard({
   market,
+  selected,
   onInspectMarket,
 }: {
   market: MarketReadiness;
+  selected: boolean;
   onInspectMarket: (marketCode: string) => void;
 }) {
   return (
-    <article className="rounded-2xl border border-border bg-white p-4 shadow-sm">
+    <button
+      type="button"
+      onClick={() => onInspectMarket(market.marketCode)}
+      aria-pressed={selected}
+      className={`group w-full cursor-pointer rounded-2xl border p-4 text-left shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
+        selected
+          ? "border-navy bg-white shadow-md ring-2 ring-navy/15"
+          : "border-border bg-white hover:-translate-y-0.5 hover:border-navy/35 hover:shadow-md"
+      }`}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h4 className="text-lg font-extrabold text-navy">{market.marketLabel}</h4>
@@ -984,14 +1022,10 @@ function MarketReadinessCard({
         <strong className="text-navy">Underfill reason:</strong>{" "}
         {market.underfillReason ?? (market.targetMet ? "Coverage target met." : "No executor reason returned.")}
       </div>
-      <button
-        type="button"
-        onClick={() => onInspectMarket(market.marketCode)}
-        className="mt-3 text-sm font-extrabold text-teal-dark underline-offset-4 hover:underline"
-      >
+      <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-dark/30 bg-teal/10 px-4 py-2 text-sm font-extrabold text-teal-dark transition group-hover:border-teal-dark/50 group-hover:bg-teal/15">
         Inspect {market.marketCode} routes
-      </button>
-    </article>
+      </span>
+    </button>
   );
 }
 
@@ -1056,9 +1090,11 @@ function DiagnosticsPanel({
 
 function FallbackPoolsSection({
   pools,
+  selectedRouteScope,
   onInspectMarket,
 }: {
   pools: MarketReadiness[];
+  selectedRouteScope: string | null;
   onInspectMarket: (marketCode: string) => void;
 }) {
   return (
@@ -1069,39 +1105,49 @@ function FallbackPoolsSection({
     >
       <div className="mt-4 grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
         {pools.length ? (
-          pools.map((pool) => (
-            <article key={pool.marketCode} className="rounded-xl border border-dashed border-border bg-slate-50 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h4 className="font-extrabold text-navy">{pool.marketLabel}</h4>
-                  <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
-                    {pool.marketCode} · {pool.marketGroup}
-                  </p>
-                </div>
-                <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-extrabold text-muted">
-                  Fallback only
-                </span>
-              </div>
-              <p className="mt-3 text-sm font-semibold leading-6 text-muted">
-                No public display target. Coverage is retained for internal routing, replacement, and regional debugging.
-              </p>
-              <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                <MarketMiniMetric label="Fresh" value={pool.freshCount ?? 0} />
-                <MarketMiniMetric label="Missing" value={pool.missingCount ?? 0} />
-                <MarketMiniMetric label="Failed" value={pool.failed} />
-                <MarketMiniMetric label="Provider" value={pool.providerCalls} />
-                <MarketMiniMetric label="Attempts" value={pool.routeAttempts} />
-                <MarketMiniMetric label="Timeout" value={pool.timeoutCount ?? 0} />
-              </dl>
+          pools.map((pool) => {
+            const selected = normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(pool.marketCode);
+
+            return (
               <button
+                key={pool.marketCode}
                 type="button"
                 onClick={() => onInspectMarket(pool.marketCode)}
-                className="mt-3 text-sm font-extrabold text-teal-dark underline-offset-4 hover:underline"
+                aria-pressed={selected}
+                className={`w-full cursor-pointer rounded-xl border border-dashed p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
+                  selected
+                    ? "border-navy bg-white shadow-md ring-2 ring-navy/15"
+                    : "border-border bg-slate-50 hover:border-navy/35 hover:bg-white hover:shadow-sm"
+                }`}
               >
-                Inspect fallback routes
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h4 className="font-extrabold text-navy">{pool.marketLabel}</h4>
+                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-muted">
+                      {pool.marketCode} · {pool.marketGroup}
+                    </p>
+                  </div>
+                  <span className="rounded-full bg-slate-200 px-2.5 py-1 text-xs font-extrabold text-muted">
+                    Fallback only
+                  </span>
+                </div>
+                <p className="mt-3 text-sm font-semibold leading-6 text-muted">
+                  No public display target. Coverage is retained for internal routing, replacement, and regional debugging.
+                </p>
+                <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                  <MarketMiniMetric label="Fresh" value={pool.freshCount ?? 0} />
+                  <MarketMiniMetric label="Missing" value={pool.missingCount ?? 0} />
+                  <MarketMiniMetric label="Failed" value={pool.failed} />
+                  <MarketMiniMetric label="Provider" value={pool.providerCalls} />
+                  <MarketMiniMetric label="Attempts" value={pool.routeAttempts} />
+                  <MarketMiniMetric label="Timeout" value={pool.timeoutCount ?? 0} />
+                </dl>
+                <span className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-dark/30 bg-teal/10 px-4 py-2 text-sm font-extrabold text-teal-dark">
+                  Inspect fallback routes
+                </span>
               </button>
-            </article>
-          ))
+            );
+          })
         ) : (
           <p className="rounded-xl border border-border bg-slate-50 p-4 text-sm font-semibold text-muted">
             No fallback-only pools were returned.
@@ -1149,6 +1195,7 @@ function MarketRouteInspector({
   onPreviousPage,
   onNextPage,
   onFilterChange,
+  routeDetailsRef,
 }: {
   publicGroups: AdminHomepageFareMarketRouteGroup[];
   fallbackGroups: AdminHomepageFareMarketRouteGroup[];
@@ -1161,6 +1208,7 @@ function MarketRouteInspector({
   onPreviousPage: () => void;
   onNextPage: () => void;
   onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
+  routeDetailsRef: RefObject<HTMLDivElement | null>;
 }) {
   const handleSelectMarket = (marketCode: string) => {
     onSelectMarket(marketCode);
@@ -1190,7 +1238,7 @@ function MarketRouteInspector({
               key={item.key}
               type="button"
               onClick={() => handleFilterChange(item.key)}
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold transition ${
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
                 filter === item.key
                   ? "border-navy bg-navy text-white shadow-sm"
                   : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white"
@@ -1217,10 +1265,10 @@ function MarketRouteInspector({
             <button
               type="button"
               onClick={() => handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)}
-              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold transition ${
+              className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
                 selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
-                  ? "border-navy bg-navy text-white"
-                  : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white"
+                  ? "border-navy bg-navy text-white ring-2 ring-navy/15"
+                  : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white hover:shadow-md"
               }`}
               aria-pressed={selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE}
             >
@@ -1234,7 +1282,7 @@ function MarketRouteInspector({
                 <MarketRouteGroupCard
                   key={group.marketCode}
                   group={group}
-                  selected={selectedRouteScope === group.marketCode}
+                  selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(group.marketCode)}
                   onSelect={handleSelectMarket}
                 />
               ))}
@@ -1261,7 +1309,7 @@ function MarketRouteInspector({
                 <MarketRouteGroupCard
                   key={group.marketCode}
                   group={group}
-                  selected={selectedRouteScope === group.marketCode}
+                  selected={normalizeAdminHomepageFareMarketCode(selectedRouteScope ?? "") === normalizeAdminHomepageFareMarketCode(group.marketCode)}
                   onSelect={handleSelectMarket}
                   fallbackOnly
                 />
@@ -1272,6 +1320,7 @@ function MarketRouteInspector({
       </div>
 
       <SelectedRouteDetails
+        routeDetailsRef={routeDetailsRef}
         group={selectedGroup}
         selectedRouteScope={selectedRouteScope}
         loading={loading}
@@ -1298,12 +1347,13 @@ function MarketRouteGroupCard({
     <button
       type="button"
       onClick={() => onSelect(group.marketCode)}
-      className={`h-full rounded-2xl border p-4 text-left transition ${
+      className={`h-full w-full cursor-pointer rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-dark ${
         selected
-          ? "border-navy bg-white shadow-md ring-2 ring-navy/10"
-          : "border-slate-200 bg-white/70 hover:border-navy/30 hover:bg-white hover:shadow-sm"
+          ? "border-navy bg-white shadow-md ring-2 ring-navy/15"
+          : "border-slate-200 bg-white/70 hover:-translate-y-0.5 hover:border-navy/35 hover:bg-white hover:shadow-md"
       }`}
       aria-pressed={selected}
+      aria-label={`Inspect ${group.marketCode} routes`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -1325,11 +1375,15 @@ function MarketRouteGroupCard({
         <MarketMiniMetric label="LKG" value={group.lastKnownGoodFaresCount} />
         <MarketMiniMetric label="Failed/missing" value={group.failedUnavailableRoutesCount + group.missingRoutesCount} />
       </dl>
+      <span className="mt-4 inline-flex min-h-10 items-center justify-center rounded-full border border-teal-dark/30 bg-teal/10 px-4 py-2 text-sm font-extrabold text-teal-dark transition">
+        Inspect {group.marketCode} routes
+      </span>
     </button>
   );
 }
 
 function SelectedRouteDetails({
+  routeDetailsRef,
   group,
   selectedRouteScope,
   loading,
@@ -1337,6 +1391,7 @@ function SelectedRouteDetails({
   onPreviousPage,
   onNextPage,
 }: {
+  routeDetailsRef: RefObject<HTMLDivElement | null>;
   group: AdminHomepageFareMarketRouteGroup | null;
   selectedRouteScope: string | null;
   loading: boolean;
@@ -1346,7 +1401,7 @@ function SelectedRouteDetails({
 }) {
   if (!selectedRouteScope || !group) {
     return (
-      <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center">
+      <div ref={routeDetailsRef} className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center">
         <p className="text-sm font-extrabold text-navy">
           Select a market to inspect its routes, or choose View All.
         </p>
@@ -1361,7 +1416,7 @@ function SelectedRouteDetails({
   const isViewAll = group.marketCode === "ALL";
 
   return (
-    <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white/80 shadow-sm">
+    <div ref={routeDetailsRef} className="mt-5 overflow-hidden rounded-2xl border border-slate-200 bg-white/80 shadow-sm">
       <div className="border-b border-slate-200 bg-slate-50/90 px-4 py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
