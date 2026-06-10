@@ -529,7 +529,7 @@ export function AppHeader({
   return (
     <>
       <header className="relative z-50 border-b border-white/10 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
-        <div className="page-shell flex flex-col gap-0.5 py-1 md:gap-1">
+        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-1 md:pt-[6px]">
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[42px] md:gap-4">
             <Link
               href="/"
@@ -924,7 +924,7 @@ export function AppHeader({
           </div>
 
           <nav className="hidden md:block">
-            <div className="flex min-h-[32px] items-center pb-0.5 md:pl-11 lg:pl-12">
+            <div className="flex min-h-[32px] items-center pb-0.5 md:pl-20 lg:pl-24">
               <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
                 {desktopPrimaryNavItems.map((item) => {
                   const Icon = item.icon;
@@ -937,13 +937,13 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, item.href)
                       }
-                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                         active
                           ? "bg-white/10 text-white ring-1 ring-white/25"
                           : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
                       }`}
                     >
-                      {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                      {Icon ? <Icon size={16} aria-hidden="true" /> : null}
                       <span>{item.label}</span>
                     </Link>
                   );
