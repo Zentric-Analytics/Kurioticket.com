@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
   ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE,
   buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
   paginateAdminHomepageFareRoutes,
+  resolveAdminHomepageFareSelectedRouteGroup,
   splitAdminHomepageFareMarketRouteGroups,
   type AdminHomepageFareMarket,
   type AdminHomepageFareRoute,
@@ -271,6 +273,94 @@ test("public market cards exclude fallback-only groups while fallback groups rem
   assert.deepEqual(fallbackGroups.map((group) => group.marketCode), ["GLOBAL"]);
   assert.equal(fallbackGroups[0]?.status, "Fallback only");
   assert.equal(fallbackGroups[0]?.routes.length, 1);
+});
+
+test("selected market scope resolves only that market's paginated routes", () => {
+  const manyRoutes = Array.from({ length: 12 }, (_, index): AdminHomepageFareRoute => ({
+    id: `us-route-${index + 1}`,
+    market: index % 2 === 0 ? "us" : "US",
+    label: `US Route ${index + 1}`,
+    origin: "JFK",
+    destination: `D${index + 1}`,
+    section: "popular",
+    status: "fresh",
+  }));
+  const groups = buildAdminHomepageFareRouteGroups({
+    routes: [...manyRoutes, ...routes.filter((route) => route.market !== "US")],
+    markets,
+    includeEmptyGroups: true,
+  });
+  const selectedUs = resolveAdminHomepageFareSelectedRouteGroup({
+    selectedScope: "us",
+    marketRouteGroups: groups,
+    allRoutesGroup: buildAdminHomepageFareAllRoutesGroup(routes),
+  });
+  const page = paginateAdminHomepageFareRoutes(selectedUs?.routes, 1);
+
+  assert.equal(selectedUs?.marketCode, "US");
+  assert.equal(page.routes.length, ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE);
+  assert.equal(page.totalRoutes, 12);
+  assert.deepEqual([...new Set((selectedUs?.routes ?? []).map((route) => route.market.toUpperCase()))], ["US"]);
+});
+
+test("View All scope is separate from the All status filter and paginates all filtered routes", () => {
+  const manyRoutes = Array.from({ length: 15 }, (_, index): AdminHomepageFareRoute => ({
+    id: `mixed-route-${index + 1}`,
+    market: index % 2 === 0 ? "US" : "NG",
+    label: `Mixed Route ${index + 1}`,
+    origin: index % 2 === 0 ? "JFK" : "LOS",
+    destination: `M${index + 1}`,
+    section: "discovery",
+    status: index < 12 ? "fresh" : "missing",
+  }));
+  const marketGroups = buildAdminHomepageFareRouteGroups({
+    routes: manyRoutes,
+    markets,
+    filter: "fresh",
+  });
+  const allRoutesGroup = buildAdminHomepageFareAllRoutesGroup(manyRoutes, "fresh");
+  const selectedAll = resolveAdminHomepageFareSelectedRouteGroup({
+    selectedScope: ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
+    marketRouteGroups: marketGroups,
+    allRoutesGroup,
+  });
+  const page = paginateAdminHomepageFareRoutes(selectedAll?.routes, 1);
+
+  assert.equal(selectedAll?.displayName, "All routes");
+  assert.equal(selectedAll?.routes.length, 12);
+  assert.equal(page.routes.length, ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE);
+  assert.equal(page.hasNextPage, true);
+  assert.deepEqual([...new Set((selectedAll?.routes ?? []).map((route) => route.status))], ["fresh"]);
+});
+
+test("changing status filters preserves the selected route scope", () => {
+  const missingGroups = buildAdminHomepageFareRouteGroups({
+    routes,
+    markets,
+    filter: "missing",
+    includeEmptyGroups: true,
+  });
+  const selectedUs = resolveAdminHomepageFareSelectedRouteGroup({
+    selectedScope: "US",
+    marketRouteGroups: missingGroups,
+    allRoutesGroup: buildAdminHomepageFareAllRoutesGroup(routes, "missing"),
+  });
+
+  assert.equal(selectedUs?.marketCode, "US");
+  assert.deepEqual(selectedUs?.routes.map((route) => route.id), ["discover-us-la-vegas"]);
+});
+
+test("no selected route scope resolves to null for the initial help state", () => {
+  const groups = buildAdminHomepageFareRouteGroups({ routes, markets });
+
+  assert.equal(
+    resolveAdminHomepageFareSelectedRouteGroup({
+      selectedScope: null,
+      marketRouteGroups: groups,
+      allRoutesGroup: buildAdminHomepageFareAllRoutesGroup(routes),
+    }),
+    null,
+  );
 });
 
 test("grouping renders empty admin state when route readiness arrays are missing", () => {
