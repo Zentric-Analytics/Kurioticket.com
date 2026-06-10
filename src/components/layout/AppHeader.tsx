@@ -528,453 +528,465 @@ export function AppHeader({
 
   return (
     <>
-      <header className="relative z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
-        <div className="page-shell flex min-h-[56px] items-center justify-between gap-3 py-2 md:min-h-[46px] md:gap-4 md:py-1">
-          <Link
-            href="/"
-            aria-label="Kurioticket home"
-            onClick={(event) => handleRouteLinkClick(event, "/")}
-            className="shrink-0"
-          >
-            <KurioticketLogo
-              variant="full"
-              tone="light"
-              className="gap-2"
-              markClassName="h-8 w-8 md:h-9 md:w-9"
-              textClassName="text-base md:text-lg"
-            />
-          </Link>
+      <header className="relative z-50 border-b border-white/10 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
+        <div className="page-shell flex flex-col gap-0.5 py-1 md:gap-1 md:py-0.5">
+          <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[42px] md:gap-4">
+            <Link
+              href="/"
+              aria-label="Kurioticket home"
+              onClick={(event) => handleRouteLinkClick(event, "/")}
+              className="shrink-0"
+            >
+              <KurioticketLogo
+                variant="full"
+                tone="light"
+                className="gap-2"
+                markClassName="h-8 w-8 md:h-9 md:w-9"
+                textClassName="text-base md:text-lg"
+              />
+            </Link>
 
-          <div className="hidden min-w-0 flex-1 items-center justify-end gap-2 md:flex">
-            <CountryCurrencySelector variant="header" grouped />
+            <div className="hidden min-w-0 flex-1 items-center justify-end gap-2 md:flex">
+              <CountryCurrencySelector variant="header" grouped />
 
-            <div className="relative" ref={languageRef}>
+              <div className="relative" ref={languageRef}>
+                <button
+                  ref={languageTriggerRef}
+                  type="button"
+                  onClick={() => setLanguageOpen((value) => !value)}
+                  aria-haspopup="dialog"
+                  aria-expanded={languageOpen}
+                  aria-controls={languageOpen ? languageDialogId : undefined}
+                  aria-label={t.openLanguagePreferences.replace(
+                    "{{language}}",
+                    selectedLanguageDisplayName,
+                  )}
+                  title={t.openLanguagePreferences.replace(
+                    "{{language}}",
+                    selectedLanguageDisplayName,
+                  )}
+                  className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/20 bg-white/10 text-indigo-50 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                >
+                  {renderFlag(
+                    selectedLanguage?.countryCode,
+                    selectedLanguage?.fallbackText,
+                  )}
+                </button>
+              </div>
+
+              <div className="flex shrink-0 items-center justify-end gap-2">
+                {isSignedIn ? (
+                  <div className="relative" ref={accountRef}>
+                    <button
+                      type="button"
+                      aria-haspopup="menu"
+                      aria-expanded={accountOpen}
+                      onClick={() => setAccountOpen((value) => !value)}
+                      className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-1.5 pr-2.5 text-[13px] font-semibold text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    >
+                      <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
+                        {session?.user?.image ? (
+                          <RawImage
+                            src={session.user.image}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          accountInitials
+                        )}
+                      </span>
+
+                      <span className="max-w-[8rem] truncate">
+                        {accountDisplayName}
+                      </span>
+
+                      <ChevronDown
+                        size={13}
+                        className={`text-indigo-100 transition-transform ${accountOpen ? "rotate-180" : ""}`}
+                        aria-hidden="true"
+                      />
+                    </button>
+
+                    {accountOpen ? (
+                      <div
+                        role="menu"
+                        aria-label="Account menu"
+                        className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
+                      >
+                        <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+                          <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
+                            Kurioticket account
+                          </p>
+                          <p className="mt-1 truncate text-sm font-black text-slate-950">
+                            {session?.user?.name || accountDisplayName}
+                          </p>
+                          {session?.user?.email ? (
+                            <p className="truncate text-xs font-semibold text-slate-500">
+                              {session.user.email}
+                            </p>
+                          ) : null}
+                        </div>
+
+                        <div className="grid gap-1 p-2">
+                          {signedInAccountMenuItems.map((item) => {
+                            const Icon = item.icon;
+
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                role="menuitem"
+                                onClick={(event) =>
+                                  handleRouteLinkClick(event, item.href, () =>
+                                    setAccountOpen(false),
+                                  )
+                                }
+                                className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              >
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
+                                  <Icon size={17} aria-hidden="true" />
+                                </span>
+
+                                <span className="min-w-0">
+                                  <span className="block text-sm font-bold text-slate-950">
+                                    {item.label}
+                                  </span>
+                                  <span className="block truncate text-xs font-medium text-slate-500">
+                                    {item.description}
+                                  </span>
+                                </span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+
+                        <div className="border-t border-slate-100 p-2">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={handleSignOut}
+                            disabled={isSigningOut}
+                            aria-busy={isSigningOut}
+                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                          >
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                              <LogOut size={17} aria-hidden="true" />
+                            </span>
+                            {isSigningOut ? t.signingOut : t.logout}
+                          </button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <>
+                    <Link
+                      href="/auth/signin"
+                      onClick={(event) =>
+                        handleRouteLinkClick(event, "/auth/signin")
+                      }
+                      className="inline-flex h-9 cursor-pointer items-center rounded-full px-3 text-[13px] font-semibold text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    >
+                      {t.login}
+                    </Link>
+
+                    <Link
+                      href="/auth/signup"
+                      onClick={(event) =>
+                        handleRouteLinkClick(event, "/auth/signup")
+                      }
+                      className="inline-flex h-9 cursor-pointer items-center rounded-full bg-violet-600 px-3.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    >
+                      {t.signUp}
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 md:hidden">
+              {isSignedIn ? (
+                <button
+                  type="button"
+                  aria-label={t.openAccountMenu}
+                  aria-expanded={open}
+                  aria-haspopup="menu"
+                  onClick={() => setOpen((value) => !value)}
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-xs font-black text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                >
+                  <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
+                    {session?.user?.image ? (
+                      <RawImage
+                        src={session.user.image}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      accountInitials
+                    )}
+                  </span>
+                </button>
+              ) : (
+                <Link
+                  href="/auth/signin"
+                  aria-label={t.signIn}
+                  onClick={(event) =>
+                    handleRouteLinkClick(event, "/auth/signin")
+                  }
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                >
+                  <UserCircle size={18} />
+                </Link>
+              )}
+
               <button
-                ref={languageTriggerRef}
                 type="button"
-                onClick={() => setLanguageOpen((value) => !value)}
-                aria-haspopup="dialog"
-                aria-expanded={languageOpen}
-                aria-controls={languageOpen ? languageDialogId : undefined}
-                aria-label={t.openLanguagePreferences.replace(
-                  "{{language}}",
-                  selectedLanguageDisplayName,
-                )}
-                title={t.openLanguagePreferences.replace(
-                  "{{language}}",
-                  selectedLanguageDisplayName,
-                )}
-                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/20 bg-white/10 text-indigo-50 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                aria-label={open ? t.closeMobileMenu : t.openMobileMenu}
+                aria-expanded={open}
+                aria-controls={open ? "mobile-menu-drawer" : undefined}
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                onClick={() => setOpen((value) => !value)}
               >
-                {renderFlag(
-                  selectedLanguage?.countryCode,
-                  selectedLanguage?.fallbackText,
-                )}
+                {open ? <X size={18} /> : <Menu size={18} />}
               </button>
             </div>
 
-            <div className="flex shrink-0 items-center justify-end gap-2">
-              {isSignedIn ? (
-                <div className="relative" ref={accountRef}>
-                  <button
-                    type="button"
-                    aria-haspopup="menu"
-                    aria-expanded={accountOpen}
-                    onClick={() => setAccountOpen((value) => !value)}
-                    className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-1.5 pr-2.5 text-[13px] font-semibold text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                  >
-                    <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
-                      {session?.user?.image ? (
-                        <RawImage
-                          src={session.user.image}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        accountInitials
-                      )}
-                    </span>
-
-                    <span className="max-w-[8rem] truncate">
-                      {accountDisplayName}
-                    </span>
-
-                    <ChevronDown
-                      size={13}
-                      className={`text-indigo-100 transition-transform ${accountOpen ? "rotate-180" : ""}`}
-                      aria-hidden="true"
-                    />
-                  </button>
-
-                  {accountOpen ? (
+            {languageOpen && typeof document !== "undefined"
+              ? createPortal(
+                  <>
                     <div
-                      role="menu"
-                      aria-label="Account menu"
-                      className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
+                      className="fixed inset-0 z-40 bg-slate-900/45"
+                      onClick={closeLanguageDialog}
+                    />
+
+                    <section
+                      ref={languageMenuRef}
+                      id={languageDialogId}
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby={languageTitleId}
+                      aria-describedby={languageDescriptionId}
+                      className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(64px,6vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
                     >
-                      <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
-                        <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
-                          Kurioticket account
-                        </p>
-                        <p className="mt-1 truncate text-sm font-black text-slate-950">
-                          {session?.user?.name || accountDisplayName}
-                        </p>
-                        {session?.user?.email ? (
-                          <p className="truncate text-xs font-semibold text-slate-500">
-                            {session.user.email}
+                      <div className="mb-5 flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-600">
+                            {t.globalLanguage}
                           </p>
-                        ) : null}
+                          <h2
+                            id={languageTitleId}
+                            className="mt-1 text-xl font-black text-slate-950"
+                          >
+                            {t.websiteLanguageTitle}
+                          </h2>
+                          <p
+                            id={languageDescriptionId}
+                            className="mt-1 max-w-2xl text-sm leading-6 text-slate-600"
+                          >
+                            {t.websiteLanguageDescription}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={closeLanguageDialog}
+                          className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                          aria-label={t.closeLanguageSelector}
+                        >
+                          <X size={18} aria-hidden="true" />
+                        </button>
                       </div>
 
-                      <div className="grid gap-1 p-2">
-                        {signedInAccountMenuItems.map((item) => {
-                          const Icon = item.icon;
+                      <div className="mb-4 rounded-none border border-slate-200 bg-slate-50 px-4 py-3">
+                        <p className="text-sm font-bold text-slate-950">
+                          {t.currentLanguage.replace(
+                            "{{language}}",
+                            selectedLanguageDisplayName,
+                          )}
+                        </p>
+                        <p className="mt-1 text-xs font-medium text-slate-600">
+                          {t.languagePreparingNotice}
+                        </p>
+                      </div>
+
+                      <label
+                        htmlFor={languageSearchId}
+                        className="mb-2 block text-sm font-bold text-slate-900"
+                      >
+                        {t.languageSearchLabel}
+                      </label>
+
+                      <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
+                        <Search
+                          size={16}
+                          className="text-slate-500"
+                          aria-hidden="true"
+                        />
+
+                        <input
+                          ref={languageSearchInputRef}
+                          id={languageSearchId}
+                          value={languageQuery}
+                          onChange={(event) => {
+                            setLanguageQuery(event.target.value);
+                            setLanguageStatusMessage("");
+                          }}
+                          placeholder={t.languageSearchPlaceholder}
+                          className="w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
+                        />
+                      </div>
+
+                      {languageStatusMessage ? (
+                        <p
+                          className="mb-4 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900"
+                          role="status"
+                        >
+                          {languageStatusMessage}
+                        </p>
+                      ) : null}
+
+                      <div
+                        role="radiogroup"
+                        aria-label={t.languageOptionsLabel}
+                        className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
+                      >
+                        {filteredLanguages.map((option) => {
+                          const active = option.code === locale;
+                          const available = option.status === "available";
 
                           return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              role="menuitem"
-                              onClick={(event) =>
-                                handleRouteLinkClick(event, item.href, () =>
-                                  setAccountOpen(false),
-                                )
+                            <button
+                              key={option.code}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              aria-disabled={!available}
+                              aria-label={
+                                available
+                                  ? t.selectLanguageOption.replace(
+                                      "{{language}}",
+                                      option.nativeLabel,
+                                    )
+                                  : t.languagePreparingAria.replace(
+                                      "{{language}}",
+                                      option.nativeLabel,
+                                    )
                               }
-                              className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              onClick={() => handleLanguageSelect(option)}
+                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                                active
+                                  ? "border-violet-500 bg-violet-50 ring-2 ring-violet-100"
+                                  : available
+                                    ? "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
+                                    : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
+                              }`}
                             >
-                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
-                                <Icon size={17} aria-hidden="true" />
+                              <span className="flex min-w-0 items-start gap-2.5">
+                                {renderFlag(
+                                  option.countryCode,
+                                  option.fallbackText,
+                                )}
+
+                                <span className="min-w-0">
+                                  <span
+                                    className="block truncate text-sm font-black text-slate-950"
+                                    dir={option.direction}
+                                  >
+                                    {option.nativeLabel}
+                                  </span>
+                                  <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                                    {option.label} · {option.locale}
+                                  </span>
+                                  {!available ? (
+                                    <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
+                                      {t.preparing}
+                                    </span>
+                                  ) : null}
+                                </span>
                               </span>
 
-                              <span className="min-w-0">
-                                <span className="block text-sm font-bold text-slate-950">
-                                  {item.label}
-                                </span>
-                                <span className="block truncate text-xs font-medium text-slate-500">
-                                  {item.description}
-                                </span>
-                              </span>
-                            </Link>
+                              {active ? (
+                                <Check
+                                  size={16}
+                                  className="mt-0.5 shrink-0 text-violet-600"
+                                  aria-hidden="true"
+                                />
+                              ) : null}
+                            </button>
                           );
                         })}
                       </div>
+                    </section>
+                  </>,
+                  document.body,
+                )
+              : null}
+          </div>
 
-                      <div className="border-t border-slate-100 p-2">
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={handleSignOut}
-                          disabled={isSigningOut}
-                          aria-busy={isSigningOut}
-                          className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
-                        >
-                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-                            <LogOut size={17} aria-hidden="true" />
-                          </span>
-                          {isSigningOut ? t.signingOut : t.logout}
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <>
-                  <Link
-                    href="/auth/signin"
-                    onClick={(event) =>
-                      handleRouteLinkClick(event, "/auth/signin")
-                    }
-                    className="inline-flex h-9 cursor-pointer items-center rounded-full px-3 text-[13px] font-semibold text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                  >
-                    {t.login}
-                  </Link>
+          <nav className="hidden md:block">
+            <div className="flex min-h-[32px] items-center pb-0.5">
+              <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
+                {desktopPrimaryNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isNavItemActive(item.href);
 
-                  <Link
-                    href="/auth/signup"
-                    onClick={(event) =>
-                      handleRouteLinkClick(event, "/auth/signup")
-                    }
-                    className="inline-flex h-9 cursor-pointer items-center rounded-full bg-violet-600 px-3.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                  >
-                    {t.signUp}
-                  </Link>
-                </>
-              )}
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={(event) =>
+                        handleRouteLinkClick(event, item.href)
+                      }
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                        active
+                          ? "bg-white/10 text-white ring-1 ring-white/25"
+                          : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          </nav>
 
-          <div className="flex items-center gap-2 md:hidden">
-            {isSignedIn ? (
-              <button
-                type="button"
-                aria-label={t.openAccountMenu}
-                aria-expanded={open}
-                aria-haspopup="menu"
-                onClick={() => setOpen((value) => !value)}
-                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-xs font-black text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-              >
-                <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
-                  {session?.user?.image ? (
-                    <RawImage
-                      src={session.user.image}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    accountInitials
-                  )}
-                </span>
-              </button>
-            ) : (
-              <Link
-                href="/auth/signin"
-                aria-label={t.signIn}
-                onClick={(event) => handleRouteLinkClick(event, "/auth/signin")}
-                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-              >
-                <UserCircle size={18} />
-              </Link>
-            )}
+          <nav className="md:hidden">
+            <div className="overflow-x-auto pb-1 pt-0.5">
+              <div className="flex min-w-max items-center gap-1.5 whitespace-nowrap">
+                {visibleMobilePrimaryNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isNavItemActive(item.href);
 
-            <button
-              type="button"
-              aria-label={open ? t.closeMobileMenu : t.openMobileMenu}
-              aria-expanded={open}
-              aria-controls={open ? "mobile-menu-drawer" : undefined}
-              className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-              onClick={() => setOpen((value) => !value)}
-            >
-              {open ? <X size={18} /> : <Menu size={18} />}
-            </button>
-          </div>
-
-          {languageOpen && typeof document !== "undefined"
-            ? createPortal(
-                <>
-                  <div
-                    className="fixed inset-0 z-40 bg-slate-900/45"
-                    onClick={closeLanguageDialog}
-                  />
-
-                  <section
-                    ref={languageMenuRef}
-                    id={languageDialogId}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-labelledby={languageTitleId}
-                    aria-describedby={languageDescriptionId}
-                    className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(64px,6vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
-                  >
-                    <div className="mb-5 flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-600">
-                          {t.globalLanguage}
-                        </p>
-                        <h2
-                          id={languageTitleId}
-                          className="mt-1 text-xl font-black text-slate-950"
-                        >
-                          {t.websiteLanguageTitle}
-                        </h2>
-                        <p
-                          id={languageDescriptionId}
-                          className="mt-1 max-w-2xl text-sm leading-6 text-slate-600"
-                        >
-                          {t.websiteLanguageDescription}
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={closeLanguageDialog}
-                        className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-                        aria-label={t.closeLanguageSelector}
-                      >
-                        <X size={18} aria-hidden="true" />
-                      </button>
-                    </div>
-
-                    <div className="mb-4 rounded-none border border-slate-200 bg-slate-50 px-4 py-3">
-                      <p className="text-sm font-bold text-slate-950">
-                        {t.currentLanguage.replace(
-                          "{{language}}",
-                          selectedLanguageDisplayName,
-                        )}
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-slate-600">
-                        {t.languagePreparingNotice}
-                      </p>
-                    </div>
-
-                    <label
-                      htmlFor={languageSearchId}
-                      className="mb-2 block text-sm font-bold text-slate-900"
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={(event) =>
+                        handleRouteLinkClick(event, item.href)
+                      }
+                      className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                        active
+                          ? "bg-white/10 text-white ring-1 ring-white/30 shadow-none"
+                          : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
+                      }`}
                     >
-                      {t.languageSearchLabel}
-                    </label>
-
-                    <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
-                      <Search
-                        size={16}
-                        className="text-slate-500"
-                        aria-hidden="true"
-                      />
-
-                      <input
-                        ref={languageSearchInputRef}
-                        id={languageSearchId}
-                        value={languageQuery}
-                        onChange={(event) => {
-                          setLanguageQuery(event.target.value);
-                          setLanguageStatusMessage("");
-                        }}
-                        placeholder={t.languageSearchPlaceholder}
-                        className="w-full border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400"
-                      />
-                    </div>
-
-                    {languageStatusMessage ? (
-                      <p
-                        className="mb-4 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900"
-                        role="status"
-                      >
-                        {languageStatusMessage}
-                      </p>
-                    ) : null}
-
-                    <div
-                      role="radiogroup"
-                      aria-label={t.languageOptionsLabel}
-                      className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
-                    >
-                      {filteredLanguages.map((option) => {
-                        const active = option.code === locale;
-                        const available = option.status === "available";
-
-                        return (
-                          <button
-                            key={option.code}
-                            type="button"
-                            role="radio"
-                            aria-checked={active}
-                            aria-disabled={!available}
-                            aria-label={
-                              available
-                                ? t.selectLanguageOption.replace(
-                                    "{{language}}",
-                                    option.nativeLabel,
-                                  )
-                                : t.languagePreparingAria.replace(
-                                    "{{language}}",
-                                    option.nativeLabel,
-                                  )
-                            }
-                            onClick={() => handleLanguageSelect(option)}
-                            className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
-                              active
-                                ? "border-violet-500 bg-violet-50 ring-2 ring-violet-100"
-                                : available
-                                  ? "border-slate-200 hover:border-violet-300 hover:bg-violet-50"
-                                  : "border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300"
-                            }`}
-                          >
-                            <span className="flex min-w-0 items-start gap-2.5">
-                              {renderFlag(
-                                option.countryCode,
-                                option.fallbackText,
-                              )}
-
-                              <span className="min-w-0">
-                                <span
-                                  className="block truncate text-sm font-black text-slate-950"
-                                  dir={option.direction}
-                                >
-                                  {option.nativeLabel}
-                                </span>
-                                <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
-                                  {option.label} · {option.locale}
-                                </span>
-                                {!available ? (
-                                  <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
-                                    {t.preparing}
-                                  </span>
-                                ) : null}
-                              </span>
-                            </span>
-
-                            {active ? (
-                              <Check
-                                size={16}
-                                className="mt-0.5 shrink-0 text-violet-600"
-                                aria-hidden="true"
-                              />
-                            ) : null}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                </>,
-                document.body,
-              )
-            : null}
+                      {Icon ? (
+                        <Icon
+                          size={15}
+                          className="shrink-0"
+                          aria-hidden="true"
+                        />
+                      ) : null}
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </nav>
         </div>
-
-        <nav className="hidden border-t border-white/10 bg-white/[0.04] md:block">
-          <div className="page-shell flex min-h-[36px] items-center py-1">
-            <div className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
-              {desktopPrimaryNavItems.map((item) => {
-                const Icon = item.icon;
-                const active = isNavItemActive(item.href);
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={(event) => handleRouteLinkClick(event, item.href)}
-                    className={`inline-flex cursor-pointer items-center gap-1 rounded-lg px-2.5 py-1 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                      active
-                        ? "bg-white/[0.12] text-white ring-1 ring-white/35"
-                        : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </nav>
-
-        <nav className="bg-white/5 md:hidden">
-          <div className="page-shell overflow-x-auto py-1.5">
-            <div className="flex min-w-max items-center gap-1.5 whitespace-nowrap">
-              {visibleMobilePrimaryNavItems.map((item) => {
-                const Icon = item.icon;
-                const active = isNavItemActive(item.href);
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={(event) => handleRouteLinkClick(event, item.href)}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                      active
-                        ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
-                        : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    {Icon ? (
-                      <Icon size={15} className="shrink-0" aria-hidden="true" />
-                    ) : null}
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        </nav>
 
         {open && typeof document !== "undefined"
           ? createPortal(
