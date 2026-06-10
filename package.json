@@ -8,6 +8,7 @@
     "prestart": "npm run db:deploy:render",
     "start": "next start",
     "lint": "eslint",
+    "test": "JITI_TSCONFIG_PATHS=true node --test --import jiti/register \"src/**/*.test.ts\"",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
@@ -48,6 +49,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "jiti": "^2.7.0",
     "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "typescript": "^5"
