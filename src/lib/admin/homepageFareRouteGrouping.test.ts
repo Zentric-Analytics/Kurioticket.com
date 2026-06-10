@@ -6,6 +6,7 @@ import {
   ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE,
   buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
+  normalizeAdminHomepageFareMarketCode,
   paginateAdminHomepageFareRoutes,
   resolveAdminHomepageFareSelectedRouteGroup,
   splitAdminHomepageFareMarketRouteGroups,
@@ -273,6 +274,55 @@ test("public market cards exclude fallback-only groups while fallback groups rem
   assert.deepEqual(fallbackGroups.map((group) => group.marketCode), ["GLOBAL"]);
   assert.equal(fallbackGroups[0]?.status, "Fallback only");
   assert.equal(fallbackGroups[0]?.routes.length, 1);
+});
+
+
+test("market card scopes use stable normalized market codes", () => {
+  const groups = buildAdminHomepageFareRouteGroups({
+    routes: [
+      {
+        id: "popular-ke-nairobi-mombasa",
+        market: "ke",
+        label: "Mombasa",
+        origin: "NBO",
+        destination: "MBA",
+        section: "popular",
+        status: "fresh",
+      },
+    ],
+    markets: [
+      {
+        market: "KE",
+        marketCode: " ke ",
+        marketLabel: "Kenya",
+        marketGroup: "Africa",
+        popularVisibleFresh: 1,
+        discoveryVisibleFresh: 0,
+        backupFresh: 0,
+        targetMet: false,
+        status: "underfilled",
+        failed: 0,
+        unavailable: 0,
+        candidatePoolSize: 1,
+        marketVisibility: "country",
+        popularVisibleTarget: 1,
+        discoveryVisibleTarget: 1,
+      },
+    ],
+    includeEmptyGroups: true,
+  });
+
+  assert.equal(normalizeAdminHomepageFareMarketCode(" ke "), "KE");
+  assert.deepEqual(groups.map((group) => group.marketCode), ["KE"]);
+
+  const selectedKe = resolveAdminHomepageFareSelectedRouteGroup({
+    selectedScope: "ke",
+    marketRouteGroups: groups,
+    allRoutesGroup: buildAdminHomepageFareAllRoutesGroup([]),
+  });
+
+  assert.equal(selectedKe?.marketCode, "KE");
+  assert.equal(selectedKe?.routes.length, 1);
 });
 
 test("selected market scope resolves only that market's paginated routes", () => {
