@@ -12,10 +12,8 @@ import {
   Headphones,
   LifeBuoy,
   LockKeyhole,
-  Luggage,
   Mail,
   PencilLine,
-  Plane,
   Route,
   Settings,
   ShieldCheck,
@@ -85,35 +83,6 @@ function isActiveDashboardRoute(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function TravelIllustration({ compact = false, variant = "luggage" }: { compact?: boolean; variant?: "luggage" | "globe" }) {
-  return (
-    <div
-      className={cn(
-        "relative isolate flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100/70 text-violet-700",
-        compact ? "size-20" : "size-20 sm:size-28",
-      )}
-      aria-hidden="true"
-    >
-      <div className="absolute inset-3 rounded-full bg-white/35" />
-      <div className="absolute -left-4 top-7 h-6 w-14 rounded-full bg-white/60" />
-      <div className="absolute right-2 top-8 h-5 w-12 rounded-full bg-white/70" />
-      {variant === "globe" ? (
-        <>
-          <div className="absolute inset-4 rounded-full border border-violet-300/60" />
-          <div className="absolute h-20 w-20 rounded-full border-l border-violet-300/70 sm:h-24 sm:w-24" />
-          <div className="absolute h-14 w-24 rotate-12 rounded-[100%] border-t border-dashed border-violet-400/80 sm:w-28" />
-          <Plane className="absolute right-3 top-8 size-7 rotate-45 fill-violet-700 text-violet-700" />
-        </>
-      ) : (
-        <>
-          <div className="absolute bottom-7 h-3 w-20 rounded-full bg-violet-300/30 blur-sm" />
-          <Luggage className={cn("relative fill-violet-500/20 text-violet-700 drop-shadow-sm", compact ? "size-12" : "size-12 sm:size-16")} />
-        </>
-      )}
-    </div>
-  );
-}
-
 export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: AccountDashboardFrameProps) {
   const pathname = usePathname();
 
@@ -124,7 +93,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
         mobileOverviewTabs && "gap-3 sm:gap-4",
       )}
     >
-      <aside className="min-w-0" aria-label="Account navigation">
+      <aside className="min-w-0 lg:sticky lg:top-5 lg:self-start" aria-label="Account navigation">
         <div
           className={cn(
             "border border-violet-100/80 bg-white shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]",
@@ -164,20 +133,6 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
             </div>
           </nav>
 
-          <div className="mt-5 hidden rounded-2xl border border-violet-100/80 bg-gradient-to-b from-violet-50/55 to-white p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-14 xl:mt-16">
-            <div className="mx-auto mb-2 flex justify-center opacity-85">
-              <TravelIllustration compact />
-            </div>
-            <h2 className="text-[13px] font-semibold text-slate-900">Book your next trip</h2>
-            <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">Find great deals on flights and hotels.</p>
-            <Link
-              href="/flights/results"
-              className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200 bg-white px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-50"
-            >
-              <Plane className="size-3.5" aria-hidden="true" />
-              Search flights
-            </Link>
-          </div>
         </div>
       </aside>
       <div className="min-w-0 space-y-3.5 sm:space-y-4">{children}</div>
