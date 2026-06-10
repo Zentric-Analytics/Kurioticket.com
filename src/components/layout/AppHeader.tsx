@@ -10,10 +10,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 
-import {
-  signOut,
-  useSession,
-} from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
@@ -110,18 +107,11 @@ export function AppHeader({
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState("");
-  const [languageStatusMessage, setLanguageStatusMessage] = useState(
-    ""
-  );
+  const [languageStatusMessage, setLanguageStatusMessage] = useState("");
   const [accountOpen, setAccountOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
-  const {
-    locale,
-    setLocale,
-    t,
-    locales,
-  } = useLocale();
+  const { locale, setLocale, t, locales } = useLocale();
 
   const pathname = usePathname();
   const { start: startRouteProgress } = useRouteProgress();
@@ -149,10 +139,7 @@ export function AppHeader({
     const onClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
 
-      if (
-        accountRef.current &&
-        !accountRef.current.contains(target)
-      ) {
+      if (accountRef.current && !accountRef.current.contains(target)) {
         setAccountOpen(false);
       }
     };
@@ -198,8 +185,8 @@ export function AppHeader({
 
       const focusableElements = Array.from(
         languageMenuRef.current.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        )
+          'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
       ).filter((element) => element.getClientRects().length > 0);
 
       const firstElement = focusableElements[0];
@@ -262,13 +249,11 @@ export function AppHeader({
   }, [open]);
 
   const selectedLanguage = useMemo(
-    () =>
-      locales.find((option) => option.code === locale) ?? locales[0],
-    [locale, locales]
+    () => locales.find((option) => option.code === locale) ?? locales[0],
+    [locale, locales],
   );
 
-  const selectedLanguageDisplayName =
-    selectedLanguage.nativeLabel;
+  const selectedLanguageDisplayName = selectedLanguage.nativeLabel;
 
   const accountDisplayName = useMemo(() => {
     const rawName = session?.user?.name?.trim();
@@ -282,16 +267,16 @@ export function AppHeader({
 
   const accountInitials = useMemo(() => {
     const source =
-      session?.user?.name?.trim() ||
-      session?.user?.email?.trim() ||
-      t.account;
+      session?.user?.name?.trim() || session?.user?.email?.trim() || t.account;
 
-    return source
-      .split(/[\s@._-]+/)
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part.charAt(0).toUpperCase())
-      .join("") || "A";
+    return (
+      source
+        .split(/[\s@._-]+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join("") || "A"
+    );
   }, [session?.user?.email, session?.user?.name, t.account]);
 
   const filteredLanguages = useMemo(() => {
@@ -358,7 +343,7 @@ export function AppHeader({
           ]
         : []),
     ],
-    [isSignedIn, t]
+    [isSignedIn, t],
   );
 
   const isNavItemActive = (href: string) => {
@@ -409,7 +394,7 @@ export function AppHeader({
     ]);
 
     return navItems.filter(
-      (item) => Boolean(item.icon) && mobilePrimaryHrefs.has(item.href)
+      (item) => Boolean(item.icon) && mobilePrimaryHrefs.has(item.href),
     );
   }, [navItems]);
 
@@ -418,7 +403,7 @@ export function AppHeader({
     // hideMobileSecondaryNavLinks is retained for the current header API even though
     // mobile secondary links now live in the overlay drawer instead of this rail.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [hideMobileSecondaryNavLinks, mobilePrimaryNavItems]
+    [hideMobileSecondaryNavLinks, mobilePrimaryNavItems],
   );
 
   const mobileDrawerHrefs = useMemo(
@@ -429,7 +414,7 @@ export function AppHeader({
         "/saved",
         ...(isSignedIn ? ["/dashboard"] : []),
       ]),
-    [isSignedIn]
+    [isSignedIn],
   );
 
   const mobileMenuNavItems = useMemo(() => {
@@ -438,7 +423,7 @@ export function AppHeader({
 
   const renderFlag = (
     countryCode: string | undefined,
-    fallbackText: string | undefined
+    fallbackText: string | undefined,
   ) => (
     <span className="inline-flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
       {countryCode ? (
@@ -468,7 +453,7 @@ export function AppHeader({
   const handleRouteLinkClick = (
     event: ReactMouseEvent<HTMLAnchorElement>,
     href: string,
-    afterStart?: () => void
+    afterStart?: () => void,
   ) => {
     if (
       event.defaultPrevented ||
@@ -504,7 +489,10 @@ export function AppHeader({
   const handleLanguageSelect = (option: (typeof locales)[number]) => {
     if (option.status !== "available") {
       setLanguageStatusMessage(
-        t.languageUnavailableMessage.replace("{{language}}", option.nativeLabel)
+        t.languageUnavailableMessage.replace(
+          "{{language}}",
+          option.nativeLabel,
+        ),
       );
       return;
     }
@@ -541,22 +529,54 @@ export function AppHeader({
   return (
     <>
       <header className="relative z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
-        <div className="page-shell flex min-h-[88px] items-center justify-between gap-5 py-4">
+        <div className="page-shell flex min-h-[56px] items-center justify-between gap-3 py-2 md:min-h-[66px] md:gap-4 md:py-2">
           <Link
             href="/"
             aria-label="Kurioticket home"
             onClick={(event) => handleRouteLinkClick(event, "/")}
             className="shrink-0"
           >
-            <KurioticketLogo variant="full" tone="light" />
+            <KurioticketLogo
+              variant="full"
+              tone="light"
+              className="gap-2"
+              markClassName="h-8 w-8 md:h-9 md:w-9"
+              textClassName="text-base md:text-lg"
+            />
           </Link>
 
-          <div className="hidden flex-1 flex-col gap-3 md:flex">
-            <div className="flex items-center justify-end gap-3">
-              <div className="inline-flex h-10 items-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
+          <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
+            <nav className="flex min-w-0 items-center justify-end gap-1.5">
+              {desktopPrimaryNavItems.map((item) => {
+                const Icon = item.icon;
+                const active = isNavItemActive(item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={(event) => handleRouteLinkClick(event, item.href)}
+                    className={`inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                      active
+                        ? "bg-white/10 text-white ring-1 ring-white/45 shadow-none"
+                        : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="flex shrink-0 items-center justify-end gap-2">
+              <div className="inline-flex h-9 items-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
                 <CountryCurrencySelector variant="header" grouped />
 
-                <span className="pointer-events-none h-6 w-px bg-white/20" aria-hidden="true" />
+                <span
+                  className="pointer-events-none h-6 w-px bg-white/20"
+                  aria-hidden="true"
+                />
 
                 <div className="relative" ref={languageRef}>
                   <button
@@ -566,12 +586,19 @@ export function AppHeader({
                     aria-haspopup="dialog"
                     aria-expanded={languageOpen}
                     aria-controls={languageOpen ? languageDialogId : undefined}
-                    aria-label={t.openLanguagePreferences.replace("{{language}}", selectedLanguageDisplayName)}
-                    className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-none border-0 bg-transparent px-3 text-xs font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    aria-label={t.openLanguagePreferences.replace(
+                      "{{language}}",
+                      selectedLanguageDisplayName,
+                    )}
+                    className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-none border-0 bg-transparent px-2.5 text-xs font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     <span>{selectedLanguageDisplayName}</span>
 
-                    <ChevronDown size={14} className="text-indigo-100" aria-hidden="true" />
+                    <ChevronDown
+                      size={14}
+                      className="text-indigo-100"
+                      aria-hidden="true"
+                    />
                   </button>
                 </div>
               </div>
@@ -583,9 +610,9 @@ export function AppHeader({
                     aria-haspopup="menu"
                     aria-expanded={accountOpen}
                     onClick={() => setAccountOpen((value) => !value)}
-                    className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-white/25 bg-white/10 px-2 pr-3 text-sm font-semibold text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-1.5 pr-2.5 text-[13px] font-semibold text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
-                    <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-xs font-black text-indigo-700 shadow-sm">
+                    <span className="inline-flex h-6 w-6 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
                       {session?.user?.image ? (
                         <RawImage
                           src={session.user.image}
@@ -597,10 +624,12 @@ export function AppHeader({
                       )}
                     </span>
 
-                    <span className="max-w-[8rem] truncate">{accountDisplayName}</span>
+                    <span className="max-w-[8rem] truncate">
+                      {accountDisplayName}
+                    </span>
 
                     <ChevronDown
-                      size={14}
+                      size={13}
                       className={`text-indigo-100 transition-transform ${accountOpen ? "rotate-180" : ""}`}
                       aria-hidden="true"
                     />
@@ -610,7 +639,7 @@ export function AppHeader({
                     <div
                       role="menu"
                       aria-label="Account menu"
-                      className="absolute right-0 top-[calc(100%+0.75rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
+                      className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
                     >
                       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
                         <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
@@ -636,11 +665,13 @@ export function AppHeader({
                               href={item.href}
                               role="menuitem"
                               onClick={(event) =>
-                                handleRouteLinkClick(event, item.href, () => setAccountOpen(false))
+                                handleRouteLinkClick(event, item.href, () =>
+                                  setAccountOpen(false),
+                                )
                               }
-                              className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
-                              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
+                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
                                 <Icon size={17} aria-hidden="true" />
                               </span>
 
@@ -664,9 +695,9 @@ export function AppHeader({
                           onClick={handleSignOut}
                           disabled={isSigningOut}
                           aria-busy={isSigningOut}
-                          className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                          className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                         >
-                          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                             <LogOut size={17} aria-hidden="true" />
                           </span>
                           {isSigningOut ? t.signingOut : t.logout}
@@ -679,45 +710,26 @@ export function AppHeader({
                 <>
                   <Link
                     href="/auth/signin"
-                    onClick={(event) => handleRouteLinkClick(event, "/auth/signin")}
-                    className="inline-flex h-10 cursor-pointer items-center rounded-full px-3.5 text-sm font-semibold text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    onClick={(event) =>
+                      handleRouteLinkClick(event, "/auth/signin")
+                    }
+                    className="inline-flex h-9 cursor-pointer items-center rounded-full px-3 text-[13px] font-semibold text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     {t.login}
                   </Link>
 
                   <Link
                     href="/auth/signup"
-                    onClick={(event) => handleRouteLinkClick(event, "/auth/signup")}
-                    className="inline-flex h-10 cursor-pointer items-center rounded-full bg-violet-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                    onClick={(event) =>
+                      handleRouteLinkClick(event, "/auth/signup")
+                    }
+                    className="inline-flex h-9 cursor-pointer items-center rounded-full bg-violet-600 px-3.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                   >
                     {t.signUp}
                   </Link>
                 </>
               )}
             </div>
-
-            <nav className="flex items-center gap-2.5">
-              {desktopPrimaryNavItems.map((item) => {
-                const Icon = item.icon;
-                const active = isNavItemActive(item.href);
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={(event) => handleRouteLinkClick(event, item.href)}
-                    className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                      active
-                        ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
-                        : "text-indigo-50 hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    {Icon ? <Icon size={17} aria-hidden="true" /> : null}
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
@@ -728,7 +740,7 @@ export function AppHeader({
                 aria-expanded={open}
                 aria-haspopup="menu"
                 onClick={() => setOpen((value) => !value)}
-                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-sm font-black text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-xs font-black text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               >
                 {session?.user?.image ? (
                   <RawImage
@@ -745,9 +757,9 @@ export function AppHeader({
                 href="/auth/signin"
                 aria-label={t.signIn}
                 onClick={(event) => handleRouteLinkClick(event, "/auth/signin")}
-                className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               >
-                <UserCircle size={18} />
+                <UserCircle size={17} />
               </Link>
             )}
 
@@ -756,10 +768,10 @@ export function AppHeader({
               aria-label={open ? t.closeMobileMenu : t.openMobileMenu}
               aria-expanded={open}
               aria-controls={open ? "mobile-menu-drawer" : undefined}
-              className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+              className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               onClick={() => setOpen((value) => !value)}
             >
-              {open ? <X size={18} /> : <Menu size={18} />}
+              {open ? <X size={17} /> : <Menu size={17} />}
             </button>
           </div>
 
@@ -778,7 +790,7 @@ export function AppHeader({
                     aria-modal="true"
                     aria-labelledby={languageTitleId}
                     aria-describedby={languageDescriptionId}
-                    className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(80px,8vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
+                    className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-auto rounded-none border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl md:inset-x-0 md:bottom-auto md:top-[max(64px,6vh)] md:mx-auto md:w-[min(980px,96vw)] md:rounded-3xl md:p-7"
                   >
                     <div className="mb-5 flex items-start justify-between gap-4">
                       <div>
@@ -811,7 +823,10 @@ export function AppHeader({
 
                     <div className="mb-4 rounded-none border border-slate-200 bg-slate-50 px-4 py-3">
                       <p className="text-sm font-bold text-slate-950">
-                        {t.currentLanguage.replace("{{language}}", selectedLanguageDisplayName)}
+                        {t.currentLanguage.replace(
+                          "{{language}}",
+                          selectedLanguageDisplayName,
+                        )}
                       </p>
                       <p className="mt-1 text-xs font-medium text-slate-600">
                         {t.languagePreparingNotice}
@@ -826,7 +841,11 @@ export function AppHeader({
                     </label>
 
                     <div className="mb-4 flex items-center gap-2 rounded-none border border-slate-200 px-3 py-2 focus-within:border-violet-400 focus-within:ring-2 focus-within:ring-violet-100">
-                      <Search size={16} className="text-slate-500" aria-hidden="true" />
+                      <Search
+                        size={16}
+                        className="text-slate-500"
+                        aria-hidden="true"
+                      />
 
                       <input
                         ref={languageSearchInputRef}
@@ -842,7 +861,10 @@ export function AppHeader({
                     </div>
 
                     {languageStatusMessage ? (
-                      <p className="mb-4 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900" role="status">
+                      <p
+                        className="mb-4 rounded-none border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900"
+                        role="status"
+                      >
                         {languageStatusMessage}
                       </p>
                     ) : null}
@@ -865,8 +887,14 @@ export function AppHeader({
                             aria-disabled={!available}
                             aria-label={
                               available
-                                ? t.selectLanguageOption.replace("{{language}}", option.nativeLabel)
-                                : t.languagePreparingAria.replace("{{language}}", option.nativeLabel)
+                                ? t.selectLanguageOption.replace(
+                                    "{{language}}",
+                                    option.nativeLabel,
+                                  )
+                                : t.languagePreparingAria.replace(
+                                    "{{language}}",
+                                    option.nativeLabel,
+                                  )
                             }
                             onClick={() => handleLanguageSelect(option)}
                             className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
@@ -878,10 +906,16 @@ export function AppHeader({
                             }`}
                           >
                             <span className="flex min-w-0 items-start gap-2.5">
-                              {renderFlag(option.countryCode, option.fallbackText)}
+                              {renderFlag(
+                                option.countryCode,
+                                option.fallbackText,
+                              )}
 
                               <span className="min-w-0">
-                                <span className="block truncate text-sm font-black text-slate-950" dir={option.direction}>
+                                <span
+                                  className="block truncate text-sm font-black text-slate-950"
+                                  dir={option.direction}
+                                >
                                   {option.nativeLabel}
                                 </span>
                                 <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
@@ -896,7 +930,11 @@ export function AppHeader({
                             </span>
 
                             {active ? (
-                              <Check size={16} className="mt-0.5 shrink-0 text-violet-600" aria-hidden="true" />
+                              <Check
+                                size={16}
+                                className="mt-0.5 shrink-0 text-violet-600"
+                                aria-hidden="true"
+                              />
                             ) : null}
                           </button>
                         );
@@ -904,14 +942,14 @@ export function AppHeader({
                     </div>
                   </section>
                 </>,
-                document.body
+                document.body,
               )
             : null}
         </div>
 
         <nav className="bg-white/5 md:hidden">
-          <div className="page-shell overflow-x-auto py-2.5">
-            <div className="flex min-w-max items-center gap-2 whitespace-nowrap">
+          <div className="page-shell overflow-x-auto py-1.5">
+            <div className="flex min-w-max items-center gap-1.5 whitespace-nowrap">
               {visibleMobilePrimaryNavItems.map((item) => {
                 const Icon = item.icon;
                 const active = isNavItemActive(item.href);
@@ -921,14 +959,14 @@ export function AppHeader({
                     key={item.href}
                     href={item.href}
                     onClick={(event) => handleRouteLinkClick(event, item.href)}
-                    className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2.5 text-base font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                       active
                         ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
                         : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     {Icon ? (
-                      <Icon size={17} className="shrink-0" aria-hidden="true" />
+                      <Icon size={15} className="shrink-0" aria-hidden="true" />
                     ) : null}
                     <span>{item.label}</span>
                   </Link>
@@ -962,10 +1000,18 @@ export function AppHeader({
                     <Link
                       href="/"
                       aria-label="Kurioticket home"
-                      onClick={(event) => handleRouteLinkClick(event, "/", () => setOpen(false))}
+                      onClick={(event) =>
+                        handleRouteLinkClick(event, "/", () => setOpen(false))
+                      }
                       className="shrink-0"
                     >
-                      <KurioticketLogo variant="full" tone="dark" />
+                      <KurioticketLogo
+                        variant="full"
+                        tone="dark"
+                        className="gap-2"
+                        markClassName="h-8 w-8"
+                        textClassName="text-base"
+                      />
                     </Link>
 
                     <button
@@ -995,14 +1041,19 @@ export function AppHeader({
                       }}
                       aria-haspopup="dialog"
                       aria-expanded={languageOpen}
-                      aria-controls={languageOpen ? languageDialogId : undefined}
-                      aria-label={t.openLanguagePreferences.replace("{{language}}", selectedLanguageDisplayName)}
+                      aria-controls={
+                        languageOpen ? languageDialogId : undefined
+                      }
+                      aria-label={t.openLanguagePreferences.replace(
+                        "{{language}}",
+                        selectedLanguageDisplayName,
+                      )}
                       className="inline-flex min-h-11 cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                     >
                       <span className="inline-flex items-center gap-2">
                         {renderFlag(
                           selectedLanguage?.countryCode,
-                          selectedLanguage?.fallbackText
+                          selectedLanguage?.fallbackText,
                         )}
                         <span>{selectedLanguageDisplayName}</span>
                       </span>
@@ -1017,7 +1068,11 @@ export function AppHeader({
                         <Link
                           key={item.href}
                           href={item.href}
-                          onClick={(event) => handleRouteLinkClick(event, item.href, () => setOpen(false))}
+                          onClick={(event) =>
+                            handleRouteLinkClick(event, item.href, () =>
+                              setOpen(false),
+                            )
+                          }
                           className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                         >
                           {Icon ? <Icon size={16} aria-hidden="true" /> : null}
@@ -1027,7 +1082,10 @@ export function AppHeader({
                     })}
 
                     {isSignedIn ? (
-                      <section className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-2" aria-label="Account">
+                      <section
+                        className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-2"
+                        aria-label="Account"
+                      >
                         <div className="flex items-center gap-2.5 border-b border-slate-200 pb-2">
                           <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-black text-white shadow-sm">
                             {session?.user?.image ? (
@@ -1060,7 +1118,9 @@ export function AppHeader({
                                 key={item.href}
                                 href={item.href}
                                 onClick={(event) =>
-                                  handleRouteLinkClick(event, item.href, () => setOpen(false))
+                                  handleRouteLinkClick(event, item.href, () =>
+                                    setOpen(false),
+                                  )
                                 }
                                 className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                               >
@@ -1086,11 +1146,9 @@ export function AppHeader({
                   </nav>
                 </aside>
               </div>,
-              document.body
+              document.body,
             )
           : null}
-
-
       </header>
     </>
   );
