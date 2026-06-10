@@ -6,9 +6,12 @@ import { RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import {
+  ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE,
   buildAdminHomepageFareAllRoutesGroup,
   buildAdminHomepageFareRouteGroups,
+  normalizeAdminHomepageFareMarketCode,
   paginateAdminHomepageFareRoutes,
+  resolveAdminHomepageFareSelectedRouteGroup,
   splitAdminHomepageFareMarketRouteGroups,
   type AdminHomepageFareRouteGroupFilter,
   type AdminHomepageFareMarketRouteGroup,
@@ -410,9 +413,22 @@ export function HomepageFaresRefreshCard() {
     loading: true,
     error: "",
   });
-  const [selectedMarketCode, setSelectedMarketCode] = useState<string | null>(null);
+  const [selectedRouteScope, setSelectedRouteScope] = useState<string | null>(null);
+  const [routePage, setRoutePage] = useState(1);
   const [routeFilter, setRouteFilter] =
     useState<AdminHomepageFareRouteGroupFilter>("all");
+  const selectRouteScope = useCallback((scope: string) => {
+    setRoutePage(1);
+    setSelectedRouteScope(
+      scope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+        ? ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+        : normalizeAdminHomepageFareMarketCode(scope),
+    );
+  }, []);
+  const selectRouteFilter = useCallback((filter: AdminHomepageFareRouteGroupFilter) => {
+    setRoutePage(1);
+    setRouteFilter(filter);
+  }, []);
 
   const loadStatus = useCallback(async () => {
     setStatusState((current) => ({ ...current, loading: true, error: "" }));
@@ -511,12 +527,11 @@ export function HomepageFaresRefreshCard() {
     () => buildAdminHomepageFareAllRoutesGroup(statusPayload.routes, routeFilter),
     [routeFilter, statusPayload.routes],
   );
-  const selectedRouteGroup =
-    selectedMarketCode === "ALL"
-      ? allRoutesGroup
-      : selectedMarketCode
-        ? marketRouteGroups.find((group) => group.marketCode === selectedMarketCode) ?? null
-        : null;
+  const selectedRouteGroup = resolveAdminHomepageFareSelectedRouteGroup({
+    selectedScope: selectedRouteScope,
+    marketRouteGroups,
+    allRoutesGroup,
+  });
   const { publicGroups: publicRouteGroups, fallbackGroups: fallbackRouteGroups } =
     splitAdminHomepageFareMarketRouteGroups(marketRouteGroups);
 
@@ -594,18 +609,20 @@ export function HomepageFaresRefreshCard() {
             onReload={() => void loadStatus()}
           />
 
-          <MarketReadinessDashboard markets={publicMarkets} onInspectMarket={setSelectedMarketCode} />
+          <MarketReadinessDashboard markets={publicMarkets} onInspectMarket={selectRouteScope} />
 
           <MarketRouteInspector
             publicGroups={publicRouteGroups}
             fallbackGroups={fallbackRouteGroups}
-            allRoutesGroup={allRoutesGroup}
-            selectedMarketCode={selectedMarketCode}
+            selectedRouteScope={selectedRouteScope}
             selectedGroup={selectedRouteGroup}
             filter={routeFilter}
             loading={statusState.loading}
-            onSelectMarket={setSelectedMarketCode}
-            onFilterChange={setRouteFilter}
+            onSelectMarket={selectRouteScope}
+            routePage={routePage}
+            onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
+            onNextPage={() => setRoutePage((page) => page + 1)}
+            onFilterChange={selectRouteFilter}
           />
 
           <DiagnosticsPanel
@@ -615,7 +632,7 @@ export function HomepageFaresRefreshCard() {
             stoppedReason={latestCounts?.stoppedReason}
           />
 
-          <FallbackPoolsSection pools={fallbackPools} onInspectMarket={setSelectedMarketCode} />
+          <FallbackPoolsSection pools={fallbackPools} onInspectMarket={selectRouteScope} />
 
           <RawDebugDetails statusPayload={statusPayload} refreshCounts={latestCounts} />
         </div>
@@ -1123,32 +1140,32 @@ function RawDebugDetails({
 function MarketRouteInspector({
   publicGroups,
   fallbackGroups,
-  allRoutesGroup,
-  selectedMarketCode,
+  selectedRouteScope,
   selectedGroup,
   filter,
   loading,
   onSelectMarket,
+  routePage,
+  onPreviousPage,
+  onNextPage,
   onFilterChange,
 }: {
   publicGroups: AdminHomepageFareMarketRouteGroup[];
   fallbackGroups: AdminHomepageFareMarketRouteGroup[];
-  allRoutesGroup: AdminHomepageFareMarketRouteGroup;
-  selectedMarketCode: string | null;
+  selectedRouteScope: string | null;
   selectedGroup: AdminHomepageFareMarketRouteGroup | null;
   filter: AdminHomepageFareRouteGroupFilter;
   loading: boolean;
   onSelectMarket: (marketCode: string) => void;
+  routePage: number;
+  onPreviousPage: () => void;
+  onNextPage: () => void;
   onFilterChange: (filter: AdminHomepageFareRouteGroupFilter) => void;
 }) {
-  const [routePage, setRoutePage] = useState(1);
-
   const handleSelectMarket = (marketCode: string) => {
-    setRoutePage(1);
     onSelectMarket(marketCode);
   };
   const handleFilterChange = (nextFilter: AdminHomepageFareRouteGroupFilter) => {
-    setRoutePage(1);
     onFilterChange(nextFilter);
   };
 
@@ -1199,12 +1216,13 @@ function MarketRouteInspector({
             </div>
             <button
               type="button"
-              onClick={() => handleSelectMarket(allRoutesGroup.marketCode)}
+              onClick={() => handleSelectMarket(ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE)}
               className={`inline-flex min-h-10 items-center justify-center rounded-full border px-4 py-2 text-sm font-extrabold transition ${
-                selectedMarketCode === allRoutesGroup.marketCode
+                selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
                   ? "border-navy bg-navy text-white"
                   : "border-slate-200 bg-white/80 text-navy hover:border-navy/40 hover:bg-white"
               }`}
+              aria-pressed={selectedRouteScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE}
             >
               View All
             </button>
@@ -1216,7 +1234,7 @@ function MarketRouteInspector({
                 <MarketRouteGroupCard
                   key={group.marketCode}
                   group={group}
-                  selected={selectedMarketCode === group.marketCode}
+                  selected={selectedRouteScope === group.marketCode}
                   onSelect={handleSelectMarket}
                 />
               ))}
@@ -1243,7 +1261,7 @@ function MarketRouteInspector({
                 <MarketRouteGroupCard
                   key={group.marketCode}
                   group={group}
-                  selected={selectedMarketCode === group.marketCode}
+                  selected={selectedRouteScope === group.marketCode}
                   onSelect={handleSelectMarket}
                   fallbackOnly
                 />
@@ -1255,11 +1273,11 @@ function MarketRouteInspector({
 
       <SelectedRouteDetails
         group={selectedGroup}
-        selectedMarketCode={selectedMarketCode}
+        selectedRouteScope={selectedRouteScope}
         loading={loading}
         routePage={routePage}
-        onPreviousPage={() => setRoutePage((page) => Math.max(1, page - 1))}
-        onNextPage={() => setRoutePage((page) => page + 1)}
+        onPreviousPage={onPreviousPage}
+        onNextPage={onNextPage}
       />
     </section>
   );
@@ -1285,7 +1303,7 @@ function MarketRouteGroupCard({
           ? "border-navy bg-white shadow-md ring-2 ring-navy/10"
           : "border-slate-200 bg-white/70 hover:border-navy/30 hover:bg-white hover:shadow-sm"
       }`}
-      aria-expanded={selected}
+      aria-pressed={selected}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -1313,20 +1331,20 @@ function MarketRouteGroupCard({
 
 function SelectedRouteDetails({
   group,
-  selectedMarketCode,
+  selectedRouteScope,
   loading,
   routePage,
   onPreviousPage,
   onNextPage,
 }: {
   group: AdminHomepageFareMarketRouteGroup | null;
-  selectedMarketCode: string | null;
+  selectedRouteScope: string | null;
   loading: boolean;
   routePage: number;
   onPreviousPage: () => void;
   onNextPage: () => void;
 }) {
-  if (!selectedMarketCode || !group) {
+  if (!selectedRouteScope || !group) {
     return (
       <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-white/55 p-6 text-center">
         <p className="text-sm font-extrabold text-navy">

@@ -70,6 +70,12 @@ export type AdminHomepageFareRouteGroupFilter =
   | "unavailable";
 
 export const ADMIN_HOMEPAGE_FARE_ROUTE_PAGE_SIZE = 10;
+export const ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE = "__all_homepage_fare_routes__";
+
+export type AdminHomepageFareRouteScope =
+  | typeof ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE
+  | string
+  | null;
 
 export type AdminHomepageFareMarketRouteGroup = {
   marketCode: string;
@@ -104,17 +110,19 @@ export function buildAdminHomepageFareRouteGroups({
 }) {
   const safeRoutes = Array.isArray(routes) ? routes.filter(isAdminHomepageFareRoute) : [];
   const safeMarkets = Array.isArray(markets) ? markets.filter(isAdminHomepageFareMarket) : [];
-  const marketByCode = new Map(safeMarkets.map((market) => [market.marketCode, market]));
+  const marketByCode = new Map(
+    safeMarkets.map((market) => [normalizeAdminHomepageFareMarketCode(market.marketCode), market]),
+  );
   const marketCodes = new Set([
-    ...safeMarkets.map((market) => market.marketCode),
-    ...safeRoutes.map((route) => route.market),
+    ...safeMarkets.map((market) => normalizeAdminHomepageFareMarketCode(market.marketCode)),
+    ...safeRoutes.map((route) => normalizeAdminHomepageFareMarketCode(route.market)),
   ]);
 
   return [...marketCodes]
     .map((marketCode) => {
       const market = marketByCode.get(marketCode);
       const groupRoutes = safeRoutes
-        .filter((route) => route.market === marketCode)
+        .filter((route) => normalizeAdminHomepageFareMarketCode(route.market) === marketCode)
         .filter((route) => routeMatchesFilter(route, filter));
       const group = createGroup(marketCode, groupRoutes, market);
       return group;
@@ -162,6 +170,34 @@ export function splitAdminHomepageFareMarketRouteGroups(
   };
 }
 
+export function resolveAdminHomepageFareSelectedRouteGroup({
+  selectedScope,
+  marketRouteGroups,
+  allRoutesGroup,
+}: {
+  selectedScope: AdminHomepageFareRouteScope;
+  marketRouteGroups: AdminHomepageFareMarketRouteGroup[];
+  allRoutesGroup: AdminHomepageFareMarketRouteGroup;
+}) {
+  if (!selectedScope) return null;
+
+  if (selectedScope === ADMIN_HOMEPAGE_FARE_ALL_ROUTES_SCOPE) {
+    return allRoutesGroup;
+  }
+
+  const selectedMarketCode = normalizeAdminHomepageFareMarketCode(selectedScope);
+
+  return (
+    marketRouteGroups.find(
+      (group) => normalizeAdminHomepageFareMarketCode(group.marketCode) === selectedMarketCode,
+    ) ?? null
+  );
+}
+
+export function normalizeAdminHomepageFareMarketCode(value: string) {
+  return value.trim().toUpperCase();
+}
+
 export function paginateAdminHomepageFareRoutes<T>(
   routes: T[] | null | undefined,
   page: number,
@@ -206,7 +242,8 @@ function createGroup(
     (route) => route.status === "failed" || route.status === "unavailable",
   ).length;
   const staleRoutesCount = routes.filter((route) => route.status === "expired").length;
-  const marketLabel = market?.marketLabel ?? marketCode;
+  const normalizedMarketCode = normalizeAdminHomepageFareMarketCode(marketCode);
+  const marketLabel = market?.marketLabel ?? normalizedMarketCode;
   const marketGroup = market?.marketGroup ?? "Global International";
   const marketVisibility = market?.marketVisibility ?? "country";
   const publicDisplayTarget =
@@ -214,7 +251,7 @@ function createGroup(
   const isFallbackPool = marketVisibility !== "country" || publicDisplayTarget === 0;
 
   return {
-    marketCode,
+    marketCode: normalizedMarketCode,
     marketLabel,
     marketGroup,
     displayName: marketCode === "ALL" ? "All routes" : `${marketLabel} / ${marketGroup}`,
