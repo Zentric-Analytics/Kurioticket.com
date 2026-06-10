@@ -21,6 +21,7 @@ import {
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
 import { translations as enTranslations } from "@/lib/i18n/en";
+import { translateHomeDiscoveryCopy } from "@/lib/i18n/homeDiscovery";
 import { readSavedTripIds, writeSavedTripIds } from "@/lib/saved-trips-local";
 import {
   getHomeDiscoveryByRegion,
@@ -83,15 +84,18 @@ const discoveryById = new Map<string, HomeDiscoveryItem>(
   allDiscoveryItems.map((item) => [item.id, item]),
 );
 
-const resolveSavedTrip = (id: string): ResolvedSavedTrip => {
+const resolveSavedTrip = (
+  id: string,
+  dictionary: Record<string, string>,
+): ResolvedSavedTrip => {
   const matched = discoveryById.get(id);
 
   if (!matched) {
     return {
       id,
-      title: "Saved trip",
-      route: "Destination details unavailable",
-      note: "This trip was saved on this device and can still be removed anytime.",
+      title: dictionary.savedTripFallbackTitle ?? enTranslations.savedTripFallbackTitle ?? "Saved trip",
+      route: dictionary.savedTripFallbackRoute ?? enTranslations.savedTripFallbackRoute ?? "Destination details unavailable",
+      note: dictionary.savedTripFallbackNote ?? enTranslations.savedTripFallbackNote ?? "This trip was saved on this device and can still be removed anytime.",
       href: "/destinations",
       unresolved: true,
     };
@@ -99,9 +103,9 @@ const resolveSavedTrip = (id: string): ResolvedSavedTrip => {
 
   return {
     id,
-    title: matched.title,
+    title: translateHomeDiscoveryCopy(dictionary, matched).title,
     route: `${matched.originCity} (${matched.originCode}) → ${matched.destinationCity} (${matched.destinationCode})`,
-    note: matched.routeNote,
+    note: translateHomeDiscoveryCopy(dictionary, matched).routeNote,
     image: matched.image,
     imageAlt: matched.imageAlt,
     originCode: matched.originCode,
@@ -291,8 +295,8 @@ export function SavedTripsAndRecentSearches() {
   }, []);
 
   const savedTrips = useMemo(
-    () => savedIds.map((id) => resolveSavedTrip(id)),
-    [savedIds],
+    () => savedIds.map((id) => resolveSavedTrip(id, dictionary)),
+    [dictionary, savedIds],
   );
 
   useEffect(() => {

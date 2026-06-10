@@ -40,6 +40,7 @@ import { getGeneralFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
 import { getTranslations } from "@/lib/i18n";
+import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   readSavedTripIds,
@@ -162,10 +163,7 @@ export default function Home() {
   const translateDiscoveryItemCopy = (
     item: HomeDiscoveryCardItem,
     field: "title" | "routeNote",
-  ) =>
-    dictionary[`homeDiscoveryRoute.${item.id}.${field}`] ??
-    enTranslations[`homeDiscoveryRoute.${item.id}.${field}`] ??
-    item[field];
+  ) => translateHomeDiscoveryField(dictionary, item, field);
   const translatedFaqs = getGeneralFaqs(t);
 
   const popularDestinationResolution = useMemo(
