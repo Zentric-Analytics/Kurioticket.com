@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { PriceText } from "@/components/currency/PriceText";
+import { useLocale } from "@/components/layout/LocaleProvider";
 
 import {
   clearRecentSearches,
@@ -19,6 +20,7 @@ import {
   removeRecentSearch,
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { readSavedTripIds, writeSavedTripIds } from "@/lib/saved-trips-local";
 import {
   getHomeDiscoveryByRegion,
@@ -271,6 +273,8 @@ function buildSavedTripHref(trip: ResolvedSavedTrip, fare?: SavedTripFare) {
 }
 
 export function SavedTripsAndRecentSearches() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
   const [savedTripFares, setSavedTripFares] = useState<
@@ -456,7 +460,8 @@ export function SavedTripsAndRecentSearches() {
                           {trip.unresolved ? "Saved" : "Trending"}
                         </span>
                         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                          One way · Economy · 1 traveler
+                          {t("homeDiscoveryTripOneWay")} · {t("homeDiscoveryCabinEconomy")} ·{" "}
+                          {t("homeDiscoveryTravelerCountOne")}
                         </p>
                       </div>
 

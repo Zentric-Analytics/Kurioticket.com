@@ -98,6 +98,83 @@ export const translations: TranslationDictionary = {
   homeFeaturesDealsTitle: "Ofertas en tiempo real",
   homeFeaturesDealsBody:
     "Aprovecha bajadas de tarifa y promociones exclusivas antes de que desaparezcan.",
+  homeDiscoveryTitle: "Descubre tu próxima aventura aquí",
+  homeDiscoverySubtitle:
+    "Compara ideas de rutas inteligentes, tarifas flexibles y destinos seleccionados para tu región.",
+  homeDiscoverySwipeMore: "Desliza para ver más",
+  homeDiscoveryRouteIdeaBadge: "Idea de ruta",
+  homeDiscoveryTripOneWay: "Solo ida",
+  homeDiscoveryCabinEconomy: "Económica",
+  homeDiscoveryTravelerCountOne: "1 viajero",
+  "homeDiscoveryRoute.us-jfk-mia.title":
+    "Fin de semana en la playa de Miami",
+  "homeDiscoveryRoute.us-jfk-mia.routeNote":
+    "Ruta directa de alta frecuencia para escapadas de clima cálido.",
+  "homeDiscoveryRoute.us-ord-las.title":
+    "Escapada de entretenimiento a Las Vegas",
+  "homeDiscoveryRoute.us-ord-las.routeNote":
+    "Popular para eventos, espectáculos y vuelos flexibles de fin de semana.",
+  "homeDiscoveryRoute.us-lax-sfo.title": "Ruta rápida a San Francisco",
+  "homeDiscoveryRoute.us-lax-sfo.routeNote":
+    "Favorita de negocios de corta distancia con horarios frecuentes cada día.",
+  "homeDiscoveryRoute.us-atl-mco.title": "Escapada familiar a Orlando",
+  "homeDiscoveryRoute.us-atl-mco.routeNote":
+    "Ruta a parques temáticos con opciones de horario ideales para familias.",
+  "homeDiscoveryRoute.us-dfw-sea.title":
+    "Viaje de café y naturaleza a Seattle",
+  "homeDiscoveryRoute.us-dfw-sea.routeNote":
+    "Ideal para escenas gastronómicas urbanas y excursiones por el Pacífico Noroeste.",
+  "homeDiscoveryRoute.us-mia-cun.title":
+    "Escapada breve de descanso a Cancún",
+  "homeDiscoveryRoute.us-mia-cun.routeNote":
+    "Ruta internacional rápida para resorts de playa y fines de semana largos.",
+  "homeDiscoveryRoute.us-ord-pdx.title":
+    "Fin de semana de gastronomía y bosques en Portland",
+  "homeDiscoveryRoute.us-ord-pdx.routeNote":
+    "Escapada urbana por el Pacífico Noroeste para cafeterías de especialidad, parques y cascadas cercanas.",
+  "homeDiscoveryRoute.us-sea-hnl.title": "Escapada tropical a Honolulu",
+  "homeDiscoveryRoute.us-sea-hnl.routeNote":
+    "Escapada directa a la isla para playas, surf y vistas de volcanes.",
+  "homeDiscoveryRoute.us-bos-sju.title":
+    "Fin de semana largo caribeño en San Juan",
+  "homeDiscoveryRoute.us-bos-sju.routeNote":
+    "Ruta a territorio estadounidense de clima cálido con casco histórico y playas.",
+  "homeDiscoveryRoute.us-den-phx.title":
+    "Viaje de sol y desierto a Phoenix",
+  "homeDiscoveryRoute.us-den-phx.routeNote":
+    "Ruta corta del oeste para fines de semana de golf y caminatas por el desierto de Sonora.",
+  "homeDiscoveryRoute.us-iad-bna.title": "Escapada musical a Nashville",
+  "homeDiscoveryRoute.us-iad-bna.routeNote":
+    "Ruta nacional de alta demanda para música en vivo, comida y festivales.",
+  "homeDiscoveryRoute.us-lax-yvr.title":
+    "Escapada de montaña y ciudad a Vancouver",
+  "homeDiscoveryRoute.us-lax-yvr.routeNote":
+    "Ruta transfronteriza sencilla para vistas del puerto, mariscos y senderos alpinos cercanos.",
+  "homeDiscoveryRoute.us-sea-anc.title": "Escapada natural a Anchorage",
+  "homeDiscoveryRoute.us-sea-anc.routeNote":
+    "Favorita de temporada para vistas de glaciares, tours de vida silvestre y senderismo.",
+  "homeDiscoveryRoute.us-jfk-aus.title": "Escapada musical a Austin",
+  "homeDiscoveryRoute.us-jfk-aus.routeNote":
+    "Ruta nacional popular para festivales, startups y food trucks.",
+  "homeDiscoveryRoute.us-dtw-msy.title":
+    "Fin de semana de jazz en Nueva Orleans",
+  "homeDiscoveryRoute.us-dtw-msy.routeNote":
+    "Ruta rica en cultura para clubes de jazz, cocina criolla y noches en el Barrio Francés.",
+  "homeDiscoveryRoute.us-phl-san.title": "Escapada costera a San Diego",
+  "homeDiscoveryRoute.us-phl-san.routeNote":
+    "Escapada de costa a costa con playas, cruceros por la bahía y clima templado.",
+  homeTrustTitle: "Por qué los viajeros comparan en Kurioticket",
+  homeTrustSubtitle:
+    "Kurioticket te ayuda a comparar ofertas de proveedores con claridad y luego completar la reserva en el sitio del proveedor.",
+  homeTrustCompareTitle: "Compara ofertas de proveedores",
+  homeTrustCompareBody:
+    "Consulta opciones de vuelos y hoteles de varios proveedores de viaje en un solo lugar.",
+  homeTrustPricingTitle: "Contexto de precios transparente",
+  homeTrustPricingBody:
+    "Revisa el precio, los detalles de la ruta o estadía y los términos clave antes de continuar.",
+  homeTrustHandoffTitle: "Continuación segura con el proveedor",
+  homeTrustHandoffBody:
+    "Cuando eliges una oferta, continúas con el proveedor para completar la reserva de forma segura.",
   homePopularDestinations: "Destinos populares",
   homeViewAllDestinations: "Ver todos los destinos",
   homePromoFlightsTitle: "Ofertas de vuelos de aerolíneas líderes",

@@ -548,7 +548,7 @@ export default function HotelsSearchPage() {
             <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3">
               {[
                 {
-                  title: "Compare provider offers",
+                  title: t("homeTrustCompareTitle"),
                   body: "View hotel options from travel providers in one place before you continue.",
                   icon: Building2,
                 },
