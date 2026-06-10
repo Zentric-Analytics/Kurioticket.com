@@ -69,10 +69,15 @@ test("market coverage targets count replacement-ready backup candidates", () => 
     discoverVisibleTarget: 8,
     discoverBackupFreshTarget: 3,
   };
-  const usRouteIds = routes.filter((route) => route.market === "US").slice(0, 19).map((route) => route.id);
+  const usRoutes = routes.filter((route) => route.market === "US");
+  const freshUsRouteIds = [
+    ...usRoutes.filter((route) => route.isPopular && route.visibility === "visible").slice(0, 8),
+    ...usRoutes.filter((route) => route.isDiscover && (route.visibility === "visible" || route.visibility === "fallback")).slice(0, 8),
+    ...usRoutes.filter((route) => route.visibility === "backup").slice(0, 3),
+  ].map((route) => route.id);
   const targets = __homepageFareCoverageTest.computeHomepageFareMarketTargets(
     routes,
-    new Set(usRouteIds),
+    new Set(freshUsRouteIds),
     budget,
   );
 
@@ -110,10 +115,23 @@ test("fresh fares are preferred over last-known-good and missing never becomes p
   assert.equal(__homepageFareCoverageTest.isUsableHomepageFareSnapshotRecord({ snapshot: missing, now, currency: HOMEPAGE_FARE_DEFAULT_CURRENCY }), false);
 });
 
-function snapshot({ origin = "JFK", destination = "LHR", searchedAt, expiresAt }: { origin?: string; destination?: string; searchedAt: string; expiresAt: string }) {
+function snapshot({
+  origin = "JFK",
+  destination = "LHR",
+  departureDate = "2026-07-24",
+  searchedAt,
+  expiresAt,
+}: {
+  origin?: string;
+  destination?: string;
+  departureDate?: string;
+  searchedAt: string;
+  expiresAt: string;
+}) {
   return {
     origin,
     destination,
+    departureDate: new Date(`${departureDate}T00:00:00.000Z`),
     currency: "USD",
     price: 499,
     providerBacked: true,
