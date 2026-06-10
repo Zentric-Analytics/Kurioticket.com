@@ -644,7 +644,7 @@ export default function DealsPage() {
       <AppHeader />
 
       <main className="flex-1 bg-slate-50 pb-12">
-        <section className="relative overflow-visible border-b border-slate-200/80 bg-[#f8f7ff] pb-14 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:pb-20">
+        <section className="relative overflow-visible border-b border-slate-200/80 bg-[#f8f7ff] pb-8 shadow-[0_18px_45px_rgba(15,23,42,0.06)] sm:pb-12">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={dealsHeroImage}
@@ -658,18 +658,18 @@ export default function DealsPage() {
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-50 via-slate-50/85 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 pt-10 sm:pt-14">
+          <div className="page-shell relative z-10 pt-7 sm:pt-9">
             <div className="max-w-[1040px]">
-              <h1 className="max-w-none text-balance text-3xl font-semibold leading-[1.12] tracking-[-0.015em] text-slate-800 sm:text-4xl lg:whitespace-nowrap lg:text-4xl lg:leading-[1.08]">
+              <h1 className="max-w-none text-balance text-2xl font-semibold leading-[1.14] tracking-[-0.015em] text-slate-800 sm:text-3xl lg:whitespace-nowrap lg:text-3xl">
                 {dictionary.title}
               </h1>
-              <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-700">
+              <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-700 sm:text-base">
                 {dictionary.subtitle}
               </p>
             </div>
           </div>
 
-          <div className="page-shell relative z-20 pt-8 sm:pt-10">
+          <div className="page-shell relative z-20 pt-4 sm:pt-6">
             <div className="mx-auto w-full max-w-[1040px] space-y-3">
               <div className="px-1">
                 <fieldset

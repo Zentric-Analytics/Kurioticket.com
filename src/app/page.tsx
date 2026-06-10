@@ -429,19 +429,19 @@ export default function Home() {
             <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
 
-          <div className="page-shell relative pb-5 pt-8 sm:pb-6 sm:pt-10 lg:pt-12">
-            <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
-              <div className="space-y-2.5 pt-1">
-                <h1 className="max-w-3xl text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.022em] text-slate-900 sm:text-[2.15rem] lg:text-[2.65rem]">
+          <div className="page-shell relative pb-4 pt-6 sm:pb-5 sm:pt-8 lg:pt-9">
+            <div className="grid content-start gap-2.5 pb-2 sm:gap-3 sm:pb-3 lg:max-w-[1200px]">
+              <div className="space-y-2 pt-0.5">
+                <h1 className="max-w-3xl text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 sm:text-[1.9rem] lg:text-[2.25rem]">
                   {t("homeHeroTitle")}
                 </h1>
 
-                <p className="max-w-xl text-sm font-semibold leading-6 text-slate-700 sm:text-base sm:leading-7">
+                <p className="max-w-xl text-sm font-semibold leading-5 text-slate-700 sm:text-[0.95rem] sm:leading-6">
                   {t("homeHeroSubtitle")}
                 </p>
               </div>
 
-              <div className="relative z-10 mt-0.5 w-full max-w-[1280px]">
+              <div className="relative z-10 mt-0 w-full max-w-[1280px]">
                 <SearchTabs
                   t={t as unknown as Record<string, string>}
                   compactHero

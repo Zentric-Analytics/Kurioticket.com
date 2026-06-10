@@ -15,10 +15,12 @@ export default async function FlightRouteLandingPage({ params }: { params: Promi
       <AppHeader />
       <main className="flex-1">
         <section className="border-b border-border bg-white">
-          <div className="page-shell pt-24 pb-8 sm:pt-28 lg:pt-28">
+          <div className="page-shell pb-6 pt-8 sm:pt-10 lg:pt-12">
             <p className="text-sm font-semibold text-teal-dark">Route planning guide</p>
-            <h1 className="mt-2 text-3xl font-bold text-navy">{cheapRouteTitle(slug)}</h1>
-            <p className="mt-3 max-w-2xl text-muted">
+            <h1 className="mt-1.5 text-xl font-bold leading-tight text-navy sm:text-2xl lg:text-3xl">
+              {cheapRouteTitle(slug)}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-base">
               Compare route details, airport options, seasonal timing, and travel planning notes before continuing your search.
             </p>
           </div>

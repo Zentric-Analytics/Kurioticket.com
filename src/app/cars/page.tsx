@@ -532,16 +532,16 @@ function CarsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16 pt-8 sm:pt-10 lg:pt-12">
+      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-14 pt-6 sm:pt-8 lg:pt-10">
         <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
 
-        <div className="relative mx-auto max-w-6xl space-y-8 md:space-y-10">
-          <section className="space-y-4" aria-labelledby="cars-search-heading">
+        <div className="relative mx-auto max-w-6xl space-y-7 md:space-y-9">
+          <section className="space-y-3" aria-labelledby="cars-search-heading">
             <div className="px-1">
               <h1
                 id="cars-search-heading"
-                className="text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
+                className="text-[1.35rem] font-semibold leading-[1.14] tracking-[-0.018em] text-slate-900 md:text-[1.65rem] lg:whitespace-nowrap lg:text-[1.85rem]"
               >
                 Search rental cars for every part of your trip
               </h1>

@@ -435,10 +435,10 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16 pt-8 sm:pt-10 lg:pt-12">
+      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-14 pt-6 sm:pt-8 lg:pt-10">
         <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
-        <div className="relative mx-auto max-w-6xl space-y-11 md:space-y-14">
+        <div className="relative mx-auto max-w-6xl space-y-8 md:space-y-10">
           <HotelSearchBar />
 
           <section
@@ -447,7 +447,7 @@ export default function HotelsSearchPage() {
           >
             <h2
               id="hotel-destinations-heading"
-              className="px-1 text-[1.35rem] font-semibold leading-[1.18] tracking-[-0.014em] text-slate-800 md:text-[2rem]"
+              className="px-1 text-[1.25rem] font-semibold leading-[1.18] tracking-[-0.014em] text-slate-800 md:text-[1.6rem]"
             >
               Explore hotel stays by destination
             </h2>
@@ -470,7 +470,7 @@ export default function HotelsSearchPage() {
           >
             <h2
               id="more-hotel-destinations-heading"
-              className="px-1 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+              className="px-1 text-[1.15rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.5rem]"
             >
               Featured hotel destinations
             </h2>
@@ -497,7 +497,7 @@ export default function HotelsSearchPage() {
                 <div className="max-w-2xl">
                   <h2
                     id="hotel-inspiration-heading"
-                    className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+                    className="text-[1.15rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.5rem]"
                   >
                     Find stays for every kind of trip
                   </h2>
@@ -599,7 +599,7 @@ export default function HotelsSearchPage() {
           >
             <h2
               id="global-hotel-destinations-heading"
-              className="px-1 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+              className="px-1 text-[1.15rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.5rem]"
             >
               Explore stays around the world
             </h2>

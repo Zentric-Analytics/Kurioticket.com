@@ -2351,10 +2351,10 @@ export function FlightResultsClient() {
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-6 sm:pt-8 lg:pt-8">
+      <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-4 sm:pt-6 lg:pt-6">
         <section className="page-shell">
           <form
-            className="mx-auto mt-0 w-full max-w-5xl space-y-1.5"
+            className="mx-auto mt-0 w-full max-w-5xl space-y-1"
             onSubmit={(event) => {
               event.preventDefault();
 
@@ -2415,12 +2415,12 @@ export function FlightResultsClient() {
 
             <div className="text-center">
               <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <h1 className="mx-auto w-max whitespace-nowrap text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-[clamp(1.9rem,5vw,2.75rem)]">
+                <h1 className="mx-auto w-max whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-2xl lg:text-3xl">
                   Compare available flight options
                 </h1>
               </div>
-              <div className="mx-auto mt-3 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <p className="mx-auto w-max whitespace-nowrap text-center text-xs leading-6 text-slate-600 sm:text-base">
+              <div className="mx-auto mt-2 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                <p className="mx-auto w-max whitespace-nowrap text-center text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
                   Review fares and choose the route that fits your trip in a few
                   taps.
                 </p>
