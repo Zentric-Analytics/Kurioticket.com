@@ -166,7 +166,7 @@ export function CountryCurrencySelector({
   const triggerClassName = isMobileVariant
     ? "flex h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-none border border-slate-200 bg-white px-4 text-left text-sm font-semibold text-slate-900 transition-colors hover:border-violet-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
     : isGroupedHeaderVariant
-      ? "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-none border-0 bg-transparent px-3 text-xs font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+      ? "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3 text-xs font-semibold text-indigo-50 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
       : isHeaderVariant
         ? "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 text-xs font-semibold text-indigo-50 shadow-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-900"
         : "inline-flex h-12 cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-900 shadow-sm transition-colors hover:border-violet-300 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500";
@@ -526,6 +526,8 @@ export function CountryCurrencySelector({
               {selectedOption.code} · {selectedCurrency}
             </span>
           </span>
+        ) : isHeaderVariant ? (
+          <span>{selectedCurrency}</span>
         ) : (
           <span>
             {selectedOption.code} · {selectedCurrency}
