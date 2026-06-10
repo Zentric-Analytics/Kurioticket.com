@@ -171,7 +171,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
             <h2 className="text-[13px] font-semibold text-slate-900">Book your next trip</h2>
             <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">Find great deals on flights and hotels.</p>
             <Link
-              href="/flights/results"
+              href="/flights"
               className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200 bg-white px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-50"
             >
               <Plane className="size-3.5" aria-hidden="true" />
@@ -578,7 +578,7 @@ export function TripsDashboardPage() {
             When real booked or saved trip activity is available for your account, it will be organized here. Start with a flight or hotel search to keep planning.
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/flights/results">Search flights</LinkButton>
+            <LinkButton href="/flights">Search flights</LinkButton>
             <LinkButton href="/hotels" variant="secondary">Search hotels</LinkButton>
           </div>
         </div>
@@ -606,7 +606,7 @@ export function SavedDashboardPage() {
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <LinkButton href="/saved">Open saved trips</LinkButton>
-            <LinkButton href="/flights/results" variant="secondary">Search flights</LinkButton>
+            <LinkButton href="/flights" variant="secondary">Search flights</LinkButton>
             <LinkButton href="/hotels" variant="secondary">Search hotels</LinkButton>
           </div>
         </div>

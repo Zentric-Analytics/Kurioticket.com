@@ -299,7 +299,7 @@ export function AppHeader({
   const navItems = useMemo(
     () => [
       {
-        href: "/flights/results",
+        href: "/flights",
         label: t.flights,
         icon: Plane,
       },
@@ -376,7 +376,7 @@ export function AppHeader({
 
   const desktopPrimaryNavItems = useMemo(() => {
     const desktopPrimaryHrefs = new Set([
-      "/flights/results",
+      "/flights",
       "/hotels",
       "/cars",
       "/deals",
@@ -387,7 +387,7 @@ export function AppHeader({
 
   const mobilePrimaryNavItems = useMemo(() => {
     const mobilePrimaryHrefs = new Set([
-      "/flights/results",
+      "/flights",
       "/hotels",
       "/cars",
       "/deals",

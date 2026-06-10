@@ -212,7 +212,7 @@ export default function ExplorePage() {
 
             <div className="grid gap-3 sm:grid-cols-3 lg:min-w-96 lg:grid-cols-1">
               <LinkButton
-                href="/flights/results"
+                href="/flights"
                 className="bg-indigo-700 text-white hover:bg-indigo-800"
               >
                 {c.ctas.flights}

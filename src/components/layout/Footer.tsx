@@ -32,7 +32,7 @@ export function Footer() {
       links: [
         {
           label: t.flights || "Flights",
-          href: "/flights/results",
+          href: "/flights",
         },
         {
           label: t.hotels || "Hotels",
