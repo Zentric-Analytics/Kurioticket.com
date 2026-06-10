@@ -57,8 +57,12 @@ type TripType =
   | "one-way"
   | "multi-city";
 
+type SearchTabsTranslations =
+  | Record<string, string>
+  | ((key: string) => string);
+
 type SearchTabsProps = {
-  t: Record<string, string>;
+  t: SearchTabsTranslations;
   compactHero?: boolean;
 };
 
@@ -162,9 +166,23 @@ const findDiscoveryImageForHotel = (destination: string) => {
 };
 
 export function SearchTabs({
-  t,
+  t: translations,
   compactHero = false,
 }: SearchTabsProps) {
+  const t = useMemo(
+    () =>
+      typeof translations === "function"
+        ? new Proxy(
+            {},
+            {
+              get: (_target, key) =>
+                typeof key === "string" ? translations(key) : undefined,
+            }
+          ) as Record<string, string>
+        : translations,
+    [translations]
+  );
+
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
 
@@ -361,10 +379,44 @@ export function SearchTabs({
         (flightDatesOpen || hotelDatesOpen) &&
           "relative z-[200]",
         compactHero
-          ? "p-1.5 sm:p-2"
+          ? "p-1 sm:p-1.5"
           : "p-2"
       ),
     [compactHero, flightDatesOpen, hotelDatesOpen]
+  );
+
+  const tabsClassName = cn(
+    "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
+    compactHero ? "mb-1 sm:mb-1.5" : "mb-2"
+  );
+  const formClassName = compactHero ? "space-y-1" : "space-y-2";
+  const fieldCardClassName = cn(
+    "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
+    compactHero ? "p-0.5" : "p-1"
+  );
+  const flightGridClassName = cn(
+    "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
+    compactHero
+      ? "gap-1 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_132px]"
+      : "gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]"
+  );
+  const hotelGridClassName = cn(
+    "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
+    compactHero
+      ? "gap-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_132px]"
+      : "gap-1.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]"
+  );
+  const joinedFieldClassName = cn(
+    "transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+    compactHero ? "min-h-[50px] px-3 py-1" : "min-h-[54px] px-3 py-1.5"
+  );
+  const submitWrapClassName = cn(
+    "sm:col-span-2 lg:col-span-1 lg:self-stretch",
+    compactHero ? "lg:min-h-[50px]" : "lg:min-h-[54px]"
+  );
+  const submitButtonClassName = cn(
+    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+    compactHero ? "h-11 lg:min-h-[50px]" : "h-12 lg:min-h-[54px]"
   );
 
   const fromQuery = from.trim();
@@ -1683,7 +1735,7 @@ export function SearchTabs({
   return (
     <>
       <section className={wrapper}>
-      <div className="mb-2 inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1">
+      <div className={tabsClassName}>
         <button
           type="button"
           onClick={() =>
@@ -1722,7 +1774,7 @@ export function SearchTabs({
           onSubmit={
             onFlightSubmit
           }
-          className="space-y-2"
+          className={formClassName}
         >
           <div className="flex items-center justify-between gap-2 px-1">
             <div
@@ -1815,12 +1867,12 @@ export function SearchTabs({
               )}
             </div>
           </div>
-          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
-              <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+          <div className={fieldCardClassName}>
+            <div className={flightGridClassName}>
+              <div className={cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", joinedFieldClassName)}>
               <div
                 ref={fromWrapRef}
-                className="relative min-h-[54px] px-0 py-0 pr-3"
+                className="relative px-0 py-0 pr-3"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.origin ||
@@ -1961,11 +2013,10 @@ export function SearchTabs({
 
               <div
                 ref={toWrapRef}
-                className="relative min-h-[54px] px-0 py-0 pl-3"
+                className="relative px-0 py-0 pl-3"
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
-                  {t.destination ||
-                    t.destination}
+                  {t.destination || "Destination"}
                 </label>
                 <div className="relative h-8">
                   <button
@@ -2090,7 +2141,7 @@ export function SearchTabs({
 
               <div
                 ref={dateWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                className={cn("relative rounded-xl border border-slate-300 bg-white", joinedFieldClassName)}
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
@@ -2360,7 +2411,7 @@ export function SearchTabs({
 
               <div
                 ref={travelersWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                className={cn("relative rounded-xl border border-slate-300 bg-white", joinedFieldClassName)}
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.travelers}
@@ -2465,19 +2516,19 @@ export function SearchTabs({
                   </>
                 ) : null}
               </div>
-              <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
+              <div className={submitWrapClassName}>
                 <Button
                   type="submit"
                   disabled={
                     isFlightSearchDisabled
                   }
                   aria-busy={isFlightSubmitting}
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
+                  aria-label={t.searchFlights || "Search flights"}
+                  className={submitButtonClassName}
                 >
                   {isFlightSubmitting
                     ? t.searchingFlights || "Searching flights..."
-                    : t.search ||
-                      t.search}
+                    : t.search || "Search"}
                 </Button>
               </div>
             </div>
@@ -2562,14 +2613,13 @@ export function SearchTabs({
           onSubmit={
             onHotelSubmit
           }
-          className="space-y-1.5"
+          className={formClassName}
         >
-          <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px] lg:gap-0">
-              <div className="min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+          <div className={fieldCardClassName}>
+            <div className={hotelGridClassName}>
+              <div className={cn("relative rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", joinedFieldClassName)}>
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
-                  {t.destination ||
-                    t.destination}
+                  {t.destination || "Destination"}
                 </label>
                 <button
                   ref={hotelDestinationMobileLauncherRef}
@@ -2616,7 +2666,7 @@ export function SearchTabs({
               </div>
               <div
                 ref={hotelDateWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                className={cn("relative rounded-xl border border-slate-300 bg-white", joinedFieldClassName)}
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
@@ -2851,7 +2901,7 @@ export function SearchTabs({
               </div>
               <div
                 ref={hotelGuestsRoomsWrapRef}
-                className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                className={cn("relative rounded-xl border border-slate-300 bg-white", joinedFieldClassName)}
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.guests ||
@@ -3018,19 +3068,19 @@ export function SearchTabs({
                   </div>
                 ) : null}
               </div>
-              <div className="sm:col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
+              <div className={submitWrapClassName}>
                 <Button
                   type="submit"
                   disabled={
                     isHotelSearchDisabled
                   }
                   aria-busy={isHotelSubmitting}
-                  className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
+                  aria-label={t.searchHotels || "Search hotels"}
+                  className={submitButtonClassName}
                 >
                   {isHotelSubmitting
                     ? t.searchingHotels || "Searching hotels..."
-                    : t.search ||
-                      t.search}
+                    : t.search || "Search"}
                 </Button>
               </div>
             </div>
