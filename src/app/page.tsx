@@ -159,6 +159,13 @@ export default function Home() {
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const translateDiscoveryItemCopy = (
+    item: HomeDiscoveryCardItem,
+    field: "title" | "routeNote",
+  ) =>
+    dictionary[`homeDiscoveryRoute.${item.id}.${field}`] ??
+    enTranslations[`homeDiscoveryRoute.${item.id}.${field}`] ??
+    item[field];
   const translatedFaqs = getGeneralFaqs(t);
 
   const popularDestinationResolution = useMemo(
@@ -523,16 +530,15 @@ export default function Home() {
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
               <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-                Discover your next adventure here
+                {t("homeDiscoveryTitle")}
               </h2>
               <p className="text-sm font-normal leading-6 text-slate-600 sm:text-base">
-                Compare smart route ideas, flexible fares, and destinations
-                picked for your region.
+                {t("homeDiscoverySubtitle")}
               </p>
             </div>
             <div className="flex items-center justify-end sm:hidden">
               <div className="pointer-events-none mb-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
-                Swipe for more
+                {t("homeDiscoverySwipeMore")}
                 <ChevronRight size={13} className="text-slate-500" />
               </div>
             </div>
@@ -556,10 +562,13 @@ export default function Home() {
                         image={card.item.image}
                         imageAlt={card.item.imageAlt}
                         destinationCode={card.item.destinationCode}
-                        title={card.item.title}
+                        title={translateDiscoveryItemCopy(card.item, "title")}
                         originCode={card.item.originCode}
                         destinationCodeLabel={card.item.destinationCode}
-                        routeNote={card.item.routeNote}
+                        routeNote={translateDiscoveryItemCopy(
+                          card.item,
+                          "routeNote",
+                        )}
                         compact
                         price={card.fare}
                         displayCurrency={selectedOption.currency}
@@ -590,10 +599,13 @@ export default function Home() {
                     image={card.item.image}
                     imageAlt={card.item.imageAlt}
                     destinationCode={card.item.destinationCode}
-                    title={card.item.title}
+                    title={translateDiscoveryItemCopy(card.item, "title")}
                     originCode={card.item.originCode}
                     destinationCodeLabel={card.item.destinationCode}
-                    routeNote={card.item.routeNote}
+                    routeNote={translateDiscoveryItemCopy(
+                      card.item,
+                      "routeNote",
+                    )}
                     price={card.fare}
                     displayCurrency={selectedOption.currency}
                     expectedOriginCode={card.item.originCode}
@@ -917,12 +929,13 @@ function DiscoverySuggestionCard({
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-0.5">
           <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
-            Route idea
+            {t("homeDiscoveryRouteIdeaBadge")}
           </span>
           <p
             className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
           >
-            One way · Economy · 1 traveler
+            {t("homeDiscoveryTripOneWay")} · {t("homeDiscoveryCabinEconomy")} ·{" "}
+            {t("homeDiscoveryTravelerCountOne")}
           </p>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { resolveMarket } from "@/lib/market/resolveMarket";
 
 import { validateDestinationImages } from "./destinationImageValidation";
@@ -1106,12 +1107,12 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
   US: [
     {
       id: "us-jfk-mia",
-      title: "Miami beach weekend",
+      title: enTranslations["homeDiscoveryRoute.us-jfk-mia.title"],
       originCity: "New York",
       originCode: "JFK",
       destinationCity: "Miami",
       destinationCode: "MIA",
-      routeNote: "High-frequency nonstop route for warm-weather escapes.",
+      routeNote: enTranslations["homeDiscoveryRoute.us-jfk-mia.routeNote"],
       priceFromUsd: 129,
       image:
         "https://images.unsplash.com/photo-1506966953602-c20cc11f75e3?auto=format&fit=crop&w=1200&q=90",
@@ -1119,12 +1120,12 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-ord-las",
-      title: "Las Vegas entertainment run",
+      title: enTranslations["homeDiscoveryRoute.us-ord-las.title"],
       originCity: "Chicago",
       originCode: "ORD",
       destinationCity: "Las Vegas",
       destinationCode: "LAS",
-      routeNote: "Popular for events, shows, and flexible weekend flights.",
+      routeNote: enTranslations["homeDiscoveryRoute.us-ord-las.routeNote"],
       priceFromUsd: 154,
       image:
         "https://images.unsplash.com/photo-1605833556294-ea5c7a74f57d?auto=format&fit=crop&w=1200&q=90",
@@ -1132,12 +1133,12 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-lax-sfo",
-      title: "San Francisco quick corridor",
+      title: enTranslations["homeDiscoveryRoute.us-lax-sfo.title"],
       originCity: "Los Angeles",
       originCode: "LAX",
       destinationCity: "San Francisco",
       destinationCode: "SFO",
-      routeNote: "Short-haul business favorite with frequent daily schedules.",
+      routeNote: enTranslations["homeDiscoveryRoute.us-lax-sfo.routeNote"],
       priceFromUsd: 109,
       image:
         "https://images.pexels.com/photos/208745/pexels-photo-208745.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -1145,12 +1146,12 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-atl-mco",
-      title: "Orlando family getaway",
+      title: enTranslations["homeDiscoveryRoute.us-atl-mco.title"],
       originCity: "Atlanta",
       originCode: "ATL",
       destinationCity: "Orlando",
       destinationCode: "MCO",
-      routeNote: "Theme-park route with family-friendly timing options.",
+      routeNote: enTranslations["homeDiscoveryRoute.us-atl-mco.routeNote"],
       priceFromUsd: 98,
       image:
         "https://images.pexels.com/photos/3411135/pexels-photo-3411135.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -1158,12 +1159,12 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-dfw-sea",
-      title: "Seattle coffee-and-nature trip",
+      title: enTranslations["homeDiscoveryRoute.us-dfw-sea.title"],
       originCity: "Dallas",
       originCode: "DFW",
       destinationCity: "Seattle",
       destinationCode: "SEA",
-      routeNote: "Great for urban food scenes and Pacific Northwest day trips.",
+      routeNote: enTranslations["homeDiscoveryRoute.us-dfw-sea.routeNote"],
       priceFromUsd: 166,
       image:
         "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=1200&q=90",
@@ -1171,13 +1172,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-mia-cun",
-      title: "Cancun short leisure hop",
+      title: enTranslations["homeDiscoveryRoute.us-mia-cun.title"],
       originCity: "Miami",
       originCode: "MIA",
       destinationCity: "Cancun",
       destinationCode: "CUN",
       routeNote:
-        "Quick international route for beach resorts and long weekends.",
+        enTranslations["homeDiscoveryRoute.us-mia-cun.routeNote"],
       priceFromUsd: 147,
       image:
         "https://images.pexels.com/photos/35985284/pexels-photo-35985284.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -1186,13 +1187,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-ord-pdx",
-      title: "Portland food-and-forest weekend",
+      title: enTranslations["homeDiscoveryRoute.us-ord-pdx.title"],
       originCity: "Chicago",
       originCode: "ORD",
       destinationCity: "Portland",
       destinationCode: "PDX",
       routeNote:
-        "Pacific Northwest city break for coffee roasters, parks, and nearby waterfalls.",
+        enTranslations["homeDiscoveryRoute.us-ord-pdx.routeNote"],
       priceFromUsd: 176,
       image:
         "https://images.unsplash.com/photo-1477511801984-4ad318ed9846?auto=format&fit=crop&w=1200&q=90",
@@ -1200,13 +1201,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-sea-hnl",
-      title: "Honolulu tropical break",
+      title: enTranslations["homeDiscoveryRoute.us-sea-hnl.title"],
       originCity: "Seattle",
       originCode: "SEA",
       destinationCity: "Honolulu",
       destinationCode: "HNL",
       routeNote:
-        "Direct island escape for beaches, surfing, and volcano views.",
+        enTranslations["homeDiscoveryRoute.us-sea-hnl.routeNote"],
       priceFromUsd: 267,
       image:
         "https://images.pexels.com/photos/161902/hawaii-beach-sand-ocean-161902.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -1215,13 +1216,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-bos-sju",
-      title: "San Juan Caribbean long weekend",
+      title: enTranslations["homeDiscoveryRoute.us-bos-sju.title"],
       originCity: "Boston",
       originCode: "BOS",
       destinationCity: "San Juan",
       destinationCode: "SJU",
       routeNote:
-        "Warm-weather US territory route with historic old town and beaches.",
+        enTranslations["homeDiscoveryRoute.us-bos-sju.routeNote"],
       priceFromUsd: 203,
       image:
         "https://images.unsplash.com/photo-1602407294553-6ac9170b3ed0?auto=format&fit=crop&w=1200&q=90",
@@ -1229,13 +1230,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-den-phx",
-      title: "Phoenix desert sun trip",
+      title: enTranslations["homeDiscoveryRoute.us-den-phx.title"],
       originCity: "Denver",
       originCode: "DEN",
       destinationCity: "Phoenix",
       destinationCode: "PHX",
       routeNote:
-        "Short western route for golf weekends and Sonoran desert hikes.",
+        enTranslations["homeDiscoveryRoute.us-den-phx.routeNote"],
       priceFromUsd: 117,
       image:
         "https://images.unsplash.com/photo-1675264671526-7fb10698431b?auto=format&fit=crop&w=1200&q=90",
@@ -1243,13 +1244,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-iad-bna",
-      title: "Nashville music-city getaway",
+      title: enTranslations["homeDiscoveryRoute.us-iad-bna.title"],
       originCity: "Washington",
       originCode: "IAD",
       destinationCity: "Nashville",
       destinationCode: "BNA",
       routeNote:
-        "High-demand domestic route for live music, food, and festivals.",
+        enTranslations["homeDiscoveryRoute.us-iad-bna.routeNote"],
       priceFromUsd: 132,
       image:
         "https://images.unsplash.com/photo-1510771463146-e89e6e86560e?auto=format&fit=crop&w=1200&q=90",
@@ -1257,13 +1258,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-lax-yvr",
-      title: "Vancouver mountain-and-city escape",
+      title: enTranslations["homeDiscoveryRoute.us-lax-yvr.title"],
       originCity: "Los Angeles",
       originCode: "LAX",
       destinationCity: "Vancouver",
       destinationCode: "YVR",
       routeNote:
-        "Easy cross-border route for harbor views, seafood, and nearby alpine trails.",
+        enTranslations["homeDiscoveryRoute.us-lax-yvr.routeNote"],
       priceFromUsd: 189,
       image:
         "https://images.pexels.com/photos/2382868/pexels-photo-2382868.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -1272,13 +1273,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-sea-anc",
-      title: "Anchorage wilderness gateway",
+      title: enTranslations["homeDiscoveryRoute.us-sea-anc.title"],
       originCity: "Seattle",
       originCode: "SEA",
       destinationCity: "Anchorage",
       destinationCode: "ANC",
       routeNote:
-        "Seasonal favorite for glacier views, wildlife tours, and hiking.",
+        enTranslations["homeDiscoveryRoute.us-sea-anc.routeNote"],
       priceFromUsd: 221,
       image:
         "https://images.unsplash.com/photo-1472396961693-142e6e269027?auto=format&fit=crop&w=1200&q=90",
@@ -1286,13 +1287,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-jfk-aus",
-      title: "Austin live-music city hop",
+      title: enTranslations["homeDiscoveryRoute.us-jfk-aus.title"],
       originCity: "New York",
       originCode: "JFK",
       destinationCity: "Austin",
       destinationCode: "AUS",
       routeNote:
-        "Popular domestic route for festivals, startups, and food trucks.",
+        enTranslations["homeDiscoveryRoute.us-jfk-aus.routeNote"],
       priceFromUsd: 173,
       image:
         "https://images.unsplash.com/photo-1531218150217-54595bc2b934?auto=format&fit=crop&w=1200&q=90",
@@ -1300,13 +1301,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-dtw-msy",
-      title: "New Orleans jazz weekend",
+      title: enTranslations["homeDiscoveryRoute.us-dtw-msy.title"],
       originCity: "Detroit",
       originCode: "DTW",
       destinationCity: "New Orleans",
       destinationCode: "MSY",
       routeNote:
-        "Culture-rich route for jazz clubs, Creole dining, and French Quarter nights.",
+        enTranslations["homeDiscoveryRoute.us-dtw-msy.routeNote"],
       priceFromUsd: 158,
       image:
         "https://images.unsplash.com/photo-1518391846015-55a9cc003b25?auto=format&fit=crop&w=1200&q=90",
@@ -1314,13 +1315,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "us-phl-san",
-      title: "San Diego coastal break",
+      title: enTranslations["homeDiscoveryRoute.us-phl-san.title"],
       originCity: "Philadelphia",
       originCode: "PHL",
       destinationCity: "San Diego",
       destinationCode: "SAN",
       routeNote:
-        "Cross-country escape with beaches, harbor cruises, and mild weather.",
+        enTranslations["homeDiscoveryRoute.us-phl-san.routeNote"],
       priceFromUsd: 264,
       image:
         "https://images.pexels.com/photos/3586966/pexels-photo-3586966.jpeg?auto=compress&cs=tinysrgb&w=1200",

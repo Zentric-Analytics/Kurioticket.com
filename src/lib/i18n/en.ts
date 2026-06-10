@@ -96,6 +96,62 @@ export const translations: TranslationDictionary = {
   homeFeaturesDealsTitle: "Real-Time Deals",
   homeFeaturesDealsBody:
     "Catch fare drops and exclusive promotions before they disappear.",
+  homeDiscoveryTitle: "Discover your next adventure here",
+  homeDiscoverySubtitle:
+    "Compare smart route ideas, flexible fares, and destinations picked for your region.",
+  homeDiscoverySwipeMore: "Swipe for more",
+  homeDiscoveryRouteIdeaBadge: "Route idea",
+  homeDiscoveryTripOneWay: "One way",
+  homeDiscoveryCabinEconomy: "Economy",
+  homeDiscoveryTravelerCountOne: "1 traveler",
+  "homeDiscoveryRoute.us-jfk-mia.title": "Miami beach weekend",
+  "homeDiscoveryRoute.us-jfk-mia.routeNote":
+    "High-frequency nonstop route for warm-weather escapes.",
+  "homeDiscoveryRoute.us-ord-las.title": "Las Vegas entertainment run",
+  "homeDiscoveryRoute.us-ord-las.routeNote":
+    "Popular for events, shows, and flexible weekend flights.",
+  "homeDiscoveryRoute.us-lax-sfo.title": "San Francisco quick corridor",
+  "homeDiscoveryRoute.us-lax-sfo.routeNote":
+    "Short-haul business favorite with frequent daily schedules.",
+  "homeDiscoveryRoute.us-atl-mco.title": "Orlando family getaway",
+  "homeDiscoveryRoute.us-atl-mco.routeNote":
+    "Theme-park route with family-friendly timing options.",
+  "homeDiscoveryRoute.us-dfw-sea.title": "Seattle coffee-and-nature trip",
+  "homeDiscoveryRoute.us-dfw-sea.routeNote":
+    "Great for urban food scenes and Pacific Northwest day trips.",
+  "homeDiscoveryRoute.us-mia-cun.title": "Cancun short leisure hop",
+  "homeDiscoveryRoute.us-mia-cun.routeNote":
+    "Quick international route for beach resorts and long weekends.",
+  "homeDiscoveryRoute.us-ord-pdx.title": "Portland food-and-forest weekend",
+  "homeDiscoveryRoute.us-ord-pdx.routeNote":
+    "Pacific Northwest city break for coffee roasters, parks, and nearby waterfalls.",
+  "homeDiscoveryRoute.us-sea-hnl.title": "Honolulu tropical break",
+  "homeDiscoveryRoute.us-sea-hnl.routeNote":
+    "Direct island escape for beaches, surfing, and volcano views.",
+  "homeDiscoveryRoute.us-bos-sju.title": "San Juan Caribbean long weekend",
+  "homeDiscoveryRoute.us-bos-sju.routeNote":
+    "Warm-weather US territory route with historic old town and beaches.",
+  "homeDiscoveryRoute.us-den-phx.title": "Phoenix desert sun trip",
+  "homeDiscoveryRoute.us-den-phx.routeNote":
+    "Short western route for golf weekends and Sonoran desert hikes.",
+  "homeDiscoveryRoute.us-iad-bna.title": "Nashville music-city getaway",
+  "homeDiscoveryRoute.us-iad-bna.routeNote":
+    "High-demand domestic route for live music, food, and festivals.",
+  "homeDiscoveryRoute.us-lax-yvr.title": "Vancouver mountain-and-city escape",
+  "homeDiscoveryRoute.us-lax-yvr.routeNote":
+    "Easy cross-border route for harbor views, seafood, and nearby alpine trails.",
+  "homeDiscoveryRoute.us-sea-anc.title": "Anchorage wilderness gateway",
+  "homeDiscoveryRoute.us-sea-anc.routeNote":
+    "Seasonal favorite for glacier views, wildlife tours, and hiking.",
+  "homeDiscoveryRoute.us-jfk-aus.title": "Austin live-music city hop",
+  "homeDiscoveryRoute.us-jfk-aus.routeNote":
+    "Popular domestic route for festivals, startups, and food trucks.",
+  "homeDiscoveryRoute.us-dtw-msy.title": "New Orleans jazz weekend",
+  "homeDiscoveryRoute.us-dtw-msy.routeNote":
+    "Culture-rich route for jazz clubs, Creole dining, and French Quarter nights.",
+  "homeDiscoveryRoute.us-phl-san.title": "San Diego coastal break",
+  "homeDiscoveryRoute.us-phl-san.routeNote":
+    "Cross-country escape with beaches, harbor cruises, and mild weather.",
   homeTrustTitle: "Why travelers compare on Kurioticket",
   homeTrustSubtitle:
     "Kurioticket helps you compare provider offers clearly, then complete booking on the provider’s site.",
