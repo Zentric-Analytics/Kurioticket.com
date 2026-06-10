@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -47,7 +47,7 @@ type DashboardOverviewProps = {
   userName?: string | null;
 };
 
-type PersonalDetails = {
+type PersonalDetailsDraft = {
   name: string;
   displayName: string;
   email: string;
@@ -58,10 +58,13 @@ type PersonalDetails = {
 };
 
 type PersonalDetailRow = {
-  key: keyof PersonalDetails;
+  key: keyof PersonalDetailsDraft;
   label: string;
   fallback: string;
   helper?: string;
+  inputType?: "text" | "tel" | "date" | "email";
+  multiline?: boolean;
+  readOnly?: boolean;
 };
 
 type ListRowProps = {
@@ -215,19 +218,22 @@ const personalDetailRows: PersonalDetailRow[] = [
     label: "Email address",
     fallback: "Add your email address",
     helper: "This is the email address you use to sign in. It is also where we send important account updates.",
+    inputType: "email",
+    readOnly: true,
   },
   {
     key: "phone",
     label: "Phone number",
     fallback: "Add your phone number",
     helper: "Travel providers may use this number if they need to contact you about a booking.",
+    inputType: "tel",
   },
-  { key: "dateOfBirth", label: "Date of birth", fallback: "Add your date of birth" },
+  { key: "dateOfBirth", label: "Date of birth", fallback: "Add your date of birth", inputType: "date" },
   { key: "nationality", label: "Nationality", fallback: "Add your nationality" },
-  { key: "address", label: "Address", fallback: "Add your address" },
+  { key: "address", label: "Address", fallback: "Add your address", multiline: true },
 ];
 
-function getPersonalDetails({ displayName, userEmail, userName }: DashboardOverviewProps): PersonalDetails {
+function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: DashboardOverviewProps): PersonalDetailsDraft {
   const trimmedName = userName?.trim() ?? "";
   const trimmedDisplayName = trimmedName ? displayName.trim() : "";
 
@@ -251,8 +257,59 @@ function DetailValue({ value, fallback, helper }: { value: string; fallback: str
   );
 }
 
+function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: string; onChange: (key: keyof PersonalDetailsDraft, value: string) => void }) {
+  const baseClassName = cn(
+    "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100",
+    row.readOnly && "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
+  );
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    onChange(row.key, event.target.value);
+  };
+
+  if (row.multiline) {
+    return (
+      <textarea
+        className={cn(baseClassName, "min-h-28 resize-y")}
+        value={value}
+        onChange={handleChange}
+        placeholder={row.fallback}
+        readOnly={row.readOnly}
+        rows={4}
+      />
+    );
+  }
+
+  return (
+    <input
+      className={baseClassName}
+      type={row.inputType ?? "text"}
+      value={value}
+      onChange={handleChange}
+      placeholder={row.fallback}
+      readOnly={row.readOnly}
+    />
+  );
+}
+
 function PersonalDetailsSection(props: DashboardOverviewProps) {
-  const details = getPersonalDetails(props);
+  const initialValues = getPersonalDetailsInitialValues(props);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState<PersonalDetailsDraft>(initialValues);
+
+  const handleEdit = () => {
+    setDraft(initialValues);
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setDraft(initialValues);
+    setIsEditing(false);
+  };
+
+  const updateDraft = (key: keyof PersonalDetailsDraft, value: string) => {
+    setDraft((current) => ({ ...current, [key]: value }));
+  };
 
   return (
     <section
@@ -268,23 +325,61 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             Update your information and manage how it is used across Kurioticket.
           </p>
         </div>
-        <button
-          type="button"
-          disabled
-          className="inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-5 text-sm font-semibold text-slate-500 sm:w-auto"
-          title="Profile editing is not available yet."
-        >
-          Edit
-        </button>
       </div>
 
       <div className="divide-y divide-slate-200">
-        {personalDetailRows.map((row) => (
-          <div key={row.key} className="grid min-w-0 gap-1.5 px-4 py-3 sm:px-6 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-4">
-            <div className="text-sm font-semibold text-slate-700">{row.label}</div>
-            <DetailValue value={details[row.key]} fallback={row.fallback} helper={row.helper} />
+        {personalDetailRows.map((row) => {
+          const readOnlyValue = initialValues[row.key];
+          const editValue = draft[row.key];
+
+          return (
+            <div key={row.key} className="grid min-w-0 gap-1.5 px-4 py-3 sm:px-6 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-4">
+              <div className="text-sm font-semibold text-slate-700">{row.label}</div>
+              {isEditing ? (
+                <div className="min-w-0 space-y-1.5">
+                  <DetailInput row={row} value={editValue} onChange={updateDraft} />
+                  {row.helper ? <p className="text-sm leading-6 text-slate-500">{row.helper}</p> : null}
+                </div>
+              ) : (
+                <DetailValue value={readOnlyValue} fallback={row.fallback} helper={row.helper} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:px-6">
+        {isEditing ? (
+          <div className="flex min-w-0 flex-col gap-3 sm:items-end">
+            <p className="text-sm leading-6 text-slate-500 sm:text-right">Profile editing coming soon.</p>
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled
+                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 text-sm font-semibold text-slate-500"
+              >
+                Save changes
+              </button>
+            </div>
           </div>
-        ))}
+        ) : (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-22px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 sm:w-auto"
+            >
+              Edit
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
