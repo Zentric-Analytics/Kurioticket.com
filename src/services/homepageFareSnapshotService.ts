@@ -115,7 +115,21 @@ export type HomepageFareSnapshotStatusRoute = {
   errorReason?: SafeHomepageFareErrorReason;
   errorCategory?: SafeHomepageFareErrorCategory;
   replacementCandidateUsed?: string;
+  publicPriceDiagnosis?: HomepageFarePublicPriceDiagnosis;
 };
+
+
+export type HomepageFarePublicPriceDiagnosis =
+  | "fresh_available"
+  | "last_known_good_used"
+  | "last_known_good_failed_safety_check"
+  | "fresh_missing"
+  | "last_known_good_missing"
+  | "exact_route_mismatch"
+  | "provider_failed"
+  | "provider_unavailable"
+  | "no_provider_backed_fare_ever"
+  | "price_invalid";
 
 export type HomepageFareSnapshotStatusSummary = Record<
   HomepageFareSnapshotStatusValue,
@@ -186,6 +200,7 @@ export type HomepageFareSnapshotStatusResponse = {
   discoveryFreshByMarket: Record<string, number>;
   backupFreshByMarket: Record<string, number>;
   lastKnownGoodByMarket: Record<string, number>;
+  publicPriceDiagnostics: Record<HomepageFarePublicPriceDiagnosis, number>;
   timeoutByMarket: Record<string, number>;
   candidatePoolSizeByMarket: Record<string, number>;
   routeAttemptsByMarket: Record<string, number>;
@@ -225,6 +240,7 @@ export type HomepageFareSnapshotResponseEntry = {
   unavailable?: boolean;
   priceState?: "fresh" | "last_known_good" | "none";
   cachedProviderBacked?: boolean;
+  origin?: string;
 };
 
 export type HomepageFareDateStrategy = {
@@ -1647,7 +1663,9 @@ function getHomepageFareReplacementCandidates({
     .map((route) => ({
       route,
       score:
-        getHomepageFareReplacementMarketDistance(failedRoute.market, route.market) * 10 +
+        getHomepageFareReplacementMarketDistance(failedRoute.market, route.market) * 100 +
+        (hasSuccessfulActiveHomepageFareHistory(snapshotsByRouteId.get(route.id)) ? 0 : 20) +
+        (route.visibility === failedRoute.visibility ? 0 : route.visibility === "visible" ? 1 : 8) +
         getHomepageFareRefreshPriorityScore({
           route,
           snapshot: snapshotsByRouteId.get(route.id),
@@ -2149,7 +2167,10 @@ function prioritizeHomepageFareRefreshRoutes({
     }))
     .sort(
       (first, second) =>
-        first.score - second.score || first.route.priority - second.route.priority,
+        first.score - second.score ||
+        (marketTargets[second.route.market]?.missingCount ?? 0) -
+          (marketTargets[first.route.market]?.missingCount ?? 0) ||
+        first.route.priority - second.route.priority,
     );
 
   const routesByScore = new Map<number, HomepageRefreshRoute[]>();
@@ -2161,11 +2182,14 @@ function prioritizeHomepageFareRefreshRoutes({
   return [...routesByScore.entries()]
     .sort(([firstScore], [secondScore]) => firstScore - secondScore)
     .flatMap(([, sameScoreRoutes]) =>
-      roundRobinHomepageFareRoutesByMarket(sameScoreRoutes),
+      roundRobinHomepageFareRoutesByMarket(sameScoreRoutes, marketTargets),
     );
 }
 
-function roundRobinHomepageFareRoutesByMarket(routes: HomepageRefreshRoute[]) {
+function roundRobinHomepageFareRoutesByMarket(
+  routes: HomepageRefreshRoute[],
+  marketTargets: Record<string, HomepageFareMarketTarget> = {},
+) {
   const routesByMarket = new Map<string, HomepageRefreshRoute[]>();
 
   for (const route of routes) {
@@ -2181,7 +2205,14 @@ function roundRobinHomepageFareRoutesByMarket(routes: HomepageRefreshRoute[]) {
   while (appendedRoute) {
     appendedRoute = false;
 
-    for (const market of HOMEPAGE_FARE_REFRESH_MARKETS) {
+    const marketsByMissingCoverage = [...HOMEPAGE_FARE_REFRESH_MARKETS].sort(
+      (first, second) =>
+        (marketTargets[second]?.missingCount ?? 0) -
+          (marketTargets[first]?.missingCount ?? 0) ||
+        first.localeCompare(second),
+    );
+
+    for (const market of marketsByMissingCoverage) {
       const marketRoutes = routesByMarket.get(market);
       const route = marketRoutes?.shift();
 
@@ -2745,7 +2776,7 @@ function areSameCandidateSets(
 function getHomepageDiscoveryCandidateRouteKey(
   candidate: HomeDiscoveryFareCandidate,
 ) {
-  return `${candidate.id}:${candidate.originCode}:${candidate.destinationCode}`;
+  return `${candidate.id}:${normalizeHomepageFareCode(candidate.originCode) ?? candidate.originCode}:${normalizeHomepageFareCode(candidate.destinationCode) ?? candidate.destinationCode}`;
 }
 
 function buildHomepageDiscoveryFareCardsResponse({
@@ -2847,9 +2878,9 @@ function isUsableHomepageDiscoveryFareForCandidate(
 } {
   return (
     isUsableHomepageFareSnapshotResponseEntry(fare) &&
-    fare.search.origin === candidate.originCode &&
-    fare.search.destination === candidate.destinationCode &&
-    fare.search.currency === fare.currency
+    normalizeHomepageFareCode(fare.search.origin) === normalizeHomepageFareCode(candidate.originCode) &&
+    normalizeHomepageFareCode(fare.search.destination) === normalizeHomepageFareCode(candidate.destinationCode) &&
+    normalizeHomepageFareCurrency(fare.search.currency) === normalizeHomepageFareCurrency(fare.currency)
   );
 }
 
@@ -2947,6 +2978,7 @@ export async function readHomepageFareSnapshotStatus({
       discoveryFreshByMarket: createEmptyRefreshMarketCounts(),
       backupFreshByMarket: createEmptyRefreshMarketCounts(),
       lastKnownGoodByMarket: createEmptyRefreshMarketCounts(),
+      publicPriceDiagnostics: createEmptyPublicPriceDiagnostics(),
       timeoutByMarket: createEmptyRefreshMarketCounts(),
       candidatePoolSizeByMarket: createEmptyRefreshMarketCounts(),
       routeAttemptsByMarket: createEmptyRefreshMarketCounts(),
@@ -3039,6 +3071,7 @@ export async function readHomepageFareSnapshotStatus({
   );
   const emptyMarketCounts = createEmptyRefreshMarketCounts();
   const lastKnownGoodByMarket = createEmptyRefreshMarketCounts();
+  const publicPriceDiagnostics = createEmptyPublicPriceDiagnostics();
   const timeoutByMarket = createEmptyRefreshMarketCounts();
   const failedByMarket = createEmptyRefreshMarketCounts();
   const unavailableByMarket = createEmptyRefreshMarketCounts();
@@ -3049,6 +3082,10 @@ export async function readHomepageFareSnapshotStatus({
   let lastRefreshAt: string | undefined;
 
   for (const route of statusRoutes) {
+    if (route.publicPriceDiagnosis) {
+      publicPriceDiagnostics[route.publicPriceDiagnosis] =
+        (publicPriceDiagnostics[route.publicPriceDiagnosis] ?? 0) + 1;
+    }
     if (route.status === "last_known_good") {
       lastKnownGoodByMarket[route.market] =
         (lastKnownGoodByMarket[route.market] ?? 0) + 1;
@@ -3116,6 +3153,7 @@ export async function readHomepageFareSnapshotStatus({
     discoveryFreshByMarket: visibleDiscoveryPricedByMarket,
     backupFreshByMarket,
     lastKnownGoodByMarket,
+    publicPriceDiagnostics,
     timeoutByMarket,
     candidatePoolSizeByMarket,
     routeAttemptsByMarket: emptyMarketCounts,
@@ -3384,6 +3422,21 @@ type HomepageFareSnapshotRecord = {
   payload?: unknown;
 };
 
+function createEmptyPublicPriceDiagnostics(): Record<HomepageFarePublicPriceDiagnosis, number> {
+  return {
+    fresh_available: 0,
+    last_known_good_used: 0,
+    last_known_good_failed_safety_check: 0,
+    fresh_missing: 0,
+    last_known_good_missing: 0,
+    exact_route_mismatch: 0,
+    provider_failed: 0,
+    provider_unavailable: 0,
+    no_provider_backed_fare_ever: 0,
+    price_invalid: 0,
+  };
+}
+
 function createEmptyHomepageFareSnapshotStatusSummary(): HomepageFareSnapshotStatusSummary {
   return {
     fresh: 0,
@@ -3502,6 +3555,7 @@ function formatHomepageFareSnapshotStatusRoute({
     return {
       ...base,
       status: "missing",
+      publicPriceDiagnosis: "no_provider_backed_fare_ever",
       providerBacked: false,
     };
   }
@@ -3531,6 +3585,15 @@ function formatHomepageFareSnapshotStatusRoute({
     status !== "fresh"
       ? readSafeHomepageFareSnapshotError(snapshot.payload)
       : undefined;
+  const publicPriceDiagnosis = getHomepageFarePublicPriceDiagnosis({
+    route,
+    snapshot,
+    now,
+    currency,
+    status,
+    isFresh,
+    isLastKnownGood,
+  });
 
   const provider = readHomepageFareSnapshotProvider(snapshot.payload);
 
@@ -3546,6 +3609,7 @@ function formatHomepageFareSnapshotStatusRoute({
       : {}),
     ...(provider ? { provider } : {}),
     status,
+    publicPriceDiagnosis,
     providerBacked: snapshot.providerBacked === true,
     searchedAt: snapshot.searchedAt.toISOString(),
     expiresAt: snapshot.expiresAt.toISOString(),
@@ -3558,6 +3622,45 @@ function formatHomepageFareSnapshotStatusRoute({
   };
 }
 
+
+function getHomepageFarePublicPriceDiagnosis({
+  route,
+  snapshot,
+  status,
+  isFresh,
+  isLastKnownGood,
+  currency,
+}: {
+  route: HomepageFareRoute;
+  snapshot: HomepageFareSnapshotRecord;
+  now: Date;
+  status: HomepageFareSnapshotStatusValue;
+  isFresh: boolean;
+  isLastKnownGood: boolean;
+  currency: string;
+}): HomepageFarePublicPriceDiagnosis {
+  const routeOrigin = normalizeHomepageFareCode(route.origin);
+  const routeDestination = normalizeHomepageFareCode(route.destination);
+  const snapshotOrigin = normalizeHomepageFareCode(snapshot.origin);
+  const snapshotDestination = normalizeHomepageFareCode(snapshot.destination);
+
+  if (routeOrigin !== snapshotOrigin || routeDestination !== snapshotDestination) {
+    return "exact_route_mismatch";
+  }
+  if (isFresh) return "fresh_available";
+  if (isLastKnownGood) return "last_known_good_used";
+  if (snapshot.providerBacked !== true) return "no_provider_backed_fare_ever";
+  if (!readFinitePrice(snapshot.price) || normalizeHomepageFareCurrency(snapshot.currency) !== currency) {
+    return "price_invalid";
+  }
+  if (snapshot.status === HomepageFareSnapshotStatus.FAILED) return "provider_failed";
+  if (snapshot.status === HomepageFareSnapshotStatus.UNAVAILABLE) return "provider_unavailable";
+  if (snapshot.status === HomepageFareSnapshotStatus.ACTIVE && status === "expired") {
+    return "last_known_good_failed_safety_check";
+  }
+
+  return status === "expired" ? "last_known_good_missing" : "fresh_missing";
+}
 
 function getHomepageFareStatusRouteSection(
   route: HomepageFareRoute,
@@ -3661,13 +3764,23 @@ function formatHomepageFareSnapshotResponseEntry({
   const unavailableEntry: HomepageFareSnapshotResponseEntry = {
     id: route.id,
     code: route.destination,
+    origin: route.origin,
     providerBacked: false,
     searchedAt: snapshot?.searchedAt?.toISOString() ?? fallbackSearchedAt,
     expiresAt: snapshot?.expiresAt?.toISOString(),
     unavailable: true,
+    priceState: "none",
   };
 
   if (!snapshot) return unavailableEntry;
+
+  const normalizedSnapshotOrigin = normalizeHomepageFareCode(snapshot.origin);
+  const normalizedSnapshotDestination = normalizeHomepageFareCode(snapshot.destination);
+  const routeMatchesSnapshot =
+    normalizedSnapshotOrigin === route.origin &&
+    normalizedSnapshotDestination === route.destination;
+
+  if (!routeMatchesSnapshot) return unavailableEntry;
 
   const price = readFinitePrice(snapshot.price);
   const expiresAtMs = snapshot.expiresAt.getTime();
@@ -3690,8 +3803,8 @@ function formatHomepageFareSnapshotResponseEntry({
   if ((!isFresh && !isLastKnownGood) || !price) return unavailableEntry;
 
   const search = buildHomepageFareSearch({
-    origin: snapshot.origin,
-    destination: snapshot.destination,
+    origin: route.origin,
+    destination: route.destination,
     departureDate: formatDateKey(snapshot.departureDate) || departureDate,
     currency: snapshot.currency,
   });
@@ -3699,6 +3812,7 @@ function formatHomepageFareSnapshotResponseEntry({
   return {
     id: route.id,
     code: route.destination,
+    origin: route.origin,
     price,
     currency: snapshot.currency,
     providerBacked: true,
@@ -3787,5 +3901,8 @@ export const __homepageFareCoverageTest = {
   isUsableHomepageFareSnapshotRecord,
   getHomepageFareReplacementCandidates,
   getHomepageFareCompatibleReplacementMarkets,
+  getHomepageFareRefreshPriorityScore,
+  prioritizeHomepageFareRefreshRoutes,
+  formatHomepageFareSnapshotResponseEntry,
   updateHomepageFareUnderfillExecutionMetadata,
 };
