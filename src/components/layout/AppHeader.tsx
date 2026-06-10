@@ -541,8 +541,8 @@ export function AppHeader({
                 variant="full"
                 tone="light"
                 className="gap-2"
-                markClassName="h-8 w-8 md:h-9 md:w-9"
-                textClassName="text-base md:text-lg"
+                markClassName="h-10 w-10 md:h-11 md:w-11"
+                textClassName="text-lg md:text-xl"
               />
             </Link>
 

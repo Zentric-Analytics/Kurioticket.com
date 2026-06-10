@@ -12,7 +12,7 @@ import React, {
 
 import { useRouter } from "next/navigation";
 
-import { Calendar, ChevronDown, Minus, Plane, Plus, RotateCcw, X } from "lucide-react";
+import { Calendar, ChevronDown, Minus, Plane, Plus, X } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -488,24 +488,6 @@ export function StandaloneFlightSearchForm() {
     setReturnDate(selectedIso);
   };
 
-  const resetForm = () => {
-    clearAirport("origin");
-    clearAirport("destination");
-    setTripType("round-trip");
-    setDepartureDate("");
-    setReturnDate("");
-    setAdultCount(1);
-    setChildCount(0);
-    setInfantCount(0);
-    setDraftAdultCount(1);
-    setDraftChildCount(0);
-    setDraftInfantCount(0);
-    setCabinClass("economy");
-    setDraftCabinClass("economy");
-    setDatesOpen(false);
-    setTravelersOpen(false);
-  };
-
   const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -755,12 +737,12 @@ export function StandaloneFlightSearchForm() {
   );
 
   return (
-    <section className="rounded-3xl border border-slate-200 bg-white p-2 shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
-      <form onSubmit={onSubmit} className="space-y-2">
-        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1 sm:inline-grid sm:w-auto">
+    <section className="rounded-3xl border border-slate-200/80 bg-white p-3 shadow-[0_18px_45px_rgba(15,23,42,0.10)] sm:p-4">
+      <form onSubmit={onSubmit} className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1 sm:inline-flex">
           {[
-            ["round-trip", t("roundTrip")],
-            ["one-way", t("oneWay")],
+            ["round-trip", "Return"],
+            ["one-way", "One way"],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -771,8 +753,10 @@ export function StandaloneFlightSearchForm() {
                 if (nextTripType === "one-way") setReturnDate("");
               }}
               className={cn(
-                "focus-ring min-h-11 rounded-xl px-4 py-2 text-sm font-black transition-colors",
-                tripType === value ? "bg-white text-indigo-700 shadow-sm" : "text-slate-600 hover:text-slate-950",
+                "focus-ring inline-flex min-h-10 flex-1 items-center justify-center rounded-xl px-4 py-2 text-sm font-black transition-colors sm:flex-none",
+                tripType === value
+                  ? "bg-white text-indigo-700 shadow-sm ring-1 ring-indigo-100"
+                  : "text-slate-600 hover:bg-white/70 hover:text-slate-950",
               )}
             >
               {label}
@@ -780,7 +764,7 @@ export function StandaloneFlightSearchForm() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1.25fr)_minmax(0,1.2fr)_minmax(0,1.1fr)_128px] lg:gap-0">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1.7fr)_minmax(170px,0.9fr)_minmax(165px,0.85fr)_156px] lg:gap-2">
           <AirportFieldControl
             ref={originWrapRef}
             inputRef={originInputRef}
@@ -802,7 +786,7 @@ export function StandaloneFlightSearchForm() {
             onKeyDown={(event) => onAirportKeyNav(event, "origin")}
             mobileLauncherRef={originMobileLauncherRef}
             desktopSuggestions={renderAirportSuggestions("origin")}
-            className="lg:rounded-l-2xl lg:border-r-0"
+            className="lg:rounded-2xl"
           />
 
           <AirportFieldControl
@@ -827,12 +811,12 @@ export function StandaloneFlightSearchForm() {
             onKeyDown={(event) => onAirportKeyNav(event, "destination")}
             mobileLauncherRef={destinationMobileLauncherRef}
             desktopSuggestions={renderAirportSuggestions("destination")}
-            className="lg:border-r-0"
+            className="lg:rounded-2xl"
           />
 
           <div
             ref={dateWrapRef}
-            className="relative min-h-[68px] rounded-2xl border border-slate-300 bg-white px-3 py-2 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/25 lg:rounded-none lg:border-r-0"
+            className="relative min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/15 lg:rounded-2xl"
           >
             <label className="mb-1 block text-xs font-extrabold uppercase tracking-[0.12em] text-slate-600">
               Travel dates
@@ -844,7 +828,7 @@ export function StandaloneFlightSearchForm() {
               aria-expanded={datesOpen}
               aria-haspopup="dialog"
               onClick={() => setDatesOpen((prev) => !prev)}
-              className="focus-ring flex min-h-10 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-black text-slate-950"
+              className="focus-ring flex min-h-9 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-extrabold text-slate-950"
             >
               <span>{dateSummary}</span>
               <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
@@ -910,7 +894,7 @@ export function StandaloneFlightSearchForm() {
 
           <div
             ref={travelersWrapRef}
-            className="relative min-h-[68px] rounded-2xl border border-slate-300 bg-white px-3 py-2 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/25 lg:rounded-none lg:border-r-0"
+            className="relative min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/15 lg:rounded-2xl"
           >
             <label className="mb-1 block text-xs font-extrabold uppercase tracking-[0.12em] text-slate-600">
               {t("travelers")}
@@ -927,7 +911,7 @@ export function StandaloneFlightSearchForm() {
                 }
                 openTravelers();
               }}
-              className="focus-ring flex min-h-10 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-black text-slate-950"
+              className="focus-ring flex min-h-9 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-extrabold text-slate-950"
             >
               <span className="truncate">{travelerSummary}</span>
               <ChevronDown
@@ -978,22 +962,11 @@ export function StandaloneFlightSearchForm() {
             type="submit"
             disabled={isSearchDisabled}
             aria-busy={isSubmitting}
-            className="min-h-[58px] w-full rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-black text-white shadow-lg shadow-indigo-700/20 lg:h-full lg:rounded-l-none lg:rounded-r-2xl"
+            className="min-h-[58px] w-full whitespace-nowrap rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-base font-black text-white shadow-lg shadow-indigo-700/20 hover:from-indigo-600 hover:to-violet-500 disabled:from-indigo-500 disabled:to-violet-500 lg:h-full"
           >
             <Plane className="mr-2 h-4 w-4" aria-hidden="true" />
-            {isSubmitting ? t("searchingFlights") : t("search")}
+            {isSubmitting ? t("searchingFlights") : "Search flights"}
           </Button>
-        </div>
-
-        <div className="flex justify-end px-1 pt-1">
-          <button
-            type="button"
-            onClick={resetForm}
-            className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-          >
-            <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-            {t("clearAll")}
-          </button>
         </div>
 
         <MobileAirportPicker
@@ -1080,7 +1053,7 @@ const AirportFieldControl = React.forwardRef<HTMLDivElement, AirportFieldControl
     <div
       ref={ref}
       className={cn(
-        "relative min-h-[68px] rounded-2xl border border-slate-300 bg-white px-3 py-2 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/25 lg:rounded-none",
+        "relative min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/15",
         className,
       )}
     >
@@ -1093,7 +1066,7 @@ const AirportFieldControl = React.forwardRef<HTMLDivElement, AirportFieldControl
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={onMobileOpen}
-        className="focus-ring flex min-h-10 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-black text-slate-950 sm:hidden"
+        className="focus-ring flex min-h-9 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-extrabold text-slate-950 sm:hidden"
       >
         <span className={cn("truncate", !value && "text-slate-400")}>{value || placeholder}</span>
         <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
@@ -1108,7 +1081,7 @@ const AirportFieldControl = React.forwardRef<HTMLDivElement, AirportFieldControl
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           autoComplete="off"
-          className="focus-ring h-10 w-full rounded-xl border-0 bg-transparent pr-9 text-base font-black text-slate-950 outline-none placeholder:text-slate-400"
+          className="focus-ring h-9 w-full rounded-xl border-0 bg-transparent pr-9 text-base font-extrabold text-slate-950 outline-none placeholder:text-slate-400"
         />
         {value ? (
           <button
