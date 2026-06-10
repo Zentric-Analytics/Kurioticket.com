@@ -7,8 +7,10 @@ import { Building2, Calendar, ClipboardCheck } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { validateDestinationImages } from "@/data/destinationImageValidation";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
@@ -376,6 +378,8 @@ hotelInspirationCategoryChips.forEach((category) => {
 });
 
 export default function HotelsSearchPage() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [selectedInspirationCategory, setSelectedInspirationCategory] =
     useState<HotelInspirationCategory>("Beach");
 
@@ -449,7 +453,7 @@ export default function HotelsSearchPage() {
               id="hotel-destinations-heading"
               className="px-1 text-[1.35rem] font-semibold leading-[1.18] tracking-[-0.014em] text-slate-800 md:text-[2rem]"
             >
-              Explore hotel stays by destination
+              {t("exploreHotelStaysByDestination")}
             </h2>
             <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(260px,86vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
@@ -472,7 +476,7 @@ export default function HotelsSearchPage() {
               id="more-hotel-destinations-heading"
               className="px-1 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
             >
-              Featured hotel destinations
+              {t("featuredHotelDestinations")}
             </h2>
             <div className="border border-slate-200/80 bg-slate-50/85 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(250px,84vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
@@ -499,16 +503,15 @@ export default function HotelsSearchPage() {
                     id="hotel-inspiration-heading"
                     className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
                   >
-                    Find stays for every kind of trip
+                    {t("findStaysEveryKindTrip")}
                   </h2>
                   <p className="mt-1.5 max-w-xl text-[0.9rem] leading-5 text-slate-600 md:mt-2 md:text-base md:leading-6">
-                    Browse destination ideas by the kind of stay you have in
-                    mind.
+                    {t("hotelInspirationBody")}
                   </p>
                 </div>
                 <div
                   className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] md:flex-wrap md:justify-end md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden"
-                  aria-label="Hotel inspiration categories"
+                  aria-label={t("hotelInspirationCategories")}
                 >
                   {hotelInspirationCategoryChips.map((chip) => {
                     const isSelected = chip === selectedInspirationCategory;
@@ -601,7 +604,7 @@ export default function HotelsSearchPage() {
               id="global-hotel-destinations-heading"
               className="px-1 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
             >
-              Explore stays around the world
+              {t("exploreStaysWorldwide")}
             </h2>
             <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(220px,76vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-5 [&::-webkit-scrollbar]:hidden">

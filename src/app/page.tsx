@@ -36,7 +36,7 @@ import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
 } from "@/data/marketHomeContent";
-import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
+import { getGeneralFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
 import { getTranslations } from "@/lib/i18n";
@@ -159,6 +159,8 @@ export default function Home() {
 
   const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const translatedFaqs = getGeneralFaqs(t);
+
   const popularDestinationResolution = useMemo(
     () => getPopularDestinationsByRegion(regionCode),
     [regionCode],
@@ -686,16 +688,15 @@ export default function Home() {
         <section className="page-shell pb-12 pt-2 sm:pt-3">
           <div className="max-w-3xl space-y-2">
             <h2 className="text-xl font-semibold tracking-normal text-slate-800 sm:font-bold sm:text-slate-900">
-              Frequently asked questions
+              {t("faqHeading")}
             </h2>
             <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-              Learn how Kurioticket helps you compare flights, hotels, and
-              travel options before booking with trusted providers.
+              {t("faqIntro")}
             </p>
           </div>
 
           <FaqAccordion
-            items={generalFaqs}
+            items={translatedFaqs}
             mobileLimit={homepageMobileFaqLimit}
             className="mt-5"
           />
@@ -704,7 +705,7 @@ export default function Home() {
             href="/faq"
             className="mt-4 inline-flex text-sm font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline sm:hidden"
           >
-            View all FAQs
+            {t("faqViewAll")}
           </Link>
         </section>
 
@@ -794,10 +795,12 @@ function DiscoveryCardImage({
   image,
   imageAlt,
   destinationCode,
+  destinationFallbackLabel,
 }: {
   image: string;
   imageAlt: string;
   destinationCode: string;
+  destinationFallbackLabel: string;
 }) {
   const [hasError, setHasError] = useState(false);
   const hasImage = Boolean(image?.trim());
@@ -807,7 +810,7 @@ function DiscoveryCardImage({
       <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-violet-200 via-fuchsia-100 to-cyan-100 text-slate-700">
         <Compass size={14} className="opacity-80" aria-hidden />
         <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
-          Destination
+          {destinationFallbackLabel}
         </span>
         <span className="text-[11px] font-black tracking-[0.12em] text-slate-800">
           {destinationCode}
@@ -895,6 +898,7 @@ function DiscoverySuggestionCard({
           image={image}
           imageAlt={imageAlt}
           destinationCode={destinationCode}
+          destinationFallbackLabel={t("destinationImageFallback")}
         />
       </div>
 

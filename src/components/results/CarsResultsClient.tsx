@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 type CarsResultsValues = {
@@ -227,6 +229,8 @@ const fieldInputClass =
   "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
 
 export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [selectedCarFilters, setSelectedCarFilters] =
@@ -491,14 +495,14 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         aria-label={
           activeFilterCount > 0
             ? `Open filters, ${activeFilterLabel}`
-            : "Open filters"
+            : t("filters")
         }
         className="relative h-14 w-[68px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
         onClick={() => setFiltersOpen(true)}
       >
         <span className="flex flex-col items-center justify-center gap-1 leading-none">
           <SlidersHorizontal size={17} strokeWidth={2.3} aria-hidden="true" />
-          <span>Filters</span>
+          <span>{t("filters")}</span>
         </span>
         {activeFilterCount > 0 ? (
           <span className="absolute right-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
@@ -805,13 +809,13 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               aria-label={
                 activeFilterCount > 0
                   ? `Open filters, ${activeFilterLabel}`
-                  : "Open filters"
+                  : t("filters")
               }
               className="relative h-10 rounded-md border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
               onClick={() => setFiltersOpen(true)}
             >
               <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-              Filters
+              {t("filters")}
               {activeFilterCount > 0 ? (
                 <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-bold leading-none text-indigo-700 ring-1 ring-indigo-100">
                   {activeFilterCount}
@@ -858,8 +862,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             >
               <SlidersHorizontal size={17} aria-hidden="true" />
               {activeFilterCount > 0
-                ? `Filters · ${activeFilterCount}`
-                : "Filters"}
+                ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
+                : t("filters")}
             </Button>
           </div>
 
@@ -886,7 +890,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold text-slate-900">
-                Filters
+                {t("filters")}
               </h2>
               {activeFilterCount > 0 ? (
                 <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
