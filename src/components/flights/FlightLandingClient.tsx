@@ -105,7 +105,13 @@ function getBeachVacationCards(
   return [...regionalMatches, ...fallbackMatches].slice(0, 6);
 }
 
-function RouteCard({ item, priority = false }: { item: HomeDiscoveryItem; priority?: boolean }) {
+function RouteCard({
+  item,
+  priority = false,
+}: {
+  item: HomeDiscoveryItem;
+  priority?: boolean;
+}) {
   return (
     <Link
       href={buildDiscoveryLink(item)}
@@ -151,9 +157,15 @@ export function FlightLandingClient() {
   const { selectedOption } = useRegion();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
-  const discoveryCards = getHomeDiscoveryByRegion(selectedOption.code).slice(0, 4);
+  const discoveryCards = getHomeDiscoveryByRegion(selectedOption.code).slice(
+    0,
+    4,
+  );
   const discoveryIds = new Set(discoveryCards.map((item) => item.id));
-  const beachVacationCards = getBeachVacationCards(selectedOption.code, discoveryIds);
+  const beachVacationCards = getBeachVacationCards(
+    selectedOption.code,
+    discoveryIds,
+  );
   const routeInspirationCards = getHomeDiscoveryByRegion(selectedOption.code)
     .filter((item) => !discoveryIds.has(item.id))
     .slice(0, 8);
@@ -170,12 +182,13 @@ export function FlightLandingClient() {
             Find flights for your next trip
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-7 text-slate-600 sm:text-lg">
-            Search routes, compare dates, and explore flight options for your next journey.
+            Search routes, compare dates, and explore flight options for your
+            next journey.
           </p>
         </div>
 
         <div className="mx-auto mt-7 max-w-6xl rounded-[2rem] border border-white/80 bg-white/85 p-3 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
-          <StandaloneFlightSearchForm />
+          <StandaloneFlightSearchForm variant="flightLanding" />
         </div>
 
         <div className="mx-auto mt-6 grid max-w-6xl gap-3 sm:grid-cols-3">
@@ -201,7 +214,9 @@ export function FlightLandingClient() {
               className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
             >
               <Icon className="h-5 w-5 text-indigo-700" aria-hidden="true" />
-              <h2 className="mt-3 text-base font-extrabold text-slate-950">{title}</h2>
+              <h2 className="mt-3 text-base font-extrabold text-slate-950">
+                {title}
+              </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
             </article>
           ))}
@@ -232,7 +247,8 @@ export function FlightLandingClient() {
                 Route ideas for flexible trips
               </h2>
               <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
-                Browse route ideas, then start a real search with dates and travelers before comparing available flights.
+                Browse route ideas, then start a real search with dates and
+                travelers before comparing available flights.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
