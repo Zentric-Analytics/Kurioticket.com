@@ -228,6 +228,8 @@ const dateOfBirthMonths = [
   "December",
 ];
 
+const dateOfBirthDays = Array.from({ length: 31 }, (_, index) => String(index + 1).padStart(2, "0"));
+
 const minDateOfBirthYear = 1900;
 const currentDateOfBirthYear = new Date().getFullYear();
 const dateOfBirthYears = Array.from(
@@ -284,6 +286,12 @@ function DetailValue({ value, fallback, helper }: { value: string; fallback: str
   );
 }
 
+function normalizeDateOfBirthDay(day: string) {
+  const normalizedDay = day.padStart(2, "0");
+
+  return dateOfBirthDays.includes(normalizedDay) ? normalizedDay : "";
+}
+
 function parseDateOfBirthParts(value: string) {
   const trimmedValue = value.trim();
 
@@ -298,7 +306,7 @@ function parseDateOfBirthParts(value: string) {
     const monthIndex = Number(monthNumber) - 1;
 
     return {
-      day,
+      day: normalizeDateOfBirthDay(day),
       month: dateOfBirthMonths[monthIndex] ?? "",
       year,
     };
@@ -307,24 +315,25 @@ function parseDateOfBirthParts(value: string) {
   const [day = "", month = "", year = ""] = trimmedValue.split(/\s+/);
 
   return {
-    day,
+    day: normalizeDateOfBirthDay(day),
     month: dateOfBirthMonths.includes(month) ? month : "",
     year,
   };
 }
 
 function formatDateOfBirthParts(parts: { day: string; month: string; year: string }) {
-  return [parts.day, parts.month, parts.year].filter(Boolean).join(" ");
+  const normalizedDay = parts.day ? parts.day.padStart(2, "0") : "";
+
+  return [normalizedDay, parts.month, parts.year].filter(Boolean).join(" ");
 }
 
 function DateOfBirthInput({ value, onChange, className }: { value: string; onChange: (value: string) => void; className: string }) {
   const [parts, setParts] = useState(() => parseDateOfBirthParts(value));
 
   const updatePart = (part: keyof typeof parts, nextValue: string) => {
-    const normalizedValue = part === "month" ? nextValue : nextValue.replace(/\D/g, "");
     const nextParts = {
       ...parts,
-      [part]: normalizedValue,
+      [part]: nextValue,
     };
 
     setParts(nextParts);
@@ -333,17 +342,16 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
 
   return (
     <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
-      <input
-        className={className}
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        maxLength={2}
-        value={parts.day}
-        onChange={(event) => updatePart("day", event.target.value)}
-        placeholder="DD"
-        aria-label="Date of birth day"
-      />
+      <select className={className} value={parts.day} onChange={(event) => updatePart("day", event.target.value)} aria-label="Date of birth day">
+        <option value="" disabled hidden>
+          DD
+        </option>
+        {dateOfBirthDays.map((day) => (
+          <option key={day} value={day}>
+            {day}
+          </option>
+        ))}
+      </select>
       <select className={className} value={parts.month} onChange={(event) => updatePart("month", event.target.value)} aria-label="Date of birth month">
         <option value="" disabled hidden>
           Month
