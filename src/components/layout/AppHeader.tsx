@@ -529,7 +529,7 @@ export function AppHeader({
   return (
     <>
       <header className="relative z-50 border-b border-white/15 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
-        <div className="page-shell flex min-h-[56px] items-center justify-between gap-3 py-2 md:min-h-[66px] md:gap-4 md:py-2">
+        <div className="page-shell flex min-h-[56px] items-center justify-between gap-3 py-2 md:min-h-[46px] md:gap-4 md:py-1">
           <Link
             href="/"
             aria-label="Kurioticket home"
@@ -545,64 +545,35 @@ export function AppHeader({
             />
           </Link>
 
-          <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
-            <nav className="flex min-w-0 items-center justify-end gap-1.5">
-              {desktopPrimaryNavItems.map((item) => {
-                const Icon = item.icon;
-                const active = isNavItemActive(item.href);
+          <div className="hidden min-w-0 flex-1 items-center justify-end gap-2 md:flex">
+            <CountryCurrencySelector variant="header" grouped />
 
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={(event) => handleRouteLinkClick(event, item.href)}
-                    className={`inline-flex cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
-                      active
-                        ? "bg-white/10 text-white ring-1 ring-white/45 shadow-none"
-                        : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
-                    }`}
-                  >
-                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
+            <div className="relative" ref={languageRef}>
+              <button
+                ref={languageTriggerRef}
+                type="button"
+                onClick={() => setLanguageOpen((value) => !value)}
+                aria-haspopup="dialog"
+                aria-expanded={languageOpen}
+                aria-controls={languageOpen ? languageDialogId : undefined}
+                aria-label={t.openLanguagePreferences.replace(
+                  "{{language}}",
+                  selectedLanguageDisplayName,
+                )}
+                title={t.openLanguagePreferences.replace(
+                  "{{language}}",
+                  selectedLanguageDisplayName,
+                )}
+                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/20 bg-white/10 text-indigo-50 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+              >
+                {renderFlag(
+                  selectedLanguage?.countryCode,
+                  selectedLanguage?.fallbackText,
+                )}
+              </button>
+            </div>
 
             <div className="flex shrink-0 items-center justify-end gap-2">
-              <div className="inline-flex h-9 items-center overflow-hidden rounded-xl border border-white/20 bg-white/10 shadow-sm backdrop-blur-sm">
-                <CountryCurrencySelector variant="header" grouped />
-
-                <span
-                  className="pointer-events-none h-6 w-px bg-white/20"
-                  aria-hidden="true"
-                />
-
-                <div className="relative" ref={languageRef}>
-                  <button
-                    ref={languageTriggerRef}
-                    type="button"
-                    onClick={() => setLanguageOpen((value) => !value)}
-                    aria-haspopup="dialog"
-                    aria-expanded={languageOpen}
-                    aria-controls={languageOpen ? languageDialogId : undefined}
-                    aria-label={t.openLanguagePreferences.replace(
-                      "{{language}}",
-                      selectedLanguageDisplayName,
-                    )}
-                    className="inline-flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-none border-0 bg-transparent px-2.5 text-xs font-semibold text-indigo-50 shadow-none transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                  >
-                    <span>{selectedLanguageDisplayName}</span>
-
-                    <ChevronDown
-                      size={14}
-                      className="text-indigo-100"
-                      aria-hidden="true"
-                    />
-                  </button>
-                </div>
-              </div>
-
               {isSignedIn ? (
                 <div className="relative" ref={accountRef}>
                   <button
@@ -740,26 +711,28 @@ export function AppHeader({
                 aria-expanded={open}
                 aria-haspopup="menu"
                 onClick={() => setOpen((value) => !value)}
-                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-white/25 bg-white/10 text-xs font-black text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-xs font-black text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               >
-                {session?.user?.image ? (
-                  <RawImage
-                    src={session.user.image}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  accountInitials
-                )}
+                <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
+                  {session?.user?.image ? (
+                    <RawImage
+                      src={session.user.image}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    accountInitials
+                  )}
+                </span>
               </button>
             ) : (
               <Link
                 href="/auth/signin"
                 aria-label={t.signIn}
                 onClick={(event) => handleRouteLinkClick(event, "/auth/signin")}
-                className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               >
-                <UserCircle size={17} />
+                <UserCircle size={18} />
               </Link>
             )}
 
@@ -768,10 +741,10 @@ export function AppHeader({
               aria-label={open ? t.closeMobileMenu : t.openMobileMenu}
               aria-expanded={open}
               aria-controls={open ? "mobile-menu-drawer" : undefined}
-              className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+              className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
               onClick={() => setOpen((value) => !value)}
             >
-              {open ? <X size={17} /> : <Menu size={17} />}
+              {open ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>
 
@@ -947,6 +920,33 @@ export function AppHeader({
             : null}
         </div>
 
+        <nav className="hidden border-t border-white/10 bg-white/[0.04] md:block">
+          <div className="page-shell flex min-h-[36px] items-center py-1">
+            <div className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
+              {desktopPrimaryNavItems.map((item) => {
+                const Icon = item.icon;
+                const active = isNavItemActive(item.href);
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={(event) => handleRouteLinkClick(event, item.href)}
+                    className={`inline-flex cursor-pointer items-center gap-1 rounded-lg px-2.5 py-1 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                      active
+                        ? "bg-white/[0.12] text-white ring-1 ring-white/35"
+                        : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    {Icon ? <Icon size={15} aria-hidden="true" /> : null}
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </nav>
+
         <nav className="bg-white/5 md:hidden">
           <div className="page-shell overflow-x-auto py-1.5">
             <div className="flex min-w-max items-center gap-1.5 whitespace-nowrap">
@@ -959,7 +959,7 @@ export function AppHeader({
                     key={item.href}
                     href={item.href}
                     onClick={(event) => handleRouteLinkClick(event, item.href)}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                       active
                         ? "bg-white/10 text-white ring-1 ring-white/50 shadow-none"
                         : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
