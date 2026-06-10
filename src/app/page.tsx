@@ -128,7 +128,8 @@ export default function Home() {
   const { mode: regionCode, selectedOption } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
-  const [newsletterStatus, setNewsletterStatus] = useState<NewsletterStatus>("idle");
+  const [newsletterStatus, setNewsletterStatus] =
+    useState<NewsletterStatus>("idle");
   const [newsletterPending, setNewsletterPending] = useState(false);
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
   const [destinationPriceState, setDestinationPriceState] =
@@ -176,15 +177,17 @@ export default function Home() {
     const replacementAwareDestinations = destinationPriceState.loading
       ? popularDestinations
       : popularDestinationFareCandidates;
-    const destinationsWithIndex = replacementAwareDestinations.map((destination, index) => {
-      const price = destinationPriceState.prices[destination.id];
-      const hasFreshPrice = hasFreshProviderPrice(price, {
-        originCode: destination.originCode,
-        destinationCode: destination.code,
-      });
+    const destinationsWithIndex = replacementAwareDestinations.map(
+      (destination, index) => {
+        const price = destinationPriceState.prices[destination.id];
+        const hasFreshPrice = hasFreshProviderPrice(price, {
+          originCode: destination.originCode,
+          destinationCode: destination.code,
+        });
 
-      return { destination, hasFreshPrice, index };
-    });
+        return { destination, hasFreshPrice, index };
+      },
+    );
 
     if (destinationPriceState.loading) {
       return destinationsWithIndex
@@ -240,7 +243,9 @@ export default function Home() {
     return groups;
   }, [discoveryCards]);
 
-  const handleNewsletterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleNewsletterSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
 
     if (newsletterPending) return;
@@ -248,7 +253,7 @@ export default function Home() {
     const email = newsletterEmail.trim();
     if (!isNewsletterEmail(email)) {
       setNewsletterStatus("error");
-      setNewsletterMessage("Enter a valid email address.");
+      setNewsletterMessage(t("homeNewsletterInvalidEmail"));
       return;
     }
 
@@ -267,12 +272,13 @@ export default function Home() {
           regionCode,
         }),
       });
-      const data = (await response.json().catch(() => null)) as
-        | { ok?: boolean; message?: string }
-        | null;
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        message?: string;
+      } | null;
 
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Unable to subscribe right now.");
+        throw new Error(data?.message || t("homeNewsletterUnableSubscribe"));
       }
 
       setNewsletterStatus("success");
@@ -281,9 +287,7 @@ export default function Home() {
     } catch (error) {
       setNewsletterStatus("error");
       setNewsletterMessage(
-        error instanceof Error
-          ? error.message
-          : "We couldn’t subscribe you right now. Please try again soon.",
+        error instanceof Error ? error.message : t("homeNewsletterTryAgain"),
       );
     } finally {
       setNewsletterPending(false);
@@ -461,7 +465,7 @@ export default function Home() {
           <div className="relative mt-6">
             <button
               type="button"
-              aria-label="Previous destinations"
+              aria-label={t("homePreviousDestinations")}
               onClick={() => scrollDestinationsRail("left")}
               className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
             >
@@ -752,19 +756,23 @@ export default function Home() {
                     aria-busy={newsletterPending}
                     disabled={newsletterPending}
                   >
-                    {newsletterPending ? "Subscribing…" : t("homeSubscribe")}
+                    {newsletterPending
+                      ? t("homeSubscribing")
+                      : t("homeSubscribe")}
                   </button>
                 </form>
               </div>
 
               <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-600 sm:text-xs">
-                By subscribing, you agree to receive Kurioticket updates. You can unsubscribe anytime.
+                {t("homeNewsletterConsent")}
               </p>
 
               {newsletterMessage ? (
                 <p
                   className={`mt-2 text-xs font-semibold sm:text-sm ${
-                    newsletterStatus === "error" ? "text-red-700" : "text-slate-700"
+                    newsletterStatus === "error"
+                      ? "text-red-700"
+                      : "text-slate-700"
                   }`}
                   role="status"
                   aria-live="polite"
@@ -860,6 +868,9 @@ function DiscoverySuggestionCard({
     itemId: string,
   ) => void;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
   return (
     <Link
       href={href}
@@ -868,7 +879,9 @@ function DiscoverySuggestionCard({
       <button
         type="button"
         onClick={(event) => onHeartToggle(event, itemId)}
-        aria-label={isSaved ? "Remove from saved routes" : "Save route"}
+        aria-label={
+          isSaved ? t("homeRemoveFromSavedRoutes") : t("homeSaveRoute")
+        }
         aria-pressed={isSaved}
         className={`focus-ring absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
       >
@@ -964,7 +977,10 @@ function hasFreshProviderPrice(
     return false;
   }
 
-  if (price.priceState === "last_known_good" || price.cachedProviderBacked === true) {
+  if (
+    price.priceState === "last_known_good" ||
+    price.cachedProviderBacked === true
+  ) {
     return true;
   }
 
@@ -1036,6 +1052,8 @@ function DiscoveryPricePill({
   expectedDestinationCode?: string;
   isLoading: boolean;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const currencyRates = useCurrencyRates();
   const hasProviderPrice = hasFreshProviderPrice(price, {
     originCode: expectedOriginCode,
@@ -1046,7 +1064,7 @@ function DiscoveryPricePill({
     return (
       <span
         className="inline-flex h-7 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
-        aria-label="Checking provider-backed route pricing"
+        aria-label={t("homeCheckingProviderRoutePricing")}
       />
     );
   }
@@ -1054,7 +1072,7 @@ function DiscoveryPricePill({
   if (!hasProviderPrice) {
     return (
       <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
-        Compare options
+        {t("homeCompareOptions")}
       </span>
     );
   }
@@ -1065,7 +1083,7 @@ function DiscoveryPricePill({
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
       <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
-        Compare options
+        {t("homeCompareOptions")}
       </span>
     );
   }
@@ -1080,8 +1098,8 @@ function DiscoveryPricePill({
     isFallbackRate: currencyRates.isFallback,
   });
   const estimateCopy = displayPrice.isConvertedEstimate
-    ? " Display estimate; final provider price may differ."
-    : " Final price confirmed by provider.";
+    ? ` ${t("displayEstimateFinalProviderMayDiffer")}`
+    : ` ${t("finalPriceConfirmedByProvider")}`;
 
   return (
     <span
@@ -1089,7 +1107,7 @@ function DiscoveryPricePill({
       aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
-      from {displayPrice.formatted}
+      {t("fromPrice").toLowerCase()} {displayPrice.formatted}
     </span>
   );
 }
@@ -1194,6 +1212,8 @@ function DestinationPricePill({
   expectedDestinationCode?: string;
   isLoading: boolean;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const currencyRates = useCurrencyRates();
   const hasProviderPrice = hasFreshProviderPrice(price, {
     originCode: expectedOriginCode,
@@ -1204,7 +1224,7 @@ function DestinationPricePill({
     return (
       <span
         className="inline-flex h-8 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
-        aria-label="Prices update with provider results"
+        aria-label={t("homePricesUpdateWithProviderResults")}
       />
     );
   }
@@ -1212,7 +1232,7 @@ function DestinationPricePill({
   if (!hasProviderPrice) {
     return (
       <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
-        Explore fares
+        {t("homeExploreFares")}
       </span>
     );
   }
@@ -1223,7 +1243,7 @@ function DestinationPricePill({
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
       <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
-        Explore fares
+        {t("homeExploreFares")}
       </span>
     );
   }
@@ -1238,8 +1258,8 @@ function DestinationPricePill({
     isFallbackRate: currencyRates.isFallback,
   });
   const estimateCopy = displayPrice.isConvertedEstimate
-    ? " Display estimate; final provider price may differ."
-    : " Final price confirmed by provider.";
+    ? ` ${t("displayEstimateFinalProviderMayDiffer")}`
+    : ` ${t("finalPriceConfirmedByProvider")}`;
 
   return (
     <span
@@ -1247,7 +1267,7 @@ function DestinationPricePill({
       aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
-      from {displayPrice.formatted}
+      {t("fromPrice").toLowerCase()} {displayPrice.formatted}
     </span>
   );
 }
