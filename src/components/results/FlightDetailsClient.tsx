@@ -20,9 +20,11 @@ import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import { formatTime } from "@/lib/utils";
+import { useLocale } from "@/components/layout/LocaleProvider";
 
 export function FlightDetailsClient({ id }: { id: string }) {
   const { selectedOption } = useRegion();
+  const { t } = useLocale();
   const currencyRates = useCurrencyRates();
   const [flight, setFlight] = useState<PublicFlightResult | null>(null);
   const [error, setError] = useState("");
@@ -84,7 +86,9 @@ export function FlightDetailsClient({ id }: { id: string }) {
   if (loading) {
     return (
       <main className="page-shell flex-1 py-10">
-        <Card className="p-6 text-muted">Loading flight details...</Card>
+        <Card className="p-6 text-muted">
+          {t.flightDetailsLoading || "Loading flight details..."}
+        </Card>
       </main>
     );
   }
@@ -94,10 +98,12 @@ export function FlightDetailsClient({ id }: { id: string }) {
       <main className="page-shell flex-1 py-10">
         <Card className="p-6">
           <h1 className="text-xl font-bold text-navy">
-            Flight quote unavailable
+            {t.flightQuoteUnavailable || "Flight quote unavailable"}
           </h1>
           <p className="mt-2 text-muted">
-            {error || "Please search again for current prices."}
+            {error ||
+              t.flightSearchAgainCurrentPrices ||
+              "Please search again for current prices."}
           </p>
         </Card>
       </main>
@@ -113,12 +119,13 @@ export function FlightDetailsClient({ id }: { id: string }) {
     isFallbackRate: currencyRates.isFallback,
   });
 
-  const heroDetails = buildHeroDetails(flight);
+  const heroDetails = buildHeroDetails(flight, t);
   const routeHeading = buildRouteHeading(flight);
   const hasProviderLink = Boolean(
     flight.partnerRedirectUrl || flight.bookingUrl,
   );
   const providerDisclaimer =
+    t.flightDetailsProviderDisclaimer ||
     "Final price, availability, booking, and fare rules are confirmed by the provider.";
   const providerOffers = buildProviderComparisonOffers(flight);
 
@@ -136,6 +143,19 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     fallbackAirlineLogo={getAirlineLogo(flight)}
                     fallbackFlightNumber={flight.flightNumber}
                     routeHeading={routeHeading}
+                    selectedFlightsLabel={
+                      t.selectedFlights || "Selected Flights"
+                    }
+                    selectedFlightItineraryLabel={
+                      t.selectedFlightItinerary || "Selected flight itinerary"
+                    }
+                    outboundLabel={t.outbound || "Outbound"}
+                    returnLabel={t.return || "Return"}
+                    itineraryLabel={t.itinerary || "Itinerary"}
+                    legLabel={t.leg || "Leg"}
+                    nonstopLabel={t.nonstop || "Nonstop"}
+                    stopSingularLabel={t.stopSingular || "stop"}
+                    stopPluralLabel={t.stopPlural || "stops"}
                   />
 
                   <Card className="mt-5 overflow-hidden border-slate-200/80 bg-white p-0 shadow-none">
@@ -214,7 +234,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                         <div className="mx-auto flex w-full max-w-[20rem] flex-col items-stretch gap-2 text-center sm:max-w-[320px] md:max-w-[15rem] lg:max-w-[15.5rem]">
                           <div className="w-full rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-center shadow-sm sm:px-3 sm:py-2">
                             <p className="text-[10px] font-semibold uppercase leading-3 tracking-wide text-slate-500">
-                              From
+                              {t.fromPrice || "From"}
                             </p>
                             <div
                               className="whitespace-nowrap text-center text-[1.125rem] font-medium leading-5 tracking-tight text-slate-900 sm:text-[1.2rem] sm:leading-6 lg:font-semibold"
@@ -225,7 +245,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
                             </div>
                             {displayPrice.isConvertedEstimate ? (
                               <p className="mx-auto mt-1 max-w-[17rem] text-center text-[11px] font-medium leading-[0.95rem] text-slate-600 sm:mt-0.5">
-                                Estimate shown. Provider price:{" "}
+                                {t.estimateShownProviderPrice ||
+                                  "Estimate shown. Provider price:"}{" "}
                                 {displayPrice.providerFormatted}.
                               </p>
                             ) : null}
@@ -237,7 +258,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
                             onClick={continueToProvider}
                             disabled={!hasProviderLink}
                           >
-                            Continue to Provider <ArrowRight size={16} />
+                            {t.continueToProvider || "Continue to Provider"}{" "}
+                            <ArrowRight size={16} />
                           </Button>
                         </div>
                       </aside>
@@ -253,6 +275,23 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   currencyRates={currencyRates.rates}
                   isFallbackRate={currencyRates.isFallback}
                   onContinueToProvider={continueToProvider}
+                  labels={{
+                    compareMoreProviders:
+                      t.compareMoreProviders || "Compare more providers",
+                    providerComparisonIntro:
+                      t.providerComparisonIntro ||
+                      "Kurioticket can compare from different providers.",
+                    noAdditionalLiveProviderOptions:
+                      t.noAdditionalLiveProviderOptions ||
+                      "No additional live provider options are available for this flight right now.",
+                    continueToProvider:
+                      t.continueToProvider || "Continue to Provider",
+                    confirmedByProvider:
+                      t.confirmedByProvider || "Confirmed by provider",
+                    nonstop: t.nonstop || "Nonstop",
+                    stopSingular: t.stopSingular || "stop",
+                    stopPlural: t.stopPlural || "stops",
+                  }}
                 />
               </div>
             </div>
@@ -269,17 +308,35 @@ function SelectedFlightSummary({
   fallbackAirlineLogo,
   fallbackFlightNumber,
   routeHeading,
+  selectedFlightsLabel,
+  selectedFlightItineraryLabel,
+  outboundLabel,
+  returnLabel,
+  itineraryLabel,
+  legLabel,
+  nonstopLabel,
+  stopSingularLabel,
+  stopPluralLabel,
 }: {
   itineraryLegs: FlightLeg[];
   fallbackAirlineName: string;
   fallbackAirlineLogo?: string;
   fallbackFlightNumber?: string;
   routeHeading: string;
+  selectedFlightsLabel: string;
+  selectedFlightItineraryLabel: string;
+  outboundLabel: string;
+  returnLabel: string;
+  itineraryLabel: string;
+  legLabel: string;
+  nonstopLabel: string;
+  stopSingularLabel: string;
+  stopPluralLabel: string;
 }) {
   return (
-    <section className="min-w-0" aria-label="Selected flight itinerary">
+    <section className="min-w-0" aria-label={selectedFlightItineraryLabel}>
       <h2 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-        Selected Flights
+        {selectedFlightsLabel}
       </h2>
       <h1 className="mt-2 text-balance text-2xl font-medium leading-snug text-slate-800 sm:text-2xl">
         {routeHeading}
@@ -301,6 +358,13 @@ function SelectedFlightSummary({
               fallbackAirlineName={fallbackAirlineName}
               fallbackAirlineLogo={fallbackAirlineLogo}
               fallbackFlightNumber={fallbackFlightNumber}
+              outboundLabel={outboundLabel}
+              returnLabel={returnLabel}
+              itineraryLabel={itineraryLabel}
+              legLabel={legLabel}
+              nonstopLabel={nonstopLabel}
+              stopSingularLabel={stopSingularLabel}
+              stopPluralLabel={stopPluralLabel}
             />
           </div>
         ))}
@@ -331,21 +395,32 @@ function ProviderComparisonPanel({
   currencyRates,
   isFallbackRate,
   onContinueToProvider,
+  labels,
 }: {
   offers: ProviderComparisonOffer[];
   selectedCurrency: string;
   currencyRates: ExchangeRates;
   isFallbackRate: boolean;
   onContinueToProvider: () => void;
+  labels: {
+    compareMoreProviders: string;
+    providerComparisonIntro: string;
+    noAdditionalLiveProviderOptions: string;
+    continueToProvider: string;
+    confirmedByProvider: string;
+    nonstop: string;
+    stopSingular: string;
+    stopPlural: string;
+  };
 }) {
   return (
-    <aside className="min-w-0 lg:mt-1" aria-label="Compare more providers">
+    <aside className="min-w-0 lg:mt-1" aria-label={labels.compareMoreProviders}>
       <div>
         <h2 className="text-base font-semibold leading-6 tracking-tight text-slate-900 sm:text-lg">
-          Compare more providers
+          {labels.compareMoreProviders}
         </h2>
         <p className="mt-1.5 text-sm leading-5 text-slate-700 sm:mt-2 sm:leading-6">
-          Kurioticket can compare from different providers.
+          {labels.providerComparisonIntro}
         </p>
       </div>
 
@@ -365,13 +440,25 @@ function ProviderComparisonPanel({
                     })
                   : null;
               const details = [
-                offer.cabinClass ? formatCabinClass(offer.cabinClass) : null,
-                offer.baggageInfo ? formatBaggageValue(offer.baggageInfo) : null,
-                typeof offer.stops === "number" ? formatStops(offer.stops) : null,
+                offer.cabinClass
+                  ? formatCabinClass(
+                      offer.cabinClass,
+                      labels.confirmedByProvider,
+                    )
+                  : null,
+                offer.baggageInfo
+                  ? formatBaggageValue(
+                      offer.baggageInfo,
+                      labels.confirmedByProvider,
+                    )
+                  : null,
+                typeof offer.stops === "number"
+                  ? formatStops(offer.stops, labels)
+                  : null,
                 offer.duration,
               ].filter(
                 (detail): detail is string =>
-                  Boolean(detail) && detail !== "Confirmed by provider",
+                  Boolean(detail) && detail !== labels.confirmedByProvider,
               );
               const providerUrl = offer.partnerRedirectUrl || offer.bookingUrl;
               const canBook =
@@ -439,7 +526,7 @@ function ProviderComparisonPanel({
                           if (providerUrl) window.location.href = providerUrl;
                         }}
                       >
-                        Book now
+                        {labels.continueToProvider}
                       </Button>
                     ) : null}
                   </div>
@@ -449,8 +536,7 @@ function ProviderComparisonPanel({
           </div>
         ) : (
           <p className="rounded-lg bg-slate-50/70 px-3 py-2 text-sm leading-5 text-slate-700 sm:py-2.5 sm:leading-6">
-            No additional live provider options are available for this flight
-            right now.
+            {labels.noAdditionalLiveProviderOptions}
           </p>
         )}
       </div>
@@ -1229,6 +1315,13 @@ function CompactLegSection({
   fallbackAirlineName,
   fallbackAirlineLogo,
   fallbackFlightNumber,
+  outboundLabel,
+  returnLabel,
+  itineraryLabel,
+  legLabel,
+  nonstopLabel,
+  stopSingularLabel,
+  stopPluralLabel,
 }: {
   leg: FlightLeg;
   legIndex: number;
@@ -1236,6 +1329,13 @@ function CompactLegSection({
   fallbackAirlineName: string;
   fallbackAirlineLogo?: string;
   fallbackFlightNumber?: string;
+  outboundLabel: string;
+  returnLabel: string;
+  itineraryLabel: string;
+  legLabel: string;
+  nonstopLabel: string;
+  stopSingularLabel: string;
+  stopPluralLabel: string;
 }) {
   const segments = leg.segments.length
     ? leg.segments
@@ -1251,7 +1351,12 @@ function CompactLegSection({
         },
       ];
 
-  const directionLabel = formatLegDirection(leg.direction, legIndex, legCount);
+  const directionLabel = formatLegDirection(leg.direction, legIndex, legCount, {
+    outbound: outboundLabel,
+    return: returnLabel,
+    itinerary: itineraryLabel,
+    leg: legLabel,
+  });
   const firstSegment = segments[0];
   const firstAirlineName = firstSegment?.airlineName || fallbackAirlineName;
   const firstMatchesFallbackAirline =
@@ -1321,7 +1426,11 @@ function CompactLegSection({
             airlineLogo={hasMultipleSegments ? undefined : firstAirlineLogo}
             flightNumber={hasMultipleSegments ? undefined : firstFlightNumber}
             duration={leg.duration}
-            stops={formatStops(leg.stops)}
+            stops={formatStops(leg.stops, {
+              nonstop: nonstopLabel,
+              stopSingular: stopSingularLabel,
+              stopPlural: stopPluralLabel,
+            })}
           />
 
           {hasMultipleSegments ? (
@@ -1346,7 +1455,9 @@ function CompactLegSection({
                       arrivalTime={segment.arrivalTime}
                       airlineName={airlineName}
                       airlineLogo={airlineLogo}
-                      flightNumber={segment.flightNumber || fallbackFlightNumber}
+                      flightNumber={
+                        segment.flightNumber || fallbackFlightNumber
+                      }
                       compact
                     />
                     {leg.layovers[segmentIndex] ? (
@@ -1476,62 +1587,86 @@ type HeroDetailItem = {
   icon: LucideIcon;
 };
 
-function buildHeroDetails(flight: PublicFlightResult): HeroDetailItem[] {
+function buildHeroDetails(
+  flight: PublicFlightResult,
+  t: Record<string, string>,
+): HeroDetailItem[] {
   return [
     {
-      label: "Baggage",
-      value: formatBaggageValue(flight.baggageInfo),
+      label: t.baggage || "Baggage",
+      value: formatBaggageValue(
+        flight.baggageInfo,
+        t.confirmedByProvider || "Confirmed by provider",
+      ),
       icon: Luggage,
     },
     {
-      label: "Cabin",
-      value: formatCabinClass(flight.cabinClass),
+      label: t.cabin || "Cabin",
+      value: formatCabinClass(
+        flight.cabinClass,
+        t.confirmedByProvider || "Confirmed by provider",
+      ),
       icon: Armchair,
     },
     {
-      label: "Seat selection",
-      value: formatSeatSelectionValue(flight),
+      label: t.seatSelection || "Seat selection",
+      value: formatSeatSelectionValue(
+        flight,
+        t.providerRulesApply || "Provider rules apply",
+      ),
       icon: Settings,
     },
     {
-      label: "Fare rules",
-      value: formatFareRulesValue(flight),
+      label: t.fareRules || "Fare rules",
+      value: formatFareRulesValue(
+        flight,
+        t.reviewBeforeBooking || "Review before booking",
+      ),
       icon: ShieldCheck,
     },
   ];
 }
 
-function formatCabinClass(value?: string) {
-  if (!value) return "Confirmed by provider";
+function formatCabinClass(value?: string, fallback = "Confirmed by provider") {
+  if (!value) return fallback;
   return value
     .replace(/[-_]/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function formatBaggageValue(value?: string) {
+function formatBaggageValue(
+  value?: string,
+  fallback = "Confirmed by provider",
+) {
   if (
     !value ||
     isProviderReviewCopy(value) ||
     /rules vary|vary by fare/i.test(value)
   ) {
-    return "Confirmed by provider";
+    return fallback;
   }
 
   return value;
 }
 
-function formatSeatSelectionValue(flight: PublicFlightResult) {
+function formatSeatSelectionValue(
+  flight: PublicFlightResult,
+  fallback = "Provider rules apply",
+) {
   return (
     getOptionalStringField(flight, [
       "seatSelectionInfo",
       "seatSelectionText",
       "seatSelectionPolicy",
       "seatSelection",
-    ]) || "Provider rules apply"
+    ]) || fallback
   );
 }
 
-function formatFareRulesValue(flight: PublicFlightResult) {
+function formatFareRulesValue(
+  flight: PublicFlightResult,
+  fallback = "Review before booking",
+) {
   const fareRules = getOptionalStringField(flight, [
     "fareRules",
     "fareRuleSummary",
@@ -1541,7 +1676,7 @@ function formatFareRulesValue(flight: PublicFlightResult) {
   ]);
 
   if (!fareRules || isProviderReviewCopy(fareRules)) {
-    return "Review before booking";
+    return fallback;
   }
 
   return fareRules;
@@ -1572,17 +1707,26 @@ function isProviderReviewCopy(value: string) {
   );
 }
 
-function formatStops(stops: number) {
-  if (stops === 0) return "Nonstop";
-  return `${stops} stop${stops > 1 ? "s" : ""}`;
+function formatStops(
+  stops: number,
+  labels = { nonstop: "Nonstop", stopSingular: "stop", stopPlural: "stops" },
+) {
+  if (stops === 0) return labels.nonstop;
+  return `${stops} ${stops > 1 ? labels.stopPlural : labels.stopSingular}`;
 }
 
 function formatLegDirection(
   direction: FlightLeg["direction"],
   index: number,
   legCount: number,
+  labels = {
+    outbound: "Outbound",
+    return: "Return",
+    itinerary: "Itinerary",
+    leg: "Leg",
+  },
 ) {
-  if (direction === "outbound") return "Outbound";
-  if (direction === "return") return "Return";
-  return legCount > 1 ? `Leg ${index + 1}` : "Itinerary";
+  if (direction === "outbound") return labels.outbound;
+  if (direction === "return") return labels.return;
+  return legCount > 1 ? `${labels.leg} ${index + 1}` : labels.itinerary;
 }
