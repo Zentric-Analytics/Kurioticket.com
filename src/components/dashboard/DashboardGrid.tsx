@@ -213,6 +213,20 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
 }
 
 const genderOptions = ["Male", "Female", "I prefer not to say"];
+const dateOfBirthMonths = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 const personalDetailRows: PersonalDetailRow[] = [
   { key: "name", label: "Name", fallback: "Add your name" },
@@ -232,7 +246,7 @@ const personalDetailRows: PersonalDetailRow[] = [
     helper: "Travel providers may use this number if they need to contact you about a booking.",
     inputType: "tel",
   },
-  { key: "dateOfBirth", label: "Date of birth", fallback: "Add your date of birth", inputType: "date" },
+  { key: "dateOfBirth", label: "Date of birth", fallback: "Add your date of birth" },
   { key: "gender", label: "Gender", fallback: "Add your gender", options: genderOptions },
   { key: "nationality", label: "Nationality", fallback: "Add your nationality" },
   { key: "address", label: "Address", fallback: "Add your address", multiline: true },
@@ -263,6 +277,91 @@ function DetailValue({ value, fallback, helper }: { value: string; fallback: str
   );
 }
 
+function parseDateOfBirthParts(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return { day: "", month: "", year: "" };
+  }
+
+  const isoDateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmedValue);
+
+  if (isoDateMatch) {
+    const [, year, monthNumber, day] = isoDateMatch;
+    const monthIndex = Number(monthNumber) - 1;
+
+    return {
+      day,
+      month: dateOfBirthMonths[monthIndex] ?? "",
+      year,
+    };
+  }
+
+  const [day = "", month = "", year = ""] = trimmedValue.split(/\s+/);
+
+  return {
+    day,
+    month: dateOfBirthMonths.includes(month) ? month : "",
+    year,
+  };
+}
+
+function formatDateOfBirthParts(parts: { day: string; month: string; year: string }) {
+  return [parts.day, parts.month, parts.year].filter(Boolean).join(" ");
+}
+
+function DateOfBirthInput({ value, onChange, className }: { value: string; onChange: (value: string) => void; className: string }) {
+  const [parts, setParts] = useState(() => parseDateOfBirthParts(value));
+
+  const updatePart = (part: keyof typeof parts, nextValue: string) => {
+    const normalizedValue = part === "month" ? nextValue : nextValue.replace(/\D/g, "");
+    const nextParts = {
+      ...parts,
+      [part]: normalizedValue,
+    };
+
+    setParts(nextParts);
+    onChange(formatDateOfBirthParts(nextParts));
+  };
+
+  return (
+    <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
+      <input
+        className={className}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        maxLength={2}
+        value={parts.day}
+        onChange={(event) => updatePart("day", event.target.value)}
+        placeholder="DD"
+        aria-label="Date of birth day"
+      />
+      <select className={className} value={parts.month} onChange={(event) => updatePart("month", event.target.value)} aria-label="Date of birth month">
+        <option value="" disabled hidden>
+          Month
+        </option>
+        {dateOfBirthMonths.map((month) => (
+          <option key={month} value={month}>
+            {month}
+          </option>
+        ))}
+      </select>
+      <input
+        className={className}
+        type="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
+        maxLength={4}
+        value={parts.year}
+        onChange={(event) => updatePart("year", event.target.value)}
+        placeholder="YYYY"
+        aria-label="Date of birth year"
+      />
+    </div>
+  );
+}
+
 function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: string; onChange: (key: keyof PersonalDetailsDraft, value: string) => void }) {
   const baseClassName = cn(
     "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100",
@@ -272,6 +371,10 @@ function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: 
   const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     onChange(row.key, event.target.value);
   };
+
+  if (row.key === "dateOfBirth") {
+    return <DateOfBirthInput value={value} onChange={(nextValue) => onChange(row.key, nextValue)} className={baseClassName} />;
+  }
 
   if (row.options) {
     return (
