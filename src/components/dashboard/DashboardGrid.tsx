@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,13 +14,11 @@ import {
   LockKeyhole,
   Luggage,
   Mail,
-  PencilLine,
   Plane,
   Route,
   Settings,
   ShieldCheck,
   UserRound,
-  X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/Card";
@@ -49,24 +47,21 @@ type DashboardOverviewProps = {
   userName?: string | null;
 };
 
-type MemberProfileDetails = {
-  legalName: string;
-  dateOfBirth: string;
-};
-
-type PersonalInfoDetails = {
-  gender: string;
+type PersonalDetails = {
+  name: string;
   displayName: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
   nationality: string;
-  cityOfResidence: string;
-  frequentlyVisitedCity: string;
+  address: string;
 };
 
-type ProfileDrawerType = "member" | "personal" | null;
-
-type ProfileDetailRow = {
+type PersonalDetailRow = {
+  key: keyof PersonalDetails;
   label: string;
-  value: string;
+  fallback: string;
+  helper?: string;
 };
 
 type ListRowProps = {
@@ -212,244 +207,86 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
   );
 }
 
-function getMemberProfileDetails({ userName }: DashboardOverviewProps): MemberProfileDetails {
+const personalDetailRows: PersonalDetailRow[] = [
+  { key: "name", label: "Name", fallback: "Add your name" },
+  { key: "displayName", label: "Display name", fallback: "Choose a display name" },
+  {
+    key: "email",
+    label: "Email address",
+    fallback: "Add your email address",
+    helper: "This is the email address you use to sign in. It is also where we send important account updates.",
+  },
+  {
+    key: "phone",
+    label: "Phone number",
+    fallback: "Add your phone number",
+    helper: "Travel providers may use this number if they need to contact you about a booking.",
+  },
+  { key: "dateOfBirth", label: "Date of birth", fallback: "Add your date of birth" },
+  { key: "nationality", label: "Nationality", fallback: "Add your nationality" },
+  { key: "address", label: "Address", fallback: "Add your address" },
+];
+
+function getPersonalDetails({ displayName, userEmail, userName }: DashboardOverviewProps): PersonalDetails {
+  const trimmedName = userName?.trim() ?? "";
+  const trimmedDisplayName = trimmedName ? displayName.trim() : "";
+
   return {
-    legalName: userName?.trim() ?? "",
+    name: trimmedName,
+    displayName: trimmedDisplayName,
+    email: userEmail?.trim() ?? "",
+    phone: "",
     dateOfBirth: "",
-  };
-}
-
-function getPersonalInfoDetails({ displayName, userName }: DashboardOverviewProps): PersonalInfoDetails {
-  return {
-    gender: "",
-    displayName: userName?.trim() ? displayName.trim() : "",
     nationality: "",
-    cityOfResidence: "",
-    frequentlyVisitedCity: "",
+    address: "",
   };
 }
 
-function formatDetailValue(value: string) {
-  return value.trim() || "-";
+function DetailValue({ value, fallback, helper }: { value: string; fallback: string; helper?: string }) {
+  return (
+    <div className="min-w-0 space-y-0.5 text-left">
+      <p className={cn("break-words text-sm font-semibold leading-6 text-slate-900", !value && "text-slate-500")}>{value || fallback}</p>
+      {helper ? <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p> : null}
+    </div>
+  );
 }
 
-function ProfileCard({
-  title,
-  subtitle,
-  rows,
-  variant = "list",
-  onEdit,
-}: {
-  title: string;
-  subtitle: string;
-  rows: ProfileDetailRow[];
-  variant?: "list" | "grid";
-  onEdit: () => void;
-}) {
+function PersonalDetailsSection(props: DashboardOverviewProps) {
+  const details = getPersonalDetails(props);
+
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-56px_rgba(49,46,129,0.5)]" aria-labelledby={`${title.toLowerCase().replaceAll(" ", "-")}-title`}>
-      <div className="flex min-w-0 items-start justify-between gap-4 px-4 pb-4 pt-5 sm:px-6">
+    <section
+      className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-56px_rgba(49,46,129,0.5)]"
+      aria-labelledby="personal-details-title"
+    >
+      <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200 px-4 py-5 sm:px-6 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <h2 id={`${title.toLowerCase().replaceAll(" ", "-")}-title`} className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-            {title}
+          <h2 id="personal-details-title" className="text-2xl font-bold tracking-tight text-slate-950">
+            Personal details
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{subtitle}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            Update your information and manage how it is used across Kurioticket.
+          </p>
         </div>
         <button
           type="button"
-          onClick={onEdit}
-          className="focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-sm font-semibold text-violet-700 transition hover:bg-violet-50 hover:text-violet-800"
+          disabled
+          className="inline-flex min-h-11 w-full cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-5 text-sm font-semibold text-slate-500 sm:w-auto"
+          title="Profile editing is not available yet."
         >
-          <PencilLine className="size-4" aria-hidden="true" />
           Edit
         </button>
       </div>
 
-      <div className="px-4 pb-5 sm:px-6">
-        <div className={cn("overflow-hidden rounded-2xl border border-slate-200 bg-white", variant === "grid" ? "grid sm:grid-cols-2" : "divide-y divide-slate-200")}>
-          {rows.map((row, index) => (
-            <div
-              key={row.label}
-              className={cn(
-                "min-w-0 px-4 py-4 sm:px-5",
-                variant === "grid" && "border-slate-200 sm:border-r sm:[&:nth-child(2n)]:border-r-0",
-                variant === "grid" && index < rows.length - 1 && "border-b",
-                variant === "grid" && rows.length % 2 === 1 && index === rows.length - 1 && "sm:col-span-2 sm:border-r-0",
-              )}
-            >
-              <p className="text-sm font-semibold leading-6 text-slate-950">{row.label}</p>
-              <p className="mt-2 break-words text-sm font-semibold leading-6 text-slate-800">{formatDetailValue(row.value)}</p>
-            </div>
-          ))}
-        </div>
+      <div className="divide-y divide-slate-200">
+        {personalDetailRows.map((row) => (
+          <div key={row.key} className="grid min-w-0 gap-1.5 px-4 py-3 sm:px-6 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-4">
+            <div className="text-sm font-semibold text-slate-700">{row.label}</div>
+            <DetailValue value={details[row.key]} fallback={row.fallback} helper={row.helper} />
+          </div>
+        ))}
       </div>
     </section>
-  );
-}
-
-function TextField({ label, placeholder, type = "text" }: { label?: string; placeholder: string; type?: "text" | "date" }) {
-  return (
-    <label className="block min-w-0">
-      {label ? <span className="mb-2 block text-sm font-semibold text-slate-950">{label}</span> : null}
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="w-full min-w-0 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-      />
-    </label>
-  );
-}
-
-function CheckboxField({ label }: { label: string }) {
-  return (
-    <label className="flex min-w-0 items-center gap-2.5 text-sm font-semibold leading-6 text-slate-950">
-      <input type="checkbox" className="size-4 shrink-0 rounded border-slate-300 text-violet-700 focus:ring-violet-200" />
-      <span>{label}</span>
-    </label>
-  );
-}
-
-function MemberProfileDrawerFields() {
-  return (
-    <div className="space-y-8">
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-bold text-slate-950">
-          Name (basic Latin alphabet)<span className="text-red-500">*</span>
-        </legend>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <TextField placeholder="Given names" />
-          <TextField placeholder="Surname" />
-        </div>
-        <CheckboxField label="I don't have a surname" />
-      </fieldset>
-
-      <fieldset className="space-y-4">
-        <legend className="text-sm font-bold text-slate-950">
-          Name (in original language)<span className="text-red-500">*</span>
-        </legend>
-        <CheckboxField label="I don't need to add a name (in original language)" />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <TextField placeholder="Given names" />
-          <TextField placeholder="Surname" />
-        </div>
-        <CheckboxField label="I don't have a surname" />
-      </fieldset>
-
-      <fieldset className="space-y-3">
-        <legend className="text-sm font-bold text-slate-950">
-          Date of birth<span className="text-red-500">*</span>
-        </legend>
-        <TextField placeholder="Date of birth" type="date" />
-      </fieldset>
-    </div>
-  );
-}
-
-function PersonalInfoDrawerFields() {
-  return (
-    <div className="space-y-4">
-      <TextField label="Display name" placeholder="Display name" />
-      <TextField label="Gender" placeholder="Gender" />
-      <TextField label="Nationality (country or region)" placeholder="Nationality (country or region)" />
-      <TextField label="City of residence" placeholder="City of residence" />
-      <TextField label="Frequently visited city" placeholder="Frequently visited city" />
-    </div>
-  );
-}
-
-function ProfileEditDrawer({ drawerType, onClose }: { drawerType: ProfileDrawerType; onClose: () => void }) {
-  if (!drawerType) {
-    return null;
-  }
-
-  const isMemberProfile = drawerType === "member";
-  const title = isMemberProfile ? "Member Profile" : "Edit Profile";
-
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/35" role="presentation">
-      <button type="button" className="absolute inset-0 cursor-default" aria-label="Close profile editor" onClick={onClose} />
-      <aside
-        className="relative flex h-full w-full min-w-0 flex-col bg-white shadow-[0_30px_90px_-35px_rgba(15,23,42,0.65)] sm:max-w-[32rem]"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="profile-edit-drawer-title"
-      >
-        <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-5 sm:px-7">
-          <h2 id="profile-edit-drawer-title" className="text-2xl font-bold tracking-tight text-slate-950">
-            {title}
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="focus-ring inline-flex size-10 shrink-0 items-center justify-center rounded-full text-slate-950 transition hover:bg-slate-100"
-            aria-label="Close profile editor"
-          >
-            <X className="size-5" aria-hidden="true" />
-          </button>
-        </div>
-
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 sm:px-7">
-          {isMemberProfile ? <MemberProfileDrawerFields /> : <PersonalInfoDrawerFields />}
-        </div>
-
-        <div className="shrink-0 border-t border-slate-200 bg-white px-5 py-4 sm:px-7">
-          <p className="mb-3 text-sm leading-6 text-slate-500">Profile saving is not available yet.</p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-xl border border-violet-300 bg-white px-5 text-sm font-bold text-violet-700 transition hover:bg-violet-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled
-              className="inline-flex min-h-12 cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-5 text-sm font-bold text-slate-500"
-              title="Profile saving is not available yet."
-            >
-              Save
-            </button>
-          </div>
-        </div>
-      </aside>
-    </div>
-  );
-}
-
-function ProfileDetailsSection(props: DashboardOverviewProps) {
-  const [activeDrawer, setActiveDrawer] = useState<ProfileDrawerType>(null);
-  const memberProfile = getMemberProfileDetails(props);
-  const personalInfo = getPersonalInfoDetails(props);
-
-  return (
-    <>
-      <div className="space-y-4">
-        <ProfileCard
-          title="Member Profile"
-          subtitle="Add your legal name and date of birth to complete your member profile. Please ensure the info matches your travel ID."
-          rows={[
-            { label: "Legal name", value: memberProfile.legalName },
-            { label: "Date of birth", value: memberProfile.dateOfBirth },
-          ]}
-          onEdit={() => setActiveDrawer("member")}
-        />
-        <ProfileCard
-          title="Personal info"
-          subtitle="Enter your personal info to help us tailor your trips and discover nearby deals for you"
-          rows={[
-            { label: "Gender", value: personalInfo.gender },
-            { label: "Display name", value: personalInfo.displayName },
-            { label: "Nationality (country or region)", value: personalInfo.nationality },
-            { label: "City of residence", value: personalInfo.cityOfResidence },
-            { label: "Frequently visited city", value: personalInfo.frequentlyVisitedCity },
-          ]}
-          variant="grid"
-          onEdit={() => setActiveDrawer("personal")}
-        />
-      </div>
-      <ProfileEditDrawer drawerType={activeDrawer} onClose={() => setActiveDrawer(null)} />
-    </>
   );
 }
 
@@ -485,7 +322,7 @@ export function DashboardOverview({ initials, displayName, userEmail, userName }
   return (
     <div className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
       <AccountIdentityHeader initials={initials} displayName={displayName} userEmail={userEmail} />
-      <ProfileDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
+      <PersonalDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
     </div>
   );
 }
