@@ -218,13 +218,14 @@ export function FlightLandingClient() {
     <main className="flex-1 bg-slate-50 pb-12 pt-4 sm:pt-8">
       <section className="page-shell">
         <div className="w-full max-w-3xl text-left sm:mx-auto sm:max-w-4xl sm:text-center">
-          <h1 className="max-w-[22.5rem] text-[1.7rem] font-semibold leading-[1.14] tracking-[-0.02em] text-slate-950 sm:mx-auto sm:max-w-3xl sm:text-[2.75rem] sm:leading-[1.08] lg:text-[3.25rem]">
+          <h1 className="max-w-none text-[clamp(1.25rem,6.2vw,1.7rem)] font-semibold leading-[1.14] tracking-[-0.02em] text-slate-950 sm:mx-auto sm:max-w-3xl sm:text-[2.75rem] sm:leading-[1.08] lg:text-[3.25rem]">
             {useEnglishHeroWrap ? (
               <>
                 <span className="sm:hidden">
-                  Find your next affordable flight
-                  <br />
-                  with ease.
+                  <span className="block whitespace-nowrap">
+                    Find your next affordable flight
+                  </span>
+                  <span className="block whitespace-nowrap">with ease.</span>
                 </span>
                 <span className="hidden sm:inline">{heroTitle}</span>
               </>
@@ -232,13 +233,16 @@ export function FlightLandingClient() {
               heroTitle
             )}
           </h1>
-          <p className="mt-2.5 max-w-[22.5rem] text-[0.94rem] font-medium leading-[1.55] text-slate-600 sm:mx-auto sm:mt-4 sm:max-w-xl sm:text-base sm:leading-7">
+          <p className="mt-2.5 max-w-none text-[0.94rem] font-medium leading-[1.55] text-slate-600 sm:mx-auto sm:mt-4 sm:max-w-xl sm:text-base sm:leading-7">
             {useEnglishHeroWrap ? (
               <>
                 <span className="sm:hidden">
-                  Search routes, compare dates, and explore flight options
-                  <br />
-                  for your next journey.
+                  <span className="block whitespace-nowrap">
+                    Search routes, compare dates, and explore
+                  </span>
+                  <span className="block whitespace-nowrap">
+                    flight options for your next journey.
+                  </span>
                 </span>
                 <span className="hidden sm:inline">{heroSubtitle}</span>
               </>
