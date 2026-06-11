@@ -134,7 +134,14 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
           )}
         >
           <nav>
-            <div className={cn("flex min-w-0 flex-wrap lg:flex-col lg:flex-nowrap lg:gap-1.5", mobileOverviewTabs ? "gap-x-7 gap-y-0 lg:gap-1.5" : "gap-2")}>
+            <div
+              className={cn(
+                "flex min-w-0 flex-wrap lg:flex-col lg:flex-nowrap lg:gap-1.5",
+                mobileOverviewTabs
+                  ? "max-w-full flex-nowrap gap-x-6 gap-y-0 overflow-x-auto overscroll-x-contain [scrollbar-width:none] lg:gap-1.5 lg:overflow-visible [&::-webkit-scrollbar]:hidden"
+                  : "gap-2",
+              )}
+            >
               {navItems.map((item) => {
                 const active = isActiveDashboardRoute(pathname, item.href);
                 const Icon = item.icon;
@@ -146,7 +153,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "focus-ring flex items-center gap-2.5 text-[13px] font-semibold transition hover:bg-white/55 hover:text-violet-700 lg:rounded-xl lg:px-3.5 lg:py-2.5",
-                      mobileOverviewTabs && "relative whitespace-nowrap rounded-none px-0 py-3.5 text-[13px] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent lg:rounded-xl lg:px-3.5 lg:py-2.5 lg:after:hidden",
+                      mobileOverviewTabs && "relative shrink-0 whitespace-nowrap rounded-none px-0 py-3 text-[13px] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent lg:rounded-xl lg:px-3.5 lg:py-2.5 lg:after:hidden",
                       !mobileOverviewTabs && "rounded-xl px-3.5 py-2.5",
                       active
                         ? cn(
@@ -188,22 +195,22 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
 function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
   return (
     <section
-      className="border-b border-slate-200/80 pb-5"
+      className="border-b border-slate-200/80 pb-4 sm:pb-5"
       aria-labelledby="dashboard-title"
     >
-      <div className="flex min-w-0 items-center gap-4 px-1 py-2 sm:gap-5 sm:px-2 sm:py-3">
+      <div className="flex min-w-0 items-center gap-3 px-1 py-1 sm:gap-5 sm:px-2 sm:py-3">
         <div
-          className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-2xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
+          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
           aria-hidden="true"
         >
           {initials}
         </div>
         <div className="min-w-0">
-          <h1 id="dashboard-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
+          <h1 id="dashboard-title" className="text-lg font-bold tracking-tight text-slate-950 sm:text-2xl">
             Welcome back, {displayName} 👋
           </h1>
-          {userEmail ? <p className="mt-1.5 break-words text-xs font-semibold text-slate-600 sm:text-sm">{userEmail}</p> : null}
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
+          {userEmail ? <p className="mt-1 break-all text-xs font-semibold text-slate-600 sm:mt-1.5 sm:break-words sm:text-sm">{userEmail}</p> : null}
+          <p className="mt-1.5 max-w-2xl text-xs leading-5 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
             Manage your trips, saved items, and preferences.
           </p>
         </div>
@@ -278,8 +285,8 @@ function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: D
 function DetailValue({ value, fallback, helper }: { value: string; fallback: string; helper?: string }) {
   return (
     <div className="min-w-0 space-y-0.5 text-left">
-      <p className={cn("break-words text-sm font-semibold leading-6 text-slate-900", !value && "text-slate-500")}>{value || fallback}</p>
-      {helper ? <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p> : null}
+      <p className={cn("break-words text-sm font-semibold leading-5 text-slate-900 sm:leading-6", !value && "text-slate-500")}>{value || fallback}</p>
+      {helper ? <p className="max-w-lg text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">{helper}</p> : null}
     </div>
   );
 }
@@ -376,7 +383,7 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
 
 function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: string; onChange: (key: keyof PersonalDetailsDraft, value: string) => void }) {
   const baseClassName = cn(
-    "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100",
+    "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 sm:py-2.5",
     row.readOnly && "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
   );
 
@@ -452,12 +459,12 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       className="min-w-0"
       aria-labelledby="personal-details-title"
     >
-      <div className="flex min-w-0 flex-col gap-4 px-1 pb-5 pt-2 sm:px-2 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 flex-col gap-2 px-1 pb-3 pt-1 sm:gap-4 sm:px-2 sm:pb-5 sm:pt-2 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <h2 id="personal-details-title" className="text-2xl font-bold tracking-tight text-slate-950">
+          <h2 id="personal-details-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
             Personal details
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+          <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600 sm:mt-2 sm:text-sm sm:leading-6">
             Update your information and manage how it is used across Kurioticket.
           </p>
         </div>
@@ -469,7 +476,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
           const editValue = draft[row.key];
 
           return (
-            <div key={row.key} className="grid min-w-0 gap-1.5 px-1 py-4 sm:px-2 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-5">
+            <div key={row.key} className="grid min-w-0 gap-1 px-1 py-2.5 sm:gap-1.5 sm:px-2 sm:py-4 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-5">
               <div className="text-sm font-semibold text-slate-700">{row.label}</div>
               {isEditing ? (
                 <div className="min-w-0 space-y-1.5">
@@ -484,7 +491,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         })}
       </div>
 
-      <div className="px-1 py-5 sm:px-2">
+      <div className="px-1 py-4 sm:px-2 sm:py-5">
         {isEditing ? (
           <div className="flex min-w-0 flex-col gap-3 sm:items-end">
             <p className="text-sm leading-6 text-slate-500 sm:text-right">Profile editing coming soon.</p>
@@ -510,7 +517,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
             <button
               type="button"
               onClick={handleEdit}
-              className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-22px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 sm:w-auto"
+              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-22px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 sm:min-h-11 sm:w-auto"
             >
               Edit
             </button>
