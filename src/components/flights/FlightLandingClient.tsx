@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Plane, SearchCheck, ShieldCheck, Sparkles } from "lucide-react";
+import { Plane, SearchCheck, ShieldCheck } from "lucide-react";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -211,14 +211,10 @@ export function FlightLandingClient() {
     <main className="flex-1 bg-slate-50 pb-12 pt-4 sm:pt-8">
       <section className="page-shell">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-indigo-700 shadow-sm sm:px-3.5 sm:py-1.5 sm:text-xs">
-            <Sparkles className="h-3.5 w-3.5" />
-            {t("flights")}
-          </div>
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:mt-5 sm:text-5xl lg:text-6xl">
+          <h1 className="mx-auto max-w-3xl text-[2rem] font-semibold leading-[1.08] tracking-[-0.022em] text-slate-950 sm:text-[2.75rem] lg:text-[3.25rem]">
             {t("flightLandingHeroTitle")}
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-600 sm:mt-4 sm:text-lg sm:leading-7">
+          <p className="mx-auto mt-3 max-w-xl text-sm font-medium leading-6 text-slate-600 sm:mt-4 sm:text-base sm:leading-7">
             {t("flightLandingHeroSubtitle")}
           </p>
         </div>
