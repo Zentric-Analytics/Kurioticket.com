@@ -53,6 +53,13 @@ import {
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
+import {
+  formatCalendarMonth,
+  formatFullDate,
+  formatShortDate as formatLocalizedShortDate,
+  formatShortWeekdays,
+  getDateFormatLocale,
+} from "@/lib/i18n/dateFormatting";
 import { translations as enTranslations } from "@/lib/i18n/en";
 
 const resultStackClass = "w-full max-w-[680px] lg:ml-4 xl:ml-6";
@@ -556,7 +563,7 @@ function FlightBookingFaqSection() {
 }
 
 export function FlightResultsClient() {
-  const { t: dictionary } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const airportPickerLabels = useMemo(
     () => ({
@@ -781,8 +788,8 @@ export function FlightResultsClient() {
   const mobileRouteSummary = `${mobileOriginSummary} → ${mobileDestinationSummary}`;
   const mobileDateSummary = departureDateInput
     ? tripTypeInput === "round-trip" && returnDateInput
-      ? `${formatCompactDateLabel(departureDateInput)} – ${formatCompactDateLabel(returnDateInput)}`
-      : formatCompactDateLabel(departureDateInput)
+      ? `${formatCompactDateLabel(departureDateInput, locale)} – ${formatCompactDateLabel(returnDateInput, locale)}`
+      : formatCompactDateLabel(departureDateInput, locale)
     : "Travel dates";
   const mobileTravelerTotal = Math.max(
     1,
@@ -2699,8 +2706,8 @@ export function FlightResultsClient() {
                     <span className="truncate">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} — ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
+                          ? `${formatDateLabel(departureDateInput, locale)} — ${formatDateLabel(returnDateInput, locale)}`
+                          : formatDateLabel(departureDateInput, locale)
                         : "Travel dates"}
                     </span>
                   </button>
@@ -2779,6 +2786,7 @@ export function FlightResultsClient() {
           {activeDatePicker && datePickerPosition ? (
             <DatePickerPopover
               position={datePickerPosition}
+              locale={locale}
               onClose={() => {
                 setActiveDatePicker(null);
                 setDatePickerPosition(null);
@@ -3069,6 +3077,7 @@ export function FlightResultsClient() {
         {activeDatePicker && (useMobileSheet || datePickerPosition) ? (
           <DatePickerPopover
             position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
+            locale={locale}
             mobileSheet={useMobileSheet}
             onClose={() => {
               setActiveDatePicker(null);
@@ -3254,8 +3263,8 @@ export function FlightResultsClient() {
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
+                          ? `${formatDateLabel(departureDateInput, locale)} – ${formatDateLabel(returnDateInput, locale)}`
+                          : formatDateLabel(departureDateInput, locale)
                         : "Travel dates"}
                     </span>
                   </span>
@@ -3699,8 +3708,8 @@ export function FlightResultsClient() {
                     <span className="block truncate text-sm font-semibold text-slate-950">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
+                          ? `${formatDateLabel(departureDateInput, locale)} – ${formatDateLabel(returnDateInput, locale)}`
+                          : formatDateLabel(departureDateInput, locale)
                         : "Travel dates"}
                     </span>
                   </span>
@@ -3710,6 +3719,7 @@ export function FlightResultsClient() {
                   <DatePickerPopover
                     alignToField="right"
                     position={datePickerPosition ?? { top: 0, left: 0, width: 0 }}
+                    locale={locale}
                     onClose={() => {
                       setActiveDatePicker(null);
                       setDatePickerPosition(null);
@@ -4370,31 +4380,28 @@ function formatDateValue(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function formatDateLabel(value: string): string {
+function formatDateLabel(value: string, locale: string): string {
   if (!value) return "";
 
   const date = new Date(`${value}T00:00:00`);
 
   if (Number.isNaN(date.getTime())) return value;
 
-  return date.toLocaleDateString("en-GB", {
+  return new Intl.DateTimeFormat(getDateFormatLocale(locale), {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  });
+  }).format(date);
 }
 
-function formatCompactDateLabel(value: string): string {
+function formatCompactDateLabel(value: string, locale: string): string {
   if (!value) return "";
 
   const date = new Date(`${value}T00:00:00`);
 
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat("en", {
-    day: "2-digit",
-    month: "short",
-  }).format(date);
+  return formatLocalizedShortDate(date, locale);
 }
 
 function parseDateValue(value: string): Date | null {
@@ -4657,6 +4664,7 @@ function buildTravelerCabinSummary(
 
 function DatePickerPopover({
   position,
+  locale,
   mobileSheet = false,
   alignToField,
   month,
@@ -4671,6 +4679,7 @@ function DatePickerPopover({
   onClose,
 }: {
   position: { top: number; left: number; width: number };
+  locale: string;
   mobileSheet?: boolean;
   alignToField?: "left" | "right";
   month: Date;
@@ -4687,7 +4696,7 @@ function DatePickerPopover({
   const leftMonth = startOfMonth(month);
   const rightMonth = addMonths(leftMonth, 1);
   const today = new Date();
-  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekdays = formatShortWeekdays(locale, 1);
 
   const dialogStyle = mobileSheet
     ? ({
@@ -4716,10 +4725,7 @@ function DatePickerPopover({
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
       <p className="mb-2 text-center text-sm font-bold text-slate-900">
-        {renderedMonth.toLocaleDateString("en-GB", {
-          month: "long",
-          year: "numeric",
-        })}
+        {formatCalendarMonth(renderedMonth, locale)}
       </p>
 
       <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
@@ -4752,6 +4758,7 @@ function DatePickerPopover({
             <button
               key={date.toISOString()}
               type="button"
+              aria-label={`Select ${formatFullDate(date, locale)}`}
               disabled={disabledDate}
               aria-disabled={disabledDate}
               onClick={() => {

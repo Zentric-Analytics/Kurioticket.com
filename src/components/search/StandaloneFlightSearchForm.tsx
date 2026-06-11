@@ -26,6 +26,12 @@ import {
   markOriginManualInput,
   type OriginFieldState,
 } from "@/lib/flights/defaultOrigin";
+import {
+  formatCalendarMonth,
+  formatFullDate,
+  formatShortDate as formatLocalizedShortDate,
+  formatShortWeekdays,
+} from "@/lib/i18n/dateFormatting";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
@@ -47,8 +53,6 @@ type MonthCell = {
   date: Date;
   isCurrentMonth: boolean;
 };
-
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const searchFieldShellClassName =
   "relative min-h-[66px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/15";
@@ -139,18 +143,15 @@ const buildMonthCells = (monthDate: Date) => {
   });
 };
 
-const formatShortDate = (isoDate: string) => {
+const formatFlightShortDate = (isoDate: string, locale: string) => {
   const parsed = parseIsoDate(isoDate);
   if (!parsed) return "";
 
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(parsed);
+  return formatLocalizedShortDate(parsed, locale);
 };
 
 export function StandaloneFlightSearchForm() {
-  const { t: dictionary } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
@@ -230,6 +231,7 @@ export function StandaloneFlightSearchForm() {
   const todayLocal = useMemo(() => startOfLocalDay(new Date()), []);
   const departureParsed = parseIsoDate(departureDate);
   const returnParsed = parseIsoDate(returnDate);
+  const weekdays = useMemo(() => formatShortWeekdays(locale), [locale]);
 
   const isBeforeToday = useCallback(
     (date: Date) => startOfLocalDay(date).getTime() < todayLocal.getTime(),
@@ -256,13 +258,13 @@ export function StandaloneFlightSearchForm() {
     !isReturnRangeValid;
 
   const dateSummary = useMemo(() => {
-    const departureSummary = formatShortDate(departureDate);
-    const returnSummary = formatShortDate(returnDate);
+    const departureSummary = formatFlightShortDate(departureDate, locale);
+    const returnSummary = formatFlightShortDate(returnDate, locale);
 
     if (!departureSummary) return t("travelDates");
     if (tripType === "round-trip" && returnSummary) return `${departureSummary} — ${returnSummary}`;
     return departureSummary;
-  }, [departureDate, returnDate, tripType, t]);
+  }, [departureDate, locale, returnDate, tripType, t]);
 
   const cabinClassLabel =
     cabinClass === "business" ? t("business") : cabinClass === "first" ? t("first") : t("economy");
@@ -635,7 +637,7 @@ export function StandaloneFlightSearchForm() {
           return (
             <div key={`${monthDate.toISOString()}-${monthOffset}`}>
               <p className="mb-2 text-center text-sm font-black text-slate-900">
-                {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                {formatCalendarMonth(monthDate, locale)}
               </p>
               <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
                 {weekdays.map((weekday) => (
@@ -667,11 +669,7 @@ export function StandaloneFlightSearchForm() {
                     <button
                       key={iso}
                       type="button"
-                      aria-label={`Select ${day.toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}`}
+                      aria-label={`Select ${formatFullDate(day, locale)}`}
                       onClick={() => onSelectDate(day)}
                       disabled={isDisabledDate}
                       aria-disabled={isDisabledDate}

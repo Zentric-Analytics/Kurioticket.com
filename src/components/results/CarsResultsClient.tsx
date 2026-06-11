@@ -25,6 +25,13 @@ import {
 
 import { Button } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import {
+  formatCalendarMonth,
+  formatFullDate,
+  formatShortDate as formatLocalizedShortDate,
+  formatShortWeekdays,
+  getDateFormatLocale,
+} from "@/lib/i18n/dateFormatting";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
@@ -110,7 +117,7 @@ const carFilterGroups: CarFilterGroup[] = [
   },
 ];
 
-const formatCompactDate = (date: string) => {
+const formatCompactDate = (date: string, locale: string) => {
   if (!date) {
     return "Select dates";
   }
@@ -118,14 +125,11 @@ const formatCompactDate = (date: string) => {
   const [year, month, day] = date.split("-").map(Number);
 
   return year && month && day
-    ? new Intl.DateTimeFormat("en-US", {
-        month: "short",
-        day: "numeric",
-      }).format(new Date(year, month - 1, day))
+    ? formatLocalizedShortDate(new Date(year, month - 1, day), locale)
     : date;
 };
 
-const formatDate = (date: string) => {
+const formatDate = (date: string, locale: string) => {
   if (!date) {
     return "Select date";
   }
@@ -133,7 +137,7 @@ const formatDate = (date: string) => {
   const [year, month, day] = date.split("-").map(Number);
 
   return year && month && day
-    ? new Intl.DateTimeFormat("en-US", {
+    ? new Intl.DateTimeFormat(getDateFormatLocale(locale), {
         month: "short",
         day: "numeric",
         year: "numeric",
@@ -193,7 +197,6 @@ const buildMonthCells = (monthDate: Date) => {
   });
 };
 
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const formatTimeLabel = (time: string) => {
   const [hourValue, minuteValue] = time.split(":").map(Number);
@@ -229,7 +232,7 @@ const fieldInputClass =
   "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
 
 export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
-  const { t: dictionary } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -295,8 +298,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     dropoffLocation.trim() || pickupLocation.trim() || "Return location";
   const rentalDateSummary = pickupDate
     ? dropoffDate
-      ? `${formatCompactDate(pickupDate)} — ${formatCompactDate(dropoffDate)}`
-      : formatCompactDate(pickupDate)
+      ? `${formatCompactDate(pickupDate, locale)} — ${formatCompactDate(dropoffDate, locale)}`
+      : formatCompactDate(pickupDate, locale)
     : "Select rental dates";
   const timeSummary = `${formatTimeLabel(pickupTime)} — ${formatTimeLabel(
     dropoffTime,
@@ -657,6 +660,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               />
               <SearchDateCell
                 dropoffDate={dropoffDate}
+                locale={locale}
                 isCompact={isCompactSearch}
                 isOpen={datesOpen}
                 onClear={() => {
@@ -1008,6 +1012,7 @@ function SearchDateCell({
   dropoffDate,
   isCompact,
   isOpen,
+  locale,
   onClear,
   onDone,
   onNextMonth,
@@ -1021,6 +1026,7 @@ function SearchDateCell({
   dropoffDate: string;
   isCompact: boolean;
   isOpen: boolean;
+  locale: string;
   onClear: () => void;
   onDone: () => void;
   onNextMonth: () => void;
@@ -1031,8 +1037,9 @@ function SearchDateCell({
   visibleMonthDate: Date;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const pickupDisplay = formatDate(pickupDate);
-  const dropoffDisplay = formatDate(dropoffDate);
+  const pickupDisplay = formatDate(pickupDate, locale);
+  const dropoffDisplay = formatDate(dropoffDate, locale);
+  const weekdays = useMemo(() => formatShortWeekdays(locale), [locale]);
   const summary = pickupDate
     ? dropoffDate
       ? `${pickupDisplay} — ${dropoffDisplay}`
@@ -1107,10 +1114,7 @@ function SearchDateCell({
               return (
                 <div key={monthOffset}>
                   <p className="mb-2 text-center text-sm font-bold text-slate-800">
-                    {monthDate.toLocaleDateString("en-US", {
-                      month: "long",
-                      year: "numeric",
-                    })}
+                    {formatCalendarMonth(monthDate, locale)}
                   </p>
                   <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-[0.7rem] font-bold text-slate-500">
                     {weekdays.map((weekday) => (
@@ -1149,14 +1153,7 @@ function SearchDateCell({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`Select ${day.toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            },
-                          )}${isBeforePickup ? "; starts a new pickup date" : ""}`}
+                          aria-label={`Select ${formatFullDate(day, locale)}${isBeforePickup ? "; starts a new pickup date" : ""}`}
                           onClick={() => onSelectDate(day)}
                           disabled={isPastDate}
                           className={cn(

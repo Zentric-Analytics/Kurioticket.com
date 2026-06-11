@@ -26,6 +26,12 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
 import { useRegion } from "@/components/region/RegionProvider";
+import {
+  formatFullDate,
+  formatShortDate as formatLocalizedShortDate,
+  formatShortWeekdays,
+  getDateFormatLocale,
+} from "@/lib/i18n/dateFormatting";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
@@ -91,12 +97,7 @@ const buildMonthCells = (monthDate: Date): MonthCell[] => {
   });
 };
 
-const formatWeekdays = (locale: string) =>
-  Array.from({ length: 7 }, (_, day) =>
-    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
-      new Date(2024, 0, 7 + day),
-    ),
-  );
+const formatWeekdays = (locale: string) => formatShortWeekdays(locale);
 
 const formatShortDate = (value: string, locale: string) => {
   if (!value) return "";
@@ -104,10 +105,7 @@ const formatShortDate = (value: string, locale: string) => {
   const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) return "";
 
-  return new Intl.DateTimeFormat(locale, {
-    month: "short",
-    day: "numeric",
-  }).format(new Date(year, month - 1, day));
+  return formatLocalizedShortDate(new Date(year, month - 1, day), locale);
 };
 
 const clampCount = (value: string, min: number, max: number) => {
@@ -1224,7 +1222,7 @@ export function HotelSearchBar({
                       return (
                         <div key={monthOffset}>
                           <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                            {monthDate.toLocaleDateString(locale, {
+                            {monthDate.toLocaleDateString(getDateFormatLocale(locale), {
                               month: "long",
                               year: "numeric",
                             })}
@@ -1263,14 +1261,7 @@ export function HotelSearchBar({
                                 <button
                                   key={iso}
                                   type="button"
-                                  aria-label={`Select ${day.toLocaleDateString(
-                                    locale,
-                                    {
-                                      month: "long",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    },
-                                  )}`}
+                                  aria-label={`Select ${formatFullDate(day, locale)}`}
                                   onClick={() => handleSelectHotelDate(day)}
                                   disabled={isPastDate}
                                   className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
@@ -1589,7 +1580,7 @@ export function HotelSearchBar({
               return (
                 <div key={monthOffset}>
                   <p className="mb-1 text-center text-sm font-black text-slate-900">
-                    {monthDate.toLocaleDateString(locale, {
+                    {monthDate.toLocaleDateString(getDateFormatLocale(locale), {
                       month: "long",
                       year: "numeric",
                     })}
@@ -1632,11 +1623,7 @@ export function HotelSearchBar({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`Select ${day.toLocaleDateString(locale, {
-                            month: "long",
-                            day: "numeric",
-                            year: "numeric",
-                          })}`}
+                          aria-label={`Select ${formatFullDate(day, locale)}`}
                           onClick={() => handleSelectHotelDate(day)}
                           disabled={isDisabledDate}
                           aria-disabled={isDisabledDate}
