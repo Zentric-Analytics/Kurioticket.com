@@ -1018,93 +1018,95 @@ export function AppHeader({
                   aria-label="Mobile menu"
                   className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
-                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-2.5">
-                    <Link
-                      href="/"
-                      aria-label="Kurioticket home"
-                      onClick={(event) =>
-                        handleRouteLinkClick(event, "/", () =>
-                          setMobileMenuOpen(false),
-                        )
-                      }
-                      className="shrink-0"
-                    >
-                      <KurioticketLogo
-                        variant="full"
-                        tone="dark"
-                        className="gap-2"
-                        markClassName="h-8 w-8"
-                        textClassName="text-base"
-                      />
-                    </Link>
+                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">
+                        Menu
+                      </p>
+                      <h2 className="truncate text-xl font-black tracking-[-0.03em] text-slate-950">
+                        More
+                      </h2>
+                    </div>
 
                     <button
                       type="button"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:border-slate-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                       aria-label="Close mobile menu"
                     >
                       <X size={18} aria-hidden="true" />
                     </button>
                   </div>
 
-                  <nav className="page-shell grid min-h-0 flex-1 content-start gap-1 overflow-y-auto overflow-x-hidden overscroll-contain py-3 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
-                    <div className="pb-1">
+                  <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                    <div className="space-y-2 border-b border-slate-100 pb-4 [&_button:first-child]:h-11 [&_button:first-child]:rounded-2xl [&_button:first-child]:border-slate-100 [&_button:first-child]:bg-slate-50 [&_button:first-child]:px-3.5 [&_button:first-child]:shadow-none">
                       <CountryCurrencySelector
                         variant="mobile"
                         onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
                       />
+
+                      <button
+                        ref={languageTriggerRef}
+                        type="button"
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setMobileAccountOpen(false);
+                          setLanguageOpen(true);
+                        }}
+                        aria-haspopup="dialog"
+                        aria-expanded={languageOpen}
+                        aria-controls={
+                          languageOpen ? languageDialogId : undefined
+                        }
+                        aria-label={t.openLanguagePreferences.replace(
+                          "{{language}}",
+                          selectedLanguageDisplayName,
+                        )}
+                        className="inline-flex min-h-11 w-full cursor-pointer items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-3.5 text-sm font-bold text-slate-900 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      >
+                        <span className="inline-flex min-w-0 items-center gap-3">
+                          {renderFlag(
+                            selectedLanguage?.countryCode,
+                            selectedLanguage?.fallbackText,
+                          )}
+                          <span className="truncate">
+                            {selectedLanguageDisplayName}
+                          </span>
+                        </span>
+
+                        <ChevronDown
+                          size={14}
+                          className="shrink-0 text-slate-500"
+                          aria-hidden="true"
+                        />
+                      </button>
                     </div>
 
-                    <button
-                      ref={languageTriggerRef}
-                      type="button"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        setMobileAccountOpen(false);
-                        setLanguageOpen(true);
-                      }}
-                      aria-haspopup="dialog"
-                      aria-expanded={languageOpen}
-                      aria-controls={
-                        languageOpen ? languageDialogId : undefined
-                      }
-                      aria-label={t.openLanguagePreferences.replace(
-                        "{{language}}",
-                        selectedLanguageDisplayName,
-                      )}
-                      className="inline-flex min-h-11 cursor-pointer items-center justify-between rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                    >
-                      <span className="inline-flex items-center gap-2">
-                        {renderFlag(
-                          selectedLanguage?.countryCode,
-                          selectedLanguage?.fallbackText,
-                        )}
-                        <span>{selectedLanguageDisplayName}</span>
-                      </span>
+                    <div className="grid gap-1 py-4">
+                      {mobileMenuNavItems.map((item) => {
+                        const Icon = item.icon;
 
-                      <ChevronDown size={14} className="text-slate-500" />
-                    </button>
-
-                    {mobileMenuNavItems.map((item) => {
-                      const Icon = item.icon;
-
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={(event) =>
-                            handleRouteLinkClick(event, item.href, () =>
-                              setMobileMenuOpen(false),
-                            )
-                          }
-                          className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                        >
-                          {Icon ? <Icon size={16} aria-hidden="true" /> : null}
-                          <span>{item.label}</span>
-                        </Link>
-                      );
-                    })}
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={(event) =>
+                              handleRouteLinkClick(event, item.href, () =>
+                                setMobileMenuOpen(false),
+                              )
+                            }
+                            className="group inline-flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                          >
+                            {Icon ? (
+                              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-700">
+                                <Icon size={18} aria-hidden="true" />
+                              </span>
+                            ) : null}
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </nav>
                 </aside>
               </div>,
@@ -1132,33 +1134,30 @@ export function AppHeader({
                   aria-label="Account menu"
                   className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
-                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-2.5">
+                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
                     <div className="min-w-0">
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">
-                        Kurioticket account
+                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">
+                        Kurioticket
                       </p>
-                      <p className="truncate text-base font-black text-slate-950">
-                        {session?.user?.name || accountDisplayName}
-                      </p>
+                      <h2 className="truncate text-xl font-black tracking-[-0.03em] text-slate-950">
+                        Account
+                      </h2>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => setMobileAccountOpen(false)}
-                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:border-slate-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                       aria-label="Close account menu"
                     >
                       <X size={18} aria-hidden="true" />
                     </button>
                   </div>
 
-                  <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-3 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
-                    <section
-                      className="rounded-xl border border-slate-200 bg-slate-50 p-2"
-                      aria-label="Account"
-                    >
-                      <div className="flex items-center gap-2.5 border-b border-slate-200 pb-2">
-                        <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-black text-white shadow-sm">
+                  <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                    <section aria-label="Account">
+                      <div className="flex items-center gap-3.5 border-b border-slate-100 pb-5">
+                        <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-base font-black text-white shadow-sm ring-4 ring-indigo-50">
                           {session?.user?.image ? (
                             <RawImage
                               src={session.user.image}
@@ -1171,16 +1170,16 @@ export function AppHeader({
                         </span>
 
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-black text-slate-950">
+                          <span className="block truncate text-lg font-black tracking-[-0.02em] text-slate-950">
                             {session?.user?.name || accountDisplayName}
                           </span>
-                          <span className="block truncate text-xs font-semibold text-slate-500">
+                          <span className="mt-0.5 block truncate text-sm font-semibold text-slate-500">
                             {session?.user?.email || "Kurioticket account"}
                           </span>
                         </span>
                       </div>
 
-                      <div className="mt-1.5 grid gap-0.5">
+                      <div className="grid gap-1 py-4">
                         {signedInAccountMenuItems.map((item) => {
                           const Icon = item.icon;
 
@@ -1193,22 +1192,28 @@ export function AppHeader({
                                   setMobileAccountOpen(false),
                                 )
                               }
-                              className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
-                              <Icon size={16} aria-hidden="true" />
+                              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-700">
+                                <Icon size={18} aria-hidden="true" />
+                              </span>
                               <span>{item.label}</span>
                             </Link>
                           );
                         })}
+                      </div>
 
+                      <div className="border-t border-slate-100 pt-3">
                         <button
                           type="button"
                           onClick={handleSignOut}
                           disabled={isSigningOut}
                           aria-busy={isSigningOut}
-                          className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                          className="group inline-flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-left text-base font-bold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                         >
-                          <LogOut size={16} aria-hidden="true" />
+                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition-colors group-hover:bg-white">
+                            <LogOut size={18} aria-hidden="true" />
+                          </span>
                           {isSigningOut ? t.signingOut : t.logout}
                         </button>
                       </div>
