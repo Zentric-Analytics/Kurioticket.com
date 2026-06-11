@@ -13,11 +13,8 @@ const tabs: Array<{ id: TripTab; label: string }> = [
 export function TripsManagementPage() {
   const [activeTab, setActiveTab] = useState<TripTab>("past");
   const [showLookup, setShowLookup] = useState(false);
-  const [lookupMessage, setLookupMessage] = useState("");
-
   function handleLookupSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLookupMessage("Reservation lookup is not available yet.");
   }
 
   const emptyState = activeTab === "past"
@@ -33,7 +30,7 @@ export function TripsManagementPage() {
       };
 
   return (
-    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-7 xl:max-w-[64rem]">
+    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 xl:max-w-[64rem]">
       <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 id="trips-title" className="text-3xl font-bold tracking-[-0.035em] text-slate-950 sm:text-4xl">
@@ -47,11 +44,10 @@ export function TripsManagementPage() {
           type="button"
           onClick={() => {
             setShowLookup((current) => !current);
-            setLookupMessage("");
           }}
           aria-expanded={showLookup}
           aria-controls="reservation-lookup"
-          className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-700 underline-offset-4 transition hover:text-violet-900 hover:underline"
+          className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline"
         >
           Find a reservation
         </button>
@@ -74,8 +70,8 @@ export function TripsManagementPage() {
                 className={cn(
                   "focus-ring relative -mb-px inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap border-b-2 px-1 text-sm font-semibold transition",
                   isActive
-                    ? "border-violet-700 text-violet-800"
-                    : "border-transparent text-slate-500 hover:border-violet-200 hover:text-slate-800",
+                    ? "border-violet-800 text-violet-900"
+                    : "border-transparent text-slate-600 hover:border-violet-300 hover:text-slate-900",
                 )}
               >
                 {tab.label}
@@ -85,50 +81,37 @@ export function TripsManagementPage() {
         </div>
       </div>
 
-      <div
-        id={`${activeTab}-trips-panel`}
-        role="tabpanel"
-        aria-labelledby={`${activeTab}-trips-tab`}
-        className="flex min-h-[23rem] items-center justify-center px-2 py-10 sm:px-6 sm:py-14"
-      >
-        <div className="mx-auto flex max-w-md flex-col items-center text-center">
-          {emptyState.illustration}
-          <h2 className="mt-7 text-2xl font-bold tracking-[-0.025em] text-slate-950">{emptyState.title}</h2>
-          <p className="mt-2 max-w-sm text-sm leading-6 text-slate-600">{emptyState.body}</p>
-        </div>
-      </div>
-
       {showLookup ? (
         <section
           id="reservation-lookup"
           aria-labelledby="reservation-lookup-title"
-          className="rounded-3xl border border-slate-200 bg-white/70 p-5 shadow-[0_18px_45px_-42px_rgba(49,46,129,0.55)] sm:p-6"
+          className="rounded-3xl border border-violet-100 bg-white/80 p-5 shadow-[0_18px_45px_-42px_rgba(49,46,129,0.55)] sm:p-6"
         >
           <div className="max-w-2xl">
             <h2 id="reservation-lookup-title" className="text-xl font-bold tracking-[-0.02em] text-slate-950">
               Find a reservation
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <p className="mt-2 text-sm leading-6 text-slate-700">
               Enter your reservation details to locate and manage your booking.
             </p>
           </div>
-          <form onSubmit={handleLookupSubmit} className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)_auto] lg:items-end">
-            <label className="grid gap-2 text-sm font-semibold text-slate-800">
-              Email address
-              <input
-                type="email"
-                name="email"
-                autoComplete="email"
-                className="focus-ring h-12 min-w-0 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300"
-              />
-            </label>
+          <form onSubmit={handleLookupSubmit} className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_auto] lg:items-end">
             <label className="grid gap-2 text-sm font-semibold text-slate-800">
               Reservation code
               <input
                 type="text"
                 name="reservationCode"
                 autoComplete="off"
-                className="focus-ring h-12 min-w-0 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium uppercase tracking-[0.08em] text-slate-900 outline-none transition placeholder:text-slate-400 hover:border-slate-300"
+                className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium uppercase tracking-[0.08em] text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400"
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-semibold text-slate-800">
+              Email address
+              <input
+                type="email"
+                name="email"
+                autoComplete="email"
+                className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400"
               />
             </label>
             <button
@@ -138,43 +121,51 @@ export function TripsManagementPage() {
               Find reservation
             </button>
           </form>
-          {lookupMessage ? (
-            <p className="mt-4 rounded-2xl border border-violet-100 bg-violet-50/80 px-4 py-3 text-sm font-semibold text-violet-800" role="status">
-              {lookupMessage}
-            </p>
-          ) : null}
         </section>
       ) : null}
+
+      <div
+        id={`${activeTab}-trips-panel`}
+        role="tabpanel"
+        aria-labelledby={`${activeTab}-trips-tab`}
+        className="flex min-h-[17rem] items-start justify-center px-2 pb-9 pt-6 sm:px-6 sm:pb-11 sm:pt-8"
+      >
+        <div className="mx-auto flex max-w-md flex-col items-center text-center">
+          {emptyState.illustration}
+          <h2 className="mt-6 text-2xl font-bold tracking-[-0.025em] text-slate-950">{emptyState.title}</h2>
+          <p className="mt-2 max-w-sm text-sm font-medium leading-6 text-slate-700">{emptyState.body}</p>
+        </div>
+      </div>
     </section>
   );
 }
 
 function PastTripsIllustration() {
   return (
-    <svg className="h-32 w-32 text-violet-700 sm:h-36 sm:w-36" viewBox="0 0 160 160" fill="none" role="img" aria-label="Travel history illustration">
-      <circle cx="80" cy="80" r="58" fill="#F1ECFF" />
-      <path d="M44 105c12 10 58 10 72 0" stroke="#C4B5FD" strokeWidth="4" strokeLinecap="round" />
+    <svg className="h-32 w-32 text-violet-800 sm:h-36 sm:w-36" viewBox="0 0 160 160" fill="none" role="img" aria-label="Travel history illustration">
+      <circle cx="80" cy="80" r="58" fill="#ECE7FF" />
+      <path d="M44 105c12 10 58 10 72 0" stroke="#8B5CF6" strokeWidth="4" strokeLinecap="round" />
       <rect x="50" y="58" width="60" height="55" rx="9" fill="white" stroke="currentColor" strokeWidth="4" />
       <path d="M68 58V47c0-6 5-11 12-11s12 5 12 11v11" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
       <path d="M50 77h60" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-      <rect x="83" y="86" width="36" height="24" rx="5" fill="#F8FAFC" stroke="#7C3AED" strokeWidth="3" />
-      <path d="M91 98h16" stroke="#A78BFA" strokeWidth="3" strokeLinecap="round" />
-      <path d="M42 48c8-8 18-12 30-12" stroke="#A78BFA" strokeWidth="3" strokeLinecap="round" strokeDasharray="1 8" />
-      <path d="M118 43l6 3-6 3 2-3-2-3Z" fill="#7C3AED" />
+      <rect x="83" y="86" width="36" height="24" rx="5" fill="#F5F3FF" stroke="#6D28D9" strokeWidth="3" />
+      <path d="M91 98h16" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" />
+      <path d="M42 48c8-8 18-12 30-12" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" strokeDasharray="1 8" />
+      <path d="M118 43l6 3-6 3 2-3-2-3Z" fill="#6D28D9" />
     </svg>
   );
 }
 
 function CancelledTripsIllustration() {
   return (
-    <svg className="h-32 w-32 text-violet-700 sm:h-36 sm:w-36" viewBox="0 0 160 160" fill="none" role="img" aria-label="Cancelled trip illustration">
-      <circle cx="80" cy="80" r="58" fill="#F1ECFF" />
+    <svg className="h-32 w-32 text-violet-800 sm:h-36 sm:w-36" viewBox="0 0 160 160" fill="none" role="img" aria-label="Cancelled trip illustration">
+      <circle cx="80" cy="80" r="58" fill="#ECE7FF" />
       <path d="M48 109l18-58 26 13 20-9-17 58-27-13-20 9Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="4" />
-      <path d="M66 51l2 49M92 64l3 49" stroke="#C4B5FD" strokeWidth="3" strokeLinecap="round" />
-      <path d="M57 82c12-8 24-7 34 1 8 6 17 7 28-1" stroke="#A78BFA" strokeWidth="3" strokeLinecap="round" strokeDasharray="1 7" />
-      <circle cx="110" cy="50" r="18" fill="white" stroke="#7C3AED" strokeWidth="4" />
-      <path d="M103 43l14 14M117 43l-14 14" stroke="#7C3AED" strokeLinecap="round" strokeWidth="4" />
-      <path d="M42 118c13 8 61 9 76 0" stroke="#C4B5FD" strokeLinecap="round" strokeWidth="4" />
+      <path d="M66 51l2 49M92 64l3 49" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" />
+      <path d="M57 82c12-8 24-7 34 1 8 6 17 7 28-1" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" strokeDasharray="1 7" />
+      <circle cx="110" cy="50" r="18" fill="white" stroke="#6D28D9" strokeWidth="4" />
+      <path d="M103 43l14 14M117 43l-14 14" stroke="#6D28D9" strokeLinecap="round" strokeWidth="4" />
+      <path d="M42 118c13 8 61 9 76 0" stroke="#8B5CF6" strokeLinecap="round" strokeWidth="4" />
     </svg>
   );
 }
