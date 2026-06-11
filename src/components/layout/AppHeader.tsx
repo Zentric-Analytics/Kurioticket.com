@@ -550,8 +550,10 @@ export function AppHeader({
               </span>
             </Link>
 
-            <div className="hidden min-w-0 flex-1 items-center justify-end gap-2.5 md:flex lg:gap-3">
-              <CountryCurrencySelector variant="header" grouped />
+            <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex lg:gap-3.5">
+              <div className="[&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-2.5 [&>button]:!text-indigo-50/90 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-white/10 [&>button]:hover:!text-white">
+                <CountryCurrencySelector variant="header" grouped />
+              </div>
 
               <div className="relative" ref={languageRef}>
                 <button
@@ -569,7 +571,7 @@ export function AppHeader({
                     "{{language}}",
                     selectedLanguageDisplayName,
                   )}
-                  className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/20 bg-white/10 text-indigo-50 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-indigo-50/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 >
                   {renderFlag(
                     selectedLanguage?.countryCode,
@@ -588,7 +590,7 @@ export function AppHeader({
                       aria-label={t.openAccountMenu}
                       title={t.openAccountMenu}
                       onClick={() => setAccountOpen((value) => !value)}
-                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white shadow-sm ring-1 ring-white/10 transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                     >
                       <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
                         {session?.user?.image ? (
@@ -681,7 +683,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signin")
                       }
-                      className="inline-flex h-9 cursor-pointer items-center rounded-full px-3 text-[13px] font-semibold text-indigo-50 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-9 cursor-pointer items-center rounded-md px-2.5 text-[13px] font-semibold text-indigo-50/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                     >
                       {t.login}
                     </Link>
@@ -691,7 +693,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signup")
                       }
-                      className="inline-flex h-9 cursor-pointer items-center rounded-full bg-violet-600 px-3.5 text-[13px] font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-9 cursor-pointer items-center rounded-md bg-white px-3 text-[13px] font-semibold text-indigo-700 shadow-[0_1px_2px_rgba(49,46,129,0.12)] transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                     >
                       {t.signUp}
                     </Link>
