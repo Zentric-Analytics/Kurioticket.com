@@ -1286,9 +1286,9 @@ function DestinationCard({
   ) => void;
 }) {
   return (
-    <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
+    <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start rounded-2xl transition duration-300 hover:-translate-y-1 sm:min-w-[22rem] sm:flex-[0_0_22rem]">
       <Link href={href} className="focus-ring block">
-        <div className="relative h-72 sm:h-80">
+        <div className="relative h-72 overflow-hidden rounded-2xl border border-slate-200/70 shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 group-hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:h-80">
           <Image
             src={image}
             alt={imageAlt}
@@ -1314,6 +1314,16 @@ function DestinationCard({
             <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
 
+          <div className="absolute left-4 top-4 z-10">
+            <DestinationPricePill
+              price={price}
+              displayCurrency={displayCurrency}
+              expectedOriginCode={originCode}
+              expectedDestinationCode={destinationCode}
+              isLoading={isPriceLoading}
+            />
+          </div>
+
           <div className="absolute bottom-4 left-4 z-10 pr-4 text-white [text-shadow:0_2px_12px_rgba(15,23,42,0.55)]">
             <h3 className="text-xl font-black tracking-tight sm:text-2xl">
               {city}
@@ -1322,16 +1332,6 @@ function DestinationCard({
               {country}
             </p>
           </div>
-        </div>
-
-        <div className="flex items-center p-4">
-          <DestinationPricePill
-            price={price}
-            displayCurrency={displayCurrency}
-            expectedOriginCode={originCode}
-            expectedDestinationCode={destinationCode}
-            isLoading={isPriceLoading}
-          />
         </div>
       </Link>
     </article>
@@ -1362,7 +1362,7 @@ function DestinationPricePill({
   if (isLoading) {
     return (
       <span
-        className="inline-flex h-9 w-32 animate-pulse rounded-full border border-slate-300 bg-white shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
+        className="inline-flex h-10 w-36 animate-pulse rounded-full border border-white/80 bg-white/95 shadow-[0_10px_22px_-14px_rgba(15,23,42,0.9)] backdrop-blur"
         aria-label={t("homePricesUpdateWithProviderResults")}
       />
     );
@@ -1370,7 +1370,7 @@ function DestinationPricePill({
 
   if (!hasProviderPrice) {
     return (
-      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
+      <span className="inline-flex rounded-full border border-white/80 bg-white/95 px-4 py-2 text-base font-bold text-slate-800 shadow-[0_10px_22px_-14px_rgba(15,23,42,0.9)] backdrop-blur sm:text-[17px]">
         {t("homeExploreFares")}
       </span>
     );
@@ -1381,7 +1381,7 @@ function DestinationPricePill({
 
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
-      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
+      <span className="inline-flex rounded-full border border-white/80 bg-white/95 px-4 py-2 text-base font-bold text-slate-800 shadow-[0_10px_22px_-14px_rgba(15,23,42,0.9)] backdrop-blur sm:text-[17px]">
         {t("homeExploreFares")}
       </span>
     );
@@ -1402,7 +1402,7 @@ function DestinationPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-extrabold text-slate-950 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
+      className="inline-flex rounded-full border border-white/80 bg-white/95 px-4 py-2 text-base font-extrabold text-slate-950 shadow-[0_10px_22px_-14px_rgba(15,23,42,0.9)] backdrop-blur sm:text-[17px]"
       aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
