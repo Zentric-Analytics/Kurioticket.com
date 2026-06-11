@@ -127,10 +127,10 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
       <aside className="min-w-0" aria-label="Account navigation">
         <div
           className={cn(
-            "border border-violet-100/80 bg-white shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]",
+            "border border-violet-100/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)] backdrop-blur-[1px]",
             mobileOverviewTabs
-              ? "-mx-4 border-x-0 px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:p-2.5 lg:shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]"
-              : "rounded-[1.25rem] p-2 lg:p-2.5",
+              ? "-mx-4 border-x-0 bg-white px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:bg-violet-50/35 lg:p-2.5 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)]"
+              : "rounded-[1.25rem] bg-violet-50/35 p-2 lg:p-2.5",
           )}
         >
           <nav>
@@ -145,15 +145,15 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "focus-ring flex items-center gap-2.5 text-[13px] font-semibold transition hover:bg-violet-50 hover:text-violet-700 lg:rounded-xl lg:px-3.5 lg:py-2.5",
+                      "focus-ring flex items-center gap-2.5 text-[13px] font-semibold transition hover:bg-white/55 hover:text-violet-700 lg:rounded-xl lg:px-3.5 lg:py-2.5",
                       mobileOverviewTabs && "relative whitespace-nowrap rounded-none px-0 py-3.5 text-[13px] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent lg:rounded-xl lg:px-3.5 lg:py-2.5 lg:after:hidden",
                       !mobileOverviewTabs && "rounded-xl px-3.5 py-2.5",
                       active
                         ? cn(
-                          "text-violet-700 lg:bg-violet-50 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]",
-                          mobileOverviewTabs && "after:bg-violet-700 lg:bg-violet-50 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]",
+                          "text-violet-700 lg:bg-white/65 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.10),0_10px_26px_-24px_rgba(79,70,229,0.55)]",
+                          mobileOverviewTabs && "after:bg-violet-700 lg:bg-white/65 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.10),0_10px_26px_-24px_rgba(79,70,229,0.55)]",
                         )
-                        : "text-slate-900",
+                        : "text-slate-800",
                     )}
                   >
                     <Icon className={cn("size-4 shrink-0", mobileOverviewTabs && "hidden lg:block")} strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
@@ -164,7 +164,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
             </div>
           </nav>
 
-          <div className="mt-5 hidden rounded-2xl border border-violet-100/80 bg-gradient-to-b from-violet-50/55 to-white p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-14 xl:mt-16">
+          <div className="mt-5 hidden rounded-2xl border border-violet-100/60 bg-violet-50/45 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] lg:block lg:mt-14 xl:mt-16">
             <div className="mx-auto mb-2 flex justify-center opacity-85">
               <TravelIllustration compact />
             </div>
@@ -172,7 +172,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
             <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">Find great deals on flights and hotels.</p>
             <Link
               href="/flights"
-              className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200 bg-white px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-50"
+              className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200/80 bg-white/75 px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-white"
             >
               <Plane className="size-3.5" aria-hidden="true" />
               Search flights
