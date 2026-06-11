@@ -1247,7 +1247,7 @@ export const translations: TranslationDictionary = {
   quickResumeLatestSearches: "Retoma rápidamente tus búsquedas recientes",
   quickResumeLatestSearchesBody:
     "Vuelve a las ideas de ruta que ya te gustaron, sin necesidad de cuenta.",
-  flightLandingHeroTitle: "Encuentra vuelos para tu próximo viaje",
+  flightLandingHeroTitle: "Reserva tus próximos vuelos con facilidad",
   flightLandingHeroSubtitle:
     "Busca rutas, compara fechas y explora opciones de vuelo para tu próximo viaje.",
   flightLandingFeatureSearchReadyTitle: "Rutas listas para buscar",
