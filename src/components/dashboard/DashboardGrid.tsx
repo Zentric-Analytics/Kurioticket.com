@@ -188,10 +188,10 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
 function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-slate-300/80 bg-[linear-gradient(135deg,#ffffff_0%,#faf8ff_58%,#f8fafc_100%)] shadow-[0_24px_66px_-46px_rgba(49,46,129,0.62)]"
+      className="border-b border-slate-200/80 pb-5"
       aria-labelledby="dashboard-title"
     >
-      <div className="flex min-w-0 items-center gap-4 p-4 sm:p-5 lg:p-5">
+      <div className="flex min-w-0 items-center gap-4 px-1 py-2 sm:gap-5 sm:px-2 sm:py-3">
         <div
           className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-2xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
           aria-hidden="true"
@@ -451,10 +451,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_24px_70px_-56px_rgba(49,46,129,0.5)]"
+      className="min-w-0"
       aria-labelledby="personal-details-title"
     >
-      <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200 px-4 py-5 sm:px-6 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 flex-col gap-4 px-1 pb-5 pt-2 sm:px-2 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <h2 id="personal-details-title" className="text-2xl font-bold tracking-tight text-slate-950">
             Personal details
@@ -465,13 +465,13 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         </div>
       </div>
 
-      <div className="divide-y divide-slate-200">
+      <div className="divide-y divide-slate-200 border-y border-slate-200/90">
         {personalDetailRows.map((row) => {
           const readOnlyValue = initialValues[row.key];
           const editValue = draft[row.key];
 
           return (
-            <div key={row.key} className="grid min-w-0 gap-1.5 px-4 py-3 sm:px-6 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-4">
+            <div key={row.key} className="grid min-w-0 gap-1.5 px-1 py-4 sm:px-2 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-5">
               <div className="text-sm font-semibold text-slate-700">{row.label}</div>
               {isEditing ? (
                 <div className="min-w-0 space-y-1.5">
@@ -486,7 +486,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         })}
       </div>
 
-      <div className="border-t border-slate-200 bg-slate-50/60 px-4 py-4 sm:px-6">
+      <div className="px-1 py-5 sm:px-2">
         {isEditing ? (
           <div className="flex min-w-0 flex-col gap-3 sm:items-end">
             <p className="text-sm leading-6 text-slate-500 sm:text-right">Profile editing coming soon.</p>
