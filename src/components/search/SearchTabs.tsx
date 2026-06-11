@@ -3,11 +3,13 @@
 import {
   useCallback,
   useEffect,
+  type Dispatch,
   type FormEvent,
   useMemo,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
+  type SetStateAction,
 } from "react";
 
 import { useRouter } from "next/navigation";
@@ -16,6 +18,7 @@ import {
   ArrowRightLeft,
   BedDouble,
   Calendar,
+  MapPin,
   ChevronDown,
   Minus,
   Plane,
@@ -430,11 +433,11 @@ export function SearchTabs({
     compactHero && "lg:text-[11px] lg:font-extrabold lg:tracking-[0.14em] lg:text-slate-500"
   );
   const flightFieldValueClassName = cn(
-    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm",
+    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm lg:placeholder:text-slate-400",
     compactHero && "lg:text-[15px] lg:font-semibold lg:tracking-[-0.01em] lg:text-slate-950"
   );
   const flightFieldButtonClassName = cn(
-    "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm",
+    "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] font-medium text-slate-900 outline-none transition-colors md:text-sm",
     compactHero && "lg:text-[15px] lg:font-semibold lg:tracking-[-0.01em] lg:text-slate-950"
   );
   const hotelFieldLabelClassName = cn(
@@ -451,10 +454,10 @@ export function SearchTabs({
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
       ? cn(
-          "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 lg:flex lg:flex-col lg:justify-center",
+          "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 transition-shadow sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 lg:flex lg:flex-col lg:justify-center",
           side === "origin" ? "sm:pr-3" : "sm:pl-3"
         )
-      : cn("relative px-0 py-0", side === "origin" ? "pr-3" : "pl-3");
+      : cn("relative px-0 py-0 transition-shadow", side === "origin" ? "pr-3" : "pl-3");
   const submitWrapClassName = cn(
     "sm:col-span-2 lg:col-span-1 lg:self-stretch",
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
@@ -1965,6 +1968,223 @@ export function SearchTabs({
     );
   };
 
+  const renderDesktopAirportSuggestions = ({
+    inputId,
+    suggestions,
+    highlight,
+    isLoading,
+    sectionLabel,
+    onSelect,
+  }: {
+    inputId: string;
+    suggestions: AirportOption[];
+    highlight: number;
+    isLoading: boolean;
+    sectionLabel: string;
+    onSelect: (option: AirportOption) => void;
+  }) => (
+    <div className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_22px_54px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.03] sm:block lg:w-[520px]">
+      <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+          {sectionLabel}
+        </p>
+      </div>
+      <div className="max-h-[min(52vh,360px)] overflow-y-auto py-1">
+        {isLoading ? (
+          <div className="flex items-center gap-3 px-4 py-4 text-sm font-medium text-slate-500">
+            <span className="h-2 w-2 rounded-full bg-indigo-500 shadow-[0_0_0_4px_rgba(99,102,241,0.12)]" aria-hidden="true" />
+            {t.searchingAirportsAndCities || "Searching airports and cities…"}
+          </div>
+        ) : suggestions.length ? suggestions.map((option, index) => (
+          <button
+            key={`${option.code}-${option.airport}-${inputId}`}
+            type="button"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => onSelect(option)}
+            className={cn(
+              "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-indigo-50/70 focus-visible:bg-indigo-50/70",
+              highlight === index && "bg-indigo-50 text-indigo-950"
+            )}
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true">
+              <Plane className="h-4 w-4" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-extrabold leading-5 tracking-tight text-slate-950">
+                {option.city}
+              </span>
+              <span className="mt-0.5 block truncate text-xs font-semibold leading-5 text-slate-500">
+                {option.airport}{option.country ? ` · ${option.country}` : ""}
+              </span>
+            </span>
+            <span className="shrink-0 pl-3 text-right text-sm font-extrabold tracking-[0.14em] text-slate-700">
+              {option.code}
+            </span>
+          </button>
+        )) : (
+          <div className="flex items-center gap-3 px-4 py-4 text-sm font-medium text-slate-500">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400" aria-hidden="true">
+              <MapPin className="h-4 w-4" />
+            </span>
+            {t.noMatchingAirportsOrCities || "No matching airports or cities"}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderDesktopCalendarMonth = ({
+    monthDate,
+    mode,
+  }: {
+    monthDate: Date;
+    mode: "flights" | "hotels";
+  }) => {
+    const cells = buildMonthCells(monthDate);
+
+    return (
+      <section aria-label={monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })} className="min-w-0">
+        <h3 className="mb-3 text-center text-sm font-extrabold tracking-tight text-slate-950">
+          {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+        </h3>
+        <div className="mb-2 grid grid-cols-7 text-center text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+          {weekdays.map((weekday) => (
+            <span key={weekday} className="py-1.5">{weekday.slice(0, 2)}</span>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-y-1">
+          {cells.map((cell) => {
+            const day = cell.date;
+            const iso = toIsoDate(day);
+            const isToday = toIsoDate(new Date()) === iso;
+            const isFlightMode = mode === "flights";
+            const isStart = isFlightMode ? iso === departureDate : iso === checkIn;
+            const isEnd = isFlightMode ? iso === returnDate : iso === checkOut;
+            const startParsed = isFlightMode ? departureParsed : checkInParsed;
+            const endParsed = isFlightMode ? returnParsed : checkOutParsed;
+            const isDisabledDate = isFlightMode ? !isSelectableFlightDate(day) : isBeforeToday(day);
+            const isInRange = Boolean(
+              startParsed &&
+                endParsed &&
+                !isDisabledDate &&
+                day > startParsed &&
+                day < endParsed
+            );
+
+            if (!cell.isCurrentMonth) {
+              return <span key={`desktop-placeholder-${mode}-${iso}`} aria-hidden="true" className="h-10" />;
+            }
+
+            return (
+              <button
+                key={`${mode}-${iso}`}
+                type="button"
+                aria-label={`Select ${day.toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}`}
+                aria-pressed={isStart || isEnd}
+                onClick={() => {
+                  if (isDisabledDate) return;
+                  if (isFlightMode) onSelectDate(day);
+                  else onSelectHotelDate(day);
+                }}
+                disabled={isDisabledDate}
+                aria-disabled={isDisabledDate}
+                className={cn(
+                  "focus-ring relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition-colors disabled:cursor-not-allowed",
+                  isDisabledDate
+                    ? "text-slate-300"
+                    : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
+                  isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-300",
+                  isInRange && "rounded-xl bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
+                  (isStart || isEnd) && "bg-indigo-700 text-white shadow-sm shadow-indigo-700/20 hover:bg-indigo-700 hover:text-white ring-0"
+                )}
+              >
+                {day.getDate()}
+                {isToday && !isStart && !isEnd ? (
+                  <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+    );
+  };
+
+  const renderDesktopCalendarPopover = ({
+    mode,
+    visibleMonth,
+    setVisibleMonth,
+    onClear,
+    onDone,
+  }: {
+    mode: "flights" | "hotels";
+    visibleMonth: Date;
+    setVisibleMonth: Dispatch<SetStateAction<Date>>;
+    onClear: () => void;
+    onDone: () => void;
+  }) => (
+    <div
+      role="dialog"
+      aria-label={t.chooseTravelDates || "Choose travel dates"}
+      className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,660px)] rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_24px_58px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.03] sm:block"
+    >
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+            {mode === "flights" ? (t.travelDates || "Travel dates") : "Stay dates"}
+          </p>
+          <h3 className="mt-1 text-base font-extrabold tracking-tight text-slate-950">
+            {t.chooseTravelDates || "Choose travel dates"}
+          </h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-label="Previous month"
+            onClick={() => setVisibleMonth((prev) => addMonths(prev, -1))}
+            className="focus-ring rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+          >
+            Prev
+          </button>
+          <button
+            type="button"
+            aria-label="Next month"
+            onClick={() => setVisibleMonth((prev) => addMonths(prev, 1))}
+            className="focus-ring rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-5">
+        {[0, 1].map((monthOffset) => renderDesktopCalendarMonth({
+          monthDate: addMonths(visibleMonth, monthOffset),
+          mode,
+        }))}
+      </div>
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+        <button
+          type="button"
+          onClick={onClear}
+          className="focus-ring rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+        >
+          {t.clear || "Clear"}
+        </button>
+        <button
+          type="button"
+          onClick={onDone}
+          className="focus-ring rounded-xl bg-slate-950 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-800"
+        >
+          {t.done || "Done"}
+        </button>
+      </div>
+    </div>
+  );
+
   const passengerRows = [
     { key: "adults", label: t.adultPlural || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
     { key: "children", label: t.childPlural || "Children", subtitle: "Ages 2–17", count: draftChildCount, min: 0 },
@@ -1979,7 +2199,7 @@ export function SearchTabs({
   const renderPassengerControlRows = (compact = false) => (
     <div className={cn(
       "overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.07)]",
-      compact && "rounded-2xl shadow-sm"
+      compact && "rounded-2xl border-slate-100 shadow-none"
     )}>
       {passengerRows.map((row) => {
         const draftTravelerCount = draftAdultCount + draftChildCount + draftInfantCount;
@@ -2000,7 +2220,7 @@ export function SearchTabs({
               <span className="block text-base font-extrabold tracking-tight text-slate-950 sm:text-sm">
                 {row.label}
               </span>
-              <span className="mt-0.5 block text-xs font-semibold leading-5 text-slate-500">
+              <span className="mt-0.5 block text-xs font-medium leading-5 text-slate-500">
                 {row.subtitle}
               </span>
             </span>
@@ -2019,7 +2239,7 @@ export function SearchTabs({
                 disabled={!canDecrement}
                 className={cn(
                   "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
-                  compact ? "h-8 w-8" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                  compact ? "h-8 w-8 border-slate-200 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
                 )}
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -2051,7 +2271,7 @@ export function SearchTabs({
                 disabled={!canIncrement}
                 className={cn(
                   "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
-                  compact ? "h-8 w-8" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                  compact ? "h-8 w-8 border-slate-200 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
                 )}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -2066,13 +2286,15 @@ export function SearchTabs({
   const renderCabinClassPicker = (compact = false) => (
     <div className={cn(
       "rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]",
-      compact && "rounded-2xl p-3 shadow-sm"
+      compact && "rounded-2xl border-slate-100 p-3 shadow-none"
     )}>
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-          {t.cabinClass || "Cabin class"}
-        </p>
-      </div>
+      {!compact ? (
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+            {t.cabinClass || "Cabin class"}
+          </p>
+        </div>
+      ) : null}
       <div className="grid grid-cols-3 gap-2">
         {cabinOptions.map(([value, label]) => (
           <button
@@ -2084,7 +2306,7 @@ export function SearchTabs({
               draftCabinClass === value
                 ? "border-indigo-500 bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]"
                 : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800",
-              compact && "min-h-9 rounded-xl text-xs"
+              compact && "min-h-9 rounded-xl text-xs font-bold"
             )}
           >
             {label}
@@ -2096,7 +2318,12 @@ export function SearchTabs({
 
   const renderTravelersCabinPicker = () => (
     <div className="space-y-4">
-      {renderPassengerControlRows()}
+      <div>
+        <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+          Passengers
+        </p>
+        {renderPassengerControlRows()}
+      </div>
       {renderCabinClassPicker()}
     </div>
   );
@@ -2287,7 +2514,10 @@ export function SearchTabs({
               <div className={flightRouteGroupClassName}>
               <div
                 ref={fromWrapRef}
-                className={flightRouteFieldClassName("origin")}
+                className={cn(
+                  flightRouteFieldClassName("origin"),
+                  fromOpen && "lg:ring-2 lg:ring-indigo-500/35 lg:ring-offset-2 lg:ring-offset-white"
+                )}
               >
                 <label className={flightFieldLabelClassName}>
                   {t.origin ||
@@ -2363,57 +2593,21 @@ export function SearchTabs({
                     </button>
                   ) : null}
                 </div>
-                {shouldShowFromSuggestionsPanel ? (
-                  <div className="absolute left-0 top-[calc(100%+6px)] z-50 hidden max-h-[min(50vh,280px)] w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-xl sm:block">
-                    {isFromLoadingVisible ? (
-                      <div className="px-3 py-2 text-sm text-slate-500">
-                        {t.searchingAirportsAndCities || "Searching airports and cities…"}
-                      </div>
-                    ) : fromSuggestions.length ? fromSuggestions.map(
-                      (
-                        option,
-                        index
-                      ) => (
-                        <button
-                          key={`${option.code}-${option.airport}`}
-                          type="button"
-                          onClick={() => {
-                            setFromState((current) => markOriginManualInput(
-                              current,
-                              formatAirportLabel(option),
-                              option.code
-                            ));
-                            setFromOpen(
-                              false
-                            );
-                          }}
-                          className={cn(
-                            "block w-full px-3 py-2 text-left transition-colors",
-                            fromHighlight ===
-                              index
-                              ? "bg-slate-100"
-                              : "hover:bg-slate-50"
-                          )}
-                        >
-                          <p className="text-sm font-medium text-slate-900">
-                            {option.city} (
-                            {option.code})
-                          </p>
-                          <p className="text-xs leading-5 text-slate-600">
-                            {option.airport}
-                            {option.country
-                              ? ` · ${option.country}`
-                              : ""}
-                          </p>
-                        </button>
-                      )
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-slate-500">
-                        {t.noMatchingAirportsOrCities || "No matching airports or cities"}
-                      </div>
-                    )}
-                  </div>
-                ) : null}
+                {shouldShowFromSuggestionsPanel ? renderDesktopAirportSuggestions({
+                  inputId: "homepage-flight-origin",
+                  suggestions: fromSuggestions,
+                  highlight: fromHighlight,
+                  isLoading: isFromLoadingVisible,
+                  sectionLabel: fromState.source === "maxmind-default" ? "Near you" : "Airports and cities",
+                  onSelect: (option) => {
+                    setFromState((current) => markOriginManualInput(
+                      current,
+                      formatAirportLabel(option),
+                      option.code
+                    ));
+                    setFromOpen(false);
+                  },
+                }) : null}
               </div>
               <div className="relative z-20 -my-2 flex h-4 items-center justify-center sm:my-0 sm:h-auto">
                 <button
@@ -2428,7 +2622,10 @@ export function SearchTabs({
 
               <div
                 ref={toWrapRef}
-                className={flightRouteFieldClassName("destination")}
+                className={cn(
+                  flightRouteFieldClassName("destination"),
+                  toOpen && "lg:ring-2 lg:ring-indigo-500/35 lg:ring-offset-2 lg:ring-offset-white"
+                )}
               >
                 <label className={flightFieldLabelClassName}>
                   {t.destination || "Destination"}
@@ -2497,60 +2694,18 @@ export function SearchTabs({
                     </button>
                   ) : null}
                 </div>
-                {shouldShowToSuggestionsPanel ? (
-                  <div className="absolute left-0 top-[calc(100%+6px)] z-50 hidden max-h-[min(50vh,280px)] w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-xl sm:block">
-                    {isToLoadingVisible ? (
-                      <div className="px-3 py-2 text-sm text-slate-500">
-                        {t.searchingAirportsAndCities || "Searching airports and cities…"}
-                      </div>
-                    ) : toSuggestions.length ? toSuggestions.map(
-                      (
-                        option,
-                        index
-                      ) => (
-                        <button
-                          key={`${option.code}-${option.airport}`}
-                          type="button"
-                          onClick={() => {
-                            setTo(
-                              formatAirportLabel(
-                                option
-                              )
-                            );
-                            setToCode(
-                              option.code
-                            );
-                            setToOpen(
-                              false
-                            );
-                          }}
-                          className={cn(
-                            "block w-full px-3 py-2 text-left transition-colors",
-                            toHighlight ===
-                              index
-                              ? "bg-slate-100"
-                              : "hover:bg-slate-50"
-                          )}
-                        >
-                          <p className="text-sm font-medium text-slate-900">
-                            {option.city} (
-                            {option.code})
-                          </p>
-                          <p className="text-xs leading-5 text-slate-600">
-                            {option.airport}
-                            {option.country
-                              ? ` · ${option.country}`
-                              : ""}
-                          </p>
-                        </button>
-                      )
-                    ) : (
-                      <div className="px-3 py-2 text-sm text-slate-500">
-                        {t.noMatchingAirportsOrCities || "No matching airports or cities"}
-                      </div>
-                    )}
-                  </div>
-                ) : null}
+                {shouldShowToSuggestionsPanel ? renderDesktopAirportSuggestions({
+                  inputId: "homepage-flight-destination",
+                  suggestions: toSuggestions,
+                  highlight: toHighlight,
+                  isLoading: isToLoadingVisible,
+                  sectionLabel: "Airports and cities",
+                  onSelect: (option) => {
+                    setTo(formatAirportLabel(option));
+                    setToCode(option.code);
+                    setToOpen(false);
+                  },
+                }) : null}
               </div>
               </div>
 
@@ -2612,214 +2767,16 @@ export function SearchTabs({
                     >
                       {renderFlightDateCalendar()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label={t.chooseTravelDates || "Choose travel dates"} className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,560px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
-                    <p className="mb-2.5 text-sm font-semibold text-slate-900">
-                      {t.chooseTravelDates || "Choose travel dates"}
-                    </p>
-                    <div className="mb-3 flex items-center justify-between">
-                      <button
-                        type="button"
-                        aria-label="Previous month"
-                        onClick={() =>
-                          setVisibleMonthDate(
-                            (prev) =>
-                              addMonths(
-                                prev,
-                                -1
-                              )
-                          )
-                        }
-                        className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                      >
-                        Prev
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Next month"
-                        onClick={() =>
-                          setVisibleMonthDate(
-                            (prev) =>
-                              addMonths(
-                                prev,
-                                1
-                              )
-                          )
-                        }
-                        className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                      >
-                        Next
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                      {[0, 1].map(
-                        (monthOffset) => {
-                          const monthDate =
-                            addMonths(
-                              visibleMonthDate,
-                              monthOffset
-                            );
-                          const cells =
-                            buildMonthCells(
-                              monthDate
-                            );
-                          return (
-                            <div
-                              key={monthOffset}
-                            >
-                              <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                                {monthDate.toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month:
-                                      "long",
-                                    year: "numeric",
-                                  }
-                                )}
-                              </p>
-                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
-                                {weekdays.map(
-                                  (
-                                    weekday
-                                  ) => (
-                                    <span
-                                      key={
-                                        weekday
-                                      }
-                                    >
-                                      {
-                                        weekday
-                                      }
-                                    </span>
-                                  )
-                                )}
-                              </div>
-                              <div className="grid grid-cols-7 gap-1">
-                                {cells.map(
-                                  (
-                                    cell
-                                  ) => {
-                                    const day =
-                                      cell.date;
-                                    const iso =
-                                      toIsoDate(
-                                        day
-                                      );
-                                    const isDeparture =
-                                      iso ===
-                                      departureDate;
-                                    const isReturn =
-                                      iso ===
-                                      returnDate;
-                                    const isDisabledDate =
-                                      !isSelectableFlightDate(
-                                        day
-                                      );
-                                    const isInRange =
-                                      !!(
-                                        departureParsed &&
-                                        returnParsed &&
-                                        !isDisabledDate &&
-                                        day >
-                                          departureParsed &&
-                                        day <
-                                          returnParsed
-                                      );
-                                    if (
-                                      !cell.isCurrentMonth
-                                    ) {
-                                      return (
-                                        <span
-                                          key={`placeholder-${iso}`}
-                                          aria-hidden="true"
-                                          className="h-8 w-8 justify-self-center"
-                                        />
-                                      );
-                                    }
-
-                                    return (
-                                      <button
-                                        key={
-                                          iso
-                                        }
-                                        type="button"
-                                        aria-label={`Select ${day.toLocaleDateString(
-                                          "en-US",
-                                          {
-                                            month:
-                                              "long",
-                                            day: "numeric",
-                                            year: "numeric",
-                                          }
-                                        )}`}
-                                        onClick={() => {
-                                          if (
-                                            isDisabledDate ||
-                                            !isSelectableFlightDate(
-                                              day
-                                            )
-                                          ) {
-                                            return;
-                                          }
-
-                                          onSelectDate(
-                                            day
-                                          );
-                                        }}
-                                        disabled={
-                                          isDisabledDate
-                                        }
-                                        aria-disabled={
-                                          isDisabledDate
-                                        }
-                                        className={cn(
-                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
-                                          isDisabledDate
-                                            ? "text-slate-300 hover:bg-transparent"
-                                            : "text-slate-900 hover:bg-indigo-50",
-                                          isInRange &&
-                                            "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
-                                          (isDeparture ||
-                                            isReturn) &&
-                                            "bg-indigo-700 text-white hover:bg-indigo-700"
-                                        )}
-                                      >
-                                        {day.getDate()}
-                                      </button>
-                                    );
-                                  }
-                                )}
-                              </div>
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
-                    <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDepartureDate(
-                            ""
-                          );
-                          setReturnDate("");
-                        }}
-                        className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                      >
-                        {t.clear || "Clear"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFlightDatesOpen(
-                            false
-                          )
-                        }
-                        className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
-                      >
-                        {t.done || "Done"}
-                      </button>
-                    </div>
-                  </div>
+                    {renderDesktopCalendarPopover({
+                      mode: "flights",
+                      visibleMonth: visibleMonthDate,
+                      setVisibleMonth: setVisibleMonthDate,
+                      onClear: () => {
+                        setDepartureDate("");
+                        setReturnDate("");
+                      },
+                      onDone: () => setFlightDatesOpen(false),
+                    })}
                   </>
                 ) : null}
               </div>
@@ -2883,15 +2840,25 @@ export function SearchTabs({
                     >
                       {renderTravelersCabinPicker()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,340px)] rounded-3xl border border-slate-200 bg-white p-3 shadow-[0_18px_42px_rgba(15,23,42,0.16)] sm:block">
-                      <h3 className="px-1 text-sm font-extrabold tracking-tight text-slate-950">
-                        {t.travelers || "Travelers"}
-                      </h3>
-                      <div className="mt-3 space-y-3">
-                        {renderPassengerControlRows(true)}
-                        {renderCabinClassPicker(true)}
+                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,360px)] rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_22px_54px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.03] sm:block">
+                      <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                          Passengers
+                        </p>
+                        <h3 className="mt-1 text-base font-extrabold tracking-tight text-slate-950">
+                          {t.travelers || "Travelers"}
+                        </h3>
                       </div>
-                      <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
+                      <div className="mt-3 space-y-4">
+                        {renderPassengerControlRows(true)}
+                        <div>
+                          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                            {t.cabinClass || "Cabin class"}
+                          </p>
+                          {renderCabinClassPicker(true)}
+                        </div>
+                      </div>
+                      <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
                         <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-xl bg-indigo-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
                       </div>
                     </div>
@@ -3081,205 +3048,18 @@ export function SearchTabs({
                 </button>
                 {hotelDatesOpen ? (
                   <>
-                    <div ref={hotelDatesPanelRef} className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,560px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
-                    <p className="mb-2.5 text-sm font-semibold text-slate-900">
-                      {t.chooseTravelDates || "Choose travel dates"}
-                    </p>
-                    <div className="mb-3 flex items-center justify-between">
-                      <button
-                        type="button"
-                        aria-label="Previous month"
-                        onClick={() =>
-                          setHotelVisibleMonthDate(
-                            (prev) =>
-                              addMonths(
-                                prev,
-                                -1
-                              )
-                          )
-                        }
-                        className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                      >
-                        Prev
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Next month"
-                        onClick={() =>
-                          setHotelVisibleMonthDate(
-                            (prev) =>
-                              addMonths(
-                                prev,
-                                1
-                              )
-                          )
-                        }
-                        className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                      >
-                        Next
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                      {[0, 1].map(
-                        (monthOffset) => {
-                          const monthDate =
-                            addMonths(
-                              hotelVisibleMonthDate,
-                              monthOffset
-                            );
-                          const cells =
-                            buildMonthCells(
-                              monthDate
-                            );
-                          return (
-                            <div
-                              key={monthOffset}
-                            >
-                              <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                                {monthDate.toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month:
-                                      "long",
-                                    year: "numeric",
-                                  }
-                                )}
-                              </p>
-                              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
-                                {weekdays.map(
-                                  (
-                                    weekday
-                                  ) => (
-                                    <span
-                                      key={
-                                        weekday
-                                      }
-                                    >
-                                      {
-                                        weekday
-                                      }
-                                    </span>
-                                  )
-                                )}
-                              </div>
-                              <div className="grid grid-cols-7 gap-1">
-                                {cells.map(
-                                  (
-                                    cell
-                                  ) => {
-                                    const day =
-                                      cell.date;
-                                    const iso =
-                                      toIsoDate(
-                                        day
-                                      );
-                                    const isCheckIn =
-                                      iso ===
-                                      checkIn;
-                                    const isCheckOut =
-                                      iso ===
-                                      checkOut;
-                                    const isPastDate =
-                                      isBeforeToday(
-                                        day
-                                      );
-                                    const isDisabledDate =
-                                      isPastDate;
-                                    const isInRange =
-                                      !!(
-                                        checkInParsed &&
-                                        checkOutParsed &&
-                                        !isDisabledDate &&
-                                        day >
-                                          checkInParsed &&
-                                        day <
-                                          checkOutParsed
-                                      );
-                                    if (
-                                      !cell.isCurrentMonth
-                                    ) {
-                                      return (
-                                        <span
-                                          key={`placeholder-${iso}`}
-                                          aria-hidden="true"
-                                          className="h-8 w-8 justify-self-center"
-                                        />
-                                      );
-                                    }
-
-                                    return (
-                                      <button
-                                        key={
-                                          iso
-                                        }
-                                        type="button"
-                                        aria-label={`Select ${day.toLocaleDateString(
-                                          "en-US",
-                                          {
-                                            month:
-                                              "long",
-                                            day: "numeric",
-                                            year: "numeric",
-                                          }
-                                        )}`}
-                                        onClick={() =>
-                                          onSelectHotelDate(
-                                            day
-                                          )
-                                        }
-                                        disabled={
-                                          isDisabledDate
-                                        }
-                                        aria-disabled={
-                                          isDisabledDate
-                                        }
-                                        className={cn(
-                                          "focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed",
-                                          isDisabledDate
-                                            ? "text-slate-300 hover:bg-transparent"
-                                            : "text-slate-900 hover:bg-indigo-50",
-                                          isInRange &&
-                                            "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
-                                          (isCheckIn ||
-                                            isCheckOut) &&
-                                            "bg-indigo-700 text-white hover:bg-indigo-700"
-                                        )}
-                                      >
-                                        {day.getDate()}
-                                      </button>
-                                    );
-                                  }
-                                )}
-                              </div>
-                            </div>
-                          );
-                        }
-                      )}
-                    </div>
-                    <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
-                      <button
-                        type="button"
-                        onClick={() => {
+                    <div ref={hotelDatesPanelRef}>
+                      {renderDesktopCalendarPopover({
+                        mode: "hotels",
+                        visibleMonth: hotelVisibleMonthDate,
+                        setVisibleMonth: setHotelVisibleMonthDate,
+                        onClear: () => {
                           setCheckIn("");
                           setCheckOut("");
-                        }}
-                        className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-                      >
-                        {t.clear || "Clear"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setHotelDatesOpen(
-                            false
-                          )
-                        }
-                        className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
-                      >
-                        {t.done || "Done"}
-                      </button>
+                        },
+                        onDone: () => setHotelDatesOpen(false),
+                      })}
                     </div>
-                  </div>
                   </>
                 ) : null}
               </div>
@@ -3318,12 +3098,21 @@ export function SearchTabs({
                   />
                 </button>
                 {hotelGuestsRoomsOpen ? (
-                  <div className="absolute left-0 top-[calc(100%+8px)] z-30 hidden w-[min(92vw,340px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
-                    <div className="divide-y divide-slate-200/80">
+                  <div className="absolute left-0 top-[calc(100%+10px)] z-30 hidden w-[min(92vw,360px)] rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_22px_54px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.03] sm:block">
+                    <div className="mb-3">
+                      <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                        Stay details
+                      </p>
+                      <h3 className="mt-1 text-base font-extrabold tracking-tight text-slate-950">
+                        Guests and rooms
+                      </h3>
+                    </div>
+                    <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white">
                       {[
                         {
                           key: "adults",
                           label: "Adults",
+                          helper: "Guests 18+",
                           value: hotelAdultCount,
                           min: 1,
                           max: 12 - hotelChildCount,
@@ -3339,6 +3128,7 @@ export function SearchTabs({
                         {
                           key: "children",
                           label: "Children",
+                          helper: "Ages 0–17",
                           value: hotelChildCount,
                           min: 0,
                           max: 12 - hotelAdultCount,
@@ -3354,6 +3144,7 @@ export function SearchTabs({
                         {
                           key: "rooms",
                           label: "Rooms",
+                          helper: "Up to 6 rooms",
                           value: Number(rooms),
                           min: 1,
                           max: 6,
@@ -3383,42 +3174,47 @@ export function SearchTabs({
                         return (
                           <div
                             key={row.key}
-                            className="flex items-center justify-between gap-3 px-1 py-3"
+                            className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3 last:border-b-0"
                           >
-                            <span className="text-sm font-bold text-slate-950">
-                              {row.label}
+                            <span className="min-w-0">
+                              <span className="block text-sm font-extrabold tracking-tight text-slate-950">
+                                {row.label}
+                              </span>
+                              <span className="mt-0.5 block text-xs font-medium leading-5 text-slate-500">
+                                {row.helper}
+                              </span>
                             </span>
                             <div className="flex shrink-0 items-center gap-2">
                               <button
                                 type="button"
                                 onClick={row.onDecrement}
                                 disabled={!canDecrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
                               >
-                                <Minus className="h-4 w-4" />
+                                <Minus className="h-3.5 w-3.5" />
                               </button>
-                              <span className="min-w-7 text-center text-sm font-black tabular-nums text-slate-950">
+                              <span className="min-w-7 text-center text-sm font-extrabold tabular-nums text-slate-950">
                                 {row.value}
                               </span>
                               <button
                                 type="button"
                                 onClick={row.onIncrement}
                                 disabled={!canIncrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
                               >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-3.5 w-3.5" />
                               </button>
                             </div>
                           </div>
                         );
                       })}
-                      <div className="px-1 py-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-bold text-slate-950">
+                      <div className="px-4 py-3">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-sm font-extrabold tracking-tight text-slate-950">
                               Pet-friendly
                             </p>
-                            <p className="pr-2 text-xs leading-5 text-slate-600">
+                            <p className="mt-0.5 text-xs font-medium leading-5 text-slate-500">
                               Only show stays that allow pets
                             </p>
                           </div>
