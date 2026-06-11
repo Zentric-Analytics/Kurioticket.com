@@ -39,7 +39,6 @@ import {
 import { getGeneralFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
-import { getTranslations } from "@/lib/i18n";
 import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
@@ -125,7 +124,7 @@ function isNewsletterEmail(value: string) {
 }
 
 export default function Home() {
-  const { locale } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const { mode: regionCode, selectedOption } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
@@ -158,7 +157,6 @@ export default function Home() {
     });
   };
 
-  const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const translateDiscoveryItemCopy = (
     item: HomeDiscoveryCardItem,
