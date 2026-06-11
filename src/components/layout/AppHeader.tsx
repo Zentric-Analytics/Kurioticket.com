@@ -268,6 +268,17 @@ export function AppHeader({
   );
 
   const selectedLanguageDisplayName = selectedLanguage.nativeLabel;
+  const selectedLanguageDrawerName = selectedLanguageDisplayName
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .trim();
+
+  const selectedLanguageDrawerFlag = selectedLanguage?.countryCode
+    ? selectedLanguage.countryCode
+        .toUpperCase()
+        .replace(/./g, (character) =>
+          String.fromCodePoint(127397 + character.charCodeAt(0)),
+        )
+    : "🌐";
 
   const accountDisplayName = useMemo(() => {
     const rawName = session?.user?.name?.trim();
@@ -1099,7 +1110,7 @@ export function AppHeader({
                         Preferences
                       </p>
 
-                      <div className="mt-2 space-y-2 [&_button:first-child]:h-11 [&_button:first-child]:rounded-xl [&_button:first-child]:border-slate-100 [&_button:first-child]:bg-slate-50 [&_button:first-child]:px-3.5 [&_button:first-child]:shadow-none">
+                      <div className="mt-2 flex flex-wrap items-center gap-2 [&>button:first-child]:!inline-flex [&>button:first-child]:!h-10 [&>button:first-child]:!w-auto [&>button:first-child]:!rounded-full [&>button:first-child]:!border-slate-200 [&>button:first-child]:!bg-white [&>button:first-child]:!px-3 [&>button:first-child]:!text-sm [&>button:first-child]:!shadow-none [&>button:first-child:hover]:!border-violet-300 [&>button:first-child:hover]:!bg-violet-50 [&>button:first-child>span>span:first-child]:sr-only [&>button:first-child>span>span:last-child]:!mt-0 [&>button:first-child>span>span:last-child]:!text-sm">
                         <CountryCurrencySelector
                           variant="mobile"
                           onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
@@ -1122,15 +1133,14 @@ export function AppHeader({
                             "{{language}}",
                             selectedLanguageDisplayName,
                           )}
-                          className="inline-flex min-h-11 w-full cursor-pointer items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3.5 text-sm font-bold text-slate-900 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                          className="inline-flex h-10 w-auto max-w-full cursor-pointer items-center justify-between gap-2 rounded-full border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 transition-colors hover:border-violet-300 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                         >
-                          <span className="inline-flex min-w-0 items-center gap-3">
-                            {renderFlag(
-                              selectedLanguage?.countryCode,
-                              selectedLanguage?.fallbackText,
-                            )}
+                          <span className="inline-flex min-w-0 items-center gap-2">
+                            <span aria-hidden="true" className="text-base leading-none">
+                              {selectedLanguageDrawerFlag}
+                            </span>
                             <span className="truncate">
-                              {selectedLanguageDisplayName}
+                              {selectedLanguageDrawerName}
                             </span>
                           </span>
 
