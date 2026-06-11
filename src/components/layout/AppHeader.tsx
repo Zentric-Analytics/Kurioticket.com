@@ -419,7 +419,12 @@ export function AppHeader({
     [hideMobileSecondaryNavLinks, mobilePrimaryNavItems],
   );
 
-  const mobileDrawerHrefs = useMemo(
+  const mobileTravelDrawerHrefs = useMemo(
+    () => new Set(["/flights", "/hotels", "/cars", "/deals"]),
+    [],
+  );
+
+  const mobileExploreDrawerHrefs = useMemo(
     () =>
       new Set([
         "/destinations",
@@ -430,9 +435,13 @@ export function AppHeader({
     [isSignedIn],
   );
 
-  const mobileMenuNavItems = useMemo(() => {
-    return navItems.filter((item) => mobileDrawerHrefs.has(item.href));
-  }, [mobileDrawerHrefs, navItems]);
+  const mobileTravelMenuNavItems = useMemo(() => {
+    return navItems.filter((item) => mobileTravelDrawerHrefs.has(item.href));
+  }, [mobileTravelDrawerHrefs, navItems]);
+
+  const mobileExploreMenuNavItems = useMemo(() => {
+    return navItems.filter((item) => mobileExploreDrawerHrefs.has(item.href));
+  }, [mobileExploreDrawerHrefs, navItems]);
 
   const renderFlag = (
     countryCode: string | undefined,
@@ -1080,75 +1089,138 @@ export function AppHeader({
                     </button>
                   </div>
 
-                  <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
-                    <div className="space-y-2 border-b border-slate-100 pb-4 [&_button:first-child]:h-11 [&_button:first-child]:rounded-2xl [&_button:first-child]:border-slate-100 [&_button:first-child]:bg-slate-50 [&_button:first-child]:px-3.5 [&_button:first-child]:shadow-none">
-                      <CountryCurrencySelector
-                        variant="mobile"
-                        onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
-                      />
-
-                      <button
-                        ref={languageTriggerRef}
-                        type="button"
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          setMobileAccountOpen(false);
-                          setLanguageOpen(true);
-                        }}
-                        aria-haspopup="dialog"
-                        aria-expanded={languageOpen}
-                        aria-controls={
-                          languageOpen ? languageDialogId : undefined
-                        }
-                        aria-label={t.openLanguagePreferences.replace(
-                          "{{language}}",
-                          selectedLanguageDisplayName,
-                        )}
-                        className="inline-flex min-h-11 w-full cursor-pointer items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-3.5 text-sm font-bold text-slate-900 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                  <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                    <section aria-labelledby="mobile-menu-preferences-heading">
+                      <p
+                        id="mobile-menu-preferences-heading"
+                        className="px-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500"
                       >
-                        <span className="inline-flex min-w-0 items-center gap-3">
-                          {renderFlag(
-                            selectedLanguage?.countryCode,
-                            selectedLanguage?.fallbackText,
-                          )}
-                          <span className="truncate">
-                            {selectedLanguageDisplayName}
-                          </span>
-                        </span>
+                        Preferences
+                      </p>
 
-                        <ChevronDown
-                          size={14}
-                          className="shrink-0 text-slate-500"
-                          aria-hidden="true"
+                      <div className="mt-2 space-y-2 [&_button:first-child]:h-11 [&_button:first-child]:rounded-xl [&_button:first-child]:border-slate-100 [&_button:first-child]:bg-slate-50 [&_button:first-child]:px-3.5 [&_button:first-child]:shadow-none">
+                        <CountryCurrencySelector
+                          variant="mobile"
+                          onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
                         />
-                      </button>
-                    </div>
 
-                    <div className="grid gap-1 py-4">
-                      {mobileMenuNavItems.map((item) => {
-                        const Icon = item.icon;
+                        <button
+                          ref={languageTriggerRef}
+                          type="button"
+                          onClick={() => {
+                            setMobileMenuOpen(false);
+                            setMobileAccountOpen(false);
+                            setLanguageOpen(true);
+                          }}
+                          aria-haspopup="dialog"
+                          aria-expanded={languageOpen}
+                          aria-controls={
+                            languageOpen ? languageDialogId : undefined
+                          }
+                          aria-label={t.openLanguagePreferences.replace(
+                            "{{language}}",
+                            selectedLanguageDisplayName,
+                          )}
+                          className="inline-flex min-h-11 w-full cursor-pointer items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-3.5 text-sm font-bold text-slate-900 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                        >
+                          <span className="inline-flex min-w-0 items-center gap-3">
+                            {renderFlag(
+                              selectedLanguage?.countryCode,
+                              selectedLanguage?.fallbackText,
+                            )}
+                            <span className="truncate">
+                              {selectedLanguageDisplayName}
+                            </span>
+                          </span>
 
-                        return (
-                          <Link
-                            key={item.href}
-                            href={item.href}
-                            onClick={(event) =>
-                              handleRouteLinkClick(event, item.href, () =>
-                                setMobileMenuOpen(false),
-                              )
-                            }
-                            className="group inline-flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                          >
-                            {Icon ? (
-                              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-700">
-                                <Icon size={18} aria-hidden="true" />
-                              </span>
-                            ) : null}
-                            <span>{item.label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
+                          <ChevronDown
+                            size={14}
+                            className="shrink-0 text-slate-500"
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </div>
+                    </section>
+
+                    <section
+                      aria-labelledby="mobile-menu-travel-heading"
+                      className="mt-5 border-t border-slate-100 pt-4"
+                    >
+                      <p
+                        id="mobile-menu-travel-heading"
+                        className="px-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500"
+                      >
+                        Travel
+                      </p>
+
+                      <div className="mt-2 grid gap-1">
+                        {mobileTravelMenuNavItems.map((item) => {
+                          const Icon = item.icon;
+
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={(event) =>
+                                handleRouteLinkClick(event, item.href, () =>
+                                  setMobileMenuOpen(false),
+                                )
+                              }
+                              className="group inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-1.5 py-2 text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            >
+                              {Icon ? (
+                                <Icon
+                                  size={20}
+                                  className="shrink-0 text-slate-500 transition-colors group-hover:text-indigo-700"
+                                  aria-hidden="true"
+                                />
+                              ) : null}
+                              <span>{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </section>
+
+                    <section
+                      aria-labelledby="mobile-menu-explore-heading"
+                      className="mt-5 border-t border-slate-100 pt-4"
+                    >
+                      <p
+                        id="mobile-menu-explore-heading"
+                        className="px-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500"
+                      >
+                        Explore
+                      </p>
+
+                      <div className="mt-2 grid gap-1">
+                        {mobileExploreMenuNavItems.map((item) => {
+                          const Icon = item.icon;
+
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={(event) =>
+                                handleRouteLinkClick(event, item.href, () =>
+                                  setMobileMenuOpen(false),
+                                )
+                              }
+                              className="group inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-1.5 py-2 text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            >
+                              {Icon ? (
+                                <Icon
+                                  size={20}
+                                  className="shrink-0 text-slate-500 transition-colors group-hover:text-indigo-700"
+                                  aria-hidden="true"
+                                />
+                              ) : null}
+                              <span>{item.label}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </section>
                   </nav>
                 </aside>
               </div>,
