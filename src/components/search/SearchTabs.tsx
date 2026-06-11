@@ -388,7 +388,7 @@ export function SearchTabs({
       cn(
         "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
         (flightDatesOpen || hotelDatesOpen || travelersMenuOpen || fromOpen || toOpen || hotelGuestsRoomsOpen || hotelDestinationMobilePickerOpen) &&
-          "relative z-[300]",
+          "relative isolate z-[1000]",
         compactHero
           ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
           : "p-2"
@@ -454,7 +454,7 @@ export function SearchTabs({
     compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em] lg:text-slate-900 lg:placeholder:text-slate-500" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-indigo-500 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-indigo-500/25"
     : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
@@ -1988,7 +1988,7 @@ export function SearchTabs({
     sectionLabel: string;
     onSelect: (option: AirportOption) => void;
   }) => (
-    <div className="absolute left-0 top-[calc(100%+10px)] z-[360] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]">
+    <div className="absolute left-0 top-[calc(100%+10px)] z-[1100] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]">
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
           {sectionLabel}
@@ -2136,7 +2136,7 @@ export function SearchTabs({
       role="dialog"
       aria-label={t.chooseTravelDates || "Choose travel dates"}
       className={cn(
-        "absolute left-0 top-[calc(100%+12px)] z-[360] hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
+        "absolute left-0 top-[calc(100%+12px)] z-[1100] hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
         mode === "flights" && "lg:left-1/2 lg:w-[min(760px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:p-5"
       )}
     >
@@ -2537,7 +2537,7 @@ export function SearchTabs({
                 ref={fromWrapRef}
                 className={cn(
                   flightRouteFieldClassName("origin"),
-                  fromOpen && "lg:bg-indigo-50/45 lg:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.28)]"
+                  fromOpen && "z-[1050]"
                 )}
               >
                 <label className={flightFieldLabelClassName}>
@@ -2645,7 +2645,7 @@ export function SearchTabs({
                 ref={toWrapRef}
                 className={cn(
                   flightRouteFieldClassName("destination"),
-                  toOpen && "lg:bg-indigo-50/45 lg:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.28)]"
+                  toOpen && "z-[1050]"
                 )}
               >
                 <label className={flightFieldLabelClassName}>
@@ -2732,7 +2732,7 @@ export function SearchTabs({
 
               <div
                 ref={dateWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName, flightDatesOpen && "z-[320]")}
+                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName, flightDatesOpen && "z-[1050]")}
               >
                 <label className={flightFieldLabelClassName}>
                   {t.departureDate ||
@@ -2804,7 +2804,7 @@ export function SearchTabs({
 
               <div
                 ref={travelersWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName, travelersMenuOpen && "z-[320]")}
+                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName, travelersMenuOpen && "z-[1050]")}
               >
                 <label className={flightFieldLabelClassName}>
                   {t.travelers}
@@ -2861,7 +2861,7 @@ export function SearchTabs({
                     >
                       {renderTravelersCabinPicker()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+12px)] z-[360] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
+                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+12px)] z-[1100] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
                       <div>
                         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
                           Passengers
