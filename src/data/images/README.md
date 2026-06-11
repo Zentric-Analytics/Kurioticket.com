@@ -1,34 +1,48 @@
-# Kurioticket global image registry
+# Kurioticket global image system
 
-This directory is the Phase 1 foundation for production image governance across Kurioticket.
+This directory contains the registry and Phase 2 inventory used to govern production imagery across Kurioticket without changing rendered UI output.
 
 ## Files
 
-- `imageTypes.ts` defines the supported image products, usages, sources, statuses, and the `RegisteredImage` shape.
-- `imageRegistry.ts` is the starter registry for current representative production surfaces. It intentionally preserves current rendered output and does not migrate every hard-coded URL yet.
-- `imageRegistryValidation.ts` provides validation helpers used by the audit script and future tests.
+- `imageTypes.ts` defines products, usages, sources, statuses, content roles, production priorities, registry entries, and inventory entries.
+- `imageRegistry.ts` contains approved or known reusable production entries plus provider URL patterns.
+- `imageInventory.ts` classifies discovered hard-coded image URLs that are not migrated to registry imports yet.
+- `imagePurchasePlan.ts` derives Phase 3 premium purchase categories and the seed first-60 candidate list.
+- `imageRegistryValidation.ts` validates the approved registry. Inventory is intentionally allowed to document temporary and replace-before-launch debt.
 
-## Registry rules
+## How to classify images
 
-Every production image should eventually have one registry entry with:
+For every discovered URL, capture:
 
-- a stable `id`
-- the rendered or provider-pattern `url`
-- meaningful `alt` text
-- product and usage classification
-- source and approval status
-- source page, creator, license, and license notes where applicable
-- surfaces and intended slot documentation
-- desktop and mobile crop approval flags
-- launch-critical classification
+- `product`: the product area most responsible for the slot.
+- `usage`: the concrete UI usage, such as `flight-inspiration-card`, `hotel-result-fallback`, or `recent-search-card`.
+- `source`: provider, stock source, owned source, or temporary source.
+- `status`: current governance state.
+- `launchCritical`: whether the slot must be production-ready for global launch.
+- `pageSurfaces`: human-readable surfaces where the URL is used.
+- `intendedSlot`: the job the image performs in the UI.
+- `contentRole`: `provider-real`, `fallback-only`, `marketing`, `test-only`, `recent-search-derived`, or `replacement-needed`.
+- `productionPriority`: `p0-launch-critical`, `p1-public-important`, `p2-supporting`, or `p3-internal-or-test`.
+- `premiumReplacementRequired`: whether Phase 3 should source a paid/owned replacement before launch.
 
-Do not add duplicate exact URLs or duplicate source identities. If the same underlying image is used in multiple sizes or surfaces, prefer one registry entry with multiple `usage` values and document derivatives in `pageSurfaces`/`notes` until Phase 2 migrates call sites.
+## Registry vs. inventory
 
-## Status intent
+Use `imageRegistry.ts` for approved assets or stable provider patterns that can be reused safely. Use `imageInventory.ts` for hard-coded URLs that need classification before a safe UI migration. Adding inventory metadata must not swap image URLs, change layouts, or alter search/provider behavior.
 
-- `provider-real`: Property/provider media returned by a contracted provider, such as Hotelbeds GIATA images. These are not generic marketing stock.
-- `premium-approved`: Paid or licensed marketing imagery approved for launch-critical surfaces.
-- `free-approved`: Free-source imagery with documented source/license notes. Acceptable during Phase 1, but not the preferred long-term state for premium surfaces.
-- `temporary` / `replace-before-launch` / `blocked`: Governance states for assets that must not be launch-critical.
+## Premium replacement guidance
 
-Run `npm run audit:images` before PRs that add, remove, or move image URLs.
+Set `premiumReplacementRequired: true` for launch-critical or highly visible public marketing/fallback slots where free stock is not the desired launch standard. Homepage discovery, market homepage destinations, hotel fallback pools, destination index cards, deals cards, and flight result inspiration cards are current examples.
+
+Do not require premium replacement for provider-real assets, provider logo templates, or test-only fixtures. Recent-search-derived thumbnails are normally P2 unless they become paid-traffic or launch-critical surfaces.
+
+## Duplicate handling
+
+The audit reports both exact URL duplicates and source identity duplicates. Source identity ignores transformation/query parameters so the same Unsplash/Pexels photo can be recognized across different sizes. Inventory may document hard-coded duplicates, but Phase 3 purchasing should consolidate duplicate visual identities into one premium replacement family where possible.
+
+## Provider and fallback rules
+
+Provider-real images are supplied for a returned entity and must not be reused as generic marketing. Hotel fallback images are generic only; they must not imply that a hotel has the pictured pool, room, exterior, view, amenity, rating, price, or availability. If provider-real hotel imagery exists, use it before fallback imagery.
+
+## Audit workflow
+
+Run `npm run audit:images` before PRs that add, remove, or move image URLs. The audit summarizes discovered URLs, registered/inventoried URLs, remaining unregistered URLs, launch-critical temporary/replace-before-launch/blocked counts, premium replacement candidates, provider-real/fallback-only counts, duplicate summaries, top unregistered files, and suggested Phase 3 purchase categories.

@@ -10,6 +10,7 @@ const repoRoot = path.resolve(__dirname, "..");
 const jiti = createJiti(import.meta.url);
 
 const { imageRegistry } = jiti("../src/data/images/imageRegistry.ts");
+const { imageInventory } = jiti("../src/data/images/imageInventory.ts");
 const { getSourceIdentity, validateImageRegistry } = jiti("../src/data/images/imageRegistryValidation.ts");
 
 const commonImageHostPattern = /https:\/\/(?:images\.unsplash\.com|images\.pexels\.com|images\.kiwi\.com|photos\.hotelbeds\.com)\/[^\s"'`<>)]*/g;
@@ -40,23 +41,52 @@ const ignoredRelativePrefixes = [
 const validation = validateImageRegistry(imageRegistry);
 const discovered = discoverImageReferences(repoRoot);
 const discoveredUrls = [...new Set(discovered.map((entry) => entry.url))].sort();
-const registeredUrls = new Set(imageRegistry.map((image) => image.url));
-const registeredIdentities = new Set(imageRegistry.map((image) => safeIdentity(image.url)));
-const providerPrefixes = imageRegistry
+const classifiedImages = [...imageRegistry.map(normalizeRegistryClassification), ...imageInventory];
+const registeredUrls = new Set(classifiedImages.map((image) => image.url));
+const registeredIdentities = new Set(classifiedImages.map((image) => safeIdentity(image.url)));
+const providerPrefixes = classifiedImages
   .filter((image) => image.status === "provider-real" && image.url.endsWith("/"))
   .map((image) => image.url);
 const unregisteredUrls = discoveredUrls.filter((url) => !isRegistered(url));
 const duplicateDiscoveredUrls = duplicateGroups(discovered, (entry) => entry.url);
 const duplicateDiscoveredIdentities = duplicateGroups(discovered, (entry) => safeIdentity(entry.url));
 const unregisteredFiles = filesForUrls(discovered, unregisteredUrls);
-const launchCriticalBlocked = imageRegistry.filter(
+const launchCriticalBlocked = classifiedImages.filter(
   (image) => image.launchCritical && ["temporary", "replace-before-launch", "blocked"].includes(image.status),
 );
+const premiumReplacementCandidates = classifiedImages.filter((image) => image.premiumReplacementRequired);
+const providerRealImages = classifiedImages.filter(
+  (image) => image.contentRole === "provider-real" || image.status === "provider-real",
+);
+const fallbackOnlyImages = classifiedImages.filter((image) => image.contentRole === "fallback-only");
+const phase3PurchaseCategories = summarizePhase3PurchaseCategories(premiumReplacementCandidates);
+const launchCriticalStatusCounts = countByStatus(launchCriticalBlocked);
 
 printReport();
 
 if (!validation.valid) {
   process.exitCode = 1;
+}
+
+function normalizeRegistryClassification(image) {
+  const usages = Array.isArray(image.usage) ? image.usage : [image.usage];
+  const contentRole =
+    image.contentRole ??
+    (image.status === "provider-real"
+      ? "provider-real"
+      : usages.includes("hotel-result-fallback")
+        ? "fallback-only"
+        : "marketing");
+
+  return {
+    ...image,
+    contentRole,
+    productionPriority:
+      image.productionPriority ?? (image.launchCritical ? "p0-launch-critical" : "p1-public-important"),
+    premiumReplacementRequired:
+      image.premiumReplacementRequired ??
+      (image.status === "free-approved" && ["marketing", "fallback-only"].includes(contentRole)),
+  };
 }
 
 function discoverImageReferences(root) {
@@ -153,6 +183,33 @@ function filesForUrls(entries, urls) {
   return [...files.entries()].sort(([left], [right]) => left.localeCompare(right));
 }
 
+function countByStatus(images) {
+  return images.reduce((counts, image) => {
+    counts[image.status] = (counts[image.status] ?? 0) + 1;
+    return counts;
+  }, {});
+}
+
+function topFilesByUnregisteredCount(files) {
+  return [...files].sort(([, leftUrls], [, rightUrls]) => rightUrls.length - leftUrls.length);
+}
+
+function summarizePhase3PurchaseCategories(images) {
+  const groups = new Map();
+
+  for (const image of images) {
+    const label = `${image.productionPriority ?? "unprioritized"} / ${image.product} / ${Array.isArray(image.usage) ? image.usage.join("+") : image.usage}`;
+    const group = groups.get(label) ?? { label, count: 0, surfaces: new Set() };
+    group.count += 1;
+    for (const surface of image.pageSurfaces ?? []) group.surfaces.add(surface);
+    groups.set(label, group);
+  }
+
+  return [...groups.values()]
+    .map((group) => ({ ...group, surfaces: [...group.surfaces].sort() }))
+    .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
+}
+
 function toRepoRelative(filePath) {
   return path.relative(repoRoot, filePath).split(path.sep).join("/");
 }
@@ -162,19 +219,28 @@ function printReport() {
   console.log("========================");
   console.log(`Total discovered image URLs: ${discoveredUrls.length}`);
   console.log(`Total registered images: ${imageRegistry.length}`);
+  console.log(`Total inventoried images: ${imageInventory.length}`);
+  console.log(`Total registered/inventoried URLs: ${registeredUrls.size}`);
   console.log(`Unregistered URLs: ${unregisteredUrls.length}`);
   console.log(`Duplicate discovered exact URLs: ${duplicateDiscoveredUrls.length}`);
   console.log(`Duplicate discovered source identities: ${duplicateDiscoveredIdentities.length}`);
   console.log(`Registry validation errors: ${validation.errors.length}`);
   console.log(`Registry validation warnings: ${validation.warnings.length}`);
-  console.log(`Temporary / replace-before-launch / blocked launch-critical images: ${launchCriticalBlocked.length}`);
+  console.log(`Launch-critical temporary / replace-before-launch / blocked images: ${launchCriticalBlocked.length}`);
+  console.log(`Launch-critical temporary images: ${launchCriticalStatusCounts.temporary ?? 0}`);
+  console.log(`Launch-critical replace-before-launch images: ${launchCriticalStatusCounts["replace-before-launch"] ?? 0}`);
+  console.log(`Launch-critical blocked images: ${launchCriticalStatusCounts.blocked ?? 0}`);
+  console.log(`Premium replacement candidates: ${premiumReplacementCandidates.length}`);
+  console.log(`Provider-real classified images: ${providerRealImages.length}`);
+  console.log(`Fallback-only classified images: ${fallbackOnlyImages.length}`);
 
   printIssues("\nRegistry validation errors", validation.errors, (issue) => formatIssue(issue));
   printIssues("\nRegistry validation warnings", validation.warnings, (issue) => formatIssue(issue));
   printIssues("\nUnregistered URLs", unregisteredUrls, (url) => `- ${url}`);
   printIssues("\nDuplicate discovered exact URLs", duplicateDiscoveredUrls, ([url, entries]) => `- ${url} (${entries.length} references)`);
   printIssues("\nDuplicate discovered source identities", duplicateDiscoveredIdentities, ([identity, entries]) => `- ${identity} (${entries.length} references)`);
-  printIssues("\nFiles with unregistered images", unregisteredFiles, ([filePath, urls]) => `- ${filePath}: ${urls.length} unregistered URL(s)`);
+  printIssues("\nTop files by unregistered images", topFilesByUnregisteredCount(unregisteredFiles), ([filePath, urls]) => `- ${filePath}: ${urls.length} unregistered URL(s)`);
+  printIssues("\nSuggested Phase 3 purchase categories", phase3PurchaseCategories, (category) => `- ${category.label}: ${category.count} candidate(s) across ${category.surfaces.join(", ")}`);
 
   console.log("\nTODO for Phase 2");
   console.log("- Migrate hard-coded image constants to consume registered image ids where safe.");
