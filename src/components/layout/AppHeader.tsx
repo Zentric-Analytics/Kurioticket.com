@@ -537,12 +537,15 @@ export function AppHeader({
               onClick={(event) => handleRouteLinkClick(event, "/")}
               className="shrink-0"
             >
+              <span className="block text-[22px] font-black leading-none tracking-[-0.04em] text-white md:hidden">
+                Kurioticket
+              </span>
               <KurioticketLogo
                 variant="full"
                 tone="light"
-                className="gap-2"
-                markClassName="h-10 w-10 md:h-11 md:w-11"
-                textClassName="text-[13px] md:text-xl"
+                className="hidden gap-2 md:inline-flex"
+                markClassName="md:h-11 md:w-11"
+                textClassName="md:text-xl"
               />
             </Link>
 
@@ -696,7 +699,7 @@ export function AppHeader({
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 md:hidden">
+            <div className="flex items-center gap-3 md:hidden">
               {isSignedIn ? (
                 <button
                   type="button"
@@ -704,7 +707,7 @@ export function AppHeader({
                   aria-expanded={open}
                   aria-haspopup="menu"
                   onClick={() => setOpen((value) => !value)}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-xs font-black text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-black text-white/95 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 >
                   <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
                     {session?.user?.image ? (
@@ -725,7 +728,7 @@ export function AppHeader({
                   onClick={(event) =>
                     handleRouteLinkClick(event, "/auth/signin")
                   }
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/95 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 >
                   <UserCircle size={18} />
                 </Link>
@@ -736,7 +739,7 @@ export function AppHeader({
                 aria-label={open ? t.closeMobileMenu : t.openMobileMenu}
                 aria-expanded={open}
                 aria-controls={open ? "mobile-menu-drawer" : undefined}
-                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/95 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 onClick={() => setOpen((value) => !value)}
               >
                 {open ? <X size={18} /> : <Menu size={18} />}
@@ -944,9 +947,9 @@ export function AppHeader({
             </div>
           </nav>
 
-          <nav className="md:hidden">
-            <div className="pb-1 pt-0.5">
-              <div className="grid w-full grid-cols-4 items-center gap-1">
+          <nav className="md:hidden" aria-label="Primary">
+            <div className="pb-2 pt-1">
+              <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {visibleMobilePrimaryNavItems.map((item) => {
                   const Icon = item.icon;
                   const active = isNavItemActive(item.href);
@@ -958,15 +961,15 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, item.href)
                       }
-                      className={`inline-flex min-w-0 items-center justify-center gap-1 rounded-md px-1 py-1.5 text-[14px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                      className={`inline-flex min-h-10 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-3.5 py-2 text-[15px] font-black leading-none tracking-[-0.01em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                         active
-                          ? "bg-white/10 text-white ring-1 ring-white/30 shadow-none"
-                          : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
+                          ? "border-white bg-white text-indigo-700 shadow-[0_8px_18px_rgba(49,46,129,0.22)]"
+                          : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/25 hover:bg-white/10 hover:text-white"
                       }`}
                     >
                       {Icon ? (
                         <Icon
-                          size={16}
+                          size={18}
                           className="shrink-0"
                           aria-hidden="true"
                         />
