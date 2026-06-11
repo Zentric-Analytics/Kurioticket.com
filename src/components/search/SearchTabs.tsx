@@ -419,10 +419,13 @@ export function SearchTabs({
   );
   const hotelJoinedFieldClassName = cn(
     joinedFieldClassName,
-    compactHero ? "min-h-[54px] px-3.5 py-1.5" : "min-h-[58px] px-3.5 py-2"
+    compactHero ? "min-h-[58px] px-4 py-2" : "min-h-[58px] px-3.5 py-2"
   );
   const hotelFieldLabelClassName = "mb-1 block text-[11px] font-extrabold uppercase leading-4 tracking-[0.16em] text-slate-500";
-  const hotelFieldValueClassName = "focus-ring flex min-h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400 sm:text-[15px]";
+  const hotelFieldValueClassName = cn(
+    "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left font-semibold leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
+    compactHero ? "min-h-9 text-[17px] sm:text-[16px]" : "min-h-8 text-[16px] sm:text-[15px]"
+  );
   const flightRouteGroupClassName = compactHero
     ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
     : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", flightJoinedFieldClassName);
@@ -440,6 +443,14 @@ export function SearchTabs({
   const submitButtonClassName = cn(
     "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
     compactHero ? "h-12 lg:min-h-[54px]" : "h-12 lg:min-h-[58px]"
+  );
+  const hotelSubmitWrapClassName = cn(
+    "sm:col-span-2 lg:col-span-1 lg:self-stretch",
+    compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
+  );
+  const hotelSubmitButtonClassName = cn(
+    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+    compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
 
   const fromQuery = from.trim();
@@ -3285,7 +3296,7 @@ export function SearchTabs({
                 </button>
                 {hotelGuestsRoomsOpen ? (
                   <div className="absolute left-0 top-[calc(100%+8px)] z-30 hidden w-[min(92vw,340px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
-                    <div className="space-y-3">
+                    <div className="divide-y divide-slate-200/80">
                       {[
                         {
                           key: "adults",
@@ -3349,7 +3360,7 @@ export function SearchTabs({
                         return (
                           <div
                             key={row.key}
-                            className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5"
+                            className="flex items-center justify-between gap-3 px-1 py-3"
                           >
                             <span className="text-sm font-bold text-slate-950">
                               {row.label}
@@ -3359,7 +3370,7 @@ export function SearchTabs({
                                 type="button"
                                 onClick={row.onDecrement}
                                 disabled={!canDecrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                               >
                                 <Minus className="h-4 w-4" />
                               </button>
@@ -3370,7 +3381,7 @@ export function SearchTabs({
                                 type="button"
                                 onClick={row.onIncrement}
                                 disabled={!canIncrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                               >
                                 <Plus className="h-4 w-4" />
                               </button>
@@ -3378,7 +3389,7 @@ export function SearchTabs({
                           </div>
                         );
                       })}
-                      <div className="rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
+                      <div className="px-1 py-3">
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-bold text-slate-950">
@@ -3418,7 +3429,7 @@ export function SearchTabs({
                   </div>
                 ) : null}
               </div>
-              <div className={submitWrapClassName}>
+              <div className={hotelSubmitWrapClassName}>
                 <Button
                   type="submit"
                   disabled={
@@ -3426,7 +3437,7 @@ export function SearchTabs({
                   }
                   aria-busy={isHotelSubmitting}
                   aria-label={t.searchHotels || "Search hotels"}
-                  className={submitButtonClassName}
+                  className={hotelSubmitButtonClassName}
                 >
                   {isHotelSubmitting
                     ? t.searchingHotels || "Searching hotels..."
@@ -3497,7 +3508,7 @@ export function SearchTabs({
               </div>
             }
           >
-            <div className="mx-auto w-full max-w-xl space-y-3">
+            <div className="mx-auto w-full max-w-xl divide-y divide-slate-200/80">
               {[
                 {
                   key: "adults",
@@ -3535,7 +3546,7 @@ export function SearchTabs({
                 return (
                   <div
                     key={row.key}
-                    className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm"
+                    className="flex items-center justify-between gap-4 px-1 py-4"
                   >
                     <span className="text-[15px] font-bold text-slate-950">{row.label}</span>
                     <div className="flex shrink-0 items-center gap-3">
@@ -3543,7 +3554,7 @@ export function SearchTabs({
                         type="button"
                         onClick={row.onDecrement}
                         disabled={!canDecrement}
-                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                       >
                         <Minus className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -3554,7 +3565,7 @@ export function SearchTabs({
                         type="button"
                         onClick={row.onIncrement}
                         disabled={!canIncrement}
-                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                        className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                       >
                         <Plus className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -3562,7 +3573,7 @@ export function SearchTabs({
                   </div>
                 );
               })}
-              <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-sm">
+              <div className="flex items-center justify-between gap-4 px-1 py-4">
                 <div>
                   <p className="text-[15px] font-bold text-slate-950">Pet-friendly</p>
                   <p className="text-sm leading-5 text-slate-600">
