@@ -995,7 +995,7 @@ export function AppHeader({
           </nav>
 
           <nav className="md:hidden" aria-label="Primary">
-            <div className="pb-2 pt-1">
+            <div className="pb-1 pt-2.5">
               <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {visibleMobilePrimaryNavItems.map((item) => {
                   const Icon = item.icon;
