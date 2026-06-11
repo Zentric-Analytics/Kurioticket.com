@@ -558,6 +558,21 @@ function FlightBookingFaqSection() {
 export function FlightResultsClient() {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const airportPickerLabels = useMemo(
+    () => ({
+      clear: dictionary.clear ?? enTranslations.clear ?? "",
+      done: dictionary.done ?? enTranslations.done ?? "",
+      chooseOrigin: dictionary.chooseOrigin ?? enTranslations.chooseOrigin ?? "",
+      clearOrigin: dictionary.clearOrigin ?? enTranslations.clearOrigin ?? "",
+      clearDestination: dictionary.clearDestination ?? enTranslations.clearDestination ?? "",
+      searchAirportsAndCities: dictionary.searchAirportsAndCities ?? enTranslations.searchAirportsAndCities ?? "",
+      searchAirportsOrCities: dictionary.searchAirportsOrCities ?? enTranslations.searchAirportsOrCities ?? "",
+      startTypingCityOrAirport: dictionary.startTypingCityOrAirport ?? enTranslations.startTypingCityOrAirport ?? "",
+      searchingAirportsAndCities: dictionary.searchingAirportsAndCities ?? enTranslations.searchingAirportsAndCities ?? "",
+      noMatchingAirportsOrCities: dictionary.noMatchingAirportsOrCities ?? enTranslations.noMatchingAirportsOrCities ?? "",
+    }),
+    [dictionary],
+  );
   const params = useSearchParams();
   const router = useRouter();
   const { selectedOption } = useRegion();
@@ -3896,12 +3911,13 @@ export function FlightResultsClient() {
         <>
           <MobileAirportPicker
             open={activeMobileAirportPicker === "origin"}
-            title="Choose origin"
+            title={t("chooseOrigin")}
             inputId="results-mobile-origin-picker-search"
             value={originInput}
             suggestions={originSuggestions}
             isLoading={originSuggestionsLoading}
             launcherRef={mobileOriginLauncherRef}
+            labels={airportPickerLabels}
             onChange={(nextValue) => {
               setOriginInput(nextValue);
               setOriginCode("");
@@ -3925,12 +3941,13 @@ export function FlightResultsClient() {
           />
           <MobileAirportPicker
             open={activeMobileAirportPicker === "destination"}
-            title="Choose destination"
+            title={t("chooseDestination")}
             inputId="results-mobile-destination-picker-search"
             value={destinationInput}
             suggestions={destinationSuggestions}
             isLoading={destinationSuggestionsLoading}
             launcherRef={mobileDestinationLauncherRef}
+            labels={airportPickerLabels}
             onChange={(nextValue) => {
               setDestinationInput(nextValue);
               setDestinationCode("");

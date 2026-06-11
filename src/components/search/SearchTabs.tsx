@@ -43,6 +43,7 @@ import {
   type AirportOption,
 } from "@/data/airports";
 import { getHomeDiscoveryByRegion, homeDiscoveryByRegion } from "@/data/homeDiscovery";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   applyDefaultOrigin,
   canApplyDefaultOrigin,
@@ -183,6 +184,10 @@ export function SearchTabs({
           ) as Record<string, string>
         : translations,
     [translations]
+  );
+  const translate = useCallback(
+    (key: string) => t[key] || enTranslations[key] || "",
+    [t]
   );
 
   const router = useRouter();
@@ -1895,7 +1900,7 @@ export function SearchTabs({
         <div className="mx-auto w-full max-w-xl space-y-5">
           <div className="space-y-2">
             <label className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500" htmlFor={inputId}>
-              Search airports and cities
+              {translate("searchAirportsAndCities")}
             </label>
             <div className="relative">
               <input
@@ -1904,7 +1909,7 @@ export function SearchTabs({
                 type="text"
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
-                placeholder="City, airport, or code"
+                placeholder={translate("cityAirportOrCode")}
                 autoComplete="off"
                 className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
               />
@@ -1927,11 +1932,11 @@ export function SearchTabs({
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
             {query.length < 2 ? (
               <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                Start typing a city, airport, or IATA code to see suggestions.
+                {translate("startTypingCityAirportOrCode")}
               </p>
             ) : isLoading ? (
               <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                Searching airports and cities…
+                {translate("searchingAirportsAndCities")}
               </p>
             ) : suggestions.length ? (
               suggestions.map((option) => (
@@ -1959,7 +1964,7 @@ export function SearchTabs({
               ))
             ) : (
               <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-                No matching airports or cities.
+                {translate("noMatchingAirportsOrCities")}
               </p>
             )}
           </div>
@@ -1993,7 +1998,7 @@ export function SearchTabs({
         {isLoading ? (
           <div className="flex items-center gap-3 px-4 py-4 text-sm font-medium text-slate-500">
             <span className="h-2 w-2 rounded-full bg-indigo-500 shadow-[0_0_0_4px_rgba(99,102,241,0.12)]" aria-hidden="true" />
-            {t.searchingAirportsAndCities || "Searching airports and cities…"}
+            {translate("searchingAirportsAndCities")}
           </div>
         ) : suggestions.length ? suggestions.map((option, index) => (
           <button
@@ -2026,7 +2031,7 @@ export function SearchTabs({
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400" aria-hidden="true">
               <MapPin className="h-4 w-4" />
             </span>
-            {t.noMatchingAirportsOrCities || "No matching airports or cities"}
+            {translate("noMatchingAirportsOrCities")}
           </div>
         )}
       </div>
@@ -2598,7 +2603,7 @@ export function SearchTabs({
                   suggestions: fromSuggestions,
                   highlight: fromHighlight,
                   isLoading: isFromLoadingVisible,
-                  sectionLabel: fromState.source === "maxmind-default" ? "Near you" : "Airports and cities",
+                  sectionLabel: fromState.source === "maxmind-default" ? translate("nearYou") : translate("airportsAndCities"),
                   onSelect: (option) => {
                     setFromState((current) => markOriginManualInput(
                       current,
@@ -2699,7 +2704,7 @@ export function SearchTabs({
                   suggestions: toSuggestions,
                   highlight: toHighlight,
                   isLoading: isToLoadingVisible,
-                  sectionLabel: "Airports and cities",
+                  sectionLabel: translate("airportsAndCities"),
                   onSelect: (option) => {
                     setTo(formatAirportLabel(option));
                     setToCode(option.code);
