@@ -37,7 +37,6 @@ import {
   buildPickupHref,
   defaultDriverAge,
   driverAgeOptions,
-  formatDisplayDate,
   getDriverAgeOptionLabel,
   getInitialValues,
   isBeforeToday,
@@ -45,7 +44,6 @@ import {
   timeOptions,
   toIsoDate,
   validateCarsForm,
-  weekdays,
   type CarsFormErrors,
   type CarsFormValues,
 } from "@/lib/cars/carsSearchUtils";
@@ -56,6 +54,46 @@ import {
   type CarImageCard,
   type CarPickupCard,
 } from "@/data/carsLandingContent";
+
+const formatCarDisplayDate = (isoDate: string, locale: string) => {
+  if (!isoDate) {
+    return "";
+  }
+
+  const [year, month, day] = isoDate.split("-").map(Number);
+
+  if (!year || !month || !day) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+  }).format(new Date(year, month - 1, day));
+};
+
+const formatCarWeekdays = (locale: string) =>
+  Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+      new Date(2024, 0, 7 + day),
+    ),
+  );
+
+const formatCarFullDate = (date: Date, locale: string) =>
+  new Intl.DateTimeFormat(locale, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+
+const formatTimeRangeSummary = (
+  template: string,
+  pickupTime: string,
+  returnTime: string,
+) =>
+  template
+    .replace("{pickupTime}", pickupTime)
+    .replace("{returnTime}", returnTime);
 
 const trustCards = [
   {
@@ -89,25 +127,35 @@ export default function CarsPage() {
 function CarsSearchPage() {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const translateCarImageCard = (card: CarImageCard | CarPickupCard): CarImageCard => {
-    const key = "vehicleType" in card && card.vehicleType ? `carsTripStyle.${card.vehicleType}` : `carsPickup.${card.pickupLocation}`;
+  const translateCarImageCard = (
+    card: CarImageCard | CarPickupCard,
+  ): CarImageCard => {
+    const key =
+      "vehicleType" in card && card.vehicleType
+        ? `carsTripStyle.${card.vehicleType}`
+        : `carsPickup.${card.pickupLocation}`;
 
     return {
       ...card,
-      title: dictionary[`${key}.title`] ?? enTranslations[`${key}.title`] ?? card.title,
+      title:
+        dictionary[`${key}.title`] ??
+        enTranslations[`${key}.title`] ??
+        card.title,
       subtitle:
         dictionary[`${key}.subtitle`] ??
         enTranslations[`${key}.subtitle`] ??
         card.subtitle,
+      imageAlt:
+        dictionary[`${key}.imageAlt`] ??
+        enTranslations[`${key}.imageAlt`] ??
+        card.imageAlt,
       cta: card.cta
-        ? dictionary[`${key}.cta`] ?? enTranslations[`${key}.cta`] ?? card.cta
+        ? (dictionary[`${key}.cta`] ?? enTranslations[`${key}.cta`] ?? card.cta)
         : card.cta,
       ariaLabel:
         dictionary[`${key}.ariaLabel`] ??
         enTranslations[`${key}.ariaLabel`] ??
-        ("ariaLabel" in card
-          ? card.ariaLabel
-          : `Open car results for ${card.pickupLocation} pickup`),
+        ("ariaLabel" in card ? card.ariaLabel : card.title),
     };
   };
   const router = useRouter();
@@ -338,6 +386,9 @@ function CarsSearchPage() {
 }
 
 function CarsFaqSection() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
   return (
     <section className="space-y-4 px-1" aria-labelledby="cars-faq-heading">
       <div className="max-w-2xl">
@@ -345,30 +396,39 @@ function CarsFaqSection() {
           id="cars-faq-heading"
           className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
         >
-          Cars Frequently asked questions
+          {t("carsFaq.heading")}
         </h2>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-        {carsFaqItems.map((item) => (
-          <details
-            key={item.question}
-            className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-4 py-4 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-indigo-200/80 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(79,70,229,0.36)] sm:px-5"
-          >
-            <summary className="flex min-h-12 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
-              <span>{item.question}</span>
-              <span
-                className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-indigo-200 group-open:text-indigo-600"
-                aria-hidden="true"
-              >
-                +
-              </span>
-            </summary>
-            <p className="mt-2.5 text-sm leading-6 text-slate-600">
-              {item.answer}
-            </p>
-          </details>
-        ))}
+        {carsFaqItems.map((item) => {
+          const translatedQuestion =
+            dictionary[item.questionKey] ??
+            enTranslations[item.questionKey] ??
+            "";
+          const translatedAnswer =
+            dictionary[item.answerKey] ?? enTranslations[item.answerKey] ?? "";
+
+          return (
+            <details
+              key={item.id}
+              className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-4 py-4 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-indigo-200/80 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(79,70,229,0.36)] sm:px-5"
+            >
+              <summary className="flex min-h-12 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
+                <span>{translatedQuestion}</span>
+                <span
+                  className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-indigo-200 group-open:text-indigo-600"
+                  aria-hidden="true"
+                >
+                  +
+                </span>
+              </summary>
+              <p className="mt-2.5 text-sm leading-6 text-slate-600">
+                {translatedAnswer}
+              </p>
+            </details>
+          );
+        })}
       </div>
     </section>
   );
@@ -507,7 +567,7 @@ function CarsSearchBar({
         <div className="overflow-visible border border-slate-200 bg-white p-0.5 shadow-[0_10px_28px_rgba(15,23,42,0.08)] sm:p-1">
           <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(5.8rem,0.55fr)_104px] lg:gap-0">
             <SearchCell
-              label="Pickup location"
+              label={t("carsSearch.pickupLocationLabel")}
               error={errors.pickupLocation || errors.dropoffLocation}
               className="lg:border-r lg:border-r-slate-200/80"
             >
@@ -522,7 +582,7 @@ function CarsSearchBar({
                     onChange={(event) =>
                       updateValue("pickupLocation", event.target.value)
                     }
-                    placeholder="Airport, city, or address"
+                    placeholder={t("carsSearch.pickupLocationPlaceholder")}
                     className="h-7 w-full border-none bg-transparent py-0 pl-0 pr-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8"
                     autoComplete="off"
                   />
@@ -530,7 +590,7 @@ function CarsSearchBar({
                   {values.pickupLocation ? (
                     <button
                       type="button"
-                      aria-label="Clear pickup location"
+                      aria-label={t("carsSearch.clearPickupLocation")}
                       onClick={() => {
                         updateValue("pickupLocation", "");
                         pickupLocationRef.current?.focus();
@@ -553,7 +613,7 @@ function CarsSearchBar({
                       onChange={(event) =>
                         updateValue("dropoffLocation", event.target.value)
                       }
-                      placeholder="Return city, airport, or address"
+                      placeholder={t("carsSearch.returnLocationPlaceholder")}
                       className="h-7 w-full border-t border-slate-100 bg-transparent py-0 pl-0 pr-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8 lg:pt-2"
                       autoComplete="off"
                     />
@@ -561,7 +621,7 @@ function CarsSearchBar({
                     {values.dropoffLocation ? (
                       <button
                         type="button"
-                        aria-label="Clear return location"
+                        aria-label={t("carsSearch.clearReturnLocation")}
                         onClick={() => {
                           updateValue("dropoffLocation", "");
                           dropoffLocationRef.current?.focus();
@@ -574,14 +634,14 @@ function CarsSearchBar({
                   </div>
                 ) : (
                   <p className="truncate border-t border-slate-100 pt-1.5 text-sm font-semibold text-slate-500 lg:pt-2">
-                    Return to same location
+                    {t("carsSearch.returnToSameLocation")}
                   </p>
                 )}
               </div>
             </SearchCell>
 
             <SearchCell
-              label="Rental dates"
+              label={t("carsSearch.rentalDatesLabel")}
               error={dateError}
               className="relative lg:border-r lg:border-r-slate-200/80"
             >
@@ -605,7 +665,7 @@ function CarsSearchBar({
             </SearchCell>
 
             <SearchCell
-              label="Pickup / return time"
+              label={t("carsSearch.pickupReturnTimeLabel")}
               error={timeError}
               className="relative lg:border-r lg:border-r-slate-200/80"
             >
@@ -619,7 +679,10 @@ function CarsSearchBar({
               />
             </SearchCell>
 
-            <SearchCell label="Driver age" error={errors.driverAge}>
+            <SearchCell
+              label={t("carsSearch.driverAgeLabel")}
+              error={errors.driverAge}
+            >
               <select
                 id="driverAge"
                 name="driverAge"
@@ -631,7 +694,9 @@ function CarsSearchBar({
               >
                 {driverAgeOptions.map((age) => (
                   <option key={age} value={age}>
-                    {getDriverAgeOptionLabel(age)}
+                    {age === defaultDriverAge
+                      ? t("carsSearch.driverAgeAnyAge")
+                      : getDriverAgeOptionLabel(age)}
                   </option>
                 ))}
               </select>
@@ -661,7 +726,7 @@ function CarsSearchBar({
               }
               className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
             />
-            Different return location
+            {t("carsSearch.differentReturnLocation")}
           </label>
 
           {hasActiveSearch ? (
@@ -671,7 +736,7 @@ function CarsSearchBar({
               className="focus-ring inline-flex items-center gap-1.5 px-2 py-1 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Clear all
+              {t("clearAll")}
             </button>
           ) : null}
         </div>
@@ -681,6 +746,9 @@ function CarsSearchBar({
 }
 
 function CarsPageShell() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
   return (
     <>
       <AppHeader />
@@ -691,7 +759,7 @@ function CarsPageShell() {
               className="h-5 w-5 animate-pulse text-indigo-600"
               aria-hidden="true"
             />
-            Preparing car search...
+            {t("carsSearchPreparing")}
           </div>
         </section>
       </main>
@@ -743,12 +811,12 @@ function CarImageCardLink({ card }: { card: CarImageCard }) {
   );
 }
 
-function CarPickupCardLink({ card }: { card: CarPickupCard }) {
+function CarPickupCardLink({ card }: { card: CarImageCard }) {
   return (
     <CarImageCardLink
       card={{
         ...card,
-        ariaLabel: `Open car results for ${card.pickupLocation} pickup`,
+        ariaLabel: card.ariaLabel,
       }}
     />
   );
@@ -779,15 +847,18 @@ function RentalDatesField({
   visibleMonthDate: Date;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const pickupDisplay = formatDisplayDate(pickupDate);
-  const dropoffDisplay = formatDisplayDate(dropoffDate);
+  const { locale, t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const weekdays = useMemo(() => formatCarWeekdays(locale), [locale]);
+  const pickupDisplay = formatCarDisplayDate(pickupDate, locale);
+  const dropoffDisplay = formatCarDisplayDate(dropoffDate, locale);
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
   const dateSummary = pickupDisplay
     ? dropoffDisplay
       ? `${pickupDisplay} — ${dropoffDisplay}`
       : pickupDisplay
-    : "Pickup date — Return date";
+    : t("carsSearch.rentalDatePlaceholder");
 
   return (
     <div ref={wrapRef}>
@@ -796,7 +867,7 @@ function RentalDatesField({
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        aria-label="Choose rental pickup and return dates"
+        aria-label={t("carsSearch.chooseRentalDatesAria")}
         className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
       >
         <Calendar
@@ -813,28 +884,28 @@ function RentalDatesField({
       {isOpen ? (
         <div
           role="dialog"
-          aria-label="Rental date picker"
+          aria-label={t("carsSearch.rentalDatePickerAria")}
           className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4"
         >
           <p className="mb-3 text-base font-semibold text-slate-900">
-            Choose rental dates
+            {t("carsSearch.chooseRentalDates")}
           </p>
           <div className="mb-3 flex items-center justify-between">
             <button
               type="button"
-              aria-label="Previous month"
+              aria-label={t("carsSearch.previousMonth")}
               onClick={onPreviousMonth}
               className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Prev
+              {t("carsSearch.previousMonthShort")}
             </button>
             <button
               type="button"
-              aria-label="Next month"
+              aria-label={t("carsSearch.nextMonth")}
               onClick={onNextMonth}
               className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Next
+              {t("carsSearch.nextMonthShort")}
             </button>
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
@@ -845,7 +916,7 @@ function RentalDatesField({
               return (
                 <div key={monthOffset}>
                   <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                    {monthDate.toLocaleDateString("en-US", {
+                    {monthDate.toLocaleDateString(locale, {
                       month: "long",
                       year: "numeric",
                     })}
@@ -887,14 +958,11 @@ function RentalDatesField({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`Select ${day.toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            },
-                          )}${isBeforePickup ? "; starts a new pickup date" : ""}`}
+                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, locale)}${
+                            isBeforePickup
+                              ? `; ${t("carsSearch.startsNewPickupDate")}`
+                              : ""
+                          }`}
                           onClick={() => onSelectDate(day)}
                           disabled={isPastDate}
                           className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
@@ -928,14 +996,14 @@ function RentalDatesField({
               onClick={onClear}
               className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Clear
+              {t("clear")}
             </button>
             <button
               type="button"
               onClick={onDone}
               className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
             >
-              Done
+              {t("done")}
             </button>
           </div>
         </div>
@@ -962,6 +1030,14 @@ function TimeRangeField({
   ) => void;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const timeSummary = formatTimeRangeSummary(
+    t("carsSearch.pickupReturnTimeSummary"),
+    pickupTime,
+    returnTime,
+  );
+
   return (
     <div ref={wrapRef}>
       <button
@@ -969,12 +1045,10 @@ function TimeRangeField({
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        aria-label="Choose pickup and return times"
+        aria-label={t("carsSearch.choosePickupReturnTimesAria")}
         className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
       >
-        <span className="truncate">
-          {pickupTime} pickup — {returnTime} return
-        </span>
+        <span className="truncate">{timeSummary}</span>
         <ChevronDown
           className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
           aria-hidden="true"
@@ -984,13 +1058,13 @@ function TimeRangeField({
       {isOpen ? (
         <div
           role="menu"
-          aria-label="Pickup and return time selector"
+          aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
           className="absolute left-0 right-0 top-[calc(100%+8px)] z-[180] w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:right-auto sm:w-[min(92vw,320px)]"
         >
           <div className="grid gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Pickup time
+                {t("carsSearch.pickupTimeLabel")}
               </span>
               <select
                 id="pickupTime"
@@ -1010,7 +1084,7 @@ function TimeRangeField({
 
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Return time
+                {t("carsSearch.returnTimeLabel")}
               </span>
               <select
                 id="dropoffTime"
