@@ -338,7 +338,7 @@ export function AppHeader({
             {
               href: "/dashboard",
               label: t.dashboard,
-              icon: undefined,
+              icon: LayoutDashboard,
             },
           ]
         : []),
@@ -542,7 +542,7 @@ export function AppHeader({
                 tone="light"
                 className="gap-2"
                 markClassName="h-10 w-10 md:h-11 md:w-11"
-                textClassName="text-lg md:text-xl"
+                textClassName="text-[13px] md:text-xl"
               />
             </Link>
 
@@ -696,7 +696,7 @@ export function AppHeader({
               </div>
             </div>
 
-            <div className="flex items-center gap-2 md:hidden">
+            <div className="flex items-center gap-2.5 md:hidden">
               {isSignedIn ? (
                 <button
                   type="button"
@@ -958,7 +958,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, item.href)
                       }
-                      className={`inline-flex min-w-0 items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                      className={`inline-flex min-w-0 items-center justify-center gap-1 rounded-md px-1 py-1.5 text-[14px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                         active
                           ? "bg-white/10 text-white ring-1 ring-white/30 shadow-none"
                           : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
@@ -966,7 +966,7 @@ export function AppHeader({
                     >
                       {Icon ? (
                         <Icon
-                          size={15}
+                          size={16}
                           className="shrink-0"
                           aria-hidden="true"
                         />
