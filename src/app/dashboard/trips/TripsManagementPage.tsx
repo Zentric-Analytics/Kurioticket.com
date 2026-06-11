@@ -30,7 +30,7 @@ export function TripsManagementPage() {
       };
 
   return (
-    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 xl:max-w-[64rem]">
+    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
       <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 id="trips-title" className="text-3xl font-bold tracking-[-0.035em] text-slate-950 sm:text-4xl">
