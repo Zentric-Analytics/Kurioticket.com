@@ -28,7 +28,6 @@ import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
-import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 import {
@@ -129,7 +128,7 @@ const clampNumberInput = (
 };
 
 const normalizeCabinClass = (value: string) =>
-  value === "premium-economy" || value === "business" || value === "first"
+  value === "business" || value === "first"
     ? value
     : "economy";
 
@@ -197,8 +196,12 @@ export function SearchTabs({
     useRef<HTMLInputElement>(null);
   const fromMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
+  const fromMobilePickerInputRef =
+    useRef<HTMLInputElement>(null);
   const toMobileLauncherRef =
     useRef<HTMLButtonElement>(null);
+  const toMobilePickerInputRef =
+    useRef<HTMLInputElement>(null);
   const dateWrapRef =
     useRef<HTMLDivElement>(null);
   const flightDatesLauncherRef =
@@ -548,6 +551,30 @@ export function SearchTabs({
 
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    const normalized = normalizeCabinClass(cabinClass);
+    if (cabinClass !== normalized) setCabinClass(normalized);
+  }, [cabinClass]);
+
+  useEffect(() => {
+    const normalized = normalizeCabinClass(draftCabinClass);
+    if (draftCabinClass !== normalized) setDraftCabinClass(normalized);
+  }, [draftCabinClass]);
+
+  useEffect(() => {
+    if (!activeMobileAirportPicker) return;
+
+    const inputRef = activeMobileAirportPicker === "origin"
+      ? fromMobilePickerInputRef
+      : toMobilePickerInputRef;
+    const focusId = window.setTimeout(() => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 80);
+
+    return () => window.clearTimeout(focusId);
+  }, [activeMobileAirportPicker]);
 
   useEffect(() => {
     if (!canApplyDefaultOrigin(fromState)) return;
@@ -1168,13 +1195,11 @@ export function SearchTabs({
   const normalizedCabinClass =
     normalizeCabinClass(cabinClass);
   const cabinClassLabel =
-    normalizedCabinClass === "premium-economy"
-      ? t.premiumEconomy || "Premium economy"
-      : normalizedCabinClass === "business"
-        ? t.business || "Business"
-        : normalizedCabinClass === "first"
-          ? t.first || "First"
-          : t.economy || "Economy";
+    normalizedCabinClass === "business"
+      ? t.business || "Business"
+      : normalizedCabinClass === "first"
+        ? t.first || "First"
+        : t.economy || "Economy";
 
   const travelerSummary = useMemo(() => {
     const parts: string[] = [];
@@ -1549,47 +1574,59 @@ export function SearchTabs({
 
 
   const renderFlightDateCalendar = () => (
-    <>
-      <div className="mb-3 flex items-center justify-between">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
         <button
           type="button"
           aria-label="Previous month"
           onClick={() => setVisibleMonthDate((prev) => addMonths(prev, -1))}
-          className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          className="focus-ring inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
         >
           Prev
         </button>
+        <div className="text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+            {tripType === "one-way" ? "Departure" : "Travel dates"}
+          </p>
+          <p className="text-sm font-extrabold text-slate-950">
+            {dateSummary}
+          </p>
+        </div>
         <button
           type="button"
           aria-label="Next month"
           onClick={() => setVisibleMonthDate((prev) => addMonths(prev, 1))}
-          className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          className="focus-ring inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
         >
           Next
         </button>
       </div>
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-4">
         {[0, 1].map((monthOffset) => {
           const monthDate = addMonths(visibleMonthDate, monthOffset);
           const cells = buildMonthCells(monthDate);
 
           return (
-            <div key={monthOffset}>
-              <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
+            <div
+              key={monthOffset}
+              className="rounded-3xl border border-slate-200 bg-white p-3 shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
+            >
+              <p className="mb-3 text-center text-base font-extrabold tracking-tight text-slate-950">
                 {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </p>
-              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-600">
+              <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
                 {weekdays.map((weekday) => (
-                  <span key={weekday}>{weekday}</span>
+                  <span key={weekday} className="py-1">{weekday}</span>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-1">
+              <div className="grid grid-cols-7 gap-1.5">
                 {cells.map((cell) => {
                   const day = cell.date;
                   const iso = toIsoDate(day);
                   const isDeparture = iso === departureDate;
                   const isReturn = iso === returnDate;
                   const isDisabledDate = !isSelectableFlightDate(day);
+                  const isToday = toIsoDate(new Date()) === iso;
                   const isInRange = !!(
                     departureParsed &&
                     returnParsed &&
@@ -1603,7 +1640,7 @@ export function SearchTabs({
                       <span
                         key={`placeholder-${iso}`}
                         aria-hidden="true"
-                        className="h-10 w-10 justify-self-center sm:h-11 sm:w-11"
+                        className="h-10 w-full justify-self-center sm:h-11"
                       />
                     );
                   }
@@ -1624,15 +1661,19 @@ export function SearchTabs({
                       disabled={isDisabledDate}
                       aria-disabled={isDisabledDate}
                       className={cn(
-                        "focus-ring flex h-10 w-10 items-center justify-center justify-self-center rounded-full text-base transition-colors disabled:cursor-not-allowed sm:h-11 sm:w-11",
+                        "focus-ring relative flex h-10 w-full items-center justify-center justify-self-center rounded-2xl text-sm font-bold transition-all disabled:cursor-not-allowed sm:h-11",
                         isDisabledDate
-                          ? "text-slate-300 hover:bg-transparent"
-                          : "text-slate-900 hover:bg-indigo-50",
-                        isInRange && "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
-                        (isDeparture || isReturn) && "bg-indigo-700 text-white hover:bg-indigo-700"
+                          ? "bg-slate-50/70 text-slate-300"
+                          : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
+                        isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-200",
+                        isInRange && "rounded-xl bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
+                        (isDeparture || isReturn) && "bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.25)] hover:bg-indigo-700 hover:text-white ring-0"
                       )}
                     >
                       {day.getDate()}
+                      {isToday && !isDeparture && !isReturn ? (
+                        <span className="absolute bottom-1 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                      ) : null}
                     </button>
                   );
                 })}
@@ -1641,7 +1682,7 @@ export function SearchTabs({
           );
         })}
       </div>
-    </>
+    </div>
   );
 
   const flightDatesFooter = (
@@ -1666,95 +1707,290 @@ export function SearchTabs({
     </div>
   );
 
-  const renderTravelersCabinPicker = () => (
-    <>
-      <div className="divide-y divide-slate-200 rounded-2xl bg-white px-1 sm:rounded-none sm:bg-transparent sm:px-0">
-        {[
-          { key: "adults", label: t.adultPlural || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
-          { key: "children", label: t.childPlural || "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
-          { key: "infants", label: t.infantPlural || "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
-        ].map((row) => {
-          const draftTravelerCount = draftAdultCount + draftChildCount + draftInfantCount;
-          const canDecrement = row.count > row.min;
-          const canIncrement =
-            draftTravelerCount < 9 &&
-            (row.key !== "infants" || draftInfantCount < draftAdultCount);
 
-          return (
-            <div key={row.key} className="flex items-center justify-between py-4 first:pt-1 last:pb-1">
-              <span>
-                <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
-                <span className="block text-xs leading-5 text-slate-600">{row.subtitle}</span>
-              </span>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (row.key === "adults") {
-                      const nextAdults = Math.max(1, draftAdultCount - 1);
-                      setDraftAdultCount(nextAdults);
-                      setDraftInfantCount((current) => Math.min(current, nextAdults));
-                    }
-                    if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1));
-                    if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1));
-                  }}
-                  disabled={!canDecrement}
-                  className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Minus className="h-3.5 w-3.5" />
-                </button>
-                <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{row.count}</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (row.key === "adults") {
-                      if (draftTravelerCount >= 9) return;
-                      setDraftAdultCount((current) => Math.min(9, current + 1));
-                      return;
-                    }
-                    if (row.key === "children") {
-                      if (draftTravelerCount >= 9) return;
-                      setDraftChildCount((current) => Math.min(9, current + 1));
-                      return;
-                    }
-                    if (row.key === "infants") {
-                      if (draftTravelerCount >= 9 || draftInfantCount >= draftAdultCount) return;
-                      setDraftInfantCount((current) => Math.min(draftAdultCount, current + 1));
-                    }
-                  }}
-                  disabled={!canIncrement}
-                  className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-5 rounded-2xl border-t border-slate-200 bg-white pt-5 sm:rounded-none sm:bg-transparent">
-        <div className="mb-1.5 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">{t.cabinClass || "Cabin class"}</p>
-        </div>
-        <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
-          {[["economy", t.economy || "Economy"], ["premium-economy", t.premiumEconomy || "Premium economy"], ["business", t.business || "Business"], ["first", t.first || "First"]].map(([value, label]) => (
+
+  const renderMobileAirportPicker = ({
+    open,
+    title,
+    inputId,
+    value,
+    suggestions,
+    isLoading,
+    launcherRef,
+    inputRef,
+    onChange,
+    onClear,
+    onSelect,
+    onClose,
+  }: {
+    open: boolean;
+    title: string;
+    inputId: string;
+    value: string;
+    suggestions: AirportOption[];
+    isLoading: boolean;
+    launcherRef: typeof fromMobileLauncherRef;
+    inputRef: typeof fromMobilePickerInputRef;
+    onChange: (value: string) => void;
+    onClear: () => void;
+    onSelect: (option: AirportOption) => void;
+    onClose: () => void;
+  }) => {
+    if (!open) return null;
+
+    const titleId = `${inputId}-title`;
+    const query = value.trim();
+    const focusInput = () => {
+      window.requestAnimationFrame(() => inputRef.current?.focus());
+    };
+
+    return (
+      <FlightMobilePickerShell
+        open={open}
+        title={title}
+        titleId={titleId}
+        launcherRef={launcherRef}
+        onClose={onClose}
+        contentClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)] px-4 py-5"
+        footer={(
+          <div className="flex items-center justify-between gap-3">
             <button
-              key={value}
               type="button"
-              onClick={() => setDraftCabinClass(value)}
-              className={cn(
-                "focus-ring rounded-md border px-2 py-2 text-xs font-medium leading-4 text-center transition-colors sm:py-1 sm:text-xs",
-                draftCabinClass === value
-                  ? "border-indigo-400 bg-indigo-50 text-indigo-900"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-50"
-              )}
+              onClick={() => {
+                onClear();
+                focusInput();
+              }}
+              className="focus-ring min-h-12 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
             >
-              {label}
+              {t.clear || "Clear"}
             </button>
-          ))}
+            <button
+              type="button"
+              onClick={onClose}
+              className="focus-ring min-h-12 rounded-2xl bg-indigo-700 px-7 text-sm font-bold text-white shadow-[0_14px_30px_rgba(67,56,202,0.28)] transition-colors hover:bg-indigo-600"
+            >
+              {t.done || "Done"}
+            </button>
+          </div>
+        )}
+      >
+        <div className="mx-auto w-full max-w-xl space-y-4">
+          <div className="rounded-[1.75rem] border border-white/80 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] ring-1 ring-slate-200/70">
+            <label className="mb-2 block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500" htmlFor={inputId}>
+              Search airports and cities
+            </label>
+            <div className="relative">
+              <input
+                ref={inputRef}
+                id={inputId}
+                type="text"
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                placeholder="City, airport, or code"
+                autoComplete="off"
+                className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/80 py-3 pl-4 pr-14 text-base font-bold text-slate-950 shadow-inner outline-none transition-colors placeholder:font-semibold placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/15"
+              />
+              {value.trim() ? (
+                <button
+                  type="button"
+                  aria-label={title === (t.chooseOrigin || "Choose origin") ? "Clear origin" : "Clear destination"}
+                  onClick={() => {
+                    onClear();
+                    focusInput();
+                  }}
+                  className="focus-ring absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-950"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="space-y-2.5">
+            {query.length < 2 ? (
+              <p className="rounded-3xl border border-white/80 bg-white/85 px-5 py-9 text-center text-sm font-semibold text-slate-500 shadow-sm">
+                Start typing a city, airport, or IATA code to see suggestions.
+              </p>
+            ) : isLoading ? (
+              <p className="rounded-3xl border border-white/80 bg-white/85 px-5 py-9 text-center text-sm font-semibold text-slate-500 shadow-sm">
+                Searching airports and cities…
+              </p>
+            ) : suggestions.length ? (
+              suggestions.map((option) => (
+                <button
+                  key={`${option.code}-${option.airport}-${inputId}`}
+                  type="button"
+                  onClick={() => onSelect(option)}
+                  className={cn(
+                    "focus-ring block min-h-[82px] w-full rounded-3xl border border-white/80 bg-white px-4 py-4 text-left shadow-[0_10px_28px_rgba(15,23,42,0.07)] ring-1 ring-slate-200/70 transition-all",
+                    "hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-[0_16px_34px_rgba(15,23,42,0.10)] focus-visible:border-indigo-300",
+                  )}
+                >
+                  <span className="flex items-center justify-between gap-4">
+                    <span className="min-w-0">
+                      <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
+                        {option.city}
+                      </span>
+                      <span className="mt-1 block line-clamp-2 text-sm font-semibold leading-5 text-slate-600">
+                        {option.airport}
+                      </span>
+                      {option.country ? (
+                        <span className="mt-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
+                          {option.country}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="inline-flex h-10 min-w-14 shrink-0 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 px-3 text-sm font-extrabold tracking-wide text-indigo-700">
+                      {option.code}
+                    </span>
+                  </span>
+                </button>
+              ))
+            ) : (
+              <p className="rounded-3xl border border-white/80 bg-white/85 px-5 py-9 text-center text-sm font-semibold text-slate-500 shadow-sm">
+                No matching airports or cities.
+              </p>
+            )}
+          </div>
         </div>
+      </FlightMobilePickerShell>
+    );
+  };
+
+  const passengerRows = [
+    { key: "adults", label: t.adultPlural || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
+    { key: "children", label: t.childPlural || "Children", subtitle: "Ages 2–17", count: draftChildCount, min: 0 },
+    { key: "infants", label: t.infantPlural || "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
+  ];
+  const cabinOptions = [
+    ["economy", t.economy || "Economy"],
+    ["business", t.business || "Business"],
+    ["first", t.first || "First"],
+  ];
+
+  const renderPassengerControlRows = (compact = false) => (
+    <div className={cn(
+      "overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.07)]",
+      compact && "rounded-2xl shadow-sm"
+    )}>
+      {passengerRows.map((row) => {
+        const draftTravelerCount = draftAdultCount + draftChildCount + draftInfantCount;
+        const canDecrement = row.count > row.min;
+        const canIncrement =
+          draftTravelerCount < 9 &&
+          (row.key !== "infants" || draftInfantCount < draftAdultCount);
+
+        return (
+          <div
+            key={row.key}
+            className={cn(
+              "flex items-center justify-between gap-4 border-b border-slate-100 px-4 last:border-b-0",
+              compact ? "py-3" : "py-4"
+            )}
+          >
+            <span className="min-w-0">
+              <span className="block text-base font-extrabold tracking-tight text-slate-950 sm:text-sm">
+                {row.label}
+              </span>
+              <span className="mt-0.5 block text-xs font-semibold leading-5 text-slate-500">
+                {row.subtitle}
+              </span>
+            </span>
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (row.key === "adults") {
+                    const nextAdults = Math.max(1, draftAdultCount - 1);
+                    setDraftAdultCount(nextAdults);
+                    setDraftInfantCount((current) => Math.min(current, nextAdults));
+                  }
+                  if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1));
+                  if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1));
+                }}
+                disabled={!canDecrement}
+                className={cn(
+                  "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
+                  compact ? "h-8 w-8" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                )}
+              >
+                <Minus className="h-3.5 w-3.5" />
+              </button>
+              <span className={cn(
+                "tabular-nums text-center font-extrabold text-slate-950",
+                compact ? "min-w-7 text-sm" : "min-w-8 text-base"
+              )}>
+                {row.count}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  if (row.key === "adults") {
+                    if (draftTravelerCount >= 9) return;
+                    setDraftAdultCount((current) => Math.min(9, current + 1));
+                    return;
+                  }
+                  if (row.key === "children") {
+                    if (draftTravelerCount >= 9) return;
+                    setDraftChildCount((current) => Math.min(9, current + 1));
+                    return;
+                  }
+                  if (row.key === "infants") {
+                    if (draftTravelerCount >= 9 || draftInfantCount >= draftAdultCount) return;
+                    setDraftInfantCount((current) => Math.min(draftAdultCount, current + 1));
+                  }
+                }}
+                disabled={!canIncrement}
+                className={cn(
+                  "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
+                  compact ? "h-8 w-8" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                )}
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderCabinClassPicker = (compact = false) => (
+    <div className={cn(
+      "rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]",
+      compact && "rounded-2xl p-3 shadow-sm"
+    )}>
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+          {t.cabinClass || "Cabin class"}
+        </p>
       </div>
-    </>
+      <div className="grid grid-cols-3 gap-2">
+        {cabinOptions.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setDraftCabinClass(value)}
+            className={cn(
+              "focus-ring min-h-11 rounded-2xl border px-2 text-center text-sm font-extrabold leading-4 transition-all",
+              draftCabinClass === value
+                ? "border-indigo-500 bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]"
+                : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800",
+              compact && "min-h-9 rounded-xl text-xs"
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderTravelersCabinPicker = () => (
+    <div className="space-y-4">
+      {renderPassengerControlRows()}
+      {renderCabinClassPicker()}
+    </div>
   );
 
   return (
@@ -2535,51 +2771,18 @@ export function SearchTabs({
                     >
                       {renderTravelersCabinPicker()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,320px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
-                    <h3 className="text-sm font-semibold text-slate-900">
-                      Travelers
-                    </h3>
-                    <div className="mt-3 divide-y divide-slate-100">
-                      {[
-                        { key: "adults", label: t.adultPlural || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
-                        { key: "children", label: t.childPlural || "Children", subtitle: "2–17", count: draftChildCount, min: 0 },
-                        { key: "infants", label: t.infantPlural || "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
-                      ].map((row) => {
-                        const draftTravelerCount = draftAdultCount + draftChildCount + draftInfantCount;
-                        const canDecrement = row.count > row.min;
-                        const canIncrement =
-                          draftTravelerCount < 9 &&
-                          (row.key !== "infants" || draftInfantCount < draftAdultCount);
-
-                        return (
-                          <div key={row.key} className="flex items-center justify-between py-3 first:pt-1 last:pb-1">
-                            <span>
-                              <span className="block text-sm font-semibold text-slate-900">{row.label}</span>
-                              <span className="block text-xs leading-5 text-slate-600">{row.subtitle}</span>
-                            </span>
-                            <div className="flex items-center gap-1">
-                              <button type="button" onClick={() => { if (row.key === "adults") { const nextAdults = Math.max(1, draftAdultCount - 1); setDraftAdultCount(nextAdults); setDraftInfantCount((current) => Math.min(current, nextAdults)); } if (row.key === "children") setDraftChildCount(Math.max(0, draftChildCount - 1)); if (row.key === "infants") setDraftInfantCount(Math.max(0, draftInfantCount - 1)); }} disabled={!canDecrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus className="h-3.5 w-3.5" /></button>
-                              <span className="min-w-7 text-center text-sm font-semibold text-slate-900">{row.count}</span>
-                              <button type="button" onClick={() => { if (row.key === "adults") { if (draftTravelerCount >= 9) return; setDraftAdultCount((current) => Math.min(9, current + 1)); return; } if (row.key === "children") { if (draftTravelerCount >= 9) return; setDraftChildCount((current) => Math.min(9, current + 1)); return; } if (row.key === "infants") { if (draftTravelerCount >= 9 || draftInfantCount >= draftAdultCount) return; setDraftInfantCount((current) => Math.min(draftAdultCount, current + 1)); } }} disabled={!canIncrement} className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus className="h-3.5 w-3.5" /></button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div className="mt-3 border-t border-slate-200 pt-3">
-                      <div className="mb-1.5 flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">{t.cabinClass || "Cabin class"}</p>
+                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+8px)] z-50 hidden w-[min(92vw,340px)] rounded-3xl border border-slate-200 bg-white p-3 shadow-[0_18px_42px_rgba(15,23,42,0.16)] sm:block">
+                      <h3 className="px-1 text-sm font-extrabold tracking-tight text-slate-950">
+                        {t.travelers || "Travelers"}
+                      </h3>
+                      <div className="mt-3 space-y-3">
+                        {renderPassengerControlRows(true)}
+                        {renderCabinClassPicker(true)}
                       </div>
-                      <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
-                        {[["economy", t.economy || "Economy"],["premium-economy", t.premiumEconomy || "Premium economy"],["business", t.business || "Business"],["first", t.first || "First"]].map(([value, label]) => (
-                          <button key={value} type="button" onClick={() => setDraftCabinClass(value)} className={cn("focus-ring rounded-md border px-2 py-1 text-xs font-medium leading-4 transition-colors text-center sm:text-xs", draftCabinClass === value ? "border-indigo-400 bg-indigo-50 text-indigo-900" : "border-slate-300 text-slate-700 hover:bg-slate-50")}>{label}</button>
-                        ))}
+                      <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
+                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-xl bg-indigo-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
                       </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-200 pt-3">
-                      <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
-                    </div>
-                  </div>
                   </>
                 ) : null}
               </div>
@@ -2615,43 +2818,45 @@ export function SearchTabs({
             </div>
           ) : null}
 
-          <MobileAirportPicker
-            open={activeMobileAirportPicker === "origin"}
-            title={t.chooseOrigin || "Choose origin"}
-            inputId="homepage-origin-picker-search"
-            value={from}
-            suggestions={fromSuggestions}
-            isLoading={isFromLoadingVisible}
-            launcherRef={fromMobileLauncherRef}
-            onChange={(nextValue) => {
+          {renderMobileAirportPicker({
+            open: activeMobileAirportPicker === "origin",
+            title: t.chooseOrigin || "Choose origin",
+            inputId: "homepage-origin-picker-search",
+            value: from,
+            suggestions: fromSuggestions,
+            isLoading: isFromLoadingVisible,
+            launcherRef: fromMobileLauncherRef,
+            inputRef: fromMobilePickerInputRef,
+            onChange: (nextValue) => {
               setFromState((current) => markOriginManualInput(current, nextValue));
               if (nextValue.trim().length < 2) {
                 setFromLoading(false);
                 setFromLiveSuggestions([]);
               }
               setFromHighlight(0);
-            }}
-            onClear={() => {
+            },
+            onClear: () => {
               setFromState((current) => markOriginManualInput(current, ""));
               setFromLoading(false);
               setFromLiveSuggestions([]);
               setFromHighlight(0);
-            }}
-            onSelect={(option) => {
+            },
+            onSelect: (option) => {
               setFromState((current) => markOriginManualInput(current, formatAirportLabel(option), option.code));
               setActiveMobileAirportPicker(null);
-            }}
-            onClose={() => setActiveMobileAirportPicker(null)}
-          />
-          <MobileAirportPicker
-            open={activeMobileAirportPicker === "destination"}
-            title={t.chooseDestination || "Choose destination"}
-            inputId="homepage-destination-picker-search"
-            value={to}
-            suggestions={toSuggestions}
-            isLoading={isToLoadingVisible}
-            launcherRef={toMobileLauncherRef}
-            onChange={(nextValue) => {
+            },
+            onClose: () => setActiveMobileAirportPicker(null),
+          })}
+          {renderMobileAirportPicker({
+            open: activeMobileAirportPicker === "destination",
+            title: t.chooseDestination || "Choose destination",
+            inputId: "homepage-destination-picker-search",
+            value: to,
+            suggestions: toSuggestions,
+            isLoading: isToLoadingVisible,
+            launcherRef: toMobileLauncherRef,
+            inputRef: toMobilePickerInputRef,
+            onChange: (nextValue) => {
               setTo(nextValue);
               if (nextValue.trim().length < 2) {
                 setToLoading(false);
@@ -2659,21 +2864,21 @@ export function SearchTabs({
               }
               setToCode("");
               setToHighlight(0);
-            }}
-            onClear={() => {
+            },
+            onClear: () => {
               setTo("");
               setToLoading(false);
               setToLiveSuggestions([]);
               setToCode("");
               setToHighlight(0);
-            }}
-            onSelect={(option) => {
+            },
+            onSelect: (option) => {
               setTo(formatAirportLabel(option));
               setToCode(option.code);
               setActiveMobileAirportPicker(null);
-            }}
-            onClose={() => setActiveMobileAirportPicker(null)}
-          />
+            },
+            onClose: () => setActiveMobileAirportPicker(null),
+          })}
         </form>
       ) : (
         <form
