@@ -387,13 +387,13 @@ export function SearchTabs({
     () =>
       cn(
         "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
-        (flightDatesOpen || hotelDatesOpen) &&
-          "relative z-[200]",
+        (flightDatesOpen || hotelDatesOpen || travelersMenuOpen || fromOpen || toOpen || hotelGuestsRoomsOpen || hotelDestinationMobilePickerOpen) &&
+          "relative z-[300]",
         compactHero
           ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
           : "p-2"
       ),
-    [compactHero, flightDatesOpen, hotelDatesOpen]
+    [compactHero, flightDatesOpen, hotelDatesOpen, travelersMenuOpen, fromOpen, toOpen, hotelGuestsRoomsOpen, hotelDestinationMobilePickerOpen]
   );
 
   const tabsClassName = cn(
@@ -438,11 +438,11 @@ export function SearchTabs({
     compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const flightFieldValueClassName = cn(
-    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm lg:placeholder:text-slate-500",
+    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block sm:focus-visible:shadow-none md:text-sm lg:placeholder:text-slate-500",
     compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const flightFieldButtonClassName = cn(
-    "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] font-medium text-slate-900 outline-none transition-colors md:text-sm",
+    "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:focus-visible:shadow-none md:text-sm",
     compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const hotelFieldLabelClassName = cn(
@@ -459,10 +459,10 @@ export function SearchTabs({
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
       ? cn(
-          "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 transition-shadow sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 lg:flex lg:flex-col lg:justify-center",
+          "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 transition-colors sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 lg:flex lg:flex-col lg:justify-center lg:rounded-lg",
           side === "origin" ? "sm:pr-3" : "sm:pl-3"
         )
-      : cn("relative px-0 py-0 transition-shadow", side === "origin" ? "pr-3" : "pl-3");
+      : cn("relative px-0 py-0 transition-colors lg:rounded-lg", side === "origin" ? "pr-3" : "pl-3");
   const submitWrapClassName = cn(
     "sm:col-span-2 lg:col-span-1 lg:self-stretch",
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
@@ -1988,7 +1988,7 @@ export function SearchTabs({
     sectionLabel: string;
     onSelect: (option: AirportOption) => void;
   }) => (
-    <div className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]">
+    <div className="absolute left-0 top-[calc(100%+10px)] z-[360] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]">
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
           {sectionLabel}
@@ -2135,7 +2135,10 @@ export function SearchTabs({
     <div
       role="dialog"
       aria-label={t.chooseTravelDates || "Choose travel dates"}
-      className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block"
+      className={cn(
+        "absolute left-0 top-[calc(100%+12px)] z-[360] hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
+        mode === "flights" && "lg:left-1/2 lg:w-[min(760px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:p-5"
+      )}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
@@ -2534,7 +2537,7 @@ export function SearchTabs({
                 ref={fromWrapRef}
                 className={cn(
                   flightRouteFieldClassName("origin"),
-                  fromOpen && "lg:ring-2 lg:ring-indigo-500/35 lg:ring-offset-2 lg:ring-offset-white"
+                  fromOpen && "lg:bg-indigo-50/45 lg:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.28)]"
                 )}
               >
                 <label className={flightFieldLabelClassName}>
@@ -2627,11 +2630,11 @@ export function SearchTabs({
                   },
                 }) : null}
               </div>
-              <div className="relative z-20 -my-2 flex h-4 items-center justify-center sm:my-0 sm:h-auto">
+              <div className="relative z-20 -my-2 flex h-4 items-center justify-center sm:my-0 sm:h-auto lg:z-30">
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 sm:shadow-none"
+                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 sm:shadow-none lg:h-9 lg:w-9 lg:shadow-[0_1px_3px_rgba(15,23,42,0.10)]"
                   aria-label={t.swapOriginDestination || "Swap origin and destination"}
                 >
                   <ArrowRightLeft size={14} />
@@ -2642,7 +2645,7 @@ export function SearchTabs({
                 ref={toWrapRef}
                 className={cn(
                   flightRouteFieldClassName("destination"),
-                  toOpen && "lg:ring-2 lg:ring-indigo-500/35 lg:ring-offset-2 lg:ring-offset-white"
+                  toOpen && "lg:bg-indigo-50/45 lg:shadow-[inset_0_0_0_1px_rgba(99,102,241,0.28)]"
                 )}
               >
                 <label className={flightFieldLabelClassName}>
@@ -2729,7 +2732,7 @@ export function SearchTabs({
 
               <div
                 ref={dateWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName)}
+                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName, flightDatesOpen && "z-[320]")}
               >
                 <label className={flightFieldLabelClassName}>
                   {t.departureDate ||
@@ -2801,7 +2804,7 @@ export function SearchTabs({
 
               <div
                 ref={travelersWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName)}
+                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName, travelersMenuOpen && "z-[320]")}
               >
                 <label className={flightFieldLabelClassName}>
                   {t.travelers}
@@ -2858,7 +2861,7 @@ export function SearchTabs({
                     >
                       {renderTravelersCabinPicker()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block">
+                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+12px)] z-[360] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
                       <div>
                         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
                           Passengers
