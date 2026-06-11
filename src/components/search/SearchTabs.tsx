@@ -441,7 +441,7 @@ export function SearchTabs({
     compactHero ? "lg:min-h-[54px]" : "lg:min-h-[58px]"
   );
   const submitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
     compactHero ? "h-12 lg:min-h-[54px]" : "h-12 lg:min-h-[58px]"
   );
   const hotelSubmitWrapClassName = cn(
@@ -449,7 +449,7 @@ export function SearchTabs({
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const hotelSubmitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
     compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
 
