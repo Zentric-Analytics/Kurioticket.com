@@ -194,26 +194,26 @@ export function FlightLandingClient() {
     .slice(0, 8);
 
   return (
-    <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-12 pt-4 sm:pt-8">
+    <main className="flex-1 bg-slate-50 pb-12 pt-5 sm:pt-8">
       <section className="page-shell">
-        <div className="mx-auto max-w-5xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-indigo-700 shadow-sm">
-            <Sparkles className="h-4 w-4" />
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-indigo-700 shadow-sm">
+            <Sparkles className="h-3.5 w-3.5" />
             {t("flights")}
           </div>
-          <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
             {t("flightLandingHeroTitle")}
           </h1>
-          <p className="mx-auto mt-4 max-w-3xl text-base font-medium leading-7 text-slate-600 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-2xl text-base font-medium leading-7 text-slate-600 sm:text-lg">
             {t("flightLandingHeroSubtitle")}
           </p>
         </div>
 
-        <div className="mx-auto mt-7 max-w-6xl rounded-[2rem] border border-white/80 bg-white/85 p-3 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur sm:p-5">
+        <div className="mx-auto mt-7 max-w-6xl">
           <StandaloneFlightSearchForm />
         </div>
 
-        <div className="mx-auto mt-6 grid max-w-6xl gap-3 sm:grid-cols-3">
+        <div className="mx-auto mt-5 grid max-w-6xl gap-3 sm:grid-cols-3">
           {[
             {
               title: t("flightLandingFeatureSearchReadyTitle"),

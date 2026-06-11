@@ -12,7 +12,7 @@ import React, {
 
 import { useRouter } from "next/navigation";
 
-import { Calendar, ChevronDown, Minus, Plane, Plus, X } from "lucide-react";
+import { ArrowRightLeft, Calendar, ChevronDown, Minus, Plane, Plus, X } from "lucide-react";
 
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -49,6 +49,13 @@ type MonthCell = {
 };
 
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const searchFieldShellClassName =
+  "relative min-h-[66px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/15";
+const searchFieldLabelClassName =
+  "mb-1 block text-[11px] font-bold uppercase leading-4 tracking-[0.12em] text-slate-500";
+const searchFieldValueButtonClassName =
+  "focus-ring flex min-h-8 w-full items-center justify-between gap-2 rounded-xl text-left text-[15px] font-semibold tracking-[-0.01em] text-slate-950";
 
 const normalizeSuggestionText = (value: string) =>
   value
@@ -426,6 +433,22 @@ export function StandaloneFlightSearchForm() {
     setActiveMobileAirportPicker(null);
   };
 
+  const swapAirports = () => {
+    const nextOrigin = destination;
+    const nextOriginCode = destinationCode;
+    const nextDestination = origin;
+    const nextDestinationCode = originCode;
+
+    setOriginState((current) => markOriginManualInput(current, nextOrigin, nextOriginCode));
+    setDestination(nextDestination);
+    setDestinationCode(nextDestinationCode);
+    setOriginOpen(false);
+    setDestinationOpen(false);
+    setActiveMobileAirportPicker(null);
+    setOriginHighlight(0);
+    setDestinationHighlight(0);
+  };
+
   const clearAirport = (field: AirportField) => {
     if (field === "origin") {
       setOriginState((current) => markOriginManualInput(current, ""));
@@ -752,9 +775,9 @@ export function StandaloneFlightSearchForm() {
   );
 
   return (
-    <section className="rounded-3xl border border-slate-200/80 bg-white p-3 shadow-[0_18px_45px_rgba(15,23,42,0.10)] sm:p-4">
+    <section className="rounded-[1.75rem] border border-slate-200/90 bg-white p-3 shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:p-4">
       <form onSubmit={onSubmit} className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1 sm:inline-flex">
+        <div className="flex w-full items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-50/80 p-1 sm:inline-flex sm:w-auto">
           {[
             ["round-trip", t("roundTrip")],
             ["one-way", t("oneWay")],
@@ -768,10 +791,10 @@ export function StandaloneFlightSearchForm() {
                 if (nextTripType === "one-way") setReturnDate("");
               }}
               className={cn(
-                "focus-ring inline-flex min-h-10 flex-1 items-center justify-center rounded-xl px-4 py-2 text-sm font-black transition-colors sm:flex-none",
+                "focus-ring inline-flex min-h-9 flex-1 items-center justify-center rounded-xl px-4 py-2 text-sm font-bold transition-colors sm:flex-none",
                 tripType === value
                   ? "bg-white text-indigo-700 shadow-sm ring-1 ring-indigo-100"
-                  : "text-slate-600 hover:bg-white/70 hover:text-slate-950",
+                  : "text-slate-600 hover:bg-white/80 hover:text-slate-950",
               )}
             >
               {label}
@@ -779,61 +802,71 @@ export function StandaloneFlightSearchForm() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1.7fr)_minmax(170px,0.9fr)_minmax(165px,0.85fr)_156px] lg:gap-2">
-          <AirportFieldControl
-            ref={originWrapRef}
-            inputRef={originInputRef}
-            label={t("origin")}
-            value={origin}
-            placeholder={t("cityOrAirport")}
-            open={originOpen || activeMobileAirportPicker === "origin"}
-            onMobileOpen={() => setActiveMobileAirportPicker("origin")}
-            onDesktopFocus={() => setOriginOpen(true)}
-            onChange={(nextValue) => {
-              setOriginState((current) => markOriginManualInput(current, nextValue));
-              setOriginHighlight(0);
-              if (nextValue.trim().length < 2) {
-                setOriginSuggestions([]);
-                setOriginLoading(false);
-              }
-            }}
-            onClear={() => clearAirport("origin")}
-            onKeyDown={(event) => onAirportKeyNav(event, "origin")}
-            mobileLauncherRef={originMobileLauncherRef}
-            desktopSuggestions={renderAirportSuggestions("origin")}
-            className="lg:rounded-2xl"
-          />
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,3.25fr)_minmax(0,1.55fr)_minmax(0,1.45fr)_156px] lg:gap-2">
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:rounded-2xl lg:border lg:border-slate-200 lg:bg-white lg:shadow-[0_1px_2px_rgba(15,23,42,0.04)] lg:transition-colors lg:hover:border-slate-300 lg:focus-within:border-indigo-400 lg:focus-within:ring-2 lg:focus-within:ring-indigo-500/15">
+            <AirportFieldControl
+              ref={originWrapRef}
+              inputRef={originInputRef}
+              label={t("origin")}
+              value={origin}
+              placeholder={t("cityOrAirport")}
+              open={originOpen || activeMobileAirportPicker === "origin"}
+              onMobileOpen={() => setActiveMobileAirportPicker("origin")}
+              onDesktopFocus={() => setOriginOpen(true)}
+              onChange={(nextValue) => {
+                setOriginState((current) => markOriginManualInput(current, nextValue));
+                setOriginHighlight(0);
+                if (nextValue.trim().length < 2) {
+                  setOriginSuggestions([]);
+                  setOriginLoading(false);
+                }
+              }}
+              onClear={() => clearAirport("origin")}
+              onKeyDown={(event) => onAirportKeyNav(event, "origin")}
+              mobileLauncherRef={originMobileLauncherRef}
+              desktopSuggestions={renderAirportSuggestions("origin")}
+              className="lg:min-h-[66px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:ring-0"
+            />
 
-          <AirportFieldControl
-            ref={destinationWrapRef}
-            inputRef={destinationInputRef}
-            label={t("destination")}
-            value={destination}
-            placeholder={t("cityOrAirport")}
-            open={destinationOpen || activeMobileAirportPicker === "destination"}
-            onMobileOpen={() => setActiveMobileAirportPicker("destination")}
-            onDesktopFocus={() => setDestinationOpen(true)}
-            onChange={(nextValue) => {
-              setDestination(nextValue);
-              setDestinationCode("");
-              setDestinationHighlight(0);
-              if (nextValue.trim().length < 2) {
-                setDestinationSuggestions([]);
-                setDestinationLoading(false);
-              }
-            }}
-            onClear={() => clearAirport("destination")}
-            onKeyDown={(event) => onAirportKeyNav(event, "destination")}
-            mobileLauncherRef={destinationMobileLauncherRef}
-            desktopSuggestions={renderAirportSuggestions("destination")}
-            className="lg:rounded-2xl"
-          />
+            <div className="relative z-10 -my-4 flex items-center justify-center lg:my-0">
+              <button
+                type="button"
+                onClick={swapAirports}
+                className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 lg:h-10 lg:w-10 lg:shadow-[0_1px_3px_rgba(15,23,42,0.10)]"
+                aria-label={t("swapOriginDestination") || "Swap origin and destination"}
+              >
+                <ArrowRightLeft className="h-4 w-4" aria-hidden="true" />
+              </button>
+            </div>
 
-          <div
-            ref={dateWrapRef}
-            className="relative min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/15 lg:rounded-2xl"
-          >
-            <label className="mb-1 block text-xs font-extrabold uppercase tracking-[0.12em] text-slate-600">
+            <AirportFieldControl
+              ref={destinationWrapRef}
+              inputRef={destinationInputRef}
+              label={t("destination")}
+              value={destination}
+              placeholder={t("cityOrAirport")}
+              open={destinationOpen || activeMobileAirportPicker === "destination"}
+              onMobileOpen={() => setActiveMobileAirportPicker("destination")}
+              onDesktopFocus={() => setDestinationOpen(true)}
+              onChange={(nextValue) => {
+                setDestination(nextValue);
+                setDestinationCode("");
+                setDestinationHighlight(0);
+                if (nextValue.trim().length < 2) {
+                  setDestinationSuggestions([]);
+                  setDestinationLoading(false);
+                }
+              }}
+              onClear={() => clearAirport("destination")}
+              onKeyDown={(event) => onAirportKeyNav(event, "destination")}
+              mobileLauncherRef={destinationMobileLauncherRef}
+              desktopSuggestions={renderAirportSuggestions("destination")}
+              className="lg:min-h-[66px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:ring-0"
+            />
+          </div>
+
+          <div ref={dateWrapRef} className={searchFieldShellClassName}>
+            <label className={searchFieldLabelClassName}>
               {t("travelDates")}
             </label>
             <button
@@ -843,7 +876,7 @@ export function StandaloneFlightSearchForm() {
               aria-expanded={datesOpen}
               aria-haspopup="dialog"
               onClick={() => setDatesOpen((prev) => !prev)}
-              className="focus-ring flex min-h-9 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-extrabold text-slate-950"
+              className={searchFieldValueButtonClassName}
             >
               <span>{dateSummary}</span>
               <Calendar className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
@@ -909,9 +942,9 @@ export function StandaloneFlightSearchForm() {
 
           <div
             ref={travelersWrapRef}
-            className="relative min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/15 lg:rounded-2xl"
+            className={searchFieldShellClassName}
           >
-            <label className="mb-1 block text-xs font-extrabold uppercase tracking-[0.12em] text-slate-600">
+            <label className={searchFieldLabelClassName}>
               {t("travelers")}
             </label>
             <button
@@ -926,7 +959,7 @@ export function StandaloneFlightSearchForm() {
                 }
                 openTravelers();
               }}
-              className="focus-ring flex min-h-9 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-extrabold text-slate-950"
+              className={searchFieldValueButtonClassName}
             >
               <span className="truncate">{travelerSummary}</span>
               <ChevronDown
@@ -977,7 +1010,7 @@ export function StandaloneFlightSearchForm() {
             type="submit"
             disabled={isSearchDisabled}
             aria-busy={isSubmitting}
-            className="min-h-[58px] w-full whitespace-nowrap rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-base font-black text-white shadow-lg shadow-indigo-700/20 hover:from-indigo-600 hover:to-violet-500 disabled:from-indigo-500 disabled:to-violet-500 lg:h-full"
+            className="min-h-[58px] w-full whitespace-nowrap rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-base font-black text-white shadow-[0_12px_24px_rgba(67,56,202,0.24)] hover:from-indigo-600 hover:to-violet-500 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 lg:h-full"
           >
             <Plane className="mr-2 h-4 w-4" aria-hidden="true" />
             {isSubmitting ? t("searchingFlights") : t("searchFlights")}
@@ -1070,11 +1103,11 @@ const AirportFieldControl = React.forwardRef<HTMLDivElement, AirportFieldControl
     <div
       ref={ref}
       className={cn(
-        "relative min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/15",
+        searchFieldShellClassName,
         className,
       )}
     >
-      <label className="mb-1 block text-xs font-extrabold uppercase tracking-[0.12em] text-slate-600">
+      <label className={searchFieldLabelClassName}>
         {label}
       </label>
       <button
@@ -1083,7 +1116,7 @@ const AirportFieldControl = React.forwardRef<HTMLDivElement, AirportFieldControl
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={onMobileOpen}
-        className="focus-ring flex min-h-9 w-full items-center justify-between gap-2 rounded-xl text-left text-base font-extrabold text-slate-950 sm:hidden"
+        className={cn(searchFieldValueButtonClassName, "sm:hidden")}
       >
         <span className={cn("truncate", !value && "text-slate-400")}>{value || placeholder}</span>
         <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" aria-hidden="true" />
@@ -1098,7 +1131,7 @@ const AirportFieldControl = React.forwardRef<HTMLDivElement, AirportFieldControl
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           autoComplete="off"
-          className="focus-ring h-9 w-full rounded-xl border-0 bg-transparent pr-9 text-base font-extrabold text-slate-950 outline-none placeholder:text-slate-400"
+          className="focus-ring h-8 w-full rounded-xl border-0 bg-transparent pr-9 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:text-slate-400"
         />
         {value ? (
           <button
