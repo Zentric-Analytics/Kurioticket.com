@@ -1573,117 +1573,100 @@ export function SearchTabs({
   };
 
 
-  const renderFlightDateCalendar = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-        <button
-          type="button"
-          aria-label="Previous month"
-          onClick={() => setVisibleMonthDate((prev) => addMonths(prev, -1))}
-          className="focus-ring inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
-        >
-          Prev
-        </button>
-        <div className="text-center">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-            {tripType === "one-way" ? "Departure" : "Travel dates"}
-          </p>
-          <p className="text-sm font-extrabold text-slate-950">
-            {dateSummary}
-          </p>
-        </div>
-        <button
-          type="button"
-          aria-label="Next month"
-          onClick={() => setVisibleMonthDate((prev) => addMonths(prev, 1))}
-          className="focus-ring inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
-        >
-          Next
-        </button>
-      </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-4">
-        {[0, 1].map((monthOffset) => {
-          const monthDate = addMonths(visibleMonthDate, monthOffset);
+  const renderFlightDateCalendar = () => {
+    const mobileFlightCalendarMonths = Array.from(
+      { length: 12 },
+      (_, monthOffset) => addMonths(todayLocal, monthOffset)
+    );
+
+    return (
+      <div className="mx-auto w-full max-w-xl space-y-7 pb-2">
+        {mobileFlightCalendarMonths.map((monthDate) => {
+          const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
           const cells = buildMonthCells(monthDate);
 
           return (
-            <div
-              key={monthOffset}
-              className="rounded-3xl border border-slate-200 bg-white p-3 shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
+            <section
+              key={monthKey}
+              aria-label={monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+              className="space-y-3"
             >
-              <p className="mb-3 text-center text-base font-extrabold tracking-tight text-slate-950">
+              <h3 className="px-1 text-left text-lg font-extrabold tracking-tight text-slate-950">
                 {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-              </p>
-              <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-extrabold uppercase tracking-wide text-slate-400">
-                {weekdays.map((weekday) => (
-                  <span key={weekday} className="py-1">{weekday}</span>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1.5">
-                {cells.map((cell) => {
-                  const day = cell.date;
-                  const iso = toIsoDate(day);
-                  const isDeparture = iso === departureDate;
-                  const isReturn = iso === returnDate;
-                  const isDisabledDate = !isSelectableFlightDate(day);
-                  const isToday = toIsoDate(new Date()) === iso;
-                  const isInRange = !!(
-                    departureParsed &&
-                    returnParsed &&
-                    !isDisabledDate &&
-                    day > departureParsed &&
-                    day < returnParsed
-                  );
-
-                  if (!cell.isCurrentMonth) {
-                    return (
-                      <span
-                        key={`placeholder-${iso}`}
-                        aria-hidden="true"
-                        className="h-10 w-full justify-self-center sm:h-11"
-                      />
+              </h3>
+              <div className="rounded-[1.75rem] border border-slate-200/80 bg-white px-3 pb-4 pt-3 shadow-[0_12px_34px_rgba(15,23,42,0.06)]">
+                <div className="mb-2 grid grid-cols-7 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
+                  {weekdays.map((weekday) => (
+                    <span key={weekday} className="py-2">{weekday}</span>
+                  ))}
+                </div>
+                <div className="grid grid-cols-7 gap-y-1.5">
+                  {cells.map((cell) => {
+                    const day = cell.date;
+                    const iso = toIsoDate(day);
+                    const isDeparture = iso === departureDate;
+                    const isReturn = iso === returnDate;
+                    const isDisabledDate = !isSelectableFlightDate(day);
+                    const isToday = toIsoDate(new Date()) === iso;
+                    const isInRange = !!(
+                      departureParsed &&
+                      returnParsed &&
+                      !isDisabledDate &&
+                      day > departureParsed &&
+                      day < returnParsed
                     );
-                  }
 
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      aria-label={`Select ${day.toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}`}
-                      onClick={() => {
-                        if (isDisabledDate || !isSelectableFlightDate(day)) return;
-                        onSelectDate(day);
-                      }}
-                      disabled={isDisabledDate}
-                      aria-disabled={isDisabledDate}
-                      className={cn(
-                        "focus-ring relative flex h-10 w-full items-center justify-center justify-self-center rounded-2xl text-sm font-bold transition-all disabled:cursor-not-allowed sm:h-11",
-                        isDisabledDate
-                          ? "bg-slate-50/70 text-slate-300"
-                          : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
-                        isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-200",
-                        isInRange && "rounded-xl bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
-                        (isDeparture || isReturn) && "bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.25)] hover:bg-indigo-700 hover:text-white ring-0"
-                      )}
-                    >
-                      {day.getDate()}
-                      {isToday && !isDeparture && !isReturn ? (
-                        <span className="absolute bottom-1 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
-                      ) : null}
-                    </button>
-                  );
-                })}
+                    if (!cell.isCurrentMonth) {
+                      return (
+                        <span
+                          key={`placeholder-${iso}`}
+                          aria-hidden="true"
+                          className="h-10 w-full"
+                        />
+                      );
+                    }
+
+                    return (
+                      <button
+                        key={iso}
+                        type="button"
+                        aria-label={`Select ${day.toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}`}
+                        aria-pressed={isDeparture || isReturn}
+                        onClick={() => {
+                          if (isDisabledDate || !isSelectableFlightDate(day)) return;
+                          onSelectDate(day);
+                        }}
+                        disabled={isDisabledDate}
+                        aria-disabled={isDisabledDate}
+                        className={cn(
+                          "focus-ring relative mx-auto flex h-10 w-full max-w-10 items-center justify-center rounded-full text-sm font-bold transition-colors disabled:cursor-not-allowed",
+                          isDisabledDate
+                            ? "text-slate-300"
+                            : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
+                          isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-200",
+                          isInRange && "bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
+                          (isDeparture || isReturn) && "bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.24)] hover:bg-indigo-700 hover:text-white ring-0"
+                        )}
+                      >
+                        {day.getDate()}
+                        {isToday && !isDeparture && !isReturn ? (
+                          <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            </section>
           );
         })}
       </div>
-    </div>
-  );
+    );
+  };
 
   const flightDatesFooter = (
     <div className="flex items-center justify-between gap-3">
@@ -1751,7 +1734,7 @@ export function SearchTabs({
         titleId={titleId}
         launcherRef={launcherRef}
         onClose={onClose}
-        contentClassName="bg-[linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)] px-4 py-5"
+        contentClassName="bg-slate-50 px-4 py-5"
         footer={(
           <div className="flex items-center justify-between gap-3">
             <button
@@ -1760,23 +1743,23 @@ export function SearchTabs({
                 onClear();
                 focusInput();
               }}
-              className="focus-ring min-h-12 rounded-2xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
+              className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
             >
               {t.clear || "Clear"}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="focus-ring min-h-12 rounded-2xl bg-indigo-700 px-7 text-sm font-bold text-white shadow-[0_14px_30px_rgba(67,56,202,0.28)] transition-colors hover:bg-indigo-600"
+              className="focus-ring min-h-11 rounded-xl bg-slate-950 px-7 text-sm font-bold text-white transition-colors hover:bg-slate-800"
             >
               {t.done || "Done"}
             </button>
           </div>
         )}
       >
-        <div className="mx-auto w-full max-w-xl space-y-4">
-          <div className="rounded-[1.75rem] border border-white/80 bg-white p-4 shadow-[0_18px_45px_rgba(15,23,42,0.10)] ring-1 ring-slate-200/70">
-            <label className="mb-2 block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500" htmlFor={inputId}>
+        <div className="mx-auto w-full max-w-xl space-y-5">
+          <div className="space-y-2">
+            <label className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500" htmlFor={inputId}>
               Search airports and cities
             </label>
             <div className="relative">
@@ -1788,7 +1771,7 @@ export function SearchTabs({
                 onChange={(event) => onChange(event.target.value)}
                 placeholder="City, airport, or code"
                 autoComplete="off"
-                className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/80 py-3 pl-4 pr-14 text-base font-bold text-slate-950 shadow-inner outline-none transition-colors placeholder:font-semibold placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/15"
+                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
               />
               {value.trim() ? (
                 <button
@@ -1798,7 +1781,7 @@ export function SearchTabs({
                     onClear();
                     focusInput();
                   }}
-                  className="focus-ring absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-950"
+                  className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -1806,13 +1789,13 @@ export function SearchTabs({
             </div>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
             {query.length < 2 ? (
-              <p className="rounded-3xl border border-white/80 bg-white/85 px-5 py-9 text-center text-sm font-semibold text-slate-500 shadow-sm">
+              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
                 Start typing a city, airport, or IATA code to see suggestions.
               </p>
             ) : isLoading ? (
-              <p className="rounded-3xl border border-white/80 bg-white/85 px-5 py-9 text-center text-sm font-semibold text-slate-500 shadow-sm">
+              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
                 Searching airports and cities…
               </p>
             ) : suggestions.length ? (
@@ -1821,33 +1804,26 @@ export function SearchTabs({
                   key={`${option.code}-${option.airport}-${inputId}`}
                   type="button"
                   onClick={() => onSelect(option)}
-                  className={cn(
-                    "focus-ring block min-h-[82px] w-full rounded-3xl border border-white/80 bg-white px-4 py-4 text-left shadow-[0_10px_28px_rgba(15,23,42,0.07)] ring-1 ring-slate-200/70 transition-all",
-                    "hover:-translate-y-0.5 hover:border-indigo-100 hover:shadow-[0_16px_34px_rgba(15,23,42,0.10)] focus-visible:border-indigo-300",
-                  )}
+                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
                 >
-                  <span className="flex items-center justify-between gap-4">
-                    <span className="min-w-0">
-                      <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
-                        {option.city}
-                      </span>
-                      <span className="mt-1 block line-clamp-2 text-sm font-semibold leading-5 text-slate-600">
-                        {option.airport}
-                      </span>
-                      {option.country ? (
-                        <span className="mt-1.5 block text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">
-                          {option.country}
-                        </span>
-                      ) : null}
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true">
+                    <Plane className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
+                      {option.city}
                     </span>
-                    <span className="inline-flex h-10 min-w-14 shrink-0 items-center justify-center rounded-2xl border border-indigo-100 bg-indigo-50 px-3 text-sm font-extrabold tracking-wide text-indigo-700">
-                      {option.code}
+                    <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
+                      {option.airport}
                     </span>
+                  </span>
+                  <span className="shrink-0 pl-2 text-right text-sm font-extrabold tracking-[0.12em] text-slate-700">
+                    {option.code}
                   </span>
                 </button>
               ))
             ) : (
-              <p className="rounded-3xl border border-white/80 bg-white/85 px-5 py-9 text-center text-sm font-semibold text-slate-500 shadow-sm">
+              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
                 No matching airports or cities.
               </p>
             )}
