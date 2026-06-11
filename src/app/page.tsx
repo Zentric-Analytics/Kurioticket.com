@@ -1324,7 +1324,7 @@ function DestinationCard({
           </div>
         </div>
 
-        <div className="flex items-center p-4">
+        <div className="flex min-h-[4.5rem] items-end px-4 pb-4 pt-3">
           <DestinationPricePill
             price={price}
             displayCurrency={displayCurrency}
@@ -1402,7 +1402,7 @@ function DestinationPricePill({
 
   return (
     <span
-      className="inline-flex text-base font-extrabold leading-6 tracking-tight text-slate-950 sm:text-[17px]"
+      className="inline-flex text-[17px] font-extrabold leading-6 tracking-tight text-slate-950 sm:text-lg"
       aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
