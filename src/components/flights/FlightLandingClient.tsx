@@ -214,29 +214,29 @@ export function FlightLandingClient() {
     heroSubtitle ===
       "Search routes, compare dates, and explore flight options for your next journey.";
 
+  const desktopHeroImageUrl =
+    "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=2400&q=92";
+
   return (
-    <main className="flex-1 bg-slate-50 pb-12 pt-4 sm:pt-8">
+    <main className="flex-1 bg-slate-50 pb-12 pt-4 sm:pt-6">
       <section className="page-shell">
-        <div className="w-full max-w-3xl text-left sm:mx-auto sm:max-w-4xl sm:text-center">
-          <h1 className="max-w-none text-[clamp(1.25rem,6.2vw,1.7rem)] font-semibold leading-[1.14] tracking-[-0.02em] text-slate-950 sm:mx-auto sm:max-w-3xl sm:text-[2.75rem] sm:leading-[1.08] lg:text-[3.25rem]">
-            {useEnglishHeroWrap ? (
-              <>
-                <span className="sm:hidden">
+        <div className="sm:hidden">
+          <div className="w-full max-w-3xl text-left">
+            <h1 className="max-w-none text-[clamp(1.25rem,6.2vw,1.7rem)] font-semibold leading-[1.14] tracking-[-0.02em] text-slate-950">
+              {useEnglishHeroWrap ? (
+                <span>
                   <span className="block whitespace-nowrap">
                     Find your next affordable flight
                   </span>
                   <span className="block whitespace-nowrap">with ease.</span>
                 </span>
-                <span className="hidden sm:inline">{heroTitle}</span>
-              </>
-            ) : (
-              heroTitle
-            )}
-          </h1>
-          <p className="mt-2.5 max-w-none text-[0.94rem] font-medium leading-[1.55] text-slate-600 sm:mx-auto sm:mt-4 sm:max-w-xl sm:text-base sm:leading-7">
-            {useEnglishHeroWrap ? (
-              <>
-                <span className="sm:hidden">
+              ) : (
+                heroTitle
+              )}
+            </h1>
+            <p className="mt-2.5 max-w-none text-[0.94rem] font-medium leading-[1.55] text-slate-600">
+              {useEnglishHeroWrap ? (
+                <span>
                   <span className="block whitespace-nowrap">
                     Search routes, compare dates, and explore flight
                   </span>
@@ -244,16 +244,49 @@ export function FlightLandingClient() {
                     options for your next journey.
                   </span>
                 </span>
-                <span className="hidden sm:inline">{heroSubtitle}</span>
-              </>
-            ) : (
-              heroSubtitle
-            )}
-          </p>
+              ) : (
+                heroSubtitle
+              )}
+            </p>
+          </div>
+
+          <div className="mx-auto mt-4 max-w-6xl">
+            <StandaloneFlightSearchForm localizeCalendarLabels />
+          </div>
         </div>
 
-        <div className="mx-auto mt-4 max-w-6xl sm:mt-7">
-          <StandaloneFlightSearchForm localizeCalendarLabels />
+        <div className="relative isolate hidden overflow-visible rounded-[2rem] border border-white/80 bg-white shadow-[0_24px_70px_rgba(15,23,42,0.14)] ring-1 ring-slate-900/[0.03] sm:block">
+          <div className="absolute inset-0 -z-20 overflow-hidden rounded-[2rem] bg-sky-100">
+            <Image
+              src={desktopHeroImageUrl}
+              alt="Airplane wing above bright clouds"
+              fill
+              priority
+              sizes="(min-width: 1280px) 1180px, 100vw"
+              className="object-cover object-[50%_43%]"
+            />
+          </div>
+          <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-r from-white/95 via-white/82 to-white/48" />
+          <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-b from-white/35 via-transparent to-white/78" />
+
+          <div className="px-6 py-8 lg:px-9 lg:py-9">
+            <div className="max-w-3xl">
+              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/85 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-700 shadow-sm">
+                <Plane className="h-3.5 w-3.5" aria-hidden="true" />
+                Flights
+              </div>
+              <h1 className="max-w-3xl text-[2.75rem] font-semibold leading-[1.08] tracking-[-0.035em] text-slate-950 lg:text-[3.35rem]">
+                {heroTitle}
+              </h1>
+              <p className="mt-4 max-w-xl text-base font-medium leading-7 text-slate-700 lg:text-[1.05rem]">
+                {heroSubtitle}
+              </p>
+            </div>
+
+            <div className="mt-7 max-w-6xl">
+              <StandaloneFlightSearchForm localizeCalendarLabels />
+            </div>
+          </div>
         </div>
 
         <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-5 sm:grid-cols-3">
