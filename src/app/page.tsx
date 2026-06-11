@@ -569,6 +569,7 @@ export default function Home() {
                 <SearchTabs
                   t={t as unknown as Record<string, string>}
                   compactHero
+                  locale={locale}
                 />
               </div>
             </div>
