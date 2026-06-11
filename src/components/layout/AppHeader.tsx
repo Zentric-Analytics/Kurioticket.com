@@ -929,8 +929,8 @@ export function AppHeader({
           </div>
 
           <nav className="hidden md:block" aria-label="Primary">
-            <div className="flex min-h-[50px] items-center justify-center pt-2">
-              <div className="flex min-w-0 items-center justify-center gap-4 whitespace-nowrap lg:gap-6">
+            <div className="flex min-h-[50px] items-center justify-start pt-2 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
+              <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
                 {desktopPrimaryNavItems.map((item) => {
                   const Icon = item.icon;
                   const active = isNavItemActive(item.href);
@@ -942,15 +942,15 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, item.href)
                       }
-                      className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-5 py-2 text-[16px] font-extrabold leading-none tracking-[-0.01em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 lg:px-6 ${
+                      className={`inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-[15px] font-semibold leading-none tracking-[-0.005em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 lg:px-5 ${
                         active
-                          ? "border-white bg-white text-indigo-700 shadow-[0_10px_24px_rgba(49,46,129,0.24)]"
-                          : "border-white/15 bg-white/[0.03] text-indigo-50/95 hover:border-white/35 hover:bg-white/10 hover:text-white"
+                          ? "border-white/90 bg-white text-indigo-700 shadow-[0_6px_16px_rgba(49,46,129,0.16)]"
+                          : "border-white/10 bg-transparent text-indigo-50/95 hover:border-white/30 hover:bg-white/10 hover:text-white"
                       }`}
                     >
                       {Icon ? (
                         <Icon
-                          size={18}
+                          size={17}
                           className="shrink-0"
                           aria-hidden="true"
                         />
