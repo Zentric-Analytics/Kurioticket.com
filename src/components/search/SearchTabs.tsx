@@ -435,23 +435,23 @@ export function SearchTabs({
   );
   const flightFieldLabelClassName = cn(
     "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
-    compactHero && "lg:text-[10px] lg:font-medium lg:tracking-[0.10em] lg:text-slate-500"
+    compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const flightFieldValueClassName = cn(
-    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm lg:placeholder:text-slate-400",
-    compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-950"
+    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm lg:placeholder:text-slate-500",
+    compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const flightFieldButtonClassName = cn(
     "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] font-medium text-slate-900 outline-none transition-colors md:text-sm",
-    compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-950"
+    compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const hotelFieldLabelClassName = cn(
     "mb-1 block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500",
-    compactHero && "lg:text-[10px] lg:font-medium lg:tracking-[0.10em]"
+    compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const hotelFieldValueClassName = cn(
     "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left font-medium leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
-    compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em]" : "min-h-8 text-[16px] sm:text-[15px]"
+    compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em] lg:text-slate-900 lg:placeholder:text-slate-500" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
     ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
@@ -2052,7 +2052,7 @@ export function SearchTabs({
         <h3 className="mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900">
           {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </h3>
-        <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium uppercase tracking-[0.09em] text-slate-400">
+        <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium uppercase tracking-[0.09em] text-slate-500">
           {weekdays.map((weekday) => (
             <span key={weekday} className="py-1.5">{weekday.slice(0, 2)}</span>
           ))}
@@ -2101,7 +2101,7 @@ export function SearchTabs({
                   "focus-ring relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors disabled:cursor-not-allowed",
                   isDisabledDate
                     ? "text-slate-300"
-                    : "text-slate-700 hover:bg-indigo-50/80 hover:text-indigo-800",
+                    : "text-slate-800 hover:bg-indigo-50/80 hover:text-indigo-800",
                   isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-200",
                   isInRange && "rounded-xl bg-indigo-50/80 text-indigo-800 hover:bg-indigo-100",
                   (isStart || isEnd) && "bg-indigo-600 text-white shadow-none hover:bg-indigo-600 hover:text-white ring-0"
@@ -2139,7 +2139,7 @@ export function SearchTabs({
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
+          <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
             {mode === "flights" ? (t.travelDates || "Travel dates") : "Stay dates"}
           </p>
           <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
@@ -2175,14 +2175,14 @@ export function SearchTabs({
         <button
           type="button"
           onClick={onClear}
-          className="focus-ring rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
+          className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
         >
           {t.clear || "Clear"}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
+          className="focus-ring rounded-lg bg-gradient-to-r from-indigo-700 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500"
         >
           {t.done || "Done"}
         </button>
@@ -2232,7 +2232,7 @@ export function SearchTabs({
               </span>
               <span className={cn(
                 "mt-0.5 block text-xs leading-5 text-slate-500",
-                compact ? "font-normal" : "font-medium"
+                compact ? "font-medium text-slate-600" : "font-medium"
               )}>
                 {row.subtitle}
               </span>
@@ -2860,7 +2860,7 @@ export function SearchTabs({
                     </FlightMobilePickerShell>
                     <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block">
                       <div>
-                        <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
                           Passengers
                         </p>
                         <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
@@ -2870,7 +2870,7 @@ export function SearchTabs({
                       <div className="mt-3 space-y-4">
                         {renderPassengerControlRows(true)}
                         <div>
-                          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
+                          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
                             {t.cabinClass || "Cabin class"}
                           </p>
                           {renderCabinClassPicker(true)}
@@ -3118,7 +3118,7 @@ export function SearchTabs({
                 {hotelGuestsRoomsOpen ? (
                   <div className="absolute left-0 top-[calc(100%+10px)] z-30 hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block">
                     <div className="mb-3">
-                      <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
                         Stay details
                       </p>
                       <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
@@ -3198,7 +3198,7 @@ export function SearchTabs({
                               <span className="block text-sm font-medium tracking-tight text-slate-900">
                                 {row.label}
                               </span>
-                              <span className="mt-0.5 block text-xs font-medium leading-5 text-slate-500">
+                              <span className="mt-0.5 block text-xs font-medium leading-5 text-slate-600">
                                 {row.helper}
                               </span>
                             </span>
@@ -3232,7 +3232,7 @@ export function SearchTabs({
                             <p className="text-sm font-medium tracking-tight text-slate-900">
                               Pet-friendly
                             </p>
-                            <p className="mt-0.5 text-xs font-normal leading-5 text-slate-500">
+                            <p className="mt-0.5 text-xs font-medium leading-5 text-slate-600">
                               Only show stays that allow pets
                             </p>
                           </div>
