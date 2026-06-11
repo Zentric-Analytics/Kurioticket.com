@@ -1083,11 +1083,8 @@ export function AppHeader({
                 >
                   <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
                     <div className="min-w-0">
-                      <p className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">
+                      <h2 className="truncate text-xl font-semibold tracking-[-0.02em] text-slate-950">
                         Menu
-                      </p>
-                      <h2 className="truncate text-xl font-black tracking-[-0.03em] text-slate-950">
-                        More
                       </h2>
                     </div>
 
@@ -1110,12 +1107,7 @@ export function AppHeader({
                         Preferences
                       </p>
 
-                      <div className="mt-2 flex flex-wrap items-center gap-2 [&>button:first-child]:!inline-flex [&>button:first-child]:!h-10 [&>button:first-child]:!w-auto [&>button:first-child]:!rounded-full [&>button:first-child]:!border-slate-200 [&>button:first-child]:!bg-white [&>button:first-child]:!px-3 [&>button:first-child]:!text-sm [&>button:first-child]:!shadow-none [&>button:first-child:hover]:!border-violet-300 [&>button:first-child:hover]:!bg-violet-50 [&>button:first-child>span>span:first-child]:sr-only [&>button:first-child>span>span:last-child]:!mt-0 [&>button:first-child>span>span:last-child]:!text-sm">
-                        <CountryCurrencySelector
-                          variant="mobile"
-                          onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
-                        />
-
+                      <div className="mt-2 flex flex-col items-start gap-2">
                         <button
                           ref={languageTriggerRef}
                           type="button"
@@ -1150,6 +1142,13 @@ export function AppHeader({
                             aria-hidden="true"
                           />
                         </button>
+
+                        <div className="[&>button]:!inline-flex [&>button]:!h-10 [&>button]:!w-auto [&>button]:!rounded-full [&>button]:!border-slate-200 [&>button]:!bg-white [&>button]:!px-3 [&>button]:!text-sm [&>button]:!shadow-none [&>button:hover]:!border-violet-300 [&>button:hover]:!bg-violet-50 [&>button>span>span:first-child]:sr-only [&>button>span>span:last-child]:!mt-0 [&>button>span>span:last-child]:!text-sm">
+                          <CountryCurrencySelector
+                            variant="mobile"
+                            onBeforeOpen={handleMobileCountryCurrencyBeforeOpen}
+                          />
+                        </div>
                       </div>
                     </section>
 
