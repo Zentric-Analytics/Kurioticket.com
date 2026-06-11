@@ -209,6 +209,7 @@ export function MobileAccountBackLink() {
   return (
     <Link
       href="/dashboard/account"
+      aria-label="Back to My account"
       className="focus-ring inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 pr-3 text-sm font-black text-violet-700 transition hover:bg-violet-50 lg:hidden"
     >
       <span className="text-xl leading-none" aria-hidden="true">‹</span>
@@ -219,7 +220,7 @@ export function MobileAccountBackLink() {
 
 export function MobileAccountMenuPage() {
   return (
-    <section className="mx-auto max-w-2xl lg:hidden" aria-labelledby="mobile-account-title">
+    <section className="mx-auto max-w-2xl overflow-x-hidden lg:hidden" aria-labelledby="mobile-account-title">
       <div className="mb-5 px-1">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Kurioticket</p>
         <h1 id="mobile-account-title" className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950">

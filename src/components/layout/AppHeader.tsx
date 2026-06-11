@@ -20,6 +20,7 @@ import {
   Car,
   Check,
   ChevronDown,
+  ChevronRight,
   Compass,
   LayoutDashboard,
   LogOut,
@@ -1254,7 +1255,7 @@ export function AppHeader({
                         Kurioticket
                       </p>
                       <h2 className="truncate text-xl font-black tracking-[-0.03em] text-slate-950">
-                        Account
+                        My account
                       </h2>
                     </div>
 
@@ -1311,7 +1312,17 @@ export function AppHeader({
                               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-700">
                                 <Icon size={18} aria-hidden="true" />
                               </span>
-                              <span>{item.label}</span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate">{item.label}</span>
+                                <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                                  {item.description}
+                                </span>
+                              </span>
+                              <ChevronRight
+                                size={18}
+                                className="shrink-0 text-slate-400 transition-colors group-hover:text-indigo-700"
+                                aria-hidden="true"
+                              />
                             </Link>
                           );
                         })}
