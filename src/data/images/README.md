@@ -7,7 +7,7 @@ This directory contains the registry and Phase 2 inventory used to govern produc
 - `imageTypes.ts` defines products, usages, sources, statuses, content roles, production priorities, registry entries, and inventory entries.
 - `imageRegistry.ts` contains approved or known reusable production entries plus provider URL patterns.
 - `imageInventory.ts` classifies discovered hard-coded image URLs that are not migrated to registry imports yet.
-- `imagePurchasePlan.ts` derives Phase 3 premium purchase categories and the seed first-60 candidate list.
+- `imagePurchasePlan.ts` derives Phase 3 premium purchase categories, the structured first-60 shopping list, batch counts, product/usage breakdowns, and the top-impact purchase slice.
 - `imageRegistryValidation.ts` validates the approved registry. Inventory is intentionally allowed to document temporary and replace-before-launch debt.
 
 ## How to classify images
@@ -42,6 +42,11 @@ The audit reports both exact URL duplicates and source identity duplicates. Sour
 ## Provider and fallback rules
 
 Provider-real images are supplied for a returned entity and must not be reused as generic marketing. Hotel fallback images are generic only; they must not imply that a hotel has the pictured pool, room, exterior, view, amenity, rating, price, or availability. If provider-real hotel imagery exists, use it before fallback imagery.
+
+## Phase 3 shopping and approval documents
+
+- `docs/premium-image-shopping-list-phase-3.md` is the human buying guide for the first 60 premium images, grouped into Batch A, Batch B, and Batch C.
+- `docs/image-approval-workflow.md` defines purchase/download naming, license record storage, crop approval, rejection handling, and Phase 4 replacement PR preparation.
 
 ## Audit workflow
 
