@@ -238,10 +238,10 @@ export function FlightLandingClient() {
               <>
                 <span className="sm:hidden">
                   <span className="block whitespace-nowrap">
-                    Search routes, compare dates, and explore
+                    Search routes, compare dates, and explore flight
                   </span>
                   <span className="block whitespace-nowrap">
-                    flight options for your next journey.
+                    options for your next journey.
                   </span>
                 </span>
                 <span className="hidden sm:inline">{heroSubtitle}</span>
