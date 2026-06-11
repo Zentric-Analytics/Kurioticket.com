@@ -117,13 +117,21 @@ function getRouteText(item: HomeDiscoveryItem, t: (key: string) => string) {
   return {
     title: t(`homeDiscoveryRoute.${item.id}.title`) || item.title,
     routeNote: t(`homeDiscoveryRoute.${item.id}.routeNote`) || item.routeNote,
-    originCity: getDiscoveryTranslation("flightLandingCity", item.originCity, t),
+    originCity: getDiscoveryTranslation(
+      "flightLandingCity",
+      item.originCity,
+      t,
+    ),
     destinationCity: getDiscoveryTranslation(
       "flightLandingCity",
       item.destinationCity,
       t,
     ),
-    imageAlt: getDiscoveryTranslation("flightLandingImageAlt", item.imageAlt, t),
+    imageAlt: getDiscoveryTranslation(
+      "flightLandingImageAlt",
+      item.imageAlt,
+      t,
+    ),
   };
 }
 
@@ -186,34 +194,40 @@ export function FlightLandingClient() {
   const { selectedOption } = useRegion();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
-  const discoveryCards = getHomeDiscoveryByRegion(selectedOption.code).slice(0, 4);
+  const discoveryCards = getHomeDiscoveryByRegion(selectedOption.code).slice(
+    0,
+    4,
+  );
   const discoveryIds = new Set(discoveryCards.map((item) => item.id));
-  const beachVacationCards = getBeachVacationCards(selectedOption.code, discoveryIds);
+  const beachVacationCards = getBeachVacationCards(
+    selectedOption.code,
+    discoveryIds,
+  );
   const routeInspirationCards = getHomeDiscoveryByRegion(selectedOption.code)
     .filter((item) => !discoveryIds.has(item.id))
     .slice(0, 8);
 
   return (
-    <main className="flex-1 bg-slate-50 pb-12 pt-5 sm:pt-8">
+    <main className="flex-1 bg-slate-50 pb-12 pt-4 sm:pt-8">
       <section className="page-shell">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-indigo-700 shadow-sm">
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-indigo-700 shadow-sm sm:px-3.5 sm:py-1.5 sm:text-xs">
             <Sparkles className="h-3.5 w-3.5" />
             {t("flights")}
           </div>
-          <h1 className="mt-5 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:mt-5 sm:text-5xl lg:text-6xl">
             {t("flightLandingHeroTitle")}
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base font-medium leading-7 text-slate-600 sm:text-lg">
+          <p className="mx-auto mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-600 sm:mt-4 sm:text-lg sm:leading-7">
             {t("flightLandingHeroSubtitle")}
           </p>
         </div>
 
-        <div className="mx-auto mt-7 max-w-6xl">
+        <div className="mx-auto mt-4 max-w-6xl sm:mt-7">
           <StandaloneFlightSearchForm />
         </div>
 
-        <div className="mx-auto mt-5 grid max-w-6xl gap-3 sm:grid-cols-3">
+        <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-5 sm:grid-cols-3">
           {[
             {
               title: t("flightLandingFeatureSearchReadyTitle"),
@@ -236,7 +250,9 @@ export function FlightLandingClient() {
               className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
             >
               <Icon className="h-5 w-5 text-indigo-700" aria-hidden="true" />
-              <h2 className="mt-3 text-base font-extrabold text-slate-950">{title}</h2>
+              <h2 className="mt-3 text-base font-extrabold text-slate-950">
+                {title}
+              </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
             </article>
           ))}
