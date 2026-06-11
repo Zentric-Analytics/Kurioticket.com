@@ -15,7 +15,6 @@ import {
   Luggage,
   Mail,
   Plane,
-  Route,
   Settings,
   ShieldCheck,
   UserRound,
@@ -630,32 +629,6 @@ export function DashboardOverview({ initials, displayName, userEmail, userName }
   );
 }
 
-export function TripsDashboardPage() {
-  return (
-    <Card className="overflow-hidden p-0">
-      <div className="border-b border-border bg-surface-muted/70 px-5 py-5 sm:px-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">My Trips</p>
-        <h1 className="mt-2 text-3xl font-bold text-navy">My Trips</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-          Booked and saved trip activity tied to your account will appear here when it exists.
-        </p>
-      </div>
-      <div className="px-5 py-6 sm:px-6">
-        <div className="rounded-2xl border border-dashed border-border bg-white p-6">
-          <Route className="size-10 text-teal-dark" aria-hidden="true" />
-          <h2 className="mt-4 text-2xl font-bold text-navy">No trips booked yet</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            When real booked or saved trip activity is available for your account, it will be organized here. Start with a flight or hotel search to keep planning.
-          </p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/flights">Search flights</LinkButton>
-            <LinkButton href="/hotels" variant="secondary">Search hotels</LinkButton>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 export function SavedDashboardPage() {
   return (
