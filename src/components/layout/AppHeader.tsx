@@ -529,20 +529,20 @@ export function AppHeader({
   return (
     <>
       <header className="relative z-50 border-b border-white/10 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
-        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-1 md:gap-1 md:pt-[6px]">
-          <div className="flex min-h-[48px] items-center justify-between gap-2.5 md:min-h-[42px] md:gap-4">
+        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-1 md:pt-[6px]">
+          <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[42px] md:gap-4">
             <Link
               href="/"
               aria-label="Kurioticket home"
               onClick={(event) => handleRouteLinkClick(event, "/")}
-              className="min-w-0 shrink-0"
+              className="shrink-0"
             >
               <KurioticketLogo
                 variant="full"
                 tone="light"
-                className="gap-1.5 md:gap-2"
-                markClassName="h-9 w-9 md:h-11 md:w-11"
-                textClassName="text-base sm:text-lg md:text-xl"
+                className="gap-2"
+                markClassName="h-10 w-10 md:h-11 md:w-11"
+                textClassName="text-lg md:text-xl"
               />
             </Link>
 
@@ -696,7 +696,7 @@ export function AppHeader({
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+            <div className="flex items-center gap-2 md:hidden">
               {isSignedIn ? (
                 <button
                   type="button"
@@ -704,7 +704,7 @@ export function AppHeader({
                   aria-expanded={open}
                   aria-haspopup="menu"
                   onClick={() => setOpen((value) => !value)}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-white/15 bg-white/[0.06] text-xs font-black text-white/95 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-xs font-black text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 >
                   <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
                     {session?.user?.image ? (
@@ -725,7 +725,7 @@ export function AppHeader({
                   onClick={(event) =>
                     handleRouteLinkClick(event, "/auth/signin")
                   }
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-white/15 bg-white/[0.06] text-white/95 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 >
                   <UserCircle size={18} />
                 </Link>
@@ -736,7 +736,7 @@ export function AppHeader({
                 aria-label={open ? t.closeMobileMenu : t.openMobileMenu}
                 aria-expanded={open}
                 aria-controls={open ? "mobile-menu-drawer" : undefined}
-                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-white/15 bg-white/[0.06] text-white/95 transition-colors hover:border-white/25 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-white/25 bg-white/10 text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 onClick={() => setOpen((value) => !value)}
               >
                 {open ? <X size={18} /> : <Menu size={18} />}
@@ -945,8 +945,8 @@ export function AppHeader({
           </nav>
 
           <nav className="md:hidden">
-            <div className="pb-0.5 pt-0">
-              <div className="grid w-full grid-cols-4 items-center gap-1 rounded-lg bg-white/[0.04] p-0.5 ring-1 ring-white/10">
+            <div className="pb-1 pt-0.5">
+              <div className="grid w-full grid-cols-4 items-center gap-1">
                 {visibleMobilePrimaryNavItems.map((item) => {
                   const Icon = item.icon;
                   const active = isNavItemActive(item.href);
@@ -958,15 +958,15 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, item.href)
                       }
-                      className={`inline-flex min-h-9 min-w-0 items-center justify-center gap-1 rounded-md px-1 py-1 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                      className={`inline-flex min-w-0 items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
                         active
-                          ? "bg-white/[0.12] text-white ring-1 ring-white/20"
+                          ? "bg-white/10 text-white ring-1 ring-white/30 shadow-none"
                           : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
                       }`}
                     >
                       {Icon ? (
                         <Icon
-                          size={14}
+                          size={15}
                           className="shrink-0"
                           aria-hidden="true"
                         />
