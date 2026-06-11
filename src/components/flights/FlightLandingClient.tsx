@@ -224,7 +224,7 @@ export function FlightLandingClient() {
         </div>
 
         <div className="mx-auto mt-4 max-w-6xl sm:mt-7">
-          <StandaloneFlightSearchForm />
+          <StandaloneFlightSearchForm localizeCalendarLabels />
         </div>
 
         <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-5 sm:grid-cols-3">

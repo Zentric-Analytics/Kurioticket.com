@@ -56,7 +56,25 @@ type MonthCell = {
   isCurrentMonth: boolean;
 };
 
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const normalizeFlightsCalendarLocale = (
+  locale: string | null | undefined,
+) => {
+  const normalized =
+    locale?.trim().replace("_", "-").toLowerCase() ?? "";
+
+  if (normalized === "es" || normalized.startsWith("es-")) {
+    return "es-ES";
+  }
+
+  return "en-US";
+};
+
+const formatFlightsWeekdays = (locale: string) =>
+  Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+      new Date(2024, 0, 7 + day),
+    ),
+  );
 
 const searchFieldShellClassName =
   "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 sm:min-h-[66px] sm:rounded-2xl sm:border-slate-200 sm:px-4 sm:py-3 sm:hover:border-slate-300 sm:focus-within:border-indigo-400 sm:focus-within:ring-indigo-500/15";
@@ -147,18 +165,14 @@ const buildMonthCells = (monthDate: Date) => {
   });
 };
 
-const formatShortDate = (isoDate: string) => {
-  const parsed = parseIsoDate(isoDate);
-  if (!parsed) return "";
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(parsed);
+type StandaloneFlightSearchFormProps = {
+  localizeCalendarLabels?: boolean;
 };
 
-export function StandaloneFlightSearchForm() {
-  const { t: dictionary } = useLocale();
+export function StandaloneFlightSearchForm({
+  localizeCalendarLabels = false,
+}: StandaloneFlightSearchFormProps = {}) {
+  const { t: dictionary, locale } = useLocale();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
@@ -178,6 +192,43 @@ export function StandaloneFlightSearchForm() {
     }),
     [t],
   );
+  const calendarLocale = useMemo(
+    () =>
+      normalizeFlightsCalendarLocale(
+        localizeCalendarLabels ? locale : "en-us",
+      ),
+    [localizeCalendarLabels, locale],
+  );
+  const monthYearFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(calendarLocale, {
+        month: "long",
+        year: "numeric",
+      }),
+    [calendarLocale],
+  );
+  const accessibleDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(calendarLocale, {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+    [calendarLocale],
+  );
+  const shortDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(calendarLocale, {
+        month: "short",
+        day: "numeric",
+      }),
+    [calendarLocale],
+  );
+  const weekdays = useMemo(
+    () => formatFlightsWeekdays(calendarLocale),
+    [calendarLocale],
+  );
+
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
 
@@ -273,14 +324,18 @@ export function StandaloneFlightSearchForm() {
     !isReturnRangeValid;
 
   const dateSummary = useMemo(() => {
-    const departureSummary = formatShortDate(departureDate);
-    const returnSummary = formatShortDate(returnDate);
+    const departureSummary = departureParsed
+      ? shortDateFormatter.format(departureParsed)
+      : "";
+    const returnSummary = returnParsed
+      ? shortDateFormatter.format(returnParsed)
+      : "";
 
     if (!departureSummary) return t("travelDates");
     if (tripType === "round-trip" && returnSummary)
       return `${departureSummary} — ${returnSummary}`;
     return departureSummary;
-  }, [departureDate, returnDate, tripType, t]);
+  }, [departureParsed, returnParsed, shortDateFormatter, tripType, t]);
 
   const cabinClassLabel =
     cabinClass === "business"
@@ -737,10 +792,7 @@ export function StandaloneFlightSearchForm() {
           return (
             <div key={`${monthDate.toISOString()}-${monthOffset}`}>
               <p className="mb-2 text-center text-sm font-black text-slate-900">
-                {monthDate.toLocaleDateString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })}
+                {monthYearFormatter.format(monthDate)}
               </p>
               <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
                 {weekdays.map((weekday) => (
@@ -776,11 +828,7 @@ export function StandaloneFlightSearchForm() {
                     <button
                       key={iso}
                       type="button"
-                      aria-label={`Select ${day.toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}`}
+                      aria-label={`Select ${accessibleDateFormatter.format(day)}`}
                       onClick={() => onSelectDate(day)}
                       disabled={isDisabledDate}
                       aria-disabled={isDisabledDate}
