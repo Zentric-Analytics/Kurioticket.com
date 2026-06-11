@@ -168,6 +168,14 @@ const findDiscoveryImageForHotel = (destination: string) => {
   });
 };
 
+const desktopOverlayRootClassName = "relative isolate z-[2147482800]";
+const desktopOverlayGuardClassName =
+  "fixed inset-0 z-[2147483000] hidden bg-transparent sm:block";
+const desktopActiveFieldClassName = "z-[2147483200]";
+const desktopPopoverPanelClassName = "z-[2147483400]";
+const desktopTravelersFieldClassName = "z-[2147483500]";
+const desktopTravelersPopoverClassName = "z-[2147483600]";
+
 export function SearchTabs({
   t: translations,
   compactHero = false,
@@ -383,17 +391,29 @@ export function SearchTabs({
   const [hotelGuestsRoomsOpen, setHotelGuestsRoomsOpen] =
     useState(false);
 
+  const desktopPopoverOpen =
+    flightDatesOpen ||
+    hotelDatesOpen ||
+    travelersMenuOpen ||
+    fromOpen ||
+    toOpen ||
+    hotelGuestsRoomsOpen;
+
+  const searchTabsOverlayOpen =
+    desktopPopoverOpen ||
+    hotelDestinationMobilePickerOpen ||
+    activeMobileAirportPicker !== null;
+
   const wrapper = useMemo(
     () =>
       cn(
         "rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
-        (flightDatesOpen || hotelDatesOpen || travelersMenuOpen || fromOpen || toOpen || hotelGuestsRoomsOpen || hotelDestinationMobilePickerOpen) &&
-          "relative isolate z-[1000]",
+        searchTabsOverlayOpen && desktopOverlayRootClassName,
         compactHero
           ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
           : "p-2"
       ),
-    [compactHero, flightDatesOpen, hotelDatesOpen, travelersMenuOpen, fromOpen, toOpen, hotelGuestsRoomsOpen, hotelDestinationMobilePickerOpen]
+    [compactHero, searchTabsOverlayOpen]
   );
 
   const tabsClassName = cn(
@@ -1988,7 +2008,12 @@ export function SearchTabs({
     sectionLabel: string;
     onSelect: (option: AirportOption) => void;
   }) => (
-    <div className="absolute left-0 top-[calc(100%+10px)] z-[1100] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]">
+    <div
+      className={cn(
+        "absolute left-0 top-[calc(100%+10px)] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]",
+        desktopPopoverPanelClassName
+      )}
+    >
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
           {sectionLabel}
@@ -2136,7 +2161,8 @@ export function SearchTabs({
       role="dialog"
       aria-label={t.chooseTravelDates || "Choose travel dates"}
       className={cn(
-        "absolute left-0 top-[calc(100%+12px)] z-[1100] hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
+        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
+        desktopPopoverPanelClassName,
         mode === "flights" && "lg:left-1/2 lg:w-[min(760px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:p-5"
       )}
     >
@@ -2352,6 +2378,9 @@ export function SearchTabs({
   return (
     <>
       <section className={wrapper}>
+        {desktopPopoverOpen ? (
+          <div aria-hidden="true" className={desktopOverlayGuardClassName} />
+        ) : null}
       <div className={tabsClassName}>
         <button
           type="button"
@@ -2537,7 +2566,7 @@ export function SearchTabs({
                 ref={fromWrapRef}
                 className={cn(
                   flightRouteFieldClassName("origin"),
-                  fromOpen && "z-[1050]"
+                  fromOpen && desktopActiveFieldClassName
                 )}
               >
                 <label className={flightFieldLabelClassName}>
@@ -2645,7 +2674,7 @@ export function SearchTabs({
                 ref={toWrapRef}
                 className={cn(
                   flightRouteFieldClassName("destination"),
-                  toOpen && "z-[1050]"
+                  toOpen && desktopActiveFieldClassName
                 )}
               >
                 <label className={flightFieldLabelClassName}>
@@ -2732,7 +2761,11 @@ export function SearchTabs({
 
               <div
                 ref={dateWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName, flightDatesOpen && "z-[1050]")}
+                className={cn(
+                  "relative rounded-xl border border-slate-300 bg-white",
+                  flightJoinedFieldClassName,
+                  flightDatesOpen && desktopActiveFieldClassName
+                )}
               >
                 <label className={flightFieldLabelClassName}>
                   {t.departureDate ||
@@ -2804,7 +2837,11 @@ export function SearchTabs({
 
               <div
                 ref={travelersWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName, travelersMenuOpen && "z-[1050]")}
+                className={cn(
+                  "relative rounded-xl border border-slate-300 bg-white",
+                  flightJoinedFieldClassName,
+                  travelersMenuOpen && desktopTravelersFieldClassName
+                )}
               >
                 <label className={flightFieldLabelClassName}>
                   {t.travelers}
@@ -2861,7 +2898,14 @@ export function SearchTabs({
                     >
                       {renderTravelersCabinPicker()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+12px)] z-[1100] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
+                    <div
+                      role="dialog"
+                      aria-label="Travelers and cabin"
+                      className={cn(
+                        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
+                        desktopTravelersPopoverClassName
+                      )}
+                    >
                       <div>
                         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
                           Passengers
@@ -3038,7 +3082,11 @@ export function SearchTabs({
               </div>
               <div
                 ref={hotelDateWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", hotelJoinedFieldClassName)}
+                className={cn(
+                  "relative rounded-xl border border-slate-300 bg-white",
+                  hotelJoinedFieldClassName,
+                  hotelDatesOpen && desktopActiveFieldClassName
+                )}
               >
                 <label className={hotelFieldLabelClassName}>
                   {t.departureDate ||
@@ -3086,7 +3134,11 @@ export function SearchTabs({
               </div>
               <div
                 ref={hotelGuestsRoomsWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", hotelJoinedFieldClassName)}
+                className={cn(
+                  "relative rounded-xl border border-slate-300 bg-white",
+                  hotelJoinedFieldClassName,
+                  hotelGuestsRoomsOpen && desktopActiveFieldClassName
+                )}
               >
                 <label className={hotelFieldLabelClassName}>
                   {t.guests ||
@@ -3119,7 +3171,12 @@ export function SearchTabs({
                   />
                 </button>
                 {hotelGuestsRoomsOpen ? (
-                  <div className="absolute left-0 top-[calc(100%+10px)] z-30 hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block">
+                  <div
+                    className={cn(
+                      "absolute left-0 top-[calc(100%+10px)] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block",
+                      desktopPopoverPanelClassName
+                    )}
+                  >
                     <div className="mb-3">
                       <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
                         Stay details
