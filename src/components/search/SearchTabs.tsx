@@ -1810,7 +1810,7 @@ export function SearchTabs({
                 <div
                   role="radiogroup"
                   aria-label={t.tripType || "Trip type"}
-                  className="inline-flex rounded-full border border-slate-200 bg-white p-0.5 shadow-sm"
+                  className="inline-flex items-center gap-3 rounded-lg bg-white/80 px-0.5 py-1"
                 >
                   {(["round-trip", "one-way"] as const).map((mode) => {
                     const selected = tripType === mode;
@@ -1822,14 +1822,41 @@ export function SearchTabs({
                         role="radio"
                         aria-checked={selected}
                         onClick={() => onSelectTripType(mode)}
+                        onKeyDown={(event) => {
+                          if (
+                            event.key !== "ArrowRight" &&
+                            event.key !== "ArrowLeft" &&
+                            event.key !== "ArrowDown" &&
+                            event.key !== "ArrowUp"
+                          ) {
+                            return;
+                          }
+
+                          event.preventDefault();
+                          onSelectTripType(mode === "round-trip" ? "one-way" : "round-trip");
+                        }}
                         className={cn(
-                          "focus-ring inline-flex min-h-8 items-center rounded-full px-3 py-1 text-sm font-semibold transition-all",
-                          selected
-                            ? "bg-slate-950 text-white shadow-sm"
-                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                          "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950",
+                          selected && "text-slate-950"
                         )}
                       >
-                        {tripTypeLabel(mode)}
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors",
+                            selected
+                              ? "border-indigo-600 bg-white"
+                              : "border-slate-300 bg-white group-hover:border-slate-400"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "h-1.5 w-1.5 rounded-full bg-indigo-600 transition-opacity",
+                              selected ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                        </span>
+                        <span>{tripTypeLabel(mode)}</span>
                       </button>
                     );
                   })}
@@ -2040,11 +2067,11 @@ export function SearchTabs({
                   </div>
                 ) : null}
               </div>
-              <div className="flex items-center justify-center">
+              <div className="relative z-20 -my-2 flex h-4 items-center justify-center sm:my-0 sm:h-auto">
                 <button
                   type="button"
                   onClick={onSwapAirports}
-                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                  className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 sm:shadow-none"
                   aria-label={t.swapOriginDestination || "Swap origin and destination"}
                 >
                   <ArrowRightLeft size={14} />
