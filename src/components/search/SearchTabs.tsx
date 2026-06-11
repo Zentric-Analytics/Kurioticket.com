@@ -1595,7 +1595,10 @@ export function SearchTabs({
         formatShortDate(checkOut);
 
       if (!checkInSummary) {
-        return "Check-in — Check-out";
+        return (
+          t.hotelSearchDatePlaceholder ||
+          enTranslations.hotelSearchDatePlaceholder
+        );
       }
 
       if (checkOutSummary) {
@@ -1604,7 +1607,7 @@ export function SearchTabs({
 
       return checkInSummary;
     },
-    [checkIn, checkOut]
+    [checkIn, checkOut, t.hotelSearchDatePlaceholder]
   );
 
   const checkInParsed =
@@ -2169,7 +2172,9 @@ export function SearchTabs({
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-            {mode === "flights" ? (t.travelDates || "Travel dates") : "Stay dates"}
+            {mode === "flights"
+              ? (t.travelDates || "Travel dates")
+              : (t.hotelSearchTravelDatesLabel || "Travel dates")}
           </p>
           <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
             {t.chooseTravelDates || "Choose travel dates"}
@@ -2178,19 +2183,19 @@ export function SearchTabs({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            aria-label="Previous month"
+            aria-label={t.previousMonth || "Previous month"}
             onClick={() => setVisibleMonth((prev) => addMonths(prev, -1))}
             className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
-            Prev
+            {t.previousMonthShort || "Prev"}
           </button>
           <button
             type="button"
-            aria-label="Next month"
+            aria-label={t.nextMonth || "Next month"}
             onClick={() => setVisibleMonth((prev) => addMonths(prev, 1))}
             className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
-            Next
+            {t.nextMonthShort || "Next"}
           </button>
         </div>
       </div>
@@ -3089,7 +3094,7 @@ export function SearchTabs({
                 )}
               >
                 <label className={hotelFieldLabelClassName}>
-                  {t.departureDate ||
+                  {t.hotelSearchTravelDatesLabel ||
                     t.travelDates || "Travel dates"}
                 </label>
                 <button
