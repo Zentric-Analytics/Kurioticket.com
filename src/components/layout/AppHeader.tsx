@@ -707,9 +707,9 @@ export function AppHeader({
                   aria-expanded={open}
                   aria-haspopup="menu"
                   onClick={() => setOpen((value) => !value)}
-                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-black text-white/95 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-transparent bg-transparent text-xs font-black text-white/95 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 >
-                  <span className="inline-flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
+                  <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
                     {session?.user?.image ? (
                       <RawImage
                         src={session.user.image}
