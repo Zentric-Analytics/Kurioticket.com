@@ -25,7 +25,6 @@ import {
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
-import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { type AirportOption, formatAirportLabel } from "@/data/airports";
 import {
@@ -56,11 +55,8 @@ type MonthCell = {
   isCurrentMonth: boolean;
 };
 
-const normalizeFlightsCalendarLocale = (
-  locale: string | null | undefined,
-) => {
-  const normalized =
-    locale?.trim().replace("_", "-").toLowerCase() ?? "";
+const normalizeFlightsCalendarLocale = (locale: string | null | undefined) => {
+  const normalized = locale?.trim().replace("_", "-").toLowerCase() ?? "";
 
   if (normalized === "es" || normalized.startsWith("es-")) {
     return "es-ES";
@@ -194,9 +190,7 @@ export function StandaloneFlightSearchForm({
   );
   const calendarLocale = useMemo(
     () =>
-      normalizeFlightsCalendarLocale(
-        localizeCalendarLabels ? locale : "en-us",
-      ),
+      normalizeFlightsCalendarLocale(localizeCalendarLabels ? locale : "en-us"),
     [localizeCalendarLabels, locale],
   );
   const monthYearFormatter = useMemo(
@@ -235,9 +229,11 @@ export function StandaloneFlightSearchForm({
   const originWrapRef = useRef<HTMLDivElement>(null);
   const originInputRef = useRef<HTMLInputElement>(null);
   const originMobileLauncherRef = useRef<HTMLButtonElement>(null);
+  const originMobilePickerInputRef = useRef<HTMLInputElement>(null);
   const destinationWrapRef = useRef<HTMLDivElement>(null);
   const destinationInputRef = useRef<HTMLInputElement>(null);
   const destinationMobileLauncherRef = useRef<HTMLButtonElement>(null);
+  const destinationMobilePickerInputRef = useRef<HTMLInputElement>(null);
   const dateWrapRef = useRef<HTMLDivElement>(null);
   const datesMobileLauncherRef = useRef<HTMLButtonElement>(null);
   const travelersWrapRef = useRef<HTMLDivElement>(null);
@@ -456,6 +452,22 @@ export function StandaloneFlightSearchForm({
   });
 
   useEffect(() => {
+    if (!activeMobileAirportPicker || typeof window === "undefined") return;
+
+    const focusId = window.setTimeout(() => {
+      const inputRef =
+        activeMobileAirportPicker === "origin"
+          ? originMobilePickerInputRef
+          : destinationMobilePickerInputRef;
+
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }, 80);
+
+    return () => window.clearTimeout(focusId);
+  }, [activeMobileAirportPicker]);
+
+  useEffect(() => {
     const onPointerDown = (event: MouseEvent) => {
       const eventTarget = event.target as Node;
       if (
@@ -491,18 +503,22 @@ export function StandaloneFlightSearchForm({
   }, []);
 
   const openTravelers = () => {
+    const normalizedCabinClass = normalizeCabinClass(cabinClass);
+    setCabinClass(normalizedCabinClass);
     setDraftAdultCount(adultCount);
     setDraftChildCount(childCount);
     setDraftInfantCount(infantCount);
-    setDraftCabinClass(cabinClass);
+    setDraftCabinClass(normalizedCabinClass);
     setTravelersOpen(true);
   };
 
   const closeTravelers = () => {
+    const normalizedCabinClass = normalizeCabinClass(cabinClass);
+    setCabinClass(normalizedCabinClass);
     setDraftAdultCount(adultCount);
     setDraftChildCount(childCount);
     setDraftInfantCount(infantCount);
-    setDraftCabinClass(cabinClass);
+    setDraftCabinClass(normalizedCabinClass);
     setTravelersOpen(false);
   };
 
@@ -699,6 +715,160 @@ export function StandaloneFlightSearchForm({
     router.push(`/flights/results?${params.toString()}`);
   };
 
+  const renderMobileAirportPicker = ({
+    field,
+    open,
+    title,
+    inputId,
+    value,
+    suggestions,
+    isLoading,
+    launcherRef,
+    inputRef,
+    onChange,
+    onClear,
+    onSelect,
+    onClose,
+  }: {
+    field: AirportField;
+    open: boolean;
+    title: string;
+    inputId: string;
+    value: string;
+    suggestions: AirportOption[];
+    isLoading: boolean;
+    launcherRef: React.RefObject<HTMLButtonElement | null>;
+    inputRef: React.RefObject<HTMLInputElement | null>;
+    onChange: (value: string) => void;
+    onClear: () => void;
+    onSelect: (option: AirportOption) => void;
+    onClose: () => void;
+  }) => {
+    if (!open) return null;
+
+    const titleId = `${inputId}-title`;
+    const query = value.trim();
+    const clearLabel =
+      field === "origin"
+        ? airportPickerLabels.clearOrigin
+        : airportPickerLabels.clearDestination;
+    const focusInput = () => {
+      window.requestAnimationFrame(() => inputRef.current?.focus());
+    };
+
+    return (
+      <FlightMobilePickerShell
+        open={open}
+        title={title}
+        titleId={titleId}
+        launcherRef={launcherRef}
+        onClose={onClose}
+        contentClassName="bg-slate-50 px-4 py-5"
+        footer={
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                onClear();
+                focusInput();
+              }}
+              className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+            >
+              {airportPickerLabels.clear}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="focus-ring min-h-11 rounded-xl bg-slate-950 px-7 text-sm font-bold text-white transition-colors hover:bg-slate-800"
+            >
+              {airportPickerLabels.done}
+            </button>
+          </div>
+        }
+      >
+        <div className="mx-auto w-full max-w-xl space-y-5">
+          <div className="space-y-2">
+            <label
+              className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500"
+              htmlFor={inputId}
+            >
+              {airportPickerLabels.searchAirportsAndCities}
+            </label>
+            <div className="relative">
+              <input
+                ref={inputRef}
+                id={inputId}
+                type="text"
+                value={value}
+                onChange={(event) => onChange(event.target.value)}
+                placeholder={airportPickerLabels.searchAirportsOrCities}
+                autoComplete="off"
+                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+              />
+              {value.trim() ? (
+                <button
+                  type="button"
+                  aria-label={clearLabel}
+                  onClick={() => {
+                    onClear();
+                    focusInput();
+                  }}
+                  className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            {query.length < 2 ? (
+              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
+                {airportPickerLabels.startTypingCityOrAirport}
+              </p>
+            ) : isLoading ? (
+              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
+                {airportPickerLabels.searchingAirportsAndCities}
+              </p>
+            ) : suggestions.length ? (
+              suggestions.map((option) => (
+                <button
+                  key={`${option.code}-${option.airport}-${inputId}`}
+                  type="button"
+                  onClick={() => onSelect(option)}
+                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
+                >
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+                    aria-hidden="true"
+                  >
+                    <Plane className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-base font-extrabold leading-5 tracking-tight text-slate-950">
+                      {option.city}
+                    </span>
+                    <span className="mt-1 block truncate text-sm font-medium leading-5 text-slate-500">
+                      {option.airport}
+                      {option.country ? ` · ${option.country}` : ""}
+                    </span>
+                  </span>
+                  <span className="shrink-0 pl-2 text-right text-sm font-extrabold tracking-[0.12em] text-slate-700">
+                    {option.code}
+                  </span>
+                </button>
+              ))
+            ) : (
+              <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
+                {airportPickerLabels.noMatchingAirportsOrCities}
+              </p>
+            )}
+          </div>
+        </div>
+      </FlightMobilePickerShell>
+    );
+  };
+
   const renderAirportSuggestions = (field: AirportField) => {
     const suggestions =
       field === "origin"
@@ -754,227 +924,305 @@ export function StandaloneFlightSearchForm({
     );
   };
 
-  const renderDateCalendar = (compact = false) => (
-    <div
-      className={cn(
-        "mx-auto w-full max-w-2xl rounded-3xl bg-white shadow-sm",
-        compact ? "p-3" : "p-3 sm:p-4",
-      )}
-    >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <button
-          type="button"
-          aria-label="Previous month"
-          onClick={() => setVisibleMonthDate((prev) => addMonths(prev, -1))}
-          className="focus-ring rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+  const renderDateCalendar = (compact = false) => {
+    const renderMonth = (monthDate: Date) => {
+      const cells = buildMonthCells(monthDate);
+      const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
+
+      return (
+        <section
+          key={monthKey}
+          aria-label={monthYearFormatter.format(monthDate)}
+          className={cn("min-w-0", compact ? "space-y-2.5" : "")}
         >
-          Prev
-        </button>
-        <button
-          type="button"
-          aria-label="Next month"
-          onClick={() => setVisibleMonthDate((prev) => addMonths(prev, 1))}
-          className="focus-ring rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-        >
-          Next
-        </button>
-      </div>
-      <div
-        className={cn(
-          "grid grid-cols-1 gap-4",
-          compact ? "" : "md:grid-cols-2",
-        )}
-      >
-        {[0, 1].map((monthOffset) => {
-          const monthDate = addMonths(visibleMonthDate, monthOffset);
-          const cells = buildMonthCells(monthDate);
-
-          return (
-            <div key={`${monthDate.toISOString()}-${monthOffset}`}>
-              <p className="mb-2 text-center text-sm font-black text-slate-900">
-                {monthYearFormatter.format(monthDate)}
-              </p>
-              <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-500">
-                {weekdays.map((weekday) => (
-                  <span key={weekday}>{weekday}</span>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {cells.map((cell) => {
-                  const day = cell.date;
-                  const iso = toIsoDate(day);
-                  const isDeparture = iso === departureDate;
-                  const isReturn = iso === returnDate;
-                  const isDisabledDate = isBeforeToday(day);
-                  const isInRange = Boolean(
-                    departureParsed &&
-                    returnParsed &&
-                    !isDisabledDate &&
-                    day > departureParsed &&
-                    day < returnParsed,
-                  );
-
-                  if (!cell.isCurrentMonth) {
-                    return (
-                      <span
-                        key={`placeholder-${iso}`}
-                        aria-hidden="true"
-                        className="h-9 w-9 justify-self-center min-[390px]:h-10 min-[390px]:w-10"
-                      />
-                    );
-                  }
-
-                  return (
-                    <button
-                      key={iso}
-                      type="button"
-                      aria-label={`Select ${accessibleDateFormatter.format(day)}`}
-                      onClick={() => onSelectDate(day)}
-                      disabled={isDisabledDate}
-                      aria-disabled={isDisabledDate}
-                      className={cn(
-                        "focus-ring flex h-9 w-9 items-center justify-center justify-self-center rounded-full text-sm font-semibold transition-colors disabled:cursor-not-allowed min-[390px]:h-10 min-[390px]:w-10",
-                        isDisabledDate
-                          ? "text-slate-300"
-                          : "text-slate-900 hover:bg-indigo-50",
-                        isInRange &&
-                          "rounded-md bg-indigo-100 text-indigo-900 hover:bg-indigo-100",
-                        (isDeparture || isReturn) &&
-                          "bg-indigo-700 text-white hover:bg-indigo-700",
-                      )}
-                    >
-                      {day.getDate()}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const renderTravelersPicker = () => (
-    <div className="mx-auto w-full max-w-xl space-y-5 rounded-3xl bg-white p-4 shadow-sm">
-      <div className="divide-y divide-slate-200">
-        {[
-          {
-            key: "adults",
-            label: t("adultPlural"),
-            subtitle: "18+",
-            count: draftAdultCount,
-            min: 1,
-          },
-          {
-            key: "children",
-            label: t("childPlural"),
-            subtitle: "2–17",
-            count: draftChildCount,
-            min: 0,
-          },
-          {
-            key: "infants",
-            label: t("infantPlural"),
-            subtitle: "Under 2",
-            count: draftInfantCount,
-            min: 0,
-          },
-        ].map((row) => {
-          const draftTravelerCount =
-            draftAdultCount + draftChildCount + draftInfantCount;
-          const canDecrement = row.count > row.min;
-          const canIncrement =
-            draftTravelerCount < 9 &&
-            (row.key !== "infants" || draftInfantCount < draftAdultCount);
-
-          return (
-            <div
-              key={row.key}
-              className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
-            >
-              <span>
-                <span className="block text-base font-black text-slate-950">
-                  {row.label}
-                </span>
-                <span className="block text-sm leading-5 text-slate-600">
-                  {row.subtitle}
-                </span>
+          <h3
+            className={cn(
+              compact
+                ? "text-left text-[17px] font-bold tracking-tight text-slate-950"
+                : "mb-2 text-center text-sm font-medium tracking-tight text-slate-900",
+            )}
+          >
+            {monthYearFormatter.format(monthDate)}
+          </h3>
+          <div
+            className={cn(
+              "grid grid-cols-7 text-center text-slate-500",
+              compact
+                ? "text-[12px] font-semibold tracking-[0.08em]"
+                : "mb-1.5 text-[10px] font-medium tracking-[0.09em]",
+            )}
+          >
+            {weekdays.map((weekday) => (
+              <span key={weekday} className={compact ? "py-2" : "py-1.5"}>
+                {weekday}
               </span>
-              <div className="flex items-center gap-3">
+            ))}
+          </div>
+          <div
+            className={cn(
+              "grid grid-cols-7",
+              compact ? "gap-y-1.5" : "gap-y-0.5",
+            )}
+          >
+            {cells.map((cell) => {
+              const day = cell.date;
+              const iso = toIsoDate(day);
+              const isDeparture = iso === departureDate;
+              const isReturn = iso === returnDate;
+              const isDisabledDate = isBeforeToday(day);
+              const isToday = toIsoDate(new Date()) === iso;
+              const isInRange = Boolean(
+                departureParsed &&
+                returnParsed &&
+                !isDisabledDate &&
+                day > departureParsed &&
+                day < returnParsed,
+              );
+
+              if (!cell.isCurrentMonth) {
+                return (
+                  <span
+                    key={`placeholder-${iso}`}
+                    aria-hidden="true"
+                    className={compact ? "h-11 w-full" : "h-10"}
+                  />
+                );
+              }
+
+              return (
                 <button
+                  key={iso}
                   type="button"
-                  onClick={() => {
-                    if (row.key === "adults") {
-                      const nextAdults = Math.max(1, draftAdultCount - 1);
-                      setDraftAdultCount(nextAdults);
-                      setDraftInfantCount((current) =>
-                        Math.min(current, nextAdults),
-                      );
-                    }
-                    if (row.key === "children")
-                      setDraftChildCount(Math.max(0, draftChildCount - 1));
-                    if (row.key === "infants")
-                      setDraftInfantCount(Math.max(0, draftInfantCount - 1));
-                  }}
-                  disabled={!canDecrement}
-                  className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  aria-label={`Select ${accessibleDateFormatter.format(day)}`}
+                  aria-pressed={isDeparture || isReturn}
+                  onClick={() => onSelectDate(day)}
+                  disabled={isDisabledDate}
+                  aria-disabled={isDisabledDate}
+                  className={cn(
+                    "focus-ring relative mx-auto flex items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed",
+                    compact
+                      ? "h-11 w-full max-w-11 text-[15px] font-semibold"
+                      : "h-10 w-10 text-sm font-medium",
+                    isDisabledDate
+                      ? "text-slate-300"
+                      : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
+                    isToday &&
+                      !isDisabledDate &&
+                      "ring-1 ring-inset ring-indigo-300",
+                    isInRange &&
+                      "bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
+                    (isDeparture || isReturn) &&
+                      "bg-indigo-700 text-white shadow-sm ring-0 hover:bg-indigo-700 hover:text-white",
+                  )}
                 >
-                  <Minus className="h-4 w-4" aria-hidden="true" />
+                  {day.getDate()}
+                  {isToday && !isDeparture && !isReturn ? (
+                    <span
+                      className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500"
+                      aria-hidden="true"
+                    />
+                  ) : null}
                 </button>
-                <span className="min-w-8 text-center text-base font-bold text-slate-950">
-                  {row.count}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (row.key === "adults")
-                      setDraftAdultCount((current) => Math.min(9, current + 1));
-                    if (row.key === "children")
-                      setDraftChildCount((current) => Math.min(9, current + 1));
-                    if (row.key === "infants")
-                      setDraftInfantCount((current) =>
-                        Math.min(draftAdultCount, current + 1),
-                      );
-                  }}
-                  disabled={!canIncrement}
-                  className="focus-ring inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="border-t border-slate-200 pt-5">
-        <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.14em] text-slate-600">
-          {t("cabinClass")}
-        </p>
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            ["economy", t("economy")],
-            ["business", t("business")],
-            ["first", t("first")],
-          ].map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setDraftCabinClass(normalizeCabinClass(value))}
-              className={cn(
-                "focus-ring min-h-11 rounded-xl border px-2 py-2 text-center text-sm font-bold transition-colors",
-                draftCabinClass === value
-                  ? "border-indigo-400 bg-indigo-50 text-indigo-900"
-                  : "border-slate-300 text-slate-700 hover:bg-slate-50",
-              )}
-            >
-              {label}
-            </button>
-          ))}
+              );
+            })}
+          </div>
+        </section>
+      );
+    };
+
+    if (compact) {
+      const mobileCalendarMonths = Array.from(
+        { length: 12 },
+        (_, monthOffset) => addMonths(todayLocal, monthOffset),
+      );
+
+      return (
+        <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
+          {mobileCalendarMonths.map((monthDate) => renderMonth(monthDate))}
+        </div>
+      );
+    }
+
+    return (
+      <div className="mx-auto w-full max-w-2xl rounded-3xl bg-white p-3 shadow-sm sm:p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            aria-label="Previous month"
+            onClick={() => setVisibleMonthDate((prev) => addMonths(prev, -1))}
+            className="focus-ring rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Prev
+          </button>
+          <button
+            type="button"
+            aria-label="Next month"
+            onClick={() => setVisibleMonthDate((prev) => addMonths(prev, 1))}
+            className="focus-ring rounded-xl border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Next
+          </button>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {[0, 1].map((monthOffset) =>
+            renderMonth(addMonths(visibleMonthDate, monthOffset)),
+          )}
         </div>
       </div>
-    </div>
-  );
+    );
+  };
+
+  const renderTravelersPicker = () => {
+    const passengerRows = [
+      {
+        key: "adults",
+        label: t("adultPlural") || "Adults",
+        subtitle: "18+",
+        count: draftAdultCount,
+        min: 1,
+      },
+      {
+        key: "children",
+        label: t("childPlural") || "Children",
+        subtitle: "Ages 2–17",
+        count: draftChildCount,
+        min: 0,
+      },
+      {
+        key: "infants",
+        label: t("infantPlural") || "Infants",
+        subtitle: "Under 2",
+        count: draftInfantCount,
+        min: 0,
+      },
+    ];
+    const cabinOptions = [
+      ["economy", t("economy") || "Economy"],
+      ["business", t("business") || "Business"],
+      ["first", t("first") || "First"],
+    ] as const;
+
+    return (
+      <div className="mx-auto w-full max-w-xl space-y-4">
+        <div>
+          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+            Passengers
+          </p>
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.07)]">
+            {passengerRows.map((row) => {
+              const draftTravelerCount =
+                draftAdultCount + draftChildCount + draftInfantCount;
+              const canDecrement = row.count > row.min;
+              const canIncrement =
+                draftTravelerCount < 9 &&
+                (row.key !== "infants" || draftInfantCount < draftAdultCount);
+
+              return (
+                <div
+                  key={row.key}
+                  className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-4 last:border-b-0"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-base font-extrabold tracking-tight text-slate-950 sm:text-sm">
+                      {row.label}
+                    </span>
+                    <span className="mt-0.5 block text-xs font-medium leading-5 text-slate-500">
+                      {row.subtitle}
+                    </span>
+                  </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (row.key === "adults") {
+                          const nextAdults = Math.max(1, draftAdultCount - 1);
+                          setDraftAdultCount(nextAdults);
+                          setDraftInfantCount((current) =>
+                            Math.min(current, nextAdults),
+                          );
+                        }
+                        if (row.key === "children")
+                          setDraftChildCount(Math.max(0, draftChildCount - 1));
+                        if (row.key === "infants")
+                          setDraftInfantCount(
+                            Math.max(0, draftInfantCount - 1),
+                          );
+                      }}
+                      disabled={!canDecrement}
+                      className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                    >
+                      <Minus className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                    <span className="min-w-8 text-center text-base font-extrabold tabular-nums text-slate-950">
+                      {row.count}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (row.key === "adults") {
+                          if (draftTravelerCount >= 9) return;
+                          setDraftAdultCount((current) =>
+                            Math.min(9, current + 1),
+                          );
+                          return;
+                        }
+                        if (row.key === "children") {
+                          if (draftTravelerCount >= 9) return;
+                          setDraftChildCount((current) =>
+                            Math.min(9, current + 1),
+                          );
+                          return;
+                        }
+                        if (row.key === "infants") {
+                          if (
+                            draftTravelerCount >= 9 ||
+                            draftInfantCount >= draftAdultCount
+                          )
+                            return;
+                          setDraftInfantCount((current) =>
+                            Math.min(draftAdultCount, current + 1),
+                          );
+                        }
+                      }}
+                      disabled={!canIncrement}
+                      className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                    >
+                      <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+              {t("cabinClass") || "Cabin class"}
+            </p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {cabinOptions.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setDraftCabinClass(normalizeCabinClass(value))}
+                className={cn(
+                  "focus-ring min-h-11 rounded-2xl border px-2 text-center text-sm leading-4 transition-all",
+                  draftCabinClass === value
+                    ? "border-indigo-500 bg-indigo-700 font-extrabold text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]"
+                    : "border-slate-200 bg-slate-50/80 font-bold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-[1.75rem] sm:border-slate-200/90 sm:p-4 sm:shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
@@ -1137,7 +1385,7 @@ export function StandaloneFlightSearchForm({
                   titleId="standalone-flight-mobile-dates-title"
                   launcherRef={datesMobileLauncherRef}
                   onClose={() => setDatesOpen(false)}
-                  contentClassName="px-3 py-3"
+                  contentClassName="px-4 py-4"
                   footer={
                     <div className="flex items-center justify-between gap-3">
                       <button
@@ -1146,14 +1394,14 @@ export function StandaloneFlightSearchForm({
                           setDepartureDate("");
                           setReturnDate("");
                         }}
-                        className="focus-ring rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                        className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
                       >
                         {t("clear")}
                       </button>
                       <button
                         type="button"
                         onClick={() => setDatesOpen(false)}
-                        className="focus-ring rounded-xl bg-indigo-700 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600"
+                        className="focus-ring min-h-11 rounded-xl bg-slate-950 px-7 text-sm font-bold text-white transition-colors hover:bg-slate-800"
                       >
                         {t("done")}
                       </button>
@@ -1273,16 +1521,17 @@ export function StandaloneFlightSearchForm({
           </Button>
         </div>
 
-        <MobileAirportPicker
-          open={activeMobileAirportPicker === "origin"}
-          title={t("chooseOrigin")}
-          inputId="standalone-flight-origin-mobile-search"
-          value={origin}
-          suggestions={visibleOriginSuggestions}
-          isLoading={originQuery.length >= 2 && originLoading}
-          launcherRef={originMobileLauncherRef}
-          labels={airportPickerLabels}
-          onChange={(nextValue) => {
+        {renderMobileAirportPicker({
+          field: "origin",
+          open: activeMobileAirportPicker === "origin",
+          title: t("chooseOrigin"),
+          inputId: "standalone-flight-origin-mobile-search",
+          value: origin,
+          suggestions: visibleOriginSuggestions,
+          isLoading: originQuery.length >= 2 && originLoading,
+          launcherRef: originMobileLauncherRef,
+          inputRef: originMobilePickerInputRef,
+          onChange: (nextValue) => {
             setOriginState((current) =>
               markOriginManualInput(current, nextValue),
             );
@@ -1291,21 +1540,22 @@ export function StandaloneFlightSearchForm({
               setOriginSuggestions([]);
               setOriginLoading(false);
             }
-          }}
-          onClear={() => clearAirport("origin")}
-          onSelect={(option) => selectAirport("origin", option)}
-          onClose={() => setActiveMobileAirportPicker(null)}
-        />
-        <MobileAirportPicker
-          open={activeMobileAirportPicker === "destination"}
-          title={t("chooseDestination")}
-          inputId="standalone-flight-destination-mobile-search"
-          value={destination}
-          suggestions={visibleDestinationSuggestions}
-          isLoading={destinationQuery.length >= 2 && destinationLoading}
-          launcherRef={destinationMobileLauncherRef}
-          labels={airportPickerLabels}
-          onChange={(nextValue) => {
+          },
+          onClear: () => clearAirport("origin"),
+          onSelect: (option) => selectAirport("origin", option),
+          onClose: () => setActiveMobileAirportPicker(null),
+        })}
+        {renderMobileAirportPicker({
+          field: "destination",
+          open: activeMobileAirportPicker === "destination",
+          title: t("chooseDestination"),
+          inputId: "standalone-flight-destination-mobile-search",
+          value: destination,
+          suggestions: visibleDestinationSuggestions,
+          isLoading: destinationQuery.length >= 2 && destinationLoading,
+          launcherRef: destinationMobileLauncherRef,
+          inputRef: destinationMobilePickerInputRef,
+          onChange: (nextValue) => {
             setDestination(nextValue);
             setDestinationCode("");
             setDestinationHighlight(0);
@@ -1313,11 +1563,11 @@ export function StandaloneFlightSearchForm({
               setDestinationSuggestions([]);
               setDestinationLoading(false);
             }
-          }}
-          onClear={() => clearAirport("destination")}
-          onSelect={(option) => selectAirport("destination", option)}
-          onClose={() => setActiveMobileAirportPicker(null)}
-        />
+          },
+          onClear: () => clearAirport("destination"),
+          onSelect: (option) => selectAirport("destination", option),
+          onClose: () => setActiveMobileAirportPicker(null),
+        })}
       </form>
     </section>
   );
