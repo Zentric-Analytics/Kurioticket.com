@@ -397,7 +397,7 @@ export function SearchTabs({
   const flightGridClassName = cn(
     "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
     compactHero
-      ? "gap-1 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_132px]"
+      ? "gap-1 lg:grid-cols-[minmax(0,3.2fr)_minmax(0,1.25fr)_minmax(0,1.05fr)_132px]"
       : "gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]"
   );
   const hotelGridClassName = cn(
@@ -410,6 +410,16 @@ export function SearchTabs({
     "transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
     compactHero ? "min-h-[50px] px-3 py-1" : "min-h-[54px] px-3 py-1.5"
   );
+  const flightRouteGroupClassName = compactHero
+    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+    : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", joinedFieldClassName);
+  const flightRouteFieldClassName = (side: "origin" | "destination") =>
+    compactHero
+      ? cn(
+          "relative min-h-[50px] rounded-xl border border-slate-300 bg-white px-3 py-1 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0",
+          side === "origin" ? "sm:pr-3" : "sm:pl-3"
+        )
+      : cn("relative px-0 py-0", side === "origin" ? "pr-3" : "pl-3");
   const submitWrapClassName = cn(
     "sm:col-span-2 lg:col-span-1 lg:self-stretch",
     compactHero ? "lg:min-h-[50px]" : "lg:min-h-[54px]"
@@ -1106,7 +1116,7 @@ export function SearchTabs({
       return (
         t.roundTrip ||
         t.tripRound ||
-        t.roundTrip
+        "Round trip"
       );
     }
 
@@ -1114,7 +1124,7 @@ export function SearchTabs({
       return (
         t.oneWay ||
         t.tripOneWay ||
-        t.oneWay
+        "One way"
       );
     }
 
@@ -1123,6 +1133,21 @@ export function SearchTabs({
       t.tripMulti ||
       "Multi-city"
     );
+  };
+
+  const onSelectTripType = (mode: Exclude<TripType, "multi-city">) => {
+    setTripType(mode);
+    if (mode === "one-way") {
+      setReturnDate("");
+    } else if (
+      returnDate &&
+      (!isValidFlightDate(returnDate) ||
+        !isValidFlightDate(departureDate) ||
+        returnDate < departureDate)
+    ) {
+      setReturnDate("");
+    }
+    setTripTypeOpen(false);
   };
 
   const travelerCount = adultCount + childCount + infantCount;
@@ -1781,98 +1806,113 @@ export function SearchTabs({
               ref={tripTypeWrapRef}
               className="relative inline-flex"
             >
-              <button
-                type="button"
-                aria-expanded={
-                  tripTypeOpen
-                }
-                aria-haspopup="listbox"
-                onClick={() =>
-                  setTripTypeOpen(
-                    (
-                      prevOpen
-                    ) =>
-                      !prevOpen
-                  )
-                }
-                className="focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-950"
-              >
-                {tripTypeLabel(
-                  tripType
-                )}
-                <ChevronDown
-                  aria-hidden="true"
-                  className={cn(
-                    "h-4 w-4 text-slate-500 transition-transform",
-                    tripTypeOpen &&
-                      "rotate-180"
-                  )}
-                />
-              </button>
-
-              {tripTypeOpen && (
+              {compactHero ? (
                 <div
-                  role="listbox"
-                  className="absolute left-0 top-full z-30 mt-1 min-w-[210px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                  role="radiogroup"
+                  aria-label={t.tripType || "Trip type"}
+                  className="inline-flex rounded-full border border-slate-200 bg-white p-0.5 shadow-sm"
                 >
-                  {(
-                    [
-                      "round-trip",
-                      "one-way",
-                    ] as const
-                  ).map((mode) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => {
-                        setTripType(
-                          mode
-                        );
-                        if (mode === "one-way") {
-                          setReturnDate("");
-                        } else if (
-                          returnDate &&
-                          (!isValidFlightDate(returnDate) ||
-                            !isValidFlightDate(departureDate) ||
-                            returnDate < departureDate)
-                        ) {
-                          setReturnDate("");
-                        }
-                        setTripTypeOpen(
-                          false
-                        );
-                      }}
-                      className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
-                        tripType ===
-                          mode
-                          ? "bg-slate-900 text-white"
-                          : "text-slate-700 hover:bg-slate-100"
-                      )}
-                    >
-                      {tripTypeLabel(
-                        mode
-                      )}
-                    </button>
-                  ))}
+                  {(["round-trip", "one-way"] as const).map((mode) => {
+                    const selected = tripType === mode;
+
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => onSelectTripType(mode)}
+                        className={cn(
+                          "focus-ring inline-flex min-h-8 items-center rounded-full px-3 py-1 text-sm font-semibold transition-all",
+                          selected
+                            ? "bg-slate-950 text-white shadow-sm"
+                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                        )}
+                      >
+                        {tripTypeLabel(mode)}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <>
                   <button
                     type="button"
-                    disabled
-                    className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-500"
+                    aria-expanded={
+                      tripTypeOpen
+                    }
+                    aria-haspopup="listbox"
+                    onClick={() =>
+                      setTripTypeOpen(
+                        (
+                          prevOpen
+                        ) =>
+                          !prevOpen
+                      )
+                    }
+                    className="focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-1 text-sm font-medium text-slate-700 transition-colors hover:text-slate-950"
                   >
-                    Multi-city —
-                    Use one-way or round-trip search
+                    {tripTypeLabel(
+                      tripType
+                    )}
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={cn(
+                        "h-4 w-4 text-slate-500 transition-transform",
+                        tripTypeOpen &&
+                          "rotate-180"
+                      )}
+                    />
                   </button>
-                </div>
+
+                  {tripTypeOpen && (
+                    <div
+                      role="listbox"
+                      className="absolute left-0 top-full z-30 mt-1 min-w-[210px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                    >
+                      {(
+                        [
+                          "round-trip",
+                          "one-way",
+                        ] as const
+                      ).map((mode) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => onSelectTripType(mode)}
+                          className={cn(
+                            "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                            tripType ===
+                              mode
+                              ? "bg-slate-900 text-white"
+                              : "text-slate-700 hover:bg-slate-100"
+                          )}
+                        >
+                          {tripTypeLabel(
+                            mode
+                          )}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        disabled
+                        className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-500"
+                      >
+                        Multi-city —
+                        Use one-way or round-trip search
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>
           <div className={fieldCardClassName}>
             <div className={flightGridClassName}>
-              <div className={cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", joinedFieldClassName)}>
+              <div className={flightRouteGroupClassName}>
               <div
                 ref={fromWrapRef}
-                className="relative px-0 py-0 pr-3"
+                className={flightRouteFieldClassName("origin")}
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.origin ||
@@ -2013,7 +2053,7 @@ export function SearchTabs({
 
               <div
                 ref={toWrapRef}
-                className="relative px-0 py-0 pl-3"
+                className={flightRouteFieldClassName("destination")}
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.destination || "Destination"}
@@ -2533,7 +2573,7 @@ export function SearchTabs({
               </div>
             </div>
           </div>
-          {hasActiveFlightSearch ? (
+          {hasActiveFlightSearch && !compactHero ? (
             <div className="grid w-full grid-cols-1 px-1 pt-0.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:px-0">
               <div className="flex justify-end lg:col-start-4">
                 <button
