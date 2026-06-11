@@ -11,6 +11,11 @@ const jiti = createJiti(import.meta.url);
 
 const { imageRegistry } = jiti("../src/data/images/imageRegistry.ts");
 const { imageInventory } = jiti("../src/data/images/imageInventory.ts");
+const {
+  phase3FirstSixtyPurchaseList,
+  phase3LaunchCriticalPurchaseCandidatesByProduct,
+  phase3PurchaseBatchCounts,
+} = jiti("../src/data/images/imagePurchasePlan.ts");
 const { getSourceIdentity, validateImageRegistry } = jiti("../src/data/images/imageRegistryValidation.ts");
 
 const commonImageHostPattern = /https:\/\/(?:images\.unsplash\.com|images\.pexels\.com|images\.kiwi\.com|photos\.hotelbeds\.com)\/[^\s"'`<>)]*/g;
@@ -231,6 +236,11 @@ function printReport() {
   console.log(`Launch-critical replace-before-launch images: ${launchCriticalStatusCounts["replace-before-launch"] ?? 0}`);
   console.log(`Launch-critical blocked images: ${launchCriticalStatusCounts.blocked ?? 0}`);
   console.log(`Premium replacement candidates: ${premiumReplacementCandidates.length}`);
+  console.log(`First-60 premium purchase candidates: ${phase3FirstSixtyPurchaseList.length}`);
+  console.log(`Phase 3 Batch A / B / C counts: ${phase3PurchaseBatchCounts.A} / ${phase3PurchaseBatchCounts.B} / ${phase3PurchaseBatchCounts.C}`);
+  console.log(
+    `Launch-critical purchase candidates by product: ${formatCountsByKey(phase3LaunchCriticalPurchaseCandidatesByProduct)}`,
+  );
   console.log(`Provider-real classified images: ${providerRealImages.length}`);
   console.log(`Fallback-only classified images: ${fallbackOnlyImages.length}`);
 
@@ -242,11 +252,11 @@ function printReport() {
   printIssues("\nTop files by unregistered images", topFilesByUnregisteredCount(unregisteredFiles), ([filePath, urls]) => `- ${filePath}: ${urls.length} unregistered URL(s)`);
   printIssues("\nSuggested Phase 3 purchase categories", phase3PurchaseCategories, (category) => `- ${category.label}: ${category.count} candidate(s) across ${category.surfaces.join(", ")}`);
 
-  console.log("\nTODO for Phase 2");
-  console.log("- Migrate hard-coded image constants to consume registered image ids where safe.");
-  console.log("- Register remaining flight inspiration, deal, explore, recent-search, and documentation-only image references.");
-  console.log("- Replace launch-critical free-approved marketing imagery with premium-approved or owned assets.");
-  console.log("- Add CI enforcement once the current unregistered inventory is intentionally resolved.");
+  console.log("\nTODO for Phase 3 / Phase 4");
+  console.log("- Shop and approve the first-60 premium image purchase list before URL replacement work begins.");
+  console.log("- Preserve current UI output until purchased images have license records and desktop/mobile crop approval.");
+  console.log("- Replace launch-critical free-approved marketing imagery with premium-approved or owned assets in focused Phase 4 PRs.");
+  console.log("- Add CI enforcement once approved premium replacements are registered and migrated safely.");
 }
 
 function printIssues(title, issues, formatter) {
@@ -259,6 +269,12 @@ function printIssues(title, issues, formatter) {
   if (issues.length > 80) {
     console.log(`- ...and ${issues.length - 80} more`);
   }
+}
+
+function formatCountsByKey(counts) {
+  const entries = Object.entries(counts).sort(([left], [right]) => left.localeCompare(right));
+  if (entries.length === 0) return "none";
+  return entries.map(([key, count]) => `${key}: ${count}`).join(", ");
 }
 
 function formatIssue(issue) {
