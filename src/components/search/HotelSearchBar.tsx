@@ -91,15 +91,20 @@ const buildMonthCells = (monthDate: Date): MonthCell[] => {
   });
 };
 
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const formatWeekdays = (locale: string) =>
+  Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+      new Date(2024, 0, 7 + day),
+    ),
+  );
 
-const formatShortDate = (value: string) => {
+const formatShortDate = (value: string, locale: string) => {
   if (!value) return "";
 
   const [year, month, day] = value.split("-").map(Number);
   if (!year || !month || !day) return "";
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
   }).format(new Date(year, month - 1, day));
@@ -156,6 +161,16 @@ const destinationKindLabels: Record<
   "airport-area": "Airport area",
 };
 
+const destinationKindTranslationKeys: Record<
+  HotelDestinationSuggestion["kind"],
+  string
+> = {
+  city: "hotelDestinationKind.city",
+  district: "hotelDestinationKind.district",
+  landmark: "hotelDestinationKind.landmark",
+  "airport-area": "hotelDestinationKind.airport-area",
+};
+
 export type HotelSearchBarProps = {
   initialDestination?: string;
   initialCheckIn?: string;
@@ -182,7 +197,7 @@ export function HotelSearchBar({
   initialGuests = 1,
   initialRooms = "1",
   initialSort = null,
-  introLabel = "Compare hotel options",
+  introLabel,
   errorRole,
   compact = false,
   mobileLayout = "default",
@@ -193,11 +208,13 @@ export function HotelSearchBar({
   onSubmitStart,
   className,
 }: HotelSearchBarProps) {
-  const { t: dictionary } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
   );
+  const getDestinationKindLabel = (kind: HotelDestinationSuggestion["kind"]) =>
+    t(destinationKindTranslationKeys[kind]) || destinationKindLabels[kind];
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -267,11 +284,11 @@ export function HotelSearchBar({
   });
 
   const dateSummary = useMemo(() => {
-    const formattedCheckIn = formatShortDate(checkIn);
-    const formattedCheckOut = formatShortDate(checkOut);
+    const formattedCheckIn = formatShortDate(checkIn, locale);
+    const formattedCheckOut = formatShortDate(checkOut, locale);
 
     if (!formattedCheckIn) {
-      return "Check-in — Check-out";
+      return t("hotelSearchDatePlaceholder");
     }
 
     if (formattedCheckOut) {
@@ -279,7 +296,7 @@ export function HotelSearchBar({
     }
 
     return formattedCheckIn;
-  }, [checkIn, checkOut]);
+  }, [checkIn, checkOut, locale, t]);
 
   const totalHotelGuests = hotelAdultCount + hotelChildCount;
 
@@ -287,8 +304,16 @@ export function HotelSearchBar({
     const normalizedGuests = Math.max(1, Math.min(12, totalHotelGuests));
     const normalizedRooms = clampCount(rooms, 1, 6);
 
-    return `${normalizedGuests} ${normalizedGuests === 1 ? "guest" : "guests"}, ${normalizedRooms} ${normalizedRooms === 1 ? "room" : "rooms"}`;
-  }, [rooms, totalHotelGuests]);
+    const guestLabel = t(
+      normalizedGuests === 1 ? "guestSingular" : "guestPlural",
+    );
+    const roomLabel = t(normalizedRooms === 1 ? "roomSingular" : "roomPlural");
+
+    return `${normalizedGuests} ${guestLabel}, ${normalizedRooms} ${roomLabel}`;
+  }, [rooms, t, totalHotelGuests]);
+
+  const weekdays = useMemo(() => formatWeekdays(locale), [locale]);
+  const hotelSearchIntroLabel = introLabel ?? t("hotelSearchIntroLabel");
 
   const mobileSearchSummary = useMemo(() => {
     const trimmedDestination = destination.trim() || t("destination");
@@ -375,7 +400,9 @@ export function HotelSearchBar({
       if (!(target instanceof Node)) return;
 
       if (target instanceof Element) {
-        const mobilePickerShell = target.closest("[data-flight-mobile-picker-shell]");
+        const mobilePickerShell = target.closest(
+          "[data-flight-mobile-picker-shell]",
+        );
 
         if (mobilePickerShell) return;
       }
@@ -773,34 +800,34 @@ export function HotelSearchBar({
       : Math.max(1, Math.min(6, parsedRooms));
 
     if (!trimmedDestination) {
-      setError("Please enter a destination.");
+      setError(t("hotelErrorEnterDestination"));
       return;
     }
 
     setDestinationSuggestionsOpen(false);
 
     if (!checkIn) {
-      setError("Please select a check-in date.");
+      setError(t("hotelErrorSelectCheckIn"));
       return;
     }
 
     if (!checkOut) {
-      setError("Please select a check-out date.");
+      setError(t("hotelErrorSelectCheckOut"));
       return;
     }
 
     if (new Date(checkOut) <= new Date(checkIn)) {
-      setError("Check-out must be after check-in.");
+      setError(t("hotelErrorCheckoutAfterCheckin"));
       return;
     }
 
     if (normalizedGuests < 1 || normalizedGuests > 12) {
-      setError("Please select between 1 and 12 guests.");
+      setError(t("hotelErrorGuestsRange"));
       return;
     }
 
     if (normalizedRooms < 1 || normalizedRooms > 6) {
-      setError("Please select between 1 and 6 rooms.");
+      setError(t("hotelErrorRoomsRange"));
       return;
     }
 
@@ -933,7 +960,9 @@ export function HotelSearchBar({
           )}
         </div>
       ) : (
-        <p className="px-1 text-sm font-medium text-slate-600">{introLabel}</p>
+        <p className="px-1 text-sm font-medium text-slate-600">
+          {hotelSearchIntroLabel}
+        </p>
       )}
       <form
         onSubmit={handleSubmit}
@@ -953,11 +982,11 @@ export function HotelSearchBar({
           <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))] sm:hidden">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-base font-bold tracking-tight text-slate-950">
-                Edit hotel search
+                {t("editHotelSearch")}
               </h2>
               <button
                 type="button"
-                aria-label="Close search form"
+                aria-label={t("closeSearchForm")}
                 onClick={closeMobileSearchPanel}
                 className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-base font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
               >
@@ -995,7 +1024,9 @@ export function HotelSearchBar({
               ref={destinationWrapperRef}
               className={cn(fieldClassName, "lg:rounded-l-xl")}
             >
-              <span className={fieldLabelClassName}>Destination</span>
+              <span className={fieldLabelClassName}>
+                {t("hotelSearchDestinationLabel")}
+              </span>
               <span className="relative block">
                 <button
                   ref={destinationMobileLauncherRef}
@@ -1008,14 +1039,20 @@ export function HotelSearchBar({
                   }}
                   aria-haspopup="dialog"
                   aria-expanded={destinationMobilePickerOpen}
-                  aria-label="Choose hotel destination"
+                  aria-label={t("chooseHotelDestination")}
                   className={cn(
                     valueControlClassName,
                     "flex items-center justify-between gap-2 pr-2 text-left sm:hidden",
                   )}
                 >
-                  <span className={cn("truncate", !destination.trim() && "text-slate-400")}>
-                    {destination.trim() || "City, area, or landmark"}
+                  <span
+                    className={cn(
+                      "truncate",
+                      !destination.trim() && "text-slate-400",
+                    )}
+                  >
+                    {destination.trim() ||
+                      t("hotelSearchDestinationPlaceholder")}
                   </span>
                   <ChevronDown
                     size={16}
@@ -1047,7 +1084,7 @@ export function HotelSearchBar({
                       ? `hotel-destination-suggestion-${visibleDestinationSuggestions[destinationHighlight].id}`
                       : undefined
                   }
-                  placeholder="City, area, or landmark"
+                  placeholder={t("hotelSearchDestinationPlaceholder")}
                   className={cn(
                     valueControlClassName,
                     "pr-9 placeholder:text-slate-400 max-sm:hidden",
@@ -1059,7 +1096,7 @@ export function HotelSearchBar({
                     type="button"
                     onClick={handleClearDestination}
                     onMouseDown={(event) => event.preventDefault()}
-                    aria-label="Clear destination"
+                    aria-label={t("clearDestination")}
                     className="focus-ring absolute right-0 top-1/2 hidden h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800 sm:inline-flex"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
@@ -1070,12 +1107,12 @@ export function HotelSearchBar({
                 <div
                   id="hotel-destination-suggestions"
                   role="listbox"
-                  aria-label="Hotel destination suggestions"
+                  aria-label={t("hotelDestinationSuggestions")}
                   className="absolute left-0 top-[calc(100%+8px)] z-50 hidden max-h-[min(68vh,360px)] w-[min(92vw,420px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:block lg:w-[min(42vw,440px)]"
                 >
                   {destinationSuggestionsLoading ? (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
-                      Finding destinations…
+                      {t("findingDestinations")}
                     </div>
                   ) : visibleDestinationSuggestions.length ? (
                     visibleDestinationSuggestions.map((suggestion, index) => {
@@ -1110,14 +1147,14 @@ export function HotelSearchBar({
                             </span>
                           </span>
                           <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
-                            {destinationKindLabels[suggestion.kind]}
+                            {getDestinationKindLabel(suggestion.kind)}
                           </span>
                         </button>
                       );
                     })
                   ) : (
                     <div className="px-3 py-2.5 text-sm font-medium text-slate-500">
-                      No matching destinations yet.
+                      {t("noMatchingDestinationsYet")}
                     </div>
                   )}
                 </div>
@@ -1125,14 +1162,16 @@ export function HotelSearchBar({
             </label>
 
             <div ref={datesWrapperRef} className={fieldClassName}>
-              <span className={fieldLabelClassName}>Travel dates</span>
+              <span className={fieldLabelClassName}>
+                {t("hotelSearchTravelDatesLabel")}
+              </span>
               <button
                 ref={datesMobileLauncherRef}
                 type="button"
                 onClick={handleToggleDates}
                 aria-expanded={datesOpen}
                 aria-haspopup="dialog"
-                aria-label="Choose travel dates"
+                aria-label={t("chooseTravelDates")}
                 className={cn(
                   valueControlClassName,
                   "flex items-center gap-1.5 text-left",
@@ -1150,28 +1189,28 @@ export function HotelSearchBar({
               {datesOpen ? (
                 <div className="absolute left-0 top-[calc(100%+8px)] z-[200] hidden w-[min(92vw,580px)] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_16px_36px_rgba(15,23,42,0.14)] sm:block">
                   <p className="mb-2.5 text-sm font-semibold text-slate-900">
-                    Choose travel dates
+                    {t("chooseTravelDates")}
                   </p>
                   <div className="mb-3 flex items-center justify-between">
                     <button
                       type="button"
-                      aria-label="Previous month"
+                      aria-label={t("previousMonth")}
                       onClick={() =>
                         setHotelVisibleMonthDate((prev) => addMonths(prev, -1))
                       }
                       className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                     >
-                      Prev
+                      {t("previousMonthShort")}
                     </button>
                     <button
                       type="button"
-                      aria-label="Next month"
+                      aria-label={t("nextMonth")}
                       onClick={() =>
                         setHotelVisibleMonthDate((prev) => addMonths(prev, 1))
                       }
                       className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                     >
-                      Next
+                      {t("nextMonthShort")}
                     </button>
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1185,7 +1224,7 @@ export function HotelSearchBar({
                       return (
                         <div key={monthOffset}>
                           <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                            {monthDate.toLocaleDateString("en-US", {
+                            {monthDate.toLocaleDateString(locale, {
                               month: "long",
                               year: "numeric",
                             })}
@@ -1225,7 +1264,7 @@ export function HotelSearchBar({
                                   key={iso}
                                   type="button"
                                   aria-label={`Select ${day.toLocaleDateString(
-                                    "en-US",
+                                    locale,
                                     {
                                       month: "long",
                                       day: "numeric",
@@ -1266,14 +1305,14 @@ export function HotelSearchBar({
                       }}
                       className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                     >
-                      Clear
+                      {t("clear")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setDatesOpen(false)}
                       className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
                     >
-                      Done
+                      {t("done")}
                     </button>
                   </div>
                 </div>
@@ -1281,14 +1320,16 @@ export function HotelSearchBar({
             </div>
 
             <div ref={guestsRoomsWrapperRef} className={fieldClassName}>
-              <span className={fieldLabelClassName}>Guests</span>
+              <span className={fieldLabelClassName}>
+                {t("hotelSearchGuestsLabel")}
+              </span>
               <button
                 ref={guestsRoomsMobileLauncherRef}
                 type="button"
                 onClick={handleToggleGuestsRooms}
                 aria-expanded={guestsRoomsOpen}
                 aria-haspopup="dialog"
-                aria-label="Choose guests and rooms"
+                aria-label={t("chooseGuestsAndRooms")}
                 className={cn(
                   valueControlClassName,
                   "flex items-center justify-between gap-1.5 text-left",
@@ -1308,7 +1349,7 @@ export function HotelSearchBar({
                     {[
                       {
                         key: "adults",
-                        label: "Adults",
+                        label: t("adults"),
                         value: hotelAdultCount,
                         min: 1,
                         max: 12 - hotelChildCount,
@@ -1321,7 +1362,7 @@ export function HotelSearchBar({
                       },
                       {
                         key: "children",
-                        label: "Children",
+                        label: t("children"),
                         value: hotelChildCount,
                         min: 0,
                         max: 12 - hotelAdultCount,
@@ -1334,7 +1375,7 @@ export function HotelSearchBar({
                       },
                       {
                         key: "rooms",
-                        label: "Rooms",
+                        label: t("rooms"),
                         value: clampCount(rooms, 1, 6),
                         min: 1,
                         max: 6,
@@ -1388,17 +1429,17 @@ export function HotelSearchBar({
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-slate-900">
-                              Pet-friendly
+                              {t("petFriendly")}
                             </p>
                             <p className="pr-2 text-xs leading-5 text-slate-600">
-                              Only show stays that allow pets
+                              {t("onlyShowPetFriendlyStays")}
                             </p>
                           </div>
                           <button
                             type="button"
                             role="switch"
                             aria-checked={hotelPetFriendly}
-                            aria-label="Toggle pet-friendly stays"
+                            aria-label={t("togglePetFriendlyStays")}
                             onClick={() => setHotelPetFriendly((prev) => !prev)}
                             className={`focus-ring relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border transition-colors ${
                               hotelPetFriendly
@@ -1457,7 +1498,7 @@ export function HotelSearchBar({
               className="focus-ring inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Clear all
+              {t("clearAll")}
             </button>
           </div>
         ) : null}
@@ -1490,7 +1531,7 @@ export function HotelSearchBar({
 
       <HotelMobilePickerShell
         open={datesOpen}
-        title="Choose travel dates"
+        title={t("chooseTravelDates")}
         titleId="hotel-results-mobile-dates-title"
         launcherRef={datesMobileLauncherRef}
         onClose={() => setDatesOpen(false)}
@@ -1505,14 +1546,14 @@ export function HotelSearchBar({
               }}
               className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Clear
+              {t("clear")}
             </button>
             <button
               type="button"
               onClick={() => setDatesOpen(false)}
               className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
             >
-              Done
+              {t("done")}
             </button>
           </div>
         }
@@ -1521,19 +1562,23 @@ export function HotelSearchBar({
           <div className="flex items-center justify-between">
             <button
               type="button"
-              aria-label="Previous month"
-              onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, -1))}
+              aria-label={t("previousMonth")}
+              onClick={() =>
+                setHotelVisibleMonthDate((prev) => addMonths(prev, -1))
+              }
               className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Prev
+              {t("previousMonthShort")}
             </button>
             <button
               type="button"
-              aria-label="Next month"
-              onClick={() => setHotelVisibleMonthDate((prev) => addMonths(prev, 1))}
+              aria-label={t("nextMonth")}
+              onClick={() =>
+                setHotelVisibleMonthDate((prev) => addMonths(prev, 1))
+              }
               className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Next
+              {t("nextMonthShort")}
             </button>
           </div>
           <div className="grid grid-cols-1 gap-3">
@@ -1544,7 +1589,7 @@ export function HotelSearchBar({
               return (
                 <div key={monthOffset}>
                   <p className="mb-1 text-center text-sm font-black text-slate-900">
-                    {monthDate.toLocaleDateString("en-US", {
+                    {monthDate.toLocaleDateString(locale, {
                       month: "long",
                       year: "numeric",
                     })}
@@ -1567,10 +1612,10 @@ export function HotelSearchBar({
                       const isDisabledDate = isPastDate || isInvalidCheckOut;
                       const isInRange = Boolean(
                         checkInParsed &&
-                          checkOutParsed &&
-                          !isPastDate &&
-                          day > checkInParsed &&
-                          day < checkOutParsed,
+                        checkOutParsed &&
+                        !isPastDate &&
+                        day > checkInParsed &&
+                        day < checkOutParsed,
                       );
 
                       if (!cell.isCurrentMonth) {
@@ -1587,7 +1632,7 @@ export function HotelSearchBar({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`Select ${day.toLocaleDateString("en-US", {
+                          aria-label={`Select ${day.toLocaleDateString(locale, {
                             month: "long",
                             day: "numeric",
                             year: "numeric",
@@ -1620,7 +1665,7 @@ export function HotelSearchBar({
 
       <HotelMobilePickerShell
         open={guestsRoomsOpen}
-        title="Guests and rooms"
+        title={t("guestsAndRooms")}
         titleId="hotel-results-mobile-guests-title"
         launcherRef={guestsRoomsMobileLauncherRef}
         onClose={() => setGuestsRoomsOpen(false)}
@@ -1631,7 +1676,7 @@ export function HotelSearchBar({
               onClick={() => setGuestsRoomsOpen(false)}
               className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
             >
-              Done
+              {t("done")}
             </button>
           </div>
         }
@@ -1640,34 +1685,44 @@ export function HotelSearchBar({
           {[
             {
               key: "adults",
-              label: "Adults",
+              label: t("adults"),
               value: hotelAdultCount,
               min: 1,
               max: 12 - hotelChildCount,
-              onDecrement: () => setHotelAdultCount((prev) => Math.max(1, prev - 1)),
+              onDecrement: () =>
+                setHotelAdultCount((prev) => Math.max(1, prev - 1)),
               onIncrement: () =>
-                setHotelAdultCount((prev) => Math.min(12 - hotelChildCount, prev + 1)),
+                setHotelAdultCount((prev) =>
+                  Math.min(12 - hotelChildCount, prev + 1),
+                ),
             },
             {
               key: "children",
-              label: "Children",
+              label: t("children"),
               value: hotelChildCount,
               min: 0,
               max: 12 - hotelAdultCount,
-              onDecrement: () => setHotelChildCount((prev) => Math.max(0, prev - 1)),
+              onDecrement: () =>
+                setHotelChildCount((prev) => Math.max(0, prev - 1)),
               onIncrement: () =>
-                setHotelChildCount((prev) => Math.min(12 - hotelAdultCount, prev + 1)),
+                setHotelChildCount((prev) =>
+                  Math.min(12 - hotelAdultCount, prev + 1),
+                ),
             },
             {
               key: "rooms",
-              label: "Rooms",
+              label: t("rooms"),
               value: clampCount(rooms, 1, 6),
               min: 1,
               max: 6,
               onDecrement: () =>
-                setRooms((prev) => String(Math.max(1, clampCount(prev, 1, 6) - 1))),
+                setRooms((prev) =>
+                  String(Math.max(1, clampCount(prev, 1, 6) - 1)),
+                ),
               onIncrement: () =>
-                setRooms((prev) => String(Math.min(6, clampCount(prev, 1, 6) + 1))),
+                setRooms((prev) =>
+                  String(Math.min(6, clampCount(prev, 1, 6) + 1)),
+                ),
             },
           ].map((row) => {
             const canDecrement = row.value > row.min;
@@ -1678,7 +1733,9 @@ export function HotelSearchBar({
                 key={row.key}
                 className="flex items-center justify-between gap-4 border-b border-slate-100 pb-4 last:border-b-0 last:pb-0"
               >
-                <span className="text-base font-black text-slate-950">{row.label}</span>
+                <span className="text-base font-black text-slate-950">
+                  {row.label}
+                </span>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
@@ -1705,7 +1762,6 @@ export function HotelSearchBar({
           })}
         </div>
       </HotelMobilePickerShell>
-
     </section>
   );
 }
