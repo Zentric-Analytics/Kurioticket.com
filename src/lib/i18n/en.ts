@@ -1239,7 +1239,7 @@ export const translations: TranslationDictionary = {
   quickResumeLatestSearches: "Quick resume from your latest searches",
   quickResumeLatestSearchesBody:
     "Jump back into route ideas you already liked—no account required.",
-  flightLandingHeroTitle: "Book your next flights with ease",
+  flightLandingHeroTitle: "Book your next flight with ease",
   flightLandingHeroSubtitle:
     "Search routes, compare dates, and explore flight options for your next journey.",
   flightLandingFeatureSearchReadyTitle: "Search-ready routes",
