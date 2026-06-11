@@ -95,33 +95,33 @@ export const pickupCards: CarPickupCard[] = [
 
 export const carsFaqItems = [
   {
-    question: "What information do I need to search for a rental car?",
-    answer:
-      "Enter your pickup location, pickup and return dates, pickup and return times, driver age, and whether you plan to return the car to a different location.",
+    id: "search-information",
+    questionKey: "carsFaq.0.question",
+    answerKey: "carsFaq.0.answer",
   },
   {
-    question: "Can I return the car to a different location?",
-    answer:
-      "Yes. Select Different return location in the search form and enter the drop-off city, airport, or address where you plan to return the car.",
+    id: "different-return-location",
+    questionKey: "carsFaq.1.question",
+    answerKey: "carsFaq.1.answer",
   },
   {
-    question: "Why does driver age matter for rental cars?",
-    answer:
-      "Rental providers may apply different rules, fees, vehicle eligibility, or deposit requirements based on the driver’s age and location.",
+    id: "driver-age",
+    questionKey: "carsFaq.2.question",
+    answerKey: "carsFaq.2.answer",
   },
   {
-    question: "What should I check before booking a rental car?",
-    answer:
-      "Review the pickup and return location, dates, times, mileage policy, fuel policy, insurance options, cancellation terms, deposit requirements, and required documents before booking.",
+    id: "before-booking",
+    questionKey: "carsFaq.3.question",
+    answerKey: "carsFaq.3.answer",
   },
   {
-    question: "Where is the final rental price confirmed?",
-    answer:
-      "Final price, vehicle availability, taxes, fees, deposit requirements, and rental rules are confirmed by the provider before booking.",
+    id: "final-price",
+    questionKey: "carsFaq.4.question",
+    answerKey: "carsFaq.4.answer",
   },
   {
-    question: "What documents might I need at pickup?",
-    answer:
-      "Rental providers may require a valid driver’s license, payment card, proof of identity, and any documents required by the pickup country or location.",
+    id: "pickup-documents",
+    questionKey: "carsFaq.5.question",
+    answerKey: "carsFaq.5.answer",
   },
 ];
