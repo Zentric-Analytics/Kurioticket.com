@@ -33,7 +33,6 @@ import {
   X,
 } from "lucide-react";
 
-import { KurioticketLogo } from "@/components/brand/KurioticketLogo";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { CountryCurrencySelector } from "@/components/region/CountryCurrencySelector";
@@ -535,8 +534,8 @@ export function AppHeader({
   return (
     <>
       <header className="relative z-50 border-b border-white/10 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
-        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-1 md:pt-[6px]">
-          <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[42px] md:gap-4">
+        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-3 md:pt-4">
+          <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link
               href="/"
               aria-label="Kurioticket home"
@@ -546,16 +545,12 @@ export function AppHeader({
               <span className="block text-[22px] font-black leading-none tracking-[-0.04em] text-white md:hidden">
                 Kurioticket
               </span>
-              <KurioticketLogo
-                variant="full"
-                tone="light"
-                className="hidden gap-2 md:inline-flex"
-                markClassName="md:h-11 md:w-11"
-                textClassName="md:text-xl"
-              />
+              <span className="hidden text-[28px] font-black leading-none tracking-[-0.055em] text-white drop-shadow-sm md:block lg:text-[30px]">
+                Kurioticket
+              </span>
             </Link>
 
-            <div className="hidden min-w-0 flex-1 items-center justify-end gap-2 md:flex">
+            <div className="hidden min-w-0 flex-1 items-center justify-end gap-2.5 md:flex lg:gap-3">
               <CountryCurrencySelector variant="header" grouped />
 
               <div className="relative" ref={languageRef}>
@@ -933,9 +928,9 @@ export function AppHeader({
               : null}
           </div>
 
-          <nav className="hidden md:block">
-            <div className="flex min-h-[32px] items-center pb-0.5 md:pl-24 lg:pl-32">
-              <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
+          <nav className="hidden md:block" aria-label="Primary">
+            <div className="flex min-h-[50px] items-center justify-center pt-2">
+              <div className="flex min-w-0 items-center justify-center gap-4 whitespace-nowrap lg:gap-6">
                 {desktopPrimaryNavItems.map((item) => {
                   const Icon = item.icon;
                   const active = isNavItemActive(item.href);
@@ -947,13 +942,19 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, item.href)
                       }
-                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-[15px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 ${
+                      className={`inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border px-5 py-2 text-[16px] font-extrabold leading-none tracking-[-0.01em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700 lg:px-6 ${
                         active
-                          ? "bg-white/10 text-white ring-1 ring-white/25"
-                          : "text-indigo-50/90 hover:bg-white/10 hover:text-white"
+                          ? "border-white bg-white text-indigo-700 shadow-[0_10px_24px_rgba(49,46,129,0.24)]"
+                          : "border-white/15 bg-white/[0.03] text-indigo-50/95 hover:border-white/35 hover:bg-white/10 hover:text-white"
                       }`}
                     >
-                      {Icon ? <Icon size={17} aria-hidden="true" /> : null}
+                      {Icon ? (
+                        <Icon
+                          size={18}
+                          className="shrink-0"
+                          aria-hidden="true"
+                        />
+                      ) : null}
                       <span>{item.label}</span>
                     </Link>
                   );
