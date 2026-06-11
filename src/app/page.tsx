@@ -1402,7 +1402,7 @@ function DestinationPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-extrabold text-slate-950 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
+      className="inline-flex text-base font-extrabold leading-6 tracking-tight text-slate-950 sm:text-[17px]"
       aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
