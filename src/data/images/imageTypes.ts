@@ -61,6 +61,35 @@ export type ImageFocalPoint =
   | "bottom-left"
   | "bottom-right";
 
+export const imageContentRoles = [
+  "provider-real",
+  "fallback-only",
+  "marketing",
+  "test-only",
+  "recent-search-derived",
+  "replacement-needed",
+] as const;
+
+export const imageProductionPriorities = [
+  "p0-launch-critical",
+  "p1-public-important",
+  "p2-supporting",
+  "p3-internal-or-test",
+] as const;
+
+export type ImageContentRole = (typeof imageContentRoles)[number];
+export type ImageProductionPriority = (typeof imageProductionPriorities)[number];
+
+export type ImageClassification = {
+  launchCritical: boolean;
+  pageSurfaces: string[];
+  intendedSlot: string;
+  contentRole: ImageContentRole;
+  productionPriority: ImageProductionPriority;
+  premiumReplacementRequired: boolean;
+  notes?: string;
+};
+
 export type RegisteredImage = {
   id: string;
   url: string;
@@ -80,5 +109,18 @@ export type RegisteredImage = {
   desktopApproved: boolean;
   mobileApproved: boolean;
   launchCritical: boolean;
+  contentRole?: ImageContentRole;
+  productionPriority?: ImageProductionPriority;
+  premiumReplacementRequired?: boolean;
   notes?: string;
+};
+
+export type InventoriedImage = ImageClassification & {
+  id: string;
+  url: string;
+  product: ImageProduct;
+  usage: ImageUsage | ImageUsage[];
+  source: ImageSource;
+  status: ImageStatus;
+  sourceFiles: string[];
 };

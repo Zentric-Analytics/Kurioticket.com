@@ -107,3 +107,42 @@ Every paid image purchase must capture:
 - crop notes and focal point
 - desktop/mobile approval status
 - launch-critical classification
+
+## Phase 2 inventory classification
+
+Phase 2 adds a non-rendering inventory layer for hard-coded image URLs that are not safe to migrate to registry imports yet. Use:
+
+- `src/data/images/imageRegistry.ts` for approved, reusable, known production entries and provider URL patterns.
+- `src/data/images/imageInventory.ts` for discovered image slots that need governance classification but must preserve current UI output.
+- `src/data/images/imagePurchasePlan.ts` for the Phase 3 premium purchasing queue derived from inventory metadata.
+
+Every inventory entry must classify the URL by product, usage, source, status, launch-critical flag, public surfaces, intended slot, content role, production priority, and premium replacement requirement. The content role answers whether the image is `provider-real`, `fallback-only`, `marketing`, `test-only`, `recent-search-derived`, or `replacement-needed`.
+
+## Production priority scale
+
+- `p0-launch-critical`: trust-critical launch surfaces such as homepage hero/discovery cards and hotel result fallback pools.
+- `p1-public-important`: public pages that matter for acquisition, SEO, or result confidence, but can follow P0 purchasing.
+- `p2-supporting`: supporting UI such as recent-search thumbnails or provider logos that are lower risk.
+- `p3-internal-or-test`: test fixtures and non-production references.
+
+Launch-critical images with `temporary`, `replace-before-launch`, or `blocked` status remain visible in the audit as governance debt. Phase 2 inventory may mark them this way to make the launch gap explicit; Phase 3 should resolve P0/P1 candidates with `premium-approved` or owned assets before launch.
+
+## Premium replacement rules
+
+Mark `premiumReplacementRequired: true` when an image appears on a high-trust public marketing or fallback surface, repeats across markets, receives paid traffic, or materially affects traveler confidence. This includes homepage fare discovery, market homepage destination modules, public destination cards, deals cards, flight-result route cards, and hotel fallback pools.
+
+Do not mark provider-real images for premium replacement. Provider imagery is governed by provider contracts and should be validated as matching the returned entity. Do not mark test-only URLs for premium replacement. Recent-search-derived thumbnails may stay temporary unless they are promoted into paid acquisition or launch-critical public modules.
+
+## Duplicate handling
+
+Duplicates should be handled by source identity, not just exact URL. The same Unsplash or Pexels asset may appear with different `w`, `q`, or `ixlib` parameters. Keep duplicate visual identities inventoried when they are still hard-coded in different files, but the Phase 3 purchase plan should treat them as one replacement family where possible.
+
+If an image becomes an approved reusable asset, move it into `imageRegistry.ts`, use multiple usages/page surfaces, and migrate call sites only in a dedicated UI-preserving PR.
+
+## Provider, fallback, and marketing distinctions
+
+Provider-real images are returned by contracted inventory providers for a specific hotel, airline, or travel entity. They must not be reused as generic marketing stock. Marketing images are Kurioticket-selected destination, deal, car, hotel-discovery, or route-inspiration images and need source/license/crop approval before launch. Fallback-only images are generic images shown only when provider-real imagery is missing; hotel fallback images must not imply exact property rooms, amenities, pools, views, ratings, price, or availability.
+
+## Phase 3 shopping-list generation
+
+Run `npm run audit:images` to view premium replacement candidate counts and suggested Phase 3 purchase categories. `src/data/images/imagePurchasePlan.ts` groups candidates into the first shopping categories and exposes `phase3FirstSixtyCandidateImages` as the seed list for the first 60-image buying pass. The first batch should prioritize P0 homepage discovery, market homepage destinations, and hotel fallback replacements before broader P1 destination/deal/result surfaces.
