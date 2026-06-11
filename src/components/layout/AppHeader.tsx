@@ -1212,7 +1212,7 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 border-b border-slate-100/80 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
                               {Icon ? (
                                 <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
@@ -1250,7 +1250,7 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 border-b border-slate-100/80 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
                               {Icon ? (
                                 <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
@@ -1287,7 +1287,7 @@ export function AppHeader({
                                   setMobileMenuOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 border-b border-slate-100/80 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-12 cursor-pointer items-center gap-3.5 px-2 py-2.5 text-[15px] font-semibold leading-5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
                               <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
                                 <Icon size={19} aria-hidden="true" />
