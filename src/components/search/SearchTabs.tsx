@@ -382,7 +382,7 @@ export function SearchTabs({
         (flightDatesOpen || hotelDatesOpen) &&
           "relative z-[200]",
         compactHero
-          ? "p-1 sm:p-1.5"
+          ? "p-1 sm:p-1.5 lg:border-slate-200/90 lg:bg-white/95 lg:p-2 lg:shadow-[0_18px_46px_rgba(15,23,42,0.13)] lg:ring-1 lg:ring-white/70"
           : "p-2"
       ),
     [compactHero, flightDatesOpen, hotelDatesOpen]
@@ -390,66 +390,85 @@ export function SearchTabs({
 
   const tabsClassName = cn(
     "inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1",
-    compactHero ? "mb-1 sm:mb-1.5" : "mb-2"
+    compactHero
+      ? "mb-1 sm:mb-1.5 lg:mb-2 lg:gap-0.5 lg:border-slate-200/90 lg:bg-slate-100/80 lg:shadow-inner"
+      : "mb-2"
   );
-  const formClassName = compactHero ? "space-y-1" : "space-y-2";
+  const formClassName = compactHero ? "space-y-1 lg:space-y-1.5" : "space-y-2";
   const fieldCardClassName = cn(
     "overflow-visible rounded-2xl border border-slate-200 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.10)]",
-    compactHero ? "p-0.5" : "p-1"
+    compactHero
+      ? "p-0.5 lg:border-slate-200/90 lg:p-1 lg:shadow-[0_14px_34px_rgba(15,23,42,0.10)] lg:ring-1 lg:ring-slate-900/[0.02]"
+      : "p-1"
   );
   const flightGridClassName = cn(
     "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
     compactHero
-      ? "gap-1 lg:grid-cols-[minmax(0,3.2fr)_minmax(0,1.25fr)_minmax(0,1.05fr)_132px]"
+      ? "gap-1 lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px]"
       : "gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px]"
   );
   const hotelGridClassName = cn(
     "grid grid-cols-1 sm:grid-cols-2 lg:gap-0",
     compactHero
-      ? "gap-1 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_132px]"
+      ? "gap-1 lg:grid-cols-[minmax(0,1.65fr)_minmax(172px,1.28fr)_minmax(158px,1.02fr)_136px]"
       : "gap-1.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]"
   );
   const joinedFieldClassName = cn(
     "transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
-    compactHero ? "min-h-[50px] px-3 py-1" : "min-h-[54px] px-3 py-1.5"
+    compactHero ? "min-h-[50px] px-3 py-1 lg:min-h-[56px] lg:px-4 lg:py-2" : "min-h-[54px] px-3 py-1.5"
   );
   const flightJoinedFieldClassName = cn(
     joinedFieldClassName,
-    compactHero ? "min-h-[54px] px-3.5 py-1.5" : "min-h-[58px] px-3.5 py-2"
+    compactHero ? "min-h-[54px] px-3.5 py-1.5 lg:min-h-[58px] lg:px-4 lg:py-2" : "min-h-[58px] px-3.5 py-2"
   );
   const hotelJoinedFieldClassName = cn(
     joinedFieldClassName,
-    compactHero ? "min-h-[58px] px-4 py-2" : "min-h-[58px] px-3.5 py-2"
+    compactHero ? "min-h-[58px] px-4 py-2 lg:min-h-[58px]" : "min-h-[58px] px-3.5 py-2"
   );
-  const hotelFieldLabelClassName = "mb-1 block text-[11px] font-extrabold uppercase leading-4 tracking-[0.16em] text-slate-500";
+  const flightFieldLabelClassName = cn(
+    "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
+    compactHero && "lg:text-[11px] lg:font-extrabold lg:tracking-[0.14em] lg:text-slate-500"
+  );
+  const flightFieldValueClassName = cn(
+    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm",
+    compactHero && "lg:text-[15px] lg:font-semibold lg:tracking-[-0.01em] lg:text-slate-950"
+  );
+  const flightFieldButtonClassName = cn(
+    "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm",
+    compactHero && "lg:text-[15px] lg:font-semibold lg:tracking-[-0.01em] lg:text-slate-950"
+  );
+  const hotelFieldLabelClassName = cn(
+    "mb-1 block text-[11px] font-extrabold uppercase leading-4 tracking-[0.16em] text-slate-500",
+    compactHero && "lg:tracking-[0.14em]"
+  );
   const hotelFieldValueClassName = cn(
     "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left font-semibold leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
-    compactHero ? "min-h-9 text-[17px] sm:text-[16px]" : "min-h-8 text-[16px] sm:text-[15px]"
+    compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em]" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
     : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
       ? cn(
-          "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0",
+          "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 lg:flex lg:flex-col lg:justify-center",
           side === "origin" ? "sm:pr-3" : "sm:pl-3"
         )
       : cn("relative px-0 py-0", side === "origin" ? "pr-3" : "pl-3");
   const submitWrapClassName = cn(
     "sm:col-span-2 lg:col-span-1 lg:self-stretch",
-    compactHero ? "lg:min-h-[54px]" : "lg:min-h-[58px]"
+    compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const submitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
-    compactHero ? "h-12 lg:min-h-[54px]" : "h-12 lg:min-h-[58px]"
+    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
+    compactHero ? "h-12 lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
   const hotelSubmitWrapClassName = cn(
     "sm:col-span-2 lg:col-span-1 lg:self-stretch",
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const hotelSubmitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
+    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
     compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
 
@@ -2093,12 +2112,14 @@ export function SearchTabs({
           }
           className={cn(
             "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
             tab === "flights"
               ? "bg-white text-navy shadow-sm"
-              : "text-slate-600 hover:text-slate-800"
+              : "text-slate-600 hover:text-slate-800",
+            compactHero && tab === "flights" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
-          <Plane size={16} />
+          <Plane className="h-4 w-4" />
           {t.flights}
         </button>
 
@@ -2109,12 +2130,14 @@ export function SearchTabs({
           }
           className={cn(
             "focus-ring inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors",
+            compactHero && "lg:px-3.5 lg:py-2 lg:text-[15px]",
             tab === "hotels"
               ? "bg-white text-navy shadow-sm"
-              : "text-slate-600 hover:text-slate-800"
+              : "text-slate-600 hover:text-slate-800",
+            compactHero && tab === "hotels" && "lg:shadow-[0_3px_10px_rgba(15,23,42,0.08)]"
           )}
         >
-          <BedDouble size={16} />
+          <BedDouble className="h-4 w-4" />
           {t.hotels}
         </button>
       </div>
@@ -2135,7 +2158,7 @@ export function SearchTabs({
                 <div
                   role="radiogroup"
                   aria-label={t.tripType || "Trip type"}
-                  className="inline-flex items-center gap-3 rounded-lg bg-white/80 px-0.5 py-1"
+                  className="inline-flex items-center gap-3 rounded-lg bg-white/80 px-0.5 py-1 lg:gap-1 lg:rounded-xl lg:border lg:border-slate-200 lg:bg-slate-50 lg:p-1"
                 >
                   {(["round-trip", "one-way"] as const).map((mode) => {
                     const selected = tripType === mode;
@@ -2161,14 +2184,14 @@ export function SearchTabs({
                           onSelectTripType(mode === "round-trip" ? "one-way" : "round-trip");
                         }}
                         className={cn(
-                          "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950",
-                          selected && "text-slate-950"
+                          "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950 lg:px-2.5",
+                          selected && "text-slate-950 lg:bg-white lg:shadow-sm"
                         )}
                       >
                         <span
                           aria-hidden="true"
                           className={cn(
-                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors",
+                            "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors lg:h-[15px] lg:w-[15px]",
                             selected
                               ? "border-indigo-600 bg-white"
                               : "border-slate-300 bg-white group-hover:border-slate-400"
@@ -2266,7 +2289,7 @@ export function SearchTabs({
                 ref={fromWrapRef}
                 className={flightRouteFieldClassName("origin")}
               >
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
+                <label className={flightFieldLabelClassName}>
                   {t.origin ||
                     "Origin"}
                 </label>
@@ -2326,7 +2349,7 @@ export function SearchTabs({
                       )
                     }
                     placeholder={t.fromPlaceholder || "From?"}
-                    className="focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
+                    className={flightFieldValueClassName}
                   />
                   {from.trim() ? (
                     <button
@@ -2407,7 +2430,7 @@ export function SearchTabs({
                 ref={toWrapRef}
                 className={flightRouteFieldClassName("destination")}
               >
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
+                <label className={flightFieldLabelClassName}>
                   {t.destination || "Destination"}
                 </label>
                 <div className="relative h-8">
@@ -2460,7 +2483,7 @@ export function SearchTabs({
                       )
                     }
                     placeholder={t.toPlaceholder || "To?"}
-                    className="focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm"
+                    className={flightFieldValueClassName}
                   />
                   {to.trim() ? (
                     <button
@@ -2535,7 +2558,7 @@ export function SearchTabs({
                 ref={dateWrapRef}
                 className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName)}
               >
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
+                <label className={flightFieldLabelClassName}>
                   {t.departureDate ||
                     t.travelDates || "Travel dates"}
                 </label>
@@ -2554,7 +2577,7 @@ export function SearchTabs({
                   }
                   aria-haspopup="dialog"
                   aria-label={t.chooseTravelDates || "Choose travel dates"}
-                  className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
+                  className={flightFieldButtonClassName}
                 >
                   <Calendar
                     size={16}
@@ -2805,7 +2828,7 @@ export function SearchTabs({
                 ref={travelersWrapRef}
                 className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName)}
               >
-                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
+                <label className={flightFieldLabelClassName}>
                   {t.travelers}
                 </label>
                 <button
@@ -2822,9 +2845,9 @@ export function SearchTabs({
                     }
                     openTravelersMenu();
                   }}
-                  className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
+                  className={cn(flightFieldButtonClassName, "justify-between pr-0")}
                 >
-                  <span className="block text-sm font-medium text-slate-900">
+                  <span className="block min-w-0 truncate">
                       {
                         travelerSummary
                       }
