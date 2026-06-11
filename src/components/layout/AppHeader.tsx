@@ -96,6 +96,16 @@ const signedInAccountMenuItems = [
   },
 ];
 
+const mobileSignedInAccountMenuItems = [
+  {
+    href: "/dashboard/account",
+    label: "My account",
+    description: "Manage account pages",
+    icon: LayoutDashboard,
+  },
+  ...signedInAccountMenuItems.slice(1),
+];
+
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
 }: AppHeaderProps = {}) {
@@ -1212,7 +1222,7 @@ export function AppHeader({
                       </div>
 
                       <div className="grid gap-1 py-4">
-                        {signedInAccountMenuItems.map((item) => {
+                        {mobileSignedInAccountMenuItems.map((item) => {
                           const Icon = item.icon;
 
                           return (

@@ -35,6 +35,16 @@ const navItems = [
   { label: "Support", href: "/dashboard/support", icon: LifeBuoy },
 ];
 
+const mobileAccountNavItems = [
+  { label: "Personal details", href: "/dashboard", icon: UserRound },
+  { label: "My Trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
+  { label: "Saved", href: "/dashboard/saved", icon: Bookmark },
+  { label: "Price alerts", href: "/dashboard/alerts", icon: Bell },
+  { label: "Preference", href: "/dashboard/preferences", icon: Settings },
+  { label: "Security", href: "/dashboard/security", icon: ShieldCheck },
+  { label: "Support", href: "/dashboard/support", icon: LifeBuoy },
+];
+
 type AccountDashboardFrameProps = {
   children: ReactNode;
   mobileOverviewTabs?: boolean;
@@ -124,7 +134,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
         mobileOverviewTabs && "gap-3 sm:gap-4",
       )}
     >
-      <aside className="min-w-0" aria-label="Account navigation">
+      <aside className="hidden min-w-0 lg:block" aria-label="Account navigation">
         <div
           className={cn(
             "border border-violet-100/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)] backdrop-blur-[1px]",
@@ -187,8 +197,62 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
           </div>
         </div>
       </aside>
-      <div className="min-w-0 space-y-3.5 sm:space-y-4">{children}</div>
+      <div className="min-w-0 space-y-3.5 sm:space-y-4">
+        <MobileAccountBackLink />
+        {children}
+      </div>
     </div>
+  );
+}
+
+export function MobileAccountBackLink() {
+  return (
+    <Link
+      href="/dashboard/account"
+      className="focus-ring inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 pr-3 text-sm font-black text-violet-700 transition hover:bg-violet-50 lg:hidden"
+    >
+      <span className="text-xl leading-none" aria-hidden="true">‹</span>
+      <span>My account</span>
+    </Link>
+  );
+}
+
+export function MobileAccountMenuPage() {
+  return (
+    <section className="mx-auto max-w-2xl lg:hidden" aria-labelledby="mobile-account-title">
+      <div className="mb-5 px-1">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Kurioticket</p>
+        <h1 id="mobile-account-title" className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950">
+          My account
+        </h1>
+      </div>
+
+      <div className="overflow-hidden rounded-[1.35rem] border border-violet-100 bg-white shadow-[0_22px_58px_-48px_rgba(49,46,129,0.55)]">
+        <div className="border-b border-slate-100 bg-violet-50/55 px-5 py-4">
+          <h2 className="text-sm font-black text-slate-950">Manage account</h2>
+        </div>
+
+        <nav aria-label="Manage account">
+          {mobileAccountNavItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group flex min-h-14 w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-violet-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500"
+              >
+                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 transition group-hover:bg-white">
+                  <Icon className="size-4.5" strokeWidth={2.2} aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1 truncate text-base font-bold text-slate-900">{item.label}</span>
+                <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </section>
   );
 }
 
