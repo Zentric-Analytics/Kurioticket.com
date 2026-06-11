@@ -148,6 +148,21 @@ export function StandaloneFlightSearchForm() {
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
   );
+  const airportPickerLabels = useMemo(
+    () => ({
+      clear: t("clear"),
+      done: t("done"),
+      chooseOrigin: t("chooseOrigin"),
+      clearOrigin: t("clearOrigin"),
+      clearDestination: t("clearDestination"),
+      searchAirportsAndCities: t("searchAirportsAndCities"),
+      searchAirportsOrCities: t("searchAirportsOrCities"),
+      startTypingCityOrAirport: t("startTypingCityOrAirport"),
+      searchingAirportsAndCities: t("searchingAirportsAndCities"),
+      noMatchingAirportsOrCities: t("noMatchingAirportsOrCities"),
+    }),
+    [t],
+  );
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
 
@@ -563,7 +578,7 @@ export function StandaloneFlightSearchForm() {
             ))}
           </div>
         ) : (
-          <p className="px-3 py-4 text-sm font-medium text-slate-500">No matching airports or cities.</p>
+          <p className="px-3 py-4 text-sm font-medium text-slate-500">{t("noMatchingAirportsOrCities")}</p>
         )}
       </div>
     );
@@ -971,12 +986,13 @@ export function StandaloneFlightSearchForm() {
 
         <MobileAirportPicker
           open={activeMobileAirportPicker === "origin"}
-          title="Choose origin"
+          title={t("chooseOrigin")}
           inputId="standalone-flight-origin-mobile-search"
           value={origin}
           suggestions={visibleOriginSuggestions}
           isLoading={originQuery.length >= 2 && originLoading}
           launcherRef={originMobileLauncherRef}
+          labels={airportPickerLabels}
           onChange={(nextValue) => {
             setOriginState((current) => markOriginManualInput(current, nextValue));
             setOriginHighlight(0);
@@ -991,12 +1007,13 @@ export function StandaloneFlightSearchForm() {
         />
         <MobileAirportPicker
           open={activeMobileAirportPicker === "destination"}
-          title="Choose destination"
+          title={t("chooseDestination")}
           inputId="standalone-flight-destination-mobile-search"
           value={destination}
           suggestions={visibleDestinationSuggestions}
           isLoading={destinationQuery.length >= 2 && destinationLoading}
           launcherRef={destinationMobileLauncherRef}
+          labels={airportPickerLabels}
           onChange={(nextValue) => {
             setDestination(nextValue);
             setDestinationCode("");
