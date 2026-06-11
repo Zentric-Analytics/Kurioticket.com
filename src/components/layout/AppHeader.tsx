@@ -104,7 +104,8 @@ export function AppHeader({
 
   const isSignedIn = Boolean(session?.user);
 
-  const [open, setOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileAccountOpen, setMobileAccountOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageQuery, setLanguageQuery] = useState("");
   const [languageStatusMessage, setLanguageStatusMessage] = useState("");
@@ -146,7 +147,8 @@ export function AppHeader({
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpen(false);
+        setMobileMenuOpen(false);
+        setMobileAccountOpen(false);
         setAccountOpen(false);
       }
     };
@@ -217,7 +219,8 @@ export function AppHeader({
 
   useEffect(() => {
     const closeMenuOnRouteChange = window.setTimeout(() => {
-      setOpen(false);
+      setMobileMenuOpen(false);
+      setMobileAccountOpen(false);
     }, 0);
 
     return () => {
@@ -226,7 +229,7 @@ export function AppHeader({
   }, [pathname]);
 
   useEffect(() => {
-    if (!open) {
+    if (!mobileMenuOpen && !mobileAccountOpen) {
       return;
     }
 
@@ -236,7 +239,8 @@ export function AppHeader({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        setOpen(false);
+        setMobileMenuOpen(false);
+        setMobileAccountOpen(false);
       }
     };
 
@@ -246,7 +250,7 @@ export function AppHeader({
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [mobileAccountOpen, mobileMenuOpen]);
 
   const selectedLanguage = useMemo(
     () => locales.find((option) => option.code === locale) ?? locales[0],
@@ -507,6 +511,7 @@ export function AppHeader({
   const handleMobileCountryCurrencyBeforeOpen = () => {
     setLanguageOpen(false);
     setAccountOpen(false);
+    setMobileAccountOpen(false);
   };
 
   const handleSignOut = async () => {
@@ -516,7 +521,8 @@ export function AppHeader({
 
     setIsSigningOut(true);
     setAccountOpen(false);
-    setOpen(false);
+    setMobileAccountOpen(false);
+    setMobileMenuOpen(false);
 
     try {
       await signOut({ redirect: false, callbackUrl: "/" });
@@ -704,9 +710,13 @@ export function AppHeader({
                 <button
                   type="button"
                   aria-label={t.openAccountMenu}
-                  aria-expanded={open}
-                  aria-haspopup="menu"
-                  onClick={() => setOpen((value) => !value)}
+                  aria-expanded={mobileAccountOpen}
+                  aria-controls="mobile-account-drawer"
+                  aria-haspopup="dialog"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    setMobileAccountOpen((value) => !value);
+                  }}
                   className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-transparent bg-transparent text-xs font-black text-white/95 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 >
                   <span className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-white text-[11px] font-black text-indigo-700 shadow-sm">
@@ -736,13 +746,18 @@ export function AppHeader({
 
               <button
                 type="button"
-                aria-label={open ? t.closeMobileMenu : t.openMobileMenu}
-                aria-expanded={open}
-                aria-controls={open ? "mobile-menu-drawer" : undefined}
+                aria-label={
+                  mobileMenuOpen ? t.closeMobileMenu : t.openMobileMenu
+                }
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-menu-drawer"
                 className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/95 transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                onClick={() => setOpen((value) => !value)}
+                onClick={() => {
+                  setMobileAccountOpen(false);
+                  setMobileMenuOpen((value) => !value);
+                }}
               >
-                {open ? <X size={18} /> : <Menu size={18} />}
+                {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
               </button>
             </div>
 
@@ -983,7 +998,7 @@ export function AppHeader({
           </nav>
         </div>
 
-        {open && typeof document !== "undefined"
+        {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
               <div
                 className="fixed inset-0 z-[70] md:hidden"
@@ -993,7 +1008,7 @@ export function AppHeader({
                   type="button"
                   className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45"
                   aria-label="Close mobile menu backdrop"
-                  onClick={() => setOpen(false)}
+                  onClick={() => setMobileMenuOpen(false)}
                 />
 
                 <aside
@@ -1008,7 +1023,9 @@ export function AppHeader({
                       href="/"
                       aria-label="Kurioticket home"
                       onClick={(event) =>
-                        handleRouteLinkClick(event, "/", () => setOpen(false))
+                        handleRouteLinkClick(event, "/", () =>
+                          setMobileMenuOpen(false),
+                        )
                       }
                       className="shrink-0"
                     >
@@ -1023,7 +1040,7 @@ export function AppHeader({
 
                     <button
                       type="button"
-                      onClick={() => setOpen(false)}
+                      onClick={() => setMobileMenuOpen(false)}
                       className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:border-slate-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                       aria-label="Close mobile menu"
                     >
@@ -1043,7 +1060,8 @@ export function AppHeader({
                       ref={languageTriggerRef}
                       type="button"
                       onClick={() => {
-                        setOpen(false);
+                        setMobileMenuOpen(false);
+                        setMobileAccountOpen(false);
                         setLanguageOpen(true);
                       }}
                       aria-haspopup="dialog"
@@ -1077,7 +1095,7 @@ export function AppHeader({
                           href={item.href}
                           onClick={(event) =>
                             handleRouteLinkClick(event, item.href, () =>
-                              setOpen(false),
+                              setMobileMenuOpen(false),
                             )
                           }
                           className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
@@ -1087,69 +1105,114 @@ export function AppHeader({
                         </Link>
                       );
                     })}
+                  </nav>
+                </aside>
+              </div>,
+              document.body,
+            )
+          : null}
 
-                    {isSignedIn ? (
-                      <section
-                        className="mt-1 rounded-xl border border-slate-200 bg-slate-50 p-2"
-                        aria-label="Account"
-                      >
-                        <div className="flex items-center gap-2.5 border-b border-slate-200 pb-2">
-                          <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-black text-white shadow-sm">
-                            {session?.user?.image ? (
-                              <RawImage
-                                src={session.user.image}
-                                alt=""
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              accountInitials
-                            )}
+        {isSignedIn && mobileAccountOpen && typeof document !== "undefined"
+          ? createPortal(
+              <div
+                className="fixed inset-0 z-[70] md:hidden"
+                role="presentation"
+              >
+                <button
+                  type="button"
+                  className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45"
+                  aria-label="Close mobile account backdrop"
+                  onClick={() => setMobileAccountOpen(false)}
+                />
+
+                <aside
+                  id="mobile-account-drawer"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Account menu"
+                  className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                >
+                  <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 px-4 py-2.5">
+                    <div className="min-w-0">
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-600">
+                        Kurioticket account
+                      </p>
+                      <p className="truncate text-base font-black text-slate-950">
+                        {session?.user?.name || accountDisplayName}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setMobileAccountOpen(false)}
+                      className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-transparent text-slate-700 transition-colors hover:border-slate-200 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                      aria-label="Close account menu"
+                    >
+                      <X size={18} aria-hidden="true" />
+                    </button>
+                  </div>
+
+                  <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-3 pb-[calc(1rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
+                    <section
+                      className="rounded-xl border border-slate-200 bg-slate-50 p-2"
+                      aria-label="Account"
+                    >
+                      <div className="flex items-center gap-2.5 border-b border-slate-200 pb-2">
+                        <span className="inline-flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-xs font-black text-white shadow-sm">
+                          {session?.user?.image ? (
+                            <RawImage
+                              src={session.user.image}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            accountInitials
+                          )}
+                        </span>
+
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-black text-slate-950">
+                            {session?.user?.name || accountDisplayName}
                           </span>
-
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-black text-slate-950">
-                              {session?.user?.name || accountDisplayName}
-                            </span>
-                            <span className="block truncate text-xs font-semibold text-slate-500">
-                              {session?.user?.email || "Kurioticket account"}
-                            </span>
+                          <span className="block truncate text-xs font-semibold text-slate-500">
+                            {session?.user?.email || "Kurioticket account"}
                           </span>
-                        </div>
+                        </span>
+                      </div>
 
-                        <div className="mt-1.5 grid gap-0.5">
-                          {signedInAccountMenuItems.map((item) => {
-                            const Icon = item.icon;
+                      <div className="mt-1.5 grid gap-0.5">
+                        {signedInAccountMenuItems.map((item) => {
+                          const Icon = item.icon;
 
-                            return (
-                              <Link
-                                key={item.href}
-                                href={item.href}
-                                onClick={(event) =>
-                                  handleRouteLinkClick(event, item.href, () =>
-                                    setOpen(false),
-                                  )
-                                }
-                                className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                              >
-                                <Icon size={16} aria-hidden="true" />
-                                <span>{item.label}</span>
-                              </Link>
-                            );
-                          })}
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              onClick={(event) =>
+                                handleRouteLinkClick(event, item.href, () =>
+                                  setMobileAccountOpen(false),
+                                )
+                              }
+                              className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                            >
+                              <Icon size={16} aria-hidden="true" />
+                              <span>{item.label}</span>
+                            </Link>
+                          );
+                        })}
 
-                          <button
-                            type="button"
-                            onClick={handleSignOut}
-                            disabled={isSigningOut}
-                            aria-busy={isSigningOut}
-                            className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
-                          >
-                            <LogOut size={16} aria-hidden="true" />
-                            {isSigningOut ? t.signingOut : t.logout}
-                          </button>
-                        </div>
-                      </section>
-                    ) : null}
+                        <button
+                          type="button"
+                          onClick={handleSignOut}
+                          disabled={isSigningOut}
+                          aria-busy={isSigningOut}
+                          className="inline-flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm font-semibold text-slate-700 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                        >
+                          <LogOut size={16} aria-hidden="true" />
+                          {isSigningOut ? t.signingOut : t.logout}
+                        </button>
+                      </div>
+                    </section>
                   </nav>
                 </aside>
               </div>,
