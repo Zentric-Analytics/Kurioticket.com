@@ -576,79 +576,81 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell py-5">
-          <div className="flex items-center">
-            <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
-              {t("homePopularDestinations")}
-            </h2>
-          </div>
+        <section className="border-y border-slate-200/75 bg-[#fbfaf7] py-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:py-5 sm:shadow-none">
+          <div className="page-shell">
+            <div className="flex items-center">
+              <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
+                {t("homePopularDestinations")}
+              </h2>
+            </div>
 
-          <div className="relative mt-6">
-            <button
-              type="button"
-              aria-label={t("homePreviousDestinations")}
-              onClick={() => scrollDestinationsRail("left")}
-              className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
-            >
-              <ChevronLeft size={18} />
-            </button>
+            <div className="relative mt-6">
+              <button
+                type="button"
+                aria-label={t("homePreviousDestinations")}
+                onClick={() => scrollDestinationsRail("left")}
+                className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+              >
+                <ChevronLeft size={18} />
+              </button>
 
-            <button
-              type="button"
-              aria-label={t("homeNextDestinations")}
-              onClick={() => scrollDestinationsRail("right")}
-              className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
-            >
-              <ChevronRight size={18} />
-            </button>
+              <button
+                type="button"
+                aria-label={t("homeNextDestinations")}
+                onClick={() => scrollDestinationsRail("right")}
+                className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+              >
+                <ChevronRight size={18} />
+              </button>
 
-            <div
-              ref={destinationsRailRef}
-              className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {visiblePopularDestinations.map((destination) => {
-                const price = destinationPriceState.prices[destination.id];
-                const city = translatePopularDestinationDisplayLabel(
-                  dictionary,
-                  destination.city,
-                  HOME_POPULAR_DESTINATION_CITY_KEYS,
-                );
-                const country = translatePopularDestinationDisplayLabel(
-                  dictionary,
-                  destination.country,
-                  HOME_POPULAR_DESTINATION_COUNTRY_KEYS,
-                );
+              <div
+                ref={destinationsRailRef}
+                className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {visiblePopularDestinations.map((destination) => {
+                  const price = destinationPriceState.prices[destination.id];
+                  const city = translatePopularDestinationDisplayLabel(
+                    dictionary,
+                    destination.city,
+                    HOME_POPULAR_DESTINATION_CITY_KEYS,
+                  );
+                  const country = translatePopularDestinationDisplayLabel(
+                    dictionary,
+                    destination.country,
+                    HOME_POPULAR_DESTINATION_COUNTRY_KEYS,
+                  );
 
-                return (
-                  <DestinationCard
-                    key={destination.id}
-                    city={city}
-                    country={country}
-                    imageAlt={destination.imageAlt}
-                    saveLabelTemplate={t("homeSaveDestination")}
-                    image={destination.image}
-                    destinationId={destination.id}
-                    price={price}
-                    displayCurrency={selectedOption.currency}
-                    originCode={destination.originCode}
-                    destinationCode={destination.code}
-                    href={buildDestinationCardHref(price, {
-                      originCode: destination.originCode,
-                      destinationCode: destination.code,
-                      displayCurrency: selectedOption.currency,
-                      market: regionCode,
-                    })}
-                    isPriceLoading={destinationPriceState.loading}
-                    isSaved={savedTripIds.includes(destination.id)}
-                    onHeartToggle={handleSavedTripToggle}
-                  />
-                );
-              })}
+                  return (
+                    <DestinationCard
+                      key={destination.id}
+                      city={city}
+                      country={country}
+                      imageAlt={destination.imageAlt}
+                      saveLabelTemplate={t("homeSaveDestination")}
+                      image={destination.image}
+                      destinationId={destination.id}
+                      price={price}
+                      displayCurrency={selectedOption.currency}
+                      originCode={destination.originCode}
+                      destinationCode={destination.code}
+                      href={buildDestinationCardHref(price, {
+                        originCode: destination.originCode,
+                        destinationCode: destination.code,
+                        displayCurrency: selectedOption.currency,
+                        market: regionCode,
+                      })}
+                      isPriceLoading={destinationPriceState.loading}
+                      isSaved={savedTripIds.includes(destination.id)}
+                      onHeartToggle={handleSavedTripToggle}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="page-shell bg-transparent py-5 sm:py-6">
+        <section className="page-shell bg-white py-7 sm:bg-transparent sm:py-6">
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
               <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
