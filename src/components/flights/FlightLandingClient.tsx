@@ -105,10 +105,25 @@ function getBeachVacationCards(
   return [...regionalMatches, ...fallbackMatches].slice(0, 6);
 }
 
+function getDiscoveryTranslation(
+  keyPrefix: string,
+  value: string,
+  t: (key: string) => string,
+) {
+  return t(`${keyPrefix}.${value}`) || value;
+}
+
 function getRouteText(item: HomeDiscoveryItem, t: (key: string) => string) {
   return {
     title: t(`homeDiscoveryRoute.${item.id}.title`) || item.title,
     routeNote: t(`homeDiscoveryRoute.${item.id}.routeNote`) || item.routeNote,
+    originCity: getDiscoveryTranslation("flightLandingCity", item.originCity, t),
+    destinationCity: getDiscoveryTranslation(
+      "flightLandingCity",
+      item.destinationCity,
+      t,
+    ),
+    imageAlt: getDiscoveryTranslation("flightLandingImageAlt", item.imageAlt, t),
   };
 }
 
@@ -128,15 +143,15 @@ function RouteCard({
     <Link
       href={buildDiscoveryLink(item)}
       aria-label={t("flightLandingRouteAriaLabel")
-        .replace("{{origin}}", item.originCity)
-        .replace("{{destination}}", item.destinationCity)}
+        .replace("{{origin}}", routeText.originCity)
+        .replace("{{destination}}", routeText.destinationCity)}
       className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_14px_36px_rgba(15,23,42,0.07)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_42px_rgba(79,70,229,0.14)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
     >
       <article className="flex h-full flex-col">
         <div className="relative h-40 overflow-hidden bg-slate-100">
           <Image
             src={item.image}
-            alt={item.imageAlt}
+            alt={routeText.imageAlt}
             fill
             priority={priority}
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
@@ -151,7 +166,7 @@ function RouteCard({
             {routeText.title}
           </h3>
           <p className="mt-1 text-sm font-semibold text-slate-700">
-            {item.originCity} {routeConnector} {item.destinationCity}
+            {routeText.originCity} {routeConnector} {routeText.destinationCity}
           </p>
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
             {routeText.routeNote}
@@ -269,7 +284,7 @@ export function FlightLandingClient() {
                       {item.originCode} → {item.destinationCode}
                     </p>
                     <h3 className="mt-2 text-base font-extrabold text-slate-950">
-                      {item.destinationCity}
+                      {routeText.destinationCity}
                     </h3>
                     <p className="mt-1 line-clamp-2 text-sm leading-6 text-slate-600">
                       {routeText.routeNote}
