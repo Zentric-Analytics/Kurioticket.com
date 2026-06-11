@@ -67,6 +67,23 @@ type SearchTabsTranslations =
 type SearchTabsProps = {
   t: SearchTabsTranslations;
   compactHero?: boolean;
+  locale?: string;
+};
+
+const normalizeHomepageCalendarLocale = (
+  locale: string | null | undefined
+) => {
+  const normalized =
+    locale?.trim().replace("_", "-").toLowerCase() ?? "";
+
+  if (
+    normalized === "es" ||
+    normalized.startsWith("es-")
+  ) {
+    return "es-ES";
+  }
+
+  return "en-US";
 };
 
 type PlacesApiResponse = {
@@ -179,6 +196,7 @@ const desktopTravelersPopoverClassName = "z-[2147483600]";
 export function SearchTabs({
   t: translations,
   compactHero = false,
+  locale,
 }: SearchTabsProps) {
   const t = useMemo(
     () =>
@@ -196,6 +214,45 @@ export function SearchTabs({
   const translate = useCallback(
     (key: string) => t[key] || enTranslations[key] || "",
     [t]
+  );
+
+  const calendarLocale = useMemo(
+    () => normalizeHomepageCalendarLocale(locale),
+    [locale]
+  );
+  const monthYearFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(calendarLocale, {
+        month: "long",
+        year: "numeric",
+      }),
+    [calendarLocale]
+  );
+  const accessibleDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(calendarLocale, {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+    [calendarLocale]
+  );
+  const shortDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(calendarLocale, {
+        month: "short",
+        day: "numeric",
+      }),
+    [calendarLocale]
+  );
+  const weekdays = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, index) =>
+        new Intl.DateTimeFormat(calendarLocale, {
+          weekday: "short",
+        }).format(new Date(2021, 7, index + 1))
+      ),
+    [calendarLocale]
   );
 
   const router = useRouter();
@@ -940,7 +997,7 @@ export function SearchTabs({
   const guests = String(hotelAdultCount + hotelChildCount);
   const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? t.guestSingular || "guest" : t.guestPlural || "guests"}, ${rooms} ${Number(rooms) === 1 ? t.roomSingular || "room" : t.roomPlural || "rooms"}`;
 
-  const formatShortDate = (
+  const formatShortDate = useCallback((
     isoDate: string
   ) => {
     if (!isoDate) {
@@ -972,14 +1029,8 @@ export function SearchTabs({
       return "";
     }
 
-    return new Intl.DateTimeFormat(
-      "en-US",
-      {
-        month: "short",
-        day: "numeric",
-      }
-    ).format(parsedDate);
-  };
+    return shortDateFormatter.format(parsedDate);
+  }, [shortDateFormatter]);
 
   const dateSummary = useMemo(
     () => {
@@ -1008,19 +1059,10 @@ export function SearchTabs({
       departureDate,
       returnDate,
       tripType,
+      formatShortDate,
       t.travelDates,
     ]
   );
-
-  const weekdays = [
-    "Sun",
-    "Mon",
-    "Tue",
-    "Wed",
-    "Thu",
-    "Fri",
-    "Sat",
-  ];
 
   const parseIsoDate = (
     value: string
@@ -1607,7 +1649,7 @@ export function SearchTabs({
 
       return checkInSummary;
     },
-    [checkIn, checkOut, t.hotelSearchDatePlaceholder]
+    [checkIn, checkOut, formatShortDate, t.hotelSearchDatePlaceholder]
   );
 
   const checkInParsed =
@@ -1659,13 +1701,13 @@ export function SearchTabs({
           return (
             <section
               key={monthKey}
-              aria-label={monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+              aria-label={monthYearFormatter.format(monthDate)}
               className="space-y-2.5"
             >
               <h3 className="text-left text-[17px] font-bold tracking-tight text-slate-950">
-                {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                {monthYearFormatter.format(monthDate)}
               </h3>
-              <div className="grid grid-cols-7 text-center text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+              <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
                 {weekdays.map((weekday) => (
                   <span key={weekday} className="py-2">{weekday}</span>
                 ))}
@@ -1700,11 +1742,7 @@ export function SearchTabs({
                     <button
                       key={iso}
                       type="button"
-                      aria-label={`Select ${day.toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}`}
+                      aria-label={`Select ${accessibleDateFormatter.format(day)}`}
                       aria-pressed={isDeparture || isReturn}
                       onClick={() => {
                         if (isDisabledDate || !isSelectableFlightDate(day)) return;
@@ -1752,13 +1790,13 @@ export function SearchTabs({
           return (
             <section
               key={monthKey}
-              aria-label={monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+              aria-label={monthYearFormatter.format(monthDate)}
               className="space-y-2.5"
             >
               <h3 className="text-left text-[17px] font-bold tracking-tight text-slate-950">
-                {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                {monthYearFormatter.format(monthDate)}
               </h3>
-              <div className="grid grid-cols-7 text-center text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+              <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
                 {weekdays.map((weekday) => (
                   <span key={weekday} className="py-2">{weekday}</span>
                 ))}
@@ -1794,11 +1832,7 @@ export function SearchTabs({
                     <button
                       key={iso}
                       type="button"
-                      aria-label={`Select ${day.toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })}`}
+                      aria-label={`Select ${accessibleDateFormatter.format(day)}`}
                       aria-pressed={isCheckIn || isCheckOut}
                       onClick={() => {
                         if (isDisabledDate) return;
@@ -2076,13 +2110,13 @@ export function SearchTabs({
     const cells = buildMonthCells(monthDate);
 
     return (
-      <section aria-label={monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })} className="min-w-0">
+      <section aria-label={monthYearFormatter.format(monthDate)} className="min-w-0">
         <h3 className="mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900">
-          {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          {monthYearFormatter.format(monthDate)}
         </h3>
-        <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium uppercase tracking-[0.09em] text-slate-500">
+        <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium tracking-[0.09em] text-slate-500">
           {weekdays.map((weekday) => (
-            <span key={weekday} className="py-1.5">{weekday.slice(0, 2)}</span>
+            <span key={weekday} className="py-1.5">{weekday}</span>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-y-0.5">
@@ -2112,11 +2146,7 @@ export function SearchTabs({
               <button
                 key={`${mode}-${iso}`}
                 type="button"
-                aria-label={`Select ${day.toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}`}
+                aria-label={`Select ${accessibleDateFormatter.format(day)}`}
                 aria-pressed={isStart || isEnd}
                 onClick={() => {
                   if (isDisabledDate) return;
