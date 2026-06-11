@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 
 import { X } from "lucide-react";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShell";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 export type HotelDestinationSuggestion = {
@@ -32,6 +34,16 @@ export const hotelDestinationKindLabels: Record<
   "airport-area": "Airport area",
 };
 
+const hotelDestinationKindTranslationKeys: Record<
+  HotelDestinationSuggestion["kind"],
+  string
+> = {
+  city: "hotelDestinationKind.city",
+  district: "hotelDestinationKind.district",
+  landmark: "hotelDestinationKind.landmark",
+  "airport-area": "hotelDestinationKind.airport-area",
+};
+
 type HotelDestinationMobilePickerProps = {
   open: boolean;
   value: string;
@@ -57,9 +69,16 @@ export function HotelDestinationMobilePicker({
   onClose,
   onClear,
 }: HotelDestinationMobilePickerProps) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const getDestinationKindLabel = (kind: HotelDestinationSuggestion["kind"]) =>
+    t(hotelDestinationKindTranslationKeys[kind]) ||
+    hotelDestinationKindLabels[kind];
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState(value);
-  const [suggestions, setSuggestions] = useState<HotelDestinationSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<HotelDestinationSuggestion[]>(
+    [],
+  );
   const [suggestionsCountryHint, setSuggestionsCountryHint] = useState("");
   const [loading, setLoading] = useState(false);
   const [highlight, setHighlight] = useState(0);
@@ -127,9 +146,9 @@ export function HotelDestinationMobilePicker({
               .filter((suggestion) =>
                 Boolean(
                   suggestion?.id &&
-                    suggestion?.name &&
-                    suggestion?.country &&
-                    suggestion?.searchValue,
+                  suggestion?.name &&
+                  suggestion?.country &&
+                  suggestion?.searchValue,
                 ),
               )
               .slice(0, 8)
@@ -152,7 +171,13 @@ export function HotelDestinationMobilePicker({
       window.clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [activeCountryHint, detectedCountryHint, open, selectedCountryHint, trimmedQuery]);
+  }, [
+    activeCountryHint,
+    detectedCountryHint,
+    open,
+    selectedCountryHint,
+    trimmedQuery,
+  ]);
 
   const applyValue = (nextValue: string) => {
     onChange(nextValue);
@@ -177,14 +202,14 @@ export function HotelDestinationMobilePicker({
           onClick={clearValue}
           className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
         >
-          Clear
+          {t("clear")}
         </button>
         <button
           type="button"
           onClick={() => applyValue(trimmedQuery)}
           className="focus-ring min-h-11 rounded-xl bg-slate-950 px-7 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Done
+          {t("done")}
         </button>
       </div>
     ),
@@ -195,7 +220,7 @@ export function HotelDestinationMobilePicker({
   return (
     <HotelMobilePickerShell
       open={open}
-      title="Choose destination"
+      title={t("chooseDestination")}
       titleId={titleId}
       launcherRef={launcherRef}
       onClose={onClose}
@@ -204,8 +229,11 @@ export function HotelDestinationMobilePicker({
     >
       <div className="mx-auto w-full max-w-xl space-y-5">
         <div className="space-y-2">
-          <label className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500" htmlFor={inputId}>
-            Destination
+          <label
+            className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500"
+            htmlFor={inputId}
+          >
+            {t("hotelSearchDestinationLabel")}
           </label>
           <div className="relative">
             <input
@@ -217,7 +245,9 @@ export function HotelDestinationMobilePicker({
               onKeyDown={(event) => {
                 if (event.key === "ArrowDown" && visibleSuggestions.length) {
                   event.preventDefault();
-                  setHighlight((current) => (current + 1) % visibleSuggestions.length);
+                  setHighlight(
+                    (current) => (current + 1) % visibleSuggestions.length,
+                  );
                 }
                 if (event.key === "ArrowUp" && visibleSuggestions.length) {
                   event.preventDefault();
@@ -230,17 +260,19 @@ export function HotelDestinationMobilePicker({
                 if (event.key === "Enter") {
                   event.preventDefault();
                   const highlightedSuggestion = visibleSuggestions[highlight];
-                  applyValue(highlightedSuggestion?.searchValue ?? trimmedQuery);
+                  applyValue(
+                    highlightedSuggestion?.searchValue ?? trimmedQuery,
+                  );
                 }
               }}
-              placeholder="City, area, or landmark"
+              placeholder={t("hotelSearchDestinationPlaceholder")}
               className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
             />
             {query ? (
               <button
                 type="button"
                 onClick={clearValue}
-                aria-label="Clear destination"
+                aria-label={t("clearDestination")}
                 className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -252,7 +284,7 @@ export function HotelDestinationMobilePicker({
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           {loading ? (
             <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
-              Finding destinations…
+              {t("findingDestinations")}
             </p>
           ) : visibleSuggestions.length ? (
             <div className="divide-y divide-slate-100">
@@ -280,7 +312,7 @@ export function HotelDestinationMobilePicker({
                       </span>
                     </span>
                     <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600">
-                      {hotelDestinationKindLabels[suggestion.kind]}
+                      {getDestinationKindLabel(suggestion.kind)}
                     </span>
                   </button>
                 );
@@ -289,8 +321,8 @@ export function HotelDestinationMobilePicker({
           ) : (
             <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
               {trimmedQuery
-                ? "No matching destinations yet."
-                : "Search for a city, area, or landmark."}
+                ? t("noMatchingDestinationsYet")
+                : t("searchCityAreaLandmark")}
             </p>
           )}
         </div>

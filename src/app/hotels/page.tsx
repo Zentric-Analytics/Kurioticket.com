@@ -380,7 +380,9 @@ hotelInspirationCategoryChips.forEach((category) => {
 export default function HotelsSearchPage() {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const translateHotelCard = <TCard extends HotelDestinationCard>(card: TCard) => ({
+  const translateHotelCard = <TCard extends HotelDestinationCard>(
+    card: TCard,
+  ) => ({
     ...card,
     title:
       dictionary[`hotelDestination.${card.destinationQuery}.title`] ??
@@ -395,6 +397,13 @@ export default function HotelsSearchPage() {
       enTranslations[`hotelDestination.${card.destinationQuery}.linkLabel`] ??
       card.linkLabel,
   });
+  const translateHotelInspirationCategory = (
+    category: HotelInspirationCategory,
+  ) =>
+    dictionary[`hotelInspirationCategory.${category}`] ??
+    enTranslations[`hotelInspirationCategory.${category}`] ??
+    category;
+
   const translateHotelInspirationCard = (card: HotelInspirationCard) => ({
     ...translateHotelCard(card),
     badge:
@@ -434,10 +443,12 @@ export default function HotelsSearchPage() {
     href: destinationCardHref(card.destinationQuery),
   }));
 
-  const globalHotelDestinationLinks = globalHotelDestinationCards.map((card) => ({
-    ...translateHotelCard(card),
-    href: destinationCardHref(card.destinationQuery),
-  }));
+  const globalHotelDestinationLinks = globalHotelDestinationCards.map(
+    (card) => ({
+      ...translateHotelCard(card),
+      href: destinationCardHref(card.destinationQuery),
+    }),
+  );
 
   const hotelInspirationLinks = hotelInspirationCardsByCategory[
     selectedInspirationCategory
@@ -538,7 +549,7 @@ export default function HotelsSearchPage() {
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                       >
-                        {chip}
+                        {translateHotelInspirationCategory(chip)}
                       </button>
                     );
                   })}
