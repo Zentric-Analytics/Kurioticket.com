@@ -1362,7 +1362,7 @@ function DestinationPricePill({
   if (isLoading) {
     return (
       <span
-        className="inline-flex h-9 w-32 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
+        className="inline-flex h-9 w-32 animate-pulse rounded-full border border-slate-300 bg-white shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
         aria-label={t("homePricesUpdateWithProviderResults")}
       />
     );
@@ -1370,7 +1370,7 @@ function DestinationPricePill({
 
   if (!hasProviderPrice) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/95 px-4 py-2 text-[15px] font-semibold text-slate-700 shadow-sm">
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
         {t("homeExploreFares")}
       </span>
     );
@@ -1381,7 +1381,7 @@ function DestinationPricePill({
 
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/95 px-4 py-2 text-[15px] font-semibold text-slate-700 shadow-sm">
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
         {t("homeExploreFares")}
       </span>
     );
@@ -1402,7 +1402,7 @@ function DestinationPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-200 bg-white/95 px-4 py-2 text-[15px] font-bold text-slate-900 shadow-sm"
+      className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-extrabold text-slate-950 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
       aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
