@@ -19,7 +19,8 @@
     "check:conflicts": "node scripts/check-conflicts.mjs",
     "prebuild": "npm run check:conflicts",
     "check:homepage-destination-prices": "node scripts/check-homepage-destination-prices.mjs",
-    "verify:currencies": "node scripts/verify-currency-coverage.mjs"
+    "verify:currencies": "node scripts/verify-currency-coverage.mjs",
+    "audit:images": "node scripts/audit-images.mjs"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
