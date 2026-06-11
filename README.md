@@ -1,6 +1,6 @@
 # Kurioticket
 
-Kurioticket is an Intelligent Stress-Free Travel Confidence Platform. Phase 1 focuses on premium flight and hotel metasearch, normalized provider results, safe external provider redirects, account dashboards, price alerts, premium subscription plumbing, support, legal pages, admin foundations, and Render deployment readiness.
+Kurioticket is an Intelligent Stress-Free Travel Confidence Platform. Phase 1 focuses on premium flight, hotel, and car search systems, normalized provider results, safe external provider redirects, account dashboards, price alerts, premium subscription plumbing, support, legal pages, admin foundations, and Render deployment readiness.
 
 Kurioticket is not an airline, OTA, or ticket issuer. Users compare options on Kurioticket and continue externally to airlines, hotels, affiliate partners, or travel providers for current pricing, rules, availability, and purchase steps.
 
@@ -10,7 +10,7 @@ Kurioticket is not an airline, OTA, or ticket issuer. Users compare options on K
 - Tailwind CSS
 - PostgreSQL with Prisma
 - NextAuth credentials and Google auth
-- Duffel, Amadeus, Kiwi/Tequila, and hotel provider service architecture
+- Duffel flight provider integration plus production-ready hotel and car provider service architecture
 - Stripe Checkout, subscriptions, webhooks, billing portal
 - Resend transactional email
 - OpenAI API for premium travel intelligence
@@ -39,10 +39,9 @@ Copy `.env.example` and fill provider credentials:
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `STRIPE_MONTHLY_PRICE_ID`, `STRIPE_YEARLY_PRICE_ID`
 - `OPENAI_API_KEY`, `OPENAI_MODEL`
-- `AMADEUS_CLIENT_ID`, `AMADEUS_CLIENT_SECRET`
-- `DUFFEL_API_KEY`
-- `KIWI_API_KEY`, `TRAVELPAYOUTS_API_KEY`, `TRAVELPAYOUTS_MARKER`
-- `HOTEL_API_KEY`
+- `DUFFEL_API_KEY` for the active flight provider path
+- Hotel provider credentials only when enabling an approved/configured hotel provider
+- Car provider credentials only when enabling an approved/configured car provider
 - `ADMIN_EMAILS`
 - `ENABLE_DEVELOPMENT_FALLBACKS` should remain `false` outside intentional local testing
 
@@ -93,25 +92,24 @@ The schema includes users, auth sessions, subscriptions, saved flights/hotels/se
 
 Provider calls happen only in backend services under `src/services/travel`.
 
-- Duffel is the primary live flight provider.
-- Amadeus is the secondary flight provider.
-- Kiwi/Tequila is the third flight provider.
-- Travelpayouts is not a replacement for Duffel. It is the affiliate, enrichment, destination discovery, travel trends, SEO, and monetization layer.
-- Hotels use Amadeus Hotels when Amadeus credentials exist, then a hotel partner/Travelpayouts-style enrichment path if configured.
+- Duffel is the only active working flight provider path today. Configure `FLIGHT_PROVIDER_PRIMARY=duffel`, `DUFFEL_API_MODE=live`, and `DUFFEL_API_KEY` for production flight search.
+- Hotels remain enabled and production-ready for approved provider access/integration. Hotel live inventory, prices, availability, and booking links should appear only when an approved/configured hotel provider is active for that environment.
+- Cars remain enabled and production-ready for approved provider access/integration. Car live inventory, prices, availability, and booking links should appear only when an approved/configured car provider is active for that environment.
+- Optional/future provider variables may remain documented in `.env.example`, but they are not required for the current launch unless the corresponding approved hotel or car provider is intentionally enabled.
 
-Provider credentials missing, unavailable, or rate-limited never produce fake live results in production or staging. Local fallback data is paused by default and only runs when `ENABLE_DEVELOPMENT_FALLBACKS=true` is set locally. Raw provider responses are never returned to users.
+Provider credentials missing, unavailable, or rate-limited never produce fake live results in production or staging. Kurioticket must not show fake providers, prices, inventory, availability, booking links, or supplier approval. Local fallback data is paused by default and only runs when `ENABLE_DEVELOPMENT_FALLBACKS=true` is set locally. Raw provider responses are never returned to users.
 
 ### Duffel Setup
 
-Set `DUFFEL_API_KEY` in Render and local `.env.local` when testing live searches. Duffel calls are made only from backend services with `Authorization: Bearer <token>` and the `Duffel-Version` header. Kurioticket creates live offer requests and normalizes offers into the internal flight result shape for metasearch comparison.
+Set `DUFFEL_API_KEY` in Render and local `.env.local` when testing live searches. Duffel calls are made only from backend services with `Authorization: Bearer <token>` and the `Duffel-Version` header. Kurioticket creates live offer requests and normalizes offers into the internal flight result shape for metasearch comparison. No other flight provider should be presented as active for the current launch.
 
-### Travelpayouts Setup
+### Hotel and Car Provider Setup
 
-Set `TRAVELPAYOUTS_API_KEY` and `TRAVELPAYOUTS_MARKER`. The marker is used for affiliate attribution and the API key is used for data/enrichment health checks and future destination discovery surfaces. Travelpayouts enriches deals, SEO pages, external provider redirects, and travel intelligence; Duffel remains the primary live flight provider.
+Keep hotel and car systems enabled and provider-ready. Configure hotel or car provider credentials only after the provider has been approved for the target environment, and show live hotel or car inventory/prices only after that provider is active and configured. Missing hotel or car provider credentials should produce maintenance/unavailable messaging rather than simulated live supply.
 
 ### Provider Health Checks
 
-Admins can review provider status at `/admin`. The admin-only endpoint `/api/admin/provider-health` reports Duffel and Travelpayouts configured/missing state, connection test result, response latency, sanitized last error, and environment readiness. Provider errors are logged internally and sanitized before returning to the browser.
+Admins can review provider status at `/admin`. The admin-only endpoint `/api/admin/provider-health` reports Duffel configured/missing state, connection test result, response latency, sanitized last error, and environment readiness. Provider errors are logged internally and sanitized before returning to the browser.
 
 ## Stripe Setup
 
@@ -181,7 +179,7 @@ Primary production domains:
 
 Staging may use either the Render staging URL or `staging.kurioticket.com`. If using a custom staging domain, add the domain to the staging Render service and create the DNS record GoDaddy/Render asks for.
 
-Use separate production and staging values for Stripe, Resend, OpenAI, Duffel, Travelpayouts, database, auth, and app URL environment variables. Staging must not share production payment webhooks unless intentionally configured by the infrastructure owner.
+Use separate production and staging values for Stripe, Resend, OpenAI, Duffel, approved hotel/car providers, database, auth, and app URL environment variables. Staging must not share production payment webhooks unless intentionally configured by the infrastructure owner.
 
 ## GitHub Branch Workflow
 
