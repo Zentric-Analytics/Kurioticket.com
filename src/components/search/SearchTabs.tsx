@@ -192,6 +192,9 @@ const desktopActiveFieldClassName = "z-[2147483200]";
 const desktopPopoverPanelClassName = "z-[2147483400]";
 const desktopTravelersFieldClassName = "z-[2147483500]";
 const desktopTravelersPopoverClassName = "z-[2147483600]";
+const mobileDoneButtonClassName =
+  "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
+
 
 export function SearchTabs({
   t: translations,
@@ -1880,7 +1883,7 @@ export function SearchTabs({
       <button
         type="button"
         onClick={() => setFlightDatesOpen(false)}
-        className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+        className={cn(mobileDoneButtonClassName, "px-4 py-2")}
       >
         {t.done || "Done"}
       </button>
@@ -1947,7 +1950,7 @@ export function SearchTabs({
             <button
               type="button"
               onClick={onClose}
-              className="focus-ring min-h-11 rounded-xl bg-slate-950 px-7 text-sm font-bold text-white transition-colors hover:bg-slate-800"
+              className={mobileDoneButtonClassName}
             >
               {t.done || "Done"}
             </button>
@@ -2922,7 +2925,7 @@ export function SearchTabs({
                           <button
                             type="button"
                             onClick={applyTravelersDraft}
-                            className="focus-ring rounded-xl bg-indigo-700 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600"
+                            className={cn(mobileDoneButtonClassName, "px-5 py-3")}
                           >
                             {t.done || "Done"}
                           </button>
@@ -3412,7 +3415,7 @@ export function SearchTabs({
                 <button
                   type="button"
                   onClick={() => setHotelDatesOpen(false)}
-                  className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                  className={cn(mobileDoneButtonClassName, "px-4 py-2")}
                 >
                   {t.done || "Done"}
                 </button>
@@ -3433,7 +3436,7 @@ export function SearchTabs({
                 <button
                   type="button"
                   onClick={() => setHotelGuestsRoomsOpen(false)}
-                  className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                  className={cn(mobileDoneButtonClassName, "px-4 py-2")}
                 >
                   {t.done || "Done"}
                 </button>

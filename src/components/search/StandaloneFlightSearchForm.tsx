@@ -78,6 +78,8 @@ const searchFieldLabelClassName =
   "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[11px] sm:font-bold sm:tracking-[0.12em] sm:text-slate-500";
 const searchFieldValueButtonClassName =
   "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:rounded-xl sm:text-[15px] sm:font-semibold sm:tracking-[-0.01em] sm:text-slate-950";
+const mobileDoneButtonClassName =
+  "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
 
 const normalizeSuggestionText = (value: string) =>
   value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
@@ -779,7 +781,7 @@ export function StandaloneFlightSearchForm({
             <button
               type="button"
               onClick={onClose}
-              className="focus-ring min-h-11 rounded-xl bg-slate-950 px-7 text-sm font-bold text-white transition-colors hover:bg-slate-800"
+              className={mobileDoneButtonClassName}
             >
               {airportPickerLabels.done}
             </button>
@@ -1401,7 +1403,7 @@ export function StandaloneFlightSearchForm({
                       <button
                         type="button"
                         onClick={() => setDatesOpen(false)}
-                        className="focus-ring min-h-11 rounded-xl bg-slate-950 px-7 text-sm font-bold text-white transition-colors hover:bg-slate-800"
+                        className={mobileDoneButtonClassName}
                       >
                         {t("done")}
                       </button>
@@ -1477,7 +1479,7 @@ export function StandaloneFlightSearchForm({
                       <button
                         type="button"
                         onClick={applyTravelersDraft}
-                        className="focus-ring rounded-xl bg-indigo-700 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600"
+                        className={cn(mobileDoneButtonClassName, "px-6 py-3")}
                       >
                         {t("done")}
                       </button>

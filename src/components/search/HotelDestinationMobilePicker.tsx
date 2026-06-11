@@ -9,6 +9,9 @@ import { HotelMobilePickerShell } from "@/components/search/HotelMobilePickerShe
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
+const mobileDoneButtonClassName =
+  "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700 disabled:cursor-not-allowed disabled:opacity-50";
+
 export type HotelDestinationSuggestion = {
   id: string;
   name: string;
@@ -207,7 +210,7 @@ export function HotelDestinationMobilePicker({
         <button
           type="button"
           onClick={() => applyValue(trimmedQuery)}
-          className="focus-ring min-h-11 rounded-xl bg-slate-950 px-7 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className={mobileDoneButtonClassName}
         >
           {t("done")}
         </button>
