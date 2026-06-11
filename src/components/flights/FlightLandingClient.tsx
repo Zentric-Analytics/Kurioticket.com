@@ -207,15 +207,44 @@ export function FlightLandingClient() {
     .filter((item) => !discoveryIds.has(item.id))
     .slice(0, 8);
 
+  const heroTitle = t("flightLandingHeroTitle");
+  const heroSubtitle = t("flightLandingHeroSubtitle");
+  const useEnglishHeroWrap =
+    heroTitle === "Find your next affordable flight with ease." &&
+    heroSubtitle ===
+      "Search routes, compare dates, and explore flight options for your next journey.";
+
   return (
     <main className="flex-1 bg-slate-50 pb-12 pt-4 sm:pt-8">
       <section className="page-shell">
         <div className="w-full max-w-3xl text-left sm:mx-auto sm:max-w-4xl sm:text-center">
-          <h1 className="max-w-[21.75rem] text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.022em] text-slate-950 sm:mx-auto sm:max-w-3xl sm:text-[2.75rem] sm:leading-[1.08] lg:text-[3.25rem]">
-            {t("flightLandingHeroTitle")}
+          <h1 className="max-w-[22.5rem] text-[1.7rem] font-semibold leading-[1.14] tracking-[-0.02em] text-slate-950 sm:mx-auto sm:max-w-3xl sm:text-[2.75rem] sm:leading-[1.08] lg:text-[3.25rem]">
+            {useEnglishHeroWrap ? (
+              <>
+                <span className="sm:hidden">
+                  Find your next affordable flight
+                  <br />
+                  with ease.
+                </span>
+                <span className="hidden sm:inline">{heroTitle}</span>
+              </>
+            ) : (
+              heroTitle
+            )}
           </h1>
-          <p className="mt-2.5 max-w-[21.75rem] text-sm font-medium leading-6 text-slate-600 sm:mx-auto sm:mt-4 sm:max-w-xl sm:text-base sm:leading-7">
-            {t("flightLandingHeroSubtitle")}
+          <p className="mt-2.5 max-w-[22.5rem] text-[0.94rem] font-medium leading-[1.55] text-slate-600 sm:mx-auto sm:mt-4 sm:max-w-xl sm:text-base sm:leading-7">
+            {useEnglishHeroWrap ? (
+              <>
+                <span className="sm:hidden">
+                  Search routes, compare dates, and explore flight options
+                  <br />
+                  for your next journey.
+                </span>
+                <span className="hidden sm:inline">{heroSubtitle}</span>
+              </>
+            ) : (
+              heroSubtitle
+            )}
           </p>
         </div>
 
