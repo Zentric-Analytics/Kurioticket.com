@@ -175,14 +175,14 @@ export function HotelDestinationMobilePicker({
         <button
           type="button"
           onClick={clearValue}
-          className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+          className="focus-ring min-h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
         >
           Clear
         </button>
         <button
           type="button"
           onClick={() => applyValue(trimmedQuery)}
-          className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="focus-ring min-h-11 rounded-xl bg-slate-950 px-7 text-sm font-bold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Done
         </button>
@@ -200,13 +200,14 @@ export function HotelDestinationMobilePicker({
       launcherRef={launcherRef}
       onClose={onClose}
       footer={footer}
+      contentClassName="bg-slate-50 px-4 py-5"
     >
-      <div className="mx-auto w-full max-w-xl space-y-4">
-        <label className="block rounded-2xl border border-indigo-200 bg-white p-3 shadow-sm focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20">
-          <span className="mb-2 block text-xs font-black uppercase tracking-[0.16em] text-slate-500">
+      <div className="mx-auto w-full max-w-xl space-y-5">
+        <div className="space-y-2">
+          <label className="block text-[11px] font-extrabold uppercase tracking-[0.18em] text-slate-500" htmlFor={inputId}>
             Destination
-          </span>
-          <span className="relative block">
+          </label>
+          <div className="relative">
             <input
               ref={inputRef}
               id={inputId}
@@ -233,31 +234,28 @@ export function HotelDestinationMobilePicker({
                 }
               }}
               placeholder="City, area, or landmark"
-              className="focus-ring h-12 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 pr-10 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+              className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
             />
             {query ? (
               <button
                 type="button"
                 onClick={clearValue}
                 aria-label="Clear destination"
-                className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-900"
+                className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
             ) : null}
-          </span>
-        </label>
+          </div>
+        </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-          <p className="px-2 pb-2 pt-1 text-xs font-black uppercase tracking-[0.16em] text-slate-500">
-            Suggestions
-          </p>
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           {loading ? (
-            <div className="rounded-xl bg-slate-50 px-3 py-4 text-sm font-semibold text-slate-500">
+            <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
               Finding destinations…
-            </div>
+            </p>
           ) : visibleSuggestions.length ? (
-            <div className="space-y-1">
+            <div className="divide-y divide-slate-100">
               {visibleSuggestions.map((suggestion, index) => {
                 const detail = [suggestion.region, suggestion.country]
                   .filter(Boolean)
@@ -269,19 +267,19 @@ export function HotelDestinationMobilePicker({
                     type="button"
                     onClick={() => applyValue(suggestion.searchValue)}
                     className={cn(
-                      "focus-ring flex w-full items-start justify-between gap-3 rounded-xl px-3 py-3 text-left transition-colors",
-                      highlight === index ? "bg-indigo-50" : "hover:bg-slate-50",
+                      "focus-ring flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50 focus-visible:bg-slate-50",
+                      highlight === index && "bg-indigo-50",
                     )}
                   >
                     <span className="min-w-0">
                       <span className="block truncate text-base font-black text-slate-950">
                         {suggestion.name}
                       </span>
-                      <span className="mt-0.5 block truncate text-sm font-medium text-slate-600">
+                      <span className="mt-0.5 block truncate text-sm font-medium text-slate-500">
                         {detail || suggestion.country}
                       </span>
                     </span>
-                    <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[11px] font-bold text-slate-600">
+                    <span className="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] font-bold text-slate-600">
                       {hotelDestinationKindLabels[suggestion.kind]}
                     </span>
                   </button>
@@ -289,11 +287,11 @@ export function HotelDestinationMobilePicker({
               })}
             </div>
           ) : (
-            <div className="rounded-xl bg-slate-50 px-3 py-4 text-sm font-semibold text-slate-500">
+            <p className="px-5 py-8 text-center text-sm font-medium leading-6 text-slate-500">
               {trimmedQuery
                 ? "No matching destinations yet."
                 : "Search for a city, area, or landmark."}
-            </div>
+            </p>
           )}
         </div>
       </div>
