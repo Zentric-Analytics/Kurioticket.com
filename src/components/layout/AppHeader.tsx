@@ -960,7 +960,7 @@ export function AppHeader({
           </div>
 
           <nav className="hidden md:block" aria-label="Primary">
-            <div className="flex min-h-[50px] items-center justify-start pt-2 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
+            <div className="flex min-h-[50px] items-center justify-start pt-2.5 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
               <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
                 {desktopPrimaryNavItems.map((item) => {
                   const Icon = item.icon;
