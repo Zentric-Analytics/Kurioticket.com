@@ -127,9 +127,10 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
       <aside className="min-w-0" aria-label="Account navigation">
         <div
           className={cn(
+            "border border-violet-100/80 bg-white shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]",
             mobileOverviewTabs
-              ? "-mx-4 border border-x-0 border-violet-100/60 bg-white/45 px-4 py-0 shadow-none backdrop-blur-sm lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:p-2.5 lg:shadow-[0_18px_46px_-44px_rgba(49,46,129,0.38)]"
-              : "rounded-[1.25rem] border border-violet-100/80 bg-white p-2 shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)] lg:p-2.5",
+              ? "-mx-4 border-x-0 px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:p-2.5 lg:shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]"
+              : "rounded-[1.25rem] p-2 lg:p-2.5",
           )}
         >
           <nav>
@@ -149,10 +150,8 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
                       !mobileOverviewTabs && "rounded-xl px-3.5 py-2.5",
                       active
                         ? cn(
-                          mobileOverviewTabs
-                            ? "text-violet-700 lg:bg-white/70 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.12),0_10px_28px_-24px_rgba(79,70,229,0.5)]"
-                            : "text-violet-700 lg:bg-violet-50 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]",
-                          mobileOverviewTabs && "after:bg-violet-700 lg:bg-white/70 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.12),0_10px_28px_-24px_rgba(79,70,229,0.5)]",
+                          "text-violet-700 lg:bg-violet-50 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]",
+                          mobileOverviewTabs && "after:bg-violet-700 lg:bg-violet-50 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]",
                         )
                         : "text-slate-900",
                     )}
@@ -165,14 +164,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
             </div>
           </nav>
 
-          <div
-            className={cn(
-              "mt-5 hidden rounded-2xl p-3 text-center lg:block lg:mt-14 xl:mt-16",
-              mobileOverviewTabs
-                ? "border border-violet-100/70 bg-gradient-to-b from-white/65 via-violet-50/45 to-white/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.72)]"
-                : "border border-violet-100/80 bg-gradient-to-b from-violet-50/55 to-white shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]",
-            )}
-          >
+          <div className="mt-5 hidden rounded-2xl border border-violet-100/80 bg-gradient-to-b from-violet-50/55 to-white p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-14 xl:mt-16">
             <div className="mx-auto mb-2 flex justify-center opacity-85">
               <TravelIllustration compact />
             </div>
@@ -196,10 +188,10 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
 function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
   return (
     <section
-      className="rounded-[1.5rem] border border-white/60 bg-white/40 px-4 py-4 shadow-[0_20px_54px_-48px_rgba(49,46,129,0.42)] backdrop-blur-sm sm:px-5 sm:py-5"
+      className="border-b border-slate-200/80 pb-5"
       aria-labelledby="dashboard-title"
     >
-      <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+      <div className="flex min-w-0 items-center gap-4 px-1 py-2 sm:gap-5 sm:px-2 sm:py-3">
         <div
           className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-2xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
           aria-hidden="true"
@@ -252,6 +244,7 @@ const personalDetailRows: PersonalDetailRow[] = [
     key: "email",
     label: "Email address",
     fallback: "Add your email address",
+    helper: "This is the email address you use to sign in. It is also where we send important account updates.",
     inputType: "email",
     readOnly: true,
   },
@@ -259,6 +252,7 @@ const personalDetailRows: PersonalDetailRow[] = [
     key: "phone",
     label: "Phone number",
     fallback: "Add your phone number",
+    helper: "Travel providers may use this number if they need to contact you about a booking.",
     inputType: "tel",
   },
   { key: "dateOfBirth", label: "Date of birth", fallback: "Add your date of birth" },
@@ -457,10 +451,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
   return (
     <section
-      className="min-w-0 rounded-[1.5rem] border border-white/60 bg-white/35 px-4 shadow-[0_20px_54px_-48px_rgba(49,46,129,0.38)] backdrop-blur-sm sm:px-5"
+      className="min-w-0"
       aria-labelledby="personal-details-title"
     >
-      <div className="flex min-w-0 flex-col gap-4 pb-5 pt-5 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 flex-col gap-4 px-1 pb-5 pt-2 sm:px-2 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <h2 id="personal-details-title" className="text-2xl font-bold tracking-tight text-slate-950">
             Personal details
@@ -471,13 +465,13 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         </div>
       </div>
 
-      <div className="divide-y divide-slate-200/80 border-y border-slate-200/80">
+      <div className="divide-y divide-slate-200 border-y border-slate-200/90">
         {personalDetailRows.map((row) => {
           const readOnlyValue = initialValues[row.key];
           const editValue = draft[row.key];
 
           return (
-            <div key={row.key} className="grid min-w-0 gap-1.5 py-4 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-5">
+            <div key={row.key} className="grid min-w-0 gap-1.5 px-1 py-4 sm:px-2 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-5">
               <div className="text-sm font-semibold text-slate-700">{row.label}</div>
               {isEditing ? (
                 <div className="min-w-0 space-y-1.5">
@@ -492,7 +486,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         })}
       </div>
 
-      <div className="py-5">
+      <div className="px-1 py-5 sm:px-2">
         {isEditing ? (
           <div className="flex min-w-0 flex-col gap-3 sm:items-end">
             <p className="text-sm leading-6 text-slate-500 sm:text-right">Profile editing coming soon.</p>
