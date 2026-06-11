@@ -435,22 +435,22 @@ export function SearchTabs({
   );
   const flightFieldLabelClassName = cn(
     "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600",
-    compactHero && "lg:text-[11px] lg:font-extrabold lg:tracking-[0.14em] lg:text-slate-500"
+    compactHero && "lg:text-[10px] lg:font-medium lg:tracking-[0.10em] lg:text-slate-500"
   );
   const flightFieldValueClassName = cn(
     "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block md:text-sm lg:placeholder:text-slate-400",
-    compactHero && "lg:text-[15px] lg:font-semibold lg:tracking-[-0.01em] lg:text-slate-950"
+    compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-950"
   );
   const flightFieldButtonClassName = cn(
     "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] font-medium text-slate-900 outline-none transition-colors md:text-sm",
-    compactHero && "lg:text-[15px] lg:font-semibold lg:tracking-[-0.01em] lg:text-slate-950"
+    compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-950"
   );
   const hotelFieldLabelClassName = cn(
-    "mb-1 block text-[11px] font-extrabold uppercase leading-4 tracking-[0.16em] text-slate-500",
-    compactHero && "lg:tracking-[0.14em]"
+    "mb-1 block text-[11px] font-semibold uppercase leading-4 tracking-[0.12em] text-slate-500",
+    compactHero && "lg:text-[10px] lg:font-medium lg:tracking-[0.10em]"
   );
   const hotelFieldValueClassName = cn(
-    "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left font-semibold leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
+    "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left font-medium leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
     compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em]" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
@@ -1988,9 +1988,9 @@ export function SearchTabs({
     sectionLabel: string;
     onSelect: (option: AirportOption) => void;
   }) => (
-    <div className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_22px_54px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.03] sm:block lg:w-[520px]">
+    <div className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]">
       <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-2.5">
-        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+        <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
           {sectionLabel}
         </p>
       </div>
@@ -2007,22 +2007,22 @@ export function SearchTabs({
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(option)}
             className={cn(
-              "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-indigo-50/70 focus-visible:bg-indigo-50/70",
+              "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-indigo-50/60 focus-visible:bg-indigo-50/60",
               highlight === index && "bg-indigo-50 text-indigo-950"
             )}
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 ring-1 ring-slate-200/70" aria-hidden="true">
               <Plane className="h-4 w-4" />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-extrabold leading-5 tracking-tight text-slate-950">
+              <span className="block truncate text-sm font-medium leading-5 tracking-tight text-slate-900">
                 {option.city}
               </span>
-              <span className="mt-0.5 block truncate text-xs font-semibold leading-5 text-slate-500">
+              <span className="mt-0.5 block truncate text-xs font-normal leading-5 text-slate-500">
                 {option.airport}{option.country ? ` · ${option.country}` : ""}
               </span>
             </span>
-            <span className="shrink-0 pl-3 text-right text-sm font-extrabold tracking-[0.14em] text-slate-700">
+            <span className="shrink-0 pl-3 text-right text-sm font-medium tracking-[0.08em] text-slate-600">
               {option.code}
             </span>
           </button>
@@ -2049,15 +2049,15 @@ export function SearchTabs({
 
     return (
       <section aria-label={monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })} className="min-w-0">
-        <h3 className="mb-3 text-center text-sm font-extrabold tracking-tight text-slate-950">
+        <h3 className="mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900">
           {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
         </h3>
-        <div className="mb-2 grid grid-cols-7 text-center text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-400">
+        <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium uppercase tracking-[0.09em] text-slate-400">
           {weekdays.map((weekday) => (
             <span key={weekday} className="py-1.5">{weekday.slice(0, 2)}</span>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-y-1">
+        <div className="grid grid-cols-7 gap-y-0.5">
           {cells.map((cell) => {
             const day = cell.date;
             const iso = toIsoDate(day);
@@ -2098,13 +2098,13 @@ export function SearchTabs({
                 disabled={isDisabledDate}
                 aria-disabled={isDisabledDate}
                 className={cn(
-                  "focus-ring relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold transition-colors disabled:cursor-not-allowed",
+                  "focus-ring relative mx-auto flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors disabled:cursor-not-allowed",
                   isDisabledDate
                     ? "text-slate-300"
-                    : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
-                  isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-300",
-                  isInRange && "rounded-xl bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
-                  (isStart || isEnd) && "bg-indigo-700 text-white shadow-sm shadow-indigo-700/20 hover:bg-indigo-700 hover:text-white ring-0"
+                    : "text-slate-700 hover:bg-indigo-50/80 hover:text-indigo-800",
+                  isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-200",
+                  isInRange && "rounded-xl bg-indigo-50/80 text-indigo-800 hover:bg-indigo-100",
+                  (isStart || isEnd) && "bg-indigo-600 text-white shadow-none hover:bg-indigo-600 hover:text-white ring-0"
                 )}
               >
                 {day.getDate()}
@@ -2135,14 +2135,14 @@ export function SearchTabs({
     <div
       role="dialog"
       aria-label={t.chooseTravelDates || "Choose travel dates"}
-      className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,660px)] rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_24px_58px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.03] sm:block"
+      className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block"
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
+      <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+          <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
             {mode === "flights" ? (t.travelDates || "Travel dates") : "Stay dates"}
           </p>
-          <h3 className="mt-1 text-base font-extrabold tracking-tight text-slate-950">
+          <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
             {t.chooseTravelDates || "Choose travel dates"}
           </h3>
         </div>
@@ -2151,7 +2151,7 @@ export function SearchTabs({
             type="button"
             aria-label="Previous month"
             onClick={() => setVisibleMonth((prev) => addMonths(prev, -1))}
-            className="focus-ring rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+            className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
             Prev
           </button>
@@ -2159,7 +2159,7 @@ export function SearchTabs({
             type="button"
             aria-label="Next month"
             onClick={() => setVisibleMonth((prev) => addMonths(prev, 1))}
-            className="focus-ring rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+            className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
             Next
           </button>
@@ -2171,18 +2171,18 @@ export function SearchTabs({
           mode,
         }))}
       </div>
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+      <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
         <button
           type="button"
           onClick={onClear}
-          className="focus-ring rounded-xl border border-slate-200 px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+          className="focus-ring rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
         >
           {t.clear || "Clear"}
         </button>
         <button
           type="button"
           onClick={onDone}
-          className="focus-ring rounded-xl bg-slate-950 px-5 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-800"
+          className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800"
         >
           {t.done || "Done"}
         </button>
@@ -2222,10 +2222,18 @@ export function SearchTabs({
             )}
           >
             <span className="min-w-0">
-              <span className="block text-base font-extrabold tracking-tight text-slate-950 sm:text-sm">
+              <span className={cn(
+                "block tracking-tight sm:text-sm",
+                compact
+                  ? "text-base font-medium text-slate-900"
+                  : "text-base font-extrabold text-slate-950"
+              )}>
                 {row.label}
               </span>
-              <span className="mt-0.5 block text-xs font-medium leading-5 text-slate-500">
+              <span className={cn(
+                "mt-0.5 block text-xs leading-5 text-slate-500",
+                compact ? "font-normal" : "font-medium"
+              )}>
                 {row.subtitle}
               </span>
             </span>
@@ -2244,14 +2252,16 @@ export function SearchTabs({
                 disabled={!canDecrement}
                 className={cn(
                   "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
-                  compact ? "h-8 w-8 border-slate-200 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
                 )}
               >
                 <Minus className="h-3.5 w-3.5" />
               </button>
               <span className={cn(
-                "tabular-nums text-center font-extrabold text-slate-950",
-                compact ? "min-w-7 text-sm" : "min-w-8 text-base"
+                "tabular-nums text-center",
+                compact
+                  ? "min-w-7 text-sm font-medium text-slate-900"
+                  : "min-w-8 text-base font-extrabold text-slate-950"
               )}>
                 {row.count}
               </span>
@@ -2276,7 +2286,7 @@ export function SearchTabs({
                 disabled={!canIncrement}
                 className={cn(
                   "focus-ring inline-flex items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none",
-                  compact ? "h-8 w-8 border-slate-200 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
+                  compact ? "h-8 w-8 border-slate-200 text-slate-600 shadow-none hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800" : "h-10 w-10 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
                 )}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -2307,11 +2317,14 @@ export function SearchTabs({
             type="button"
             onClick={() => setDraftCabinClass(value)}
             className={cn(
-              "focus-ring min-h-11 rounded-2xl border px-2 text-center text-sm font-extrabold leading-4 transition-all",
+              "focus-ring min-h-11 rounded-2xl border px-2 text-center text-sm leading-4 transition-all",
               draftCabinClass === value
-                ? "border-indigo-500 bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]"
+                ? cn(
+                    "border-indigo-500 bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
+                    compact && "border-indigo-600 bg-indigo-600 shadow-none"
+                  )
                 : "border-slate-200 bg-slate-50/80 text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800",
-              compact && "min-h-9 rounded-xl text-xs font-bold"
+              compact ? "min-h-9 rounded-xl text-xs font-medium" : "font-extrabold"
             )}
           >
             {label}
@@ -2845,26 +2858,26 @@ export function SearchTabs({
                     >
                       {renderTravelersCabinPicker()}
                     </FlightMobilePickerShell>
-                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,360px)] rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_22px_54px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.03] sm:block">
+                    <div role="dialog" aria-label="Travelers and cabin" className="absolute left-0 top-[calc(100%+10px)] z-50 hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block">
                       <div>
-                        <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
                           Passengers
                         </p>
-                        <h3 className="mt-1 text-base font-extrabold tracking-tight text-slate-950">
+                        <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
                           {t.travelers || "Travelers"}
                         </h3>
                       </div>
                       <div className="mt-3 space-y-4">
                         {renderPassengerControlRows(true)}
                         <div>
-                          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
                             {t.cabinClass || "Cabin class"}
                           </p>
                           {renderCabinClassPicker(true)}
                         </div>
                       </div>
-                      <div className="mt-4 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
-                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-xl bg-indigo-700 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
+                      <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+                        <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
                       </div>
                     </div>
                   </>
@@ -3103,12 +3116,12 @@ export function SearchTabs({
                   />
                 </button>
                 {hotelGuestsRoomsOpen ? (
-                  <div className="absolute left-0 top-[calc(100%+10px)] z-30 hidden w-[min(92vw,360px)] rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_22px_54px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.03] sm:block">
+                  <div className="absolute left-0 top-[calc(100%+10px)] z-30 hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block">
                     <div className="mb-3">
-                      <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+                      <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-500">
                         Stay details
                       </p>
-                      <h3 className="mt-1 text-base font-extrabold tracking-tight text-slate-950">
+                      <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
                         Guests and rooms
                       </h3>
                     </div>
@@ -3182,7 +3195,7 @@ export function SearchTabs({
                             className="flex items-center justify-between gap-4 border-b border-slate-100 px-4 py-3 last:border-b-0"
                           >
                             <span className="min-w-0">
-                              <span className="block text-sm font-extrabold tracking-tight text-slate-950">
+                              <span className="block text-sm font-medium tracking-tight text-slate-900">
                                 {row.label}
                               </span>
                               <span className="mt-0.5 block text-xs font-medium leading-5 text-slate-500">
@@ -3194,18 +3207,18 @@ export function SearchTabs({
                                 type="button"
                                 onClick={row.onDecrement}
                                 disabled={!canDecrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </button>
-                              <span className="min-w-7 text-center text-sm font-extrabold tabular-nums text-slate-950">
+                              <span className="min-w-7 text-center text-sm font-medium tabular-nums text-slate-900">
                                 {row.value}
                               </span>
                               <button
                                 type="button"
                                 onClick={row.onIncrement}
                                 disabled={!canIncrement}
-                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                               </button>
@@ -3216,10 +3229,10 @@ export function SearchTabs({
                       <div className="px-4 py-3">
                         <div className="flex items-center justify-between gap-4">
                           <div className="min-w-0">
-                            <p className="text-sm font-extrabold tracking-tight text-slate-950">
+                            <p className="text-sm font-medium tracking-tight text-slate-900">
                               Pet-friendly
                             </p>
-                            <p className="mt-0.5 text-xs font-medium leading-5 text-slate-500">
+                            <p className="mt-0.5 text-xs font-normal leading-5 text-slate-500">
                               Only show stays that allow pets
                             </p>
                           </div>
