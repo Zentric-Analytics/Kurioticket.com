@@ -7,13 +7,14 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { signinSchema } from "@/lib/validation";
 
 type SigninFormProps = {
   callbackUrl?: string;
   googleEnabled?: boolean;
-  initialError?: string;
-  initialMessage?: string;
+  initialErrorKey?: string;
+  initialMessageKey?: string;
 };
 
 type LoginStep = "credentials" | "code";
@@ -23,26 +24,34 @@ type Credentials = {
   password: string;
 };
 
-const invalidLoginMessage =
-  "We could not sign you in. Check your email and password, then try again.";
-const rateLimitedMessage = "Too many attempts. Please wait a moment and try again.";
-const codeSentMessage = "We sent a verification code to your email.";
-const codeFailedMessage = "That code did not work. Check the code and try again.";
-const processingMessage =
-  "Checking your details and sending a verification code…";
-const resendSuccessMessage = "We sent a new code if this account can sign in.";
+const invalidLoginKey = "loginInvalidCredentials";
+const rateLimitedKey = "loginRateLimited";
+const codeSentKey = "loginCodeSent";
+const codeFailedKey = "loginCodeFailed";
+const processingKey = "loginProcessing";
+const resendSuccessKey = "loginResendSuccess";
+
+type MessageState = {
+  key: string;
+  params?: Record<string, string | number>;
+};
 
 export function SigninForm({
   callbackUrl = "/",
   googleEnabled = false,
-  initialError = "",
-  initialMessage = "",
+  initialErrorKey = "",
+  initialMessageKey = "",
 }: SigninFormProps) {
   const [step, setStep] = useState<LoginStep>("credentials");
   const [emailForCode, setEmailForCode] = useState("");
   const [code, setCode] = useState("");
-  const [error, setError] = useState(initialError);
-  const [message, setMessage] = useState(initialMessage);
+  const { t } = useLocale();
+  const [error, setError] = useState<MessageState | null>(
+    initialErrorKey ? { key: initialErrorKey } : null,
+  );
+  const [message, setMessage] = useState<MessageState | null>(
+    initialMessageKey ? { key: initialMessageKey } : null,
+  );
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
@@ -68,8 +77,8 @@ export function SigninForm({
     if (credentialsInFlightRef.current) return;
     credentialsInFlightRef.current = true;
     setLoading(true);
-    setError("");
-    setMessage(processingMessage);
+    setError(null);
+    setMessage({ key: processingKey });
 
     const parsed = signinSchema.safeParse({
       email: String(formData.get("email") || ""),
@@ -79,8 +88,8 @@ export function SigninForm({
     if (!parsed.success) {
       credentialsInFlightRef.current = false;
       setLoading(false);
-      setMessage("");
-      setError(invalidLoginMessage);
+      setMessage(null);
+      setError({ key: invalidLoginKey });
       return;
     }
 
@@ -93,13 +102,13 @@ export function SigninForm({
       if (!result.ok) {
         credentialsInFlightRef.current = false;
         setLoading(false);
-        setMessage("");
-        setError(result.error);
+        setMessage(null);
+        setError({ key: result.errorKey });
         return;
       }
 
       if (result.redirectTo?.startsWith("/auth/verify-email")) {
-        setMessage("We sent a verification code to your email.");
+        setMessage({ key: codeSentKey });
         startTransition(() => {
           window.location.href = result.redirectTo || "/auth/verify-email";
         });
@@ -111,15 +120,15 @@ export function SigninForm({
       setCode("");
       setCooldownSeconds(result.cooldownSeconds || 30);
       setStep("code");
-      setMessage(codeSentMessage);
+      setMessage({ key: codeSentKey });
       setLoading(false);
       credentialsInFlightRef.current = false;
     } catch (error) {
       console.error("[signin]", error);
       credentialsInFlightRef.current = false;
       setLoading(false);
-      setMessage("");
-      setError(invalidLoginMessage);
+      setMessage(null);
+      setError({ key: invalidLoginKey });
     }
   }
 
@@ -127,8 +136,8 @@ export function SigninForm({
     if (codeInFlightRef.current) return;
     codeInFlightRef.current = true;
     setLoading(true);
-    setError("");
-    setMessage("");
+    setError(null);
+    setMessage(null);
 
     const loginCode = String(formData.get("code") || "").trim();
     const email = credentialsRef.current?.email || emailForCode;
@@ -136,7 +145,7 @@ export function SigninForm({
     if (!email || !/^\d{6}$/.test(loginCode)) {
       codeInFlightRef.current = false;
       setLoading(false);
-      setError("Enter the 6-digit login code.");
+      setError({ key: "loginEnterCode" });
       return;
     }
 
@@ -151,14 +160,14 @@ export function SigninForm({
       if (!result?.ok) {
         codeInFlightRef.current = false;
         setLoading(false);
-        setError(
-          result?.error === "RateLimited" ? rateLimitedMessage : codeFailedMessage
-        );
+        setError({
+          key: result?.error === "RateLimited" ? rateLimitedKey : codeFailedKey,
+        });
         return;
       }
 
       credentialsRef.current = null;
-      setMessage("Verified. Redirecting…");
+      setMessage({ key: "loginVerifiedRedirecting" });
       startTransition(() => {
         window.location.href = result.url || callbackUrl;
       });
@@ -166,7 +175,7 @@ export function SigninForm({
       console.error("[signin:verify-login]", error);
       codeInFlightRef.current = false;
       setLoading(false);
-      setError(codeFailedMessage);
+      setError({ key: codeFailedKey });
     }
   }
 
@@ -175,29 +184,29 @@ export function SigninForm({
 
     const credentials = credentialsRef.current;
     if (!credentials) {
-      setError("Start over so we can check your details before sending a new code.");
+      setError({ key: "loginStartOverError" });
       return;
     }
 
     resendInFlightRef.current = true;
     setResending(true);
-    setError("");
-    setMessage("Sending a new verification code…");
+    setError(null);
+    setMessage({ key: "loginSendingNewCode" });
 
     try {
       const result = await requestLoginCode(credentials);
       if (!result.ok) {
-        setMessage("");
-        setError(result.error);
+        setMessage(null);
+        setError({ key: result.errorKey });
         return;
       }
 
       setCooldownSeconds(result.cooldownSeconds || 30);
-      setMessage(resendSuccessMessage);
+      setMessage({ key: resendSuccessKey });
     } catch (error) {
       console.error("[signin:resend-login-code]", error);
-      setMessage("");
-      setError("Unable to send a new code right now. Please try again.");
+      setMessage(null);
+      setError({ key: "loginUnableSendNewCode" });
     } finally {
       resendInFlightRef.current = false;
       setResending(false);
@@ -213,8 +222,8 @@ export function SigninForm({
     setEmailForCode("");
     setCode("");
     setCooldownSeconds(0);
-    setError("");
-    setMessage("");
+    setError(null);
+    setMessage(null);
     setLoading(false);
     setResending(false);
   }
@@ -238,10 +247,10 @@ export function SigninForm({
     if (!response.ok) {
       return {
         ok: false as const,
-        error:
+        errorKey:
           response.status === 429
-            ? rateLimitedMessage
-            : String(data.error || invalidLoginMessage),
+            ? rateLimitedKey
+            : getLoginErrorKey(data.error),
         cooldownSeconds,
       };
     }
@@ -255,15 +264,13 @@ export function SigninForm({
 
   return (
     <Card className="mx-auto w-full max-w-md p-5">
-      <h1 className="text-2xl font-bold text-navy">Log in</h1>
+      <h1 className="text-2xl font-bold text-navy">{t.loginPageTitle}</h1>
 
-      <p className="mt-2 text-sm text-muted">
-        Save searches, manage alerts, and access your travel dashboard.
-      </p>
+      <p className="mt-2 text-sm text-muted">{t.loginPageSubtitle}</p>
 
       {step === "credentials" ? (
         <form action={submitCredentials} className="mt-5 grid gap-4">
-          <Field label="Email">
+          <Field label={t.loginEmailLabel}>
             <Input
               name="email"
               type="email"
@@ -273,7 +280,7 @@ export function SigninForm({
             />
           </Field>
 
-          <Field label="Password">
+          <Field label={t.loginPasswordLabel}>
             <Input
               name="password"
               type="password"
@@ -287,26 +294,33 @@ export function SigninForm({
             className="cursor-pointer text-sm font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
             href="/auth/forgot-password"
           >
-            Forgot password?
+            {t.loginForgotPassword}
           </Link>
 
-          {message ? <StatusMessage>{message}</StatusMessage> : null}
-          {error ? <ErrorMessage>{error}</ErrorMessage> : null}
+          {message ? (
+            <StatusMessage>{formatTranslation(t, message)}</StatusMessage>
+          ) : null}
+          {error ? (
+            <ErrorMessage>{formatTranslation(t, error)}</ErrorMessage>
+          ) : null}
 
           <Button disabled={busy}>
-            {busy ? "Checking details…" : "Log in"}
+            {busy ? t.loginCheckingDetails : t.loginSubmit}
           </Button>
         </form>
       ) : (
         <form action={submitCode} className="mt-5 grid gap-4">
           <div className="rounded-md bg-teal/10 px-3 py-2 text-sm text-teal-dark">
-            <p className="font-semibold">{codeSentMessage}</p>
+            <p className="font-semibold">{t.loginCodeSent}</p>
             <p className="mt-1 text-teal-dark/80">
-              Enter the 6-digit code sent to {emailForCode}. Codes expire after 10 minutes.
+              {formatTranslation(t, {
+                key: "loginCodeInstructions",
+                params: { email: emailForCode },
+              })}
             </p>
           </div>
 
-          <Field label="Verification code">
+          <Field label={t.loginVerificationCodeLabel}>
             <Input
               name="code"
               inputMode="numeric"
@@ -323,11 +337,15 @@ export function SigninForm({
             />
           </Field>
 
-          {message && message !== codeSentMessage ? <StatusMessage>{message}</StatusMessage> : null}
-          {error ? <ErrorMessage>{error}</ErrorMessage> : null}
+          {message && message.key !== codeSentKey ? (
+            <StatusMessage>{formatTranslation(t, message)}</StatusMessage>
+          ) : null}
+          {error ? (
+            <ErrorMessage>{formatTranslation(t, error)}</ErrorMessage>
+          ) : null}
 
           <Button disabled={busy || code.length !== 6}>
-            {busy ? "Verifying…" : "Verify login"}
+            {busy ? t.loginVerifying : t.loginVerifyLogin}
           </Button>
 
           <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
@@ -338,10 +356,13 @@ export function SigninForm({
               disabled={busy || resending || cooldownSeconds > 0}
             >
               {resending
-                ? "Sending code…"
+                ? t.loginSendingCode
                 : cooldownSeconds > 0
-                  ? `Resend in ${cooldownSeconds}s`
-                  : "Resend code"}
+                  ? formatTranslation(t, {
+                      key: "loginResendIn",
+                      params: { seconds: cooldownSeconds },
+                    })
+                  : t.loginResendCode}
             </button>
 
             <button
@@ -350,7 +371,7 @@ export function SigninForm({
               onClick={startOver}
               disabled={busy || resending}
             >
-              Use different details
+              {t.loginUseDifferentDetails}
             </button>
           </div>
         </form>
@@ -362,26 +383,56 @@ export function SigninForm({
           className="mt-3 w-full hover:border-slate-300 hover:bg-slate-50 focus-visible:ring-violet-500"
           onClick={() =>
             signIn("google", {
-              callbackUrl:
-                callbackUrl || "/",
-              prompt:
-                "select_account",
+              callbackUrl: callbackUrl || "/",
+              prompt: "select_account",
             })
           }
           disabled={busy}
         >
-          Continue with Google
+          {t.loginGoogle}
         </Button>
       ) : null}
 
       <p className="mt-4 text-sm text-muted">
-        New to Kurioticket?{" "}
-        <Link className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2" href="/auth/signup">
-          Create an account
+        {t.loginSignupPrompt}{" "}
+        <Link
+          className="cursor-pointer font-semibold text-teal-dark transition-colors hover:text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
+          href="/auth/signup"
+        >
+          {t.loginCreateAccount}
         </Link>
       </p>
     </Card>
   );
+}
+
+function formatTranslation(
+  translations: Record<string, string>,
+  message: MessageState,
+) {
+  const template = translations[message.key] ?? message.key;
+
+  if (!message.params) {
+    return template;
+  }
+
+  return Object.entries(message.params).reduce(
+    (text, [key, value]) => text.replaceAll(`{{${key}}}`, String(value)),
+    template,
+  );
+}
+
+function getLoginErrorKey(error: unknown) {
+  switch (String(error || "")) {
+    case "Too many sign-in attempts. Please wait and try again.":
+      return rateLimitedKey;
+    case "This account is not available. Please contact support.":
+      return "loginErrorAccountUnavailable";
+    case "Unable to send login code right now. Please try again.":
+      return "loginUnableSendLoginCode";
+    default:
+      return invalidLoginKey;
+  }
 }
 
 function StatusMessage({ children }: { children: string }) {
@@ -412,7 +463,7 @@ function parseRetryAfter(value: string | null) {
 function parseCooldownSeconds(data: unknown, fallback: number) {
   if (!data || typeof data !== "object") return fallback;
   const cooldownSeconds = Number(
-    (data as Record<string, unknown>).cooldownSeconds || 0
+    (data as Record<string, unknown>).cooldownSeconds || 0,
   );
 
   if (!Number.isFinite(cooldownSeconds) || cooldownSeconds <= 0) {
