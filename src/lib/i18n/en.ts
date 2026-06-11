@@ -33,6 +33,7 @@ export const translations: TranslationDictionary = {
   notifications: "Notifications",
   search: "Search",
   searchingFlights: "Searching flights...",
+  searchFlights: "Search flights",
   searchingCars: "Searching cars...",
   searchingHotels: "Searching hotels...",
   clear: "Clear",
@@ -1054,6 +1055,24 @@ export const translations: TranslationDictionary = {
   quickResumeLatestSearches: "Quick resume from your latest searches",
   quickResumeLatestSearchesBody:
     "Jump back into route ideas you already liked—no account required.",
+  flightLandingHeroTitle: "Find flights for your next trip",
+  flightLandingHeroSubtitle:
+    "Search routes, compare dates, and explore flight options for your next journey.",
+  flightLandingFeatureSearchReadyTitle: "Search-ready routes",
+  flightLandingFeatureSearchReadyBody:
+    "Enter real trip details before results are requested from flight providers.",
+  flightLandingFeatureCompareTitle: "Compare in context",
+  flightLandingFeatureCompareBody:
+    "Use dates, traveler counts, cabin, duration, stops, and route details to evaluate options.",
+  flightLandingFeatureProviderTitle: "Provider review",
+  flightLandingFeatureProviderBody:
+    "Always confirm final availability, price, and rules with the provider before booking.",
+  flightLandingStartThisSearch: "Start this search",
+  flightLandingRouteIdeasTitle: "Route ideas for flexible trips",
+  flightLandingRouteIdeasBody:
+    "Browse route ideas, then start a real search with dates and travelers before comparing available flights.",
+  flightLandingRouteConnector: "to",
+  flightLandingRouteAriaLabel: "Search flights from {{origin}} to {{destination}}",
   discoverDestinationsFromRegion: "Discover destinations from your region",
   discoverDestinationsFromRegionBody:
     "Explore curated routes and start your next trip with confidence.",
@@ -1094,6 +1113,7 @@ export const translations: TranslationDictionary = {
   searchAirportsAndCities: "Search airports and cities",
   searchAirportsOrCities: "Search airports or cities",
   cityAirportOrCode: "City, airport, or code",
+  cityOrAirport: "City or airport",
   startTypingCityAirportOrCode: "Start typing a city, airport, or IATA code to see suggestions.",
   startTypingCityOrAirport: "Start typing a city or airport name to see suggestions.",
   searchingAirportsAndCities: "Searching airports and cities…",

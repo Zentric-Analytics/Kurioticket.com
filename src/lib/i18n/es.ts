@@ -35,6 +35,7 @@ export const translations: TranslationDictionary = {
   notifications: "Notificaciones",
   search: "Buscar",
   searchingFlights: "Buscando vuelos...",
+  searchFlights: "Buscar vuelos",
   searchingCars: "Buscando autos...",
   searchingHotels: "Buscando hoteles...",
   clear: "Borrar",
@@ -321,8 +322,8 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ca-yul-cdg.routeNote": "Idea de ruta hacia París para comparar fechas, tarifas y opciones de viaje.",
   "homeDiscoveryRoute.ca-yvr-lax.title": "Escapada a Los Angeles",
   "homeDiscoveryRoute.ca-yvr-lax.routeNote": "Ruta hacia Los Angeles con ambiente costero, descanso y planes de ocio.",
-  "homeDiscoveryRoute.ca-yyz-cun.title": "Escapada a Cancún",
-  "homeDiscoveryRoute.ca-yyz-cun.routeNote": "Idea de ruta hacia Cancún para comparar fechas, tarifas y opciones de viaje.",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "Escapada de invierno a Cancún",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote": "Ruta de descanso confiable con opciones sin escalas en temporada alta.",
   "homeDiscoveryRoute.ca-yyc-yhz.title": "Fin de semana en Halifax",
   "homeDiscoveryRoute.ca-yyc-yhz.routeNote": "Ruta hacia Halifax para cultura, historia y paseos memorables.",
   "homeDiscoveryRoute.ca-yul-lhr.title": "Escapada urbana a Londres",
@@ -1062,6 +1063,24 @@ export const translations: TranslationDictionary = {
   quickResumeLatestSearches: "Retoma rápidamente tus búsquedas recientes",
   quickResumeLatestSearchesBody:
     "Vuelve a las ideas de ruta que ya te gustaron, sin necesidad de cuenta.",
+  flightLandingHeroTitle: "Encuentra vuelos para tu próximo viaje",
+  flightLandingHeroSubtitle:
+    "Busca rutas, compara fechas y explora opciones de vuelo para tu próximo viaje.",
+  flightLandingFeatureSearchReadyTitle: "Rutas listas para buscar",
+  flightLandingFeatureSearchReadyBody:
+    "Ingresa detalles reales del viaje antes de solicitar resultados a los proveedores de vuelos.",
+  flightLandingFeatureCompareTitle: "Compara con contexto",
+  flightLandingFeatureCompareBody:
+    "Usa fechas, cantidad de viajeros, cabina, duración, escalas y detalles de ruta para evaluar opciones.",
+  flightLandingFeatureProviderTitle: "Revisión con el proveedor",
+  flightLandingFeatureProviderBody:
+    "Confirma siempre la disponibilidad final, el precio y las reglas con el proveedor antes de reservar.",
+  flightLandingStartThisSearch: "Iniciar esta búsqueda",
+  flightLandingRouteIdeasTitle: "Ideas de rutas para viajes flexibles",
+  flightLandingRouteIdeasBody:
+    "Explora ideas de rutas y luego inicia una búsqueda real con fechas y viajeros antes de comparar vuelos disponibles.",
+  flightLandingRouteConnector: "a",
+  flightLandingRouteAriaLabel: "Buscar vuelos de {{origin}} a {{destination}}",
   discoverDestinationsFromRegion: "Descubre destinos desde tu región",
   discoverDestinationsFromRegionBody:
     "Explora rutas seleccionadas y empieza tu próximo viaje con confianza.",
@@ -1102,6 +1121,7 @@ export const translations: TranslationDictionary = {
   searchAirportsAndCities: "Buscar aeropuertos y ciudades",
   searchAirportsOrCities: "Buscar aeropuertos o ciudades",
   cityAirportOrCode: "Ciudad, aeropuerto o código",
+  cityOrAirport: "Ciudad o aeropuerto",
   startTypingCityAirportOrCode: "Empieza a escribir una ciudad, aeropuerto o código IATA para ver sugerencias.",
   startTypingCityOrAirport: "Empieza a escribir el nombre de una ciudad o aeropuerto para ver sugerencias.",
   searchingAirportsAndCities: "Buscando aeropuertos y ciudades…",
