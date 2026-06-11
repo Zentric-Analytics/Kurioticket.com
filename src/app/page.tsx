@@ -52,6 +52,121 @@ const heroImage =
 
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
 
+const HOME_POPULAR_DESTINATION_CITY_KEYS: Record<string, string> = {
+  Accra: "homePopularDestinationCity.accra",
+  "Addis Ababa": "homePopularDestinationCity.addisAbaba",
+  Amsterdam: "homePopularDestinationCity.amsterdam",
+  Atlanta: "homePopularDestinationCity.atlanta",
+  Bali: "homePopularDestinationCity.bali",
+  Bangkok: "homePopularDestinationCity.bangkok",
+  Barcelona: "homePopularDestinationCity.barcelona",
+  Bogota: "homePopularDestinationCity.bogota",
+  Boston: "homePopularDestinationCity.boston",
+  "Buenos Aires": "homePopularDestinationCity.buenosAires",
+  Cairo: "homePopularDestinationCity.cairo",
+  Calgary: "homePopularDestinationCity.calgary",
+  Cancun: "homePopularDestinationCity.cancun",
+  "Cape Town": "homePopularDestinationCity.capeTown",
+  Chicago: "homePopularDestinationCity.chicago",
+  Dallas: "homePopularDestinationCity.dallas",
+  "Dar es Salaam": "homePopularDestinationCity.darEsSalaam",
+  Denver: "homePopularDestinationCity.denver",
+  Doha: "homePopularDestinationCity.doha",
+  Dubai: "homePopularDestinationCity.dubai",
+  Halifax: "homePopularDestinationCity.halifax",
+  Hanoi: "homePopularDestinationCity.hanoi",
+  "Hong Kong": "homePopularDestinationCity.hongKong",
+  Istanbul: "homePopularDestinationCity.istanbul",
+  Jeddah: "homePopularDestinationCity.jeddah",
+  Johannesburg: "homePopularDestinationCity.johannesburg",
+  "Kuala Lumpur": "homePopularDestinationCity.kualaLumpur",
+  "Las Vegas": "homePopularDestinationCity.lasVegas",
+  Lima: "homePopularDestinationCity.lima",
+  Lisbon: "homePopularDestinationCity.lisbon",
+  London: "homePopularDestinationCity.london",
+  "Los Angeles": "homePopularDestinationCity.losAngeles",
+  Madrid: "homePopularDestinationCity.madrid",
+  Manila: "homePopularDestinationCity.manila",
+  Mauritius: "homePopularDestinationCity.mauritius",
+  Miami: "homePopularDestinationCity.miami",
+  Montreal: "homePopularDestinationCity.montreal",
+  Nairobi: "homePopularDestinationCity.nairobi",
+  "New York": "homePopularDestinationCity.newYork",
+  Orlando: "homePopularDestinationCity.orlando",
+  Paris: "homePopularDestinationCity.paris",
+  Phoenix: "homePopularDestinationCity.phoenix",
+  "Rio de Janeiro": "homePopularDestinationCity.rioDeJaneiro",
+  Riyadh: "homePopularDestinationCity.riyadh",
+  Rome: "homePopularDestinationCity.rome",
+  "San Francisco": "homePopularDestinationCity.sanFrancisco",
+  "San Jose": "homePopularDestinationCity.sanJose",
+  Santiago: "homePopularDestinationCity.santiago",
+  Seattle: "homePopularDestinationCity.seattle",
+  Seoul: "homePopularDestinationCity.seoul",
+  Singapore: "homePopularDestinationCity.singapore",
+  Taipei: "homePopularDestinationCity.taipei",
+  Toronto: "homePopularDestinationCity.toronto",
+  Vancouver: "homePopularDestinationCity.vancouver",
+  Vienna: "homePopularDestinationCity.vienna",
+  Washington: "homePopularDestinationCity.washington",
+  Zanzibar: "homePopularDestinationCity.zanzibar",
+  Zurich: "homePopularDestinationCity.zurich",
+};
+
+const HOME_POPULAR_DESTINATION_COUNTRY_KEYS: Record<string, string> = {
+  Argentina: "homePopularDestinationCountry.argentina",
+  Austria: "homePopularDestinationCountry.austria",
+  Brazil: "homePopularDestinationCountry.brazil",
+  Canada: "homePopularDestinationCountry.canada",
+  Chile: "homePopularDestinationCountry.chile",
+  Colombia: "homePopularDestinationCountry.colombia",
+  "Costa Rica": "homePopularDestinationCountry.costaRica",
+  Egypt: "homePopularDestinationCountry.egypt",
+  Ethiopia: "homePopularDestinationCountry.ethiopia",
+  France: "homePopularDestinationCountry.france",
+  Ghana: "homePopularDestinationCountry.ghana",
+  "Hong Kong": "homePopularDestinationCountry.hongKong",
+  Indonesia: "homePopularDestinationCountry.indonesia",
+  Italy: "homePopularDestinationCountry.italy",
+  Kenya: "homePopularDestinationCountry.kenya",
+  Malaysia: "homePopularDestinationCountry.malaysia",
+  Mauritius: "homePopularDestinationCountry.mauritius",
+  Mexico: "homePopularDestinationCountry.mexico",
+  Netherlands: "homePopularDestinationCountry.netherlands",
+  Peru: "homePopularDestinationCountry.peru",
+  Philippines: "homePopularDestinationCountry.philippines",
+  Portugal: "homePopularDestinationCountry.portugal",
+  Qatar: "homePopularDestinationCountry.qatar",
+  "Saudi Arabia": "homePopularDestinationCountry.saudiArabia",
+  Singapore: "homePopularDestinationCountry.singapore",
+  "South Africa": "homePopularDestinationCountry.southAfrica",
+  "South Korea": "homePopularDestinationCountry.southKorea",
+  Spain: "homePopularDestinationCountry.spain",
+  Switzerland: "homePopularDestinationCountry.switzerland",
+  Taiwan: "homePopularDestinationCountry.taiwan",
+  Tanzania: "homePopularDestinationCountry.tanzania",
+  Thailand: "homePopularDestinationCountry.thailand",
+  Türkiye: "homePopularDestinationCountry.turkiye",
+  "United Arab Emirates": "homePopularDestinationCountry.unitedArabEmirates",
+  "United Kingdom": "homePopularDestinationCountry.unitedKingdom",
+  "United States": "homePopularDestinationCountry.unitedStates",
+  Vietnam: "homePopularDestinationCountry.vietnam",
+};
+
+function translatePopularDestinationDisplayLabel(
+  dictionary: Record<string, string>,
+  fallbackLabel: string,
+  labelKeys: Record<string, string>,
+) {
+  const translationKey = labelKeys[fallbackLabel];
+
+  return translationKey
+    ? (dictionary[translationKey] ??
+        enTranslations[translationKey] ??
+        fallbackLabel)
+    : fallbackLabel;
+}
+
 type DestinationPriceSearch = {
   tripType: "one-way";
   origin: string;
@@ -492,12 +607,22 @@ export default function Home() {
             >
               {visiblePopularDestinations.map((destination) => {
                 const price = destinationPriceState.prices[destination.id];
+                const city = translatePopularDestinationDisplayLabel(
+                  dictionary,
+                  destination.city,
+                  HOME_POPULAR_DESTINATION_CITY_KEYS,
+                );
+                const country = translatePopularDestinationDisplayLabel(
+                  dictionary,
+                  destination.country,
+                  HOME_POPULAR_DESTINATION_COUNTRY_KEYS,
+                );
 
                 return (
                   <DestinationCard
                     key={destination.id}
-                    city={destination.city}
-                    country={destination.country}
+                    city={city}
+                    country={country}
                     imageAlt={destination.imageAlt}
                     saveLabelTemplate={t("homeSaveDestination")}
                     image={destination.image}
