@@ -129,7 +129,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
           className={cn(
             "border border-violet-100/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)] backdrop-blur-[1px]",
             mobileOverviewTabs
-              ? "-mx-4 border-x-0 bg-white px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:bg-violet-50/35 lg:p-2.5 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)]"
+              ? "-mx-4 border-x-0 bg-white px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:border-black/25 lg:bg-violet-50/35 lg:p-2.5 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)]"
               : "rounded-[1.25rem] bg-violet-50/35 p-2 lg:p-2.5",
           )}
         >
