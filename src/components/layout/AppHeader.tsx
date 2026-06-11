@@ -457,7 +457,7 @@ export function AppHeader({
     countryCode: string | undefined,
     fallbackText: string | undefined,
   ) => (
-    <span className="inline-flex h-4 w-[1.375rem] items-center justify-center overflow-hidden rounded-[3px] border border-white/35 bg-white/15 shadow-[0_1px_1px_rgba(30,27,75,0.14)]">
+    <span className="inline-flex h-[18px] w-6 items-center justify-center overflow-hidden rounded-[3px] border border-white/35 bg-white/15 shadow-[0_1px_1px_rgba(30,27,75,0.14)]">
       {countryCode ? (
         <RawImage
           src={`https://flagcdn.com/${countryCode.toLowerCase()}.svg`}
@@ -580,7 +580,7 @@ export function AppHeader({
             </Link>
 
             <div className="hidden min-w-0 flex-1 items-center justify-end gap-3.5 md:flex lg:gap-4">
-              <div className="[&>button]:!h-10 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-3 [&>button]:!text-sm [&>button]:!font-semibold [&>button]:!text-indigo-50/90 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-white/10 [&>button]:hover:!text-white">
+              <div className="[&>button]:!h-10 [&>button]:!rounded-md [&>button]:!border-transparent [&>button]:!bg-transparent [&>button]:!px-3 [&>button]:!text-[15px] [&>button]:!font-semibold [&>button]:!text-indigo-50/90 [&>button]:!shadow-none [&>button]:!backdrop-blur-0 [&>button]:hover:!bg-white/10 [&>button]:hover:!text-white">
                 <CountryCurrencySelector variant="header" grouped />
               </div>
 
@@ -712,7 +712,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signin")
                       }
-                      className="inline-flex h-10 cursor-pointer items-center rounded-md px-3 text-sm font-semibold text-indigo-50/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-10 cursor-pointer items-center rounded-md px-3 text-[15px] font-semibold leading-none text-indigo-50/90 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                     >
                       {t.login}
                     </Link>
@@ -722,7 +722,7 @@ export function AppHeader({
                       onClick={(event) =>
                         handleRouteLinkClick(event, "/auth/signup")
                       }
-                      className="inline-flex h-10 cursor-pointer items-center rounded-md bg-white px-3.5 text-sm font-semibold text-indigo-700 shadow-[0_1px_2px_rgba(49,46,129,0.12)] transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                      className="inline-flex h-10 cursor-pointer items-center rounded-md bg-white px-3 text-[15px] font-semibold leading-none text-indigo-700 shadow-[0_1px_2px_rgba(49,46,129,0.12)] transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                     >
                       {t.signUp}
                     </Link>
