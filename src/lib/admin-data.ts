@@ -158,8 +158,8 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
       lastSuccessfulRequest: hotelRequest,
       lastFailedRequest: hotelFailure,
       notes: hotelCredentials
-        ? "Hotel search credentials are present. Hotel booking operations are not live until provider booking and confirmation records are connected."
-        : "Hotel provider search is not connected to production credentials.",
+        ? "Hotel search credentials are present for the configured provider. Live inventory should display only after provider approval and environment configuration are confirmed."
+        : "Hotels remain provider-ready; live inventory and prices stay unavailable until an approved provider is configured.",
     },
     {
       product: "Cars",
@@ -171,8 +171,8 @@ export async function getProviderStatuses(): Promise<ProviderStatus[]> {
       lastSuccessfulRequest: null,
       lastFailedRequest: null,
       notes: process.env.CAR_PROVIDER_PRIMARY && process.env.CAR_PROVIDER_API_KEY
-        ? "Car provider configuration is detected, but booking operations remain not live until confirmation storage is connected."
-        : "Cars are pending and not connected to a real provider in this environment.",
+        ? "Car provider configuration is detected. Live inventory should display only after provider approval and environment configuration are confirmed."
+        : "Cars remain provider-ready; live inventory and prices stay unavailable until an approved provider is configured.",
     },
   ];
 }
@@ -205,12 +205,9 @@ export async function getDuffelAdminHealth() {
 }
 
 export const pausedProviderRows = [
-  { name: "Sabre", status: "Future integration", note: "Not configured yet." },
-  { name: "Travelport", status: "Future integration", note: "Not configured yet." },
-  { name: "Amadeus", status: "Paused", note: "Not active for current metasearch operations." },
-  { name: "Skyscanner", status: "Future integration", note: "Not configured yet." },
-  { name: "Kiwi / Tequila", status: "Paused", note: "Not active for current metasearch operations." },
-  { name: "Travelpayouts", status: "Paused", note: "Disabled as an active provider; optional future discovery integration only." },
+  { name: "Additional flight providers", status: "Not active", note: "Duffel is the only active working flight provider path today." },
+  { name: "Hotel providers", status: "Provider-ready", note: "Enable only after an approved provider is configured for the environment." },
+  { name: "Car providers", status: "Provider-ready", note: "Enable only after an approved provider is configured for the environment." },
 ];
 
 function unavailableMetrics(): AdminMetrics {
@@ -258,10 +255,10 @@ function getHotelCredentialsPresent(provider: string) {
 function hotelProviderLabel(provider: string) {
   return {
     none: "Not connected",
-    kayak_sandbox: "Kayak sandbox",
+    kayak_sandbox: "Configured hotel provider",
     hotelbeds: "Hotelbeds",
-    amadeus_hotels: "Amadeus Hotels",
-    generic_partner: "Generic hotel partner",
+    amadeus_hotels: "Configured hotel provider",
+    generic_partner: "Configured hotel provider",
   }[provider] || "Not connected";
 }
 

@@ -100,7 +100,7 @@ function PausedProviderCard({ providers }: { providers: Array<{ name: string; st
       <h3 className="font-bold text-navy">Paused / future providers</h3>
       <p className="mt-1 text-xs font-semibold leading-5 text-muted">These are not active failures.</p>
       <div className="mt-4 grid gap-2 text-sm">
-        {(providers.length ? providers : [{ name: "Travelpayouts", status: "Paused", note: "Disabled as active provider." }]).map((provider) => (
+        {(providers.length ? providers : [{ name: "Additional providers", status: "Not active", note: "Duffel is the active flight provider." }]).map((provider) => (
           <div key={provider.name} className="flex items-center justify-between gap-3">
             <span className="text-muted">{provider.name}</span>
             <span className="font-bold text-muted">{provider.status}</span>
