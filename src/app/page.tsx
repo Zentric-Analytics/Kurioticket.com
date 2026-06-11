@@ -1298,7 +1298,7 @@ function DestinationCard({
             className="object-cover transition duration-500 group-hover:scale-105"
           />
 
-          <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/55 via-slate-950/16 to-transparent" />
 
           <button
             type="button"
@@ -1314,11 +1314,11 @@ function DestinationCard({
             <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
 
-          <div className="absolute bottom-4 left-4 pr-4 text-white">
-            <h3 className="text-xl font-black tracking-tight drop-shadow-sm sm:text-2xl">
+          <div className="absolute bottom-4 left-4 z-10 pr-4 text-white [text-shadow:0_2px_12px_rgba(15,23,42,0.55)]">
+            <h3 className="text-xl font-black tracking-tight sm:text-2xl">
               {city}
             </h3>
-            <p className="text-sm font-semibold text-white/95 drop-shadow-sm">
+            <p className="text-sm font-semibold text-white/95">
               {country}
             </p>
           </div>
@@ -1362,7 +1362,7 @@ function DestinationPricePill({
   if (isLoading) {
     return (
       <span
-        className="inline-flex h-8 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
+        className="inline-flex h-9 w-32 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
         aria-label={t("homePricesUpdateWithProviderResults")}
       />
     );
@@ -1370,7 +1370,7 @@ function DestinationPricePill({
 
   if (!hasProviderPrice) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/95 px-4 py-2 text-[15px] font-semibold text-slate-700 shadow-sm">
         {t("homeExploreFares")}
       </span>
     );
@@ -1381,7 +1381,7 @@ function DestinationPricePill({
 
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
+      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/95 px-4 py-2 text-[15px] font-semibold text-slate-700 shadow-sm">
         {t("homeExploreFares")}
       </span>
     );
@@ -1402,7 +1402,7 @@ function DestinationPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm"
+      className="inline-flex rounded-full border border-slate-200 bg-white/95 px-4 py-2 text-[15px] font-bold text-slate-900 shadow-sm"
       aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
