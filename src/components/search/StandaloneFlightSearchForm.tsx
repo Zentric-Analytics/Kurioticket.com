@@ -725,7 +725,7 @@ export function StandaloneFlightSearchForm() {
         })}
       </div>
       <div className="border-t border-slate-200 pt-5">
-        <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.14em] text-slate-600">Cabin Class</p>
+        <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.14em] text-slate-600">{t("cabinClass")}</p>
         <div className="grid grid-cols-3 gap-2">
           {[
             ["economy", t("economy")],
@@ -756,8 +756,8 @@ export function StandaloneFlightSearchForm() {
       <form onSubmit={onSubmit} className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-1 sm:inline-flex">
           {[
-            ["round-trip", "Return"],
-            ["one-way", "One way"],
+            ["round-trip", t("roundTrip")],
+            ["one-way", t("oneWay")],
           ].map(([value, label]) => (
             <button
               key={value}
@@ -783,9 +783,9 @@ export function StandaloneFlightSearchForm() {
           <AirportFieldControl
             ref={originWrapRef}
             inputRef={originInputRef}
-            label="Origin"
+            label={t("origin")}
             value={origin}
-            placeholder="City or airport"
+            placeholder={t("cityOrAirport")}
             open={originOpen || activeMobileAirportPicker === "origin"}
             onMobileOpen={() => setActiveMobileAirportPicker("origin")}
             onDesktopFocus={() => setOriginOpen(true)}
@@ -809,7 +809,7 @@ export function StandaloneFlightSearchForm() {
             inputRef={destinationInputRef}
             label={t("destination")}
             value={destination}
-            placeholder="City or airport"
+            placeholder={t("cityOrAirport")}
             open={destinationOpen || activeMobileAirportPicker === "destination"}
             onMobileOpen={() => setActiveMobileAirportPicker("destination")}
             onDesktopFocus={() => setDestinationOpen(true)}
@@ -834,12 +834,12 @@ export function StandaloneFlightSearchForm() {
             className="relative min-h-[72px] rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-500/15 lg:rounded-2xl"
           >
             <label className="mb-1 block text-xs font-extrabold uppercase tracking-[0.12em] text-slate-600">
-              Travel dates
+              {t("travelDates")}
             </label>
             <button
               ref={datesMobileLauncherRef}
               type="button"
-              aria-label="Choose travel dates"
+              aria-label={t("chooseTravelDates")}
               aria-expanded={datesOpen}
               aria-haspopup="dialog"
               onClick={() => setDatesOpen((prev) => !prev)}
@@ -852,7 +852,7 @@ export function StandaloneFlightSearchForm() {
               <>
                 <FlightMobilePickerShell
                   open={datesOpen}
-                  title="Choose travel dates"
+                  title={t("chooseTravelDates")}
                   titleId="standalone-flight-mobile-dates-title"
                   launcherRef={datesMobileLauncherRef}
                   onClose={() => setDatesOpen(false)}
@@ -867,7 +867,7 @@ export function StandaloneFlightSearchForm() {
                         }}
                         className="focus-ring rounded-xl border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                       >
-                        Clear
+                        {t("clear")}
                       </button>
                       <button
                         type="button"
@@ -980,7 +980,7 @@ export function StandaloneFlightSearchForm() {
             className="min-h-[58px] w-full whitespace-nowrap rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-base font-black text-white shadow-lg shadow-indigo-700/20 hover:from-indigo-600 hover:to-violet-500 disabled:from-indigo-500 disabled:to-violet-500 lg:h-full"
           >
             <Plane className="mr-2 h-4 w-4" aria-hidden="true" />
-            {isSubmitting ? t("searchingFlights") : "Search flights"}
+            {isSubmitting ? t("searchingFlights") : t("searchFlights")}
           </Button>
         </div>
 

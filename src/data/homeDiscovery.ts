@@ -629,13 +629,13 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "ng-los-cpt",
-      title: "Cape Town coastal adventure",
+      title: enTranslations["homeDiscoveryRoute.ng-los-cpt.title"],
       originCity: "Lagos",
       originCode: "LOS",
       destinationCity: "Cape Town",
       destinationCode: "CPT",
       routeNote:
-        "Scenic South Africa route with beaches, mountains, and vineyards.",
+        enTranslations["homeDiscoveryRoute.ng-los-cpt.routeNote"],
       priceFromUsd: 467,
       image:
         "https://images.pexels.com/photos/34069442/pexels-photo-34069442.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -701,12 +701,12 @@ export const homeDiscoveryByRegion: Record<string, HomeDiscoveryItem[]> = {
     },
     {
       id: "ca-yyz-cun",
-      title: "Cancun winter escape",
+      title: enTranslations["homeDiscoveryRoute.ca-yyz-cun.title"],
       originCity: "Toronto",
       originCode: "YYZ",
       destinationCity: "Cancun",
       destinationCode: "CUN",
-      routeNote: "Reliable leisure route with nonstop options in peak season.",
+      routeNote: enTranslations["homeDiscoveryRoute.ca-yyz-cun.routeNote"],
       priceFromUsd: 298,
       image:
         "https://images.pexels.com/photos/27898572/pexels-photo-27898572.jpeg?auto=compress&cs=tinysrgb&w=1200",
