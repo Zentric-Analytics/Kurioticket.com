@@ -15,6 +15,57 @@ export const translations: TranslationDictionary = {
   logout: "Cerrar sesión",
   login: "Iniciar sesión",
   signUp: "Crear cuenta",
+  loginPageTitle: "Iniciar sesión",
+  loginPageSubtitle:
+    "Guarda búsquedas, administra alertas y accede a tu panel de viajes.",
+  loginEmailLabel: "Correo electrónico",
+  loginPasswordLabel: "Contraseña",
+  loginForgotPassword: "¿Olvidaste tu contraseña?",
+  loginSubmit: "Iniciar sesión",
+  loginCheckingDetails: "Comprobando datos…",
+  loginGoogle: "Continuar con Google",
+  loginSignupPrompt: "¿Nuevo en Kurioticket?",
+  loginCreateAccount: "Crear una cuenta",
+  loginInvalidCredentials:
+    "No pudimos iniciar sesión. Revisa tu correo electrónico y contraseña e inténtalo de nuevo.",
+  loginRateLimited: "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+  loginCodeSent: "Enviamos un código de verificación a tu correo electrónico.",
+  loginCodeFailed: "Ese código no funcionó. Revisa el código e inténtalo de nuevo.",
+  loginProcessing: "Comprobando tus datos y enviando un código de verificación…",
+  loginResendSuccess: "Enviamos un código nuevo si esta cuenta puede iniciar sesión.",
+  loginEnterCode: "Ingresa el código de inicio de sesión de 6 dígitos.",
+  loginVerifiedRedirecting: "Verificado. Redirigiendo…",
+  loginStartOverError:
+    "Vuelve a empezar para que podamos comprobar tus datos antes de enviar un código nuevo.",
+  loginSendingNewCode: "Enviando un código de verificación nuevo…",
+  loginUnableSendNewCode: "No se puede enviar un código nuevo ahora. Inténtalo de nuevo.",
+  loginUnableSendLoginCode:
+    "No se puede enviar el código de inicio de sesión ahora. Inténtalo de nuevo.",
+  loginCodeInstructions:
+    "Ingresa el código de 6 dígitos enviado a {{email}}. Los códigos caducan después de 10 minutos.",
+  loginVerificationCodeLabel: "Código de verificación",
+  loginVerifying: "Verificando…",
+  loginVerifyLogin: "Verificar inicio de sesión",
+  loginSendingCode: "Enviando código…",
+  loginResendIn: "Reenviar en {{seconds}} s",
+  loginResendCode: "Reenviar código",
+  loginUseDifferentDetails: "Usar otros datos",
+  loginPasswordResetSuccess:
+    "Tu contraseña se restableció. Inicia sesión con tu nueva contraseña.",
+  loginInactiveMessage:
+    "Se cerró tu sesión después de 30 minutos de inactividad. Inicia sesión de nuevo para continuar.",
+  loginErrorAccountUnavailable: "Esta cuenta no está disponible. Contacta con soporte.",
+  loginErrorOAuthCallback:
+    "El inicio de sesión con Google se interrumpió durante la devolución de llamada. Inténtalo de nuevo.",
+  loginErrorOAuthAccountNotLinked:
+    "Este correo electrónico ya está asociado con otro método de inicio de sesión. Continúa con tu método original o restablece tu contraseña.",
+  loginErrorAccessDenied: "Google denegó el acceso. Permite el acceso e inténtalo de nuevo.",
+  loginErrorConfiguration:
+    "El inicio de sesión con Google no está disponible temporalmente. Inténtalo de nuevo pronto o usa el inicio de sesión con correo electrónico.",
+  loginErrorCallback:
+    "Falló la devolución de llamada del inicio de sesión con Google. Inténtalo de nuevo o usa el inicio de sesión con correo electrónico.",
+  loginErrorGoogleGeneric:
+    "No se pudo completar el inicio de sesión con Google. Inténtalo de nuevo o usa el inicio de sesión con correo electrónico.",
   menu: "Menú",
   selectLanguage: "Selecciona tu idioma",
   suggestedLanguages: "Idiomas sugeridos",

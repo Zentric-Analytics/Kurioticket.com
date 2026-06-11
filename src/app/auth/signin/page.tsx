@@ -22,29 +22,19 @@ type SigninPageProps = {
   }>;
 };
 
-function getSafeCallbackUrl(
-  callbackUrl?: string
-) {
+function getSafeCallbackUrl(callbackUrl?: string) {
   if (!callbackUrl) {
     return "/";
   }
 
-  if (
-    callbackUrl.startsWith("/") &&
-    !callbackUrl.startsWith("//")
-  ) {
+  if (callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")) {
     return callbackUrl;
   }
 
   try {
-    const appOrigin = new URL(
-      getBaseUrl()
-    ).origin;
+    const appOrigin = new URL(getBaseUrl()).origin;
 
-    const parsed = new URL(
-      callbackUrl,
-      appOrigin
-    );
+    const parsed = new URL(callbackUrl, appOrigin);
 
     if (parsed.origin !== appOrigin) {
       return "/";
@@ -52,67 +42,50 @@ function getSafeCallbackUrl(
 
     const relative = `${parsed.pathname}${parsed.search}${parsed.hash}`;
 
-    return relative.startsWith("/")
-      ? relative
-      : "/";
+    return relative.startsWith("/") ? relative : "/";
   } catch {
     return "/";
   }
 }
 
-function getGoogleAuthErrorMessage(
-  error?: string
-) {
+function getGoogleAuthErrorKey(error?: string) {
   switch (error) {
     case "AccountUnavailable":
-      return "This account is not available. Please contact support.";
+      return "loginErrorAccountUnavailable";
     case "OAuthCallback":
-      return "Google sign-in was interrupted during callback. Please try again.";
+      return "loginErrorOAuthCallback";
     case "OAuthAccountNotLinked":
-      return "This email is already associated with another sign-in method. Continue with your original method, or reset your password.";
+      return "loginErrorOAuthAccountNotLinked";
     case "AccessDenied":
-      return "Access was denied by Google. Please allow access and try again.";
+      return "loginErrorAccessDenied";
     case "Configuration":
-      return "Google sign-in is temporarily unavailable. Please try again shortly, or use email login.";
+      return "loginErrorConfiguration";
     case "Callback":
-      return "Google sign-in callback failed. Please try again, or use email login.";
+      return "loginErrorCallback";
     default:
-      return error
-        ? "Google sign-in could not be completed. Please try again, or use email login."
-        : "";
+      return error ? "loginErrorGoogleGeneric" : "";
   }
 }
 
-export default async function SigninPage({
-  searchParams,
-}: SigninPageProps) {
+export default async function SigninPage({ searchParams }: SigninPageProps) {
   const params = await searchParams;
 
-  const callbackUrl =
-    getSafeCallbackUrl(
-      params?.callbackUrl
-    );
+  const callbackUrl = getSafeCallbackUrl(params?.callbackUrl);
 
-  const initialError =
-    getGoogleAuthErrorMessage(
-      params?.error
-    );
+  const initialErrorKey = getGoogleAuthErrorKey(params?.error);
 
-  const initialMessage =
+  const initialMessageKey =
     params?.reset === "success"
-      ? "Your password was reset. Log in with your new password."
+      ? "loginPasswordResetSuccess"
       : params?.reason === "inactive"
-        ? "You were signed out after 30 minutes of inactivity. Log in again to continue."
+        ? "loginInactiveMessage"
         : "";
 
   const googleEnabled = Boolean(
-    getGoogleClientId().trim() &&
-      getGoogleClientSecret().trim()
+    getGoogleClientId().trim() && getGoogleClientSecret().trim(),
   );
 
-  console.error(
-    `Google OAuth enabled: ${googleEnabled}`
-  );
+  console.error(`Google OAuth enabled: ${googleEnabled}`);
 
   return (
     <>
@@ -122,8 +95,8 @@ export default async function SigninPage({
         <SigninForm
           callbackUrl={callbackUrl}
           googleEnabled={googleEnabled}
-          initialError={initialError}
-          initialMessage={initialMessage}
+          initialErrorKey={initialErrorKey}
+          initialMessageKey={initialMessageKey}
         />
       </main>
 
