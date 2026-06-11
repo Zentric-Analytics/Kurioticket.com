@@ -94,6 +94,19 @@ const normalizeCabinClassValue = (
 ): CabinClassValue =>
   value === "business" || value === "first" ? value : "economy";
 
+const normalizeFlightResultsCalendarLocale = (
+  locale: string | null | undefined,
+) => {
+  const normalized =
+    locale?.trim().replace("_", "-").toLowerCase() ?? "";
+
+  if (normalized === "es" || normalized.startsWith("es-")) {
+    return "es-ES";
+  }
+
+  return "en-US";
+};
+
 function getFlightFaqItems(t: (key: string) => string): Array<{ question: string; answer: string }> {
   return [
     {
@@ -558,10 +571,14 @@ function FlightBookingFaqSection() {
 }
 
 export function FlightResultsClient() {
-  const { t: dictionary } = useLocale();
+  const { t: dictionary, locale } = useLocale();
   const t = useCallback(
     (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
     [dictionary],
+  );
+  const calendarLocale = useMemo(
+    () => normalizeFlightResultsCalendarLocale(locale),
+    [locale],
   );
   const airportPickerLabels = useMemo(
     () => ({
@@ -786,8 +803,8 @@ export function FlightResultsClient() {
   const mobileRouteSummary = `${mobileOriginSummary} → ${mobileDestinationSummary}`;
   const mobileDateSummary = departureDateInput
     ? tripTypeInput === "round-trip" && returnDateInput
-      ? `${formatCompactDateLabel(departureDateInput)} – ${formatCompactDateLabel(returnDateInput)}`
-      : formatCompactDateLabel(departureDateInput)
+      ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
+      : formatCompactDateLabel(departureDateInput, calendarLocale)
     : t("travelDates");
   const mobileTravelerTotal = Math.max(
     1,
@@ -2476,7 +2493,7 @@ export function FlightResultsClient() {
                   }}
                   className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-950 sm:h-auto sm:rounded-md sm:border-0 sm:bg-transparent sm:px-1 sm:text-sm sm:font-medium sm:shadow-none"
                 >
-                  {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
+                  {tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip")}
                   <ChevronDown
                     aria-hidden="true"
                     className={cn(
@@ -2504,7 +2521,7 @@ export function FlightResultsClient() {
                           : "text-slate-700 hover:bg-slate-100",
                       )}
                     >
-                      Round-trip
+                      {t("roundTrip")}
                     </button>
                     <button
                       type="button"
@@ -2518,7 +2535,7 @@ export function FlightResultsClient() {
                           : "text-slate-700 hover:bg-slate-100",
                       )}
                     >
-                      One-way
+                      {t("oneWay")}
                     </button>
                   </div>
                 ) : null}
@@ -2536,7 +2553,7 @@ export function FlightResultsClient() {
                       className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600"
                       htmlFor="origin"
                     >
-                      Origin
+                      {t("origin")}
                     </label>
                     <input
                       id="origin"
@@ -2621,7 +2638,7 @@ export function FlightResultsClient() {
                       className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600"
                       htmlFor="destination"
                     >
-                      Destination
+                      {t("destination")}
                     </label>
                     <input
                       id="destination"
@@ -2706,8 +2723,8 @@ export function FlightResultsClient() {
                     <span className="truncate">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} — ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
+                          ? `${formatDateLabel(departureDateInput, calendarLocale)} — ${formatDateLabel(returnDateInput, calendarLocale)}`
+                          : formatDateLabel(departureDateInput, calendarLocale)
                         : t("travelDates")}
                     </span>
                   </button>
@@ -3205,9 +3222,9 @@ export function FlightResultsClient() {
                   )}
                 >
                   <span className="min-w-0">
-                    <span className={mobileLabelClass}>Origin</span>
+                    <span className={mobileLabelClass}>{t("origin")}</span>
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {originInput.trim() || "From?"}
+                      {originInput.trim() || t("fromPlaceholder")}
                     </span>
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
@@ -3230,9 +3247,9 @@ export function FlightResultsClient() {
                   )}
                 >
                   <span className="min-w-0">
-                    <span className={mobileLabelClass}>Destination</span>
+                    <span className={mobileLabelClass}>{t("destination")}</span>
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {destinationInput.trim() || "To?"}
+                      {destinationInput.trim() || t("toPlaceholder")}
                     </span>
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
@@ -3262,8 +3279,8 @@ export function FlightResultsClient() {
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
+                          ? `${formatDateLabel(departureDateInput, calendarLocale)} – ${formatDateLabel(returnDateInput, calendarLocale)}`
+                          : formatDateLabel(departureDateInput, calendarLocale)
                         : t("travelDates")}
                     </span>
                   </span>
@@ -3410,7 +3427,7 @@ export function FlightResultsClient() {
         <div className="flex flex-col gap-0">
           <div className="flex items-center justify-between sm:hidden">
             <span className="text-sm font-semibold text-slate-500">
-              Edit search
+              {t("editSearch")}
             </span>
             <button
               type="button"
@@ -3447,7 +3464,7 @@ export function FlightResultsClient() {
                       {t("tripType")}
                     </span>
                     <span className="block truncate text-sm font-semibold text-slate-950">
-                      {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
+                      {tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip")}
                     </span>
                   </span>
                   <ChevronDown
@@ -3477,7 +3494,7 @@ export function FlightResultsClient() {
                           : "text-slate-700 hover:bg-slate-100",
                       )}
                     >
-                      Round-trip
+                      {t("roundTrip")}
                     </button>
 
                     <button
@@ -3492,7 +3509,7 @@ export function FlightResultsClient() {
                           : "text-slate-700 hover:bg-slate-100",
                       )}
                     >
-                      One-way
+                      {t("oneWay")}
                     </button>
                   </div>
                 ) : null}
@@ -3507,7 +3524,7 @@ export function FlightResultsClient() {
                     className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
                     htmlFor="results-origin"
                   >
-                    Origin
+                    {t("origin")}
                   </label>
                   <input
                     id="results-origin"
@@ -3605,7 +3622,7 @@ export function FlightResultsClient() {
                     className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
                     htmlFor="results-destination"
                   >
-                    Destination
+                    {t("destination")}
                   </label>
                   <input
                     id="results-destination"
@@ -3708,8 +3725,8 @@ export function FlightResultsClient() {
                     <span className="block truncate text-sm font-semibold text-slate-950">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
+                          ? `${formatDateLabel(departureDateInput, calendarLocale)} – ${formatDateLabel(returnDateInput, calendarLocale)}`
+                          : formatDateLabel(departureDateInput, calendarLocale)
                         : t("travelDates")}
                     </span>
                   </span>
@@ -4375,28 +4392,28 @@ function formatDateValue(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function formatDateLabel(value: string): string {
+function formatDateLabel(value: string, locale = "en-US"): string {
   if (!value) return "";
 
   const date = new Date(`${value}T00:00:00`);
 
   if (Number.isNaN(date.getTime())) return value;
 
-  return date.toLocaleDateString("en-GB", {
+  return new Intl.DateTimeFormat(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  });
+  }).format(date);
 }
 
-function formatCompactDateLabel(value: string): string {
+function formatCompactDateLabel(value: string, locale = "en-US"): string {
   if (!value) return "";
 
   const date = new Date(`${value}T00:00:00`);
 
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(locale, {
     day: "2-digit",
     month: "short",
   }).format(date);
@@ -4688,8 +4705,9 @@ function DatePickerPopover({
   onToday: () => void;
   onClose: () => void;
 }) {
-  const { t: dictionary } = useLocale();
+  const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const calendarLocale = normalizeFlightResultsCalendarLocale(locale);
   const leftMonth = startOfMonth(month);
   const rightMonth = addMonths(leftMonth, 1);
   const today = new Date();
@@ -4730,10 +4748,10 @@ function DatePickerPopover({
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
       <p className="mb-2 text-center text-sm font-bold text-slate-900">
-        {renderedMonth.toLocaleDateString(undefined, {
+        {new Intl.DateTimeFormat(calendarLocale, {
           month: "long",
           year: "numeric",
-        })}
+        }).format(renderedMonth)}
       </p>
 
       <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
