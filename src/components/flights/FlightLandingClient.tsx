@@ -210,11 +210,11 @@ export function FlightLandingClient() {
   return (
     <main className="flex-1 bg-slate-50 pb-12 pt-4 sm:pt-8">
       <section className="page-shell">
-        <div className="mx-auto max-w-[20.5rem] text-left sm:max-w-4xl sm:text-center">
-          <h1 className="max-w-[20.5rem] text-[1.62rem] font-medium leading-[1.12] tracking-[-0.022em] text-slate-950 sm:mx-auto sm:max-w-3xl sm:text-[2.75rem] sm:font-semibold sm:leading-[1.08] lg:text-[3.25rem]">
+        <div className="w-full max-w-3xl text-left sm:mx-auto sm:max-w-4xl sm:text-center">
+          <h1 className="max-w-[21.75rem] text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.022em] text-slate-950 sm:mx-auto sm:max-w-3xl sm:text-[2.75rem] sm:leading-[1.08] lg:text-[3.25rem]">
             {t("flightLandingHeroTitle")}
           </h1>
-          <p className="mt-3 max-w-[20.5rem] text-[0.95rem] font-medium leading-6 text-slate-600 sm:mx-auto sm:mt-4 sm:max-w-xl sm:text-base sm:leading-7">
+          <p className="mt-2.5 max-w-[21.75rem] text-sm font-medium leading-6 text-slate-600 sm:mx-auto sm:mt-4 sm:max-w-xl sm:text-base sm:leading-7">
             {t("flightLandingHeroSubtitle")}
           </p>
         </div>
