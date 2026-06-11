@@ -413,23 +413,27 @@ export function SearchTabs({
     "transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
     compactHero ? "min-h-[50px] px-3 py-1" : "min-h-[54px] px-3 py-1.5"
   );
+  const flightJoinedFieldClassName = cn(
+    joinedFieldClassName,
+    compactHero ? "min-h-[54px] px-3.5 py-1.5" : "min-h-[58px] px-3.5 py-2"
+  );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
-    : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", joinedFieldClassName);
+    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+    : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
       ? cn(
-          "relative min-h-[50px] rounded-xl border border-slate-300 bg-white px-3 py-1 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0",
+          "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0",
           side === "origin" ? "sm:pr-3" : "sm:pl-3"
         )
       : cn("relative px-0 py-0", side === "origin" ? "pr-3" : "pl-3");
   const submitWrapClassName = cn(
     "sm:col-span-2 lg:col-span-1 lg:self-stretch",
-    compactHero ? "lg:min-h-[50px]" : "lg:min-h-[54px]"
+    compactHero ? "lg:min-h-[54px]" : "lg:min-h-[58px]"
   );
   const submitButtonClassName = cn(
     "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20",
-    compactHero ? "h-11 lg:min-h-[50px]" : "h-12 lg:min-h-[54px]"
+    compactHero ? "h-12 lg:min-h-[54px]" : "h-12 lg:min-h-[58px]"
   );
 
   const fromQuery = from.trim();
@@ -1580,7 +1584,7 @@ export function SearchTabs({
     );
 
     return (
-      <div className="mx-auto w-full max-w-xl space-y-7 pb-2">
+      <div className="mx-auto w-full max-w-xl space-y-8 pb-2">
         {mobileFlightCalendarMonths.map((monthDate) => {
           const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
           const cells = buildMonthCells(monthDate);
@@ -1589,77 +1593,75 @@ export function SearchTabs({
             <section
               key={monthKey}
               aria-label={monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
-              className="space-y-3"
+              className="space-y-2.5"
             >
-              <h3 className="px-1 text-left text-lg font-extrabold tracking-tight text-slate-950">
+              <h3 className="text-left text-[17px] font-bold tracking-tight text-slate-950">
                 {monthDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
               </h3>
-              <div className="rounded-[1.75rem] border border-slate-200/80 bg-white px-3 pb-4 pt-3 shadow-[0_12px_34px_rgba(15,23,42,0.06)]">
-                <div className="mb-2 grid grid-cols-7 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-slate-400">
-                  {weekdays.map((weekday) => (
-                    <span key={weekday} className="py-2">{weekday}</span>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-y-1.5">
-                  {cells.map((cell) => {
-                    const day = cell.date;
-                    const iso = toIsoDate(day);
-                    const isDeparture = iso === departureDate;
-                    const isReturn = iso === returnDate;
-                    const isDisabledDate = !isSelectableFlightDate(day);
-                    const isToday = toIsoDate(new Date()) === iso;
-                    const isInRange = !!(
-                      departureParsed &&
-                      returnParsed &&
-                      !isDisabledDate &&
-                      day > departureParsed &&
-                      day < returnParsed
-                    );
+              <div className="grid grid-cols-7 text-center text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                {weekdays.map((weekday) => (
+                  <span key={weekday} className="py-2">{weekday}</span>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-y-1.5">
+                {cells.map((cell) => {
+                  const day = cell.date;
+                  const iso = toIsoDate(day);
+                  const isDeparture = iso === departureDate;
+                  const isReturn = iso === returnDate;
+                  const isDisabledDate = !isSelectableFlightDate(day);
+                  const isToday = toIsoDate(new Date()) === iso;
+                  const isInRange = !!(
+                    departureParsed &&
+                    returnParsed &&
+                    !isDisabledDate &&
+                    day > departureParsed &&
+                    day < returnParsed
+                  );
 
-                    if (!cell.isCurrentMonth) {
-                      return (
-                        <span
-                          key={`placeholder-${iso}`}
-                          aria-hidden="true"
-                          className="h-10 w-full"
-                        />
-                      );
-                    }
-
+                  if (!cell.isCurrentMonth) {
                     return (
-                      <button
-                        key={iso}
-                        type="button"
-                        aria-label={`Select ${day.toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })}`}
-                        aria-pressed={isDeparture || isReturn}
-                        onClick={() => {
-                          if (isDisabledDate || !isSelectableFlightDate(day)) return;
-                          onSelectDate(day);
-                        }}
-                        disabled={isDisabledDate}
-                        aria-disabled={isDisabledDate}
-                        className={cn(
-                          "focus-ring relative mx-auto flex h-10 w-full max-w-10 items-center justify-center rounded-full text-sm font-bold transition-colors disabled:cursor-not-allowed",
-                          isDisabledDate
-                            ? "text-slate-300"
-                            : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
-                          isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-200",
-                          isInRange && "bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
-                          (isDeparture || isReturn) && "bg-indigo-700 text-white shadow-[0_10px_22px_rgba(67,56,202,0.24)] hover:bg-indigo-700 hover:text-white ring-0"
-                        )}
-                      >
-                        {day.getDate()}
-                        {isToday && !isDeparture && !isReturn ? (
-                          <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
-                        ) : null}
-                      </button>
+                      <span
+                        key={`placeholder-${iso}`}
+                        aria-hidden="true"
+                        className="h-11 w-full"
+                      />
                     );
-                  })}
-                </div>
+                  }
+
+                  return (
+                    <button
+                      key={iso}
+                      type="button"
+                      aria-label={`Select ${day.toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })}`}
+                      aria-pressed={isDeparture || isReturn}
+                      onClick={() => {
+                        if (isDisabledDate || !isSelectableFlightDate(day)) return;
+                        onSelectDate(day);
+                      }}
+                      disabled={isDisabledDate}
+                      aria-disabled={isDisabledDate}
+                      className={cn(
+                        "focus-ring relative mx-auto flex h-11 w-full max-w-11 items-center justify-center rounded-full text-[15px] font-semibold transition-colors disabled:cursor-not-allowed",
+                        isDisabledDate
+                          ? "text-slate-300"
+                          : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
+                        isToday && !isDisabledDate && "ring-1 ring-inset ring-indigo-300",
+                        isInRange && "bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
+                        (isDeparture || isReturn) && "bg-indigo-700 text-white shadow-sm hover:bg-indigo-700 hover:text-white ring-0"
+                      )}
+                    >
+                      {day.getDate()}
+                      {isToday && !isDeparture && !isReturn ? (
+                        <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-indigo-500" aria-hidden="true" />
+                      ) : null}
+                    </button>
+                  );
+                })}
               </div>
             </section>
           );
@@ -2420,7 +2422,7 @@ export function SearchTabs({
 
               <div
                 ref={dateWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", joinedFieldClassName)}
+                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName)}
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.departureDate ||
@@ -2690,7 +2692,7 @@ export function SearchTabs({
 
               <div
                 ref={travelersWrapRef}
-                className={cn("relative rounded-xl border border-slate-300 bg-white", joinedFieldClassName)}
+                className={cn("relative rounded-xl border border-slate-300 bg-white", flightJoinedFieldClassName)}
               >
                 <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
                   {t.travelers}
