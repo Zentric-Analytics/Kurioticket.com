@@ -97,24 +97,26 @@ const formatTimeRangeSummary = (
 
 const trustCards = [
   {
-    title: "Built for complete trips",
-    description:
-      "Plan flights, stays, and ground transportation in one Kurioticket flow.",
+    key: "carsTrust.0",
     icon: CheckCircle2,
   },
   {
-    title: "Pickup details first",
-    description:
-      "Enter pickup location, dates, times, and driver age so your rental search starts with the right trip details.",
+    key: "carsTrust.1",
     icon: CalendarClock,
   },
   {
-    title: "Clear rental review",
-    description:
-      "Review final price, availability, fees, and rental rules with the provider before booking.",
+    key: "carsTrust.2",
     icon: ShieldCheck,
   },
 ];
+
+type TranslatedCarImageCard = CarImageCard & {
+  title: string;
+  subtitle: string;
+  imageAlt: string;
+  ariaLabel: string;
+  cta?: string;
+};
 
 export default function CarsPage() {
   return (
@@ -129,33 +131,27 @@ function CarsSearchPage() {
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const translateCarImageCard = (
     card: CarImageCard | CarPickupCard,
-  ): CarImageCard => {
-    const key =
-      "vehicleType" in card && card.vehicleType
-        ? `carsTripStyle.${card.vehicleType}`
-        : `carsPickup.${card.pickupLocation}`;
+  ): TranslatedCarImageCard => {
+    const key = card.translationKey;
 
     return {
       ...card,
-      title:
-        dictionary[`${key}.title`] ??
-        enTranslations[`${key}.title`] ??
-        card.title,
+      title: dictionary[`${key}.title`] ?? enTranslations[`${key}.title`] ?? "",
       subtitle:
         dictionary[`${key}.subtitle`] ??
         enTranslations[`${key}.subtitle`] ??
-        card.subtitle,
+        "",
       imageAlt:
         dictionary[`${key}.imageAlt`] ??
         enTranslations[`${key}.imageAlt`] ??
-        card.imageAlt,
-      cta: card.cta
-        ? (dictionary[`${key}.cta`] ?? enTranslations[`${key}.cta`] ?? card.cta)
-        : card.cta,
+        "",
+      cta: card.ctaKey
+        ? (dictionary[card.ctaKey] ?? enTranslations[card.ctaKey] ?? "")
+        : undefined,
       ariaLabel:
         dictionary[`${key}.ariaLabel`] ??
         enTranslations[`${key}.ariaLabel`] ??
-        ("ariaLabel" in card ? card.ariaLabel : card.title),
+        "",
     };
   };
   const router = useRouter();
@@ -301,7 +297,7 @@ function CarsSearchPage() {
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {tripStyleCards.map((card) => (
                   <CarImageCardLink
-                    key={card.title}
+                    key={card.translationKey}
                     card={translateCarImageCard(card)}
                   />
                 ))}
@@ -311,20 +307,20 @@ function CarsSearchPage() {
 
           <section className="relative isolate rounded-[1.5rem] border border-slate-200/75 bg-[linear-gradient(135deg,rgba(255,255,255,0.78),rgba(248,250,252,0.72)_54%,rgba(241,245,249,0.58))] p-2 shadow-[0_24px_64px_-52px_rgba(15,23,42,0.34)] ring-1 ring-white/80 sm:rounded-[2rem] sm:p-4">
             <div className="grid gap-2.5 sm:gap-4 md:grid-cols-3">
-              {trustCards.map((card, index) => {
+              {trustCards.map((card) => {
                 const Icon = card.icon;
                 const translatedTitle =
-                  dictionary[`carsTrust.${index}.title`] ??
-                  enTranslations[`carsTrust.${index}.title`] ??
-                  card.title;
+                  dictionary[`${card.key}.title`] ??
+                  enTranslations[`${card.key}.title`] ??
+                  "";
                 const translatedDescription =
-                  dictionary[`carsTrust.${index}.description`] ??
-                  enTranslations[`carsTrust.${index}.description`] ??
-                  card.description;
+                  dictionary[`${card.key}.description`] ??
+                  enTranslations[`${card.key}.description`] ??
+                  "";
 
                 return (
                   <article
-                    key={card.title}
+                    key={card.key}
                     className="relative isolate cursor-default overflow-hidden rounded-[1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-4 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6"
                   >
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
@@ -369,7 +365,7 @@ function CarsSearchPage() {
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {pickupCards.map((card) => (
                   <CarPickupCardLink
-                    key={card.title}
+                    key={card.translationKey}
                     card={translateCarImageCard(card)}
                   />
                 ))}
@@ -768,7 +764,7 @@ function CarsPageShell() {
   );
 }
 
-function CarImageCardLink({ card }: { card: CarImageCard }) {
+function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
   return (
     <Link
       href={
@@ -811,7 +807,7 @@ function CarImageCardLink({ card }: { card: CarImageCard }) {
   );
 }
 
-function CarPickupCardLink({ card }: { card: CarImageCard }) {
+function CarPickupCardLink({ card }: { card: TranslatedCarImageCard }) {
   return (
     <CarImageCardLink
       card={{
