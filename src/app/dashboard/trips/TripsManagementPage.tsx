@@ -220,13 +220,56 @@ export function TripsManagementPage() {
           aria-labelledby={`${activeHistoryTab}-trips-tab`}
           className="min-h-[10rem] px-1 pb-9 pt-6 sm:pb-11 sm:pt-8"
         >
-          <div className="max-w-xl">
-            <h3 className="text-xl font-bold tracking-[-0.02em] text-slate-950 sm:text-2xl">{historyEmptyState.title}</h3>
-            <p className="mt-2 max-w-lg text-sm font-medium leading-6 text-slate-700 sm:text-base">{historyEmptyState.body}</p>
+          <div className="flex max-w-2xl flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
+            <HistoryEmptyIllustration variant={activeHistoryTab} />
+            <div className="max-w-xl">
+              <h3 className="text-xl font-bold tracking-[-0.02em] text-slate-950 sm:text-2xl">{historyEmptyState.title}</h3>
+              <p className="mt-2 max-w-lg text-sm font-medium leading-6 text-slate-700 sm:text-base">{historyEmptyState.body}</p>
+            </div>
           </div>
         </div>
       </section>
     </section>
+  );
+}
+
+function HistoryEmptyIllustration({ variant }: { variant: TripHistoryTab }) {
+  if (variant === "cancelled") {
+    return (
+      <svg
+        className="h-20 w-20 shrink-0 text-violet-800 sm:h-24 sm:w-24"
+        viewBox="0 0 120 120"
+        fill="none"
+        role="img"
+        aria-label="Cancelled trip illustration"
+      >
+        <circle cx="60" cy="60" r="44" fill="#F1EDFF" />
+        <path d="M29 42l18-8 26 10 18-7v41l-18 7-26-10-18 8V42Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="3" />
+        <path d="M47 34v41M73 44v41" stroke="#A78BFA" strokeLinecap="round" strokeWidth="2.5" />
+        <path d="M38 60c9-7 17-8 27-3s17 4 25-4" stroke="#C4B5FD" strokeLinecap="round" strokeWidth="3" />
+        <circle cx="76" cy="68" r="15" fill="#F5F3FF" stroke="#6D28D9" strokeWidth="3" />
+        <path d="M70 62l12 12M82 62L70 74" stroke="#6D28D9" strokeLinecap="round" strokeWidth="3" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      className="h-20 w-20 shrink-0 text-violet-800 sm:h-24 sm:w-24"
+      viewBox="0 0 120 120"
+      fill="none"
+      role="img"
+      aria-label="Travel history illustration"
+    >
+      <circle cx="60" cy="60" r="44" fill="#F1EDFF" />
+      <path d="M34 32h36l15 15v41H34V32Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="3" />
+      <path d="M70 33v15h15" stroke="currentColor" strokeLinejoin="round" strokeWidth="3" />
+      <path d="M45 59h27M45 70h21" stroke="#A78BFA" strokeLinecap="round" strokeWidth="3" />
+      <path d="M45 48h12" stroke="#6D28D9" strokeLinecap="round" strokeWidth="3" />
+      <path d="M42 88c7 5 29 5 36 0" stroke="#C4B5FD" strokeLinecap="round" strokeWidth="3" />
+      <path d="M82 74a13 13 0 1 1-4-9" stroke="#6D28D9" strokeLinecap="round" strokeWidth="3" />
+      <path d="M82 61v11h-11" stroke="#6D28D9" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+    </svg>
   );
 }
 
