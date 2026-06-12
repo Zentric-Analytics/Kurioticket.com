@@ -475,6 +475,147 @@ export const translations: TranslationDictionary = {
   homeDestinationNewYorkCity: "New York",
   homeDestinationNewYorkCountry: "États-Unis",
   homeDestinationNewYorkAlt: "New York, États-Unis",
+
+  login: "Se connecter",
+  signUp: "S’inscrire",
+  searchRentalCarsEveryPartTrip:
+    "Recherchez des voitures de location pour chaque étape de votre voyage",
+  exploreCarsByTripStyle:
+    "Explorez les voitures de location par style de voyage",
+  carsTripStyleBody:
+    "Choisissez un type de voiture et nous ouvrirons les résultats avec le contexte de recherche prêt.",
+  "carsTripStyle.economy.title": "Voitures économiques",
+  "carsTripStyle.economy.subtitle":
+    "Recherches abordables pour la ville et les voyages en solo",
+  "carsTripStyle.economy.cta": "Lancer une recherche de voiture économique",
+  "carsTripStyle.economy.ariaLabel":
+    "Lancer une recherche de voiture économique depuis une prise en charge en centre-ville",
+  "carsTripStyle.economy.imageAlt":
+    "Voitures compactes circulant entre des immeubles du centre-ville",
+  "carsTripStyle.suv.title": "SUV",
+  "carsTripStyle.suv.subtitle":
+    "De l’espace pour les voyages en famille, les bagages et les longs trajets",
+  "carsTripStyle.suv.cta": "Ouvrir une recherche de location de SUV",
+  "carsTripStyle.suv.ariaLabel":
+    "Ouvrir une recherche de location de SUV depuis une prise en charge à l’aéroport",
+  "carsTripStyle.suv.imageAlt":
+    "SUV roulant sur une route dégagée près des montagnes",
+  "carsTripStyle.luxury.title": "Voitures de luxe",
+  "carsTripStyle.luxury.subtitle":
+    "Contexte de recherche premium pour les voyages d’affaires ou les occasions spéciales",
+  "carsTripStyle.luxury.cta": "Planifier une recherche de voiture de luxe",
+  "carsTripStyle.luxury.ariaLabel":
+    "Planifier une recherche de voiture de luxe depuis une prise en charge près de l’hôtel",
+  "carsTripStyle.luxury.imageAlt":
+    "Voiture premium garée près d’un bâtiment moderne élégant",
+  "carsTripStyle.van.title": "Vans",
+  "carsTripStyle.van.subtitle":
+    "Contexte de recherche pour les voyages en groupe et les bagages familiaux",
+  "carsTripStyle.van.cta": "Rechercher des vans pour les voyages en groupe",
+  "carsTripStyle.van.ariaLabel":
+    "Rechercher des vans pour les voyages en groupe depuis une prise en charge à l’aéroport",
+  "carsTripStyle.van.imageAlt":
+    "Van de passagers circulant sur une route lumineuse et panoramique",
+  "carsTrust.0.title": "Conçu pour les voyages complets",
+  "carsTrust.0.description":
+    "Planifiez vols, séjours et transports terrestres dans un seul parcours Kurioticket.",
+  "carsTrust.1.title": "Les détails de prise en charge d’abord",
+  "carsTrust.1.description":
+    "Saisissez le lieu de prise en charge, les dates, les horaires et l’âge du conducteur afin que votre recherche de location commence avec les bons détails de voyage.",
+  "carsTrust.2.title": "Vérification claire de la location",
+  "carsTrust.2.description":
+    "Vérifiez le prix final, la disponibilité, les frais et les règles de location auprès du fournisseur avant de réserver.",
+  carsPickupPointsTitle:
+    "Commencez par des points de prise en charge populaires",
+  carsPickupPointsBody:
+    "Choisissez un type de prise en charge et nous ouvrirons la page de résultats des voitures avec les détails de recherche prêts.",
+  "carsPickup.Airport.title": "Prises en charge à l’aéroport",
+  "carsPickup.Airport.subtitle":
+    "Commencez depuis les principaux points d’arrivée des aéroports",
+  "carsPickup.Airport.ariaLabel":
+    "Ouvrir les résultats de voitures pour une prise en charge à l’aéroport",
+  "carsPickup.Airport.imageAlt":
+    "Avion stationné à une porte d’aéroport au coucher du soleil",
+  "carsPickup.City center.title": "Prises en charge en centre-ville",
+  "carsPickup.City center.subtitle":
+    "Prenez le véhicule près des hôtels du centre-ville et des quartiers d’affaires",
+  "carsPickup.City center.ariaLabel":
+    "Ouvrir les résultats de voitures pour une prise en charge en centre-ville",
+  "carsPickup.City center.imageAlt":
+    "Voitures circulant dans une rue urbaine entre de hauts immeubles",
+  "carsPickup.Train station.title": "Prises en charge en gare",
+  "carsPickup.Train station.subtitle":
+    "Poursuivez votre voyage après votre arrivée en train",
+  "carsPickup.Train station.ariaLabel":
+    "Ouvrir les résultats de voitures pour une prise en charge en gare",
+  "carsPickup.Train station.imageAlt":
+    "Quai de train avec des voies menant à une gare urbaine",
+  "carsPickup.Hotel area.title": "Prises en charge près de l’hôtel",
+  "carsPickup.Hotel area.subtitle":
+    "Planifiez une prise en charge près de votre lieu de séjour",
+  "carsPickup.Hotel area.ariaLabel":
+    "Ouvrir les résultats de voitures pour une prise en charge près de l’hôtel",
+  "carsPickup.Hotel area.imageAlt":
+    "Extérieur d’hôtel avec palmiers et allée d’accès",
+  "carsSearch.pickupLocationLabel": "Lieu de prise en charge",
+  "carsSearch.pickupLocationPlaceholder": "Aéroport, ville ou adresse",
+  "carsSearch.returnLocationPlaceholder":
+    "Ville, aéroport ou adresse de retour",
+  "carsSearch.returnToSameLocation": "Retour au même endroit",
+  "carsSearch.differentReturnLocation": "Lieu de retour différent",
+  "carsSearch.rentalDatesLabel": "Dates de location",
+  "carsSearch.rentalDatePlaceholder":
+    "Date de prise en charge — Date de retour",
+  "carsSearch.pickupReturnTimeLabel": "Heure de prise en charge / retour",
+  "carsSearch.pickupReturnTimeSummary":
+    "Prise en charge {pickupTime} — retour {returnTime}",
+  "carsSearch.driverAgeLabel": "Âge du conducteur",
+  "carsSearch.driverAgeAnyAge": "Tout âge",
+  "carsSearch.clearPickupLocation": "Effacer le lieu de prise en charge",
+  "carsSearch.clearReturnLocation": "Effacer le lieu de retour",
+  "carsSearch.chooseRentalDatesAria":
+    "Choisir les dates de prise en charge et de retour de la location",
+  "carsSearch.rentalDatePickerAria": "Sélecteur de dates de location",
+  "carsSearch.chooseRentalDates": "Choisissez les dates de location",
+  "carsSearch.previousMonth": "Mois précédent",
+  "carsSearch.previousMonthShort": "Préc.",
+  "carsSearch.nextMonth": "Mois suivant",
+  "carsSearch.nextMonthShort": "Suiv.",
+  "carsSearch.selectDateAriaPrefix": "Sélectionner",
+  "carsSearch.startsNewPickupDate":
+    "commence une nouvelle date de prise en charge",
+  "carsSearch.choosePickupReturnTimesAria":
+    "Choisir les heures de prise en charge et de retour",
+  "carsSearch.pickupReturnTimeSelectorAria":
+    "Sélecteur d’heure de prise en charge et de retour",
+  "carsSearch.pickupTimeLabel": "Heure de prise en charge",
+  "carsSearch.returnTimeLabel": "Heure de retour",
+  carsSearchPreparing: "Préparation de la recherche de voitures…",
+  searchingCars: "Recherche de voitures…",
+  "carsFaq.heading": "Questions fréquentes sur les voitures",
+  "carsFaq.0.question":
+    "Quelles informations me faut-il pour rechercher une voiture de location ?",
+  "carsFaq.0.answer":
+    "Saisissez le lieu de prise en charge, les dates de prise en charge et de retour, les heures de prise en charge et de retour, l’âge du conducteur et indiquez si vous prévoyez de rendre la voiture à un endroit différent.",
+  "carsFaq.1.question": "Puis-je rendre la voiture à un autre endroit ?",
+  "carsFaq.1.answer":
+    "Oui. Sélectionnez Lieu de retour différent dans le formulaire de recherche et saisissez la ville, l’aéroport ou l’adresse où vous prévoyez de rendre la voiture.",
+  "carsFaq.2.question":
+    "Pourquoi l’âge du conducteur est-il important pour les voitures de location ?",
+  "carsFaq.2.answer":
+    "Les fournisseurs de location peuvent appliquer des règles, frais, exigences de dépôt ou disponibilités de véhicules différents selon l’âge du conducteur et le lieu.",
+  "carsFaq.3.question":
+    "Que dois-je vérifier avant de réserver une voiture de location ?",
+  "carsFaq.3.answer":
+    "Vérifiez les lieux de prise en charge et de retour, les dates, les horaires, la politique de kilométrage, la politique de carburant, les options d’assurance, les conditions d’annulation, les exigences de dépôt et les documents requis avant de réserver.",
+  "carsFaq.4.question": "Où le prix final de la location est-il confirmé ?",
+  "carsFaq.4.answer":
+    "Le fournisseur confirme le prix final, la disponibilité du véhicule, les taxes, les frais, les exigences de dépôt et les règles de location avant la réservation.",
+  "carsFaq.5.question":
+    "Quels documents pourrais-je devoir présenter lors de la prise en charge ?",
+  "carsFaq.5.answer":
+    "Les fournisseurs de location peuvent demander un permis de conduire valide, une carte de paiement, une pièce d’identité et tout document requis par le pays ou le lieu de prise en charge.",
+
   footerContactUs: "Nous contacter",
   footerCustomerSupport: "Assistance client",
   footerServiceGuarantee: "Garantie de service",
