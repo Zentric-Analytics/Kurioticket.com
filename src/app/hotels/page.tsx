@@ -37,128 +37,128 @@ type HotelDestinationCard = {
 
 const hotelDestinationCards: HotelDestinationCard[] = [
   {
-    title: "Japan",
-    subtitle: "Tokyo stays",
+    title: enTranslations["hotelDestination.Tokyo.title"],
+    subtitle: enTranslations["hotelDestination.Tokyo.subtitle"],
     destinationQuery: "Tokyo",
     image:
       "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "Tokyo skyline with dense high-rise buildings in daylight",
-    linkLabel: "Search hotels in Tokyo, Japan",
+    linkLabel: enTranslations["hotelDestination.Tokyo.linkLabel"],
   },
   {
-    title: "United Kingdom",
-    subtitle: "London stays",
+    title: enTranslations["hotelDestination.London.title"],
+    subtitle: enTranslations["hotelDestination.London.subtitle"],
     destinationQuery: "London",
     image:
       "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "Tower Bridge and the River Thames in London under a blue sky",
-    linkLabel: "Search hotels in London, United Kingdom",
+    linkLabel: enTranslations["hotelDestination.London.linkLabel"],
   },
   {
-    title: "France",
-    subtitle: "Paris stays",
+    title: enTranslations["hotelDestination.Paris.title"],
+    subtitle: enTranslations["hotelDestination.Paris.subtitle"],
     destinationQuery: "Paris",
     image:
       "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "Eiffel Tower and the Seine River in Paris at golden hour",
-    linkLabel: "Search hotels in Paris, France",
+    linkLabel: enTranslations["hotelDestination.Paris.linkLabel"],
   },
   {
-    title: "United States",
-    subtitle: "New York stays",
+    title: enTranslations["hotelDestination.New York.title"],
+    subtitle: enTranslations["hotelDestination.New York.subtitle"],
     destinationQuery: "New York",
     image:
       "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt:
       "New York City skyline with One World Trade Center and waterfront",
-    linkLabel: "Search hotels in New York, United States",
+    linkLabel: enTranslations["hotelDestination.New York.linkLabel"],
   },
 ];
 
 const moreHotelDestinationCards: HotelDestinationCard[] = [
   {
-    title: "Italy",
-    subtitle: "Rome stays",
+    title: enTranslations["hotelDestination.Rome.title"],
+    subtitle: enTranslations["hotelDestination.Rome.subtitle"],
     destinationQuery: "Rome",
     image:
       "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "The Colosseum in Rome beneath a clear blue sky",
-    linkLabel: "Search hotels in Rome, Italy",
+    linkLabel: enTranslations["hotelDestination.Rome.linkLabel"],
   },
   {
-    title: "United Arab Emirates",
-    subtitle: "Dubai stays",
+    title: enTranslations["hotelDestination.Dubai.title"],
+    subtitle: enTranslations["hotelDestination.Dubai.subtitle"],
     destinationQuery: "Dubai",
     image:
       "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "Dubai skyline with the Burj Khalifa rising above skyscrapers",
-    linkLabel: "Search hotels in Dubai, United Arab Emirates",
+    linkLabel: enTranslations["hotelDestination.Dubai.linkLabel"],
   },
   {
-    title: "Singapore",
-    subtitle: "Singapore stays",
+    title: enTranslations["hotelDestination.Singapore.title"],
+    subtitle: enTranslations["hotelDestination.Singapore.subtitle"],
     destinationQuery: "Singapore",
     image:
       "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Marina Bay skyline in Singapore at dusk",
-    linkLabel: "Search hotels in Singapore, Singapore",
+    linkLabel: enTranslations["hotelDestination.Singapore.linkLabel"],
   },
   {
-    title: "Spain",
-    subtitle: "Barcelona stays",
+    title: enTranslations["hotelDestination.Barcelona.title"],
+    subtitle: enTranslations["hotelDestination.Barcelona.subtitle"],
     destinationQuery: "Barcelona",
     image:
       "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Barcelona cityscape with Sagrada Familia in daylight",
-    linkLabel: "Search hotels in Barcelona, Spain",
+    linkLabel: enTranslations["hotelDestination.Barcelona.linkLabel"],
   },
 ];
 
 const globalHotelDestinationCards: HotelDestinationCard[] = [
   {
-    title: "Canada",
-    subtitle: "Toronto stays",
+    title: enTranslations["hotelDestination.Toronto.title"],
+    subtitle: enTranslations["hotelDestination.Toronto.subtitle"],
     destinationQuery: "Toronto",
     image:
       "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Toronto skyline with the CN Tower beside Lake Ontario",
-    linkLabel: "Search hotels in Toronto, Canada",
+    linkLabel: enTranslations["hotelDestination.Toronto.linkLabel"],
   },
   {
-    title: "Netherlands",
-    subtitle: "Amsterdam stays",
+    title: enTranslations["hotelDestination.Amsterdam.title"],
+    subtitle: enTranslations["hotelDestination.Amsterdam.subtitle"],
     destinationQuery: "Amsterdam",
     image:
       "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Amsterdam canal houses and bridge along the water",
-    linkLabel: "Search hotels in Amsterdam, Netherlands",
+    linkLabel: enTranslations["hotelDestination.Amsterdam.linkLabel"],
   },
   {
-    title: "Thailand",
-    subtitle: "Bangkok stays",
+    title: enTranslations["hotelDestination.Bangkok.title"],
+    subtitle: enTranslations["hotelDestination.Bangkok.subtitle"],
     destinationQuery: "Bangkok",
     image:
       "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Bangkok city skyline and Chao Phraya river at sunset",
-    linkLabel: "Search hotels in Bangkok, Thailand",
+    linkLabel: enTranslations["hotelDestination.Bangkok.linkLabel"],
   },
   {
-    title: "Mexico",
-    subtitle: "Cancun stays",
+    title: enTranslations["hotelDestination.Cancun.title"],
+    subtitle: enTranslations["hotelDestination.Cancun.subtitle"],
     destinationQuery: "Cancun",
     image:
       "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Cancun beach with white sand and turquoise water",
-    linkLabel: "Search hotels in Cancun, Mexico",
+    linkLabel: enTranslations["hotelDestination.Cancun.linkLabel"],
   },
   {
-    title: "Turkey",
-    subtitle: "Istanbul stays",
+    title: enTranslations["hotelDestination.Istanbul.title"],
+    subtitle: enTranslations["hotelDestination.Istanbul.subtitle"],
     destinationQuery: "Istanbul",
     image:
       "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Istanbul waterfront with domes and minarets at golden hour",
-    linkLabel: "Search hotels in Istanbul, Turkey",
+    linkLabel: enTranslations["hotelDestination.Istanbul.linkLabel"],
   },
 ];
 
