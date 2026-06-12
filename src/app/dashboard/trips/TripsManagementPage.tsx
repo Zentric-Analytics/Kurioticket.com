@@ -60,16 +60,14 @@ export function TripsManagementPage() {
     setLookupMessage("Reservation lookup is not available yet.");
   }
 
-  const emptyState = activeTab === "past"
+  const historyEmptyState = activeTab === "past"
     ? {
-        title: "No past trips yet",
-        body: "Completed trips will appear here after you travel.",
-        illustration: <PastTripsIllustration />,
+        title: "Your travel history will appear here",
+        body: "Completed trips will be listed here so you can review past plans and details.",
       }
     : {
         title: "No cancelled trips yet",
         body: "Trips you cancel will appear here for easy reference.",
-        illustration: <CancelledTripsIllustration />,
       };
 
   return (
@@ -100,7 +98,7 @@ export function TripsManagementPage() {
 
           {showLookup ? (
             <div
-              className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/20 px-4 py-6 sm:absolute sm:inset-auto sm:right-0 sm:top-[calc(100%+0.75rem)] sm:block sm:w-[min(24rem,calc(100vw-3rem))] sm:bg-transparent sm:p-0"
+              className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/20 px-3 pb-3 pt-16 sm:absolute sm:inset-auto sm:right-0 sm:top-[calc(100%+0.75rem)] sm:block sm:w-[min(24rem,calc(100vw-3rem))] sm:bg-transparent sm:p-0"
               role="presentation"
             >
               <section
@@ -109,7 +107,7 @@ export function TripsManagementPage() {
                 aria-labelledby="reservation-lookup-title"
                 aria-modal="true"
                 role="dialog"
-                className="max-h-[calc(100vh-3rem)] w-full max-w-sm overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.55)] sm:max-h-none sm:max-w-none sm:p-6"
+                className="max-h-[calc(100vh-4.75rem)] w-full max-w-sm overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.55)] sm:max-h-none sm:max-w-none sm:p-6"
               >
                 <div className="flex items-start gap-4">
                   <div className="min-w-0 flex-1">
@@ -167,76 +165,78 @@ export function TripsManagementPage() {
         </div>
       </div>
 
-      <div className="border-b border-slate-200/80" role="tablist" aria-label="Trip history filters">
-        <div className="flex min-w-0 gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {tabs.map((tab) => {
-            const isActive = activeTab === tab.id;
-
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                aria-controls={`${tab.id}-trips-panel`}
-                id={`${tab.id}-trips-tab`}
-                onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "focus-ring relative -mb-px inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap border-b-2 px-1 text-sm font-semibold transition",
-                  isActive
-                    ? "border-violet-800 text-violet-900"
-                    : "border-transparent text-slate-600 hover:border-violet-300 hover:text-slate-900",
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
+      <section aria-labelledby="upcoming-trips-title" className="pt-4 sm:pt-6">
+        <div className="flex min-w-0 flex-col items-center gap-5 py-5 text-center sm:py-7">
+          <CurrentTripsIllustration />
+          <div className="max-w-lg">
+            <h2 id="upcoming-trips-title" className="text-2xl font-bold tracking-[-0.025em] text-slate-950 sm:text-3xl">
+              Where to next?
+            </h2>
+            <p className="mt-3 text-sm font-medium leading-6 text-slate-700 sm:text-base">
+              You have not started any trips yet. When you make a booking, it will appear here.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div
-        id={`${activeTab}-trips-panel`}
-        role="tabpanel"
-        aria-labelledby={`${activeTab}-trips-tab`}
-        className="flex min-h-[17rem] items-start justify-center px-2 pb-9 pt-6 sm:px-6 sm:pb-11 sm:pt-8"
-      >
-        <div className="mx-auto flex max-w-md flex-col items-center text-center">
-          {emptyState.illustration}
-          <h2 className="mt-6 text-2xl font-bold tracking-[-0.025em] text-slate-950">{emptyState.title}</h2>
-          <p className="mt-2 max-w-sm text-sm font-medium leading-6 text-slate-700">{emptyState.body}</p>
+      <section aria-labelledby="trip-history-title" className="pt-2 sm:pt-4">
+        <h2 id="trip-history-title" className="sr-only">
+          Trip history
+        </h2>
+        <div className="border-b border-slate-200/80" role="tablist" aria-label="Trip history filters">
+          <div className="flex min-w-0 gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  aria-controls={`${tab.id}-trips-panel`}
+                  id={`${tab.id}-trips-tab`}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                    "focus-ring relative -mb-px inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap border-b-2 px-1 text-sm font-semibold transition",
+                    isActive
+                      ? "border-violet-800 text-violet-900"
+                      : "border-transparent text-slate-600 hover:border-violet-300 hover:text-slate-900",
+                  )}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+
+        <div
+          id={`${activeTab}-trips-panel`}
+          role="tabpanel"
+          aria-labelledby={`${activeTab}-trips-tab`}
+          className="min-h-[10rem] px-1 pb-9 pt-6 sm:pb-11 sm:pt-8"
+        >
+          <div className="max-w-xl">
+            <h3 className="text-xl font-bold tracking-[-0.02em] text-slate-950 sm:text-2xl">{historyEmptyState.title}</h3>
+            <p className="mt-2 max-w-lg text-sm font-medium leading-6 text-slate-700 sm:text-base">{historyEmptyState.body}</p>
+          </div>
+        </div>
+      </section>
     </section>
   );
 }
 
-function PastTripsIllustration() {
+function CurrentTripsIllustration() {
   return (
-    <svg className="h-32 w-32 text-violet-800 sm:h-36 sm:w-36" viewBox="0 0 160 160" fill="none" role="img" aria-label="Travel history illustration">
+    <svg className="h-28 w-28 text-violet-800 sm:h-32 sm:w-32" viewBox="0 0 160 160" fill="none" role="img" aria-label="Travel illustration">
       <circle cx="80" cy="80" r="58" fill="#ECE7FF" />
-      <path d="M44 105c12 10 58 10 72 0" stroke="#8B5CF6" strokeWidth="4" strokeLinecap="round" />
-      <rect x="50" y="58" width="60" height="55" rx="9" fill="white" stroke="currentColor" strokeWidth="4" />
-      <path d="M68 58V47c0-6 5-11 12-11s12 5 12 11v11" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-      <path d="M50 77h60" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-      <rect x="83" y="86" width="36" height="24" rx="5" fill="#F5F3FF" stroke="#6D28D9" strokeWidth="3" />
-      <path d="M91 98h16" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" />
-      <path d="M42 48c8-8 18-12 30-12" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" strokeDasharray="1 8" />
-      <path d="M118 43l6 3-6 3 2-3-2-3Z" fill="#6D28D9" />
-    </svg>
-  );
-}
-
-function CancelledTripsIllustration() {
-  return (
-    <svg className="h-32 w-32 text-violet-800 sm:h-36 sm:w-36" viewBox="0 0 160 160" fill="none" role="img" aria-label="Cancelled trip illustration">
-      <circle cx="80" cy="80" r="58" fill="#ECE7FF" />
-      <path d="M48 109l18-58 26 13 20-9-17 58-27-13-20 9Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="4" />
-      <path d="M66 51l2 49M92 64l3 49" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" />
-      <path d="M57 82c12-8 24-7 34 1 8 6 17 7 28-1" stroke="#8B5CF6" strokeWidth="3" strokeLinecap="round" strokeDasharray="1 7" />
-      <circle cx="110" cy="50" r="18" fill="white" stroke="#6D28D9" strokeWidth="4" />
-      <path d="M103 43l14 14M117 43l-14 14" stroke="#6D28D9" strokeLinecap="round" strokeWidth="4" />
-      <path d="M42 118c13 8 61 9 76 0" stroke="#8B5CF6" strokeLinecap="round" strokeWidth="4" />
+      <path d="M43 104c14 11 60 11 74 0" stroke="#8B5CF6" strokeLinecap="round" strokeWidth="4" />
+      <path d="M50 96l20-52 26 20 22-11-18 59-28-21-22 5Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="4" />
+      <path d="M70 44l2 47M96 64l4 48" stroke="#8B5CF6" strokeLinecap="round" strokeWidth="3" />
+      <path d="M43 55c11-9 22-13 36-13" stroke="#8B5CF6" strokeDasharray="1 8" strokeLinecap="round" strokeWidth="3" />
+      <path d="M113 42l9 4-9 4 3-4-3-4Z" fill="#6D28D9" />
+      <circle cx="104" cy="96" r="7" fill="#6D28D9" />
     </svg>
   );
 }
