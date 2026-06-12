@@ -7,23 +7,30 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { signupSchema } from "@/lib/validation";
 
 type SignupFormProps = {
   googleEnabled?: boolean;
 };
 
+type MessageState = {
+  key: string;
+};
+
 export function SignupForm({
   googleEnabled = false,
 }: SignupFormProps) {
+  const { t } = useLocale();
+
   const [error, setError] =
-    useState("");
+    useState<MessageState | null>(null);
 
   const [loading, setLoading] =
     useState(false);
 
   const [message, setMessage] =
-    useState("");
+    useState<MessageState | null>(null);
 
   const [isPending, startTransition] =
     useTransition();
@@ -32,8 +39,8 @@ export function SignupForm({
     formData: FormData,
   ) {
     setLoading(true);
-    setError("");
-    setMessage("");
+    setError(null);
+    setMessage(null);
 
     const input = {
       name: String(
@@ -55,12 +62,12 @@ export function SignupForm({
     if (!parsed.success) {
       setLoading(false);
 
-      setError(
-        getPublicSignupValidationError(
+      setError({
+        key: getPublicSignupValidationErrorKey(
           parsed.error.flatten()
             .fieldErrors,
         ),
-      );
+      });
 
       return;
     }
@@ -90,12 +97,11 @@ export function SignupForm({
     if (!response.ok) {
       setLoading(false);
 
-      setError(
-        String(
-          data.error ||
-            "Unable to create account right now.",
+      setError({
+        key: getSignupErrorKey(
+          data.error,
         ),
-      );
+      });
 
       return;
     }
@@ -116,7 +122,9 @@ export function SignupForm({
       signInResult?.error ===
       "EmailVerificationRequired"
     ) {
-      setMessage("Verification required. Redirecting...");
+      setMessage({
+        key: "signupVerificationRequiredRedirecting",
+      });
 
       startTransition(() => {
         window.location.href = `/auth/verify-email?email=${encodeURIComponent(
@@ -128,14 +136,16 @@ export function SignupForm({
     }
 
     if (!signInResult?.ok) {
-      setError(
-        "Your account was created, but automatic login failed. Please log in with your new password.",
-      );
+      setError({
+        key: "signupAutomaticLoginFailed",
+      });
 
       return;
     }
 
-    setMessage("Account created. Redirecting...");
+    setMessage({
+      key: "signupAccountCreatedRedirecting",
+    });
 
     startTransition(() => {
       window.location.href =
@@ -146,15 +156,15 @@ export function SignupForm({
 
   return (
     <Card className="mx-auto w-full max-w-md p-5">
-      <h1 className="text-2xl font-bold text-navy">
-        Create your account
+      <h1 className="break-words text-2xl font-bold text-navy">
+        {t.signupPageTitle}
       </h1>
 
       <form
         action={submit}
         className="mt-5 grid gap-4"
       >
-        <Field label="Full name">
+        <Field label={t.signupFullNameLabel}>
           <Input
             name="name"
             autoComplete="name"
@@ -163,7 +173,7 @@ export function SignupForm({
           />
         </Field>
 
-        <Field label="Email">
+        <Field label={t.signupEmailLabel}>
           <Input
             name="email"
             type="email"
@@ -173,7 +183,7 @@ export function SignupForm({
           />
         </Field>
 
-        <Field label="Password">
+        <Field label={t.signupPasswordLabel}>
           <Input
             name="password"
             type="password"
@@ -184,43 +194,40 @@ export function SignupForm({
           />
         </Field>
 
-        <p className="text-xs leading-5 text-muted">
-          By creating an
-          account, you agree
-          to{" "}
+        <p className="break-words text-xs leading-5 text-muted">
+          {t.signupAgreementBeforeTerms}
           <Link
             className="font-semibold text-teal-dark"
             href="/legal/terms-of-service"
           >
-            Terms
+            {t.signupTermsLink}
           </Link>
-          ,{" "}
+          {t.signupAgreementBetweenLinks}
           <Link
             className="font-semibold text-teal-dark"
             href="/legal/privacy-policy"
           >
-            Privacy Policy
+            {t.signupPrivacyPolicyLink}
           </Link>
-          , and partner
-          redirect disclosures.
+          {t.signupAgreementAfterPrivacy}
         </p>
 
         {error ? (
-          <p className="text-sm text-danger" aria-live="polite">
-            {error}
+          <p className="break-words text-sm text-danger" aria-live="polite">
+            {formatTranslation(t, error)}
           </p>
         ) : null}
 
         {message ? (
-          <p className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark" aria-live="polite">
-            {message}
+          <p className="break-words rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark" aria-live="polite">
+            {formatTranslation(t, message)}
           </p>
         ) : null}
 
         <Button disabled={loading || isPending}>
           {loading || isPending
-            ? "Creating account..."
-            : "Sign Up"}
+            ? t.signupCreatingAccount
+            : t.signupSubmit}
         </Button>
       </form>
 
@@ -235,25 +242,31 @@ export function SignupForm({
             })
           }
         >
-          Continue with Google
+          {t.signupGoogle}
         </Button>
       ) : null}
 
-      <p className="mt-4 text-sm text-muted">
-        Already have an
-        account?{" "}
+      <p className="mt-4 break-words text-sm text-muted">
+        {t.signupAlreadyHaveAccount}{" "}
         <Link
           className="font-semibold text-teal-dark"
           href="/auth/signin"
         >
-          Log in
+          {t.signupLoginLink}
         </Link>
       </p>
     </Card>
   );
 }
 
-function getPublicSignupValidationError(
+function formatTranslation(
+  translations: Record<string, string>,
+  message: MessageState,
+) {
+  return translations[message.key] ?? message.key;
+}
+
+function getPublicSignupValidationErrorKey(
   fieldErrors: Record<
     string,
     string[] | undefined
@@ -262,15 +275,33 @@ function getPublicSignupValidationError(
   if (
     fieldErrors.email?.length
   ) {
-    return "Enter a valid email address.";
+    return "signupErrorInvalidEmail";
   }
 
   if (
     fieldErrors.password
       ?.length
   ) {
-    return "Password must meet minimum requirements.";
+    return "signupErrorPasswordRequirements";
   }
 
-  return "Unable to create account right now.";
+  return "signupErrorUnableCreate";
+}
+
+function getSignupErrorKey(error: unknown) {
+  switch (String(error || "")) {
+    case "Enter a valid email address.":
+      return "signupErrorInvalidEmail";
+    case "Password must meet minimum requirements.":
+      return "signupErrorPasswordRequirements";
+    case "Too many signup attempts. Please wait and try again.":
+      return "signupErrorRateLimited";
+    case "An account with this email already exists.":
+      return "signupErrorDuplicateEmail";
+    case "Unable to send verification code right now. Please try again.":
+      return "signupErrorUnableSendVerification";
+    case "Unable to create account right now.":
+    default:
+      return "signupErrorUnableCreate";
+  }
 }
