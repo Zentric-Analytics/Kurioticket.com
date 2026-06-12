@@ -697,20 +697,46 @@ export function SavedDashboardPage() {
 }
 
 export function PreferencesDashboardPage() {
+  const { t } = useLocale();
+
   return (
     <section aria-labelledby="preferences-title" className="space-y-4">
       <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Preferences</p>
-        <h1 id="preferences-title" className="mt-2 text-3xl font-bold text-navy">Preferences</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
+          {t["accountDashboard.preferences.eyebrow"]}
+        </p>
+        <h1 id="preferences-title" className="mt-2 text-3xl font-bold text-navy">
+          {t["accountDashboard.preferences.title"]}
+        </h1>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Account settings are grouped here as clean shortcuts. Controls that are not active yet are marked clearly.
+          {t["accountDashboard.preferences.description"]}
         </p>
       </div>
       <div className="grid gap-3">
-        <ListRow title="Personal details" body="Review your account profile details when editable profile controls are available." icon={UserRound} status="Coming soon" />
-        <ListRow title="Notification preferences" body="Manage email and alert preferences as notification controls are added." icon={Mail} status="Coming soon" />
-        <ListRow title="Travel preferences" body="Keep preferred planning defaults easy to find for future account settings." icon={Settings} status="Coming soon" />
-        <ListRow title="Security and privacy" body="Review current privacy and platform policy information." href="/legal" icon={ShieldCheck} />
+        <ListRow
+          title={t["accountDashboard.preferences.personalDetails.title"]}
+          body={t["accountDashboard.preferences.personalDetails.description"]}
+          icon={UserRound}
+          status={t["accountDashboard.preferences.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.preferences.notifications.title"]}
+          body={t["accountDashboard.preferences.notifications.description"]}
+          icon={Mail}
+          status={t["accountDashboard.preferences.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.preferences.travel.title"]}
+          body={t["accountDashboard.preferences.travel.description"]}
+          icon={Settings}
+          status={t["accountDashboard.preferences.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.preferences.securityPrivacy.title"]}
+          body={t["accountDashboard.preferences.securityPrivacy.description"]}
+          href="/legal"
+          icon={ShieldCheck}
+        />
       </div>
     </section>
   );

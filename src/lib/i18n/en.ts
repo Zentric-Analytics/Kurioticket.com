@@ -179,6 +179,23 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.openSavedTrips": "Open saved trips",
   "accountDashboard.saved.searchFlights": "Search flights",
   "accountDashboard.saved.searchHotels": "Search hotels",
+  "accountDashboard.preferences.eyebrow": "PREFERENCES",
+  "accountDashboard.preferences.title": "Preferences",
+  "accountDashboard.preferences.description":
+    "Account settings are grouped here as clean shortcuts. Controls that are not active yet are marked clearly.",
+  "accountDashboard.preferences.comingSoon": "Coming soon",
+  "accountDashboard.preferences.personalDetails.title": "Personal details",
+  "accountDashboard.preferences.personalDetails.description":
+    "Review your account profile details when editable profile controls are available.",
+  "accountDashboard.preferences.notifications.title": "Notification preferences",
+  "accountDashboard.preferences.notifications.description":
+    "Manage email and alert preferences as notification controls are added.",
+  "accountDashboard.preferences.travel.title": "Travel preferences",
+  "accountDashboard.preferences.travel.description":
+    "Keep preferred planning defaults easy to find for future account settings.",
+  "accountDashboard.preferences.securityPrivacy.title": "Security and privacy",
+  "accountDashboard.preferences.securityPrivacy.description":
+    "Review current privacy and platform policy information.",
   "accountDashboard.mobile.backAriaLabel": "Back to My account",
   "accountDashboard.mobile.manageAccount": "Manage account",
   "accountDashboard.personalDetails.title": "Personal details",
