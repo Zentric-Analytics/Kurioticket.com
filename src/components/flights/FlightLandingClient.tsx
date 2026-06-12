@@ -209,10 +209,26 @@ export function FlightLandingClient() {
 
   const heroTitle = t("flightLandingHeroTitle");
   const heroSubtitle = t("flightLandingHeroSubtitle");
+  const englishHeroTitle = enTranslations.flightLandingHeroTitle;
+  const englishHeroSubtitle = enTranslations.flightLandingHeroSubtitle;
+  const englishHeroTitleFirstLine = englishHeroTitle.replace(
+    " with ease.",
+    "",
+  );
+  const englishHeroTitleSecondLine = englishHeroTitle.replace(
+    `${englishHeroTitleFirstLine} `,
+    "",
+  );
+  const englishHeroSubtitleFirstLine = englishHeroSubtitle.replace(
+    " options for your next journey.",
+    "",
+  );
+  const englishHeroSubtitleSecondLine = englishHeroSubtitle.replace(
+    `${englishHeroSubtitleFirstLine} `,
+    "",
+  );
   const useEnglishHeroWrap =
-    heroTitle === "Find your next affordable flight with ease." &&
-    heroSubtitle ===
-      "Search routes, compare dates, and explore flight options for your next journey.";
+    heroTitle === englishHeroTitle && heroSubtitle === englishHeroSubtitle;
 
   const desktopHeroImageUrl =
     "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=2400&q=92";
@@ -226,9 +242,11 @@ export function FlightLandingClient() {
               {useEnglishHeroWrap ? (
                 <span>
                   <span className="block whitespace-nowrap">
-                    Find your next affordable flight
+                    {englishHeroTitleFirstLine}
                   </span>
-                  <span className="block whitespace-nowrap">with ease.</span>
+                  <span className="block whitespace-nowrap">
+                    {englishHeroTitleSecondLine}
+                  </span>
                 </span>
               ) : (
                 heroTitle
@@ -238,10 +256,10 @@ export function FlightLandingClient() {
               {useEnglishHeroWrap ? (
                 <span>
                   <span className="block whitespace-nowrap">
-                    Search routes, compare dates, and explore flight
+                    {englishHeroSubtitleFirstLine}
                   </span>
                   <span className="block whitespace-nowrap">
-                    options for your next journey.
+                    {englishHeroSubtitleSecondLine}
                   </span>
                 </span>
               ) : (
@@ -259,7 +277,7 @@ export function FlightLandingClient() {
           <div className="absolute inset-0 -z-20 overflow-hidden rounded-[2rem] bg-sky-100">
             <Image
               src={desktopHeroImageUrl}
-              alt="Airplane wing above bright clouds"
+              alt={t("flightLandingHeroImageAlt")}
               fill
               priority
               sizes="(min-width: 1280px) 1180px, 100vw"
@@ -273,7 +291,7 @@ export function FlightLandingClient() {
             <div className="max-w-3xl">
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/85 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-700 shadow-sm">
                 <Plane className="h-3.5 w-3.5" aria-hidden="true" />
-                Flights
+                {t("flights")}
               </div>
               <h1 className="max-w-3xl text-[2.75rem] font-semibold leading-[1.08] tracking-[-0.035em] text-slate-950 lg:text-[3.35rem]">
                 {heroTitle}

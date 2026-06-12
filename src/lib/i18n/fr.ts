@@ -15,6 +15,8 @@ export const translations: TranslationDictionary = {
   destinations: "Destinations",
   explore: "Explorer",
   dashboard: "Tableau de bord",
+  login: "Se connecter",
+  signUp: "S’inscrire",
   legalCenter: "Centre légal",
   homeHeroTitle: "Trouvez rapidement des vols pas chers",
   homeHeroSubtitle:
@@ -389,6 +391,32 @@ export const translations: TranslationDictionary = {
   faqQuestionManageChanges: "Où gérer les modifications ou les annulations ?",
   faqAnswerManageChanges:
     "Les modifications, annulations, remboursements et demandes d’assistance sont généralement gérés par le fournisseur auprès duquel la réservation a été effectuée. Utilisez les informations de confirmation de ce fournisseur pour vos demandes de service.",
+  flightLandingHeroTitle:
+    "Trouvez votre prochain vol abordable en toute simplicité.",
+  flightLandingHeroSubtitle:
+    "Recherchez des itinéraires, comparez les dates et explorez les options de vol pour votre prochain voyage.",
+  flightLandingHeroImageAlt: "Aile d’avion au-dessus de nuages lumineux",
+  flightLandingFeatureSearchReadyTitle: "Itinéraires prêts à rechercher",
+  flightLandingFeatureSearchReadyBody:
+    "Saisissez les détails réels du voyage avant que les résultats soient demandés aux fournisseurs de vols.",
+  flightLandingFeatureCompareTitle: "Comparer avec le contexte",
+  flightLandingFeatureCompareBody:
+    "Utilisez les dates, le nombre de voyageurs, la cabine, la durée, les escales et les détails de l’itinéraire pour évaluer les options.",
+  flightLandingFeatureProviderTitle: "Vérification auprès du fournisseur",
+  flightLandingFeatureProviderBody:
+    "Confirmez toujours la disponibilité finale, le prix et les règles auprès du fournisseur avant de réserver.",
+  flightLandingStartThisSearch: "Lancer cette recherche",
+  flightLandingRouteIdeasTitle:
+    "Idées d’itinéraires pour des voyages flexibles",
+  flightLandingRouteIdeasBody:
+    "Parcourez des idées d’itinéraires, puis lancez une vraie recherche avec les dates et les voyageurs avant de comparer les vols disponibles.",
+  flightLandingRouteConnector: "vers",
+  flightLandingRouteAriaLabel:
+    "Rechercher des vols de {{origin}} à {{destination}}",
+  discoverDestinationsFromRegion:
+    "Découvrez des destinations depuis votre région",
+  discoverDestinationsFromRegionBody:
+    "Explorez des itinéraires sélectionnés et commencez votre prochain voyage en toute confiance.",
   tripType: "Type de voyage",
   from: "De",
   to: "Vers",
@@ -410,7 +438,7 @@ export const translations: TranslationDictionary = {
   childPlural: "enfants",
   infantSingular: "bébé",
   infantPlural: "bébés",
-  premiumEconomy: "Premium Economy",
+  premiumEconomy: "Économie premium",
   travelerSingular: "voyageur",
   travelerPlural: "voyageurs",
   cabinClass: "Classe de cabine",
@@ -419,6 +447,9 @@ export const translations: TranslationDictionary = {
   searchAirportsAndCities: "Rechercher des aéroports et des villes",
   searchAirportsOrCities: "Rechercher des aéroports ou des villes",
   cityAirportOrCode: "Ville, aéroport ou code",
+  cityOrAirport: "Ville ou aéroport",
+  startTypingCityOrAirport:
+    "Commencez à saisir le nom d’une ville ou d’un aéroport pour voir des suggestions.",
   noMatchingAirportsOrCities: "Aucun aéroport ni ville ne correspond",
   startTypingCityAirportOrCode:
     "Commencez à saisir une ville, un aéroport ou un code",
@@ -431,6 +462,39 @@ export const translations: TranslationDictionary = {
   search: "Rechercher",
   searchFlights: "Rechercher des vols",
   searchingFlights: "Recherche de vols…",
+  beachVacations: "Vacances à la plage",
+  beachVacationsBody:
+    "Explorez des itinéraires vers des côtes ensoleillées, des îles et des destinations balnéaires au climat doux.",
+  flightBookingFaqs: "FAQ sur la réservation de vols",
+  flightBookingFaqIntro:
+    "Consultez les informations courantes sur la recherche de vols avant de continuer avec un fournisseur.",
+  flightFaqBestTimeQuestion:
+    "Quel est le meilleur moment pour réserver un vol ?",
+  flightFaqBestTimeAnswer:
+    "Les prix des vols peuvent varier selon l’itinéraire, la saison, la demande et les disponibilités. Il est généralement utile de comparer plusieurs dates, de vérifier les aéroports proches lorsque c’est possible et d’examiner l’itinéraire complet avant de choisir un tarif.",
+  flightFaqBeforeBookingQuestion:
+    "Que dois-je vérifier avant de réserver ?",
+  flightFaqBeforeBookingAnswer:
+    "Vérifiez les heures de départ et d’arrivée, la durée totale du voyage, les escales, les règles de bagages, les options de choix de siège, les conditions d’annulation et la politique de modification du billet avant de finaliser votre réservation auprès du fournisseur.",
+  flightFaqFlexibleFareQuestion: "Qu’est-ce qu’un tarif flexible ?",
+  flightFaqFlexibleFareAnswer:
+    "Un tarif flexible peut permettre des modifications ou des annulations avec moins de restrictions qu’un tarif de base, mais les règles exactes dépendent de la compagnie aérienne ou du fournisseur de réservation. Vérifiez toujours les conditions tarifaires avant l’achat.",
+  flightFaqNonstopQuestion:
+    "Les vols sans escale sont-ils toujours préférables ?",
+  flightFaqNonstopAnswer:
+    "Pas toujours. Les vols sans escale peuvent faire gagner du temps, tandis que les itinéraires avec une escale peuvent offrir d’autres heures de départ, fenêtres d’arrivée ou options tarifaires. Comparez la durée totale du voyage, la durée de l’escale et la commodité avant de décider.",
+  flightFaqBaggageQuestion:
+    "Comment fonctionnent les règles de bagages ?",
+  flightFaqBaggageAnswer:
+    "La franchise bagages peut varier selon la compagnie aérienne, l’itinéraire, la cabine, le type de tarif et le fournisseur. Vérifiez si les bagages cabine, les bagages enregistrés et les effets personnels sont inclus avant de réserver.",
+  flightFaqChangeCancelQuestion:
+    "Puis-je modifier ou annuler mon billet ?",
+  flightFaqChangeCancelAnswer:
+    "Les possibilités de modification et d’annulation dépendent des règles tarifaires et des politiques du fournisseur. Certains billets peuvent être non remboursables ou inclure des frais, alors examinez attentivement les conditions avant de réserver.",
+  flightFaqInternationalQuestion:
+    "Que dois-je savoir sur les vols internationaux ?",
+  flightFaqInternationalAnswer:
+    "Pour un voyage international, vérifiez la validité du passeport, les exigences de visa, les règles de transit, les politiques de bagages et les conditions d’arrivée pour votre destination avant de réserver.",
   swapOriginDestination: "Inverser l’origine et la destination",
   chooseOrigin: "Choisir l’origine",
   chooseDestination: "Choisir la destination",
