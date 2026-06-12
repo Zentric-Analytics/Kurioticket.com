@@ -1276,6 +1276,73 @@ export const translations: TranslationDictionary = {
   homeDestinationNewYorkCity: "New York",
   homeDestinationNewYorkCountry: "United States",
   homeDestinationNewYorkAlt: "New York, United States skyline",
+  moreServiceInfoEyebrow: "Platform Information",
+  moreServiceInfoTitle: "More Service Information",
+  moreServiceInfoDescription:
+    "Learn how Kurioticket helps travelers search, compare, save, and organize travel options from multiple providers in one place.",
+  moreServiceInfoContextTitle: "Plan with context",
+  moreServiceInfoContextSubtitle: "From search results to provider redirects",
+  moreServiceInfoContextCompare: "Compare options from multiple travel providers.",
+  moreServiceInfoContextSave: "Save trips, alerts, and preferences when signed in.",
+  moreServiceInfoContextContinue: "Continue with provider details before booking externally.",
+  moreServiceInfoHowHeading: "How Kurioticket works",
+  moreServiceInfoHowDescription:
+    "These service details explain Kurioticket's role before, during, and after a travel search.",
+  moreServiceInfoHowBadge: "TRAVEL PLANNING BASICS",
+  moreServiceInfoStepSearchTitle: "Search Multiple Providers",
+  moreServiceInfoStepSearchSummary:
+    "Search travel options across different providers from one place instead of opening each provider separately.",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket brings available flight, hotel, route, and travel result information into a single search experience so travelers can review options more efficiently.",
+  moreServiceInfoStepCompareTitle: "Compare Travel Options",
+  moreServiceInfoStepCompareSummary:
+    "Compare prices, routes, hotels, schedules, and available travel options before deciding what fits your trip.",
+  moreServiceInfoStepCompareDetails:
+    "Results may include provider details, timing, destination information, and other trip data that help you evaluate the option before continuing to the provider.",
+  moreServiceInfoStepSaveTitle: "Save Trips and Alerts",
+  moreServiceInfoStepSaveSummary:
+    "Create an account to save trips, track routes, and manage travel alerts connected to your travel planning.",
+  moreServiceInfoStepSaveDetails:
+    "Saved trips, recent searches, and alerts make it easier to return to options you are considering and keep related travel planning details organized.",
+  moreServiceInfoStepRedirectsTitle: "Provider Redirects Explained",
+  moreServiceInfoStepRedirectsSummary:
+    "When you select an offer, you may be redirected to a travel provider to complete booking, payment, confirmation, and fulfillment.",
+  moreServiceInfoStepRedirectsDetails:
+    "The provider page is where final prices, availability, rules, payment steps, receipts, booking changes, cancellations, and travel documents are handled for redirected offers.",
+  moreServiceInfoStepAccountTitle: "Account & Travel Tools",
+  moreServiceInfoStepAccountSummary:
+    "Use account tools to organize saved searches, trips, alerts, and preferences in one Kurioticket workspace.",
+  moreServiceInfoStepAccountDetails:
+    "These tools support travel planning on Kurioticket, while provider-specific booking management remains with the provider when your booking is completed externally.",
+  moreServiceInfoFaqHeading: "Frequently asked questions",
+  moreServiceInfoFaqDescription:
+    "Short answers about travel search, provider redirects, saved trips, and account tools.",
+  moreServiceInfoFaqWhatQuestion: "What is Kurioticket?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket is a travel search and comparison platform for finding, comparing, saving, and organizing travel options from multiple providers.",
+  moreServiceInfoFaqSearchQuestion: "How does travel search work?",
+  moreServiceInfoFaqSearchAnswer:
+    "You enter trip details, and Kurioticket displays available travel options and provider information that may help you compare choices.",
+  moreServiceInfoFaqRedirectQuestion:
+    "Why am I redirected to another provider?",
+  moreServiceInfoFaqRedirectAnswer:
+    "Some offers are completed on external provider sites. The provider handles final booking steps, payment, confirmation, and fulfillment.",
+  moreServiceInfoFaqPaymentsQuestion: "Does Kurioticket process payments?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "For redirected provider offers, Kurioticket does not process payment. Review and complete payment directly on the provider page.",
+  moreServiceInfoFaqSaveQuestion: "Can I save trips and alerts?",
+  moreServiceInfoFaqSaveAnswer:
+    "Yes. Account tools can help you save trips, track routes, manage alerts, and return to travel options you are considering.",
+  moreServiceInfoFaqAccountQuestion: "Is an account required?",
+  moreServiceInfoFaqAccountAnswer:
+    "You can browse search information without every account tool, but saving trips, alerts, and preferences may require signing in.",
+  moreServiceInfoFaqSupportQuestion: "How do I contact support?",
+  moreServiceInfoFaqSupportAnswer:
+    "Use the Customer Support page and include your account email, what you were trying to do, and any route, hotel, or provider details.",
+  moreServiceInfoHelpTitle: "Need help?",
+  moreServiceInfoHelpDescription:
+    "Questions about your account, saved trips, alerts, or provider redirects?",
+  moreServiceInfoSupportCta: "Contact Customer Support",
   serviceGuaranteeEyebrow: "Kurioticket service commitment",
   serviceGuaranteeTitle: "Service Guarantee",
   serviceGuaranteeDescription:

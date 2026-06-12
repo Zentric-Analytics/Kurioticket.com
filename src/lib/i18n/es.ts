@@ -1283,6 +1283,77 @@ export const translations: TranslationDictionary = {
   homeDestinationNewYorkCity: "Nueva York",
   homeDestinationNewYorkCountry: "Estados Unidos",
   homeDestinationNewYorkAlt: "Nueva York, Estados Unidos",
+  moreServiceInfoEyebrow: "Información de la plataforma",
+  moreServiceInfoTitle: "Más información del servicio",
+  moreServiceInfoDescription:
+    "Descubre cómo Kurioticket ayuda a los viajeros a buscar, comparar, guardar y organizar opciones de viaje de varios proveedores en un solo lugar.",
+  moreServiceInfoContextTitle: "Planifica con contexto",
+  moreServiceInfoContextSubtitle:
+    "Desde los resultados de búsqueda hasta las redirecciones a proveedores",
+  moreServiceInfoContextCompare:
+    "Compara opciones de varios proveedores de viajes.",
+  moreServiceInfoContextSave:
+    "Guarda viajes, alertas y preferencias al iniciar sesión.",
+  moreServiceInfoContextContinue:
+    "Revisa los detalles del proveedor antes de reservar externamente.",
+  moreServiceInfoHowHeading: "Cómo funciona Kurioticket",
+  moreServiceInfoHowDescription:
+    "Estos detalles del servicio explican el papel de Kurioticket antes, durante y después de una búsqueda de viaje.",
+  moreServiceInfoHowBadge: "CONCEPTOS BÁSICOS DE PLANIFICACIÓN DE VIAJES",
+  moreServiceInfoStepSearchTitle: "Busca en varios proveedores",
+  moreServiceInfoStepSearchSummary:
+    "Busca opciones de viaje de distintos proveedores desde un solo lugar, en vez de abrir cada proveedor por separado.",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket reúne información disponible sobre vuelos, hoteles, rutas y resultados de viaje en una sola experiencia de búsqueda para que los viajeros puedan revisar opciones con mayor eficiencia.",
+  moreServiceInfoStepCompareTitle: "Compara opciones de viaje",
+  moreServiceInfoStepCompareSummary:
+    "Compara precios, rutas, hoteles, horarios y opciones de viaje disponibles antes de decidir qué se adapta mejor a tu viaje.",
+  moreServiceInfoStepCompareDetails:
+    "Los resultados pueden incluir detalles del proveedor, horarios, información del destino y otros datos del viaje que te ayudan a evaluar la opción antes de continuar al proveedor.",
+  moreServiceInfoStepSaveTitle: "Guarda viajes y alertas",
+  moreServiceInfoStepSaveSummary:
+    "Crea una cuenta para guardar viajes, seguir rutas y gestionar alertas relacionadas con tu planificación de viaje.",
+  moreServiceInfoStepSaveDetails:
+    "Los viajes guardados, las búsquedas recientes y las alertas facilitan volver a las opciones que estás considerando y mantener organizada la información de tu planificación de viaje.",
+  moreServiceInfoStepRedirectsTitle: "Redirecciones a proveedores explicadas",
+  moreServiceInfoStepRedirectsSummary:
+    "Cuando seleccionas una oferta, es posible que se te redirija a un proveedor de viajes para completar la reserva, el pago, la confirmación y la gestión del servicio.",
+  moreServiceInfoStepRedirectsDetails:
+    "La página del proveedor es donde se gestionan los precios finales, la disponibilidad, las reglas, los pasos de pago, los recibos, los cambios de reserva, las cancelaciones y los documentos de viaje para las ofertas redirigidas.",
+  moreServiceInfoStepAccountTitle: "Cuenta y herramientas de viaje",
+  moreServiceInfoStepAccountSummary:
+    "Usa las herramientas de cuenta para organizar búsquedas guardadas, viajes, alertas y preferencias en un solo espacio de Kurioticket.",
+  moreServiceInfoStepAccountDetails:
+    "Estas herramientas ayudan a planificar viajes en Kurioticket, mientras que la gestión específica de la reserva permanece con el proveedor cuando la reserva se completa externamente.",
+  moreServiceInfoFaqHeading: "Preguntas frecuentes",
+  moreServiceInfoFaqDescription:
+    "Respuestas breves sobre búsqueda de viajes, redirecciones a proveedores, viajes guardados y herramientas de cuenta.",
+  moreServiceInfoFaqWhatQuestion: "¿Qué es Kurioticket?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket es una plataforma de búsqueda y comparación de viajes para encontrar, comparar, guardar y organizar opciones de viaje de varios proveedores.",
+  moreServiceInfoFaqSearchQuestion: "¿Cómo funciona la búsqueda de viajes?",
+  moreServiceInfoFaqSearchAnswer:
+    "Ingresas los detalles del viaje y Kurioticket muestra opciones de viaje disponibles e información de proveedores que puede ayudarte a comparar alternativas.",
+  moreServiceInfoFaqRedirectQuestion:
+    "¿Por qué se me redirige a otro proveedor?",
+  moreServiceInfoFaqRedirectAnswer:
+    "Algunas ofertas se completan en sitios de proveedores externos. El proveedor gestiona los pasos finales de reserva, pago, confirmación y prestación del servicio.",
+  moreServiceInfoFaqPaymentsQuestion: "¿Kurioticket procesa pagos?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "Para las ofertas redirigidas a proveedores, Kurioticket no procesa el pago. Revisa y completa el pago directamente en la página del proveedor.",
+  moreServiceInfoFaqSaveQuestion: "¿Puedo guardar viajes y alertas?",
+  moreServiceInfoFaqSaveAnswer:
+    "Sí. Las herramientas de cuenta pueden ayudarte a guardar viajes, seguir rutas, gestionar alertas y volver a las opciones de viaje que estás considerando.",
+  moreServiceInfoFaqAccountQuestion: "¿Se necesita una cuenta?",
+  moreServiceInfoFaqAccountAnswer:
+    "Puedes consultar información de búsqueda sin usar todas las herramientas de cuenta, pero guardar viajes, alertas y preferencias puede requerir iniciar sesión.",
+  moreServiceInfoFaqSupportQuestion: "¿Cómo puedo contactar con soporte?",
+  moreServiceInfoFaqSupportAnswer:
+    "Usa la página de atención al cliente e incluye el correo electrónico de tu cuenta, lo que estabas intentando hacer y cualquier detalle de ruta, hotel o proveedor.",
+  moreServiceInfoHelpTitle: "¿Necesitas ayuda?",
+  moreServiceInfoHelpDescription:
+    "¿Tienes preguntas sobre tu cuenta, viajes guardados, alertas o redirecciones a proveedores?",
+  moreServiceInfoSupportCta: "Contactar al servicio de atención al cliente",
   serviceGuaranteeEyebrow: "Compromiso de servicio de Kurioticket",
   serviceGuaranteeTitle: "Garantía de servicio",
   serviceGuaranteeDescription:
