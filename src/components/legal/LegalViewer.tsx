@@ -147,11 +147,49 @@ function getAffiliateDisclosureDocumentTranslation(
   };
 }
 
+function getDataDeletionPolicyDocumentTranslation(
+  document: LegalDocument,
+  t: TranslationDictionary
+): LegalDocument {
+  if (document.slug !== "data-deletion-policy") {
+    return document;
+  }
+
+  return {
+    ...document,
+    title: getTranslation(t, "legal.dataDeletionPolicy.title", document.title),
+    summary: getTranslation(t, "legal.dataDeletionPolicy.summary", document.summary),
+    lastUpdated: getTranslation(
+      t,
+      "legal.dataDeletionPolicy.lastUpdatedDate",
+      document.lastUpdated
+    ),
+    sections: document.sections.map((section) => ({
+      ...section,
+      title: getTranslation(
+        t,
+        `legal.dataDeletionPolicy.sections.${section.id}.title`,
+        section.title
+      ),
+      paragraphs: section.paragraphs.map((paragraph, index) =>
+        getTranslation(
+          t,
+          `legal.dataDeletionPolicy.sections.${section.id}.paragraph${index + 1}`,
+          paragraph
+        )
+      ),
+    })),
+  };
+}
+
 export function LegalViewer({ document }: { document: LegalDocument }) {
   const { t } = useLocale();
-  const localizedDocument = getAffiliateDisclosureDocumentTranslation(
-    getCookieDocumentTranslation(
-      getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+  const localizedDocument = getDataDeletionPolicyDocumentTranslation(
+    getAffiliateDisclosureDocumentTranslation(
+      getCookieDocumentTranslation(
+        getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+        t
+      ),
       t
     ),
     t
@@ -160,6 +198,7 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
   const isPrivacyPolicy = document.slug === "privacy-policy";
   const isCookiePolicy = document.slug === "cookie-policy";
   const isAffiliateDisclosure = document.slug === "affiliate-disclosure";
+  const isDataDeletionPolicy = document.slug === "data-deletion-policy";
   const lastUpdatedText = isTermsOfService
     ? t["legal.terms.lastUpdated"]
     : isPrivacyPolicy
@@ -180,7 +219,13 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
               "legal.affiliateDisclosure.lastUpdated",
               `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
             )
-          : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
+          : isDataDeletionPolicy
+            ? getTranslation(
+                t,
+                "legal.dataDeletionPolicy.lastUpdated",
+                `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
+              )
+            : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
   const developerNote = isTermsOfService
     ? t["legal.terms.developerNote"]
     : isPrivacyPolicy
@@ -193,7 +238,13 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
               "legal.affiliateDisclosure.developerNote",
               legalDeveloperNote
             )
-          : legalDeveloperNote;
+          : isDataDeletionPolicy
+            ? getTranslation(
+                t,
+                "legal.dataDeletionPolicy.developerNote",
+                legalDeveloperNote
+              )
+            : legalDeveloperNote;
   const tableOfContentsLabel = isPrivacyPolicy
     ? getTranslation(
         t,
