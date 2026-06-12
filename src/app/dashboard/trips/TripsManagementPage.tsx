@@ -1,27 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 type TripHistoryTab = "past" | "cancelled";
 
-const historyTabs: Array<{ id: TripHistoryTab; label: string }> = [
-  { id: "past", label: "Past" },
-  { id: "cancelled", label: "Cancelled" },
+const historyTabs: Array<{ id: TripHistoryTab; labelKey: string }> = [
+  { id: "past", labelKey: "accountDashboard.trips.history.tabs.past" },
+  { id: "cancelled", labelKey: "accountDashboard.trips.history.tabs.cancelled" },
 ];
 
-const historyEmptyStates: Record<TripHistoryTab, { title: string; body: string }> = {
+const historyEmptyStates: Record<TripHistoryTab, { titleKey: string; bodyKey: string }> = {
   past: {
-    title: "Your travel history will appear here",
-    body: "Completed trips will be listed here so you can review past plans and details.",
+    titleKey: "accountDashboard.trips.history.empty.past.title",
+    bodyKey: "accountDashboard.trips.history.empty.past.body",
   },
   cancelled: {
-    title: "No cancelled trips yet",
-    body: "Trips you cancel will appear here for easy reference.",
+    titleKey: "accountDashboard.trips.history.empty.cancelled.title",
+    bodyKey: "accountDashboard.trips.history.empty.cancelled.body",
   },
 };
 
 export function TripsManagementPage() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [activeHistoryTab, setActiveHistoryTab] = useState<TripHistoryTab>("past");
   const [showLookup, setShowLookup] = useState(false);
   const [lookupMessage, setLookupMessage] = useState<string | null>(null);
@@ -68,7 +72,7 @@ export function TripsManagementPage() {
 
   function handleLookupSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLookupMessage("Reservation lookup is not available yet.");
+    setLookupMessage(t("accountDashboard.trips.lookup.unavailable"));
   }
 
   const historyEmptyState = historyEmptyStates[activeHistoryTab];
@@ -78,10 +82,10 @@ export function TripsManagementPage() {
       <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 id="trips-title" className="text-3xl font-bold tracking-[-0.035em] text-slate-950 sm:text-4xl">
-            My Trips
+            {t("accountDashboard.trips.title")}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-            View and manage your trips in one place.
+            {t("accountDashboard.trips.subtitle")}
           </p>
         </div>
         <div className="relative flex w-fit shrink-0 justify-end">
@@ -96,7 +100,7 @@ export function TripsManagementPage() {
             aria-controls="reservation-lookup"
             className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline"
           >
-            Find a reservation
+            {t("accountDashboard.trips.findReservation")}
           </button>
 
           {showLookup ? (
@@ -115,16 +119,16 @@ export function TripsManagementPage() {
                 <div className="flex items-start gap-4">
                   <div className="min-w-0 flex-1">
                     <h2 id="reservation-lookup-title" className="text-xl font-bold tracking-[-0.02em] text-slate-950">
-                      Enter booking details
+                      {t("accountDashboard.trips.lookup.title")}
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
-                      Enter your reservation code and email address to locate and manage your booking.
+                      {t("accountDashboard.trips.lookup.body")}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={closeLookup}
-                    aria-label="Close reservation lookup"
+                    aria-label={t("accountDashboard.trips.lookup.closeAriaLabel")}
                     className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-xl leading-none text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                   >
                     ×
@@ -133,7 +137,7 @@ export function TripsManagementPage() {
 
                 <form onSubmit={handleLookupSubmit} className="mt-5 grid gap-4">
                   <label className="grid gap-2 text-sm font-semibold text-slate-800">
-                    Reservation code
+                    {t("accountDashboard.trips.lookup.reservationCode")}
                     <input
                       type="text"
                       name="reservationCode"
@@ -142,7 +146,7 @@ export function TripsManagementPage() {
                     />
                   </label>
                   <label className="grid gap-2 text-sm font-semibold text-slate-800">
-                    Email address
+                    {t("accountDashboard.trips.lookup.emailAddress")}
                     <input
                       type="email"
                       name="email"
@@ -154,7 +158,7 @@ export function TripsManagementPage() {
                     type="submit"
                     className="focus-ring inline-flex h-12 items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-24px_rgba(79,70,229,0.9)] transition hover:bg-violet-800"
                   >
-                    Find reservation
+                    {t("accountDashboard.trips.lookup.submit")}
                   </button>
                   {lookupMessage ? (
                     <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900" role="status">
@@ -170,13 +174,13 @@ export function TripsManagementPage() {
 
       <section aria-labelledby="upcoming-trips-title" className="pt-2 sm:pt-3">
         <div className="flex min-w-0 flex-col items-center gap-5 py-4 text-center sm:py-6">
-          <CurrentTripsIllustration />
+          <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
           <div className="max-w-lg">
             <h2 id="upcoming-trips-title" className="text-2xl font-bold tracking-[-0.025em] text-slate-950 sm:text-3xl">
-              Where to next?
+              {t("accountDashboard.trips.current.empty.title")}
             </h2>
             <p className="mt-3 text-sm font-medium leading-6 text-slate-700 sm:text-base">
-              You have not started any trips yet. When you make a booking, it will appear here.
+              {t("accountDashboard.trips.current.empty.body")}
             </p>
           </div>
         </div>
@@ -184,9 +188,9 @@ export function TripsManagementPage() {
 
       <section aria-labelledby="trip-history-title" className="pt-2 sm:pt-4">
         <h2 id="trip-history-title" className="sr-only">
-          Trip history
+          {t("accountDashboard.trips.history.title")}
         </h2>
-        <div className="border-b border-slate-200/80" role="tablist" aria-label="Trip history filters">
+        <div className="border-b border-slate-200/80" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
           <div className="flex min-w-0 gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {historyTabs.map((tab) => {
               const isActive = activeHistoryTab === tab.id;
@@ -207,7 +211,7 @@ export function TripsManagementPage() {
                       : "border-transparent text-slate-600 hover:border-violet-300 hover:text-slate-900",
                   )}
                 >
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </button>
               );
             })}
@@ -221,10 +225,10 @@ export function TripsManagementPage() {
           className="min-h-[10rem] px-1 pb-9 pt-6 sm:pb-11 sm:pt-8"
         >
           <div className="flex max-w-2xl flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
-            <HistoryEmptyIllustration variant={activeHistoryTab} />
+            <HistoryEmptyIllustration variant={activeHistoryTab} ariaLabel={t(activeHistoryTab === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")} />
             <div className="max-w-xl">
-              <h3 className="text-xl font-bold tracking-[-0.02em] text-slate-950 sm:text-2xl">{historyEmptyState.title}</h3>
-              <p className="mt-2 max-w-lg text-sm font-medium leading-6 text-slate-700 sm:text-base">{historyEmptyState.body}</p>
+              <h3 className="text-xl font-bold tracking-[-0.02em] text-slate-950 sm:text-2xl">{t(historyEmptyState.titleKey)}</h3>
+              <p className="mt-2 max-w-lg text-sm font-medium leading-6 text-slate-700 sm:text-base">{t(historyEmptyState.bodyKey)}</p>
             </div>
           </div>
         </div>
@@ -233,7 +237,7 @@ export function TripsManagementPage() {
   );
 }
 
-function HistoryEmptyIllustration({ variant }: { variant: TripHistoryTab }) {
+function HistoryEmptyIllustration({ variant, ariaLabel }: { variant: TripHistoryTab; ariaLabel: string }) {
   if (variant === "cancelled") {
     return (
       <svg
@@ -241,7 +245,7 @@ function HistoryEmptyIllustration({ variant }: { variant: TripHistoryTab }) {
         viewBox="0 0 120 120"
         fill="none"
         role="img"
-        aria-label="Cancelled trip illustration"
+        aria-label={ariaLabel}
       >
         <circle cx="60" cy="60" r="44" fill="#F1EDFF" />
         <path d="M29 42l18-8 26 10 18-7v41l-18 7-26-10-18 8V42Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="3" />
@@ -259,7 +263,7 @@ function HistoryEmptyIllustration({ variant }: { variant: TripHistoryTab }) {
       viewBox="0 0 120 120"
       fill="none"
       role="img"
-      aria-label="Travel history illustration"
+      aria-label={ariaLabel}
     >
       <circle cx="60" cy="60" r="44" fill="#F1EDFF" />
       <path d="M34 32h36l15 15v41H34V32Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="3" />
@@ -273,9 +277,9 @@ function HistoryEmptyIllustration({ variant }: { variant: TripHistoryTab }) {
   );
 }
 
-function CurrentTripsIllustration() {
+function CurrentTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
   return (
-    <svg className="h-28 w-28 text-violet-800 sm:h-32 sm:w-32" viewBox="0 0 160 160" fill="none" role="img" aria-label="Travel illustration">
+    <svg className="h-28 w-28 text-violet-800 sm:h-32 sm:w-32" viewBox="0 0 160 160" fill="none" role="img" aria-label={ariaLabel}>
       <circle cx="80" cy="80" r="58" fill="#ECE7FF" />
       <path d="M43 104c14 11 60 11 74 0" stroke="#8B5CF6" strokeLinecap="round" strokeWidth="4" />
       <path d="M50 96l20-52 26 20 22-11-18 59-28-21-22 5Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="4" />
