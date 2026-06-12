@@ -4,7 +4,7 @@ import { AccountDashboardFrame } from "@/components/dashboard/DashboardGrid";
 import { TripsManagementPage } from "./TripsManagementPage";
 
 export const metadata = {
-  title: "Trips",
+  title: "My Trips",
 };
 
 export default function TripsPage() {
