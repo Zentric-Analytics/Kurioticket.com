@@ -77,14 +77,50 @@ function getPrivacyDocumentTranslation(
   };
 }
 
+function getCookieDocumentTranslation(
+  document: LegalDocument,
+  t: TranslationDictionary
+): LegalDocument {
+  if (document.slug !== "cookie-policy") {
+    return document;
+  }
+
+  return {
+    ...document,
+    title: getTranslation(t, "legal.cookiePolicy.title", document.title),
+    summary: getTranslation(t, "legal.cookiePolicy.summary", document.summary),
+    lastUpdated: getTranslation(
+      t,
+      "legal.cookiePolicy.lastUpdatedDate",
+      document.lastUpdated
+    ),
+    sections: document.sections.map((section) => ({
+      ...section,
+      title: getTranslation(
+        t,
+        `legal.cookiePolicy.sections.${section.id}.title`,
+        section.title
+      ),
+      paragraphs: section.paragraphs.map((paragraph, index) =>
+        getTranslation(
+          t,
+          `legal.cookiePolicy.sections.${section.id}.paragraph${index + 1}`,
+          paragraph
+        )
+      ),
+    })),
+  };
+}
+
 export function LegalViewer({ document }: { document: LegalDocument }) {
   const { t } = useLocale();
-  const localizedDocument = getPrivacyDocumentTranslation(
-    getTermsDocumentTranslation(document, t),
+  const localizedDocument = getCookieDocumentTranslation(
+    getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
     t
   );
   const isTermsOfService = document.slug === "terms-of-service";
   const isPrivacyPolicy = document.slug === "privacy-policy";
+  const isCookiePolicy = document.slug === "cookie-policy";
   const lastUpdatedText = isTermsOfService
     ? t["legal.terms.lastUpdated"]
     : isPrivacyPolicy
@@ -93,12 +129,20 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
           "legal.privacy.lastUpdated",
           `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
         )
-      : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
+      : isCookiePolicy
+        ? getTranslation(
+            t,
+            "legal.cookiePolicy.lastUpdated",
+            `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
+          )
+        : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
   const developerNote = isTermsOfService
     ? t["legal.terms.developerNote"]
     : isPrivacyPolicy
       ? getTranslation(t, "legal.privacy.developerNote", legalDeveloperNote)
-      : legalDeveloperNote;
+      : isCookiePolicy
+        ? getTranslation(t, "legal.cookiePolicy.developerNote", legalDeveloperNote)
+        : legalDeveloperNote;
   const tableOfContentsLabel = isPrivacyPolicy
     ? getTranslation(
         t,
