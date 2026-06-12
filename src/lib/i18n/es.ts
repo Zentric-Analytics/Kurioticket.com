@@ -1283,6 +1283,39 @@ export const translations: TranslationDictionary = {
   homeDestinationNewYorkCity: "Nueva York",
   homeDestinationNewYorkCountry: "Estados Unidos",
   homeDestinationNewYorkAlt: "Nueva York, Estados Unidos",
+  serviceGuaranteeEyebrow: "Compromiso de servicio de Kurioticket",
+  serviceGuaranteeTitle: "Garantía de servicio",
+  serviceGuaranteeDescription:
+    "Queremos que los viajeros entiendan cómo funciona Kurioticket y qué pueden esperar al usar nuestra plataforma.",
+  serviceGuaranteeFaqHeading: "Preguntas frecuentes",
+  serviceGuaranteeFaqDescription:
+    "Estas respuestas explican el papel de Kurioticket como plataforma de búsqueda y comparación de viajes.",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "¿Qué garantiza Kurioticket?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket está diseñado para ayudar a los viajeros a comparar opciones de viaje con claridad. Nuestro objetivo es ofrecer una experiencia de plataforma confiable, información de búsqueda transparente y rutas claras hacia las páginas de reserva de los proveedores.",
+  serviceGuaranteeFaqResultsDisplayedQuestion: "¿Cómo se muestran los resultados de viaje?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "Los resultados se muestran con la información disponible de los proveedores de viaje, incluidas rutas, fechas, precios y detalles del proveedor cuando están disponibles.",
+  serviceGuaranteeFaqRedirectedQuestion: "¿Por qué se me redirige a otro proveedor?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "Algunos resultados se completan en el sitio de un proveedor externo. Cuando eliges una de esas opciones, Kurioticket te redirige para que el proveedor gestione la reserva, el pago y el servicio específico del viaje.",
+  serviceGuaranteeFaqBookDirectlyQuestion: "¿Reservo directamente en Kurioticket?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket es principalmente una plataforma de búsqueda y comparación de viajes. Si un resultado redirige a un proveedor, la reserva se completa con ese proveedor y no en Kurioticket.",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "¿Los precios siempre están garantizados?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "No. Los precios pueden cambiar según la disponibilidad del proveedor, impuestos, cargos, moneda y momento de consulta. Revisa siempre el precio final en la página del proveedor antes de reservar.",
+  serviceGuaranteeFaqChooseProvidersQuestion: "¿Cómo elige Kurioticket a los proveedores?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket trabaja con proveedores de viaje y fuentes de datos que pueden suministrar resultados de búsqueda relevantes. La disponibilidad, los precios y las opciones mostradas pueden variar según la ruta, el destino y la cobertura del proveedor.",
+  serviceGuaranteeFaqEncounterIssueQuestion: "¿Qué debo hacer si tengo un problema?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "Si el problema está relacionado con la búsqueda, el acceso a la cuenta, los viajes guardados, las alertas o una redirección desde Kurioticket, contacta con el soporte de Kurioticket. Si ya reservaste con un proveedor, contacta con ese proveedor para cambios de reserva, reembolsos, cancelaciones o documentos de viaje.",
+  serviceGuaranteeFaqContactSupportQuestion: "¿Cómo puedo contactar con soporte?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "Usa la página de atención al cliente e incluye el correo electrónico de tu cuenta, lo que estabas intentando hacer y cualquier detalle de ruta, hotel o proveedor que pueda ayudarnos a revisar el problema.",
+  serviceGuaranteeHelpCardTitle: "¿Necesitas ayuda con tu cuenta o búsqueda?",
+  serviceGuaranteeSupportCta: "Contactar al servicio de atención al cliente",
   footerContactUs: "Contáctanos",
   footerCustomerSupport: "Atención al cliente",
   footerServiceGuarantee: "Garantía de servicio",
