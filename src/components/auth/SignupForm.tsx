@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 
@@ -22,6 +22,10 @@ export function SignupForm({
   googleEnabled = false,
 }: SignupFormProps) {
   const { t } = useLocale();
+
+  useEffect(() => {
+    document.title = `${t.signupPageTitle} | Kurioticket`;
+  }, [t.signupPageTitle]);
 
   const [error, setError] =
     useState<MessageState | null>(null);

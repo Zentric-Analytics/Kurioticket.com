@@ -17,6 +17,36 @@ export const translations: TranslationDictionary = {
   dashboard: "Tableau de bord",
   login: "Se connecter",
   signUp: "S’inscrire",
+  signupPageTitle: "Créez votre compte",
+  signupFullNameLabel: "Nom complet",
+  signupEmailLabel: "Adresse e-mail",
+  signupPasswordLabel: "Mot de passe",
+  signupAgreementBeforeTerms: "En créant un compte, vous acceptez les ",
+  signupTermsLink: "Conditions",
+  signupAgreementBetweenLinks: ", la ",
+  signupPrivacyPolicyLink: "Politique de confidentialité",
+  signupAgreementAfterPrivacy:
+    " et les informations relatives aux redirections partenaires.",
+  signupSubmit: "S’inscrire",
+  signupCreatingAccount: "Création du compte...",
+  signupGoogle: "Continuer avec Google",
+  signupAlreadyHaveAccount: "Vous avez déjà un compte ?",
+  signupLoginLink: "Se connecter",
+  signupErrorInvalidEmail: "Saisissez une adresse e-mail valide.",
+  signupErrorPasswordRequirements:
+    "Le mot de passe doit respecter les exigences minimales.",
+  signupErrorUnableCreate: "Impossible de créer le compte pour le moment.",
+  signupErrorRateLimited:
+    "Trop de tentatives d’inscription. Veuillez patienter, puis réessayer.",
+  signupErrorDuplicateEmail:
+    "Un compte existe déjà avec cette adresse e-mail.",
+  signupErrorUnableSendVerification:
+    "Impossible d’envoyer le code de vérification pour le moment. Veuillez réessayer.",
+  signupVerificationRequiredRedirecting:
+    "Vérification requise. Redirection...",
+  signupAutomaticLoginFailed:
+    "Votre compte a été créé, mais la connexion automatique a échoué. Veuillez vous connecter avec votre nouveau mot de passe.",
+  signupAccountCreatedRedirecting: "Compte créé. Redirection...",
   legalCenter: "Centre légal",
   logout: "Se déconnecter",
   homeHeroTitle: "Trouvez rapidement des vols pas chers",
