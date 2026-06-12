@@ -77,6 +77,49 @@ function getPrivacyDocumentTranslation(
   };
 }
 
+function getRefundBookingDisclaimerTranslation(
+  document: LegalDocument,
+  t: TranslationDictionary
+): LegalDocument {
+  if (document.slug !== "refund-booking-disclaimer") {
+    return document;
+  }
+
+  return {
+    ...document,
+    title: getTranslation(
+      t,
+      "legal.refundBookingDisclaimer.title",
+      document.title
+    ),
+    summary: getTranslation(
+      t,
+      "legal.refundBookingDisclaimer.summary",
+      document.summary
+    ),
+    lastUpdated: getTranslation(
+      t,
+      "legal.refundBookingDisclaimer.lastUpdatedDate",
+      document.lastUpdated
+    ),
+    sections: document.sections.map((section) => ({
+      ...section,
+      title: getTranslation(
+        t,
+        `legal.refundBookingDisclaimer.sections.${section.id}.title`,
+        section.title
+      ),
+      paragraphs: section.paragraphs.map((paragraph, index) =>
+        getTranslation(
+          t,
+          `legal.refundBookingDisclaimer.sections.${section.id}.paragraph${index + 1}`,
+          paragraph
+        )
+      ),
+    })),
+  };
+}
+
 function getCookieDocumentTranslation(
   document: LegalDocument,
   t: TranslationDictionary
@@ -114,13 +157,18 @@ function getCookieDocumentTranslation(
 
 export function LegalViewer({ document }: { document: LegalDocument }) {
   const { t } = useLocale();
-  const localizedDocument = getCookieDocumentTranslation(
-    getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+  const localizedDocument = getRefundBookingDisclaimerTranslation(
+    getCookieDocumentTranslation(
+      getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+      t
+    ),
     t
   );
   const isTermsOfService = document.slug === "terms-of-service";
   const isPrivacyPolicy = document.slug === "privacy-policy";
   const isCookiePolicy = document.slug === "cookie-policy";
+  const isRefundBookingDisclaimer =
+    document.slug === "refund-booking-disclaimer";
   const lastUpdatedText = isTermsOfService
     ? t["legal.terms.lastUpdated"]
     : isPrivacyPolicy
@@ -135,14 +183,26 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
             "legal.cookiePolicy.lastUpdated",
             `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
           )
-        : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
+        : isRefundBookingDisclaimer
+          ? getTranslation(
+              t,
+              "legal.refundBookingDisclaimer.lastUpdated",
+              `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
+            )
+          : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
   const developerNote = isTermsOfService
     ? t["legal.terms.developerNote"]
     : isPrivacyPolicy
       ? getTranslation(t, "legal.privacy.developerNote", legalDeveloperNote)
       : isCookiePolicy
         ? getTranslation(t, "legal.cookiePolicy.developerNote", legalDeveloperNote)
-        : legalDeveloperNote;
+        : isRefundBookingDisclaimer
+          ? getTranslation(
+              t,
+              "legal.refundBookingDisclaimer.developerNote",
+              legalDeveloperNote
+            )
+          : legalDeveloperNote;
   const tableOfContentsLabel = isPrivacyPolicy
     ? getTranslation(
         t,
