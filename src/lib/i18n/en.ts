@@ -2028,6 +2028,7 @@ export const translations: TranslationDictionary = {
   flightLandingHeroTitle: "Find your next affordable flight with ease.",
   flightLandingHeroSubtitle:
     "Search routes, compare dates, and explore flight options for your next journey.",
+  flightLandingHeroImageAlt: "Airplane wing above bright clouds",
   flightLandingFeatureSearchReadyTitle: "Search-ready routes",
   flightLandingFeatureSearchReadyBody:
     "Enter real trip details before results are requested from flight providers.",
