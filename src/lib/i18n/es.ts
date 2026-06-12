@@ -199,6 +199,23 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.securityPrivacy.title": "Seguridad y privacidad",
   "accountDashboard.preferences.securityPrivacy.description":
     "Revisa la información actual de privacidad y políticas de la plataforma.",
+  "accountDashboard.security.eyebrow": "SEGURIDAD",
+  "accountDashboard.security.title": "Seguridad",
+  "accountDashboard.security.description":
+    "Gestiona la seguridad y la privacidad de tu cuenta.",
+  "accountDashboard.security.comingSoon": "Próximamente",
+  "accountDashboard.security.password.title": "Contraseña",
+  "accountDashboard.security.password.description":
+    "Gestiona tu contraseña y la seguridad de inicio de sesión.",
+  "accountDashboard.security.twoStep.title": "Verificación en dos pasos",
+  "accountDashboard.security.twoStep.description":
+    "Añade una capa adicional de protección a tu cuenta.",
+  "accountDashboard.security.activeSessions.title": "Sesiones activas",
+  "accountDashboard.security.activeSessions.description":
+    "Revisa los dispositivos con sesión iniciada en tu cuenta.",
+  "accountDashboard.security.privacy.title": "Privacidad",
+  "accountDashboard.security.privacy.description":
+    "Revisa cómo se usa la información de tu cuenta.",
   "accountDashboard.mobile.backAriaLabel": "Volver a Mi cuenta",
   "accountDashboard.mobile.manageAccount": "Gestionar cuenta",
   "accountDashboard.personalDetails.title": "Datos personales",
