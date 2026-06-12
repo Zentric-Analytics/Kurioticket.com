@@ -7,25 +7,33 @@ import type { LegalDocument } from "@/lib/types";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 import { legalDeveloperNote } from "@/data/legalDocuments";
 
-function getTermsDocumentTranslation(
+const localizedDocumentKeys: Record<string, string> = {
+  "terms-of-service": "legal.terms",
+  "cookie-policy": "legal.cookiePolicy",
+};
+
+function getLocalizedDocumentTranslation(
   document: LegalDocument,
   t: TranslationDictionary
 ): LegalDocument {
-  if (document.slug !== "terms-of-service") {
+  const documentKey = localizedDocumentKeys[document.slug];
+
+  if (!documentKey) {
     return document;
   }
 
   return {
     ...document,
-    title: t["legal.terms.title"],
-    summary: t["legal.terms.summary"],
-    lastUpdated: t["legal.terms.lastUpdatedDate"],
+    title: t[`${documentKey}.title`] || document.title,
+    summary: t[`${documentKey}.summary`] || document.summary,
+    lastUpdated: t[`${documentKey}.lastUpdatedDate`] || document.lastUpdated,
     sections: document.sections.map((section) => ({
       ...section,
-      title: t[`legal.terms.sections.${section.id}.title`],
+      title: t[`${documentKey}.sections.${section.id}.title`] || section.title,
       paragraphs: section.paragraphs.map(
-        (_paragraph, index) =>
-          t[`legal.terms.sections.${section.id}.paragraph${index + 1}`]
+        (paragraph, index) =>
+          t[`${documentKey}.sections.${section.id}.paragraph${index + 1}`] ||
+          paragraph
       ),
     })),
   };
@@ -33,13 +41,14 @@ function getTermsDocumentTranslation(
 
 export function LegalViewer({ document }: { document: LegalDocument }) {
   const { t } = useLocale();
-  const localizedDocument = getTermsDocumentTranslation(document, t);
-  const isTermsOfService = document.slug === "terms-of-service";
-  const lastUpdatedText = isTermsOfService
-    ? t["legal.terms.lastUpdated"]
+  const localizedDocument = getLocalizedDocumentTranslation(document, t);
+  const documentKey = localizedDocumentKeys[document.slug];
+  const lastUpdatedText = documentKey
+    ? t[`${documentKey}.lastUpdated`] ||
+      `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
     : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
-  const developerNote = isTermsOfService
-    ? t["legal.terms.developerNote"]
+  const developerNote = documentKey
+    ? t[`${documentKey}.developerNote`] || legalDeveloperNote
     : legalDeveloperNote;
 
   return (
