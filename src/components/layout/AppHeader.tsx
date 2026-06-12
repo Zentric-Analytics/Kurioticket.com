@@ -78,26 +78,26 @@ type AppHeaderProps = {
 const signedInAccountMenuItems = [
   {
     href: "/dashboard",
-    label: "My account",
-    description: "Trips and travel tools",
+    labelKey: "accountMenu.myAccount.label",
+    descriptionKey: "accountMenu.myAccount.description",
     icon: LayoutDashboard,
   },
   {
     href: "/saved",
-    label: "Saved trips",
-    description: "Shortlisted stays and searches",
+    labelKey: "accountMenu.savedTrips.label",
+    descriptionKey: "accountMenu.savedTrips.description",
     icon: SavedHeartIcon,
   },
   {
     href: "/dashboard/alerts",
-    label: "Price alerts",
-    description: "View saved alerts",
+    labelKey: "accountMenu.priceAlerts.label",
+    descriptionKey: "accountMenu.priceAlerts.description",
     icon: Tag,
   },
   {
     href: "/dashboard/settings",
-    label: "Account settings",
-    description: "Profile and preferences",
+    labelKey: "accountMenu.accountSettings.label",
+    descriptionKey: "accountMenu.accountSettings.description",
     icon: Settings,
   },
 ];
@@ -105,8 +105,8 @@ const signedInAccountMenuItems = [
 const mobileSignedInAccountMenuItems = [
   {
     href: "/dashboard/account",
-    label: "My account",
-    description: "Manage account pages",
+    labelKey: "accountMenu.myAccount.label",
+    descriptionKey: "accountMenu.mobileMyAccount.description",
     icon: LayoutDashboard,
   },
   ...signedInAccountMenuItems.slice(1),
@@ -353,6 +353,26 @@ export function AppHeader({
       );
     });
   }, [languageQuery, locales]);
+
+  const translatedSignedInAccountMenuItems = useMemo(
+    () =>
+      signedInAccountMenuItems.map((item) => ({
+        ...item,
+        label: t[item.labelKey],
+        description: t[item.descriptionKey],
+      })),
+    [t],
+  );
+
+  const translatedMobileSignedInAccountMenuItems = useMemo(
+    () =>
+      mobileSignedInAccountMenuItems.map((item) => ({
+        ...item,
+        label: t[item.labelKey],
+        description: t[item.descriptionKey],
+      })),
+    [t],
+  );
 
   const navItems = useMemo(
     () => [
@@ -701,12 +721,12 @@ export function AppHeader({
                     {accountOpen ? (
                       <div
                         role="menu"
-                        aria-label="Account menu"
+                        aria-label={t.openAccountMenu}
                         className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
                       >
                         <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
                           <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">
-                            Kurioticket account
+                            {t["accountMenu.eyebrow"]}
                           </p>
                           <p className="mt-1 truncate text-sm font-black text-slate-950">
                             {session?.user?.name || accountDisplayName}
@@ -719,7 +739,7 @@ export function AppHeader({
                         </div>
 
                         <div className="grid gap-1 p-2">
-                          {signedInAccountMenuItems.map((item) => {
+                          {translatedSignedInAccountMenuItems.map((item) => {
                             const Icon = item.icon;
 
                             return (
@@ -1322,16 +1342,16 @@ export function AppHeader({
                   id="mobile-account-drawer"
                   role="dialog"
                   aria-modal="true"
-                  aria-label="Account menu"
+                  aria-label={t.openAccountMenu}
                   className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
                   <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
                     <div className="min-w-0">
                       <p className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-600">
-                        Kurioticket
+                        {t["accountMenu.mobileEyebrow"]}
                       </p>
                       <h2 className="truncate text-xl font-black tracking-[-0.03em] text-slate-950">
-                        My account
+                        {t.myAccount}
                       </h2>
                     </div>
 
@@ -1339,7 +1359,7 @@ export function AppHeader({
                       type="button"
                       onClick={() => setMobileAccountOpen(false)}
                       className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      aria-label="Close account menu"
+                      aria-label={t["accountMenu.closeAccountMenu"]}
                     >
                       <X size={18} aria-hidden="true" />
                     </button>
@@ -1365,13 +1385,13 @@ export function AppHeader({
                             {session?.user?.name || accountDisplayName}
                           </span>
                           <span className="mt-0.5 block truncate text-sm font-semibold text-slate-500">
-                            {session?.user?.email || "Kurioticket account"}
+                            {session?.user?.email || t["accountMenu.fallbackAccount"]}
                           </span>
                         </span>
                       </div>
 
                       <div className="grid gap-1 py-4">
-                        {mobileSignedInAccountMenuItems.map((item) => {
+                        {translatedMobileSignedInAccountMenuItems.map((item) => {
                           const Icon = item.icon;
 
                           return (
