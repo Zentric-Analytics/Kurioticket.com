@@ -159,6 +159,23 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.openSavedTrips": "Abrir viajes guardados",
   "accountDashboard.saved.searchFlights": "Buscar vuelos",
   "accountDashboard.saved.searchHotels": "Buscar hoteles",
+  "accountDashboard.preferences.eyebrow": "PREFERENCIAS",
+  "accountDashboard.preferences.title": "Preferencias",
+  "accountDashboard.preferences.description":
+    "La configuración de la cuenta se agrupa aquí como accesos directos claros. Los controles que aún no están activos se marcan claramente.",
+  "accountDashboard.preferences.comingSoon": "Próximamente",
+  "accountDashboard.preferences.personalDetails.title": "Datos personales",
+  "accountDashboard.preferences.personalDetails.description":
+    "Revisa los detalles de tu perfil cuando estén disponibles los controles editables del perfil.",
+  "accountDashboard.preferences.notifications.title": "Preferencias de notificación",
+  "accountDashboard.preferences.notifications.description":
+    "Gestiona tus preferencias de correo electrónico y alertas a medida que se añadan controles de notificación.",
+  "accountDashboard.preferences.travel.title": "Preferencias de viaje",
+  "accountDashboard.preferences.travel.description":
+    "Mantén tus valores predeterminados de planificación fáciles de encontrar para futuras configuraciones de cuenta.",
+  "accountDashboard.preferences.securityPrivacy.title": "Seguridad y privacidad",
+  "accountDashboard.preferences.securityPrivacy.description":
+    "Revisa la información actual de privacidad y políticas de la plataforma.",
   "accountDashboard.mobile.backAriaLabel": "Volver a Mi cuenta",
   "accountDashboard.mobile.manageAccount": "Gestionar cuenta",
   "accountDashboard.personalDetails.title": "Datos personales",
