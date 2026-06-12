@@ -3,15 +3,26 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { cn } from "@/lib/utils";
 
-type TripTab = "past" | "cancelled";
+type TripHistoryTab = "past" | "cancelled";
 
-const tabs: Array<{ id: TripTab; label: string }> = [
+const historyTabs: Array<{ id: TripHistoryTab; label: string }> = [
   { id: "past", label: "Past" },
   { id: "cancelled", label: "Cancelled" },
 ];
 
+const historyEmptyStates: Record<TripHistoryTab, { title: string; body: string }> = {
+  past: {
+    title: "Your travel history will appear here",
+    body: "Completed trips will be listed here so you can review past plans and details.",
+  },
+  cancelled: {
+    title: "No cancelled trips yet",
+    body: "Trips you cancel will appear here for easy reference.",
+  },
+};
+
 export function TripsManagementPage() {
-  const [activeTab, setActiveTab] = useState<TripTab>("past");
+  const [activeHistoryTab, setActiveHistoryTab] = useState<TripHistoryTab>("past");
   const [showLookup, setShowLookup] = useState(false);
   const [lookupMessage, setLookupMessage] = useState<string | null>(null);
   const lookupPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -60,19 +71,11 @@ export function TripsManagementPage() {
     setLookupMessage("Reservation lookup is not available yet.");
   }
 
-  const historyEmptyState = activeTab === "past"
-    ? {
-        title: "Your travel history will appear here",
-        body: "Completed trips will be listed here so you can review past plans and details.",
-      }
-    : {
-        title: "No cancelled trips yet",
-        body: "Trips you cancel will appear here for easy reference.",
-      };
+  const historyEmptyState = historyEmptyStates[activeHistoryTab];
 
   return (
-    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-end sm:justify-between">
+    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-6 xl:max-w-[64rem]">
+      <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h1 id="trips-title" className="text-3xl font-bold tracking-[-0.035em] text-slate-950 sm:text-4xl">
             My Trips
@@ -165,8 +168,8 @@ export function TripsManagementPage() {
         </div>
       </div>
 
-      <section aria-labelledby="upcoming-trips-title" className="pt-4 sm:pt-6">
-        <div className="flex min-w-0 flex-col items-center gap-5 py-5 text-center sm:py-7">
+      <section aria-labelledby="upcoming-trips-title" className="pt-2 sm:pt-3">
+        <div className="flex min-w-0 flex-col items-center gap-5 py-4 text-center sm:py-6">
           <CurrentTripsIllustration />
           <div className="max-w-lg">
             <h2 id="upcoming-trips-title" className="text-2xl font-bold tracking-[-0.025em] text-slate-950 sm:text-3xl">
@@ -185,8 +188,8 @@ export function TripsManagementPage() {
         </h2>
         <div className="border-b border-slate-200/80" role="tablist" aria-label="Trip history filters">
           <div className="flex min-w-0 gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
+            {historyTabs.map((tab) => {
+              const isActive = activeHistoryTab === tab.id;
 
               return (
                 <button
@@ -196,7 +199,7 @@ export function TripsManagementPage() {
                   aria-selected={isActive}
                   aria-controls={`${tab.id}-trips-panel`}
                   id={`${tab.id}-trips-tab`}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => setActiveHistoryTab(tab.id)}
                   className={cn(
                     "focus-ring relative -mb-px inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap border-b-2 px-1 text-sm font-semibold transition",
                     isActive
@@ -212,9 +215,9 @@ export function TripsManagementPage() {
         </div>
 
         <div
-          id={`${activeTab}-trips-panel`}
+          id={`${activeHistoryTab}-trips-panel`}
           role="tabpanel"
-          aria-labelledby={`${activeTab}-trips-tab`}
+          aria-labelledby={`${activeHistoryTab}-trips-tab`}
           className="min-h-[10rem] px-1 pb-9 pt-6 sm:pb-11 sm:pt-8"
         >
           <div className="max-w-xl">
