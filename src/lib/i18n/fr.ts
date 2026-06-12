@@ -49,6 +49,27 @@ export const translations: TranslationDictionary = {
   signupAccountCreatedRedirecting: "Compte créé avec succès. Redirection...",
   legalCenter: "Centre légal",
   logout: "Se déconnecter",
+  openLanguagePreferences:
+    "Ouvrir les préférences de langue, langue actuelle {{language}}",
+  websiteLanguageTitle: "Sélectionnez la langue du site",
+  websiteLanguageDescription:
+    "L’anglais (États-Unis) est la langue par défaut du site. Kurioticket ne change la langue qu’après que vous avez choisi une option disponible.",
+  currentLanguage: "Langue actuelle : {{language}}",
+  languagePreparingNotice:
+    "D’autres langues sont en préparation. Les options indisponibles ne traduisent pas encore le site.",
+  languageSearchLabel: "Rechercher une langue",
+  languageSearchPlaceholder: "Rechercher English, Español, Français, Deutsch...",
+  languageOptionsLabel: "Options de langue",
+  selectLanguageOption: "Sélectionner {{language}}",
+  languagePreparingAria:
+    "Les traductions en {{language}} sont en préparation",
+  languageUnavailableMessage:
+    "{{language}} n’est pas encore disponible. La prise en charge des traductions est en cours d’extension.",
+  globalLanguage: "Langue globale",
+  closeLanguageSelector: "Fermer le sélecteur de langue",
+  preparing: "Bientôt disponible",
+  searchLanguage: "Rechercher une langue ou un code",
+  noLanguagesFound: "Aucune langue trouvée",
   homeHeroTitle: "Trouvez rapidement des vols pas chers",
   homeHeroSubtitle:
     "Recherchez des centaines de compagnies aériennes et sites de voyage pour trouver les meilleures offres pour votre prochain voyage.",
