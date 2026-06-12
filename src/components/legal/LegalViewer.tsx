@@ -3,9 +3,20 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { useLocale } from "@/components/layout/LocaleProvider";
+import { getTranslations } from "@/lib/i18n";
 import type { LegalDocument } from "@/lib/types";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 import { legalDeveloperNote } from "@/data/legalDocuments";
+
+const englishTranslations = getTranslations("en-us");
+
+function getTranslation(
+  t: TranslationDictionary,
+  key: string,
+  fallback: string
+) {
+  return t[key] || englishTranslations[key] || fallback;
+}
 
 function getTermsDocumentTranslation(
   document: LegalDocument,
@@ -31,16 +42,70 @@ function getTermsDocumentTranslation(
   };
 }
 
+function getPrivacyDocumentTranslation(
+  document: LegalDocument,
+  t: TranslationDictionary
+): LegalDocument {
+  if (document.slug !== "privacy-policy") {
+    return document;
+  }
+
+  return {
+    ...document,
+    title: getTranslation(t, "legal.privacy.title", document.title),
+    summary: getTranslation(t, "legal.privacy.summary", document.summary),
+    lastUpdated: getTranslation(
+      t,
+      "legal.privacy.lastUpdatedDate",
+      document.lastUpdated
+    ),
+    sections: document.sections.map((section) => ({
+      ...section,
+      title: getTranslation(
+        t,
+        `legal.privacy.sections.${section.id}.title`,
+        section.title
+      ),
+      paragraphs: section.paragraphs.map((paragraph, index) =>
+        getTranslation(
+          t,
+          `legal.privacy.sections.${section.id}.paragraph${index + 1}`,
+          paragraph
+        )
+      ),
+    })),
+  };
+}
+
 export function LegalViewer({ document }: { document: LegalDocument }) {
   const { t } = useLocale();
-  const localizedDocument = getTermsDocumentTranslation(document, t);
+  const localizedDocument = getPrivacyDocumentTranslation(
+    getTermsDocumentTranslation(document, t),
+    t
+  );
   const isTermsOfService = document.slug === "terms-of-service";
+  const isPrivacyPolicy = document.slug === "privacy-policy";
   const lastUpdatedText = isTermsOfService
     ? t["legal.terms.lastUpdated"]
-    : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
+    : isPrivacyPolicy
+      ? getTranslation(
+          t,
+          "legal.privacy.lastUpdated",
+          `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
+        )
+      : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
   const developerNote = isTermsOfService
     ? t["legal.terms.developerNote"]
-    : legalDeveloperNote;
+    : isPrivacyPolicy
+      ? getTranslation(t, "legal.privacy.developerNote", legalDeveloperNote)
+      : legalDeveloperNote;
+  const tableOfContentsLabel = isPrivacyPolicy
+    ? getTranslation(
+        t,
+        "legal.privacy.tableOfContents",
+        t["legal.tableOfContents"]
+      )
+    : t["legal.tableOfContents"];
 
   return (
     <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
@@ -68,10 +133,16 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
 
         <div className="grid gap-8 py-6 lg:grid-cols-[260px_1fr]">
           <aside>
-            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">{t["legal.tableOfContents"]}</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-muted">
+              {tableOfContentsLabel}
+            </h2>
             <nav className="mt-3 grid gap-2">
               {localizedDocument.sections.map((section) => (
-                <a key={section.id} href={`#${section.id}`} className="text-sm font-semibold text-navy hover:text-teal-dark">
+                <a
+                  key={section.id}
+                  href={`#${section.id}`}
+                  className="text-sm font-semibold text-navy hover:text-teal-dark"
+                >
                   {section.title}
                 </a>
               ))}
