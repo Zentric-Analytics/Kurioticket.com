@@ -1387,6 +1387,45 @@ export const translations: TranslationDictionary = {
     "Usa la página de atención al cliente e incluye el correo electrónico de tu cuenta, lo que estabas intentando hacer y cualquier detalle de ruta, hotel o proveedor que pueda ayudarnos a revisar el problema.",
   serviceGuaranteeHelpCardTitle: "¿Necesitas ayuda con tu cuenta o búsqueda?",
   serviceGuaranteeSupportCta: "Contactar al servicio de atención al cliente",
+  supportEyebrow: "Centro de ayuda de Kurioticket",
+  supportTitle: "Atención al cliente",
+  supportBeforeContactHeading: "Antes de contactarnos",
+  supportBeforeContactDescription:
+    "Incluye el correo electrónico de tu cuenta de Kurioticket, lo que intentabas hacer, la ruta o el hotel si corresponde, y cualquier página de proveedor a la que fuiste redirigido. No envíes números completos de tarjetas de pago ni números sensibles de documentos de viaje.",
+  supportTicketHeading: "Crear un ticket de soporte",
+  supportFormEmailLabel: "Correo electrónico",
+  supportFormSubjectLabel: "Asunto",
+  supportFormCategoryLabel: "Categoría",
+  supportCategorySearchHelp: "Ayuda con búsquedas",
+  supportCategoryPriceAlerts: "Alertas de precios",
+  supportCategoryPartnerRedirect: "Redirección a socio",
+  supportCategoryAccountHelp: "Ayuda con la cuenta",
+  supportFormMessageLabel: "¿Cómo podemos ayudarte?",
+  supportFormMessagePlaceholder:
+    "Comparte la ruta, el hotel, la alerta o el contexto de tu cuenta.",
+  supportFormSubmit: "Enviar solicitud",
+  supportFaqHeading: "Preguntas frecuentes",
+  supportFaqAccountQuestion: "Ayuda con la cuenta e inicio de sesión",
+  supportFaqAccountAnswer:
+    "Kurioticket puede ayudarte con el acceso a la cuenta, problemas de inicio de sesión, problemas de registro, acceso al perfil y problemas de la plataforma relacionados con la cuenta.",
+  supportFaqSearchQuestion: "Ayuda con búsquedas y resultados",
+  supportFaqSearchAnswer:
+    "Kurioticket puede ayudarte cuando la búsqueda de vuelos u hoteles no funciona, los resultados no cargan, los filtros son confusos o los precios y proveedores no se muestran como se esperaba.",
+  supportFaqSavedTripsQuestion: "Viajes guardados y alertas",
+  supportFaqSavedTripsAnswer:
+    "Kurioticket puede ayudarte con viajes guardados, búsquedas recientes, alertas de precios, problemas de notificaciones y herramientas de viaje vinculadas a la cuenta.",
+  supportFaqRedirectQuestion: "Ayuda con reservas o redirecciones a proveedores",
+  supportFaqRedirectAnswer:
+    "Kurioticket puede ayudarte si una redirección a un socio o proveedor falla, abre la página incorrecta o no conserva los detalles del viaje o la búsqueda seleccionados.",
+  supportFaqAlreadyBookedQuestion: "¿Ya reservaste con un proveedor?",
+  supportFaqAlreadyBookedAnswer:
+    "Si tu reserva se completó con una aerolínea, hotel, agencia de viajes o proveedor externo, ese proveedor es responsable de cambios en la reserva, reembolsos, cancelaciones, check-in, embarque, recibos y documentos de viaje.",
+  supportFaqChangeBookingQuestion: "¿Kurioticket puede cambiar mi reserva?",
+  supportFaqChangeBookingAnswer:
+    "Kurioticket solo puede ayudar con reservas hechas directamente a través de Kurioticket si y cuando se admita la reserva directa. Para reservas completadas con proveedores externos, contacta directamente a ese proveedor.",
+  supportFaqWhyRedirectedQuestion: "¿Por qué se me envió a otro proveedor?",
+  supportFaqWhyRedirectedAnswer:
+    "Kurioticket es una plataforma de búsqueda y comparación de viajes, y algunos resultados redirigen a proveedores de confianza donde completas la reserva, el pago y el soporte específico del proveedor.",
   footerContactUs: "Contáctanos",
   footerCustomerSupport: "Atención al cliente",
   footerServiceGuarantee: "Garantía de servicio",

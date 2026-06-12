@@ -4,9 +4,13 @@ import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 export function SupportForm() {
   const [status, setStatus] = useState("");
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
   async function submit(formData: FormData) {
     setStatus("Sending...");
@@ -27,27 +31,27 @@ export function SupportForm() {
 
   return (
     <Card className="p-5">
-      <h2 className="text-xl font-bold text-navy">Create a support ticket</h2>
+      <h2 className="text-xl font-bold text-navy">{t("supportTicketHeading")}</h2>
       <form action={submit} className="mt-5 grid gap-4">
-        <Field label="Email">
+        <Field label={t("supportFormEmailLabel")}>
           <Input name="email" type="email" required />
         </Field>
-        <Field label="Subject">
+        <Field label={t("supportFormSubjectLabel")}>
           <Input name="subject" required />
         </Field>
-        <Field label="Category">
+        <Field label={t("supportFormCategoryLabel")}>
           <Select name="category" defaultValue="price-alerts">
-            <option value="search-help">Search help</option>
-            <option value="price-alerts">Price alerts</option>
-            <option value="redirect">Partner redirect</option>
-            <option value="account">Account help</option>
+            <option value="search-help">{t("supportCategorySearchHelp")}</option>
+            <option value="price-alerts">{t("supportCategoryPriceAlerts")}</option>
+            <option value="redirect">{t("supportCategoryPartnerRedirect")}</option>
+            <option value="account">{t("supportCategoryAccountHelp")}</option>
           </Select>
         </Field>
-        <Field label="How can we help?">
-          <Textarea name="body" required placeholder="Share the route, hotel, alert, or account context." />
+        <Field label={t("supportFormMessageLabel")}>
+          <Textarea name="body" required placeholder={t("supportFormMessagePlaceholder")} />
         </Field>
         {status ? <p className="text-sm font-semibold text-teal-dark">{status}</p> : null}
-        <Button variant="accent">Send Request</Button>
+        <Button variant="accent">{t("supportFormSubmit")}</Button>
       </form>
     </Card>
   );
