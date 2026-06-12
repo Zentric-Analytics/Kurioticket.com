@@ -912,7 +912,7 @@ export function HotelSearchBar({
             <div className="mx-auto flex w-full max-w-3xl min-w-0 items-stretch gap-2.5">
               <button
                 type="button"
-                aria-label="Open filters"
+                aria-label={t("hotelResults.openFilters")}
                 onClick={onOpenFilters}
                 className="focus-ring relative inline-flex h-16 w-[72px] shrink-0 items-center justify-center rounded-md border border-indigo-100/90 bg-white px-2 text-[11px] font-semibold text-slate-800 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-indigo-200 hover:text-slate-950 hover:shadow-[0_8px_18px_rgba(79,70,229,0.12)] focus-visible:border-indigo-300"
               >
@@ -1263,14 +1263,13 @@ export function HotelSearchBar({
                                 <button
                                   key={iso}
                                   type="button"
-                                  aria-label={`Select ${day.toLocaleDateString(
-                                    locale,
-                                    {
-                                      month: "long",
-                                      day: "numeric",
-                                      year: "numeric",
-                                    },
-                                  )}`}
+                                  aria-label={`${t(
+                                    "hotelResults.selectDateAriaPrefix",
+                                  )} ${day.toLocaleDateString(locale, {
+                                    month: "long",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })}`}
                                   onClick={() => handleSelectHotelDate(day)}
                                   disabled={isPastDate}
                                   className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
@@ -1632,7 +1631,9 @@ export function HotelSearchBar({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`Select ${day.toLocaleDateString(locale, {
+                          aria-label={`${t(
+                            "hotelResults.selectDateAriaPrefix",
+                          )} ${day.toLocaleDateString(locale, {
                             month: "long",
                             day: "numeric",
                             year: "numeric",

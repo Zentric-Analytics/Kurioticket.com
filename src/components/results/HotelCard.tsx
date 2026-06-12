@@ -6,6 +6,8 @@ import { Building2, MapPin } from "lucide-react";
 import type { PublicHotelResult } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { formatCurrency } from "@/lib/utils";
 
 function getHotelStarRating(rating: number) {
@@ -65,17 +67,20 @@ function isMealPlanText(value: string) {
   );
 }
 
-function getCancellationDisplay(cancellationInfo: string) {
+function getCancellationDisplay(
+  cancellationInfo: string,
+  t: (key: string) => string,
+) {
   const policyText = normalizeWhitespace(cancellationInfo || "");
 
   if (!policyText) return null;
 
   if (/\bnon[-\s]?refundable\b|\bno refunds?\b/i.test(policyText)) {
-    return { label: "Non-refundable", positive: false };
+    return { label: t("hotelResults.nonRefundable"), positive: false };
   }
 
   if (/\bfree cancellation\b/i.test(policyText)) {
-    return { label: "Free cancellation", positive: true };
+    return { label: t("hotelResults.filter.freeCancellation"), positive: true };
   }
 
   if (/\bpay (?:at|on) (?:the )?property\b|\bpay later\b/i.test(policyText)) {
@@ -175,6 +180,8 @@ type HotelCardProps = {
 };
 
 export function HotelCard({ hotel }: HotelCardProps) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const starRating = getHotelStarRating(hotel.rating);
   const fallbackImageUrl = useMemo(
     () => getDeterministicFallbackImage(hotel),
@@ -193,7 +200,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
   const roomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
   const distanceText = getDistanceDisplay(hotel.distanceFromCenter);
   const mealPlanText = getMealPlanDisplay(hotel, roomTypeText);
-  const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo);
+  const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
   const amenityDisplay = getAmenityDisplay(hotel.amenities, mealPlanText);
 
   async function redirectToHotel() {
@@ -218,7 +225,9 @@ export function HotelCard({ hotel }: HotelCardProps) {
           {imageUrl ? (
             <Image
               src={imageUrl}
-              alt={`${hotel.name} stay option${hotel.location ? ` near ${hotel.location}` : ""}`}
+              alt={t("hotelResults.hotelImageAlt")
+                .replace("{{name}}", hotel.name)
+                .replace("{{location}}", hotel.location ? ` ${t("hotelResults.nearLocation").replace("{{location}}", hotel.location)}` : "")}
               fill
               className="object-cover"
               sizes="(min-width: 768px) 40vw, 100vw"
@@ -230,7 +239,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
             <div className="flex h-full flex-col items-center justify-center gap-2 bg-gradient-to-br from-indigo-50 via-white to-violet-50 px-5 text-center text-indigo-700">
               <Building2 size={36} />
               <span className="max-w-[180px] text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Image unavailable
+                {t("hotelResults.imageUnavailable")}
               </span>
             </div>
           )}
@@ -242,8 +251,14 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 {starRating ? (
                   <div
                     className="mb-1 inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-500 ring-1 ring-amber-100"
-                    aria-label={`${formatHotelRating(hotel.rating)}-star hotel`}
-                    title={`${formatHotelRating(hotel.rating)}-star hotel`}
+                    aria-label={t("hotelResults.starHotelAria").replace(
+                      "{{rating}}",
+                      formatHotelRating(hotel.rating),
+                    )}
+                    title={t("hotelResults.starHotelAria").replace(
+                      "{{rating}}",
+                      formatHotelRating(hotel.rating),
+                    )}
                   >
                     <span aria-hidden="true" className="tracking-[0.08em]">
                       {"★".repeat(starRating)}
@@ -300,11 +315,13 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   {formatCurrency(hotel.totalPrice, hotel.currency)}
                 </div>
                 <div className="text-xs font-medium leading-4 text-slate-500">
-                  estimated stay total
+                  {t("hotelResults.estimatedStayTotal")}
                 </div>
                 <div className="text-xs font-medium leading-4 text-slate-500">
-                  {formatCurrency(hotel.pricePerNight, hotel.currency)} per
-                  night
+                  {t("hotelResults.pricePerNight").replace(
+                    "{{price}}",
+                    formatCurrency(hotel.pricePerNight, hotel.currency),
+                  )}
                 </div>
               </div>
               <div className="min-[380px]:text-right">
@@ -314,7 +331,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   className="w-full whitespace-nowrap rounded-lg border border-indigo-700 bg-indigo-700 px-3 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 hover:border-indigo-800 hover:bg-indigo-800 min-[380px]:w-auto"
                   onClick={redirectToHotel}
                 >
-                  View Hotel
+                  {t("hotelResults.viewHotel")}
                 </Button>
               </div>
             </div>
