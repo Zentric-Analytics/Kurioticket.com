@@ -182,12 +182,50 @@ function getDataDeletionPolicyDocumentTranslation(
   };
 }
 
+function getRefundBookingDisclaimerDocumentTranslation(
+  document: LegalDocument,
+  t: TranslationDictionary
+): LegalDocument {
+  if (document.slug !== "refund-booking-disclaimer") {
+    return document;
+  }
+
+  return {
+    ...document,
+    title: getTranslation(t, "legal.refundBookingDisclaimer.title", document.title),
+    summary: getTranslation(t, "legal.refundBookingDisclaimer.summary", document.summary),
+    lastUpdated: getTranslation(
+      t,
+      "legal.refundBookingDisclaimer.lastUpdatedDate",
+      document.lastUpdated
+    ),
+    sections: document.sections.map((section) => ({
+      ...section,
+      title: getTranslation(
+        t,
+        `legal.refundBookingDisclaimer.sections.${section.id}.title`,
+        section.title
+      ),
+      paragraphs: section.paragraphs.map((paragraph, index) =>
+        getTranslation(
+          t,
+          `legal.refundBookingDisclaimer.sections.${section.id}.paragraph${index + 1}`,
+          paragraph
+        )
+      ),
+    })),
+  };
+}
+
 export function LegalViewer({ document }: { document: LegalDocument }) {
   const { t } = useLocale();
-  const localizedDocument = getDataDeletionPolicyDocumentTranslation(
-    getAffiliateDisclosureDocumentTranslation(
-      getCookieDocumentTranslation(
-        getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+  const localizedDocument = getRefundBookingDisclaimerDocumentTranslation(
+    getDataDeletionPolicyDocumentTranslation(
+      getAffiliateDisclosureDocumentTranslation(
+        getCookieDocumentTranslation(
+          getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+          t
+        ),
         t
       ),
       t
@@ -199,6 +237,7 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
   const isCookiePolicy = document.slug === "cookie-policy";
   const isAffiliateDisclosure = document.slug === "affiliate-disclosure";
   const isDataDeletionPolicy = document.slug === "data-deletion-policy";
+  const isRefundBookingDisclaimer = document.slug === "refund-booking-disclaimer";
   const lastUpdatedText = isTermsOfService
     ? t["legal.terms.lastUpdated"]
     : isPrivacyPolicy
@@ -225,7 +264,13 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
                 "legal.dataDeletionPolicy.lastUpdated",
                 `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
               )
-            : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
+            : isRefundBookingDisclaimer
+              ? getTranslation(
+                  t,
+                  "legal.refundBookingDisclaimer.lastUpdated",
+                  `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
+                )
+              : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
   const developerNote = isTermsOfService
     ? t["legal.terms.developerNote"]
     : isPrivacyPolicy
@@ -244,7 +289,13 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
                 "legal.dataDeletionPolicy.developerNote",
                 legalDeveloperNote
               )
-            : legalDeveloperNote;
+            : isRefundBookingDisclaimer
+              ? getTranslation(
+                  t,
+                  "legal.refundBookingDisclaimer.developerNote",
+                  legalDeveloperNote
+                )
+              : legalDeveloperNote;
   const tableOfContentsLabel = isPrivacyPolicy
     ? getTranslation(
         t,
