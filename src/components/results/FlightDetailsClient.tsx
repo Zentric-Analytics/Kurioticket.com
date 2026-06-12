@@ -120,7 +120,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
   });
 
   const heroDetails = buildHeroDetails(flight, t);
-  const routeHeading = buildRouteHeading(flight);
+  const routeHeading = buildRouteHeading(flight, t);
   const hasProviderLink = Boolean(
     flight.partnerRedirectUrl || flight.bookingUrl,
   );
@@ -156,6 +156,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     nonstopLabel={t.nonstop || "Nonstop"}
                     stopSingularLabel={t.stopSingular || "stop"}
                     stopPluralLabel={t.stopPlural || "stops"}
+                    layoverInLabel={t.layoverIn || "Layover in"}
+                    connectionLabels={buildConnectionLabels(t)}
                   />
 
                   <Card className="mt-5 overflow-hidden border-slate-200/80 bg-white p-0 shadow-none">
@@ -177,7 +179,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                                     aria-hidden="true"
                                   />
                                   <span className="text-sm font-medium text-slate-700">
-                                    Flight {flight.flightNumber}
+                                    {t.flightNumberLabel || "Flight"} {flight.flightNumber}
                                   </span>
                                 </>
                               ) : null}
@@ -291,6 +293,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     nonstop: t.nonstop || "Nonstop",
                     stopSingular: t.stopSingular || "stop",
                     stopPlural: t.stopPlural || "stops",
+                    providedBy: t.providedBy || "Provided by",
+                    ...buildLocalizedDisplayLabels(t),
                   }}
                 />
               </div>
@@ -317,6 +321,8 @@ function SelectedFlightSummary({
   nonstopLabel,
   stopSingularLabel,
   stopPluralLabel,
+  layoverInLabel,
+  connectionLabels,
 }: {
   itineraryLegs: FlightLeg[];
   fallbackAirlineName: string;
@@ -332,6 +338,8 @@ function SelectedFlightSummary({
   nonstopLabel: string;
   stopSingularLabel: string;
   stopPluralLabel: string;
+  layoverInLabel: string;
+  connectionLabels: ConnectionLabels;
 }) {
   return (
     <section className="min-w-0" aria-label={selectedFlightItineraryLabel}>
@@ -365,6 +373,8 @@ function SelectedFlightSummary({
               nonstopLabel={nonstopLabel}
               stopSingularLabel={stopSingularLabel}
               stopPluralLabel={stopPluralLabel}
+              layoverInLabel={layoverInLabel}
+              connectionLabels={connectionLabels}
             />
           </div>
         ))}
@@ -411,7 +421,8 @@ function ProviderComparisonPanel({
     nonstop: string;
     stopSingular: string;
     stopPlural: string;
-  };
+    providedBy: string;
+  } & LocalizedDisplayLabels;
 }) {
   return (
     <aside className="min-w-0 lg:mt-1" aria-label={labels.compareMoreProviders}>
@@ -444,12 +455,14 @@ function ProviderComparisonPanel({
                   ? formatCabinClass(
                       offer.cabinClass,
                       labels.confirmedByProvider,
+                      labels,
                     )
                   : null,
                 offer.baggageInfo
                   ? formatBaggageValue(
                       offer.baggageInfo,
                       labels.confirmedByProvider,
+                      labels,
                     )
                   : null,
                 typeof offer.stops === "number"
@@ -497,7 +510,7 @@ function ProviderComparisonPanel({
                       ) : null}
                       {showProviderByline ? (
                         <p className="mt-1 truncate text-[11px] leading-4 text-slate-400">
-                          Provided by {offer.providerName}
+                          {labels.providedBy} {offer.providerName}
                         </p>
                       ) : null}
                     </div>
@@ -929,14 +942,26 @@ function readNumericValue(value: unknown): number | undefined {
   return undefined;
 }
 
-function buildRouteHeading(flight: PublicFlightResult) {
+function buildRouteHeading(
+  flight: PublicFlightResult,
+  t: Record<string, string>,
+) {
   const originDisplayName = getRouteEndpointDisplayName(flight, "origin");
   const destinationDisplayName = getRouteEndpointDisplayName(
     flight,
     "destination",
   );
 
-  return `${originDisplayName} to ${destinationDisplayName}`;
+  return `${localizeRouteEndpointDisplayName(originDisplayName, t)} ${
+    t.flightRouteConnector || "to"
+  } ${localizeRouteEndpointDisplayName(destinationDisplayName, t)}`;
+}
+
+function localizeRouteEndpointDisplayName(
+  value: string,
+  t: Record<string, string>,
+) {
+  return t[`flightLandingCity.${value}`] || value;
 }
 
 function getRouteEndpointDisplayName(
@@ -1322,6 +1347,8 @@ function CompactLegSection({
   nonstopLabel,
   stopSingularLabel,
   stopPluralLabel,
+  layoverInLabel,
+  connectionLabels,
 }: {
   leg: FlightLeg;
   legIndex: number;
@@ -1336,6 +1363,8 @@ function CompactLegSection({
   nonstopLabel: string;
   stopSingularLabel: string;
   stopPluralLabel: string;
+  layoverInLabel: string;
+  connectionLabels: ConnectionLabels;
 }) {
   const segments = leg.segments.length
     ? leg.segments
@@ -1461,7 +1490,11 @@ function CompactLegSection({
                       compact
                     />
                     {leg.layovers[segmentIndex] ? (
-                      <LayoverSeparator layover={leg.layovers[segmentIndex]} />
+                      <LayoverSeparator
+                        layover={leg.layovers[segmentIndex]}
+                        layoverInLabel={layoverInLabel}
+                        connectionLabels={connectionLabels}
+                      />
                     ) : null}
                   </div>
                 );
@@ -1570,13 +1603,19 @@ function CompactFlightRow({
 
 function LayoverSeparator({
   layover,
+  layoverInLabel,
+  connectionLabels,
 }: {
   layover: FlightLeg["layovers"][number];
+  layoverInLabel: string;
+  connectionLabels: ConnectionLabels;
 }) {
+  const connectionLabel = getConnectionLabel(layover.quality, connectionLabels);
+
   return (
     <div className="py-2 text-xs font-medium leading-4 text-slate-500">
-      Layover in {layover.airport} · {layover.duration}
-      {layover.quality !== "unknown" ? ` · ${layover.quality} connection` : ""}
+      {layoverInLabel} {layover.airport} · {layover.duration}
+      {connectionLabel ? ` · ${connectionLabel}` : ""}
     </div>
   );
 }
@@ -1597,6 +1636,7 @@ function buildHeroDetails(
       value: formatBaggageValue(
         flight.baggageInfo,
         t.confirmedByProvider || "Confirmed by provider",
+        buildLocalizedDisplayLabels(t),
       ),
       icon: Luggage,
     },
@@ -1605,6 +1645,7 @@ function buildHeroDetails(
       value: formatCabinClass(
         flight.cabinClass,
         t.confirmedByProvider || "Confirmed by provider",
+        buildLocalizedDisplayLabels(t),
       ),
       icon: Armchair,
     },
@@ -1627,8 +1668,70 @@ function buildHeroDetails(
   ];
 }
 
-function formatCabinClass(value?: string, fallback = "Confirmed by provider") {
+type ConnectionLabels = Record<FlightLeg["layovers"][number]["quality"], string>;
+
+type LocalizedDisplayLabels = {
+  cabinEconomy: string;
+  cabinPremiumEconomy: string;
+  cabinBusiness: string;
+  cabinFirst: string;
+  carryOnSingularIncluded: string;
+  carryOnPluralIncluded: string;
+  checkedBagSingularIncluded: string;
+  checkedBagPluralIncluded: string;
+};
+
+function buildConnectionLabels(t: Record<string, string>): ConnectionLabels {
+  return {
+    short: t.shortConnection || "short connection",
+    good: t.connection || "connection",
+    long: t.longConnection || "long connection",
+    overnight: t.overnightConnection || "overnight connection",
+    unknown: "",
+  };
+}
+
+function getConnectionLabel(
+  quality: FlightLeg["layovers"][number]["quality"],
+  labels: ConnectionLabels,
+) {
+  return labels[quality] || "";
+}
+
+function buildLocalizedDisplayLabels(
+  t: Record<string, string>,
+): LocalizedDisplayLabels {
+  return {
+    cabinEconomy: t.economy || "Economy",
+    cabinPremiumEconomy: t.premiumEconomy || "Premium economy",
+    cabinBusiness: t.selectedFlightCabinBusiness || t.business || "Business",
+    cabinFirst: t.first || "First",
+    carryOnSingularIncluded:
+      t.carryOnSingularIncluded || "carry-on included",
+    carryOnPluralIncluded:
+      t.carryOnPluralIncluded || "carry-ons included",
+    checkedBagSingularIncluded:
+      t.checkedBagSingularIncluded || "checked bag included",
+    checkedBagPluralIncluded:
+      t.checkedBagPluralIncluded || "checked bags included",
+  };
+}
+
+function formatCabinClass(
+  value?: string,
+  fallback = "Confirmed by provider",
+  labels?: LocalizedDisplayLabels,
+) {
   if (!value) return fallback;
+
+  const normalized = value.trim().toLowerCase().replace(/[-_]/g, " ");
+  const cabinLabels = labels ?? buildLocalizedDisplayLabels({});
+
+  if (normalized === "economy") return cabinLabels.cabinEconomy;
+  if (normalized === "premium economy") return cabinLabels.cabinPremiumEconomy;
+  if (normalized === "business") return cabinLabels.cabinBusiness;
+  if (normalized === "first") return cabinLabels.cabinFirst;
+
   return value
     .replace(/[-_]/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
@@ -1637,6 +1740,7 @@ function formatCabinClass(value?: string, fallback = "Confirmed by provider") {
 function formatBaggageValue(
   value?: string,
   fallback = "Confirmed by provider",
+  labels?: LocalizedDisplayLabels,
 ) {
   if (
     !value ||
@@ -1646,7 +1750,40 @@ function formatBaggageValue(
     return fallback;
   }
 
-  return value;
+  return localizeIncludedBaggageValue(
+    value,
+    labels ?? buildLocalizedDisplayLabels({}),
+  );
+}
+
+function localizeIncludedBaggageValue(
+  value: string,
+  labels: LocalizedDisplayLabels,
+) {
+  const parts = value.split(",").map((part) => part.trim());
+  const translatedParts = parts.map((part) => {
+    const carryOnMatch = part.match(/^(\d+)\s+carry-ons? included$/i);
+    if (carryOnMatch) {
+      const count = Number(carryOnMatch[1]);
+      const label = count === 1
+        ? labels.carryOnSingularIncluded
+        : labels.carryOnPluralIncluded;
+      return `${count} ${label}`;
+    }
+
+    const checkedBagMatch = part.match(/^(\d+)\s+checked bags? included$/i);
+    if (checkedBagMatch) {
+      const count = Number(checkedBagMatch[1]);
+      const label = count === 1
+        ? labels.checkedBagSingularIncluded
+        : labels.checkedBagPluralIncluded;
+      return `${count} ${label}`;
+    }
+
+    return part;
+  });
+
+  return translatedParts.join(", ");
 }
 
 function formatSeatSelectionValue(
