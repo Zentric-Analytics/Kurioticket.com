@@ -655,26 +655,40 @@ export function DashboardOverview({ initials, displayName, userEmail, userName }
 
 
 export function SavedDashboardPage() {
+  const { t } = useLocale();
+
   return (
     <Card className="overflow-hidden p-0">
       <div className="border-b border-border bg-surface-muted/70 px-5 py-5 sm:px-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Saved</p>
-        <h1 className="mt-2 text-3xl font-bold text-navy">Saved</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
+          {t["accountDashboard.saved.eyebrow"]}
+        </p>
+        <h1 className="mt-2 text-3xl font-bold text-navy">
+          {t["accountDashboard.saved.title"]}
+        </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-          Saved trips, routes, stays, and planning items connected to your account belong here.
+          {t["accountDashboard.saved.description"]}
         </p>
       </div>
       <div className="px-5 py-6 sm:px-6">
         <div className="rounded-2xl border border-dashed border-border bg-white p-6">
           <Bookmark className="size-10 text-teal-dark" aria-hidden="true" />
-          <h2 className="mt-4 text-2xl font-bold text-navy">No saved items yet</h2>
+          <h2 className="mt-4 text-2xl font-bold text-navy">
+            {t["accountDashboard.saved.emptyTitle"]}
+          </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Items you save from Kurioticket planning tools will appear here. You can also open the existing saved trips area when saved data is available.
+            {t["accountDashboard.saved.emptyDescription"]}
           </p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/saved">Open saved trips</LinkButton>
-            <LinkButton href="/flights" variant="secondary">Search flights</LinkButton>
-            <LinkButton href="/hotels" variant="secondary">Search hotels</LinkButton>
+            <LinkButton href="/saved">
+              {t["accountDashboard.saved.openSavedTrips"]}
+            </LinkButton>
+            <LinkButton href="/flights" variant="secondary">
+              {t["accountDashboard.saved.searchFlights"]}
+            </LinkButton>
+            <LinkButton href="/hotels" variant="secondary">
+              {t["accountDashboard.saved.searchHotels"]}
+            </LinkButton>
           </div>
         </div>
       </div>

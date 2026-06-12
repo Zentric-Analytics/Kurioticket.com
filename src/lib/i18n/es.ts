@@ -149,6 +149,16 @@ export const translations: TranslationDictionary = {
   "accountDashboard.overview.welcome": "Bienvenido de nuevo, {name}",
   "accountDashboard.overview.subtitle":
     "Gestiona tus viajes, elementos guardados y preferencias.",
+  "accountDashboard.saved.eyebrow": "GUARDADO",
+  "accountDashboard.saved.title": "Guardado",
+  "accountDashboard.saved.description":
+    "Los viajes, rutas, alojamientos y elementos de planificación guardados conectados a tu cuenta aparecerán aquí.",
+  "accountDashboard.saved.emptyTitle": "Aún no tienes elementos guardados",
+  "accountDashboard.saved.emptyDescription":
+    "Los elementos que guardes desde las herramientas de planificación de Kurioticket aparecerán aquí. También puedes abrir el área de viajes guardados cuando haya datos guardados disponibles.",
+  "accountDashboard.saved.openSavedTrips": "Abrir viajes guardados",
+  "accountDashboard.saved.searchFlights": "Buscar vuelos",
+  "accountDashboard.saved.searchHotels": "Buscar hoteles",
   "accountDashboard.mobile.backAriaLabel": "Volver a Mi cuenta",
   "accountDashboard.mobile.manageAccount": "Gestionar cuenta",
   "accountDashboard.personalDetails.title": "Datos personales",
