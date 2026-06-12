@@ -193,6 +193,30 @@ export const translations: TranslationDictionary = {
   platform: "Platform",
   legal: "Legal",
   legalCenter: "Legal Center",
+  legalLastUpdated: "Last updated",
+  legalPrint: "Print",
+  legalTableOfContents: "TABLE OF CONTENTS",
+  legalPrivacyPolicyTitle: "Privacy Policy",
+  legalPrivacyPolicySummary:
+    "How Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) collects, uses, stores, and protects account, search, alert, support, and email data.",
+  legalPrivacyPolicyLastUpdatedDate: "May 11, 2026",
+  legalPrivacyPolicyDataWeCollectTitle: "Data We Collect",
+  legalPrivacyPolicyDataWeCollectAccountParagraph:
+    "We collect account data such as name, email, hashed password, authentication provider identifiers, and optional travel preferences. We do not ask for passport data, government ID, or home address at signup.",
+  legalPrivacyPolicyDataWeCollectProductParagraph:
+    "We collect product data such as searches, saved flights, saved hotels, saved searches, price alerts, redirects, support tickets, notifications, analytics events, and feature usage.",
+  legalPrivacyPolicyServiceProvidersTitle: "Service Providers",
+  legalPrivacyPolicyServiceProvidersOperationsParagraph:
+    "We may use third-party service providers to help operate our services, send communications, protect the platform, measure performance, and support product functionality.",
+  legalPrivacyPolicyServiceProvidersCardsParagraph:
+    "Kurioticket does not ask for or store credit card numbers for travel bookings. Kurioticket does not store passport data.",
+  legalPrivacyPolicyYourChoicesTitle: "Your Choices",
+  legalPrivacyPolicyYourChoicesRequestsParagraph:
+    "You may update notification preferences, request account deletion, and request access or correction where required by applicable privacy laws.",
+  legalPrivacyPolicyYourChoicesRetentionParagraph:
+    "We retain only data that is useful for product operation, security, support, analytics, compliance, or legitimate business needs.",
+  legalPrivacyPolicyDeveloperNote:
+    "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.",
   footerAbout:
     "Search flights and hotels for free, compare trusted partner prices, and make calmer travel decisions.",
   footerMeta: "Kurioticket is a travel metasearch platform.",

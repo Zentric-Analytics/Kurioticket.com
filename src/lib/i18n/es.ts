@@ -198,6 +198,30 @@ export const translations: TranslationDictionary = {
   platform: "Plataforma",
   legal: "Legal",
   legalCenter: "Centro legal",
+  legalLastUpdated: "Última actualización",
+  legalPrint: "Imprimir",
+  legalTableOfContents: "ÍNDICE",
+  legalPrivacyPolicyTitle: "Política de privacidad",
+  legalPrivacyPolicySummary:
+    "Cómo Kurioticket LLC (“Kurioticket”, “nosotros”, “nos” o “nuestro”) recopila, usa, almacena y protege datos de cuenta, búsqueda, alertas, soporte y correo electrónico.",
+  legalPrivacyPolicyLastUpdatedDate: "11 de mayo de 2026",
+  legalPrivacyPolicyDataWeCollectTitle: "Datos que recopilamos",
+  legalPrivacyPolicyDataWeCollectAccountParagraph:
+    "Recopilamos datos de cuenta como nombre, correo electrónico, contraseña cifrada, identificadores del proveedor de autenticación y preferencias de viaje opcionales. No solicitamos datos de pasaporte, identificación gubernamental ni dirección particular al registrarte.",
+  legalPrivacyPolicyDataWeCollectProductParagraph:
+    "Recopilamos datos del producto, como búsquedas, vuelos guardados, hoteles guardados, búsquedas guardadas, alertas de precios, redirecciones, tickets de soporte, notificaciones, eventos de análisis y uso de funciones.",
+  legalPrivacyPolicyServiceProvidersTitle: "Proveedores de servicios",
+  legalPrivacyPolicyServiceProvidersOperationsParagraph:
+    "Podemos usar proveedores de servicios externos para ayudar a operar nuestros servicios, enviar comunicaciones, proteger la plataforma, medir el rendimiento y respaldar la funcionalidad del producto.",
+  legalPrivacyPolicyServiceProvidersCardsParagraph:
+    "Kurioticket no solicita ni almacena números de tarjetas de crédito para reservas de viaje. Kurioticket no almacena datos de pasaporte.",
+  legalPrivacyPolicyYourChoicesTitle: "Tus opciones",
+  legalPrivacyPolicyYourChoicesRequestsParagraph:
+    "Puedes actualizar tus preferencias de notificación, solicitar la eliminación de tu cuenta y solicitar acceso o corrección cuando lo exijan las leyes de privacidad aplicables.",
+  legalPrivacyPolicyYourChoicesRetentionParagraph:
+    "Conservamos solo los datos que son útiles para la operación del producto, la seguridad, el soporte, los análisis, el cumplimiento normativo o necesidades comerciales legítimas.",
+  legalPrivacyPolicyDeveloperNote:
+    "Estos borradores legales son marcadores de posición para una startup y deben ser revisados por asesoría legal calificada antes de un lanzamiento público a gran escala.",
   footerAbout:
     "Busca vuelos y hoteles gratis, compara precios de socios de confianza y toma decisiones de viaje con más tranquilidad.",
   footerMeta: "Kurioticket es una plataforma de metabúsqueda de viajes.",

@@ -1,6 +1,7 @@
 import type { LegalDocument } from "@/lib/types";
+import { translations as englishTranslations } from "@/lib/i18n/en";
 
-const lastUpdated = "May 11, 2026";
+const lastUpdated = englishTranslations.legalPrivacyPolicyLastUpdatedDate;
 
 export const legalDocuments: LegalDocument[] = [
   {
@@ -45,32 +46,32 @@ export const legalDocuments: LegalDocument[] = [
   },
   {
     slug: "privacy-policy",
-    title: "Privacy Policy",
-    summary: "How Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) collects, uses, stores, and protects account, search, alert, support, and email data.",
-    lastUpdated,
+    title: englishTranslations.legalPrivacyPolicyTitle,
+    summary: englishTranslations.legalPrivacyPolicySummary,
+    lastUpdated: englishTranslations.legalPrivacyPolicyLastUpdatedDate,
     sections: [
       {
         id: "data-we-collect",
-        title: "Data We Collect",
+        title: englishTranslations.legalPrivacyPolicyDataWeCollectTitle,
         paragraphs: [
-          "We collect account data such as name, email, hashed password, authentication provider identifiers, and optional travel preferences. We do not ask for passport data, government ID, or home address at signup.",
-          "We collect product data such as searches, saved flights, saved hotels, saved searches, price alerts, redirects, support tickets, notifications, analytics events, and feature usage.",
+          englishTranslations.legalPrivacyPolicyDataWeCollectAccountParagraph,
+          englishTranslations.legalPrivacyPolicyDataWeCollectProductParagraph,
         ],
       },
       {
         id: "vendors",
-        title: "Service Providers",
+        title: englishTranslations.legalPrivacyPolicyServiceProvidersTitle,
         paragraphs: [
-          "We may use third-party service providers to help operate our services, send communications, protect the platform, measure performance, and support product functionality.",
-          "Kurioticket does not ask for or store credit card numbers for travel bookings. Kurioticket does not store passport data.",
+          englishTranslations.legalPrivacyPolicyServiceProvidersOperationsParagraph,
+          englishTranslations.legalPrivacyPolicyServiceProvidersCardsParagraph,
         ],
       },
       {
         id: "choices",
-        title: "Your Choices",
+        title: englishTranslations.legalPrivacyPolicyYourChoicesTitle,
         paragraphs: [
-          "You may update notification preferences, request account deletion, and request access or correction where required by applicable privacy laws.",
-          "We retain only data that is useful for product operation, security, support, analytics, compliance, or legitimate business needs.",
+          englishTranslations.legalPrivacyPolicyYourChoicesRequestsParagraph,
+          englishTranslations.legalPrivacyPolicyYourChoicesRetentionParagraph,
         ],
       },
     ],
@@ -247,4 +248,4 @@ export const legalDocuments: LegalDocument[] = [
 ];
 
 export const legalDeveloperNote =
-  "These legal drafts are startup placeholders and should be reviewed by qualified legal counsel before large-scale public launch.";
+  englishTranslations.legalPrivacyPolicyDeveloperNote;
