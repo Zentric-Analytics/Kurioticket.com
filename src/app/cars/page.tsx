@@ -29,6 +29,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { getTranslations } from "@/lib/i18n";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   addMonths,
@@ -118,6 +119,14 @@ type TranslatedCarImageCard = CarImageCard & {
   cta?: string;
 };
 
+function useCarsLandingTranslations() {
+  const { locale } = useLocale();
+  const dictionary = useMemo(() => getTranslations(locale), [locale]);
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
+  return { locale, t, dictionary };
+}
+
 export default function CarsPage() {
   return (
     <Suspense fallback={<CarsPageShell />}>
@@ -127,8 +136,7 @@ export default function CarsPage() {
 }
 
 function CarsSearchPage() {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const { dictionary, t } = useCarsLandingTranslations();
   const translateCarImageCard = (
     card: CarImageCard | CarPickupCard,
   ): TranslatedCarImageCard => {
@@ -382,8 +390,7 @@ function CarsSearchPage() {
 }
 
 function CarsFaqSection() {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const { dictionary, t } = useCarsLandingTranslations();
 
   return (
     <section className="space-y-4 px-1" aria-labelledby="cars-faq-heading">
@@ -450,8 +457,7 @@ function CarsSearchBar({
   ) => void;
   values: CarsFormValues;
 }) {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const { t } = useCarsLandingTranslations();
   const pickupLocationRef = useRef<HTMLInputElement | null>(null);
   const dropoffLocationRef = useRef<HTMLInputElement | null>(null);
   const dateWrapRef = useRef<HTMLDivElement | null>(null);
@@ -742,8 +748,7 @@ function CarsSearchBar({
 }
 
 function CarsPageShell() {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const { t } = useCarsLandingTranslations();
 
   return (
     <>
@@ -843,8 +848,7 @@ function RentalDatesField({
   visibleMonthDate: Date;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const { locale, t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const { locale, t } = useCarsLandingTranslations();
   const weekdays = useMemo(() => formatCarWeekdays(locale), [locale]);
   const pickupDisplay = formatCarDisplayDate(pickupDate, locale);
   const dropoffDisplay = formatCarDisplayDate(dropoffDate, locale);
@@ -1026,8 +1030,7 @@ function TimeRangeField({
   ) => void;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const { t } = useCarsLandingTranslations();
   const timeSummary = formatTimeRangeSummary(
     t("carsSearch.pickupReturnTimeSummary"),
     pickupTime,
