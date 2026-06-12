@@ -1608,6 +1608,12 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedQuestion: "Why was I sent to another provider?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket is a travel search and comparison platform, and some results redirect to trusted providers where you complete booking, payment, and provider-specific support.",
+  aboutPageEyebrow: "About Kurioticket",
+  aboutPageTitle: "About Us",
+  aboutPageIntroPrimary: "Kurioticket is a travel search and comparison platform that helps travelers search, compare, and discover flights, hotels, cars, and travel deals.",
+  aboutPageIntroSecondary: "Our goal is to make travel planning clearer by bringing available options and provider information into one simple place, so travelers can review choices before continuing with the provider that fits their trip.",
+  aboutPagePlanningCardHeading: "A practical travel planning tool",
+  aboutPagePlanningCardBody: "Kurioticket focuses on helping travelers evaluate travel options with useful context. Availability, prices, rules, and final booking steps may vary by provider, so travelers should review the provider page carefully before making a decision.",
   footerContactUs: "Contact Us",
   footerCustomerSupport: "Customer support",
   footerServiceGuarantee: "Service Guarantee",
