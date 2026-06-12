@@ -16,6 +16,7 @@ type DestinationCardProps = {
   imagePosition?: string;
   tag: string;
   subtitle: string;
+  ariaLabel: string;
 };
 
 export function DestinationCard({
@@ -27,6 +28,7 @@ export function DestinationCard({
   imagePosition = "center",
   tag,
   subtitle,
+  ariaLabel,
 }: DestinationCardProps) {
   const [imageSource, setImageSource] = useState(image);
 
@@ -34,7 +36,7 @@ export function DestinationCard({
     <Link
       href={href}
       className="group relative min-h-[18rem] overflow-hidden rounded-[1.45rem] bg-white p-4 text-white shadow-xl shadow-violet-100/70 outline-none ring-1 ring-white/80 transition duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-fuchsia-200/60 focus-visible:ring-4 focus-visible:ring-violet-200 sm:min-h-[19.5rem]"
-      aria-label={`Search flights to ${name}`}
+      aria-label={ariaLabel}
     >
       <Image
         src={imageSource}
@@ -57,7 +59,7 @@ export function DestinationCard({
 
       <div className="relative flex h-full min-h-[16rem] flex-col justify-between sm:min-h-[18rem]">
         <div className="flex items-center justify-between gap-3">
-          <span className="rounded-full bg-white/30 px-3 py-1 text-[0.7rem] font-black uppercase tracking-[0.13em] text-white shadow-sm ring-1 ring-white/45 backdrop-blur-md">
+          <span className="min-w-0 max-w-[calc(100%-3rem)] rounded-full bg-white/30 px-3 py-1 text-[0.7rem] font-black uppercase leading-tight tracking-[0.13em] text-white shadow-sm ring-1 ring-white/45 backdrop-blur-md [overflow-wrap:anywhere]">
             {country}
           </span>
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/30 text-base font-black shadow-sm ring-1 ring-white/45 backdrop-blur-md transition group-hover:bg-white group-hover:text-violet-700">
@@ -66,10 +68,10 @@ export function DestinationCard({
         </div>
 
         <div className="rounded-[1.25rem] border border-white/16 bg-slate-950/16 p-3.5 shadow-xl shadow-slate-950/15 backdrop-blur-[2px] transition duration-300 group-hover:border-white/30 group-hover:bg-slate-950/10 sm:p-4">
-          <p className="mb-1.5 text-[0.7rem] font-black uppercase tracking-[0.16em] text-amber-100">
+          <p className="mb-1.5 text-[0.7rem] font-black uppercase leading-tight tracking-[0.16em] text-amber-100 [overflow-wrap:anywhere]">
             {tag}
           </p>
-          <h3 className="text-xl font-black tracking-tight drop-shadow-md sm:text-2xl">
+          <h3 className="text-xl font-black leading-tight tracking-tight drop-shadow-md sm:text-2xl">
             {name}
           </h3>
           <p className="mt-1.5 text-sm font-semibold leading-5 text-white/95 drop-shadow-sm">
