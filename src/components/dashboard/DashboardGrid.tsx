@@ -22,26 +22,28 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
+import type { TranslationDictionary } from "@/lib/i18n/types";
 
 const navItems = [
-  { label: "Overview", href: "/dashboard", icon: Grid2X2 },
-  { label: "My Trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-  { label: "Saved", href: "/dashboard/saved", icon: Bookmark },
-  { label: "Price alerts", href: "/dashboard/alerts", icon: Bell },
-  { label: "Preference", href: "/dashboard/preferences", icon: Settings },
-  { label: "Security", href: "/dashboard/security", icon: ShieldCheck },
-  { label: "Support", href: "/dashboard/support", icon: LifeBuoy },
+  { labelKey: "accountDashboard.nav.overview", href: "/dashboard", icon: Grid2X2 },
+  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
+  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
+  { labelKey: "accountDashboard.nav.priceAlerts", href: "/dashboard/alerts", icon: Bell },
+  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
+  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
+  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
 ];
 
 const mobileAccountNavItems = [
-  { label: "Personal details", href: "/dashboard", icon: UserRound },
-  { label: "My Trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-  { label: "Saved", href: "/dashboard/saved", icon: Bookmark },
-  { label: "Price alerts", href: "/dashboard/alerts", icon: Bell },
-  { label: "Preference", href: "/dashboard/preferences", icon: Settings },
-  { label: "Security", href: "/dashboard/security", icon: ShieldCheck },
-  { label: "Support", href: "/dashboard/support", icon: LifeBuoy },
+  { labelKey: "accountDashboard.personalDetails.title", href: "/dashboard", icon: UserRound },
+  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
+  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
+  { labelKey: "accountDashboard.nav.priceAlerts", href: "/dashboard/alerts", icon: Bell },
+  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
+  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
+  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
 ];
 
 type AccountDashboardFrameProps = {
@@ -73,7 +75,7 @@ type PersonalDetailRow = {
   fallback: string;
   helper?: string;
   inputType?: "text" | "tel" | "date" | "email";
-  options?: string[];
+  options?: Array<{ value: string; label: string }>;
   multiline?: boolean;
   readOnly?: boolean;
 };
@@ -125,6 +127,7 @@ function TravelIllustration({ compact = false, variant = "luggage" }: { compact?
 
 export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: AccountDashboardFrameProps) {
   const pathname = usePathname();
+  const { t } = useLocale();
 
   return (
     <div
@@ -157,7 +160,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
 
                 return (
                   <Link
-                    key={item.label}
+                    key={item.href}
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
@@ -173,7 +176,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
                     )}
                   >
                     <Icon className={cn("size-4 shrink-0", mobileOverviewTabs && "hidden lg:block")} strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
-                    <span>{item.label}</span>
+                    <span>{t[item.labelKey]}</span>
                   </Link>
                 );
               })}
@@ -184,14 +187,14 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
             <div className="mx-auto mb-2 flex justify-center opacity-85">
               <TravelIllustration compact />
             </div>
-            <h2 className="text-[13px] font-semibold text-slate-900">Book your next trip</h2>
-            <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">Find great deals on flights and hotels.</p>
+            <h2 className="text-[13px] font-semibold text-slate-900">{t["accountDashboard.promo.title"]}</h2>
+            <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">{t["accountDashboard.promo.body"]}</p>
             <Link
               href="/flights"
               className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200/80 bg-white/75 px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-white"
             >
               <Plane className="size-3.5" aria-hidden="true" />
-              Search flights
+              {t["accountDashboard.promo.cta"]}
             </Link>
           </div>
         </div>
@@ -205,34 +208,38 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
 }
 
 export function MobileAccountBackLink() {
+  const { t } = useLocale();
+
   return (
     <Link
       href="/dashboard/account"
-      aria-label="Back to My account"
+      aria-label={t["accountDashboard.mobile.backAriaLabel"]}
       className="focus-ring inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 pr-3 text-sm font-black text-violet-700 transition hover:bg-violet-50 lg:hidden"
     >
       <span className="text-xl leading-none" aria-hidden="true">‹</span>
-      <span>My account</span>
+      <span>{t.myAccount}</span>
     </Link>
   );
 }
 
 export function MobileAccountMenuPage() {
+  const { t } = useLocale();
+
   return (
     <section className="mx-auto max-w-2xl overflow-x-hidden lg:hidden" aria-labelledby="mobile-account-title">
       <div className="mb-5 px-1">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Kurioticket</p>
         <h1 id="mobile-account-title" className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950">
-          My account
+          {t.myAccount}
         </h1>
       </div>
 
       <div className="overflow-hidden rounded-[1.35rem] border border-violet-100 bg-white shadow-[0_22px_58px_-48px_rgba(49,46,129,0.55)]">
         <div className="border-b border-slate-100 bg-violet-50/55 px-5 py-4">
-          <h2 className="text-sm font-black text-slate-950">Manage account</h2>
+          <h2 className="text-sm font-black text-slate-950">{t["accountDashboard.mobile.manageAccount"]}</h2>
         </div>
 
-        <nav aria-label="Manage account">
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]}>
           {mobileAccountNavItems.map((item) => {
             const Icon = item.icon;
 
@@ -245,7 +252,7 @@ export function MobileAccountMenuPage() {
                 <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 transition group-hover:bg-white">
                   <Icon className="size-4.5" strokeWidth={2.2} aria-hidden="true" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-base font-bold text-slate-900">{item.label}</span>
+                <span className="min-w-0 flex-1 truncate text-base font-bold text-slate-900">{t[item.labelKey]}</span>
                 <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
               </Link>
             );
@@ -257,6 +264,8 @@ export function MobileAccountMenuPage() {
 }
 
 function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
+  const { t } = useLocale();
+
   return (
     <section
       className="border-b border-slate-200/80 pb-4 sm:pb-5"
@@ -271,11 +280,11 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
         </div>
         <div className="min-w-0">
           <h1 id="dashboard-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-            Welcome back, {displayName} 👋
+            {t["accountDashboard.overview.welcome"].replace("{name}", displayName)} 👋
           </h1>
           {userEmail ? <p className="mt-1 break-all text-sm font-semibold text-slate-600 sm:mt-1.5 sm:break-words sm:text-sm">{userEmail}</p> : null}
           <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
-            Manage your trips, saved items, and preferences.
+            {t["accountDashboard.overview.subtitle"]}
           </p>
         </div>
       </div>
@@ -283,21 +292,26 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
   );
 }
 
-const genderOptions = ["Male", "Female", "I prefer not to say"];
-const dateOfBirthMonths = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
+const genderOptions = [
+  { value: "Male", labelKey: "accountDashboard.personalDetails.gender.male" },
+  { value: "Female", labelKey: "accountDashboard.personalDetails.gender.female" },
+  { value: "I prefer not to say", labelKey: "accountDashboard.personalDetails.gender.preferNotToSay" },
 ];
+const dateOfBirthMonthOptions = [
+  { value: "January", labelKey: "accountDashboard.personalDetails.month.january" },
+  { value: "February", labelKey: "accountDashboard.personalDetails.month.february" },
+  { value: "March", labelKey: "accountDashboard.personalDetails.month.march" },
+  { value: "April", labelKey: "accountDashboard.personalDetails.month.april" },
+  { value: "May", labelKey: "accountDashboard.personalDetails.month.may" },
+  { value: "June", labelKey: "accountDashboard.personalDetails.month.june" },
+  { value: "July", labelKey: "accountDashboard.personalDetails.month.july" },
+  { value: "August", labelKey: "accountDashboard.personalDetails.month.august" },
+  { value: "September", labelKey: "accountDashboard.personalDetails.month.september" },
+  { value: "October", labelKey: "accountDashboard.personalDetails.month.october" },
+  { value: "November", labelKey: "accountDashboard.personalDetails.month.november" },
+  { value: "December", labelKey: "accountDashboard.personalDetails.month.december" },
+];
+const dateOfBirthMonths = dateOfBirthMonthOptions.map((month) => month.value);
 
 const dateOfBirthDays = Array.from({ length: 31 }, (_, index) => String(index + 1).padStart(2, "0"));
 
@@ -308,27 +322,34 @@ const dateOfBirthYears = Array.from(
   (_, index) => String(currentDateOfBirthYear - index),
 );
 
-const personalDetailRows: PersonalDetailRow[] = [
-  { key: "name", label: "Name", fallback: "Add your name" },
-  { key: "displayName", label: "Display name", fallback: "Choose a display name" },
-  {
-    key: "email",
-    label: "Email address",
-    fallback: "Add your email address",
-    inputType: "email",
-    readOnly: true,
-  },
-  {
-    key: "phone",
-    label: "Phone number",
-    fallback: "Add your phone number",
-    inputType: "tel",
-  },
-  { key: "dateOfBirth", label: "Date of birth", fallback: "Add your date of birth" },
-  { key: "gender", label: "Gender", fallback: "Add your gender", options: genderOptions },
-  { key: "nationality", label: "Nationality", fallback: "Add your nationality" },
-  { key: "address", label: "Address", fallback: "Add your address", multiline: true },
-];
+function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
+  return [
+    { key: "name", label: t["accountDashboard.personalDetails.name"], fallback: t["accountDashboard.personalDetails.addName"] },
+    { key: "displayName", label: t["accountDashboard.personalDetails.displayName"], fallback: t["accountDashboard.personalDetails.chooseDisplayName"] },
+    {
+      key: "email",
+      label: t["accountDashboard.personalDetails.emailAddress"],
+      fallback: t["accountDashboard.personalDetails.addEmailAddress"],
+      inputType: "email",
+      readOnly: true,
+    },
+    {
+      key: "phone",
+      label: t["accountDashboard.personalDetails.phoneNumber"],
+      fallback: t["accountDashboard.personalDetails.addPhoneNumber"],
+      inputType: "tel",
+    },
+    { key: "dateOfBirth", label: t["accountDashboard.personalDetails.dateOfBirth"], fallback: t["accountDashboard.personalDetails.addDateOfBirth"] },
+    {
+      key: "gender",
+      label: t["accountDashboard.personalDetails.gender"],
+      fallback: t["accountDashboard.personalDetails.addGender"],
+      options: genderOptions.map((option) => ({ value: option.value, label: t[option.labelKey] })),
+    },
+    { key: "nationality", label: t["accountDashboard.personalDetails.nationality"], fallback: t["accountDashboard.personalDetails.addNationality"] },
+    { key: "address", label: t["accountDashboard.personalDetails.address"], fallback: t["accountDashboard.personalDetails.addAddress"], multiline: true },
+  ];
+}
 
 function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: DashboardOverviewProps): PersonalDetailsDraft {
   const trimmedName = userName?.trim() ?? "";
@@ -397,6 +418,7 @@ function formatDateOfBirthParts(parts: { day: string; month: string; year: strin
 }
 
 function DateOfBirthInput({ value, onChange, className }: { value: string; onChange: (value: string) => void; className: string }) {
+  const { t } = useLocale();
   const [parts, setParts] = useState(() => parseDateOfBirthParts(value));
 
   const updatePart = (part: keyof typeof parts, nextValue: string) => {
@@ -411,7 +433,7 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
 
   return (
     <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
-      <select className={className} value={parts.day} onChange={(event) => updatePart("day", event.target.value)} aria-label="Date of birth day">
+      <select className={className} value={parts.day} onChange={(event) => updatePart("day", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}>
         <option value="" disabled hidden>
           DD
         </option>
@@ -421,17 +443,17 @@ function DateOfBirthInput({ value, onChange, className }: { value: string; onCha
           </option>
         ))}
       </select>
-      <select className={className} value={parts.month} onChange={(event) => updatePart("month", event.target.value)} aria-label="Date of birth month">
+      <select className={className} value={parts.month} onChange={(event) => updatePart("month", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthMonth"]}>
         <option value="" disabled hidden>
-          Month
+          {t["accountDashboard.personalDetails.monthPlaceholder"]}
         </option>
-        {dateOfBirthMonths.map((month) => (
-          <option key={month} value={month}>
-            {month}
+        {dateOfBirthMonthOptions.map((month) => (
+          <option key={month.value} value={month.value}>
+            {t[month.labelKey]}
           </option>
         ))}
       </select>
-      <select className={className} value={parts.year} onChange={(event) => updatePart("year", event.target.value)} aria-label="Date of birth year">
+      <select className={className} value={parts.year} onChange={(event) => updatePart("year", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}>
         <option value="" disabled hidden>
           YYYY
         </option>
@@ -466,8 +488,8 @@ function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: 
           {row.fallback}
         </option>
         {row.options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>
@@ -500,9 +522,11 @@ function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: 
 }
 
 function PersonalDetailsSection(props: DashboardOverviewProps) {
+  const { t } = useLocale();
   const initialValues = getPersonalDetailsInitialValues(props);
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState<PersonalDetailsDraft>(initialValues);
+  const personalDetailRows = getPersonalDetailRows(t);
 
   const handleEdit = () => {
     setDraft(initialValues);
@@ -526,10 +550,10 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       <div className="flex min-w-0 flex-col gap-2 px-1 pb-3 pt-1 sm:gap-4 sm:px-2 sm:pb-5 sm:pt-2 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <h2 id="personal-details-title" className="text-[22px] font-bold tracking-tight text-slate-950 sm:text-2xl">
-            Personal details
+            {t["accountDashboard.personalDetails.title"]}
           </h2>
           <p className="mt-1 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-2 sm:text-sm sm:leading-6">
-            Update your information and manage how it is used across Kurioticket.
+            {t["accountDashboard.personalDetails.subtitle"]}
           </p>
         </div>
       </div>
@@ -558,21 +582,21 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
       <div className="px-1 py-4 sm:px-2 sm:py-5">
         {isEditing ? (
           <div className="flex min-w-0 flex-col gap-3 sm:items-end">
-            <p className="text-sm leading-6 text-slate-500 sm:text-right">Profile editing coming soon.</p>
+            <p className="text-sm leading-6 text-slate-500 sm:text-right">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={handleCancel}
                 className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
               >
-                Cancel
+                {t["accountDashboard.personalDetails.cancel"]}
               </button>
               <button
                 type="button"
                 disabled
                 className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 text-sm font-semibold text-slate-500"
               >
-                Save changes
+                {t["accountDashboard.personalDetails.saveChanges"]}
               </button>
             </div>
           </div>
@@ -583,7 +607,7 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
               onClick={handleEdit}
               className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-violet-700 px-5 text-[15px] font-semibold text-white shadow-[0_16px_34px_-22px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 sm:min-h-11 sm:w-auto sm:text-sm"
             >
-              Edit
+              {t["accountDashboard.personalDetails.edit"]}
             </button>
           </div>
         )}
