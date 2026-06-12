@@ -36,50 +36,50 @@ const SEARCH_APPLYING_TIMEOUT_MS = 15000;
 const FILTER_SCROLLBAR_HIDE_DELAY_MS = 700;
 const DEFAULT_MIN_RATING = 3;
 
-const messages = [
-  "Searching hotel partners...",
-  "Comparing total stay prices...",
-  "Checking arrival convenience...",
-  "Finding low-stress stays...",
+const loadingMessageKeys = [
+  "hotelResults.searchingHotelPartners",
+  "hotelResults.comparingTotalStayPrices",
+  "hotelResults.checkingArrivalConvenience",
+  "hotelResults.findingLowStressStays",
 ];
 
 const POPULAR_FILTERS = [
   {
     value: "free-wifi",
-    label: "Free Wi-Fi",
+    labelKey: "hotelResults.filter.freeWifi",
     terms: ["free wi-fi", "free wifi", "wifi", "wi-fi"],
   },
   {
     value: "breakfast",
-    label: "Breakfast included/available",
+    labelKey: "hotelResults.filter.breakfastIncludedAvailable",
     terms: ["breakfast"],
   },
   {
     value: "free-cancellation",
-    label: "Free cancellation",
+    labelKey: "hotelResults.filter.freeCancellation",
     terms: ["free cancellation", "flexible cancellation"],
   },
-  { value: "parking", label: "Parking", terms: ["parking"] },
-  { value: "pool", label: "Pool", terms: ["pool"] },
+  { value: "parking", labelKey: "hotelResults.filter.parking", terms: ["parking"] },
+  { value: "pool", labelKey: "hotelResults.filter.pool", terms: ["pool"] },
   {
     value: "airport-shuttle",
-    label: "Airport shuttle",
+    labelKey: "hotelResults.filter.airportShuttle",
     terms: ["airport shuttle", "airport transit", "airport"],
   },
 ];
 
 const MEAL_FILTERS = [
-  { value: "breakfast", label: "Breakfast", terms: ["breakfast"] },
+  { value: "breakfast", labelKey: "hotelResults.filter.breakfastIncludedAvailable", terms: ["breakfast"] },
   {
     value: "room-only",
-    label: "Room only",
+    labelKey: "hotelResults.filter.roomOnly",
     terms: ["room only", "accommodation only"],
   },
-  { value: "half-board", label: "Half board", terms: ["half board"] },
-  { value: "full-board", label: "Full board", terms: ["full board"] },
+  { value: "half-board", labelKey: "hotelResults.filter.halfBoard", terms: ["half board"] },
+  { value: "full-board", labelKey: "hotelResults.filter.fullBoard", terms: ["full board"] },
   {
     value: "all-inclusive",
-    label: "All inclusive",
+    labelKey: "hotelResults.filter.allInclusive",
     terms: ["all inclusive", "all-inclusive"],
   },
 ];
@@ -87,17 +87,17 @@ const MEAL_FILTERS = [
 const CANCELLATION_FILTERS = [
   {
     value: "free-cancellation",
-    label: "Free cancellation",
+    labelKey: "hotelResults.filter.freeCancellation",
     terms: ["free cancellation"],
   },
   {
     value: "flexible-cancellation",
-    label: "Flexible cancellation",
+    labelKey: "hotelResults.filter.flexibleCancellation",
     terms: ["flexible cancellation", "flexible cancellation window"],
   },
   {
     value: "policy-available",
-    label: "Cancellation policy available",
+    labelKey: "hotelResults.filter.cancellationPolicyAvailable",
     terms: [
       "cancellation policy available",
       "policy shown",
@@ -111,50 +111,50 @@ const CANCELLATION_FILTERS = [
 const FACILITY_FILTERS = [
   {
     value: "free-wifi",
-    label: "Free Wi-Fi",
+    labelKey: "hotelResults.filter.freeWifi",
     terms: ["free wi-fi", "free wifi", "wifi", "wi-fi"],
   },
-  { value: "parking", label: "Parking", terms: ["parking"] },
-  { value: "pool", label: "Pool", terms: ["pool"] },
-  { value: "spa", label: "Spa", terms: ["spa", "wellness"] },
-  { value: "fitness", label: "Fitness center", terms: ["fitness", "gym"] },
+  { value: "parking", labelKey: "hotelResults.filter.parking", terms: ["parking"] },
+  { value: "pool", labelKey: "hotelResults.filter.pool", terms: ["pool"] },
+  { value: "spa", labelKey: "hotelResults.filter.spa", terms: ["spa", "wellness"] },
+  { value: "fitness", labelKey: "hotelResults.filter.fitnessCenter", terms: ["fitness", "gym"] },
   {
     value: "airport-shuttle",
-    label: "Airport shuttle",
+    labelKey: "hotelResults.filter.airportShuttle",
     terms: ["airport shuttle", "airport transit access"],
   },
-  { value: "workspace", label: "Workspace", terms: ["workspace", "desk"] },
-  { value: "quiet-rooms", label: "Quiet rooms", terms: ["quiet"] },
+  { value: "workspace", labelKey: "hotelResults.filter.workspace", terms: ["workspace", "desk"] },
+  { value: "quiet-rooms", labelKey: "hotelResults.filter.quietRooms", terms: ["quiet"] },
   {
     value: "front-desk",
-    label: "24-hour front desk",
+    labelKey: "hotelResults.filter.frontDesk24",
     terms: ["24-hour desk", "24 hour desk", "24-hour front desk"],
   },
   {
     value: "late-check-in",
-    label: "Late check-in",
+    labelKey: "hotelResults.filter.lateCheckIn",
     terms: ["late check-in", "late checkin"],
   },
 ];
 
 const PROPERTY_TYPE_FILTERS = [
-  { value: "hotel", label: "Hotel", terms: ["hotel"] },
+  { value: "hotel", labelKey: "hotelResults.filter.hotel", terms: ["hotel"] },
   {
     value: "apartment",
-    label: "Apartment",
+    labelKey: "hotelResults.filter.apartment",
     terms: ["apartment", "apartments", "aparthotel"],
   },
-  { value: "resort", label: "Resort", terms: ["resort"] },
-  { value: "suite", label: "Suites", terms: ["suite", "suites"] },
-  { value: "inn", label: "Inn", terms: ["inn"] },
-  { value: "hostel", label: "Hostel", terms: ["hostel"] },
-  { value: "villa", label: "Villa", terms: ["villa"] },
+  { value: "resort", labelKey: "hotelResults.filter.resort", terms: ["resort"] },
+  { value: "suite", labelKey: "hotelResults.filter.suites", terms: ["suite", "suites"] },
+  { value: "inn", labelKey: "hotelResults.filter.inn", terms: ["inn"] },
+  { value: "hostel", labelKey: "hotelResults.filter.hostel", terms: ["hostel"] },
+  { value: "villa", labelKey: "hotelResults.filter.villa", terms: ["villa"] },
 ];
 
 const LOCATION_AREA_FILTERS = [
   {
     value: "city-centre",
-    label: "City Centre",
+    labelKey: "hotelResults.filter.cityCentre",
     terms: [
       "city centre",
       "city center",
@@ -166,22 +166,22 @@ const LOCATION_AREA_FILTERS = [
   },
   {
     value: "airport-area",
-    label: "Airport Area",
+    labelKey: "hotelResults.filter.airportArea",
     terms: ["airport", "airport area", "airport link", "airport transit"],
   },
   {
     value: "business-district",
-    label: "Business District",
+    labelKey: "hotelResults.filter.businessDistrict",
     terms: ["business district", "financial district", "business area"],
   },
   {
     value: "near-attractions",
-    label: "Near Attractions",
+    labelKey: "hotelResults.filter.nearAttractions",
     terms: ["attraction", "attractions", "landmark", "museum", "tourist"],
   },
   {
     value: "residential-area",
-    label: "Residential Area",
+    labelKey: "hotelResults.filter.residentialArea",
     terms: ["residential", "neighborhood", "neighbourhood"],
   },
 ];
@@ -189,49 +189,49 @@ const LOCATION_AREA_FILTERS = [
 const ROOM_TYPE_FILTERS = [
   {
     value: "single-room",
-    label: "Single Room",
+    labelKey: "hotelResults.filter.singleRoom",
     terms: ["single room", "single standard", "single"],
   },
   {
     value: "double-room",
-    label: "Double Room",
+    labelKey: "hotelResults.filter.doubleRoom",
     terms: ["double room", "double standard", "double"],
   },
   {
     value: "twin-room",
-    label: "Twin Room",
+    labelKey: "hotelResults.filter.twinRoom",
     terms: ["twin room", "twin standard", "twin"],
   },
   {
     value: "family-room",
-    label: "Family Room",
+    labelKey: "hotelResults.filter.familyRoom",
     terms: ["family room", "family standard", "family"],
   },
-  { value: "suite", label: "Suite", terms: ["suite"] },
-  { value: "standard-room", label: "Standard Room", terms: ["standard room"] },
-  { value: "deluxe-room", label: "Deluxe Room", terms: ["deluxe room"] },
-  { value: "studio", label: "Studio", terms: ["studio"] },
+  { value: "suite", labelKey: "hotelResults.filter.suites", terms: ["suite"] },
+  { value: "standard-room", labelKey: "hotelResults.filter.standardRoom", terms: ["standard room"] },
+  { value: "deluxe-room", labelKey: "hotelResults.filter.deluxeRoom", terms: ["deluxe room"] },
+  { value: "studio", labelKey: "hotelResults.filter.studio", terms: ["studio"] },
 ];
 
 const BED_TYPE_FILTERS = [
   {
     value: "twin-beds",
-    label: "Twin Beds",
+    labelKey: "hotelResults.filter.twinBeds",
     terms: ["twin bed", "twin beds", "2 twin", "two twin"],
   },
   {
     value: "double-bed",
-    label: "Double Bed",
+    labelKey: "hotelResults.filter.doubleBed",
     terms: ["double bed", "double beds"],
   },
   {
     value: "queen-bed",
-    label: "Queen Bed",
+    labelKey: "hotelResults.filter.queenBed",
     terms: ["queen bed", "queen beds", "queen room"],
   },
   {
     value: "king-bed",
-    label: "King Bed",
+    labelKey: "hotelResults.filter.kingBed",
     terms: ["king bed", "king beds", "king room"],
   },
 ];
@@ -244,7 +244,7 @@ type FilterOption = {
 
 type TermFilter = {
   value: string;
-  label: string;
+  labelKey: string;
   terms: string[];
 };
 
@@ -316,7 +316,10 @@ type HotelMobileSearchDraft = {
 
 export function HotelResultsClient() {
   const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const t = useCallback(
+    (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
+    [dictionary],
+  );
   const params = useSearchParams();
 
   const [results, setResults] = useState<PublicHotelResult[]>([]);
@@ -509,12 +512,12 @@ export function HotelResultsClient() {
 
         if (data.warningCategory === "no_live_hotel_provider") {
           throw new Error(
-            "Hotel search is temporarily unavailable for this request. We only show stay options when price, availability, fees, and rules can be reviewed with the provider. Please try again later or start a new search.",
+            t("hotelResults.searchUnavailableDetailed"),
           );
         }
 
         if (!response.ok) {
-          throw new Error(data.error || "Unable to search hotels.");
+          throw new Error(data.error || t("hotelResults.unableToSearchHotels"));
         }
 
         return data as { results: PublicHotelResult[]; warnings?: string[] };
@@ -545,7 +548,7 @@ export function HotelResultsClient() {
         setError(
           searchError instanceof Error
             ? searchError.message
-            : "Unable to search hotels.",
+            : t("hotelResults.unableToSearchHotels"),
         );
       })
       .finally(() => {
@@ -555,13 +558,16 @@ export function HotelResultsClient() {
     return () => {
       active = false;
     };
-  }, [body]);
+  }, [body, t]);
 
   useEffect(() => {
     if (!loading) return;
 
     const id = window.setInterval(
-      () => setMessageIndex((current) => (current + 1) % messages.length),
+      () =>
+        setMessageIndex((current) =>
+          (current + 1) % loadingMessageKeys.length
+        ),
       1200,
     );
 
@@ -569,8 +575,8 @@ export function HotelResultsClient() {
   }, [loading]);
 
   const filterOptions = useMemo(
-    () => buildHotelFilterOptions(results),
-    [results],
+    () => buildHotelFilterOptions(results, t),
+    [results, t],
   );
 
   const filtered = useMemo(
@@ -595,8 +601,9 @@ export function HotelResultsClient() {
         resultMaxPrice,
         minRating,
         resultCurrency,
+        t,
       ),
-    [maxPrice, minRating, resultCurrency, resultMaxPrice, selectedFilters],
+    [maxPrice, minRating, resultCurrency, resultMaxPrice, selectedFilters, t],
   );
 
   const resultsApplying = filterApplying || searchApplying;
@@ -606,8 +613,8 @@ export function HotelResultsClient() {
     [hotelSummarySortMode, visibleFilteredHotels],
   );
   const hotelSummaryItems = useMemo(
-    () => buildHotelSummaryItems(visibleFilteredHotels),
-    [visibleFilteredHotels],
+    () => buildHotelSummaryItems(visibleFilteredHotels, t),
+    [t, visibleFilteredHotels],
   );
 
   const showFilteredEmptyState =
@@ -827,6 +834,7 @@ export function HotelResultsClient() {
           onScroll={showFilterScrollbarWhileScrolling}
         >
           <HotelFilters
+            t={t}
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
             resultMaxPrice={resultMaxPrice}
@@ -842,16 +850,14 @@ export function HotelResultsClient() {
         <section className="min-w-0 space-y-4">
           {!loading && !error && warnings.length ? (
             <div className="rounded-md border border-amber/30 bg-amber/10 p-3 text-sm text-amber">
-              Some provider checks may be limited for this hotel search. Review
-              final availability, taxes, fees, and cancellation rules with the
-              provider before booking.
+              {t("hotelResults.limitedProviderChecks")}
             </div>
           ) : null}
 
           {loading ? (
             <div className="space-y-4">
               <div className="rounded-md border border-indigo-100 bg-indigo-50/70 p-4 text-sm font-semibold text-violet-700">
-                {messages[messageIndex]}
+                {t(loadingMessageKeys[messageIndex])}
               </div>
               <HotelSkeleton />
               <HotelSkeleton />
@@ -867,21 +873,21 @@ export function HotelResultsClient() {
                 chips={activeFilterChips}
                 onRemove={removeFilterChip}
                 onClearAll={resetFilters}
+                t={t}
               />
               <div className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_16px_40px_-24px_rgba(30,27,75,0.45)]">
                 <p className="text-base font-bold text-indigo-950">
-                  No stays match these filters
+                  {t("hotelResults.noStaysMatchFiltersTitle")}
                 </p>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-                  Try increasing the price range, lowering the star rating, or
-                  clearing selected hotel filters to see more available options.
+                  {t("hotelResults.noStaysMatchFiltersBody")}
                 </p>
                 <Button
                   variant="secondary"
                   className="mt-4"
                   onClick={resetFilters}
                 >
-                  Reset filters
+                  {t("hotelResults.resetFilters")}
                 </Button>
               </div>
             </div>
@@ -897,18 +903,22 @@ export function HotelResultsClient() {
                   chips={activeFilterChips}
                   onRemove={removeFilterChip}
                   onClearAll={resetFilters}
+                  t={t}
                 />
 
                 <HotelSummaryRow
                   activeSortMode={hotelSummarySortMode}
                   items={hotelSummaryItems}
                   onSortModeChange={updateHotelSummarySortMode}
+                  t={t}
                 />
 
                 <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <h1 className="text-sm font-bold text-navy">
-                    We found {visibleFilteredHotels.length} places to stay for
-                    you
+                    {t("hotelResults.foundPlacesToStay").replace(
+                      "{{count}}",
+                      String(visibleFilteredHotels.length),
+                    )}
                   </h1>
                 </div>
 
@@ -918,8 +928,7 @@ export function HotelResultsClient() {
                   ))
                 ) : (
                   <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
-                    No stays match these filters. Widen your filters to see more
-                    available options.
+                    {t("hotelResults.noStaysMatchFiltersInline")}
                   </div>
                 )}
               </div>
@@ -956,7 +965,7 @@ export function HotelResultsClient() {
             <Button
               variant="ghost"
               className="h-10 w-10 px-0"
-              aria-label="Close filters"
+              aria-label={t("closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
               <X size={20} />
@@ -964,6 +973,7 @@ export function HotelResultsClient() {
           </div>
 
           <HotelFilters
+            t={t}
             maxPrice={maxPrice}
             setMaxPrice={updateMaxPrice}
             resultMaxPrice={resultMaxPrice}
@@ -985,7 +995,7 @@ export function HotelResultsClient() {
               setFiltersOpen(false);
             }}
           >
-            Done
+            {t("done")}
           </Button>
         </div>
       </aside>
@@ -997,17 +1007,19 @@ function HotelSummaryRow({
   activeSortMode,
   items,
   onSortModeChange,
+  t,
 }: {
   activeSortMode: HotelSummarySortMode;
   items: HotelSummaryItem[];
   onSortModeChange: (sortMode: HotelSummarySortMode) => void;
+  t: (key: string) => string;
 }) {
   if (!items.length) return null;
 
   return (
     <div
       className="flex max-w-full snap-x gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 [&::-webkit-scrollbar]:hidden"
-      aria-label="Hotel result summary"
+      aria-label={t("hotelResults.summaryAria")}
     >
       {items.map((item) => {
         const Icon = item.icon;
@@ -1112,6 +1124,7 @@ function sortHotelSummaryResults(
 
 function buildHotelSummaryItems(
   hotels: PublicHotelResult[],
+  t: (key: string) => string,
 ): HotelSummaryItem[] {
   if (!hotels.length) return [];
 
@@ -1142,25 +1155,25 @@ function buildHotelSummaryItems(
 
   return [
     {
-      label: "CHEAPEST",
+      label: t("hotelResults.cheapest"),
       value: formatCurrency(getHotelSortablePrice(cheapest), cheapest.currency),
-      helperText: "Lowest total price",
+      helperText: t("hotelResults.lowestTotalPrice"),
       icon: Tag,
       iconClassName: "bg-violet-100 text-indigo-700 ring-1 ring-violet-200",
       sortMode: "cheapest",
     },
     {
-      label: "BEST VALUE",
-      value: formatHotelValueSummary(bestValue),
-      helperText: "Best balance",
+      label: t("hotelResults.bestValue"),
+      value: formatHotelValueSummary(bestValue, t),
+      helperText: t("hotelResults.bestBalance"),
       icon: ThumbsUp,
       iconClassName: "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200",
       sortMode: "bestValue",
     },
     {
-      label: "TOP RATED",
-      value: formatHotelRating(topRated.rating),
-      helperText: "Highest rating",
+      label: t("hotelResults.topRated"),
+      value: formatHotelRating(topRated.rating, t),
+      helperText: t("hotelResults.highestRating"),
       icon: Star,
       iconClassName: "bg-amber-100 text-amber-600 ring-1 ring-amber-200",
       iconElementClassName: "fill-current",
@@ -1190,39 +1203,48 @@ function getHotelValueSortScore(hotel: PublicHotelResult) {
   return Number.isFinite(hotel.valueScore) ? hotel.valueScore : null;
 }
 
-function formatHotelValueSummary(hotel: PublicHotelResult) {
+function formatHotelValueSummary(
+  hotel: PublicHotelResult,
+  t: (key: string) => string,
+) {
   const valueScore = getHotelValueSortScore(hotel);
 
   if (valueScore !== null) {
-    return `${Math.round(valueScore)}/100 score`;
+    return t("hotelResults.valueScore").replace(
+      "{{score}}",
+      String(Math.round(valueScore)),
+    );
   }
 
-  return "Recommended";
+  return t("hotelResults.recommended");
 }
 
-function formatHotelRating(rating: number) {
+function formatHotelRating(rating: number, t: (key: string) => string) {
   const formatted = Number.isInteger(rating)
     ? String(rating)
     : rating.toFixed(1);
 
-  return `${formatted} star${rating === 1 ? "" : "s"}`;
+  return t(rating === 1 ? "hotelResults.starSingular" : "hotelResults.starPlural")
+    .replace("{{count}}", formatted);
 }
 
 function ActiveHotelFilterChips({
   chips,
   onRemove,
   onClearAll,
+  t,
 }: {
   chips: ActiveHotelFilterChip[];
   onRemove: (chip: ActiveHotelFilterChip) => void;
   onClearAll: () => void;
+  t: (key: string) => string;
 }) {
   if (!chips.length) return null;
 
   return (
     <div
       className="flex max-w-full flex-wrap items-center gap-2 overflow-x-clip"
-      aria-label="Active hotel filters"
+      aria-label={t("hotelResults.activeHotelFilters")}
     >
       {chips.map((chip) => (
         <button
@@ -1230,7 +1252,7 @@ function ActiveHotelFilterChips({
           type="button"
           className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-indigo-950 transition-colors hover:border-violet-300 hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
           onClick={() => onRemove(chip)}
-          aria-label={`Remove ${chip.label} filter`}
+          aria-label={t("hotelResults.removeFilter").replace("{{label}}", chip.label)}
         >
           <span className="truncate">{chip.label}</span>
           <span
@@ -1246,13 +1268,14 @@ function ActiveHotelFilterChips({
         className="rounded-full px-1.5 py-1 text-xs font-bold text-violet-700 transition-colors hover:text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/40"
         onClick={onClearAll}
       >
-        Clear all
+        {t("clearAll")}
       </button>
     </div>
   );
 }
 
 function HotelFilters({
+  t,
   maxPrice,
   setMaxPrice,
   resultMaxPrice,
@@ -1263,6 +1286,7 @@ function HotelFilters({
   selectedFilters,
   toggleFilter,
 }: {
+  t: (key: string) => string;
   maxPrice: number;
   setMaxPrice: (value: number) => void;
   resultMaxPrice: number;
@@ -1280,16 +1304,16 @@ function HotelFilters({
     <div className="bg-white">
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
-          <h2 className="text-base font-bold text-white">Filter by</h2>
+          <h2 className="text-base font-bold text-white">{t("filterBy")}</h2>
         </div>
         <SlidersHorizontal className="text-white/90" size={18} />
       </div>
 
       <div className="space-y-4 bg-white px-3 py-3">
-        <FilterSection title="Budget / Price">
+        <FilterSection title={t("hotelResults.budgetPrice")}>
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
-              Total up to{" "}
+              {t("hotelResults.totalUpTo")} {" "}
               <span className="font-mono text-indigo-950">
                 {formatCurrency(maxPrice, priceCurrency)}
               </span>
@@ -1307,16 +1331,17 @@ function HotelFilters({
         </FilterSection>
 
         <CheckboxFilterSection
-          title="Popular Filters"
+          title={t("hotelResults.popularFilters")}
           options={options.popular}
           selected={selectedFilters.popular}
           onToggle={(value) => toggleFilter("popular", value)}
+          t={t}
         />
 
-        <FilterSection title="Star Rating">
+        <FilterSection title={t("hotelResults.starRating")}>
           <label className="block">
             <span className="mb-1.5 flex items-center justify-between text-[11px] font-medium text-muted">
-              From{" "}
+              {t("fromPrice")} {" "}
               <span className="font-mono text-indigo-950">{minRating}+</span>
             </span>
             <input
@@ -1332,55 +1357,62 @@ function HotelFilters({
         </FilterSection>
 
         <CheckboxFilterSection
-          title="Location / Area"
+          title={t("hotelResults.locationArea")}
           options={options.locations}
           selected={selectedFilters.locations}
           onToggle={(value) => toggleFilter("locations", value)}
+          t={t}
           collapsedCount={5}
         />
 
         <CheckboxFilterSection
-          title="Property Type"
+          title={t("hotelResults.propertyType")}
           options={options.propertyTypes}
           selected={selectedFilters.propertyTypes}
           onToggle={(value) => toggleFilter("propertyTypes", value)}
+          t={t}
         />
 
         <CheckboxFilterSection
-          title="Room Type"
+          title={t("hotelResults.roomType")}
           options={options.roomTypes}
           selected={selectedFilters.roomTypes}
           onToggle={(value) => toggleFilter("roomTypes", value)}
+          t={t}
           collapsedCount={5}
         />
 
         <CheckboxFilterSection
-          title="Bed Type"
+          title={t("hotelResults.bedType")}
           options={options.bedTypes}
           selected={selectedFilters.bedTypes}
           onToggle={(value) => toggleFilter("bedTypes", value)}
+          t={t}
           collapsedCount={5}
         />
 
         <CheckboxFilterSection
-          title="Meals"
+          title={t("hotelResults.meals")}
           options={options.meals}
           selected={selectedFilters.meals}
           onToggle={(value) => toggleFilter("meals", value)}
+          t={t}
         />
 
         <CheckboxFilterSection
-          title="Cancellation Policy"
+          title={t("hotelResults.cancellationPolicy")}
           options={options.cancellationPolicies}
           selected={selectedFilters.cancellationPolicies}
           onToggle={(value) => toggleFilter("cancellationPolicies", value)}
+          t={t}
         />
 
         <CheckboxFilterSection
-          title="Facilities"
+          title={t("hotelResults.facilities")}
           options={options.facilities}
           selected={selectedFilters.facilities}
           onToggle={(value) => toggleFilter("facilities", value)}
+          t={t}
           collapsedCount={6}
         />
       </div>
@@ -1410,12 +1442,14 @@ function CheckboxFilterSection({
   options,
   selected,
   onToggle,
+  t,
   collapsedCount = 4,
 }: {
   title: string;
   options: FilterOption[];
   selected: string[];
   onToggle: (value: string) => void;
+  t: (key: string) => string;
   collapsedCount?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -1467,8 +1501,11 @@ function CheckboxFilterSection({
           onClick={() => setExpanded((current) => !current)}
         >
           {expanded
-            ? "Show less"
-            : `Show more (${options.length - collapsedCount})`}
+            ? t("hotelResults.showLess")
+            : t("hotelResults.showMore").replace(
+                "{{count}}",
+                String(options.length - collapsedCount),
+              )}
         </button>
       ) : null}
     </FilterSection>
@@ -1481,6 +1518,7 @@ function buildActiveFilterChips(
   resultMaxPrice: number,
   minRating: number,
   priceCurrency: string,
+  t: (key: string) => string,
 ): ActiveHotelFilterChip[] {
   const filterGroups: Array<{
     group: keyof HotelFilterSelections;
@@ -1503,7 +1541,7 @@ function buildActiveFilterChips(
 
         return {
           key: `${group}-${value}`,
-          label: filter?.label ?? value,
+          label: filter ? t(filter.labelKey) : value,
           group,
           value,
         };
@@ -1513,7 +1551,10 @@ function buildActiveFilterChips(
   if (maxPrice < resultMaxPrice) {
     chips.push({
       key: "maxPrice",
-      label: `Up to ${formatCurrency(maxPrice, priceCurrency)}`,
+      label: t("hotelResults.upToPrice").replace(
+        "{{price}}",
+        formatCurrency(maxPrice, priceCurrency),
+      ),
       kind: "maxPrice",
     });
   }
@@ -1521,7 +1562,10 @@ function buildActiveFilterChips(
   if (minRating > DEFAULT_MIN_RATING) {
     chips.push({
       key: "minRating",
-      label: `${minRating}+ stars`,
+      label: t("hotelResults.starsAndUp").replace(
+        "{{rating}}",
+        String(minRating),
+      ),
       kind: "minRating",
     });
   }
@@ -1529,33 +1573,49 @@ function buildActiveFilterChips(
   return chips;
 }
 
-function buildHotelFilterOptions(hotels: PublicHotelResult[]) {
+function buildHotelFilterOptions(
+  hotels: PublicHotelResult[],
+  t: (key: string) => string,
+) {
   return {
-    popular: buildTermOptions(hotels, POPULAR_FILTERS, getSearchableHotelText),
-    propertyTypes: buildTermOptions(hotels, PROPERTY_TYPE_FILTERS, (hotel) =>
-      [hotel.name, hotel.roomType].join(" "),
+    popular: buildTermOptions(hotels, POPULAR_FILTERS, getSearchableHotelText, t),
+    propertyTypes: buildTermOptions(
+      hotels,
+      PROPERTY_TYPE_FILTERS,
+      (hotel) => [hotel.name, hotel.roomType].join(" "),
+      t,
     ),
-    meals: buildTermOptions(hotels, MEAL_FILTERS, getSearchableHotelText),
+    meals: buildTermOptions(hotels, MEAL_FILTERS, getSearchableHotelText, t),
     cancellationPolicies: buildTermOptions(
       hotels,
       CANCELLATION_FILTERS,
       (hotel) => [hotel.cancellationInfo, ...hotel.amenities].join(" "),
+      t,
     ),
-    facilities: buildTermOptions(hotels, FACILITY_FILTERS, (hotel) =>
-      hotel.amenities.join(" "),
+    facilities: buildTermOptions(
+      hotels,
+      FACILITY_FILTERS,
+      (hotel) => hotel.amenities.join(" "),
+      t,
     ),
-    locations: buildTermOptions(hotels, LOCATION_AREA_FILTERS, (hotel) =>
-      [hotel.location, hotel.distanceFromCenter, ...hotel.amenities].join(" "),
+    locations: buildTermOptions(
+      hotels,
+      LOCATION_AREA_FILTERS,
+      (hotel) =>
+        [hotel.location, hotel.distanceFromCenter, ...hotel.amenities].join(" "),
+      t,
     ),
     roomTypes: buildTermOptions(
       hotels,
       ROOM_TYPE_FILTERS,
       (hotel) => hotel.roomType,
+      t,
     ),
     bedTypes: buildTermOptions(
       hotels,
       BED_TYPE_FILTERS,
       (hotel) => hotel.roomType,
+      t,
     ),
   };
 }
@@ -1564,11 +1624,12 @@ function buildTermOptions(
   hotels: PublicHotelResult[],
   filters: TermFilter[],
   textForHotel: (hotel: PublicHotelResult) => string,
+  t: (key: string) => string,
 ) {
   return filters
     .map((filter) => ({
       value: filter.value,
-      label: filter.label,
+      label: t(filter.labelKey),
       count: hotels.filter((hotel) =>
         textIncludesTerms(textForHotel(hotel), filter.terms),
       ).length,
