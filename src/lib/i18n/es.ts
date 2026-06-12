@@ -216,6 +216,20 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.privacy.title": "Privacidad",
   "accountDashboard.security.privacy.description":
     "Revisa cómo se usa la información de tu cuenta.",
+  "accountDashboard.support.eyebrow": "SOPORTE",
+  "accountDashboard.support.title": "Soporte",
+  "accountDashboard.support.description":
+    "Encuentra recursos de ayuda y políticas sin presentar herramientas de soporte inactivas como flujos completos.",
+  "accountDashboard.support.comingSoon": "Próximamente",
+  "accountDashboard.support.helpCenter.title": "Centro de ayuda",
+  "accountDashboard.support.helpCenter.description":
+    "Explora el área de soporte existente para obtener ayuda de Kurioticket y orientación para planificar viajes.",
+  "accountDashboard.support.contact.title": "Contactar soporte",
+  "accountDashboard.support.contact.description":
+    "Las opciones de contacto se están preparando para solicitudes de soporte de cuenta.",
+  "accountDashboard.support.privacyData.title": "Privacidad y datos",
+  "accountDashboard.support.privacyData.description":
+    "Revisa la información legal y de privacidad sobre datos de cuenta y políticas de la plataforma.",
   "accountDashboard.mobile.backAriaLabel": "Volver a Mi cuenta",
   "accountDashboard.mobile.manageAccount": "Gestionar cuenta",
   "accountDashboard.personalDetails.title": "Datos personales",

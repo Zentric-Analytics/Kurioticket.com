@@ -789,19 +789,40 @@ export function SecurityDashboardPage() {
 }
 
 export function SupportDashboardPage() {
+  const { t } = useLocale();
+
   return (
     <section aria-labelledby="support-title" className="space-y-4">
       <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Support</p>
-        <h1 id="support-title" className="mt-2 text-3xl font-bold text-navy">Support</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
+          {t["accountDashboard.support.eyebrow"]}
+        </p>
+        <h1 id="support-title" className="mt-2 text-3xl font-bold text-navy">
+          {t["accountDashboard.support.title"]}
+        </h1>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Find help and policy resources without presenting inactive support tools as complete workflows.
+          {t["accountDashboard.support.description"]}
         </p>
       </div>
       <div className="grid gap-3">
-        <ListRow title="Help center" body="Browse the existing support area for Kurioticket help and travel-planning guidance." href="/support" icon={LifeBuoy} />
-        <ListRow title="Contact support" body="Contact options are being prepared for account support requests." icon={Headphones} status="Coming soon" />
-        <ListRow title="Privacy and data" body="Review legal and privacy information for account data and platform policies." href="/legal" icon={LockKeyhole} />
+        <ListRow
+          title={t["accountDashboard.support.helpCenter.title"]}
+          body={t["accountDashboard.support.helpCenter.description"]}
+          href="/support"
+          icon={LifeBuoy}
+        />
+        <ListRow
+          title={t["accountDashboard.support.contact.title"]}
+          body={t["accountDashboard.support.contact.description"]}
+          icon={Headphones}
+          status={t["accountDashboard.support.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.support.privacyData.title"]}
+          body={t["accountDashboard.support.privacyData.description"]}
+          href="/legal"
+          icon={LockKeyhole}
+        />
       </div>
     </section>
   );
