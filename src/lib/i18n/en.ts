@@ -179,6 +179,17 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.openSavedTrips": "Open saved trips",
   "accountDashboard.saved.searchFlights": "Search flights",
   "accountDashboard.saved.searchHotels": "Search hotels",
+  "accountSettings.eyebrow": "MY ACCOUNT",
+  "accountSettings.title": "Account settings",
+  "accountSettings.description":
+    "Manage account details and preferences from your Kurioticket account.",
+  "accountSettings.notifications.title": "Notification preferences",
+  "accountSettings.notifications.description":
+    "Review account email information and keep preference details in one place.",
+  "accountSettings.privacy.title": "Privacy controls",
+  "accountSettings.privacy.description":
+    "Review privacy information, account data guidance, and platform policies.",
+  "accountSettings.privacy.legalCenterCta": "Review legal center",
   "accountDashboard.preferences.eyebrow": "PREFERENCES",
   "accountDashboard.preferences.title": "Preferences",
   "accountDashboard.preferences.description":
