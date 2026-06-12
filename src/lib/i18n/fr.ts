@@ -35,7 +35,7 @@ export const translations: TranslationDictionary = {
   signupErrorInvalidEmail: "Saisissez une adresse e-mail valide.",
   signupErrorPasswordRequirements:
     "Le mot de passe doit respecter les exigences minimales.",
-  signupErrorUnableCreate: "Impossible de créer le compte pour le moment.",
+  signupErrorUnableCreate: "Une erreur est survenue. Veuillez réessayer.",
   signupErrorRateLimited:
     "Trop de tentatives d’inscription. Veuillez patienter, puis réessayer.",
   signupErrorDuplicateEmail:
@@ -43,10 +43,10 @@ export const translations: TranslationDictionary = {
   signupErrorUnableSendVerification:
     "Impossible d’envoyer le code de vérification pour le moment. Veuillez réessayer.",
   signupVerificationRequiredRedirecting:
-    "Vérification requise. Redirection...",
+    "Consultez votre boîte e-mail pour vérifier votre compte.",
   signupAutomaticLoginFailed:
     "Votre compte a été créé, mais la connexion automatique a échoué. Veuillez vous connecter avec votre nouveau mot de passe.",
-  signupAccountCreatedRedirecting: "Compte créé. Redirection...",
+  signupAccountCreatedRedirecting: "Compte créé avec succès. Redirection...",
   legalCenter: "Centre légal",
   logout: "Se déconnecter",
   homeHeroTitle: "Trouvez rapidement des vols pas chers",
