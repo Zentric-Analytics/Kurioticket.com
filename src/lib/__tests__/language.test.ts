@@ -19,6 +19,7 @@ test("global language catalog renders", () => {
   assert.equal(languageOptions.length, 18);
   assert.ok(languageOptions.some((o) => o.locale === "en-US" && o.status === "available"));
   assert.ok(languageOptions.some((o) => o.locale === "es-ES" && o.status === "available"));
+  assert.ok(languageOptions.some((o) => o.code === "fr" && o.locale === "fr" && o.nativeLabel === "Français" && o.status === "available"));
   assert.ok(languageOptions.some((o) => o.locale === "ar" && o.direction === "rtl"));
 });
 
@@ -32,7 +33,7 @@ test("search filters by native label and canonical locale", () => {
   assert.ok(filtered.some((o) => o.code === "pt-br"));
 });
 
-test("selected available Spanish locale persists and updates document language", () => {
+test("selected available Spanish and French locales persist and update document language", () => {
   const store = new Map<string, string>();
   const windowMock: WindowLike = {
     localStorage: {
@@ -53,6 +54,11 @@ test("selected available Spanish locale persists and updates document language",
   setLanguageInStorage("en-US");
   assert.equal(getLanguageFromStorage(), "en-us");
   assert.equal(documentMock.documentElement.lang, "en-US");
+
+  setLanguageInStorage("fr");
+  assert.equal(getLanguageFromStorage(), "fr");
+  assert.equal(documentMock.documentElement.lang, "fr");
+  assert.equal(documentMock.documentElement.dir, "ltr");
 });
 
 test("preparing locales are not persisted as selected", () => {
@@ -66,11 +72,11 @@ test("preparing locales are not persisted as selected", () => {
   };
   Object.defineProperty(globalThis, "window", { value: windowMock, configurable: true });
 
-  setLanguageInStorage("fr-FR");
+  setLanguageInStorage("de-DE");
   assert.equal(getLanguageFromStorage(), "en-us");
 
   setLanguageInStorage("es-ES");
-  setLanguageInStorage("fr-FR");
+  setLanguageInStorage("de-DE");
   assert.equal(getLanguageFromStorage(), "en-us");
 });
 

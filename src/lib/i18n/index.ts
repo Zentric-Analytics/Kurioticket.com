@@ -46,7 +46,7 @@ import { translations as zhCn } from "./zh-cn";
 import { translations as zhTw } from "./zh-tw";
 
 export const dictionaries: Record<string, TranslationDictionary> = {
-  "en-us": en, "en-gb": en, "fr-fr": fr, de, "es-es": es, it, nl, "pt-br": ptBr, "pt-pt": ptPt,
+  "en-us": en, "en-gb": en, fr, de, "es-es": es, it, nl, "pt-br": ptBr, "pt-pt": ptPt,
   pl, ru, uk, tr, "ar-sa": ar, he, "zh-cn": zhCn, "zh-tw": zhTw, ja, ko, hi, id, ms, th, vi, cs, da,
   fi, el, hu, no, ro, sk, sv, bg, hr, lt, lv, et, sl, sr, sw, yo, ig, ha, ur,
 };
@@ -59,8 +59,8 @@ const fallbackLocale: LocaleCode = "en-us";
 const localeAliases: Record<string, string> = {
   en: "en-us",
   "en-us": "en-us",
-  fr: "fr-fr",
-  "fr-fr": "fr-fr",
+  fr: "fr",
+  "fr-fr": "fr",
   es: "es-es",
   "es-es": "es-es",
   de: "de",
@@ -104,7 +104,7 @@ export function getTranslations(locale?: string | null): TranslationDictionary {
 
 export function getLocaleCountryCode(code: string): string {
   const map: Record<string, string> = {
-    "en-us": "US", "en-gb": "GB", "fr-fr": "FR", de: "DE", "es-es": "ES", it: "IT", nl: "NL", "pt-br": "BR", "pt-pt": "PT",
+    "en-us": "US", "en-gb": "GB", fr: "FR", de: "DE", "es-es": "ES", it: "IT", nl: "NL", "pt-br": "BR", "pt-pt": "PT",
     pl: "PL", ru: "RU", uk: "UA", tr: "TR", "ar-sa": "SA", he: "IL", "zh-cn": "CN", "zh-tw": "TW", ja: "JP", ko: "KR", hi: "IN",
     id: "ID", ms: "MY", th: "TH", vi: "VN", cs: "CZ", da: "DK", fi: "FI", el: "GR", hu: "HU", no: "NO", ro: "RO", sk: "SK", sv: "SE",
     bg: "BG", hr: "HR", lt: "LT", lv: "LV", et: "EE", sl: "SI", sr: "RS", sw: "KE", yo: "NG", ig: "NG", ha: "NG", ur: "PK",
