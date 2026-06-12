@@ -47,6 +47,63 @@ export const translations: TranslationDictionary = {
   signupAutomaticLoginFailed:
     "Votre compte a été créé, mais la connexion automatique a échoué. Veuillez vous connecter avec votre nouveau mot de passe.",
   signupAccountCreatedRedirecting: "Compte créé avec succès. Redirection...",
+  loginPageTitle: "Se connecter",
+  loginPageSubtitle:
+    "Enregistrez vos recherches, gérez vos alertes et accédez à votre tableau de bord de voyage.",
+  loginEmailLabel: "Adresse e-mail",
+  loginPasswordLabel: "Mot de passe",
+  loginForgotPassword: "Mot de passe oublié ?",
+  loginSubmit: "Se connecter",
+  loginCheckingDetails: "Vérification des informations…",
+  loginGoogle: "Continuer avec Google",
+  loginSignupPrompt: "Vous découvrez Kurioticket ?",
+  loginCreateAccount: "Créer un compte",
+  loginInvalidCredentials:
+    "Adresse e-mail ou mot de passe incorrect. Veuillez réessayer.",
+  loginRateLimited:
+    "Trop de tentatives. Veuillez patienter un instant, puis réessayer.",
+  loginCodeSent: "Nous avons envoyé un code de vérification à votre adresse e-mail.",
+  loginCodeFailed: "Ce code n’a pas fonctionné. Vérifiez le code et réessayez.",
+  loginProcessing:
+    "Vérification de vos informations et envoi d’un code de vérification…",
+  loginResendSuccess:
+    "Nous avons envoyé un nouveau code si ce compte peut se connecter.",
+  loginEnterCode: "Saisissez le code de connexion à 6 chiffres.",
+  loginVerifiedRedirecting: "Vérifié. Redirection…",
+  loginStartOverError:
+    "Recommencez afin que nous puissions vérifier vos informations avant d’envoyer un nouveau code.",
+  loginSendingNewCode: "Envoi d’un nouveau code de vérification…",
+  loginUnableSendNewCode:
+    "Impossible d’envoyer un nouveau code pour le moment. Veuillez réessayer.",
+  loginUnableSendLoginCode:
+    "Impossible d’envoyer le code de connexion pour le moment. Veuillez réessayer.",
+  loginCodeInstructions:
+    "Saisissez le code à 6 chiffres envoyé à {{email}}. Les codes expirent après 10 minutes.",
+  loginVerificationCodeLabel: "Code de vérification",
+  loginVerifying: "Vérification…",
+  loginVerifyLogin: "Vérifier la connexion",
+  loginSendingCode: "Envoi du code…",
+  loginResendIn: "Renvoyer dans {{seconds}} s",
+  loginResendCode: "Renvoyer le code",
+  loginUseDifferentDetails: "Utiliser d’autres informations",
+  loginPasswordResetSuccess:
+    "Votre mot de passe a été réinitialisé. Connectez-vous avec votre nouveau mot de passe.",
+  loginInactiveMessage:
+    "Votre session a été fermée après 30 minutes d’inactivité. Reconnectez-vous pour continuer.",
+  loginErrorAccountUnavailable:
+    "Ce compte n’est pas disponible. Contactez l’assistance.",
+  loginErrorOAuthCallback:
+    "La connexion avec Google a été interrompue pendant le rappel. Veuillez réessayer.",
+  loginErrorOAuthAccountNotLinked:
+    "Cette adresse e-mail est déjà associée à une autre méthode de connexion. Continuez avec votre méthode d’origine ou réinitialisez votre mot de passe.",
+  loginErrorAccessDenied:
+    "L’accès a été refusé par Google. Veuillez autoriser l’accès et réessayer.",
+  loginErrorConfiguration:
+    "La connexion avec Google est temporairement indisponible. Veuillez réessayer bientôt ou utiliser la connexion par e-mail.",
+  loginErrorCallback:
+    "Le rappel de connexion Google a échoué. Veuillez réessayer ou utiliser la connexion par e-mail.",
+  loginErrorGoogleGeneric:
+    "La connexion avec Google n’a pas pu aboutir. Veuillez réessayer ou utiliser la connexion par e-mail.",
   legalCenter: "Centre légal",
   logout: "Se déconnecter",
   openLanguagePreferences:
