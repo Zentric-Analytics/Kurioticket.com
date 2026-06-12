@@ -1,6 +1,7 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { SignupForm } from "@/components/auth/SignupForm";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   getGoogleClientId,
   getGoogleClientSecret,
@@ -9,7 +10,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Sign Up",
+  title: enTranslations.signupPageTitle,
 };
 
 export default function SignupPage() {
