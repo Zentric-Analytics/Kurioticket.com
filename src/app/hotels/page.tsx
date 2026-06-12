@@ -456,6 +456,7 @@ export default function HotelsSearchPage() {
     ...translateHotelInspirationCard(card),
     href: destinationCardHref(card.destinationQuery),
   }));
+  const hotelSearchIntroLabel = t("hotelSearchIntroLabel");
 
   return (
     <>
@@ -464,7 +465,7 @@ export default function HotelsSearchPage() {
         <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
         <div className="relative mx-auto max-w-6xl space-y-11 md:space-y-14">
-          <HotelSearchBar />
+          <HotelSearchBar introLabel={hotelSearchIntroLabel} />
 
           <section
             className="space-y-4"
