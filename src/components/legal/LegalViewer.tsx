@@ -147,11 +147,49 @@ function getAffiliateDisclosureDocumentTranslation(
   };
 }
 
+function getAcceptableUsePolicyDocumentTranslation(
+  document: LegalDocument,
+  t: TranslationDictionary
+): LegalDocument {
+  if (document.slug !== "acceptable-use-policy") {
+    return document;
+  }
+
+  return {
+    ...document,
+    title: getTranslation(t, "legal.acceptableUsePolicy.title", document.title),
+    summary: getTranslation(t, "legal.acceptableUsePolicy.summary", document.summary),
+    lastUpdated: getTranslation(
+      t,
+      "legal.acceptableUsePolicy.lastUpdatedDate",
+      document.lastUpdated
+    ),
+    sections: document.sections.map((section) => ({
+      ...section,
+      title: getTranslation(
+        t,
+        `legal.acceptableUsePolicy.sections.${section.id}.title`,
+        section.title
+      ),
+      paragraphs: section.paragraphs.map((paragraph, index) =>
+        getTranslation(
+          t,
+          `legal.acceptableUsePolicy.sections.${section.id}.paragraph${index + 1}`,
+          paragraph
+        )
+      ),
+    })),
+  };
+}
+
 export function LegalViewer({ document }: { document: LegalDocument }) {
   const { t } = useLocale();
-  const localizedDocument = getAffiliateDisclosureDocumentTranslation(
-    getCookieDocumentTranslation(
-      getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+  const localizedDocument = getAcceptableUsePolicyDocumentTranslation(
+    getAffiliateDisclosureDocumentTranslation(
+      getCookieDocumentTranslation(
+        getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+        t
+      ),
       t
     ),
     t
@@ -160,6 +198,7 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
   const isPrivacyPolicy = document.slug === "privacy-policy";
   const isCookiePolicy = document.slug === "cookie-policy";
   const isAffiliateDisclosure = document.slug === "affiliate-disclosure";
+  const isAcceptableUsePolicy = document.slug === "acceptable-use-policy";
   const lastUpdatedText = isTermsOfService
     ? t["legal.terms.lastUpdated"]
     : isPrivacyPolicy
@@ -180,7 +219,13 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
               "legal.affiliateDisclosure.lastUpdated",
               `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
             )
-          : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
+          : isAcceptableUsePolicy
+            ? getTranslation(
+                t,
+                "legal.acceptableUsePolicy.lastUpdated",
+                `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
+              )
+            : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
   const developerNote = isTermsOfService
     ? t["legal.terms.developerNote"]
     : isPrivacyPolicy
@@ -193,7 +238,13 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
               "legal.affiliateDisclosure.developerNote",
               legalDeveloperNote
             )
-          : legalDeveloperNote;
+          : isAcceptableUsePolicy
+            ? getTranslation(
+                t,
+                "legal.acceptableUsePolicy.developerNote",
+                legalDeveloperNote
+              )
+            : legalDeveloperNote;
   const tableOfContentsLabel = isPrivacyPolicy
     ? getTranslation(
         t,
