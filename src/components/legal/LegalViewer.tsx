@@ -182,6 +182,42 @@ function getDataDeletionPolicyDocumentTranslation(
   };
 }
 
+
+function getPriceAvailabilityDisclaimerDocumentTranslation(
+  document: LegalDocument,
+  t: TranslationDictionary
+): LegalDocument {
+  if (document.slug !== "price-availability-disclaimer") {
+    return document;
+  }
+
+  return {
+    ...document,
+    title: getTranslation(t, "legal.priceAvailabilityDisclaimer.title", document.title),
+    summary: getTranslation(t, "legal.priceAvailabilityDisclaimer.summary", document.summary),
+    lastUpdated: getTranslation(
+      t,
+      "legal.priceAvailabilityDisclaimer.lastUpdatedDate",
+      document.lastUpdated
+    ),
+    sections: document.sections.map((section) => ({
+      ...section,
+      title: getTranslation(
+        t,
+        `legal.priceAvailabilityDisclaimer.sections.${section.id}.title`,
+        section.title
+      ),
+      paragraphs: section.paragraphs.map((paragraph, index) =>
+        getTranslation(
+          t,
+          `legal.priceAvailabilityDisclaimer.sections.${section.id}.paragraph${index + 1}`,
+          paragraph
+        )
+      ),
+    })),
+  };
+}
+
 function getRefundBookingDisclaimerDocumentTranslation(
   document: LegalDocument,
   t: TranslationDictionary
@@ -219,11 +255,14 @@ function getRefundBookingDisclaimerDocumentTranslation(
 
 export function LegalViewer({ document }: { document: LegalDocument }) {
   const { t } = useLocale();
-  const localizedDocument = getRefundBookingDisclaimerDocumentTranslation(
-    getDataDeletionPolicyDocumentTranslation(
-      getAffiliateDisclosureDocumentTranslation(
-        getCookieDocumentTranslation(
-          getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+  const localizedDocument = getPriceAvailabilityDisclaimerDocumentTranslation(
+    getRefundBookingDisclaimerDocumentTranslation(
+      getDataDeletionPolicyDocumentTranslation(
+        getAffiliateDisclosureDocumentTranslation(
+          getCookieDocumentTranslation(
+            getPrivacyDocumentTranslation(getTermsDocumentTranslation(document, t), t),
+            t
+          ),
           t
         ),
         t
@@ -238,6 +277,7 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
   const isAffiliateDisclosure = document.slug === "affiliate-disclosure";
   const isDataDeletionPolicy = document.slug === "data-deletion-policy";
   const isRefundBookingDisclaimer = document.slug === "refund-booking-disclaimer";
+  const isPriceAvailabilityDisclaimer = document.slug === "price-availability-disclaimer";
   const lastUpdatedText = isTermsOfService
     ? t["legal.terms.lastUpdated"]
     : isPrivacyPolicy
@@ -270,7 +310,13 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
                   "legal.refundBookingDisclaimer.lastUpdated",
                   `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
                 )
-              : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
+              : isPriceAvailabilityDisclaimer
+                ? getTranslation(
+                    t,
+                    "legal.priceAvailabilityDisclaimer.lastUpdated",
+                    `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
+                  )
+                : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
   const developerNote = isTermsOfService
     ? t["legal.terms.developerNote"]
     : isPrivacyPolicy
@@ -295,7 +341,13 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
                   "legal.refundBookingDisclaimer.developerNote",
                   legalDeveloperNote
                 )
-              : legalDeveloperNote;
+              : isPriceAvailabilityDisclaimer
+                ? getTranslation(
+                    t,
+                    "legal.priceAvailabilityDisclaimer.developerNote",
+                    legalDeveloperNote
+                  )
+                : legalDeveloperNote;
   const tableOfContentsLabel = isPrivacyPolicy
     ? getTranslation(
         t,
