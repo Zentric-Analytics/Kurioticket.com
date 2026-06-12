@@ -743,20 +743,46 @@ export function PreferencesDashboardPage() {
 }
 
 export function SecurityDashboardPage() {
+  const { t } = useLocale();
+
   return (
     <section aria-labelledby="security-title" className="space-y-4">
       <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Security</p>
-        <h1 id="security-title" className="mt-2 text-3xl font-bold text-navy">Security</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
+          {t["accountDashboard.security.eyebrow"]}
+        </p>
+        <h1 id="security-title" className="mt-2 text-3xl font-bold text-navy">
+          {t["accountDashboard.security.title"]}
+        </h1>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Manage your account security and privacy settings.
+          {t["accountDashboard.security.description"]}
         </p>
       </div>
       <div className="grid gap-3">
-        <ListRow title="Password" body="Manage your password and sign-in security." icon={LockKeyhole} status="Coming soon" />
-        <ListRow title="Two-step verification" body="Add an extra layer of protection to your account." icon={ShieldCheck} status="Coming soon" />
-        <ListRow title="Active sessions" body="Review devices signed in to your account." icon={UserRound} status="Coming soon" />
-        <ListRow title="Privacy" body="Review how your account information is used." href="/legal" icon={LockKeyhole} />
+        <ListRow
+          title={t["accountDashboard.security.password.title"]}
+          body={t["accountDashboard.security.password.description"]}
+          icon={LockKeyhole}
+          status={t["accountDashboard.security.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.security.twoStep.title"]}
+          body={t["accountDashboard.security.twoStep.description"]}
+          icon={ShieldCheck}
+          status={t["accountDashboard.security.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.security.activeSessions.title"]}
+          body={t["accountDashboard.security.activeSessions.description"]}
+          icon={UserRound}
+          status={t["accountDashboard.security.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.security.privacy.title"]}
+          body={t["accountDashboard.security.privacy.description"]}
+          href="/legal"
+          icon={LockKeyhole}
+        />
       </div>
     </section>
   );
