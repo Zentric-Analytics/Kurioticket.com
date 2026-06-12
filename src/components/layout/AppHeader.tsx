@@ -115,27 +115,27 @@ const mobileSignedInAccountMenuItems = [
 const mobileInfoLegalMenuItems = [
   {
     href: "/about",
-    label: "About Kurioticket",
+    labelKey: "footerAboutKurioticket",
     icon: Info,
   },
   {
     href: "/contact",
-    label: "Contact us",
+    labelKey: "footerContactUs",
     icon: Mail,
   },
   {
     href: "/faq",
-    label: "FAQ",
+    labelKey: "faqHeading",
     icon: CircleHelp,
   },
   {
     href: "/terms",
-    label: "Terms of service",
+    labelKey: "footerTermsOfService",
     icon: Scale,
   },
   {
     href: "/privacy",
-    label: "Privacy policy",
+    labelKey: "footerPrivacyPolicy",
     icon: ShieldCheck,
   },
 ];
@@ -1216,7 +1216,7 @@ export function AppHeader({
                         id="mobile-menu-travel-heading"
                         className="px-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500"
                       >
-                        Travel
+                        {t.mobileTravelHeading || "Travel"}
                       </p>
 
                       <div className="mt-1.5 grid">
@@ -1254,7 +1254,7 @@ export function AppHeader({
                         id="mobile-menu-explore-heading"
                         className="px-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500"
                       >
-                        Explore
+                        {t.mobileExploreHeading || "Explore"}
                       </p>
 
                       <div className="mt-1.5 grid">
@@ -1291,7 +1291,7 @@ export function AppHeader({
                         id="mobile-menu-info-legal-heading"
                         className="px-2 text-[11px] font-black uppercase tracking-[0.16em] text-slate-500"
                       >
-                        Info & legal
+                        {t.mobileInfoLegalHeading || "Info & legal"}
                       </p>
 
                       <div className="mt-1.5 grid">
@@ -1312,7 +1312,7 @@ export function AppHeader({
                               <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
                                 <Icon size={19} aria-hidden="true" />
                               </span>
-                              <span className="truncate">{item.label}</span>
+                              <span className="truncate">{t[item.labelKey] || item.labelKey}</span>
                             </Link>
                           );
                         })}
