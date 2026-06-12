@@ -19,8 +19,6 @@ export const translations: TranslationDictionary = {
   signUp: "S’inscrire",
   legalCenter: "Centre légal",
   logout: "Se déconnecter",
-  login: "Se connecter",
-  signUp: "S’inscrire",
   homeHeroTitle: "Trouvez rapidement des vols pas chers",
   homeHeroSubtitle:
     "Recherchez des centaines de compagnies aériennes et sites de voyage pour trouver les meilleures offres pour votre prochain voyage.",
@@ -655,8 +653,6 @@ export const translations: TranslationDictionary = {
   homeDestinationNewYorkCountry: "États-Unis",
   homeDestinationNewYorkAlt: "New York, États-Unis",
 
-  login: "Se connecter",
-  signUp: "S’inscrire",
   searchRentalCarsEveryPartTrip:
     "Recherchez des voitures de location pour chaque étape de votre voyage",
   exploreCarsByTripStyle:
