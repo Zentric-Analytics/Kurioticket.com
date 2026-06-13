@@ -153,6 +153,23 @@ export const translations: TranslationDictionary = {
   "accountDashboard.overview.welcome": "Bon retour, {name}",
   "accountDashboard.overview.subtitle":
     "Gérez vos voyages, vos éléments enregistrés et vos préférences.",
+  "accountDashboard.preferences.eyebrow": "PRÉFÉRENCES",
+  "accountDashboard.preferences.title": "Préférences",
+  "accountDashboard.preferences.description":
+    "Les paramètres du compte sont regroupés ici sous forme de raccourcis clairs. Les contrôles qui ne sont pas encore actifs sont indiqués clairement.",
+  "accountDashboard.preferences.comingSoon": "Bientôt disponible",
+  "accountDashboard.preferences.personalDetails.title": "Informations personnelles",
+  "accountDashboard.preferences.personalDetails.description":
+    "Consultez les détails de votre profil lorsque les contrôles de profil modifiables seront disponibles.",
+  "accountDashboard.preferences.notifications.title": "Préférences de notification",
+  "accountDashboard.preferences.notifications.description":
+    "Gérez vos préférences d’e-mail et d’alertes à mesure que les contrôles de notification sont ajoutés.",
+  "accountDashboard.preferences.travel.title": "Préférences de voyage",
+  "accountDashboard.preferences.travel.description":
+    "Gardez vos paramètres de planification préférés faciles à retrouver pour les futurs réglages du compte.",
+  "accountDashboard.preferences.securityPrivacy.title": "Sécurité et confidentialité",
+  "accountDashboard.preferences.securityPrivacy.description":
+    "Consultez les informations actuelles sur la confidentialité et les politiques de la plateforme.",
   "accountDashboard.personalDetails.title": "Informations personnelles",
   "accountDashboard.personalDetails.subtitle":
     "Mettez à jour vos informations et gérez leur utilisation dans Kurioticket.",
