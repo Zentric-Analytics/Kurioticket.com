@@ -126,6 +126,23 @@ export const translations: TranslationDictionary = {
   "accountDashboard.promo.body":
     "Trouvez de bonnes offres sur les vols et les hôtels.",
   "accountDashboard.promo.cta": "Rechercher des vols",
+  "accountDashboard.security.eyebrow": "SÉCURITÉ",
+  "accountDashboard.security.title": "Sécurité",
+  "accountDashboard.security.description":
+    "Gérez la sécurité de votre compte et vos paramètres de confidentialité.",
+  "accountDashboard.security.comingSoon": "Bientôt disponible",
+  "accountDashboard.security.password.title": "Mot de passe",
+  "accountDashboard.security.password.description":
+    "Gérez votre mot de passe et la sécurité de connexion.",
+  "accountDashboard.security.twoStep.title": "Vérification en deux étapes",
+  "accountDashboard.security.twoStep.description":
+    "Ajoutez une couche de protection supplémentaire à votre compte.",
+  "accountDashboard.security.activeSessions.title": "Sessions actives",
+  "accountDashboard.security.activeSessions.description":
+    "Consultez les appareils connectés à votre compte.",
+  "accountDashboard.security.privacy.title": "Confidentialité",
+  "accountDashboard.security.privacy.description":
+    "Consultez la manière dont les informations de votre compte sont utilisées.",
   "accountDashboard.trips.title": "Mes voyages",
   "accountDashboard.trips.subtitle": "Consultez et gérez vos voyages au même endroit.",
   "accountDashboard.trips.findReservation": "Trouver une réservation",
