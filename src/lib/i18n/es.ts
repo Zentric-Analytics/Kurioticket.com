@@ -133,6 +133,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.current.empty.body": "Aún no has iniciado ningún viaje. Cuando hagas una reserva, aparecerá aquí.",
   "accountDashboard.trips.history.title": "Historial de viajes",
   "accountDashboard.trips.history.filtersAriaLabel": "Filtros del historial de viajes",
+  "accountDashboard.trips.history.tabs.active": "Activos",
   "accountDashboard.trips.history.tabs.past": "Pasados",
   "accountDashboard.trips.history.tabs.cancelled": "Cancelados",
   "accountDashboard.trips.history.empty.past.title": "Tu historial de viajes aparecerá aquí",
