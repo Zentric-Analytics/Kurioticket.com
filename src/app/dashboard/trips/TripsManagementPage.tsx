@@ -6,7 +6,8 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 type TripHistoryTab = "past" | "cancelled";
-type MobileTripTab = "active" | TripHistoryTab;
+type TripStatusTab = "active" | TripHistoryTab;
+type MobileTripTab = TripStatusTab;
 
 const mobileTripTabs: Array<{ id: MobileTripTab; label: string }> = [
   { id: "active", label: "Active" },
@@ -32,27 +33,13 @@ const mobileEmptyStates: Record<MobileTripTab, { title: string; body: string; il
   },
 };
 
-const historyTabs: Array<{ id: TripHistoryTab; labelKey: string }> = [
-  { id: "past", labelKey: "accountDashboard.trips.history.tabs.past" },
-  { id: "cancelled", labelKey: "accountDashboard.trips.history.tabs.cancelled" },
-];
-
-const historyEmptyStates: Record<TripHistoryTab, { titleKey: string; bodyKey: string }> = {
-  past: {
-    titleKey: "accountDashboard.trips.history.empty.past.title",
-    bodyKey: "accountDashboard.trips.history.empty.past.body",
-  },
-  cancelled: {
-    titleKey: "accountDashboard.trips.history.empty.cancelled.title",
-    bodyKey: "accountDashboard.trips.history.empty.cancelled.body",
-  },
-};
+const desktopTripTabs: Array<{ id: TripStatusTab; label: string }> = mobileTripTabs;
 
 export function TripsManagementPage() {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const [activeMobileTab, setActiveMobileTab] = useState<MobileTripTab>("active");
-  const [activeHistoryTab, setActiveHistoryTab] = useState<TripHistoryTab>("past");
+  const [activeDesktopTab, setActiveDesktopTab] = useState<TripStatusTab>("active");
   const [showLookup, setShowLookup] = useState(false);
   const [lookupMessage, setLookupMessage] = useState<string | null>(null);
   const lookupPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -101,8 +88,8 @@ export function TripsManagementPage() {
     setLookupMessage(t("accountDashboard.trips.lookup.unavailable"));
   }
 
-  const historyEmptyState = historyEmptyStates[activeHistoryTab];
   const mobileEmptyState = mobileEmptyStates[activeMobileTab];
+  const desktopEmptyState = mobileEmptyStates[activeDesktopTab];
 
   return (
     <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 lg:mt-0 lg:space-y-6 xl:max-w-[64rem]">
@@ -253,28 +240,11 @@ export function TripsManagementPage() {
         </div>
       </section>
 
-      <section aria-labelledby="upcoming-trips-title" className="hidden pt-2 sm:pt-3 lg:block">
-        <div className="flex min-w-0 flex-col items-center gap-5 py-4 text-center sm:py-6">
-          <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
-          <div className="max-w-lg">
-            <h2 id="upcoming-trips-title" className="text-2xl font-bold tracking-[-0.025em] text-slate-950 sm:text-3xl">
-              {t("accountDashboard.trips.current.empty.title")}
-            </h2>
-            <p className="mt-3 text-sm font-medium leading-6 text-slate-700 sm:text-base">
-              {t("accountDashboard.trips.current.empty.body")}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <section aria-labelledby="trip-history-title" className="hidden pt-2 sm:pt-4 lg:block">
-        <h2 id="trip-history-title" className="sr-only">
-          {t("accountDashboard.trips.history.title")}
-        </h2>
-        <div className="border-b border-slate-200/80" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
+      <section aria-labelledby="desktop-trips-panel-title" className="hidden pt-2 lg:block">
+        <div className="border-b border-slate-200/80" role="tablist" aria-label="Trip status filters">
           <div className="flex min-w-0 gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {historyTabs.map((tab) => {
-              const isActive = activeHistoryTab === tab.id;
+            {desktopTripTabs.map((tab) => {
+              const isActive = activeDesktopTab === tab.id;
 
               return (
                 <button
@@ -282,9 +252,9 @@ export function TripsManagementPage() {
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  aria-controls={`${tab.id}-trips-panel`}
-                  id={`${tab.id}-trips-tab`}
-                  onClick={() => setActiveHistoryTab(tab.id)}
+                  aria-controls={`${tab.id}-desktop-trips-panel`}
+                  id={`${tab.id}-desktop-trips-tab`}
+                  onClick={() => setActiveDesktopTab(tab.id)}
                   className={cn(
                     "focus-ring relative -mb-px inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap border-b-2 px-1 text-sm font-semibold transition",
                     isActive
@@ -292,7 +262,7 @@ export function TripsManagementPage() {
                       : "border-transparent text-slate-600 hover:border-violet-300 hover:text-slate-900",
                   )}
                 >
-                  {t(tab.labelKey)}
+                  {tab.label}
                 </button>
               );
             })}
@@ -300,16 +270,27 @@ export function TripsManagementPage() {
         </div>
 
         <div
-          id={`${activeHistoryTab}-trips-panel`}
+          id={`${activeDesktopTab}-desktop-trips-panel`}
           role="tabpanel"
-          aria-labelledby={`${activeHistoryTab}-trips-tab`}
-          className="min-h-[10rem] px-1 pb-9 pt-6 sm:pb-11 sm:pt-8"
+          aria-labelledby={`${activeDesktopTab}-desktop-trips-tab`}
+          className="flex min-h-[25rem] items-center justify-center px-1 pb-16 pt-12 xl:min-h-[28rem] xl:pb-20 xl:pt-14"
         >
-          <div className="flex max-w-2xl flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-5">
-            <HistoryEmptyIllustration variant={activeHistoryTab} ariaLabel={t(activeHistoryTab === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")} />
-            <div className="max-w-xl">
-              <h3 className="text-xl font-bold tracking-[-0.02em] text-slate-950 sm:text-2xl">{t(historyEmptyState.titleKey)}</h3>
-              <p className="mt-2 max-w-lg text-sm font-medium leading-6 text-slate-700 sm:text-base">{t(historyEmptyState.bodyKey)}</p>
+          <div className="flex min-w-0 flex-col items-center gap-5 text-center">
+            {desktopEmptyState.illustration === "current" ? (
+              <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
+            ) : (
+              <HistoryEmptyIllustration
+                variant={desktopEmptyState.illustration}
+                ariaLabel={t(desktopEmptyState.illustration === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")}
+              />
+            )}
+            <div className="max-w-lg">
+              <h2 id="desktop-trips-panel-title" className="text-3xl font-bold tracking-[-0.025em] text-slate-950">
+                {desktopEmptyState.title}
+              </h2>
+              <p className="mt-3 text-base font-medium leading-6 text-slate-700">
+                {desktopEmptyState.body}
+              </p>
             </div>
           </div>
         </div>
