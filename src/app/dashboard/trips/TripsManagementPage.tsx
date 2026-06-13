@@ -6,6 +6,31 @@ import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 type TripHistoryTab = "past" | "cancelled";
+type MobileTripTab = "active" | TripHistoryTab;
+
+const mobileTripTabs: Array<{ id: MobileTripTab; label: string }> = [
+  { id: "active", label: "Active" },
+  { id: "past", label: "Past" },
+  { id: "cancelled", label: "Cancelled" },
+];
+
+const mobileEmptyStates: Record<MobileTripTab, { title: string; body: string; illustration: "current" | TripHistoryTab }> = {
+  active: {
+    title: "Where to next?",
+    body: "You haven’t started any trips yet. When you make a booking, it will appear here.",
+    illustration: "current",
+  },
+  past: {
+    title: "Revisit your favourite places",
+    body: "Here you will see all your past trips and get inspired for your next ones.",
+    illustration: "past",
+  },
+  cancelled: {
+    title: "Sometimes plans change",
+    body: "Here you will see all the trips you have cancelled.",
+    illustration: "cancelled",
+  },
+};
 
 const historyTabs: Array<{ id: TripHistoryTab; labelKey: string }> = [
   { id: "past", labelKey: "accountDashboard.trips.history.tabs.past" },
@@ -26,6 +51,7 @@ const historyEmptyStates: Record<TripHistoryTab, { titleKey: string; bodyKey: st
 export function TripsManagementPage() {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const [activeMobileTab, setActiveMobileTab] = useState<MobileTripTab>("active");
   const [activeHistoryTab, setActiveHistoryTab] = useState<TripHistoryTab>("past");
   const [showLookup, setShowLookup] = useState(false);
   const [lookupMessage, setLookupMessage] = useState<string | null>(null);
@@ -76,6 +102,7 @@ export function TripsManagementPage() {
   }
 
   const historyEmptyState = historyEmptyStates[activeHistoryTab];
+  const mobileEmptyState = mobileEmptyStates[activeMobileTab];
 
   return (
     <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-6 xl:max-w-[64rem]">
@@ -172,7 +199,61 @@ export function TripsManagementPage() {
         </div>
       </div>
 
-      <section aria-labelledby="upcoming-trips-title" className="pt-2 sm:pt-3">
+      <section aria-labelledby="mobile-trips-panel-title" className="space-y-8 lg:hidden">
+        <div className="grid min-w-0 grid-cols-3 gap-2 rounded-full bg-white/75 p-1 shadow-[inset_0_0_0_1px_rgba(226,232,240,0.95)]" role="tablist" aria-label="Trip status filters">
+          {mobileTripTabs.map((tab) => {
+            const isActive = activeMobileTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`${tab.id}-mobile-trips-panel`}
+                id={`${tab.id}-mobile-trips-tab`}
+                onClick={() => setActiveMobileTab(tab.id)}
+                className={cn(
+                  "focus-ring inline-flex min-h-11 min-w-0 items-center justify-center rounded-full px-2 text-sm font-bold transition",
+                  isActive
+                    ? "border border-violet-300 bg-white text-violet-900 shadow-[0_10px_24px_-18px_rgba(88,28,135,0.8)]"
+                    : "border border-transparent bg-transparent text-slate-600 hover:text-slate-950",
+                )}
+              >
+                <span className="truncate">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div
+          id={`${activeMobileTab}-mobile-trips-panel`}
+          role="tabpanel"
+          aria-labelledby={`${activeMobileTab}-mobile-trips-tab`}
+          className="px-1 pb-10 pt-2"
+        >
+          <div className="flex min-w-0 flex-col items-center gap-5 text-center">
+            {mobileEmptyState.illustration === "current" ? (
+              <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
+            ) : (
+              <HistoryEmptyIllustration
+                variant={mobileEmptyState.illustration}
+                ariaLabel={t(mobileEmptyState.illustration === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")}
+              />
+            )}
+            <div className="max-w-lg">
+              <h2 id="mobile-trips-panel-title" className="text-2xl font-bold tracking-[-0.025em] text-slate-950">
+                {mobileEmptyState.title}
+              </h2>
+              <p className="mt-3 text-sm font-medium leading-6 text-slate-700">
+                {mobileEmptyState.body}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="upcoming-trips-title" className="hidden pt-2 sm:pt-3 lg:block">
         <div className="flex min-w-0 flex-col items-center gap-5 py-4 text-center sm:py-6">
           <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
           <div className="max-w-lg">
@@ -186,7 +267,7 @@ export function TripsManagementPage() {
         </div>
       </section>
 
-      <section aria-labelledby="trip-history-title" className="pt-2 sm:pt-4">
+      <section aria-labelledby="trip-history-title" className="hidden pt-2 sm:pt-4 lg:block">
         <h2 id="trip-history-title" className="sr-only">
           {t("accountDashboard.trips.history.title")}
         </h2>
