@@ -17,7 +17,7 @@ const mobileTripTabs: Array<{ id: MobileTripTab; label: string }> = [
 const mobileEmptyStates: Record<MobileTripTab, { title: string; body: string; illustration: "current" | TripHistoryTab }> = {
   active: {
     title: "Where to next?",
-    body: "You haven’t started any trips yet. When you make a booking, it will appear here.",
+    body: "You have not started any trips yet. When you make a booking, it will appear here.",
     illustration: "current",
   },
   past: {
@@ -105,13 +105,13 @@ export function TripsManagementPage() {
   const mobileEmptyState = mobileEmptyStates[activeMobileTab];
 
   return (
-    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-6 xl:max-w-[64rem]">
-      <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200/80 pb-5 sm:flex-row sm:items-start sm:justify-between">
+    <section aria-labelledby="trips-title" className="mx-auto -mt-[3.35rem] min-w-0 max-w-[62rem] space-y-5 lg:mt-0 lg:space-y-6 xl:max-w-[64rem]">
+      <div className="flex min-w-0 flex-col gap-2 pb-0 sm:gap-4 lg:flex-row lg:items-start lg:justify-between lg:border-b lg:border-slate-200/80 lg:pb-5">
         <div className="min-w-0">
-          <h1 id="trips-title" className="text-3xl font-bold tracking-[-0.035em] text-slate-950 sm:text-4xl">
+          <h1 id="trips-title" className="flex min-h-10 items-center gap-2.5 pl-[7.35rem] text-base font-black tracking-[-0.02em] text-slate-950 before:h-4 before:w-px before:shrink-0 before:bg-slate-300 lg:min-h-0 lg:gap-0 lg:pl-0 lg:text-4xl lg:font-bold lg:tracking-[-0.035em] lg:before:hidden">
             {t("accountDashboard.trips.title")}
           </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+          <p className="mt-2 hidden max-w-2xl text-sm leading-6 text-slate-600 lg:block lg:text-base">
             {t("accountDashboard.trips.subtitle")}
           </p>
         </div>
@@ -199,8 +199,8 @@ export function TripsManagementPage() {
         </div>
       </div>
 
-      <section aria-labelledby="mobile-trips-panel-title" className="space-y-8 lg:hidden">
-        <div className="grid min-w-0 grid-cols-3 gap-2 rounded-full bg-white/75 p-1 shadow-[inset_0_0_0_1px_rgba(226,232,240,0.95)]" role="tablist" aria-label="Trip status filters">
+      <section aria-labelledby="mobile-trips-panel-title" className="space-y-7 lg:hidden">
+        <div className="flex min-w-0 items-center gap-7 overflow-hidden" role="tablist" aria-label="Trip status filters">
           {mobileTripTabs.map((tab) => {
             const isActive = activeMobileTab === tab.id;
 
@@ -214,13 +214,13 @@ export function TripsManagementPage() {
                 id={`${tab.id}-mobile-trips-tab`}
                 onClick={() => setActiveMobileTab(tab.id)}
                 className={cn(
-                  "focus-ring inline-flex min-h-11 min-w-0 items-center justify-center rounded-full px-2 text-sm font-bold transition",
+                  "focus-ring inline-flex min-h-10 shrink-0 items-center justify-center whitespace-nowrap border-b-2 px-0.5 text-sm font-bold transition",
                   isActive
-                    ? "border border-violet-300 bg-white text-violet-900 shadow-[0_10px_24px_-18px_rgba(88,28,135,0.8)]"
-                    : "border border-transparent bg-transparent text-slate-600 hover:text-slate-950",
+                    ? "border-violet-700 text-violet-800"
+                    : "border-transparent text-slate-800 hover:border-violet-200 hover:text-slate-950",
                 )}
               >
-                <span className="truncate">{tab.label}</span>
+                <span>{tab.label}</span>
               </button>
             );
           })}
@@ -230,7 +230,7 @@ export function TripsManagementPage() {
           id={`${activeMobileTab}-mobile-trips-panel`}
           role="tabpanel"
           aria-labelledby={`${activeMobileTab}-mobile-trips-tab`}
-          className="px-1 pb-10 pt-2"
+          className="px-1 pb-10 pt-1"
         >
           <div className="flex min-w-0 flex-col items-center gap-5 text-center">
             {mobileEmptyState.illustration === "current" ? (
@@ -322,7 +322,7 @@ function HistoryEmptyIllustration({ variant, ariaLabel }: { variant: TripHistory
   if (variant === "cancelled") {
     return (
       <svg
-        className="h-20 w-20 shrink-0 text-violet-800 sm:h-24 sm:w-24"
+        className="h-24 w-24 shrink-0 text-violet-800"
         viewBox="0 0 120 120"
         fill="none"
         role="img"
@@ -340,7 +340,7 @@ function HistoryEmptyIllustration({ variant, ariaLabel }: { variant: TripHistory
 
   return (
     <svg
-      className="h-20 w-20 shrink-0 text-violet-800 sm:h-24 sm:w-24"
+      className="h-24 w-24 shrink-0 text-violet-800"
       viewBox="0 0 120 120"
       fill="none"
       role="img"
