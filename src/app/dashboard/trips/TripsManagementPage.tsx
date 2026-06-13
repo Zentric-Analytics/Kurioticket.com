@@ -230,7 +230,7 @@ export function TripsManagementPage() {
           id={`${activeMobileTab}-mobile-trips-panel`}
           role="tabpanel"
           aria-labelledby={`${activeMobileTab}-mobile-trips-tab`}
-          className="flex min-h-[70vh] items-center justify-center px-1 pb-14 pt-1 text-center"
+          className="px-1 pb-10 pt-1"
         >
           <div className="flex min-w-0 flex-col items-center gap-5 text-center">
             {mobileEmptyState.illustration === "current" ? (
