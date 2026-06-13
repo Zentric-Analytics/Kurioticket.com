@@ -1614,6 +1614,26 @@ export const translations: TranslationDictionary = {
   serviceGuaranteeHelpCardTitle:
     "Besoin d’aide avec votre compte ou votre recherche ?",
   serviceGuaranteeSupportCta: "Contacter le service client",
+  howItWorksEyebrow: "Comment fonctionne Kurioticket",
+  howItWorksTitle: "Comment fonctionne Kurioticket",
+  howItWorksIntro:
+    "Kurioticket aide les voyageurs à passer de la recherche à la comparaison, puis au fournisseur lorsqu’une offre est sélectionnée.",
+  howItWorksFlowHeading: "Parcours de base",
+  "howItWorks.steps.search.title": "Rechercher des options de voyage",
+  "howItWorks.steps.search.description":
+    "Saisissez les détails de votre voyage pour rechercher des vols, des hôtels, des voitures ou des offres de voyage disponibles.",
+  "howItWorks.steps.compare.title": "Comparer les résultats disponibles",
+  "howItWorks.steps.compare.description":
+    "Consultez les options disponibles, les prix, les horaires, les détails des fournisseurs et les autres informations de voyage lorsqu’elles sont affichées.",
+  "howItWorks.steps.choose.title": "Choisir une offre",
+  "howItWorks.steps.choose.description":
+    "Sélectionnez l’option qui correspond le mieux à vos plans après avoir examiné les détails disponibles.",
+  "howItWorks.steps.continue.title": "Continuer avec le fournisseur",
+  "howItWorks.steps.continue.description":
+    "Lorsque vous êtes redirigé, continuez sur le site Web du fournisseur pour vérifier les détails finaux et terminer les étapes de réservation.",
+  "howItWorks.providerWebsites.title": "Sites Web des fournisseurs",
+  "howItWorks.providerWebsites.description":
+    "Certaines réservations peuvent être finalisées sur les sites Web des fournisseurs après que Kurioticket vous redirige. Consultez la page du fournisseur pour vérifier la disponibilité finale, les prix, les conditions, les étapes de paiement et les détails de réservation avant de finaliser un achat.",
   footerServiceGuarantee: "Garantie de service",
   footerMoreServiceInfo: "Plus d’infos sur le service",
   footerDiscover: "Découvrir",
