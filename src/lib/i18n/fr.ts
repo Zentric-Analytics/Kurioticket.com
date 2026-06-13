@@ -1280,6 +1280,46 @@ export const translations: TranslationDictionary = {
   "flightLandingCity.Los Angeles": "Los Angeles",
   footerContactUs: "Nous contacter",
   footerCustomerSupport: "Assistance client",
+  serviceGuaranteeEyebrow: "Engagement de service Kurioticket",
+  serviceGuaranteeTitle: "Garantie de service",
+  serviceGuaranteeDescription:
+    "Nous voulons aider les voyageurs à comprendre le fonctionnement de Kurioticket et ce qu’ils peuvent attendre de notre plateforme.",
+  serviceGuaranteeFaqHeading: "Questions fréquentes",
+  serviceGuaranteeFaqDescription:
+    "Ces réponses expliquent le rôle de Kurioticket en tant que plateforme de recherche et de comparaison de voyages.",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Que garantit Kurioticket ?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket est conçu pour aider les voyageurs à comparer clairement les options de voyage. Nous visons à fournir une expérience de plateforme fiable, des informations de recherche transparentes et des chemins clairs vers les pages de réservation des fournisseurs.",
+  serviceGuaranteeFaqResultsDisplayedQuestion:
+    "Comment les résultats de voyage sont-ils affichés ?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "Les résultats sont affichés à partir des informations disponibles auprès des fournisseurs de voyages, notamment les itinéraires, les dates, les prix et les détails des fournisseurs lorsqu’ils sont disponibles.",
+  serviceGuaranteeFaqRedirectedQuestion:
+    "Pourquoi suis-je redirigé vers un autre fournisseur ?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "Certains résultats sont finalisés sur le site d’un fournisseur externe. Lorsque vous choisissez l’une de ces options, Kurioticket vous redirige afin que le fournisseur puisse gérer la réservation, le paiement et le service propre au voyage.",
+  serviceGuaranteeFaqBookDirectlyQuestion:
+    "Est-ce que je réserve directement sur Kurioticket ?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket est principalement une plateforme de recherche et de comparaison de voyages. Si un résultat redirige vers un fournisseur, la réservation est finalisée auprès de ce fournisseur plutôt que sur Kurioticket.",
+  serviceGuaranteeFaqPricesGuaranteedQuestion:
+    "Les prix sont-ils toujours garantis ?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "Non. Les prix peuvent changer en fonction de la disponibilité du fournisseur, des taxes, des frais, de la devise et du moment. Vérifiez toujours le prix final sur la page du fournisseur avant de réserver.",
+  serviceGuaranteeFaqChooseProvidersQuestion:
+    "Comment Kurioticket choisit-il les fournisseurs ?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket travaille avec des fournisseurs de voyages et des sources de données capables de fournir des résultats de recherche pertinents. La disponibilité, les prix et les options affichées peuvent varier selon l’itinéraire, la destination et la couverture du fournisseur.",
+  serviceGuaranteeFaqEncounterIssueQuestion:
+    "Que dois-je faire si je rencontre un problème ?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "Si le problème concerne la recherche, l’accès au compte, les voyages enregistrés, les alertes ou une redirection depuis Kurioticket, contactez l’assistance Kurioticket. Si vous avez déjà réservé auprès d’un fournisseur, contactez ce fournisseur pour les modifications de réservation, les remboursements, les annulations ou les documents de voyage.",
+  serviceGuaranteeFaqContactSupportQuestion: "Comment contacter l’assistance ?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "Utilisez la page du service client et indiquez l’adresse e-mail de votre compte, ce que vous essayiez de faire, ainsi que tout détail concernant l’itinéraire, l’hôtel ou le fournisseur qui pourrait nous aider à examiner le problème.",
+  serviceGuaranteeHelpCardTitle:
+    "Besoin d’aide avec votre compte ou votre recherche ?",
+  serviceGuaranteeSupportCta: "Contacter le service client",
   footerServiceGuarantee: "Garantie de service",
   footerMoreServiceInfo: "Plus d’infos sur le service",
   footerDiscover: "Découvrir",
