@@ -251,6 +251,29 @@ export const translations: TranslationDictionary = {
   loginErrorGoogleGeneric:
     "La connexion avec Google n’a pas pu aboutir. Veuillez réessayer ou utiliser la connexion par e-mail.",
   legalCenter: "Centre légal",
+  "legalCenter.heroLabel": "Informations juridiques",
+  "legalCenter.heroTitle": "Centre légal",
+  "legalCenter.heroDescription":
+    "Accédez aux informations juridiques et aux politiques importantes liées à l’utilisation de Kurioticket.",
+  "legalCenter.resourcesHeading": "Ressources juridiques",
+  "legalCenter.resourcesDescription":
+    "Choisissez une politique ci-dessous pour en savoir plus sur les conditions juridiques et les pratiques de Kurioticket en matière de données.",
+  "legalCenter.policiesBadge": "POLITIQUES",
+  "legalCenter.privacyPolicy.title": "Politique de confidentialité",
+  "legalCenter.privacyPolicy.description":
+    "Découvrez comment Kurioticket traite les informations personnelles, les données de compte, les détails de recherche et les choix de confidentialité lorsque vous utilisez la plateforme.",
+  "legalCenter.privacyPolicy.cta": "Voir la politique de confidentialité",
+  "legalCenter.termsOfService.title": "Conditions d’utilisation",
+  "legalCenter.termsOfService.description":
+    "Consultez les conditions qui expliquent l’utilisation acceptable, les responsabilités liées au compte, les redirections vers les fournisseurs et les règles de la plateforme Kurioticket.",
+  "legalCenter.termsOfService.cta": "Voir les conditions d’utilisation",
+  "legalCenter.cookiePolicy.title": "Politique relative aux cookies",
+  "legalCenter.cookiePolicy.description":
+    "Comprenez comment les cookies et technologies similaires prennent en charge les fonctionnalités du site, les préférences, l’analyse et l’amélioration des services.",
+  "legalCenter.cookiePolicy.cta": "Voir la politique relative aux cookies",
+  "legalCenter.additionalResourcesTitle": "Ressources juridiques supplémentaires",
+  "legalCenter.additionalResourcesDescription":
+    "Des ressources juridiques supplémentaires pourront être ajoutées à mesure que Kurioticket se développe.",
 
   "legal.print": "Imprimer",
   "legal.terms.title": "Conditions d’utilisation",
