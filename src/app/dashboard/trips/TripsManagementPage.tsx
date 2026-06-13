@@ -105,10 +105,10 @@ export function TripsManagementPage() {
   const mobileEmptyState = mobileEmptyStates[activeMobileTab];
 
   return (
-    <section aria-labelledby="trips-title" className="mx-auto -mt-[3.35rem] min-w-0 max-w-[62rem] space-y-5 lg:mt-0 lg:space-y-6 xl:max-w-[64rem]">
+    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 lg:mt-0 lg:space-y-6 xl:max-w-[64rem]">
       <div className="flex min-w-0 flex-col gap-2 pb-0 sm:gap-4 lg:flex-row lg:items-start lg:justify-between lg:border-b lg:border-slate-200/80 lg:pb-5">
         <div className="min-w-0">
-          <h1 id="trips-title" className="flex min-h-10 items-center gap-2.5 pl-[7.35rem] text-base font-black tracking-[-0.02em] text-slate-950 before:h-4 before:w-px before:shrink-0 before:bg-slate-300 lg:min-h-0 lg:gap-0 lg:pl-0 lg:text-4xl lg:font-bold lg:tracking-[-0.035em] lg:before:hidden">
+          <h1 id="trips-title" className="text-4xl font-black tracking-[-0.04em] text-slate-950 lg:text-4xl lg:font-bold lg:tracking-[-0.035em]">
             {t("accountDashboard.trips.title")}
           </h1>
           <p className="mt-2 hidden max-w-2xl text-sm leading-6 text-slate-600 lg:block lg:text-base">

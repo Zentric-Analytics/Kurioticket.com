@@ -49,6 +49,7 @@ const mobileAccountNavItems = [
 type AccountDashboardFrameProps = {
   children: ReactNode;
   mobileOverviewTabs?: boolean;
+  mobileBackHref?: string;
 };
 
 type DashboardOverviewProps = {
@@ -125,7 +126,7 @@ function TravelIllustration({ compact = false, variant = "luggage" }: { compact?
   );
 }
 
-export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: AccountDashboardFrameProps) {
+export function AccountDashboardFrame({ children, mobileOverviewTabs = false, mobileBackHref }: AccountDashboardFrameProps) {
   const pathname = usePathname();
   const { t } = useLocale();
 
@@ -200,19 +201,19 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: 
         </div>
       </aside>
       <div className="min-w-0 space-y-3.5 sm:space-y-4">
-        <MobileAccountBackLink />
+        <MobileAccountBackLink href={mobileBackHref} />
         {children}
       </div>
     </div>
   );
 }
 
-export function MobileAccountBackLink() {
+export function MobileAccountBackLink({ href = "/dashboard/account" }: { href?: string }) {
   const { t } = useLocale();
 
   return (
     <Link
-      href="/dashboard/account"
+      href={href}
       aria-label={t["accountDashboard.mobile.backAriaLabel"]}
       className="focus-ring inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 pr-3 text-sm font-black text-violet-700 transition hover:bg-violet-50 lg:hidden"
     >
