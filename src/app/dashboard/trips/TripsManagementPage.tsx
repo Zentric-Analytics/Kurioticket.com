@@ -112,7 +112,7 @@ export function TripsManagementPage() {
             }}
             aria-expanded={showLookup}
             aria-controls="reservation-lookup"
-            className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline"
+            className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline lg:cursor-pointer"
           >
             {t("accountDashboard.trips.findReservation")}
           </button>
@@ -256,7 +256,7 @@ export function TripsManagementPage() {
                   id={`${tab.id}-desktop-trips-tab`}
                   onClick={() => setActiveDesktopTab(tab.id)}
                   className={cn(
-                    "focus-ring relative -mb-px inline-flex min-h-11 shrink-0 items-center justify-center whitespace-nowrap border-b-2 px-1 text-sm font-semibold transition",
+                    "focus-ring relative -mb-px inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center whitespace-nowrap border-b-2 px-1 text-sm font-semibold transition",
                     isActive
                       ? "border-violet-800 text-violet-900"
                       : "border-transparent text-slate-600 hover:border-violet-300 hover:text-slate-900",
