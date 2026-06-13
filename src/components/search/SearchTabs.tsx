@@ -27,6 +27,7 @@ import {
   X,
 } from "lucide-react";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { HotelDestinationMobilePicker } from "@/components/search/HotelDestinationMobilePicker";
@@ -103,6 +104,41 @@ type PlacesApiResponse = {
 type LocationApiResponse = {
   source?: "ipinfo-lite" | "fallback";
   countryCode?: string | null;
+};
+
+const formatCalendarHeading = (
+  formatter: Intl.DateTimeFormat,
+  date: Date,
+  calendarLocale: string
+) => {
+  const formatted = formatter.format(date);
+
+  if (calendarLocale !== "fr-FR") {
+    return formatted;
+  }
+
+  return (
+    formatted.charAt(0).toLocaleUpperCase("fr-FR") +
+    formatted.slice(1)
+  );
+};
+
+const formatCalendarWeekday = (
+  formatter: Intl.DateTimeFormat,
+  date: Date,
+  calendarLocale: string
+) => {
+  const formatted = formatter.format(date);
+
+  if (calendarLocale !== "fr-FR") {
+    return formatted;
+  }
+
+  const withoutTrailingPeriod = formatted.replace(/\.$/, "");
+  return (
+    withoutTrailingPeriod.charAt(0).toLocaleUpperCase("fr-FR") +
+    withoutTrailingPeriod.slice(1)
+  );
 };
 
 const normalizeSuggestionText = (value: string) =>
@@ -208,6 +244,11 @@ export function SearchTabs({
   compactHero = false,
   locale,
 }: SearchTabsProps) {
+  const {
+    locale: activeLocale,
+    t: localeTranslations,
+  } = useLocale();
+
   const t = useMemo(
     () =>
       typeof translations === "function"
@@ -222,13 +263,14 @@ export function SearchTabs({
     [translations]
   );
   const translate = useCallback(
-    (key: string) => t[key] || enTranslations[key] || "",
-    [t]
+    (key: string) =>
+      t[key] || localeTranslations[key] || enTranslations[key] || "",
+    [localeTranslations, t]
   );
 
   const calendarLocale = useMemo(
-    () => normalizeHomepageCalendarLocale(locale),
-    [locale]
+    () => normalizeHomepageCalendarLocale(locale ?? activeLocale),
+    [activeLocale, locale]
   );
   const monthYearFormatter = useMemo(
     () =>
@@ -255,15 +297,19 @@ export function SearchTabs({
       }),
     [calendarLocale]
   );
-  const weekdays = useMemo(
-    () =>
-      Array.from({ length: 7 }, (_, index) =>
-        new Intl.DateTimeFormat(calendarLocale, {
-          weekday: "short",
-        }).format(new Date(2021, 7, index + 1))
-      ),
-    [calendarLocale]
-  );
+  const weekdays = useMemo(() => {
+    const weekdayFormatter = new Intl.DateTimeFormat(calendarLocale, {
+      weekday: "short",
+    });
+
+    return Array.from({ length: 7 }, (_, index) =>
+      formatCalendarWeekday(
+        weekdayFormatter,
+        new Date(2021, 7, index + 1),
+        calendarLocale
+      )
+    );
+  }, [calendarLocale]);
 
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
@@ -1711,11 +1757,19 @@ export function SearchTabs({
           return (
             <section
               key={monthKey}
-              aria-label={monthYearFormatter.format(monthDate)}
+              aria-label={formatCalendarHeading(
+                monthYearFormatter,
+                monthDate,
+                calendarLocale
+              )}
               className="space-y-2.5"
             >
               <h3 className="text-left text-[17px] font-bold tracking-tight text-slate-950">
-                {monthYearFormatter.format(monthDate)}
+                {formatCalendarHeading(
+                  monthYearFormatter,
+                  monthDate,
+                  calendarLocale
+                )}
               </h3>
               <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
                 {weekdays.map((weekday) => (
@@ -1800,11 +1854,19 @@ export function SearchTabs({
           return (
             <section
               key={monthKey}
-              aria-label={monthYearFormatter.format(monthDate)}
+              aria-label={formatCalendarHeading(
+                monthYearFormatter,
+                monthDate,
+                calendarLocale
+              )}
               className="space-y-2.5"
             >
               <h3 className="text-left text-[17px] font-bold tracking-tight text-slate-950">
-                {monthYearFormatter.format(monthDate)}
+                {formatCalendarHeading(
+                  monthYearFormatter,
+                  monthDate,
+                  calendarLocale
+                )}
               </h3>
               <div className="grid grid-cols-7 text-center text-[12px] font-semibold tracking-[0.08em] text-slate-500">
                 {weekdays.map((weekday) => (
@@ -1885,14 +1947,14 @@ export function SearchTabs({
         }}
         className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
       >
-        {t.clear || "Clear"}
+        {translate("clear") || "Clear"}
       </button>
       <button
         type="button"
         onClick={() => setFlightDatesOpen(false)}
         className={cn(mobileDoneButtonClassName, "px-4 py-2")}
       >
-        {t.done || "Done"}
+        {translate("done") || "Done"}
       </button>
     </div>
   );
@@ -2120,9 +2182,20 @@ export function SearchTabs({
     const cells = buildMonthCells(monthDate);
 
     return (
-      <section aria-label={monthYearFormatter.format(monthDate)} className="min-w-0">
+      <section
+        aria-label={formatCalendarHeading(
+          monthYearFormatter,
+          monthDate,
+          calendarLocale
+        )}
+        className="min-w-0"
+      >
         <h3 className="mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900">
-          {monthYearFormatter.format(monthDate)}
+          {formatCalendarHeading(
+            monthYearFormatter,
+            monthDate,
+            calendarLocale
+          )}
         </h3>
         <div className="mb-1.5 grid grid-cols-7 text-center text-[10px] font-medium tracking-[0.09em] text-slate-500">
           {weekdays.map((weekday) => (
@@ -2156,7 +2229,7 @@ export function SearchTabs({
               <button
                 key={`${mode}-${iso}`}
                 type="button"
-                aria-label={`Select ${accessibleDateFormatter.format(day)}`}
+                aria-label={`${translate("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
                 aria-pressed={isStart || isEnd}
                 onClick={() => {
                   if (isDisabledDate) return;
@@ -2202,7 +2275,7 @@ export function SearchTabs({
   }) => (
     <div
       role="dialog"
-      aria-label={t.chooseTravelDates || "Choose travel dates"}
+      aria-label={translate("chooseTravelDates") || "Choose travel dates"}
       className={cn(
         "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
         desktopPopoverPanelClassName,
@@ -2213,29 +2286,29 @@ export function SearchTabs({
         <div>
           <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
             {mode === "flights"
-              ? (t.travelDates || "Travel dates")
-              : (t.hotelSearchTravelDatesLabel || "Travel dates")}
+              ? (translate("travelDates") || "Travel dates")
+              : (translate("hotelSearchTravelDatesLabel") || "Travel dates")}
           </p>
           <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
-            {t.chooseTravelDates || "Choose travel dates"}
+            {translate("chooseTravelDates") || "Choose travel dates"}
           </h3>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            aria-label={t.previousMonth || "Previous month"}
+            aria-label={translate("previousMonth") || "Previous month"}
             onClick={() => setVisibleMonth((prev) => addMonths(prev, -1))}
             className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
-            {t.previousMonthShort || "Prev"}
+            {translate("previousMonthShort") || "Prev"}
           </button>
           <button
             type="button"
-            aria-label={t.nextMonth || "Next month"}
+            aria-label={translate("nextMonth") || "Next month"}
             onClick={() => setVisibleMonth((prev) => addMonths(prev, 1))}
             className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
-            {t.nextMonthShort || "Next"}
+            {translate("nextMonthShort") || "Next"}
           </button>
         </div>
       </div>
@@ -2251,14 +2324,14 @@ export function SearchTabs({
           onClick={onClear}
           className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
         >
-          {t.clear || "Clear"}
+          {translate("clear") || "Clear"}
         </button>
         <button
           type="button"
           onClick={onDone}
           className="focus-ring rounded-lg bg-gradient-to-r from-indigo-700 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500"
         >
-          {t.done || "Done"}
+          {translate("done") || "Done"}
         </button>
       </div>
     </div>
@@ -2830,7 +2903,7 @@ export function SearchTabs({
                     flightDatesOpen
                   }
                   aria-haspopup="dialog"
-                  aria-label={t.chooseTravelDates || "Choose travel dates"}
+                  aria-label={translate("chooseTravelDates") || "Choose travel dates"}
                   className={flightFieldButtonClassName}
                 >
                   <Calendar
@@ -2857,7 +2930,7 @@ export function SearchTabs({
                   <>
                     <FlightMobilePickerShell
                       open={flightDatesOpen}
-                      title={t.chooseTravelDates || "Choose travel dates"}
+                      title={translate("chooseTravelDates") || "Choose travel dates"}
                       titleId="homepage-flight-dates-title"
                       launcherRef={flightDatesLauncherRef}
                       footer={flightDatesFooter}
@@ -3149,7 +3222,7 @@ export function SearchTabs({
                     hotelDatesOpen
                   }
                   aria-haspopup="dialog"
-                  aria-label={t.chooseTravelDates || "Choose travel dates"}
+                  aria-label={translate("chooseTravelDates") || "Choose travel dates"}
                   className={cn(hotelFieldValueClassName, "items-center")}
                 >
                   <Calendar
@@ -3402,7 +3475,7 @@ export function SearchTabs({
 
           <HotelMobilePickerShell
             open={hotelDatesOpen}
-            title={t.chooseTravelDates || "Choose travel dates"}
+            title={translate("chooseTravelDates") || "Choose travel dates"}
             titleId="homepage-hotel-mobile-dates-title"
             launcherRef={hotelDatesMobileLauncherRef}
             onClose={() => setHotelDatesOpen(false)}
@@ -3417,14 +3490,14 @@ export function SearchTabs({
                   }}
                   className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 >
-                  {t.clear || "Clear"}
+                  {translate("clear") || "Clear"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setHotelDatesOpen(false)}
                   className={cn(mobileDoneButtonClassName, "px-4 py-2")}
                 >
-                  {t.done || "Done"}
+                  {translate("done") || "Done"}
                 </button>
               </div>
             }
