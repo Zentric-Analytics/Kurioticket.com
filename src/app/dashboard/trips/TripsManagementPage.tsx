@@ -9,31 +9,31 @@ type TripHistoryTab = "past" | "cancelled";
 type TripStatusTab = "active" | TripHistoryTab;
 type MobileTripTab = TripStatusTab;
 
-const mobileTripTabs: Array<{ id: MobileTripTab; label: string }> = [
-  { id: "active", label: "Active" },
-  { id: "past", label: "Past" },
-  { id: "cancelled", label: "Cancelled" },
+const mobileTripTabs: Array<{ id: MobileTripTab; labelKey: string }> = [
+  { id: "active", labelKey: "accountDashboard.trips.history.tabs.active" },
+  { id: "past", labelKey: "accountDashboard.trips.history.tabs.past" },
+  { id: "cancelled", labelKey: "accountDashboard.trips.history.tabs.cancelled" },
 ];
 
-const mobileEmptyStates: Record<MobileTripTab, { title: string; body: string; illustration: "current" | TripHistoryTab }> = {
+const mobileEmptyStates: Record<MobileTripTab, { titleKey: string; bodyKey: string; illustration: "current" | TripHistoryTab }> = {
   active: {
-    title: "Where to next?",
-    body: "You have not started any trips yet. When you make a booking, it will appear here.",
+    titleKey: "accountDashboard.trips.current.empty.title",
+    bodyKey: "accountDashboard.trips.current.empty.body",
     illustration: "current",
   },
   past: {
-    title: "Your travel history will appear here",
-    body: "Completed trips will be listed here so you can review past plans and details.",
+    titleKey: "accountDashboard.trips.history.empty.past.title",
+    bodyKey: "accountDashboard.trips.history.empty.past.body",
     illustration: "past",
   },
   cancelled: {
-    title: "No cancelled trips yet",
-    body: "Trips you cancel will appear here for easy reference.",
+    titleKey: "accountDashboard.trips.history.empty.cancelled.title",
+    bodyKey: "accountDashboard.trips.history.empty.cancelled.body",
     illustration: "cancelled",
   },
 };
 
-const desktopTripTabs: Array<{ id: TripStatusTab; label: string }> = mobileTripTabs;
+const desktopTripTabs: Array<{ id: TripStatusTab; labelKey: string }> = mobileTripTabs;
 
 export function TripsManagementPage() {
   const { t: dictionary } = useLocale();
@@ -207,7 +207,7 @@ export function TripsManagementPage() {
                     : "border-transparent text-slate-800 hover:border-violet-200 hover:text-slate-950",
                 )}
               >
-                <span>{tab.label}</span>
+                <span>{t(tab.labelKey)}</span>
               </button>
             );
           })}
@@ -230,10 +230,10 @@ export function TripsManagementPage() {
             )}
             <div className="max-w-lg">
               <h2 id="mobile-trips-panel-title" className="text-2xl font-bold tracking-[-0.025em] text-slate-950">
-                {mobileEmptyState.title}
+                {t(mobileEmptyState.titleKey)}
               </h2>
               <p className="mt-3 text-sm font-medium leading-6 text-slate-700">
-                {mobileEmptyState.body}
+                {t(mobileEmptyState.bodyKey)}
               </p>
             </div>
           </div>
@@ -262,7 +262,7 @@ export function TripsManagementPage() {
                       : "border-transparent text-slate-600 hover:border-violet-300 hover:text-slate-900",
                   )}
                 >
-                  {tab.label}
+                  {t(tab.labelKey)}
                 </button>
               );
             })}
@@ -286,10 +286,10 @@ export function TripsManagementPage() {
             )}
             <div className="max-w-lg">
               <h2 id="desktop-trips-panel-title" className="text-3xl font-bold tracking-[-0.025em] text-slate-950">
-                {desktopEmptyState.title}
+                {t(desktopEmptyState.titleKey)}
               </h2>
               <p className="mt-3 text-base font-medium leading-6 text-slate-700">
-                {desktopEmptyState.body}
+                {t(desktopEmptyState.bodyKey)}
               </p>
             </div>
           </div>
