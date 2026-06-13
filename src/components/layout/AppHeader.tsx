@@ -758,11 +758,11 @@ export function AppHeader({
                                   <Icon size={17} aria-hidden="true" />
                                 </span>
 
-                                <span className="min-w-0">
-                                  <span className="block text-sm font-bold text-slate-950">
+                                <span className="min-w-0 flex-1">
+                                  <span className="block break-words text-sm font-bold text-slate-950">
                                     {item.label}
                                   </span>
-                                  <span className="block truncate text-xs font-medium text-slate-500">
+                                  <span className="block whitespace-normal break-words text-xs font-medium text-slate-500">
                                     {item.description}
                                   </span>
                                 </span>
@@ -1409,10 +1409,10 @@ export function AppHeader({
                                 <Icon size={18} aria-hidden="true" />
                               </span>
                               <span className="min-w-0 flex-1">
-                                <span className="block truncate">
+                                <span className="block whitespace-normal break-words">
                                   {item.label}
                                 </span>
-                                <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
+                                <span className="mt-0.5 block whitespace-normal break-words text-xs font-semibold text-slate-500">
                                   {item.description}
                                 </span>
                               </span>
