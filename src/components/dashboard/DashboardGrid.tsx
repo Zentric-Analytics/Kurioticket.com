@@ -129,7 +129,7 @@ function TravelIllustration({ compact = false, variant = "luggage" }: { compact?
 export function AccountDashboardFrame({ children, mobileOverviewTabs = false, mobileBackHref }: AccountDashboardFrameProps) {
   const pathname = usePathname();
   const { t } = useLocale();
-  const resolvedMobileBackHref = pathname === "/dashboard/trips" ? (mobileBackHref ?? "/dashboard") : mobileBackHref;
+  const resolvedMobileBackHref = mobileBackHref;
 
   return (
     <div
