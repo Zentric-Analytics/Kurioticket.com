@@ -77,6 +77,13 @@ const normalizeHomepageCalendarLocale = (
     locale?.trim().replace("_", "-").toLowerCase() ?? "";
 
   if (
+    normalized === "fr" ||
+    normalized.startsWith("fr-")
+  ) {
+    return "fr-FR";
+  }
+
+  if (
     normalized === "es" ||
     normalized.startsWith("es-")
   ) {
@@ -1745,7 +1752,7 @@ export function SearchTabs({
                     <button
                       key={iso}
                       type="button"
-                      aria-label={`Select ${accessibleDateFormatter.format(day)}`}
+                      aria-label={`${translate("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
                       aria-pressed={isDeparture || isReturn}
                       onClick={() => {
                         if (isDisabledDate || !isSelectableFlightDate(day)) return;
@@ -1835,7 +1842,7 @@ export function SearchTabs({
                     <button
                       key={iso}
                       type="button"
-                      aria-label={`Select ${accessibleDateFormatter.format(day)}`}
+                      aria-label={`${translate("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
                       aria-pressed={isCheckIn || isCheckOut}
                       onClick={() => {
                         if (isDisabledDate) return;
