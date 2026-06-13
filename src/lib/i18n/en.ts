@@ -412,6 +412,7 @@ export const translations: TranslationDictionary = {
   "legal.terms.summary": "Rules for using Kurioticket search, accounts, dashboards, saved travel tools, and partner redirects.",
   "legal.terms.lastUpdatedDate": "May 11, 2026",
   "legal.terms.lastUpdated": "Last updated: May 11, 2026",
+  "legal.terms.tableOfContents": "TABLE OF CONTENTS",
   "legal.terms.sections.overview.title": "Overview",
   "legal.terms.sections.overview.paragraph1": "Kurioticket LLC (“Kurioticket,” “we,” “us,” or “our”) operates a travel search and comparison platform that helps users search flights, hotels, cars, compare provider options, save travel plans, and create alerts.",
   "legal.terms.sections.overview.paragraph2": "Kurioticket is not an airline, hotel, online travel agency, travel agency, payment processor for travel purchases, or ticket issuer. Purchases, fare rules, ticketing, itinerary changes, cancellations, refunds, boarding, check-in, and travel documents are handled by the external provider.",

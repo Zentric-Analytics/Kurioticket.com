@@ -454,13 +454,19 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
                       legalDeveloperNote
                     )
                   : legalDeveloperNote;
-  const tableOfContentsLabel = isPrivacyPolicy
+  const tableOfContentsLabel = isTermsOfService
     ? getTranslation(
         t,
-        "legal.privacy.tableOfContents",
+        "legal.terms.tableOfContents",
         t["legal.tableOfContents"]
       )
-    : t["legal.tableOfContents"];
+    : isPrivacyPolicy
+      ? getTranslation(
+          t,
+          "legal.privacy.tableOfContents",
+          t["legal.tableOfContents"]
+        )
+      : t["legal.tableOfContents"];
 
   return (
     <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
