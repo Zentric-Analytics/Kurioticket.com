@@ -422,6 +422,7 @@ export const translations: TranslationDictionary = {
   "legal.terms.summary": "Reglas para usar la búsqueda de Kurioticket, las cuentas, los paneles, las herramientas de viaje guardadas y las redirecciones a socios.",
   "legal.terms.lastUpdatedDate": "11 de mayo de 2026",
   "legal.terms.lastUpdated": "Última actualización: 11 de mayo de 2026",
+  "legal.terms.tableOfContents": "TABLA DE CONTENIDO",
   "legal.terms.sections.overview.title": "Descripción general",
   "legal.terms.sections.overview.paragraph1": "Kurioticket LLC (“Kurioticket”, “nosotros” o “nuestro”) opera una plataforma de búsqueda y comparación de viajes que ayuda a los usuarios a buscar vuelos, hoteles y autos, comparar opciones de proveedores, guardar planes de viaje y crear alertas.",
   "legal.terms.sections.overview.paragraph2": "Kurioticket no es una aerolínea, hotel, agencia de viajes en línea, agencia de viajes, procesador de pagos para compras de viaje ni emisor de boletos. Las compras, reglas de tarifa, emisión de boletos, cambios de itinerario, cancelaciones, reembolsos, embarque, check-in y documentos de viaje son gestionados por el proveedor externo.",
