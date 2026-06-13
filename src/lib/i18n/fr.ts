@@ -1003,6 +1003,82 @@ export const translations: TranslationDictionary = {
   homeDestinationNewYorkCountry: "États-Unis",
   homeDestinationNewYorkAlt: "New York, États-Unis",
 
+  moreServiceInfoEyebrow: "Informations sur la plateforme",
+  moreServiceInfoTitle: "Plus d’informations sur le service",
+  moreServiceInfoDescription:
+    "Découvrez comment Kurioticket aide les voyageurs à rechercher, comparer, enregistrer et organiser des options de voyage provenant de plusieurs fournisseurs au même endroit.",
+  moreServiceInfoContextTitle: "Planifiez avec le bon contexte",
+  moreServiceInfoContextSubtitle:
+    "Des résultats de recherche aux redirections vers les fournisseurs",
+  moreServiceInfoContextCompare:
+    "Comparez les options de plusieurs fournisseurs de voyage.",
+  moreServiceInfoContextSave:
+    "Enregistrez vos voyages, alertes et préférences lorsque vous êtes connecté.",
+  moreServiceInfoContextContinue:
+    "Consultez les détails du fournisseur avant de réserver en externe.",
+  moreServiceInfoHowHeading: "Comment fonctionne Kurioticket",
+  moreServiceInfoHowDescription:
+    "Ces informations expliquent le rôle de Kurioticket avant, pendant et après une recherche de voyage.",
+  moreServiceInfoHowBadge: "BASES DE LA PLANIFICATION DE VOYAGE",
+  moreServiceInfoStepSearchTitle: "Rechercher auprès de plusieurs fournisseurs",
+  moreServiceInfoStepSearchSummary:
+    "Recherchez des options de voyage auprès de différents fournisseurs depuis un seul endroit, au lieu d’ouvrir chaque fournisseur séparément.",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket rassemble les informations disponibles sur les vols, hôtels, itinéraires et résultats de voyage dans une seule expérience de recherche afin que les voyageurs puissent examiner les options plus efficacement.",
+  moreServiceInfoStepCompareTitle: "Comparer les options de voyage",
+  moreServiceInfoStepCompareSummary:
+    "Comparez les prix, itinéraires, hôtels, horaires et options de voyage disponibles avant de choisir ce qui convient à votre voyage.",
+  moreServiceInfoStepCompareDetails:
+    "Les résultats peuvent inclure des informations sur le fournisseur, les horaires, la destination et d’autres données de voyage qui vous aident à évaluer l’option avant de continuer vers le fournisseur.",
+  moreServiceInfoStepSaveTitle: "Enregistrer des voyages et des alertes",
+  moreServiceInfoStepSaveSummary:
+    "Créez un compte pour enregistrer des voyages, suivre des itinéraires et gérer les alertes de voyage liées à votre planification.",
+  moreServiceInfoStepSaveDetails:
+    "Les voyages enregistrés, les recherches récentes et les alertes facilitent le retour aux options que vous envisagez et permettent de garder les détails de planification associés organisés.",
+  moreServiceInfoStepRedirectsTitle:
+    "Explication des redirections vers les fournisseurs",
+  moreServiceInfoStepRedirectsSummary:
+    "Lorsque vous sélectionnez une offre, vous pouvez être redirigé vers un fournisseur de voyage pour finaliser la réservation, le paiement, la confirmation et l’exécution du service.",
+  moreServiceInfoStepRedirectsDetails:
+    "La page du fournisseur est l’endroit où sont gérés les prix finaux, la disponibilité, les règles, les étapes de paiement, les reçus, les modifications de réservation, les annulations et les documents de voyage pour les offres redirigées.",
+  moreServiceInfoStepAccountTitle: "Compte et outils de voyage",
+  moreServiceInfoStepAccountSummary:
+    "Utilisez les outils de compte pour organiser les recherches enregistrées, les voyages, les alertes et les préférences dans un seul espace Kurioticket.",
+  moreServiceInfoStepAccountDetails:
+    "Ces outils soutiennent la planification de voyage sur Kurioticket, tandis que la gestion de réservation propre au fournisseur reste auprès du fournisseur lorsque votre réservation est finalisée en externe.",
+  moreServiceInfoFaqHeading: "Questions fréquentes",
+  moreServiceInfoFaqDescription:
+    "Réponses courtes sur la recherche de voyage, les redirections vers les fournisseurs, les voyages enregistrés et les outils de compte.",
+  moreServiceInfoFaqWhatQuestion: "Qu’est-ce que Kurioticket ?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket est une plateforme de recherche et de comparaison de voyages permettant de trouver, comparer, enregistrer et organiser des options de voyage provenant de plusieurs fournisseurs.",
+  moreServiceInfoFaqSearchQuestion:
+    "Comment fonctionne la recherche de voyage ?",
+  moreServiceInfoFaqSearchAnswer:
+    "Vous saisissez les détails du voyage, et Kurioticket affiche les options de voyage disponibles ainsi que les informations des fournisseurs qui peuvent vous aider à comparer les choix.",
+  moreServiceInfoFaqRedirectQuestion:
+    "Pourquoi suis-je redirigé vers un autre fournisseur ?",
+  moreServiceInfoFaqRedirectAnswer:
+    "Certaines offres sont finalisées sur des sites de fournisseurs externes. Le fournisseur gère les étapes finales de réservation, le paiement, la confirmation et l’exécution du service.",
+  moreServiceInfoFaqPaymentsQuestion:
+    "Kurioticket traite-t-il les paiements ?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "Pour les offres redirigées vers des fournisseurs, Kurioticket ne traite pas le paiement. Vérifiez et finalisez le paiement directement sur la page du fournisseur.",
+  moreServiceInfoFaqSaveQuestion:
+    "Puis-je enregistrer des voyages et des alertes ?",
+  moreServiceInfoFaqSaveAnswer:
+    "Oui. Les outils de compte peuvent vous aider à enregistrer des voyages, suivre des itinéraires, gérer des alertes et revenir aux options de voyage que vous envisagez.",
+  moreServiceInfoFaqAccountQuestion: "Un compte est-il requis ?",
+  moreServiceInfoFaqAccountAnswer:
+    "Vous pouvez consulter les informations de recherche sans tous les outils de compte, mais l’enregistrement de voyages, d’alertes et de préférences peut nécessiter une connexion.",
+  moreServiceInfoFaqSupportQuestion: "Comment contacter l’assistance ?",
+  moreServiceInfoFaqSupportAnswer:
+    "Utilisez la page du service client et indiquez l’e-mail de votre compte, ce que vous essayiez de faire, ainsi que tout détail d’itinéraire, d’hôtel ou de fournisseur.",
+  moreServiceInfoHelpTitle: "Besoin d’aide ?",
+  moreServiceInfoHelpDescription:
+    "Des questions sur votre compte, vos voyages enregistrés, vos alertes ou les redirections vers les fournisseurs ?",
+  moreServiceInfoSupportCta: "Contacter le service client",
+
   searchRentalCarsEveryPartTrip:
     "Recherchez des voitures de location pour chaque étape de votre voyage",
   exploreCarsByTripStyle:
