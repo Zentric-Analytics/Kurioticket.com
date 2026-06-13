@@ -455,6 +455,7 @@ export const translations: TranslationDictionary = {
   "legal.cookiePolicy.summary": "How Kurioticket uses cookies and similar technologies for authentication, security, preferences, analytics, and performance.",
   "legal.cookiePolicy.lastUpdatedDate": "May 11, 2026",
   "legal.cookiePolicy.lastUpdated": "Last updated: May 11, 2026",
+  "legal.cookiePolicy.tableOfContents": "TABLE OF CONTENTS",
   "legal.cookiePolicy.sections.use.title": "How Cookies Are Used",
   "legal.cookiePolicy.sections.use.paragraph1": "Kurioticket may use cookies for authentication sessions, security, fraud prevention, preference storage, analytics, performance monitoring, and feature experiments.",
   "legal.cookiePolicy.sections.use.paragraph2": "Some cookies are necessary for login, dashboard access, support tickets, saved travel features, security, and preferences.",

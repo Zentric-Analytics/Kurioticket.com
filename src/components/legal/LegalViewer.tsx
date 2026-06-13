@@ -466,7 +466,13 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
           "legal.privacy.tableOfContents",
           t["legal.tableOfContents"]
         )
-      : t["legal.tableOfContents"];
+      : isCookiePolicy
+        ? getTranslation(
+            t,
+            "legal.cookiePolicy.tableOfContents",
+            t["legal.tableOfContents"]
+          )
+        : t["legal.tableOfContents"];
 
   return (
     <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
