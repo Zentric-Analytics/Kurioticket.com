@@ -124,7 +124,11 @@ const resolveSavedTrip = (
 };
 
 const getSavedTripsDateLocale = (locale: string) =>
-  locale.toLowerCase().startsWith("es") ? "es-ES" : "en-US";
+  locale.toLowerCase().startsWith("fr")
+    ? "fr-FR"
+    : locale.toLowerCase().startsWith("es")
+      ? "es-ES"
+      : "en-US";
 
 const parseDateValue = (value?: string) => {
   if (!value) return null;
