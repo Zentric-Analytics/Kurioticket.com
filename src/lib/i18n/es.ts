@@ -616,6 +616,7 @@ export const translations: TranslationDictionary = {
   previousMonth: "Mes anterior",
   nextMonth: "Mes siguiente",
   previousMonthShort: "Ant.",
+  selectDateAriaPrefix: "Seleccionar fecha",
   nextMonthShort: "Sig.",
   chooseGuestsAndRooms: "Elegir huéspedes y habitaciones",
   guestsAndRooms: "Huéspedes y habitaciones",

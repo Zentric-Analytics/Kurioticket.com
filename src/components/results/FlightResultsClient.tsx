@@ -100,6 +100,10 @@ const normalizeFlightResultsCalendarLocale = (
   const normalized =
     locale?.trim().replace("_", "-").toLowerCase() ?? "";
 
+  if (normalized === "fr" || normalized.startsWith("fr-")) {
+    return "fr-FR";
+  }
+
   if (normalized === "es" || normalized.startsWith("es-")) {
     return "es-ES";
   }

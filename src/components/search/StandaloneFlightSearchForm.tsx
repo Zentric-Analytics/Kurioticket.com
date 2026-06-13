@@ -58,6 +58,10 @@ type MonthCell = {
 const normalizeFlightsCalendarLocale = (locale: string | null | undefined) => {
   const normalized = locale?.trim().replace("_", "-").toLowerCase() ?? "";
 
+  if (normalized === "fr" || normalized.startsWith("fr-")) {
+    return "fr-FR";
+  }
+
   if (normalized === "es" || normalized.startsWith("es-")) {
     return "es-ES";
   }
@@ -1001,7 +1005,7 @@ export function StandaloneFlightSearchForm({
                 <button
                   key={iso}
                   type="button"
-                  aria-label={`Select ${accessibleDateFormatter.format(day)}`}
+                  aria-label={`${t("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
                   aria-pressed={isDeparture || isReturn}
                   onClick={() => onSelectDate(day)}
                   disabled={isDisabledDate}
@@ -1056,19 +1060,19 @@ export function StandaloneFlightSearchForm({
         <div className="mb-3 flex items-center justify-between gap-3 px-1">
           <button
             type="button"
-            aria-label="Previous month"
+            aria-label={t("previousMonth")}
             onClick={() => setVisibleMonthDate((prev) => addMonths(prev, -1))}
             className="focus-ring rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
           >
-            Prev
+            {t("previousMonthShort")}
           </button>
           <button
             type="button"
-            aria-label="Next month"
+            aria-label={t("nextMonth")}
             onClick={() => setVisibleMonthDate((prev) => addMonths(prev, 1))}
             className="focus-ring rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800"
           >
-            Next
+            {t("nextMonthShort")}
           </button>
         </div>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
