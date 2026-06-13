@@ -1884,6 +1884,10 @@ export const translations: TranslationDictionary = {
   supportFormMessagePlaceholder:
     "Comparte la ruta, el hotel, la alerta o el contexto de tu cuenta.",
   supportFormSubmit: "Enviar solicitud",
+  supportFormSending: "Enviando...",
+  supportFormSuccessPrefix: "Ticket",
+  supportFormSuccessSuffix: "abierto.",
+  supportFormErrorFallback: "No se pudo abrir el ticket.",
   supportFaqHeading: "Preguntas frecuentes",
   supportFaqAccountQuestion: "Ayuda con la cuenta e inicio de sesión",
   supportFaqAccountAnswer:

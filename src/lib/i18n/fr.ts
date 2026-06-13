@@ -1297,4 +1297,52 @@ export const translations: TranslationDictionary = {
   footerPrivacy: "Confidentialité",
   footerTerms: "Conditions",
   footerCookies: "Cookies",
+
+  supportEyebrow: "Assistance Kurioticket",
+  supportTitle: "Service client",
+  supportBeforeContactHeading: "Avant de nous contacter",
+  supportBeforeContactDescription:
+    "Indiquez l’adresse e-mail de votre compte Kurioticket, ce que vous essayiez de faire, l’itinéraire ou l’hôtel concerné le cas échéant, ainsi que toute page de fournisseur vers laquelle vous avez été redirigé. Veuillez ne pas envoyer de numéros complets de carte de paiement ni de numéros de documents de voyage sensibles.",
+  supportTicketHeading: "Créer une demande d’assistance",
+  supportFormEmailLabel: "E-mail",
+  supportFormSubjectLabel: "Objet",
+  supportFormCategoryLabel: "Catégorie",
+  supportCategorySearchHelp: "Aide sur la recherche",
+  supportCategoryPriceAlerts: "Alertes de prix",
+  supportCategoryPartnerRedirect: "Redirection vers un fournisseur",
+  supportCategoryAccountHelp: "Aide au compte",
+  supportFormMessageLabel: "Comment pouvons-nous vous aider ?",
+  supportFormMessagePlaceholder:
+    "Indiquez l’itinéraire, l’hôtel, l’alerte ou le contexte du compte.",
+  supportFormSubmit: "Envoyer la demande",
+  supportFormSending: "Envoi en cours...",
+  supportFormSuccessPrefix: "Demande",
+  supportFormSuccessSuffix: "ouverte.",
+  supportFormErrorFallback: "Impossible d’ouvrir la demande.",
+  supportFaqHeading: "Questions fréquentes",
+  supportFaqAccountQuestion: "Aide au compte et à la connexion",
+  supportFaqAccountAnswer:
+    "Kurioticket peut vous aider avec l’accès au compte, les problèmes de connexion, les problèmes d’inscription, l’accès au profil et les problèmes de plateforme liés au compte.",
+  supportFaqSearchQuestion: "Aide sur la recherche et les résultats",
+  supportFaqSearchAnswer:
+    "Kurioticket peut vous aider lorsque la recherche de vols ou d’hôtels ne fonctionne pas, que les résultats ne se chargent pas, que les filtres prêtent à confusion ou que les prix et fournisseurs ne s’affichent pas comme prévu.",
+  supportFaqSavedTripsQuestion: "Voyages enregistrés et alertes",
+  supportFaqSavedTripsAnswer:
+    "Kurioticket peut vous aider avec les voyages enregistrés, les recherches récentes, les alertes de prix, les problèmes de notification et les outils de voyage liés au compte.",
+  supportFaqRedirectQuestion:
+    "Aide sur les réservations et les redirections vers les fournisseurs",
+  supportFaqRedirectAnswer:
+    "Kurioticket peut vous aider si une redirection vers un partenaire ou un fournisseur échoue, ouvre la mauvaise page ou ne conserve pas les détails du voyage ou de la recherche sélectionnés.",
+  supportFaqAlreadyBookedQuestion:
+    "Vous avez déjà réservé auprès d’un fournisseur ?",
+  supportFaqAlreadyBookedAnswer:
+    "Si votre réservation a été effectuée auprès d’une compagnie aérienne, d’un hôtel, d’une agence de voyages ou d’un fournisseur externe, ce fournisseur est responsable des modifications de réservation, remboursements, annulations, enregistrements, embarquements, reçus et documents de voyage.",
+  supportFaqChangeBookingQuestion:
+    "Kurioticket peut-il modifier ma réservation ?",
+  supportFaqChangeBookingAnswer:
+    "Kurioticket ne peut vous aider que pour les réservations effectuées directement via Kurioticket, si et lorsque la réservation directe est prise en charge. Pour les réservations effectuées auprès de fournisseurs externes, contactez directement ce fournisseur.",
+  supportFaqWhyRedirectedQuestion:
+    "Pourquoi ai-je été redirigé vers un autre fournisseur ?",
+  supportFaqWhyRedirectedAnswer:
+    "Kurioticket est une plateforme de recherche et de comparaison de voyages, et certains résultats redirigent vers des fournisseurs de confiance auprès desquels vous finalisez la réservation, le paiement et l’assistance spécifique au fournisseur.",
 };
