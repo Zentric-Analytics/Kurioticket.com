@@ -21,13 +21,13 @@ const mobileEmptyStates: Record<MobileTripTab, { title: string; body: string; il
     illustration: "current",
   },
   past: {
-    title: "Revisit your favourite places",
-    body: "Here you will see all your past trips and get inspired for your next ones.",
+    title: "Your travel history will appear here",
+    body: "Completed trips will be listed here so you can review past plans and details.",
     illustration: "past",
   },
   cancelled: {
-    title: "Sometimes plans change",
-    body: "Here you will see all the trips you have cancelled.",
+    title: "No cancelled trips yet",
+    body: "Trips you cancel will appear here for easy reference.",
     illustration: "cancelled",
   },
 };
