@@ -153,6 +153,16 @@ export const translations: TranslationDictionary = {
   "accountDashboard.overview.welcome": "Bon retour, {name}",
   "accountDashboard.overview.subtitle":
     "Gérez vos voyages, vos éléments enregistrés et vos préférences.",
+  "accountDashboard.saved.eyebrow": "ENREGISTRÉS",
+  "accountDashboard.saved.title": "Enregistrés",
+  "accountDashboard.saved.description":
+    "Les voyages, itinéraires, séjours et éléments de planification enregistrés associés à votre compte apparaissent ici.",
+  "accountDashboard.saved.emptyTitle": "Aucun élément enregistré pour le moment",
+  "accountDashboard.saved.emptyDescription":
+    "Les éléments que vous enregistrez depuis les outils de planification de Kurioticket apparaîtront ici. Vous pouvez également ouvrir l’espace des voyages enregistrés lorsque des données enregistrées sont disponibles.",
+  "accountDashboard.saved.openSavedTrips": "Ouvrir les voyages enregistrés",
+  "accountDashboard.saved.searchFlights": "Rechercher des vols",
+  "accountDashboard.saved.searchHotels": "Rechercher des hôtels",
   "accountDashboard.personalDetails.title": "Informations personnelles",
   "accountDashboard.personalDetails.subtitle":
     "Mettez à jour vos informations et gérez leur utilisation dans Kurioticket.",
