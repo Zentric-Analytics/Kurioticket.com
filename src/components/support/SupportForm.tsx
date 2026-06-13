@@ -13,7 +13,7 @@ export function SupportForm() {
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
   async function submit(formData: FormData) {
-    setStatus("Sending...");
+    setStatus(t("supportFormSending"));
     const response = await fetch("/api/support/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -26,7 +26,11 @@ export function SupportForm() {
       }),
     });
     const data = await response.json();
-    setStatus(response.ok ? `Ticket ${data.ticket.id} opened.` : data.error || "Unable to open ticket.");
+    setStatus(
+      response.ok
+        ? `${t("supportFormSuccessPrefix")} ${data.ticket.id} ${t("supportFormSuccessSuffix")}`
+        : data.error || t("supportFormErrorFallback"),
+    );
   }
 
   return (
