@@ -104,6 +104,10 @@ const normalizeFlightResultsCalendarLocale = (
     return "es-ES";
   }
 
+  if (normalized === "fr" || normalized.startsWith("fr-")) {
+    return "fr-FR";
+  }
+
   return "en-US";
 };
 
