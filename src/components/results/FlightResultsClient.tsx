@@ -108,8 +108,8 @@ const normalizeFlightResultsCalendarLocale = (
     return "es-ES";
   }
 
-  if (normalized === "fr" || normalized.startsWith("fr-")) {
-    return "fr-FR";
+  if (normalized === "de" || normalized.startsWith("de-")) {
+    return "de-DE";
   }
 
   return "en-US";
@@ -3414,7 +3414,7 @@ export function FlightResultsClient() {
               </span>
               <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-[2px] border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 shadow-sm transition group-hover:border-indigo-200 group-hover:bg-white sm:self-center">
                 <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
-                Edit
+                {t("edit")}
               </span>
             </button>
           </div>
@@ -3878,8 +3878,8 @@ export function FlightResultsClient() {
           variant="secondary"
           aria-label={
             activeFilterCount > 0
-              ? `Open filters, ${activeFilterLabel}`
-              : "Open filters"
+              ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
+              : t("openFilters")
           }
           className="relative h-16 w-[72px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
           onClick={() => setFiltersOpen(true)}
@@ -5244,14 +5244,16 @@ function getTimeMinutes(value: string) {
   return hours * 60 + minutes;
 }
 
-function formatTimeFromMinutes(value: number) {
+function formatTimeFromMinutes(value: number, locale = "en-US") {
   const normalized = Math.max(0, Math.min(1439, value));
   const hours24 = Math.floor(normalized / 60);
   const minutes = normalized % 60;
-  const period = hours24 >= 12 ? "PM" : "AM";
-  const hours12 = hours24 % 12 || 12;
+  const date = new Date(2000, 0, 1, hours24, minutes);
 
-  return `${hours12}:${String(minutes).padStart(2, "0")} ${period}`;
+  return new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function formatDurationFromMinutes(totalMinutes: number) {
@@ -5448,8 +5450,9 @@ function Filters({
   setFlexibleOnly: (value: boolean) => void;
   onFilterChange: () => void;
 }) {
-  const { t: dictionary } = useLocale();
+  const { t: dictionary, locale } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const calendarLocale = normalizeFlightResultsCalendarLocale(locale);
   const currencyRates = useCurrencyRates();
   const filterRangeClass =
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
@@ -5568,7 +5571,7 @@ function Filters({
                 <span>{t("takeoffTimeFromOrigin")}</span>
                 <span className="font-mono text-navy">
                   {timeBounds.takeoff && maxTakeoffMinutes !== null
-                    ? formatTimeFromMinutes(maxTakeoffMinutes)
+                    ? formatTimeFromMinutes(maxTakeoffMinutes, calendarLocale)
                     : t("loading")}
                 </span>
               </div>
@@ -5588,12 +5591,12 @@ function Filters({
               <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
                 <span>
                   {timeBounds.takeoff
-                    ? formatTimeFromMinutes(timeBounds.takeoff.min)
+                    ? formatTimeFromMinutes(timeBounds.takeoff.min, calendarLocale)
                     : "—"}
                 </span>
                 <span>
                   {timeBounds.takeoff
-                    ? formatTimeFromMinutes(timeBounds.takeoff.max)
+                    ? formatTimeFromMinutes(timeBounds.takeoff.max, calendarLocale)
                     : "—"}
                 </span>
               </div>
@@ -5604,7 +5607,7 @@ function Filters({
                 <span>{t("landingTimeAtDestination")}</span>
                 <span className="font-mono text-navy">
                   {timeBounds.landing && maxLandingMinutes !== null
-                    ? formatTimeFromMinutes(maxLandingMinutes)
+                    ? formatTimeFromMinutes(maxLandingMinutes, calendarLocale)
                     : t("loading")}
                 </span>
               </div>
@@ -5624,12 +5627,12 @@ function Filters({
               <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
                 <span>
                   {timeBounds.landing
-                    ? formatTimeFromMinutes(timeBounds.landing.min)
+                    ? formatTimeFromMinutes(timeBounds.landing.min, calendarLocale)
                     : "—"}
                 </span>
                 <span>
                   {timeBounds.landing
-                    ? formatTimeFromMinutes(timeBounds.landing.max)
+                    ? formatTimeFromMinutes(timeBounds.landing.max, calendarLocale)
                     : "—"}
                 </span>
               </div>
