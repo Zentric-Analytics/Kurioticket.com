@@ -63,10 +63,10 @@ export const supportedLocales: SupportedLocale[] = [
     label: "German",
     nativeLabel: "Deutsch",
     direction: "ltr",
-    status: preparing,
+    status: "available",
     countryCode: "DE",
     fallbackText: "DE",
-    translationStatus: "partial",
+    translationStatus: "ready",
   },
   {
     code: "it-it",

@@ -10,6 +10,8 @@ import {
 } from "@/lib/language";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { translations as esTranslations } from "@/lib/i18n/es";
+import { translations as deTranslations } from "@/lib/i18n/de";
+import { getTranslations } from "@/lib/i18n";
 
 type StorageLike = { getItem: (k: string) => string | null; setItem: (k: string, v: string) => void };
 type WindowLike = { localStorage: StorageLike; dispatchEvent: (event: Event) => boolean };
@@ -20,6 +22,7 @@ test("global language catalog renders", () => {
   assert.ok(languageOptions.some((o) => o.locale === "en-US" && o.status === "available"));
   assert.ok(languageOptions.some((o) => o.locale === "es-ES" && o.status === "available"));
   assert.ok(languageOptions.some((o) => o.code === "fr" && o.locale === "fr" && o.nativeLabel === "Français" && o.status === "available"));
+  assert.ok(languageOptions.some((o) => o.code === "de-de" && o.locale === "de-DE" && o.nativeLabel === "Deutsch" && o.status === "available"));
   assert.ok(languageOptions.some((o) => o.locale === "ar" && o.direction === "rtl"));
 });
 
@@ -33,7 +36,7 @@ test("search filters by native label and canonical locale", () => {
   assert.ok(filtered.some((o) => o.code === "pt-br"));
 });
 
-test("selected available Spanish and French locales persist and update document language", () => {
+test("selected available Spanish, French, and German locales persist and update document language", () => {
   const store = new Map<string, string>();
   const windowMock: WindowLike = {
     localStorage: {
@@ -59,6 +62,11 @@ test("selected available Spanish and French locales persist and update document 
   assert.equal(getLanguageFromStorage(), "fr");
   assert.equal(documentMock.documentElement.lang, "fr");
   assert.equal(documentMock.documentElement.dir, "ltr");
+
+  setLanguageInStorage("de-DE");
+  assert.equal(getLanguageFromStorage(), "de-de");
+  assert.equal(documentMock.documentElement.lang, "de-DE");
+  assert.equal(documentMock.documentElement.dir, "ltr");
 });
 
 test("preparing locales are not persisted as selected", () => {
@@ -72,11 +80,11 @@ test("preparing locales are not persisted as selected", () => {
   };
   Object.defineProperty(globalThis, "window", { value: windowMock, configurable: true });
 
-  setLanguageInStorage("de-DE");
+  setLanguageInStorage("it-IT");
   assert.equal(getLanguageFromStorage(), "en-us");
 
   setLanguageInStorage("es-ES");
-  setLanguageInStorage("de-DE");
+  setLanguageInStorage("it-IT");
   assert.equal(getLanguageFromStorage(), "en-us");
 });
 
@@ -92,11 +100,19 @@ test("unknown locales fallback to english", () => {
   assert.equal(normalizeLanguage("xx-yy"), "en-us");
 });
 
-test("Spanish dictionary shape matches English dictionary shape", () => {
+test("Spanish and German dictionary shapes match English dictionary shape", () => {
+  const englishKeys = Object.keys(enTranslations).sort();
   assert.deepEqual(
-    Object.keys(esTranslations).sort(),
-    Object.keys(enTranslations).sort()
+    englishKeys.filter((key) => !(key in esTranslations)),
+    []
+  );
+  assert.deepEqual(
+    englishKeys.filter((key) => !(key in deTranslations)),
+    []
   );
   assert.equal(esTranslations.flights, "Vuelos");
   assert.equal(esTranslations.search, "Buscar");
+  assert.equal(deTranslations.flights, "Flüge");
+  assert.equal(deTranslations.search, "Suchen");
+  assert.equal(getTranslations("de-DE").flights, "Flüge");
 });
