@@ -19,12 +19,11 @@ import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
-import { formatTime } from "@/lib/utils";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 export function FlightDetailsClient({ id }: { id: string }) {
   const { selectedOption } = useRegion();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const currencyRates = useCurrencyRates();
   const [flight, setFlight] = useState<PublicFlightResult | null>(null);
   const [error, setError] = useState("");
@@ -143,9 +142,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     fallbackAirlineLogo={getAirlineLogo(flight)}
                     fallbackFlightNumber={flight.flightNumber}
                     routeHeading={routeHeading}
-                    selectedFlightsLabel={
-                      t.selectedFlights
-                    }
+                    selectedFlightsLabel={t.selectedFlights}
                     selectedFlightItineraryLabel={
                       t.selectedFlightItinerary || "Selected flight itinerary"
                     }
@@ -158,6 +155,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     stopPluralLabel={t.stopPlural || "stops"}
                     layoverInLabel={t.layoverIn || "Layover in"}
                     connectionLabels={buildConnectionLabels(t)}
+                    locale={locale}
                   />
 
                   <Card className="mt-5 overflow-hidden border-slate-200/80 bg-white p-0 shadow-none">
@@ -179,7 +177,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
                                     aria-hidden="true"
                                   />
                                   <span className="text-sm font-medium text-slate-700">
-                                    {t.flightNumberLabel || "Flight"} {flight.flightNumber}
+                                    {t.flightNumberLabel || "Flight"}{" "}
+                                    {flight.flightNumber}
                                   </span>
                                 </>
                               ) : null}
@@ -260,8 +259,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                             onClick={continueToProvider}
                             disabled={!hasProviderLink}
                           >
-                            {t.continueToProvider}{" "}
-                            <ArrowRight size={16} />
+                            {t.continueToProvider} <ArrowRight size={16} />
                           </Button>
                         </div>
                       </aside>
@@ -278,16 +276,14 @@ export function FlightDetailsClient({ id }: { id: string }) {
                   isFallbackRate={currencyRates.isFallback}
                   onContinueToProvider={continueToProvider}
                   labels={{
-                    compareMoreProviders:
-                      t.compareMoreProviders,
+                    compareMoreProviders: t.compareMoreProviders,
                     providerComparisonIntro:
                       t.providerComparisonIntro ||
                       "Kurioticket can compare from different providers.",
                     noAdditionalLiveProviderOptions:
                       t.noAdditionalLiveProviderOptions ||
                       "No additional live provider options are available for this flight right now.",
-                    continueToProvider:
-                      t.continueToProvider,
+                    continueToProvider: t.continueToProvider,
                     confirmedByProvider:
                       t.confirmedByProvider || "Confirmed by provider",
                     nonstop: t.nonstop || "Nonstop",
@@ -323,6 +319,7 @@ function SelectedFlightSummary({
   stopPluralLabel,
   layoverInLabel,
   connectionLabels,
+  locale,
 }: {
   itineraryLegs: FlightLeg[];
   fallbackAirlineName: string;
@@ -340,6 +337,7 @@ function SelectedFlightSummary({
   stopPluralLabel: string;
   layoverInLabel: string;
   connectionLabels: ConnectionLabels;
+  locale: string;
 }) {
   return (
     <section className="min-w-0" aria-label={selectedFlightItineraryLabel}>
@@ -375,6 +373,7 @@ function SelectedFlightSummary({
               stopPluralLabel={stopPluralLabel}
               layoverInLabel={layoverInLabel}
               connectionLabels={connectionLabels}
+              locale={locale}
             />
           </div>
         ))}
@@ -1349,6 +1348,7 @@ function CompactLegSection({
   stopPluralLabel,
   layoverInLabel,
   connectionLabels,
+  locale,
 }: {
   leg: FlightLeg;
   legIndex: number;
@@ -1365,6 +1365,7 @@ function CompactLegSection({
   stopPluralLabel: string;
   layoverInLabel: string;
   connectionLabels: ConnectionLabels;
+  locale: string;
 }) {
   const segments = leg.segments.length
     ? leg.segments
@@ -1460,6 +1461,7 @@ function CompactLegSection({
               stopSingular: stopSingularLabel,
               stopPlural: stopPluralLabel,
             })}
+            locale={locale}
           />
 
           {hasMultipleSegments ? (
@@ -1488,6 +1490,7 @@ function CompactLegSection({
                         segment.flightNumber || fallbackFlightNumber
                       }
                       compact
+                      locale={locale}
                     />
                     {leg.layovers[segmentIndex] ? (
                       <LayoverSeparator
@@ -1518,6 +1521,7 @@ function CompactFlightRow({
   duration,
   stops,
   compact = false,
+  locale = "en-US",
 }: {
   originAirport: string;
   destinationAirport: string;
@@ -1529,6 +1533,7 @@ function CompactFlightRow({
   duration?: string;
   stops?: string;
   compact?: boolean;
+  locale?: string;
 }) {
   return (
     <div
@@ -1538,7 +1543,7 @@ function CompactFlightRow({
     >
       <div className="min-w-0">
         <div className="whitespace-nowrap text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
-          {formatTime(departureTime)}
+          {formatFlightTime(departureTime, locale)}
         </div>
         <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
           {originAirport}
@@ -1591,7 +1596,7 @@ function CompactFlightRow({
 
       <div className="min-w-0 text-right">
         <div className="whitespace-nowrap text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
-          {formatTime(arrivalTime)}
+          {formatFlightTime(arrivalTime, locale)}
         </div>
         <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
           {destinationAirport}
@@ -1662,13 +1667,17 @@ function buildHeroDetails(
       value: formatFareRulesValue(
         flight,
         t.reviewBeforeBooking || "Review before booking",
+        t,
       ),
       icon: ShieldCheck,
     },
   ];
 }
 
-type ConnectionLabels = Record<FlightLeg["layovers"][number]["quality"], string>;
+type ConnectionLabels = Record<
+  FlightLeg["layovers"][number]["quality"],
+  string
+>;
 
 type LocalizedDisplayLabels = {
   cabinEconomy: string;
@@ -1706,10 +1715,8 @@ function buildLocalizedDisplayLabels(
     cabinPremiumEconomy: t.premiumEconomy || "Premium economy",
     cabinBusiness: t.selectedFlightCabinBusiness || t.business || "Business",
     cabinFirst: t.first || "First",
-    carryOnSingularIncluded:
-      t.carryOnSingularIncluded || "carry-on included",
-    carryOnPluralIncluded:
-      t.carryOnPluralIncluded || "carry-ons included",
+    carryOnSingularIncluded: t.carryOnSingularIncluded || "carry-on included",
+    carryOnPluralIncluded: t.carryOnPluralIncluded || "carry-ons included",
     checkedBagSingularIncluded:
       t.checkedBagSingularIncluded || "checked bag included",
     checkedBagPluralIncluded:
@@ -1765,18 +1772,20 @@ function localizeIncludedBaggageValue(
     const carryOnMatch = part.match(/^(\d+)\s+carry-ons? included$/i);
     if (carryOnMatch) {
       const count = Number(carryOnMatch[1]);
-      const label = count === 1
-        ? labels.carryOnSingularIncluded
-        : labels.carryOnPluralIncluded;
+      const label =
+        count === 1
+          ? labels.carryOnSingularIncluded
+          : labels.carryOnPluralIncluded;
       return `${count} ${label}`;
     }
 
     const checkedBagMatch = part.match(/^(\d+)\s+checked bags? included$/i);
     if (checkedBagMatch) {
       const count = Number(checkedBagMatch[1]);
-      const label = count === 1
-        ? labels.checkedBagSingularIncluded
-        : labels.checkedBagPluralIncluded;
+      const label =
+        count === 1
+          ? labels.checkedBagSingularIncluded
+          : labels.checkedBagPluralIncluded;
       return `${count} ${label}`;
     }
 
@@ -1803,6 +1812,7 @@ function formatSeatSelectionValue(
 function formatFareRulesValue(
   flight: PublicFlightResult,
   fallback = "Review before booking",
+  t: Record<string, string> = {},
 ) {
   const fareRules = getOptionalStringField(flight, [
     "fareRules",
@@ -1816,7 +1826,63 @@ function formatFareRulesValue(
     return fallback;
   }
 
-  return fareRules;
+  return localizeFareRulesValue(fareRules, t);
+}
+
+function localizeFareRulesValue(value: string, t: Record<string, string>) {
+  return value
+    .replace(
+      /Not refundable before departure/gi,
+      t.notRefundableBeforeDeparture || "Not refundable before departure",
+    )
+    .replace(
+      /Refundable before departure with ([A-Z]{3}) ([0-9.]+) penalty/gi,
+      (_match, currency: string, amount: string) =>
+        formatTranslationTemplate(
+          t.refundableBeforeDepartureWithPenalty ||
+            "Refundable before departure with {{currency}} {{amount}} penalty",
+          { currency, amount },
+        ),
+    )
+    .replace(
+      /Refundable before departure/gi,
+      t.refundableBeforeDeparture || "Refundable before departure",
+    )
+    .replace(
+      /Changes allowed with ([A-Z]{3}) ([0-9.]+) penalty/gi,
+      (_match, currency: string, amount: string) =>
+        formatTranslationTemplate(
+          t.changesAllowedWithPenalty ||
+            "Changes allowed with {{currency}} {{amount}} penalty",
+          { currency, amount },
+        ),
+    )
+    .replace(
+      /Changes allowed before departure/gi,
+      t.changesAllowedBeforeDeparture || "Changes allowed before departure",
+    )
+    .replace(
+      /Changes not allowed before departure/gi,
+      t.changesNotAllowedBeforeDeparture ||
+        "Changes not allowed before departure",
+    );
+}
+
+function formatTranslationTemplate(
+  template: string,
+  values: Record<string, string>,
+) {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{{${key}}}`, value),
+    template,
+  );
+}
+
+function formatFlightTime(value: string | Date, locale: string) {
+  return new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 function getOptionalStringField(flight: PublicFlightResult, keys: string[]) {
