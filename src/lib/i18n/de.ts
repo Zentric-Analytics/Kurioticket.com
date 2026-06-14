@@ -163,6 +163,7 @@ export const translations: TranslationDictionary = {
   destinations: "Reiseziele",
   login: "Anmelden",
   signup: "Registrieren",
+  signUp: "Registrieren",
   language: "Sprache",
   languageSelectorTitle: "Sprache auswählen",
   languageSelectorSubtitle: "Wähle eine verfügbare Sprache für Kurioticket.",
