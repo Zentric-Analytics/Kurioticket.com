@@ -277,6 +277,12 @@ function getPublicSignupValidationErrorKey(
   >,
 ) {
   if (
+    fieldErrors.name?.length
+  ) {
+    return "signupErrorFullNameRequired";
+  }
+
+  if (
     fieldErrors.email?.length
   ) {
     return "signupErrorInvalidEmail";
