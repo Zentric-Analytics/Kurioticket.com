@@ -91,6 +91,13 @@ const normalizeHomepageCalendarLocale = (
     return "es-ES";
   }
 
+  if (
+    normalized === "de" ||
+    normalized.startsWith("de-")
+  ) {
+    return "de-DE";
+  }
+
   return "en-US";
 };
 
@@ -129,6 +136,10 @@ const formatCalendarWeekday = (
   calendarLocale: string
 ) => {
   const formatted = formatter.format(date);
+
+  if (calendarLocale === "de-DE") {
+    return `${formatted.replace(/\.$/, "")}.`;
+  }
 
   if (calendarLocale !== "fr-FR") {
     return formatted;
@@ -2485,7 +2496,7 @@ export function SearchTabs({
     <div className="space-y-4">
       <div>
         <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-          Passengers
+          {t.passengers || "Passengers"}
         </p>
         {renderPassengerControlRows()}
       </div>
@@ -2668,8 +2679,8 @@ export function SearchTabs({
                         disabled
                         className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-500"
                       >
-                        Multi-city —
-                        Use one-way or round-trip search
+                        {t.multiCity || "Multi-city"} —
+                        {t.useOneWayOrRoundTripSearch || "Use one-way or round-trip search"}
                       </button>
                     </div>
                   )}
@@ -3026,7 +3037,7 @@ export function SearchTabs({
                     >
                       <div>
                         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-                          Passengers
+                          {t.passengers || "Passengers"}
                         </p>
                         <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
                           {t.travelers || "Travelers"}
