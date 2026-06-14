@@ -102,6 +102,7 @@ export const translations: TranslationDictionary = {
   destination: "Ziel",
   departure: "Abflug",
   return: "Rückflug",
+  departureDate: "REISEDATEN",
   travelDates: "Reisedaten",
   passengers: "Passagiere",
   travelers: "Reisende",
