@@ -1223,6 +1223,12 @@ export const translations: TranslationDictionary = {
   noAdditionalLiveProviderOptions:
     "Aucune autre option de fournisseur en direct n’est disponible pour ce vol pour le moment.",
   confirmedByProvider: "Confirmé par le fournisseur",
+  notRefundableBeforeDeparture: "Non remboursable avant le départ",
+  refundableBeforeDepartureWithPenalty: "Remboursable avant le départ avec une pénalité de {{currency}} {{amount}}",
+  refundableBeforeDeparture: "Remboursable avant le départ",
+  changesAllowedWithPenalty: "Modifications autorisées avec une pénalité de {{currency}} {{amount}}",
+  changesAllowedBeforeDeparture: "Modifications autorisées avant le départ",
+  changesNotAllowedBeforeDeparture: "Modifications non autorisées avant le départ",
   providerNormalizedItineraryPrefix: "Les détails de l’aller et du retour sont affichés à partir des données d’itinéraire normalisées par le fournisseur.",
   checkProvider: "Vérifier auprès du fournisseur",
   carryOnIncluded: "bagage cabine inclus",

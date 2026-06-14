@@ -1971,6 +1971,12 @@ export const translations: TranslationDictionary = {
   noAdditionalLiveProviderOptions:
     "No additional live provider options are available for this flight right now.",
   confirmedByProvider: "Confirmed by provider",
+  notRefundableBeforeDeparture: "Not refundable before departure",
+  refundableBeforeDepartureWithPenalty: "Refundable before departure with {{currency}} {{amount}} penalty",
+  refundableBeforeDeparture: "Refundable before departure",
+  changesAllowedWithPenalty: "Changes allowed with {{currency}} {{amount}} penalty",
+  changesAllowedBeforeDeparture: "Changes allowed before departure",
+  changesNotAllowedBeforeDeparture: "Changes not allowed before departure",
   baggage: "Baggage",
   cabin: "Cabin",
   seatSelection: "Seat selection",
