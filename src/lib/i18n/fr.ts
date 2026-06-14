@@ -211,6 +211,20 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.securityPrivacy.title": "Sécurité et confidentialité",
   "accountDashboard.preferences.securityPrivacy.description":
     "Consultez les informations actuelles sur la confidentialité et les politiques de la plateforme.",
+  "accountDashboard.support.eyebrow": "ASSISTANCE",
+  "accountDashboard.support.title": "Assistance",
+  "accountDashboard.support.description":
+    "Trouvez des ressources d’aide et de politique sans présenter les outils d’assistance inactifs comme des flux de travail complets.",
+  "accountDashboard.support.comingSoon": "Bientôt disponible",
+  "accountDashboard.support.helpCenter.title": "Centre d’aide",
+  "accountDashboard.support.helpCenter.description":
+    "Parcourez l’espace d’assistance existant pour obtenir de l’aide sur Kurioticket et des conseils de planification de voyage.",
+  "accountDashboard.support.contact.title": "Contacter l’assistance",
+  "accountDashboard.support.contact.description":
+    "Des options de contact sont en préparation pour les demandes d’assistance liées au compte.",
+  "accountDashboard.support.privacyData.title": "Confidentialité et données",
+  "accountDashboard.support.privacyData.description":
+    "Consultez les informations juridiques et de confidentialité concernant les données du compte et les politiques de la plateforme.",
   "accountDashboard.personalDetails.title": "Informations personnelles",
   "accountDashboard.personalDetails.subtitle":
     "Mettez à jour vos informations et gérez leur utilisation dans Kurioticket.",
