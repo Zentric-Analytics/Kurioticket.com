@@ -470,6 +470,7 @@ export const translations: TranslationDictionary = {
   "legal.affiliateDisclosure.summary": "How Kurioticket may earn commissions when users click or book through trusted partners.",
   "legal.affiliateDisclosure.lastUpdatedDate": "May 11, 2026",
   "legal.affiliateDisclosure.lastUpdated": "Last updated: May 11, 2026",
+  "legal.affiliateDisclosure.tableOfContents": "TABLE OF CONTENTS",
   "legal.affiliateDisclosure.sections.model.title": "Affiliate Model",
   "legal.affiliateDisclosure.sections.model.paragraph1": "Kurioticket offers free flight and hotel search without service fees. We may earn affiliate commissions when users click, book, or purchase through airline, hotel, or travel partner links.",
   "legal.affiliateDisclosure.sections.model.paragraph2": "Kurioticket may receive compensation from partners when users click or book through provider links. This helps operate and improve the service.",
