@@ -141,11 +141,35 @@ const carFilterGroups: CarFilterGroup[] = [
   },
 ];
 
-const getCarsResultsIntlLocale = (locale: string) =>
-  locale.toLowerCase().startsWith("es") ? "es-ES" : "en-US";
+const getCarsResultsIntlLocale = (locale: string) => {
+  const normalizedLocale = locale.toLowerCase();
 
-const isSpanishCarsResultsLocale = (intlLocale: string) =>
-  intlLocale.toLowerCase().startsWith("es");
+  if (normalizedLocale.startsWith("de")) {
+    return "de-DE";
+  }
+
+  if (normalizedLocale.startsWith("es")) {
+    return "es-ES";
+  }
+
+  if (normalizedLocale.startsWith("fr")) {
+    return "fr-FR";
+  }
+
+  return "en-US";
+};
+
+const usesTwentyFourHourCarsResultsTime = (intlLocale: string) =>
+  ["de", "es", "fr"].some((localePrefix) =>
+    intlLocale.toLowerCase().startsWith(localePrefix),
+  );
+
+const curatedLocationTranslationKeys: Record<string, string> = {
+  Airport: "carsResults.location.airport",
+  "City center": "carsResults.location.cityCenter",
+  "Hotel area": "carsResults.location.hotelArea",
+  "Train station": "carsResults.location.trainStation",
+};
 
 const interpolate = (template: string, values: Record<string, string>) =>
   Object.entries(values).reduce(
@@ -247,10 +271,10 @@ const formatTimeLabel = (time: string, intlLocale: string) => {
   const [hourValue, minuteValue] = time.split(":").map(Number);
 
   if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
-    return time || (isSpanishCarsResultsLocale(intlLocale) ? "10:00" : "10:00 AM");
+    return time || (usesTwentyFourHourCarsResultsTime(intlLocale) ? "10:00" : "10:00 AM");
   }
 
-  if (isSpanishCarsResultsLocale(intlLocale)) {
+  if (usesTwentyFourHourCarsResultsTime(intlLocale)) {
     return `${String(hourValue).padStart(2, "0")}:${String(minuteValue).padStart(2, "0")}`;
   }
 
@@ -262,6 +286,13 @@ const formatTimeLabel = (time: string, intlLocale: string) => {
 
 const normalizeDriverAge = (value: string) =>
   driverAgeOptions.includes(value) ? value : defaultDriverAge;
+
+const getCuratedLocationLabel = (location: string, t: (key: string) => string) => {
+  const trimmedLocation = location.trim();
+  const translationKey = curatedLocationTranslationKeys[trimmedLocation];
+
+  return translationKey ? t(translationKey) : trimmedLocation;
+};
 
 const getDriverAgeOptionLabel = (
   age: string,
@@ -333,13 +364,15 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const hasSearchContext = Boolean(pickupLocation || pickupDate || dropoffDate);
   const trimmedPickupLocation = pickupLocation.trim();
   const trimmedDropoffLocation = dropoffLocation.trim();
+  const pickupLocationLabel = getCuratedLocationLabel(trimmedPickupLocation, t);
+  const dropoffLocationLabel = getCuratedLocationLabel(trimmedDropoffLocation, t);
   const locationSummary = trimmedPickupLocation
     ? trimmedDropoffLocation && trimmedDropoffLocation !== trimmedPickupLocation
       ? interpolate(t("carsResults.pickupToReturn"), {
-          pickup: trimmedPickupLocation,
-          return: trimmedDropoffLocation,
+          pickup: pickupLocationLabel,
+          return: dropoffLocationLabel,
         })
-      : trimmedPickupLocation
+      : pickupLocationLabel
     : t("carsResults.pickupLocationNeeded");
   const activeFilterCount = useMemo(
     () =>
@@ -355,9 +388,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
   const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
-  const pickupSummary = pickupLocation.trim() || t("carsResults.pickupLocation");
+  const pickupSummary = pickupLocationLabel || t("carsResults.pickupLocation");
   const returnSummary =
-    dropoffLocation.trim() || pickupLocation.trim() || t("carsResults.returnLocation");
+    dropoffLocationLabel || pickupLocationLabel || t("carsResults.returnLocation");
   const rentalDateSummary = pickupDate
     ? dropoffDate
       ? `${formatCompactDate(
