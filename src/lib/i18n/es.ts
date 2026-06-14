@@ -499,6 +499,7 @@ export const translations: TranslationDictionary = {
   "legal.refundBookingDisclaimer.summary": "Aclara que las compras, la emisión de boletos, los reembolsos, las cancelaciones y los pagos de inventario de viaje se realizan fuera de Kurioticket.",
   "legal.refundBookingDisclaimer.lastUpdatedDate": "11 de mayo de 2026",
   "legal.refundBookingDisclaimer.lastUpdated": "Última actualización: 11 de mayo de 2026",
+  "legal.refundBookingDisclaimer.tableOfContents": "Tabla de contenido",
   "legal.refundBookingDisclaimer.sections.no-ticketing.title": "Sin emisión directa de boletos",
   "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1": "Kurioticket no vende boletos de avión ni reservas de hotel. Redirigimos a los usuarios a aerolíneas, hoteles, socios afiliados o proveedores de viaje externos para continuar con los pasos de comparación y compra.",
   "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2": "Tu contrato de compra es con el proveedor externo que acepta tu pago, no con Kurioticket.",
