@@ -1761,6 +1761,10 @@ export const translations: TranslationDictionary = {
   "carsResults.airportCounter": "Comptoir à l’aéroport",
   "carsResults.shuttlePickup": "Navette de prise en charge",
   "carsResults.cityLocation": "Agence en ville",
+  "carsResults.location.airport": "Aéroport",
+  "carsResults.location.cityCenter": "Centre-ville",
+  "carsResults.location.hotelArea": "Zone hôtelière",
+  "carsResults.location.trainStation": "Gare",
   searchingCars: "Recherche de voitures…",
   "carsFaq.heading": "Questions fréquentes sur les voitures",
   "carsFaq.0.question":
