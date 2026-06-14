@@ -173,13 +173,27 @@ export const translations: TranslationDictionary = {
   flightBookingFaqIntro:
     "Prüfen Sie häufige Details zur Flugsuche, bevor Sie mit einem Anbieter fortfahren.",
   flightFaqBestTimeQuestion: "Wann ist die beste Zeit, einen Flug zu buchen?",
+  flightFaqBestTimeAnswer:
+    "Flugpreise können sich je nach Strecke, Saison, Nachfrage und Verfügbarkeit ändern. Es ist in der Regel hilfreich, mehrere Reisedaten zu vergleichen, wenn möglich nahegelegene Flughäfen zu prüfen und die gesamte Reiseroute anzusehen, bevor Sie einen Tarif auswählen.",
   flightFaqBeforeBookingQuestion: "Was sollte ich vor der Buchung prüfen?",
+  flightFaqBeforeBookingAnswer:
+    "Prüfen Sie Abflug- und Ankunftszeiten, die gesamte Reisezeit, Zwischenstopps, Gepäckregeln, Sitzplatzauswahl, Stornierungsbedingungen und die Richtlinie für Ticketänderungen, bevor Sie Ihre Buchung beim Anbieter abschließen.",
   flightFaqFlexibleFareQuestion: "Was ist ein flexibler Tarif?",
+  flightFaqFlexibleFareAnswer:
+    "Ein flexibler Tarif kann Änderungen oder Stornierungen mit weniger Einschränkungen als ein Basistarif ermöglichen. Die genauen Regeln hängen jedoch von der Fluggesellschaft oder dem Buchungsanbieter ab. Prüfen Sie vor dem Kauf immer die Tarifbedingungen.",
   flightFaqNonstopQuestion: "Sind Nonstop-Flüge immer besser?",
+  flightFaqNonstopAnswer:
+    "Nicht immer. Nonstop-Flüge können Zeit sparen, während Verbindungen mit einem Zwischenstopp andere Abflugzeiten, Ankunftsfenster oder Tarifoptionen bieten können. Vergleichen Sie die gesamte Reisezeit, die Dauer des Zwischenstopps und den Komfort, bevor Sie sich entscheiden.",
   flightFaqBaggageQuestion: "Wie funktionieren Gepäckregeln?",
+  flightFaqBaggageAnswer:
+    "Die Gepäckregelungen können je nach Fluggesellschaft, Strecke, Kabine, Tarifart und Anbieter variieren. Prüfen Sie vor der Buchung, ob Handgepäck, aufgegebenes Gepäck und persönliche Gegenstände enthalten sind.",
   flightFaqChangeCancelQuestion: "Kann ich mein Ticket ändern oder stornieren?",
+  flightFaqChangeCancelAnswer:
+    "Änderungs- und Stornierungsmöglichkeiten hängen von den Tarifregeln und den Richtlinien des Anbieters ab. Einige Tickets können nicht erstattungsfähig sein oder Gebühren enthalten. Prüfen Sie daher die Bedingungen vor der Buchung sorgfältig.",
   flightFaqInternationalQuestion:
     "Was sollte ich über internationale Flüge wissen?",
+  flightFaqInternationalAnswer:
+    "Bei internationalen Reisen sollten Sie vor der Buchung die Gültigkeit Ihres Reisepasses, Visabestimmungen, Transitregeln, Gepäckrichtlinien und Einreiseanforderungen für Ihr Reiseziel prüfen.",
   "flightLandingCity.Cancun": "Cancún",
   "flightLandingCity.Cape Town": "Kapstadt",
   "homeDiscoveryRoute.us-jfk-mia.title": "Strandwochenende in Miami",
@@ -210,10 +224,17 @@ export const translations: TranslationDictionary = {
     "Warmwetter-Route in ein US-Territorium mit historischer Altstadt und Stränden.",
   "homeDiscoveryRoute.us-den-phx.routeNote":
     "Kurze Route in den Westen für Golfwochenenden und Wanderungen in der Sonora-Wüste.",
+  "homeDiscoveryRoute.us-dfw-sea.title": "Kaffee- und Naturtrip nach Seattle",
+  "homeDiscoveryRoute.us-ord-pdx.title":
+    "Food- und Waldwochenende in Portland",
+  "homeDiscoveryRoute.us-den-phx.title": "Wüstensonnentrip nach Phoenix",
   "homeDiscoveryRoute.us-iad-bna.routeNote":
     "Stark nachgefragte Inlandsroute für Livemusik, Essen und Festivals.",
+  "homeDiscoveryRoute.us-iad-bna.title": "Musikstadt-Auszeit in Nashville",
   "homeDiscoveryRoute.us-lax-yvr.routeNote":
     "Einfache grenzüberschreitende Route mit Hafenblick, Meeresfrüchten und nahegelegenen alpinen Wegen.",
+  "homeDiscoveryRoute.us-lax-yvr.title":
+    "Berg- und Stadtauszeit in Vancouver",
   "homeDiscoveryRoute.us-phl-san.title": "Küstenauszeit in San Diego",
   "homeDiscoveryRoute.us-phl-san.routeNote":
     "Reise quer durchs Land mit Stränden, Hafenrundfahrten und mildem Wetter.",
@@ -225,6 +246,9 @@ export const translations: TranslationDictionary = {
     "Malerische Südafrika-Route mit Stränden, Bergen und Weinbergen.",
   "homeDiscoveryRoute.fallback-yyz-cun.title": "Winterauszeit in Cancún",
   "homeDiscoveryRoute.fallback-yyz-cun.routeNote":
+    "Zuverlässige Freizeitroute mit Nonstop-Optionen in der Hochsaison.",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "Winterauszeit in Cancún",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
     "Zuverlässige Freizeitroute mit Nonstop-Optionen in der Hochsaison.",
 
   chooseHotelDestination: "Hotelziel auswählen",
