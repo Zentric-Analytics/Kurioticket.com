@@ -230,7 +230,7 @@ export const translations: TranslationDictionary = {
   chooseHotelDestination: "Hotelziel auswählen",
   hotelSearchIntroLabel: "Hoteloptionen vergleichen",
   hotelSearchDestinationLabel: "Reiseziel",
-  hotelSearchDestinationPlaceholder: "Stadt, Gegend oder Sehenswürdigkeit",
+  hotelSearchDestinationPlaceholder: "Stadt, Region oder Sehenswürdigkeit",
   hotelSearchTravelDatesLabel: "Reisedaten",
   hotelSearchDatePlaceholder: "Check-in — Check-out",
   hotelSearchGuestsLabel: "Gäste",
@@ -258,6 +258,13 @@ export const translations: TranslationDictionary = {
   onlyShowPetFriendlyStays:
     "Nur Aufenthalte anzeigen, die Haustiere erlauben",
   togglePetFriendlyStays: "Haustierfreundliche Aufenthalte umschalten",
+  chooseTravelDates: "Reisedaten auswählen",
+  clearDestination: "Reiseziel löschen",
+  guestSingular: "Gast",
+  guestPlural: "Gäste",
+  roomSingular: "Zimmer",
+  roomPlural: "Zimmer",
+  searchingHotels: "Hotels werden gesucht...",
   exploreHotelStaysByDestination:
     "Hotelaufenthalte nach Reiseziel entdecken",
   featuredHotelDestinations: "Ausgewählte Hotelreiseziele",
@@ -268,13 +275,13 @@ export const translations: TranslationDictionary = {
   exploreStaysWorldwide: "Aufenthalte weltweit entdecken",
   homeTrustCompareTitle: "Anbieterangebote vergleichen",
   hotelTrustCompareBody:
-    "Vergleichen Sie Hoteloptionen von Reiseanbietern an einem Ort, bevor Sie fortfahren.",
+    "Sehen Sie Hoteloptionen von Reiseanbietern an einem Ort, bevor Sie fortfahren.",
   hotelTrustReviewTitle: "Aufenthaltsdetails prüfen",
   hotelTrustReviewBody:
-    "Prüfen Sie Daten, Gäste, Zimmer, Preisangaben und Aufenthaltsinformationen, bevor Sie sich entscheiden.",
+    "Prüfen Sie Daten, Gäste, Zimmer, Preisinformationen und Aufenthaltsdetails, bevor Sie wählen.",
   hotelTrustProviderTitle: "Weiter zum Anbieter",
   hotelTrustProviderBody:
-    "Wenn Sie eine Option auswählen, fahren Sie mit dem Anbieter fort, um Endpreis, Verfügbarkeit, Gebühren und Stornierungsregeln zu bestätigen.",
+    "Wenn Sie eine Option auswählen, fahren Sie beim Anbieter fort, um Endpreis, Verfügbarkeit, Gebühren und Stornierungsregeln zu bestätigen.",
   "hotelDestination.Tokyo.title": "Japan",
   "hotelDestination.Tokyo.subtitle": "Aufenthalte in Tokio",
   "hotelDestination.Tokyo.linkLabel": "Hotels in Tokio, Japan suchen",

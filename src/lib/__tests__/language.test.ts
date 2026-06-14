@@ -100,6 +100,10 @@ test("unknown locales fallback to english", () => {
   assert.equal(normalizeLanguage("xx-yy"), "en-us");
 });
 
+test("German shorthand locale normalizes to available German option", () => {
+  assert.equal(normalizeLanguage("de"), "de-de");
+});
+
 test("Spanish and German dictionary shapes match English dictionary shape", () => {
   const englishKeys = Object.keys(enTranslations).sort();
   assert.deepEqual(
