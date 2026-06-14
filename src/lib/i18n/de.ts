@@ -3,6 +3,64 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  loginPageTitle: "Anmelden",
+  loginPageSubtitle:
+    "Speichern Sie Suchen, verwalten Sie Benachrichtigungen und greifen Sie auf Ihr Reise-Dashboard zu.",
+  loginEmailLabel: "E-Mail",
+  loginPasswordLabel: "Passwort",
+  loginForgotPassword: "Passwort vergessen?",
+  loginSubmit: "Anmelden",
+  loginCheckingDetails: "Anmeldung läuft …",
+  loginGoogle: "Mit Google fortfahren",
+  loginSignupPrompt: "Neu bei Kurioticket?",
+  loginCreateAccount: "Konto erstellen",
+  loginInvalidCredentials:
+    "Ungültige E-Mail-Adresse oder ungültiges Passwort.",
+  loginRateLimited:
+    "Zu viele Anmeldeversuche. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
+  loginCodeSent: "Wir haben einen Bestätigungscode an Ihre E-Mail gesendet.",
+  loginCodeFailed:
+    "Dieser Code hat nicht funktioniert. Prüfen Sie den Code und versuchen Sie es erneut.",
+  loginProcessing:
+    "Ihre Angaben werden geprüft und ein Bestätigungscode wird gesendet …",
+  loginResendSuccess:
+    "Wir haben einen neuen Code gesendet, sofern dieses Konto angemeldet werden kann.",
+  loginEnterCode: "Geben Sie den 6-stelligen Anmeldecode ein.",
+  loginVerifiedRedirecting: "Bestätigt. Weiterleitung läuft …",
+  loginStartOverError:
+    "Beginnen Sie erneut, damit wir Ihre Angaben prüfen können, bevor ein neuer Code gesendet wird.",
+  loginSendingNewCode: "Ein neuer Bestätigungscode wird gesendet …",
+  loginUnableSendNewCode:
+    "Ein neuer Code kann derzeit nicht gesendet werden. Bitte versuchen Sie es erneut.",
+  loginUnableSendLoginCode:
+    "Der Anmeldecode kann derzeit nicht gesendet werden. Bitte versuchen Sie es erneut.",
+  loginCodeInstructions:
+    "Geben Sie den 6-stelligen Code ein, der an {{email}} gesendet wurde. Codes laufen nach 10 Minuten ab.",
+  loginVerificationCodeLabel: "Bestätigungscode",
+  loginVerifying: "Bestätigung läuft …",
+  loginVerifyLogin: "Anmeldung bestätigen",
+  loginSendingCode: "Code wird gesendet …",
+  loginResendIn: "Erneut senden in {{seconds}} s",
+  loginResendCode: "Code erneut senden",
+  loginUseDifferentDetails: "Andere Angaben verwenden",
+  loginPasswordResetSuccess:
+    "Ihr Passwort wurde zurückgesetzt. Melden Sie sich mit Ihrem neuen Passwort an.",
+  loginInactiveMessage:
+    "Sie wurden nach 30 Minuten Inaktivität abgemeldet. Melden Sie sich erneut an, um fortzufahren.",
+  loginErrorAccountUnavailable:
+    "Dieses Konto ist nicht verfügbar. Bitte kontaktieren Sie den Support.",
+  loginErrorOAuthCallback:
+    "Die Google-Anmeldung wurde während des Rückrufs unterbrochen. Bitte versuchen Sie es erneut.",
+  loginErrorOAuthAccountNotLinked:
+    "Diese E-Mail-Adresse ist bereits mit einer anderen Anmeldemethode verknüpft. Verwenden Sie Ihre ursprüngliche Methode oder setzen Sie Ihr Passwort zurück.",
+  loginErrorAccessDenied:
+    "Der Zugriff wurde von Google verweigert. Bitte erlauben Sie den Zugriff und versuchen Sie es erneut.",
+  loginErrorConfiguration:
+    "Die Google-Anmeldung ist vorübergehend nicht verfügbar. Bitte versuchen Sie es in Kürze erneut oder verwenden Sie die E-Mail-Anmeldung.",
+  loginErrorCallback:
+    "Der Rückruf der Google-Anmeldung ist fehlgeschlagen. Bitte versuchen Sie es erneut oder verwenden Sie die E-Mail-Anmeldung.",
+  loginErrorGoogleGeneric:
+    "Die Google-Anmeldung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut oder verwenden Sie die E-Mail-Anmeldung.",
   homeHeroTitle: "Günstige Flüge schnell finden",
   homeHeroSubtitle:
     "Durchsuche Hunderte Airlines und Reiseportale, um die besten Angebote für deine nächste Reise zu finden.",
