@@ -626,6 +626,215 @@ export const translations: TranslationDictionary = {
     "Welche Dokumente benötige ich möglicherweise bei der Abholung?",
   "carsFaq.5.answer":
     "Mietwagenanbieter können einen gültigen Führerschein, eine Zahlungskarte, einen Identitätsnachweis und alle vom Abholland oder Abholort geforderten Dokumente verlangen.",
+  homeDiscoveryTitle: "Entdecken Sie hier Ihr nächstes Abenteuer",
+  homeDiscoverySubtitle:
+    "Vergleichen Sie clevere Routenvorschläge, flexible Tarife und Reiseziele, die für Ihre Region ausgewählt wurden.",
+  homeDiscoverySwipeMore: "Wischen Sie für mehr",
+  homeDiscoveryRouteIdeaBadge: "Routenidee",
+  homeDiscoveryTripOneWay: "Einfache Strecke",
+  homeDiscoveryCabinEconomy: "Economy",
+  homeDiscoveryTravelerCountOne: "1 Reisender",
+  "homeDiscoveryRoute.us-jfk-atl.title": "New York nach Atlanta",
+  "homeDiscoveryRoute.us-jfk-atl.routeNote":
+    "US-Hauptroute für providergestützte Homepage-Preise.",
+  "homeDiscoveryRoute.us-lax-ord.title": "Los Angeles nach Chicago",
+  "homeDiscoveryRoute.us-lax-ord.routeNote":
+    "US-Route von Küste zu Küste als Städtepaar.",
+  "homeDiscoveryRoute.us-lax-dfw.title": "Los Angeles nach Dallas",
+  "homeDiscoveryRoute.us-lax-dfw.routeNote":
+    "Stark frequentierte US-Route mit Anbietersuche.",
+  "homeDiscoveryRoute.us-jfk-den.title": "New York nach Denver",
+  "homeDiscoveryRoute.us-jfk-den.routeNote":
+    "Backup-Route zum Tor in die Berge.",
+  "homeDiscoveryRoute.us-ewr-sav.title":
+    "Historische Plätze in Savannah entdecken",
+  "homeDiscoveryRoute.us-ewr-sav.routeNote":
+    "Südliche Wochenendroute für Kopfsteinpflaster, gutes Essen und Aufenthalte am Flussufer.",
+  "homeDiscoveryRoute.us-bos-mia.title": "Wintersonne in Miami",
+  "homeDiscoveryRoute.us-bos-mia.routeNote":
+    "Route vom Nordosten in die Sonne für Strände, Restaurants und Kunstviertel.",
+  "homeDiscoveryRoute.us-lga-chs.title":
+    "Charleston-Wochenende mit Küstenküche",
+  "homeDiscoveryRoute.us-lga-chs.routeNote":
+    "Lowcountry-Route für historische Straßen, Meeresfrüchte und optionale Strandtage.",
+  "homeDiscoveryRoute.us-den-slc.title": "Salt Lake als Bergbasis",
+  "homeDiscoveryRoute.us-den-slc.routeNote":
+    "Kurzer West-Hüpfer für Skiwochenenden, Nationalparks und Restaurants in der Innenstadt.",
+  "homeDiscoveryRoute.us-iah-mex.title":
+    "Kulturwochenende in Mexiko-Stadt",
+  "homeDiscoveryRoute.us-iah-mex.routeNote":
+    "Häufige grenzüberschreitende Route für Museen, Märkte und kulinarische Viertel.",
+  "homeDiscoveryRoute.us-lax-sjd.title":
+    "Kurzer Strandtrip nach Los Cabos",
+  "homeDiscoveryRoute.us-lax-sjd.routeNote":
+    "Einfache Baja-Route für Resort-Wochenenden, Wüstenlandschaften und Meerblick.",
+  "homeDiscoveryRoute.us-ord-rsw.title":
+    "Auszeit an Fort Myers’ Golfküste",
+  "homeDiscoveryRoute.us-ord-rsw.routeNote":
+    "Warmwetterroute für Barriereinseln, Strände und entspannte Aufenthalte.",
+  "homeDiscoveryRoute.us-sea-san.title":
+    "Sonnige Verbindung nach San Diego",
+  "homeDiscoveryRoute.us-sea-san.routeNote":
+    "Westküstenroute für Strände, Parks, Hafentage und Wochenenden mit mildem Wetter.",
+  "homeDiscoveryRoute.us-jfk-lax.title":
+    "Los Angeles von Küste zu Küste",
+  "homeDiscoveryRoute.us-jfk-lax.routeNote":
+    "Wichtige transkontinentale Verbindung für Strandtage, Studios und Westküstenwochenenden.",
+  "homeDiscoveryRoute.us-ewr-mco.title":
+    "Orlando-Trip zu Freizeitparks",
+  "homeDiscoveryRoute.us-ewr-mco.routeNote":
+    "Beliebte Familienroute für Parks, Resorts und kurze Warmwetter-Auszeiten.",
+  "homeDiscoveryRoute.us-lga-fll.title":
+    "Strandtrip nach Fort Lauderdale",
+  "homeDiscoveryRoute.us-lga-fll.routeNote":
+    "Nordost-Florida-Verbindung für Strände, Kreuzfahrten und lange Wochenenden.",
+  "homeDiscoveryRoute.us-bos-lax.title":
+    "Direkte Auszeit in Los Angeles",
+  "homeDiscoveryRoute.us-bos-lax.routeNote":
+    "Beliebte Küste-zu-Küste-Route für Unterhaltung, Strände und Städtereisen.",
+  "homeDiscoveryRoute.us-ord-mia.title":
+    "Von Chicagos Seeufer an Miamis Strand",
+  "homeDiscoveryRoute.us-ord-mia.routeNote":
+    "Beliebte Midwest-Sonnenroute für Strände, Nachtleben und Kreuzfahrtstarts.",
+  "homeDiscoveryRoute.us-atl-las.title":
+    "Las-Vegas-Verbindung fürs lange Wochenende",
+  "homeDiscoveryRoute.us-atl-las.routeNote":
+    "Hub-zu-Freizeit-Route für Shows, Restaurants, Messen und Wüstenausflüge.",
+  "homeDiscoveryRoute.us-dfw-mco.title":
+    "Orlando-Flugroute für Familien",
+  "homeDiscoveryRoute.us-dfw-mco.routeNote":
+    "Große Hub-zu-Freizeitpark-Route für Resorts und Schulferienreisen.",
+  "homeDiscoveryRoute.us-den-las.title":
+    "Vegas-Hüpfer aus dem Mountain West",
+  "homeDiscoveryRoute.us-den-las.routeNote":
+    "Kurze Freizeitverbindung für Unterhaltungswochenenden und Wüstentrips.",
+  "homeDiscoveryRoute.us-sfo-las.title":
+    "Las-Vegas-Auszeit aus der Bay Area",
+  "homeDiscoveryRoute.us-sfo-las.routeNote":
+    "Häufige Westküstenroute für Shows, Essen, Events und Wüstensonne.",
+  "homeDiscoveryRoute.us-lax-hnl.title":
+    "Pazifische Strandverbindung nach Honolulu",
+  "homeDiscoveryRoute.us-lax-hnl.routeNote":
+    "Starke Freizeitreise-Route für Waikiki-Aufenthalte, Inselwanderungen und warme Meerestage.",
+  "homeDiscoveryRoute.us-sfo-sea.title":
+    "Seattle-Hop in den Pazifischen Nordwesten",
+  "homeDiscoveryRoute.us-sfo-sea.routeNote":
+    "Kurze Westküstenverbindung für Kaffee, Waterfronts, Musik und Meetings.",
+  "homeDiscoveryRoute.us-iad-mco.title":
+    "Orlando-Auszeit aus der Hauptstadtregion",
+  "homeDiscoveryRoute.us-iad-mco.routeNote":
+    "Zuverlässige Freizeitroute für Freizeitparks, Resorts und sonnige Schulferien.",
+  "homeDiscoveryRoute.us-msp-rsw.title":
+    "Fort-Myers-Route in die Wintersonne",
+  "homeDiscoveryRoute.us-msp-rsw.routeNote":
+    "Route vom oberen Midwest an den Golf für Strände, Inseln und warme Aufenthalte.",
+  "homeDiscoveryRoute.us-clt-mia.title":
+    "Miami-Verbindung über den Südost-Hub",
+  "homeDiscoveryRoute.us-clt-mia.routeNote":
+    "Gängige Südost-Verbindung für Strände, Business und Karibik-Anschlüsse.",
+  "homeDiscoveryRoute.us-dtw-fll.title":
+    "Fort-Lauderdale-Auszeit von den Großen Seen",
+  "homeDiscoveryRoute.us-dtw-fll.routeNote":
+    "Beliebte Florida-Route für Strandwochenenden, Kreuzfahrten und Wintersonne.",
+  "homeDiscoveryRoute.us-phl-mco.title":
+    "Orlando-Familienroute ab Philadelphia",
+  "homeDiscoveryRoute.us-phl-mco.routeNote":
+    "Nordost-Freizeitroute für Freizeitparks, Resorts und Sonnenpausen.",
+  "homeDiscoveryRoute.us-bwi-mco.title":
+    "Orlando-Auszeit ab Baltimore",
+  "homeDiscoveryRoute.us-bwi-mco.routeNote":
+    "Häufige Familienroute für Parkbesuche, Wochenendtrips und Resort-Aufenthalte.",
+  "homeDiscoveryRoute.us-dfw-las.title":
+    "Vegas-Route ab Nordtexas",
+  "homeDiscoveryRoute.us-dfw-las.routeNote":
+    "Stark frequentierte Freizeit- und Messeverbindung für kurze Wüstenwochenenden.",
+  "homeDiscoveryRoute.us-jfk-cun.title":
+    "Kurzer Karibiktrip nach Cancún",
+  "homeDiscoveryRoute.us-jfk-cun.routeNote":
+    "Beliebte Nonstop-Freizeitroute für Strände, Resorts und Warmwasser-Auszeiten.",
+  "homeDiscoveryRoute.us-atl-cun.title":
+    "Cancún-Freizeitroute ab Atlanta",
+  "homeDiscoveryRoute.us-atl-cun.routeNote":
+    "Hub-zu-Resort-Verbindung für Strandurlaube und leichte Karibikküsten-Trips.",
+  "homeDiscoveryRoute.us-dfw-sjd.title":
+    "Los-Cabos-Auszeit ab Nordtexas",
+  "homeDiscoveryRoute.us-dfw-sjd.routeNote":
+    "Gängige Resort-Route für Baja-Strände, Wüstenlandschaften und lange Wochenenden.",
+  "homeDiscoveryRoute.us-ord-cun.title":
+    "Cancún-Strandroute aus dem Midwest",
+  "homeDiscoveryRoute.us-ord-cun.routeNote":
+    "Zuverlässige Freizeitroute für Wintersonne, Resorts und Familienreisen.",
+  "homeDiscoveryRoute.us-jfk-sju.title":
+    "Karibischer Städtetrip nach San Juan",
+  "homeDiscoveryRoute.us-jfk-sju.routeNote":
+    "Häufige Freizeitroute für Altstadtgassen, Strände und Inselwochenenden.",
+  "homeDiscoveryRoute.us-lax-mex.title":
+    "Westküstenverbindung nach Mexiko-Stadt",
+  "homeDiscoveryRoute.us-lax-mex.routeNote":
+    "Wichtige grenzüberschreitende Route für Essen, Museen, Viertel und Events.",
+  homeTrustTitle: "Warum Reisende auf Kurioticket vergleichen",
+  homeTrustSubtitle:
+    "Kurioticket hilft Ihnen, Anbieterangebote klar zu vergleichen und die Buchung anschließend auf der Website des Anbieters abzuschließen.",
+  homeTrustCompareBody:
+    "Sehen Sie Flug- und Hoteloptionen mehrerer Reiseanbieter an einem Ort.",
+  homeTrustPricingTitle: "Transparenter Preiskontext",
+  homeTrustPricingBody:
+    "Prüfen Sie Preis, Route oder Aufenthaltsdetails sowie wichtige Bedingungen, bevor Sie fortfahren.",
+  homeTrustHandoffTitle: "Sichere Weiterleitung zum Anbieter",
+  homeTrustHandoffBody:
+    "Wenn Sie ein Angebot auswählen, fahren Sie beim Anbieter fort, um die Buchung sicher abzuschließen.",
+  homePreviousDestinations: "Vorherige Reiseziele",
+  homeNewsletterInvalidEmail: "Geben Sie eine gültige E-Mail-Adresse ein.",
+  homeNewsletterUnableSubscribe:
+    "Das Abonnement ist derzeit nicht möglich.",
+  homeNewsletterTryAgain:
+    "Wir konnten Sie gerade nicht anmelden. Bitte versuchen Sie es bald erneut.",
+  homeSubscribing: "Abonnieren…",
+  homeNewsletterConsent:
+    "Mit dem Abonnement stimmen Sie zu, Updates von Kurioticket zu erhalten. Sie können sich jederzeit abmelden.",
+  homeRemoveFromSavedRoutes: "Aus gespeicherten Routen entfernen",
+  homeSaveRoute: "Route speichern",
+  homeCheckingProviderRoutePricing:
+    "Anbieterbasierte Routenpreise werden geprüft",
+  homePricesUpdateWithProviderResults:
+    "Preise werden mit Anbieterergebnissen aktualisiert",
+  homeExploreFares: "Tarife entdecken",
+  homeCompareOptions: "Optionen vergleichen",
+  destinationImageFallback: "Reiseziel",
+  faqHeading: "Häufige Fragen",
+  faqIntro:
+    "Erfahren Sie, wie Kurioticket Ihnen hilft, Flüge, Hotels und Reiseoptionen vor der Buchung bei vertrauenswürdigen Anbietern zu vergleichen.",
+  faqViewAll: "Alle FAQs ansehen",
+  faqQuestionFindOptions:
+    "Wie findet Kurioticket Flug- und Hoteloptionen?",
+  faqAnswerFindOptions:
+    "Kurioticket durchsucht Live-Angebote von Reiseanbietern und führt Optionen an einem Ort zusammen, damit Sie Preise, Routen, Aufenthalte und Details vergleichen können, bevor Sie sich entscheiden.",
+  faqQuestionSellDirectly:
+    "Verkauft Kurioticket Tickets oder Hotelzimmer direkt?",
+  faqAnswerSellDirectly:
+    "Kurioticket hilft Ihnen, Reiseoptionen zu vergleichen. Wenn Sie ein Angebot auswählen, werden Sie zum ausgewählten Anbieter weitergeleitet, um Details zu prüfen und die Buchung auf dessen Website abzuschließen.",
+  faqQuestionPriceChanges:
+    "Warum können sich Preise ändern, nachdem ich auf ein Angebot geklickt habe?",
+  faqAnswerPriceChanges:
+    "Preise und Verfügbarkeit können sich in Echtzeit ändern, weil Airlines, Hotels und Reiseanbieter ihre Kontingente häufig aktualisieren. Prüfen Sie vor der Buchung immer den Endpreis auf der Checkout-Seite des Anbieters.",
+  faqQuestionCompareProviders:
+    "Kann ich mehrere Anbieter für dieselbe Reise vergleichen?",
+  faqAnswerCompareProviders:
+    "Ja. Kurioticket ist darauf ausgelegt, Optionen nebeneinander vergleichbar zu machen, damit Sie Preis, Zeiten, Routendetails, Hoteldetails und Gesamtwert bewerten können.",
+  faqQuestionSecureBooking: "Wie schließe ich meine Buchung sicher ab?",
+  faqAnswerSecureBooking:
+    "Buchung und Zahlung werden im Checkout des Anbieters abgeschlossen. Prüfen Sie vor der Bestätigung immer die Bedingungen, Stornierungsrichtlinien und den Endpreis des Anbieters.",
+  faqQuestionPreferences:
+    "Kann ich Währungs- und Spracheinstellungen festlegen?",
+  faqAnswerPreferences:
+    "Ja. Kurioticket ermöglicht Ihnen die Auswahl von Anzeige-Land und Währung, und Sie können jede verfügbare Website-Sprache über die Sprachauswahl wählen.",
+  faqQuestionLiveCached: "Sind Suchergebnisse live oder zwischengespeichert?",
+  faqAnswerLiveCached:
+    "Kurioticket nutzt Suchergebnisse von Anbietern, die sich bei geänderter Verfügbarkeit und Preisen aktualisieren können. So werden aktuelle Optionen angezeigt; die endgültige Verfügbarkeit wird jedoch vom Anbieter bestätigt.",
+  faqQuestionManageChanges:
+    "Wo verwalte ich Änderungen oder Stornierungen?",
+  faqAnswerManageChanges:
+    "Reiseänderungen, Stornierungen, Erstattungen und Buchungssupport werden normalerweise von dem Anbieter abgewickelt, bei dem die Buchung abgeschlossen wurde. Nutzen Sie die Bestätigungsdaten dieses Anbieters für Serviceanfragen.",
   footerContactUs: "Kontakt",
   footerCustomerSupport: "Kundensupport",
   footerServiceGuarantee: "Servicegarantie",
