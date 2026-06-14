@@ -26,6 +26,7 @@ export type TranslationDictionary = {
   signupGoogle: string;
   signupAlreadyHaveAccount: string;
   signupLoginLink: string;
+  signupErrorFullNameRequired: string;
   signupErrorInvalidEmail: string;
   signupErrorPasswordRequirements: string;
   signupErrorUnableCreate: string;
