@@ -307,9 +307,11 @@ export const translations: TranslationDictionary = {
   signupGoogle: "Continuar con Google",
   signupAlreadyHaveAccount: "¿Ya tienes una cuenta?",
   signupLoginLink: "Iniciar sesión",
+  signupErrorFullNameRequired: "Ingresa tu nombre completo.",
   signupErrorInvalidEmail: "Ingresa una dirección de correo electrónico válida.",
-  signupErrorPasswordRequirements: "La contraseña debe cumplir los requisitos mínimos.",
-  signupErrorUnableCreate: "No se puede crear la cuenta ahora.",
+  signupErrorPasswordRequirements: "La contraseña debe tener al menos 8 caracteres.",
+  signupErrorUnableCreate:
+    "No pudimos crear tu cuenta. Inténtalo de nuevo.",
   signupErrorRateLimited: "Demasiados intentos de registro. Espera e inténtalo de nuevo.",
   signupErrorDuplicateEmail: "Ya existe una cuenta con este correo electrónico.",
   signupErrorUnableSendVerification:

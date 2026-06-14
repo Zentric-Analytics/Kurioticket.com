@@ -342,10 +342,12 @@ export const translations: TranslationDictionary = {
   signupGoogle: "Continuer avec Google",
   signupAlreadyHaveAccount: "Vous avez déjà un compte ?",
   signupLoginLink: "Se connecter",
+  signupErrorFullNameRequired: "Veuillez saisir votre nom complet.",
   signupErrorInvalidEmail: "Saisissez une adresse e-mail valide.",
   signupErrorPasswordRequirements:
-    "Le mot de passe doit respecter les exigences minimales.",
-  signupErrorUnableCreate: "Une erreur est survenue. Veuillez réessayer.",
+    "Le mot de passe doit contenir au moins 8 caractères.",
+  signupErrorUnableCreate:
+    "Nous n’avons pas pu créer votre compte. Veuillez réessayer.",
   signupErrorRateLimited:
     "Trop de tentatives d’inscription. Veuillez patienter, puis réessayer.",
   signupErrorDuplicateEmail:

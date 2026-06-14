@@ -3,6 +3,42 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  signupPageTitle: "Konto erstellen",
+  signupFullNameLabel: "Vollständiger Name",
+  signupEmailLabel: "E-Mail",
+  signupPasswordLabel: "Passwort",
+  signupAgreementBeforeTerms:
+    "Mit der Erstellung eines Kontos stimmen Sie den ",
+  signupTermsLink: "Bedingungen",
+  signupAgreementBetweenLinks: ", der ",
+  signupPrivacyPolicyLink: "Datenschutzrichtlinie",
+  signupAgreementAfterPrivacy:
+    " und den Hinweisen zu Partner-Weiterleitungen zu.",
+  signupSubmit: "Registrieren",
+  signupCreatingAccount: "Konto wird erstellt …",
+  signupGoogle: "Mit Google fortfahren",
+  signupAlreadyHaveAccount: "Sie haben bereits ein Konto?",
+  signupLoginLink: "Anmelden",
+  signupErrorFullNameRequired:
+    "Bitte geben Sie Ihren vollständigen Namen ein.",
+  signupErrorInvalidEmail:
+    "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+  signupErrorPasswordRequirements:
+    "Das Passwort muss mindestens 8 Zeichen lang sein.",
+  signupErrorUnableCreate:
+    "Wir konnten Ihr Konto nicht erstellen. Bitte versuchen Sie es erneut.",
+  signupErrorRateLimited:
+    "Zu viele Registrierungsversuche. Bitte warten Sie und versuchen Sie es erneut.",
+  signupErrorDuplicateEmail:
+    "Für diese E-Mail-Adresse existiert bereits ein Konto.",
+  signupErrorUnableSendVerification:
+    "Der Bestätigungscode kann derzeit nicht gesendet werden. Bitte versuchen Sie es erneut.",
+  signupVerificationRequiredRedirecting:
+    "Bestätigung erforderlich. Weiterleitung läuft …",
+  signupAutomaticLoginFailed:
+    "Ihr Konto wurde erstellt, aber die automatische Anmeldung ist fehlgeschlagen. Bitte melden Sie sich mit Ihrem neuen Passwort an.",
+  signupAccountCreatedRedirecting:
+    "Konto erstellt. Weiterleitung läuft …",
   loginPageTitle: "Anmelden",
   loginPageSubtitle:
     "Speichern Sie Suchen, verwalten Sie Benachrichtigungen und greifen Sie auf Ihr Reise-Dashboard zu.",
