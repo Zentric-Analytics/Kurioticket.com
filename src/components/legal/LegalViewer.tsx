@@ -460,6 +460,12 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
         "legal.terms.tableOfContents",
         t["legal.tableOfContents"]
       )
+    : isAcceptableUsePolicy
+      ? getTranslation(
+          t,
+          "legal.acceptableUsePolicy.tableOfContents",
+          t["legal.tableOfContents"]
+        )
     : isPrivacyPolicy
       ? getTranslation(
           t,

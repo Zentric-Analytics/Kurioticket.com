@@ -441,6 +441,7 @@ export const translations: TranslationDictionary = {
   "legal.acceptableUsePolicy.summary": "Reglas de comportamiento para el uso seguro, justo y legal de los sistemas de Kurioticket.",
   "legal.acceptableUsePolicy.lastUpdatedDate": "11 de mayo de 2026",
   "legal.acceptableUsePolicy.lastUpdated": "Última actualización: 11 de mayo de 2026",
+  "legal.acceptableUsePolicy.tableOfContents": "TABLA DE CONTENIDO",
   "legal.acceptableUsePolicy.sections.prohibited.title": "Conducta prohibida",
   "legal.acceptableUsePolicy.sections.prohibited.paragraph1": "No puedes extraer datos de Kurioticket, extraer datos de sitios web de aerolíneas a través de Kurioticket, atacar APIs de proveedores, automatizar búsquedas abusivas, crear cuentas fraudulentas, probar tarjetas robadas, enviar spam al soporte ni interferir con la fiabilidad de la plataforma.",
   "legal.acceptableUsePolicy.sections.prohibited.paragraph2": "No puedes usar Kurioticket para facilitar actividades de viaje ilegales, acoso, fraude, abuso o acceso no autorizado.",
