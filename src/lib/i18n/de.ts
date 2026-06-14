@@ -354,6 +354,139 @@ export const translations: TranslationDictionary = {
   "hotelInspirationCategory.Family trips": "Familienreisen",
   "hotelInspirationCategory.Relaxed stays": "Erholsame Aufenthalte",
   "hotelInspirationCategory.Weekend ideas": "Wochenendideen",
+
+  searchRentalCarsEveryPartTrip: "Mietwagen für jede Etappe Ihrer Reise suchen",
+  exploreCarsByTripStyle: "Mietwagen nach Reisestil entdecken",
+  carsTripStyleBody:
+    "Wählen Sie einen Fahrzeugtyp aus, und wir öffnen Ergebnisse mit den passenden Suchdetails.",
+  "carsTripStyle.economy.title": "Economy-Fahrzeuge",
+  "carsTripStyle.economy.subtitle":
+    "Günstige Suchen für Stadt- und Alleinreisen",
+  "carsTripStyle.economy.cta": "Economy-Fahrzeugsuche starten",
+  "carsTripStyle.economy.ariaLabel":
+    "Economy-Fahrzeugsuche mit Abholung im Stadtzentrum starten",
+  "carsTripStyle.economy.imageAlt":
+    "Kompakte Stadtfahrzeuge zwischen Gebäuden im Stadtzentrum",
+  "carsTripStyle.suv.title": "SUVs",
+  "carsTripStyle.suv.subtitle":
+    "Platz für Familienreisen, Gepäck und längere Fahrten",
+  "carsTripStyle.suv.cta": "SUV-Mietwagensuche öffnen",
+  "carsTripStyle.suv.ariaLabel":
+    "SUV-Mietwagensuche mit Abholung am Flughafen öffnen",
+  "carsTripStyle.suv.imageAlt":
+    "SUV auf einer offenen Straße in der Nähe von Bergen",
+  "carsTripStyle.luxury.title": "Luxusfahrzeuge",
+  "carsTripStyle.luxury.subtitle":
+    "Premium-Suchkontext für Geschäftsreisen oder besondere Reisen",
+  "carsTripStyle.luxury.cta": "Luxusfahrzeugsuche planen",
+  "carsTripStyle.luxury.ariaLabel":
+    "Luxusfahrzeugsuche mit Abholung in Hotelnähe planen",
+  "carsTripStyle.luxury.imageAlt":
+    "Premium-Fahrzeug vor einem eleganten modernen Gebäude",
+  "carsTripStyle.van.title": "Vans",
+  "carsTripStyle.van.subtitle":
+    "Suchkontext für Gruppenreisen und Familiengepäck",
+  "carsTripStyle.van.cta": "Vans für Gruppenreisen suchen",
+  "carsTripStyle.van.ariaLabel":
+    "Vans für Gruppenreisen mit Abholung am Flughafen suchen",
+  "carsTripStyle.van.imageAlt":
+    "Personen-Van auf einer hellen Panoramastraße",
+  "carsTrust.0.title": "Für vollständige Reisen gemacht",
+  "carsTrust.0.description":
+    "Planen Sie Flüge, Aufenthalte und Bodentransport in einem Kurioticket-Ablauf.",
+  "carsTrust.1.title": "Abholdetails zuerst",
+  "carsTrust.1.description":
+    "Geben Sie Abholort, Daten, Zeiten und Fahreralter ein, damit Ihre Mietwagensuche mit den richtigen Reisedetails startet.",
+  "carsTrust.2.title": "Klare Mietwagenprüfung",
+  "carsTrust.2.description":
+    "Prüfen Sie Endpreis, Verfügbarkeit, Gebühren und Mietbedingungen beim Anbieter, bevor Sie buchen.",
+  carsPickupPointsTitle: "Mit beliebten Mietwagen-Abholorten starten",
+  carsPickupPointsBody:
+    "Wählen Sie eine Abholart aus, und wir öffnen die Mietwagen-Ergebnisseite mit den passenden Suchdetails.",
+  "carsPickup.Airport.title": "Abholung am Flughafen",
+  "carsPickup.Airport.subtitle":
+    "Starten Sie an wichtigen Ankunftsbereichen am Flughafen",
+  "carsPickup.Airport.ariaLabel":
+    "Mietwagen-Ergebnisse für Abholung am Flughafen öffnen",
+  "carsPickup.Airport.imageAlt":
+    "Flugzeug an einem Flughafengate bei Sonnenuntergang",
+  "carsPickup.City center.title": "Abholung im Stadtzentrum",
+  "carsPickup.City center.subtitle":
+    "Abholung in der Nähe von Hotels im Zentrum und Geschäftsvierteln",
+  "carsPickup.City center.ariaLabel":
+    "Mietwagen-Ergebnisse für Abholung im Stadtzentrum öffnen",
+  "carsPickup.City center.imageAlt":
+    "Autos auf einer Stadtstraße zwischen hohen Gebäuden",
+  "carsPickup.Train station.title": "Abholung am Bahnhof",
+  "carsPickup.Train station.subtitle":
+    "Setzen Sie Ihre Reise nach der Ankunft mit dem Zug fort",
+  "carsPickup.Train station.ariaLabel":
+    "Mietwagen-Ergebnisse für Abholung am Bahnhof öffnen",
+  "carsPickup.Train station.imageAlt":
+    "Bahnsteig mit Gleisen, die in einen Stadtbahnhof führen",
+  "carsPickup.Hotel area.title": "Abholung in Hotelnähe",
+  "carsPickup.Hotel area.subtitle":
+    "Planen Sie eine Fahrzeugabholung in der Nähe Ihrer Unterkunft",
+  "carsPickup.Hotel area.ariaLabel":
+    "Mietwagen-Ergebnisse für Abholung in Hotelnähe öffnen",
+  "carsPickup.Hotel area.imageAlt":
+    "Hotelfassade mit Palmen und einer Einfahrt",
+  "carsSearch.pickupLocationLabel": "ABHOLORT",
+  "carsSearch.pickupLocationPlaceholder": "Flughafen, Stadt oder Adresse",
+  "carsSearch.returnLocationPlaceholder":
+    "Rückgabeort, Flughafen oder Adresse",
+  "carsSearch.returnToSameLocation": "Rückgabe am selben Ort",
+  "carsSearch.differentReturnLocation": "Anderer Rückgabeort",
+  "carsSearch.rentalDatesLabel": "MIETDATEN",
+  "carsSearch.rentalDatePlaceholder": "Abholdatum — Rückgabedatum",
+  "carsSearch.pickupReturnTimeLabel": "ABHOL- / RÜCKGABEZEIT",
+  "carsSearch.pickupReturnTimeSummary":
+    "{pickupTime} Abholung — {returnTime} Rückgabe",
+  "carsSearch.driverAgeLabel": "ALTER DES FAHRERS",
+  "carsSearch.driverAgeAnyAge": "Jedes Alter",
+  "carsSearch.clearPickupLocation": "Abholort löschen",
+  "carsSearch.clearReturnLocation": "Rückgabeort löschen",
+  "carsSearch.chooseRentalDatesAria":
+    "Abhol- und Rückgabedaten für den Mietwagen auswählen",
+  "carsSearch.rentalDatePickerAria": "Mietdaten-Auswahl",
+  "carsSearch.chooseRentalDates": "Mietdaten auswählen",
+  "carsSearch.previousMonth": "Vorheriger Monat",
+  "carsSearch.previousMonthShort": "Zurück",
+  "carsSearch.nextMonth": "Nächster Monat",
+  "carsSearch.nextMonthShort": "Weiter",
+  "carsSearch.selectDateAriaPrefix": "Auswählen",
+  "carsSearch.startsNewPickupDate": "startet ein neues Abholdatum",
+  "carsSearch.choosePickupReturnTimesAria":
+    "Abhol- und Rückgabezeiten auswählen",
+  "carsSearch.pickupReturnTimeSelectorAria":
+    "Auswahl für Abhol- und Rückgabezeit",
+  "carsSearch.pickupTimeLabel": "Abholzeit",
+  "carsSearch.returnTimeLabel": "Rückgabezeit",
+  carsSearchPreparing: "Mietwagensuche wird vorbereitet...",
+  "carsFaq.heading": "Häufige Fragen zu Mietwagen",
+  "carsFaq.0.question":
+    "Welche Informationen benötige ich, um nach einem Mietwagen zu suchen?",
+  "carsFaq.0.answer":
+    "Geben Sie Abholort, Abhol- und Rückgabedaten, Abhol- und Rückgabezeiten, das Fahreralter und an, ob Sie das Auto an einem anderen Ort zurückgeben möchten.",
+  "carsFaq.1.question": "Kann ich das Auto an einem anderen Ort zurückgeben?",
+  "carsFaq.1.answer":
+    "Ja. Wählen Sie im Suchformular Anderer Rückgabeort aus und geben Sie die Stadt, den Flughafen oder die Adresse ein, an der Sie das Auto zurückgeben möchten.",
+  "carsFaq.2.question":
+    "Warum spielt das Fahreralter bei Mietwagen eine Rolle?",
+  "carsFaq.2.answer":
+    "Mietwagenanbieter können je nach Alter des Fahrers und Standort unterschiedliche Regeln, Gebühren, Fahrzeugberechtigungen oder Kautionsanforderungen anwenden.",
+  "carsFaq.3.question":
+    "Was sollte ich vor der Buchung eines Mietwagens prüfen?",
+  "carsFaq.3.answer":
+    "Prüfen Sie Abhol- und Rückgabeort, Daten, Zeiten, Kilometerregelung, Tankregelung, Versicherungsoptionen, Stornierungsbedingungen, Kautionsanforderungen und erforderliche Dokumente, bevor Sie buchen.",
+  "carsFaq.4.question":
+    "Wo wird der endgültige Mietwagenpreis bestätigt?",
+  "carsFaq.4.answer":
+    "Endpreis, Fahrzeugverfügbarkeit, Steuern, Gebühren, Kautionsanforderungen und Mietbedingungen werden vor der Buchung vom Anbieter bestätigt.",
+  "carsFaq.5.question":
+    "Welche Dokumente benötige ich möglicherweise bei der Abholung?",
+  "carsFaq.5.answer":
+    "Mietwagenanbieter können einen gültigen Führerschein, eine Zahlungskarte, einen Identitätsnachweis und alle vom Abholland oder Abholort geforderten Dokumente verlangen.",
   footerContactUs: "Kontakt",
   footerCustomerSupport: "Kundensupport",
   footerServiceGuarantee: "Servicegarantie",
