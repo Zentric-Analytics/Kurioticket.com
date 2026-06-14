@@ -269,7 +269,7 @@ export const translations: TranslationDictionary = {
   hotelSearchDestinationLabel: "Reiseziel",
   hotelSearchDestinationPlaceholder: "Stadt, Region oder Sehenswürdigkeit",
   hotelSearchTravelDatesLabel: "Reisedaten",
-  hotelSearchDatePlaceholder: "Check-in — Check-out",
+  hotelSearchDatePlaceholder: "Anreise — Abreise",
   hotelSearchGuestsLabel: "Gäste",
   editHotelSearch: "Hotelsuche bearbeiten",
   closeSearchForm: "Suchformular schließen",
