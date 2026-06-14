@@ -4,33 +4,41 @@ import type { TranslationDictionary } from "./types";
 export const translations: TranslationDictionary = {
   ...en,
   homeHeroTitle: "Günstige Flüge schnell finden",
-  homeHeroSubtitle: "Durchsuche Hunderte Airlines und Reiseportale, um die besten Angebote für deine nächste Reise zu finden.",
+  homeHeroSubtitle:
+    "Durchsuche Hunderte Airlines und Reiseportale, um die besten Angebote für deine nächste Reise zu finden.",
   homeAssuranceBestPrice: "Bestpreise garantiert",
   homeAssuranceCompare: "Anbieter einfach vergleichen",
   homeAssuranceSecure: "Sichere Zahlungen",
   homeAssuranceSupport: "24/7 Kundensupport",
   homeHeroBadge: "Vertrauenswürdige Reisesuchplattform",
   homeFeaturesMillionsTitle: "Millionen Optionen",
-  homeFeaturesMillionsBody: "Vergleiche Flüge und Hotels von einem großen Netzwerk vertrauenswürdiger Anbieter an einem Ort.",
+  homeFeaturesMillionsBody:
+    "Vergleiche Flüge und Hotels von einem großen Netzwerk vertrauenswürdiger Anbieter an einem Ort.",
   homeFeaturesFlexibleTitle: "Flexible Suche",
-  homeFeaturesFlexibleBody: "Filtere nach Stopps, Budget, Reiseklasse und Zeiten passend zu deinem Reisestil.",
+  homeFeaturesFlexibleBody:
+    "Filtere nach Stopps, Budget, Reiseklasse und Zeiten passend zu deinem Reisestil.",
   homeFeaturesSecureTitle: "Sicheres Erlebnis",
-  homeFeaturesSecureBody: "Deine Reiseplanung bleibt mit verlässlichen Partnern und sicherer Buchungsweiterleitung geschützt.",
+  homeFeaturesSecureBody:
+    "Deine Reiseplanung bleibt mit verlässlichen Partnern und sicherer Buchungsweiterleitung geschützt.",
   homeFeaturesDealsTitle: "Echtzeit-Angebote",
-  homeFeaturesDealsBody: "Erfasse Preisstürze und exklusive Aktionen, bevor sie verschwinden.",
+  homeFeaturesDealsBody:
+    "Erfasse Preisstürze und exklusive Aktionen, bevor sie verschwinden.",
   homePopularDestinations: "Beliebte Reiseziele",
   homeViewAllDestinations: "Alle Reiseziele anzeigen",
   homePromoFlightsTitle: "Flugangebote führender Airlines",
-  homePromoFlightsBody: "Entdecke zeitlich begrenzte Tarife und vergleiche Optionen sofort.",
+  homePromoFlightsBody:
+    "Entdecke zeitlich begrenzte Tarife und vergleiche Optionen sofort.",
   homePromoFlightsCta: "Flugangebote entdecken",
   homePromoHotelsTitle: "Hotels weltweit günstiger",
-  homePromoHotelsBody: "Finde Unterkünfte von Boutique-Hotels bis zu globalen Ketten mit Preistransparenz.",
+  homePromoHotelsBody:
+    "Finde Unterkünfte von Boutique-Hotels bis zu globalen Ketten mit Preistransparenz.",
   homePromoHotelsCta: "Hotelangebote entdecken",
   homeNewsletterTitle: "Bleib bei jedem Reiseangebot vorne",
   homeNewsletterBody: "Erhalte wöchentliche kuratierte Flug- und Hotelupdates.",
   homeNewsletterPlaceholder: "E-Mail eingeben",
   homeSubscribe: "Abonnieren",
-  homeNewsletterThanks: "Danke! Wir halten dich mit Reiseangeboten auf dem Laufenden.",
+  homeNewsletterThanks:
+    "Danke! Wir halten dich mit Reiseangeboten auf dem Laufenden.",
   homeHeroImageAlt: "Luxuriöses tropisches Resort am ruhigen Wasser",
   homeNextDestinations: "Nächste Reiseziele",
   homeEmailAddress: "E-Mail-Adresse",
@@ -68,8 +76,10 @@ export const translations: TranslationDictionary = {
   languageCurrent: "Aktuelle Sprache",
   languageAvailable: "Verfügbar",
   languageUnavailable: "Bald verfügbar",
-  languageUnavailableMessage: "{{language}} ist noch nicht verfügbar. Die Übersetzungsunterstützung wird erweitert.",
-  languageDefaultNote: "Deutsch ist jetzt für die Kurioticket-Oberfläche verfügbar.",
+  languageUnavailableMessage:
+    "{{language}} ist noch nicht verfügbar. Die Übersetzungsunterstützung wird erweitert.",
+  languageDefaultNote:
+    "Deutsch ist jetzt für die Kurioticket-Oberfläche verfügbar.",
   preparing: "Bald verfügbar",
   available: "Verfügbar",
   close: "Schließen",
@@ -131,5 +141,109 @@ export const translations: TranslationDictionary = {
   password: "Passwort",
   fullName: "Vollständiger Name",
   forgotPassword: "Passwort vergessen?",
+  cityOrAirport: "Stadt oder Flughafen",
+  flightLandingHeroTitle:
+    "Finden Sie Ihren nächsten günstigen Flug ganz einfach.",
+  flightLandingHeroSubtitle:
+    "Suchen Sie Routen, vergleichen Sie Reisedaten und entdecken Sie Flugoptionen für Ihre nächste Reise.",
+  flightLandingHeroImageAlt: "Flugzeugflügel über hellen Wolken",
+  flightLandingFeatureSearchReadyTitle: "Suchbereite Routen",
+  flightLandingFeatureSearchReadyBody:
+    "Geben Sie echte Reisedaten ein, bevor Ergebnisse von Fluganbietern angefordert werden.",
+  flightLandingFeatureCompareTitle: "Im Kontext vergleichen",
+  flightLandingFeatureCompareBody:
+    "Nutzen Sie Reisedaten, Reisendenanzahl, Kabine, Dauer, Zwischenstopps und Routendetails, um Optionen zu bewerten.",
+  flightLandingFeatureProviderTitle: "Anbieterprüfung",
+  flightLandingFeatureProviderBody:
+    "Bestätigen Sie die endgültige Verfügbarkeit, den Preis und die Regeln vor der Buchung immer beim Anbieter.",
+  discoverDestinationsFromRegion: "Entdecken Sie Reiseziele ab Ihrer Region",
+  discoverDestinationsFromRegionBody:
+    "Entdecken Sie ausgewählte Routen und starten Sie Ihre nächste Reise mit Vertrauen.",
+  flightLandingStartThisSearch: "Diese Suche starten",
+  flightLandingRouteIdeasTitle: "Routenideen für flexible Reisen",
+  flightLandingRouteIdeasBody:
+    "Durchstöbern Sie Routenideen und starten Sie dann eine echte Suche mit Reisedaten und Reisenden, bevor Sie verfügbare Flüge vergleichen.",
+  flightLandingRouteConnector: "nach",
+  flightLandingRouteAriaLabel:
+    "Flüge von {{origin}} nach {{destination}} suchen",
+  beachVacations: "Strandurlaub",
+  beachVacationsBody:
+    "Entdecken Sie Flugrouten zu sonnigen Küsten, Inselzielen und warmen Stranddestinationen.",
+  flightBookingFaqs: "Häufige Fragen zur Flugbuchung",
+  flightBookingFaqIntro:
+    "Prüfen Sie häufige Details zur Flugsuche, bevor Sie mit einem Anbieter fortfahren.",
+  flightFaqBestTimeQuestion: "Wann ist die beste Zeit, einen Flug zu buchen?",
+  flightFaqBeforeBookingQuestion: "Was sollte ich vor der Buchung prüfen?",
+  flightFaqFlexibleFareQuestion: "Was ist ein flexibler Tarif?",
+  flightFaqNonstopQuestion: "Sind Nonstop-Flüge immer besser?",
+  flightFaqBaggageQuestion: "Wie funktionieren Gepäckregeln?",
+  flightFaqChangeCancelQuestion: "Kann ich mein Ticket ändern oder stornieren?",
+  flightFaqInternationalQuestion:
+    "Was sollte ich über internationale Flüge wissen?",
+  "flightLandingCity.Cancun": "Cancún",
+  "flightLandingCity.Cape Town": "Kapstadt",
+  "homeDiscoveryRoute.us-jfk-mia.title": "Strandwochenende in Miami",
+  "homeDiscoveryRoute.us-jfk-mia.routeNote":
+    "Häufige Nonstop-Route für Auszeiten bei warmem Wetter.",
+  "homeDiscoveryRoute.us-ord-las.title": "Unterhaltungstrip nach Las Vegas",
+  "homeDiscoveryRoute.us-ord-las.routeNote":
+    "Beliebt für Events, Shows und flexible Wochenendflüge.",
+  "homeDiscoveryRoute.us-lax-sfo.title":
+    "Schnelle Verbindung nach San Francisco",
+  "homeDiscoveryRoute.us-lax-sfo.routeNote":
+    "Beliebte Kurzstrecke für Geschäftsreisen mit häufigen täglichen Verbindungen.",
+  "homeDiscoveryRoute.us-atl-mco.title": "Familienausflug nach Orlando",
+  "homeDiscoveryRoute.us-atl-mco.routeNote":
+    "Route zu Freizeitparks mit familienfreundlichen Zeitoptionen.",
+  "homeDiscoveryRoute.us-dfw-sea.routeNote":
+    "Ideal für urbane Food-Szenen und Tagesausflüge im pazifischen Nordwesten.",
+  "homeDiscoveryRoute.us-mia-cun.title": "Kurzer Freizeittrip nach Cancún",
+  "homeDiscoveryRoute.us-mia-cun.routeNote":
+    "Schnelle internationale Route zu Strandresorts und langen Wochenenden.",
+  "homeDiscoveryRoute.us-ord-pdx.routeNote":
+    "Städtereise im pazifischen Nordwesten mit Kaffeeröstereien, Parks und nahegelegenen Wasserfällen.",
+  "homeDiscoveryRoute.us-sea-hnl.title": "Tropische Auszeit in Honolulu",
+  "homeDiscoveryRoute.us-sea-hnl.routeNote":
+    "Direkte Insel-Auszeit mit Stränden, Surfen und Vulkanblicken.",
+  "homeDiscoveryRoute.us-bos-sju.title": "Langes Karibikwochenende in San Juan",
+  "homeDiscoveryRoute.us-bos-sju.routeNote":
+    "Warmwetter-Route in ein US-Territorium mit historischer Altstadt und Stränden.",
+  "homeDiscoveryRoute.us-den-phx.routeNote":
+    "Kurze Route in den Westen für Golfwochenenden und Wanderungen in der Sonora-Wüste.",
+  "homeDiscoveryRoute.us-iad-bna.routeNote":
+    "Stark nachgefragte Inlandsroute für Livemusik, Essen und Festivals.",
+  "homeDiscoveryRoute.us-lax-yvr.routeNote":
+    "Einfache grenzüberschreitende Route mit Hafenblick, Meeresfrüchten und nahegelegenen alpinen Wegen.",
+  "homeDiscoveryRoute.us-phl-san.title": "Küstenauszeit in San Diego",
+  "homeDiscoveryRoute.us-phl-san.routeNote":
+    "Reise quer durchs Land mit Stränden, Hafenrundfahrten und mildem Wetter.",
+  "homeDiscoveryRoute.fallback-fra-cpt.title": "Küstenabenteuer in Kapstadt",
+  "homeDiscoveryRoute.fallback-fra-cpt.routeNote":
+    "Malerische Südafrika-Route mit Stränden, Bergen und Weinbergen.",
+  "homeDiscoveryRoute.ng-los-cpt.title": "Küstenabenteuer in Kapstadt",
+  "homeDiscoveryRoute.ng-los-cpt.routeNote":
+    "Malerische Südafrika-Route mit Stränden, Bergen und Weinbergen.",
+  "homeDiscoveryRoute.fallback-yyz-cun.title": "Winterauszeit in Cancún",
+  "homeDiscoveryRoute.fallback-yyz-cun.routeNote":
+    "Zuverlässige Freizeitroute mit Nonstop-Optionen in der Hochsaison.",
+  footerContactUs: "Kontakt",
+  footerCustomerSupport: "Kundensupport",
+  footerServiceGuarantee: "Servicegarantie",
+  footerMoreServiceInfo: "Weitere Serviceinformationen",
+  footerDiscover: "Entdecken",
+  footerSavedRecent: "Gespeichert & zuletzt angesehen",
+  footerTermsSettings: "Bedingungen & Einstellungen",
+  footerPrivacyPolicy: "Datenschutzrichtlinie",
+  footerTermsOfService: "Nutzungsbedingungen",
+  footerCookiePolicy: "Cookie-Richtlinie",
+  footerAboutKurioticket: "Über Kurioticket",
+  footerAboutUs: "Über uns",
+  footerHowItWorks: "So funktioniert Kurioticket",
+  footerConfidenceTagline:
+    "Suchen Sie Flüge, Hotels und Reiseangebote mit Vertrauen.",
+  footerAllRightsReserved: "Alle Rechte vorbehalten.",
+  footerPrivacy: "Datenschutz",
+  footerTerms: "Bedingungen",
+  footerCookies: "Cookies",
   flightQuoteUnavailable: "Flugangebot nicht verfügbar",
 };
