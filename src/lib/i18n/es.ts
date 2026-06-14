@@ -480,6 +480,7 @@ export const translations: TranslationDictionary = {
   "legal.affiliateDisclosure.summary": "Cómo Kurioticket puede ganar comisiones cuando los usuarios hacen clic o reservan a través de socios de confianza.",
   "legal.affiliateDisclosure.lastUpdatedDate": "11 de mayo de 2026",
   "legal.affiliateDisclosure.lastUpdated": "Última actualización: 11 de mayo de 2026",
+  "legal.affiliateDisclosure.tableOfContents": "TABLA DE CONTENIDO",
   "legal.affiliateDisclosure.sections.model.title": "Modelo de afiliados",
   "legal.affiliateDisclosure.sections.model.paragraph1": "Kurioticket ofrece búsquedas gratuitas de vuelos y hoteles sin cargos por servicio. Podemos ganar comisiones de afiliados cuando los usuarios hacen clic, reservan o compran a través de enlaces de aerolíneas, hoteles o socios de viaje.",
   "legal.affiliateDisclosure.sections.model.paragraph2": "Kurioticket puede recibir compensación de socios cuando los usuarios hacen clic o reservan a través de enlaces de proveedores. Esto ayuda a operar y mejorar el servicio.",
