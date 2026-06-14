@@ -2441,6 +2441,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.comparingTotalStayPrices": "Comparando precios totales de estadía...",
   "hotelResults.checkingArrivalConvenience": "Revisando la comodidad de llegada...",
   "hotelResults.findingLowStressStays": "Buscando estadías sin complicaciones...",
+  "hotelResults.liveSearchUnavailable": "La búsqueda de hoteles en vivo no está disponible temporalmente. Vuelve a intentarlo en breve.",
   "hotelResults.searchUnavailableDetailed": "La búsqueda de hoteles no está disponible temporalmente para esta solicitud. Solo mostramos opciones de estadía cuando el precio, la disponibilidad, los cargos y las reglas se pueden revisar con el proveedor. Vuelve a intentarlo más tarde o inicia una nueva búsqueda.",
   "hotelResults.unableToSearchHotels": "No se pudieron buscar hoteles.",
   "hotelResults.limitedProviderChecks": "Algunas comprobaciones de proveedores pueden estar limitadas para esta búsqueda de hoteles. Revisa la disponibilidad final, los impuestos, los cargos y las reglas de cancelación con el proveedor antes de reservar.",

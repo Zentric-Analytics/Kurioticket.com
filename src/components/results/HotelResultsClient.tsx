@@ -517,7 +517,11 @@ export function HotelResultsClient() {
         }
 
         if (!response.ok) {
-          throw new Error(data.error || t("hotelResults.unableToSearchHotels"));
+          throw new Error(
+            data.error === enTranslations["hotelResults.liveSearchUnavailable"]
+              ? t("hotelResults.liveSearchUnavailable")
+              : data.error || t("hotelResults.unableToSearchHotels"),
+          );
         }
 
         return data as { results: PublicHotelResult[]; warnings?: string[] };
