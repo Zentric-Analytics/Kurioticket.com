@@ -488,6 +488,32 @@ export const translations: TranslationDictionary = {
   termsOfService: "Nutzungsbedingungen",
   privacyPolicy: "Datenschutzrichtlinie",
   cookiePolicy: "Cookie-Richtlinie",
+  "legal.lastUpdated": "Letzte Aktualisierung",
+  "legal.print": "Drucken",
+  "legal.tableOfContents": "INHALTSVERZEICHNIS",
+  "legal.privacy.title": "Datenschutzrichtlinie",
+  "legal.privacy.summary":
+    "Wie Kurioticket LLC („Kurioticket“, „wir“, „uns“ oder „unser“) Konto-, Such-, Benachrichtigungs-, Support- und E-Mail-Daten erhebt, verwendet, speichert und schützt.",
+  "legal.privacy.lastUpdatedDate": "11. Mai 2026",
+  "legal.privacy.lastUpdated": "Letzte Aktualisierung: 11. Mai 2026",
+  "legal.privacy.tableOfContents": "INHALTSVERZEICHNIS",
+  "legal.privacy.sections.data-we-collect.title": "Daten, die wir erheben",
+  "legal.privacy.sections.data-we-collect.paragraph1":
+    "Wir erheben Kontodaten wie Name, E-Mail-Adresse, gehashtes Passwort, Kennungen von Authentifizierungsanbietern und optionale Reisepräferenzen. Bei der Registrierung fragen wir keine Passdaten, staatlichen Ausweisdaten oder Wohnadressen ab.",
+  "legal.privacy.sections.data-we-collect.paragraph2":
+    "Wir erheben Produktdaten wie Suchanfragen, gespeicherte Flüge, gespeicherte Hotels, gespeicherte Suchen, Preisbenachrichtigungen, Weiterleitungen, Support-Tickets, Benachrichtigungen, Analyseereignisse und die Nutzung von Funktionen.",
+  "legal.privacy.sections.vendors.title": "Dienstleister",
+  "legal.privacy.sections.vendors.paragraph1":
+    "Wir können Drittanbieter-Dienstleister einsetzen, um unsere Dienste zu betreiben, Mitteilungen zu versenden, die Plattform zu schützen, die Leistung zu messen und Produktfunktionen zu unterstützen.",
+  "legal.privacy.sections.vendors.paragraph2":
+    "Kurioticket fragt keine Kreditkartennummern für Reisebuchungen ab und speichert diese nicht. Kurioticket speichert keine Passdaten.",
+  "legal.privacy.sections.choices.title": "Ihre Auswahlmöglichkeiten",
+  "legal.privacy.sections.choices.paragraph1":
+    "Sie können Benachrichtigungseinstellungen aktualisieren, die Löschung Ihres Kontos anfordern und, soweit nach geltendem Datenschutzrecht erforderlich, Auskunft oder Berichtigung verlangen.",
+  "legal.privacy.sections.choices.paragraph2":
+    "Wir bewahren nur Daten auf, die für den Produktbetrieb, Sicherheit, Support, Analysen, Compliance oder berechtigte Geschäftsanforderungen nützlich sind.",
+  "legal.privacy.developerNote":
+    "Diese rechtlichen Entwürfe sind Platzhalter für die Startphase und sollten vor einer groß angelegten öffentlichen Einführung von qualifiziertem Rechtsbeistand geprüft werden.",
   print: "Drucken",
   tableOfContents: "Inhaltsverzeichnis",
   lastUpdated: "Zuletzt aktualisiert",
