@@ -659,6 +659,39 @@ export const translations: TranslationDictionary = {
   "legalCenter.cookiePolicy.cta": "Cookie-Richtlinie anzeigen",
   "legalCenter.additionalResourcesTitle": "Zusätzliche rechtliche Ressourcen",
   "legalCenter.additionalResourcesDescription": "Weitere rechtliche Ressourcen können hinzugefügt werden, wenn Kurioticket wächst.",
+  "legal.index.heroLabel": "Rechtliches Dokumentensystem",
+  "legal.index.heroTitle": "Rechtszentrum",
+  "legal.index.developerNote":
+    "Diese Rechtsentwürfe sind Platzhalter für ein Startup und sollten vor einer größeren öffentlichen Einführung von qualifizierter Rechtsberatung geprüft werden.",
+  "legal.index.lastUpdated": "Zuletzt aktualisiert",
+  "legal.index.lastUpdatedDate": "11. Mai 2026",
+  "legal.index.documents.termsOfService.title": "Nutzungsbedingungen",
+  "legal.index.documents.termsOfService.summary":
+    "Regeln für die Nutzung der Kurioticket-Suche, Konten, Dashboards, gespeicherten Reisetools und Partner-Weiterleitungen.",
+  "legal.index.documents.privacyPolicy.title": "Datenschutzerklärung",
+  "legal.index.documents.privacyPolicy.summary":
+    "Wie Kurioticket LLC („Kurioticket“, „wir“, „uns“ oder „unser“) Konto-, Such-, Benachrichtigungs-, Support- und E-Mail-Daten erhebt, verwendet, speichert und schützt.",
+  "legal.index.documents.cookiePolicy.title": "Cookie-Richtlinie",
+  "legal.index.documents.cookiePolicy.summary":
+    "Wie Kurioticket Cookies und ähnliche Technologien für Authentifizierung, Sicherheit, Einstellungen, Analysen und Leistung verwendet.",
+  "legal.index.documents.affiliateDisclosure.title": "Affiliate-Hinweis",
+  "legal.index.documents.affiliateDisclosure.summary":
+    "Wie Kurioticket Provisionen erhalten kann, wenn Nutzer über vertrauenswürdige Partner klicken oder buchen.",
+  "legal.index.documents.refundBookingDisclaimer.title": "Hinweis zu Erstattungen und externen Anbietern",
+  "legal.index.documents.refundBookingDisclaimer.summary":
+    "Stellt klar, dass Käufe, Ticketausstellung, Erstattungen, Stornierungen und Zahlungen für Reiseangebote außerhalb von Kurioticket erfolgen.",
+  "legal.index.documents.acceptableUsePolicy.title": "Richtlinie zur zulässigen Nutzung",
+  "legal.index.documents.acceptableUsePolicy.summary":
+    "Verhaltensregeln für die sichere, faire und rechtmäßige Nutzung der Kurioticket-Systeme.",
+  "legal.index.documents.dataDeletionPolicy.title": "Richtlinie zur Datenlöschung",
+  "legal.index.documents.dataDeletionPolicy.summary":
+    "Wie Nutzer die Löschung ihres Kontos beantragen können und welche Daten möglicherweise aufbewahrt werden müssen.",
+  "legal.index.documents.priceAvailabilityDisclaimer.title": "Hinweis zu Preisen und Verfügbarkeit",
+  "legal.index.documents.priceAvailabilityDisclaimer.summary":
+    "Erklärt, warum Reisepreise, Tarifregeln, Zimmerpreise und Verfügbarkeiten sich ändern können.",
+  "legal.index.documents.partnerRedirectDisclaimer.title": "Hinweis zu Partner-Weiterleitungen",
+  "legal.index.documents.partnerRedirectDisclaimer.summary":
+    "Was passiert, wenn Kurioticket Nutzer zu Fluggesellschaften, Hotels, Affiliate-Partnern oder Reiseanbietern weiterleitet.",
   termsOfService: "Nutzungsbedingungen",
   privacyPolicy: "Datenschutzrichtlinie",
   cookiePolicy: "Cookie-Richtlinie",
