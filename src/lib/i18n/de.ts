@@ -16,6 +16,16 @@ export const translations: TranslationDictionary = {
   "accountDashboard.overview.welcome": "Willkommen zurück, {name}",
   "accountDashboard.overview.subtitle":
     "Verwalten Sie Ihre Reisen, gespeicherten Elemente und Einstellungen.",
+  "accountDashboard.saved.eyebrow": "GESPEICHERT",
+  "accountDashboard.saved.title": "Gespeichert",
+  "accountDashboard.saved.description":
+    "Gespeicherte Reisen, Routen, Aufenthalte und Planungselemente, die mit Ihrem Konto verbunden sind, erscheinen hier.",
+  "accountDashboard.saved.emptyTitle": "Noch keine gespeicherten Elemente",
+  "accountDashboard.saved.emptyDescription":
+    "Elemente, die Sie aus den Kurioticket-Planungstools speichern, erscheinen hier. Sie können auch den bestehenden Bereich für gespeicherte Reisen öffnen, sobald gespeicherte Daten verfügbar sind.",
+  "accountDashboard.saved.openSavedTrips": "Gespeicherte Reisen öffnen",
+  "accountDashboard.saved.searchFlights": "Flüge suchen",
+  "accountDashboard.saved.searchHotels": "Hotels suchen",
   "accountDashboard.personalDetails.title": "Persönliche Daten",
   "accountDashboard.personalDetails.subtitle":
     "Aktualisieren Sie Ihre Informationen und verwalten Sie, wie sie in Kurioticket verwendet werden.",
