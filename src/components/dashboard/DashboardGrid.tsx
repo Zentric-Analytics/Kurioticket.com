@@ -712,7 +712,7 @@ export function SavedDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto min-w-0 max-w-[62rem] space-y-6 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
+    <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
       <div className="px-1 text-left sm:px-2">
         <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
           {t["accountDashboard.saved.title"]}
