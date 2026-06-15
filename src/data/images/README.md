@@ -24,10 +24,11 @@ For every discovered URL, capture:
 - `contentRole`: `provider-real`, `fallback-only`, `marketing`, `test-only`, `recent-search-derived`, or `replacement-needed`.
 - `productionPriority`: `p0-launch-critical`, `p1-public-important`, `p2-supporting`, or `p3-internal-or-test`.
 - `premiumReplacementRequired`: whether Phase 3 should source a paid/owned replacement before launch.
+- For purchased premium stock, also record `vendor`, `collection`, `stockFileId`, `sourcePage`, `license`, `dimensions`, local runtime path, intended Kurioticket usage, crop approval flags, and notes that separate registration from future UI replacement.
 
 ## Registry vs. inventory
 
-Use `imageRegistry.ts` for approved assets or stable provider patterns that can be reused safely. Use `imageInventory.ts` for hard-coded URLs that need classification before a safe UI migration. Adding inventory metadata must not swap image URLs, change layouts, or alter search/provider behavior.
+Use `imageRegistry.ts` for approved assets or stable provider patterns that can be reused safely. Phase 4A premium flight assets may be registered with local `/images/premium/flights/` paths before any UI imports point at them, provided desktop and mobile approval remain explicit. Use `imageInventory.ts` for hard-coded URLs that need classification before a safe UI migration. Adding inventory metadata must not swap image URLs, change layouts, or alter search/provider behavior.
 
 ## Premium replacement guidance
 
