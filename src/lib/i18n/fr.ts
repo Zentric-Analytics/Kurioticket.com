@@ -939,7 +939,7 @@ export const translations: TranslationDictionary = {
   homeNewsletterPlaceholder: "Saisissez votre e-mail",
   homeSubscribe: "S’abonner",
   homeNewsletterThanks:
-    "Merci ! Nous vous tiendrons informé des offres de voyage.",
+    "Merci ! Votre abonnement aux mises à jour de Kurioticket est confirmé.",
   homeHeroImageAlt: "Complexe tropical de luxe au bord d’eaux calmes",
   homeNextDestinations: "Destinations suivantes",
   homePreviousDestinations: "Destinations précédentes",
