@@ -1575,6 +1575,26 @@ export const translations: TranslationDictionary = {
   remove: "Entfernen",
   searchAgain: "Erneut suchen",
   swapOriginDestination: "Abflugort und Ziel tauschen",
+  howItWorksEyebrow: "So funktioniert Kurioticket",
+  howItWorksTitle: "So funktioniert Kurioticket",
+  howItWorksIntro:
+    "Kurioticket hilft Reisenden, von der Suche zum Vergleich und anschließend zum Anbieter zu wechseln, wenn ein Angebot ausgewählt wird.",
+  howItWorksFlowHeading: "Grundlegender Ablauf",
+  "howItWorks.steps.search.title": "Reiseoptionen suchen",
+  "howItWorks.steps.search.description":
+    "Geben Sie Ihre Reisedetails ein, um verfügbare Flüge, Hotels, Mietwagen oder Reiseangebote zu finden.",
+  "howItWorks.steps.compare.title": "Verfügbare Ergebnisse vergleichen",
+  "howItWorks.steps.compare.description":
+    "Prüfen Sie verfügbare Optionen, Preise, Zeitpläne, Anbieterinformationen und weitere Reiseinformationen, sofern sie angezeigt werden.",
+  "howItWorks.steps.choose.title": "Angebot auswählen",
+  "howItWorks.steps.choose.description":
+    "Wählen Sie nach Prüfung der verfügbaren Details die Option aus, die am besten zu Ihren Plänen passt.",
+  "howItWorks.steps.continue.title": "Beim Anbieter fortfahren",
+  "howItWorks.steps.continue.description":
+    "Wenn Sie weitergeleitet werden, fahren Sie auf der Website des Anbieters fort, um die endgültigen Details zu prüfen und mögliche Buchungsschritte abzuschließen.",
+  "howItWorks.providerWebsites.title": "Anbieter-Websites",
+  "howItWorks.providerWebsites.description":
+    "Einige Buchungen können auf Anbieter-Websites abgeschlossen werden, nachdem Kurioticket Sie weitergeleitet hat. Prüfen Sie vor dem Kauf die Anbieterseite auf endgültige Verfügbarkeit, Preise, Bedingungen, Zahlungsschritte und Buchungsdetails.",
   supportEyebrow: "Kurioticket-Helpdesk",
   supportTitle: "Kundensupport",
   supportBeforeContactHeading: "Bevor Sie uns kontaktieren",
