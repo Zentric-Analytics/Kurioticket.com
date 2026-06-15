@@ -3,6 +3,26 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+
+  openLanguagePreferences:
+    "Apri le preferenze lingua, lingua attuale {{language}}",
+  websiteLanguageTitle: "Scegli la lingua del sito web",
+  websiteLanguageDescription:
+    "L’inglese (Stati Uniti) è la lingua predefinita del sito. Kurioticket cambia la lingua solo dopo aver selezionato un’opzione disponibile.",
+  currentLanguage: "Lingua attuale: {{language}}",
+  languagePreparingNotice:
+    "Altre lingue sono in preparazione. Le opzioni non disponibili non traducono ancora il sito.",
+  languageSearchLabel: "Cerca lingua",
+  languageSearchPlaceholder: "Cerca English, Español, Français, Deutsch, Italiano...",
+  languageOptionsLabel: "Opzioni lingua",
+  selectLanguageOption: "Seleziona {{language}}",
+  languagePreparingAria: "{{language}} non è ancora disponibile",
+  languageUnavailable: "Non disponibile",
+  languageUnavailableMessage:
+    "{{language}} non è ancora disponibile. Il supporto alla traduzione è in espansione.",
+  globalLanguage: "LINGUA GLOBALE",
+  closeLanguageSelector: "Chiudi selettore lingua",
+  preparing: "Non disponibile",
   homeHeroTitle: "Encuentra vuelos baratos rápido",
   homeHeroSubtitle: "Busca en cientos de aerolíneas y sitios de viaje para encontrar las mejores ofertas para tu próximo viaje.",
   homeAssuranceBestPrice: "Mejores precios garantizados",
