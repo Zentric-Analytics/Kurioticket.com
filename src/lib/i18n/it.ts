@@ -158,7 +158,9 @@ export const translations: TranslationDictionary = {
   homeDiscoveryTravelerCountOne: "1 viaggiatore",
   homeCompareOptions: "Confronta opzioni",
   homeExploreFares: "Esplora tariffe",
+  origin: "Origine",
   destination: "Destinazione",
+  departureDate: "DATE DI VIAGGIO",
   fromPrice: "Da",
 
   "homeDiscoveryRoute.us-jfk-mia.title": "Weekend sulle spiagge di Miami",
