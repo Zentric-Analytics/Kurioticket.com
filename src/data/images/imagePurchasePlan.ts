@@ -14,7 +14,7 @@ export type ImagePurchaseCategory = {
 };
 
 export type ImagePurchaseBatch = "A" | "B" | "C";
-export type ImagePurchaseApprovalStatus = "shopping-needed" | "purchased-pending-crops";
+export type ImagePurchaseApprovalStatus = "shopping-needed";
 export type ImagePurchaseSourceType = "premium-stock" | "owned" | "provider";
 export type ImagePurchaseVendor = "iStock" | "Adobe Stock" | "Shutterstock" | "Getty/iStock";
 
@@ -39,14 +39,6 @@ export type PremiumImagePurchaseEntry = {
   preferredSourceType: ImagePurchaseSourceType;
   acceptableVendors: ImagePurchaseVendor[];
   licenseRequirement: string;
-  selectedVendor?: ImagePurchaseVendor;
-  selectedCollection?: string;
-  stockFileId?: string;
-  sourcePage?: string;
-  localPath?: string;
-  dimensions?: { width: number; height: number };
-  desktopApproved?: boolean;
-  mobileApproved?: boolean;
   launchCritical: boolean;
   approvalStatus: ImagePurchaseApprovalStatus;
   buyingBatch: ImagePurchaseBatch;
@@ -58,18 +50,13 @@ const standardVendors: ImagePurchaseVendor[] = ["iStock", "Adobe Stock", "Shutte
 const standardLicenseRequirement =
   "Commercial web and mobile-web license covering Kurioticket marketing, metasearch UI, paid acquisition landing pages, email crops, worldwide use, and retained receipt/license records.";
 
-function purchaseEntry(
-  entry: Omit<
-    PremiumImagePurchaseEntry,
-    "acceptableVendors" | "approvalStatus" | "preferredSourceType" | "licenseRequirement"
-  > & { approvalStatus?: ImagePurchaseApprovalStatus },
-): PremiumImagePurchaseEntry {
+function purchaseEntry(entry: Omit<PremiumImagePurchaseEntry, "acceptableVendors" | "approvalStatus" | "preferredSourceType" | "licenseRequirement">): PremiumImagePurchaseEntry {
   return {
     ...entry,
     preferredSourceType: "premium-stock",
     acceptableVendors: [...standardVendors],
     licenseRequirement: standardLicenseRequirement,
-    approvalStatus: entry.approvalStatus ?? "shopping-needed",
+    approvalStatus: "shopping-needed",
   };
 }
 
@@ -201,50 +188,9 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
     mobileCropRequirement: "Must retain the travel cue in a tight portrait crop without relying on tiny text.",
     desktopCropRequirement: "Must remain calm behind search UI at 16:9 and 21:9.",
     recommendedAspectRatios: ["21:9", "16:9", "4:5"],
-    selectedVendor: "iStock",
-    selectedCollection: "Essentials",
-    stockFileId: "1218436213",
-    sourcePage:
-      "https://www.istockphoto.com/photo/modern-passenger-airplane-parked-to-terminal-building-gate-at-airside-apron-of-gm1218436213-356036421",
-    localPath: "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg",
-    dimensions: { width: 2047, height: 1365 },
-    desktopApproved: false,
-    mobileApproved: false,
     launchCritical: true,
-    approvalStatus: "purchased-pending-crops",
     buyingBatch: "A",
-    notes: "Purchased iStock Standard / Essentials asset for the primary Flights hero/global flight search hero. Phase 4A only registers the asset and does not replace live UI imagery; desktop and mobile crop approval remain pending.",
-  }),
-  purchaseEntry({
-    id: "phase-4a-flight-support-aircraft-gangway-terminal",
-    title: "Secondary flight support — aircraft at terminal gangway",
-    product: "flights",
-    usage: "flight-inspiration-card",
-    priority: "p1-public-important",
-    targetSurface: "Future homepage flight support / flight inspiration support",
-    replacementTargetIds: [],
-    region: "Global",
-    imageBrief:
-      "Premium aircraft-at-terminal support image that communicates flight readiness without showing a specific airline, fare, route, gate number, or availability claim.",
-    mustHave: ["Clean aircraft and terminal context", "No readable airline dependency", "Premium travel readiness tone"],
-    mustAvoid: ["Readable airline logos", "Price or availability graphics", "Provider-real implications"],
-    preferredComposition: "Aircraft and gangway relationship should remain clear with flexible card-crop room around the terminal context.",
-    mobileCropRequirement: "Must retain the aircraft/gangway cue in a tight portrait crop without relying on tiny text.",
-    desktopCropRequirement: "Must remain calm in future support-card and route-card crops.",
-    recommendedAspectRatios: ["16:9", "3:2", "4:5"],
-    selectedVendor: "iStock",
-    selectedCollection: "Essentials",
-    stockFileId: "1470585865",
-    sourcePage:
-      "https://www.istockphoto.com/photo/aircraft-is-attached-to-the-terminal-gangway-of-the-airport-building-preparation-for-gm1470585865-501392082",
-    localPath: "/images/premium/flights/kurioticket-flight-support-aircraft-gangway-terminal-002.jpg",
-    dimensions: { width: 2047, height: 1365 },
-    desktopApproved: false,
-    mobileApproved: false,
-    launchCritical: false,
-    approvalStatus: "purchased-pending-crops",
-    buyingBatch: "A",
-    notes: "Purchased iStock Standard / Essentials secondary flight support asset. Phase 4A only registers the asset and does not replace live UI imagery; desktop and mobile crop approval remain pending.",
+    notes: "Brand-level flight visual for homepage discovery and future route modules; avoid provider-real implications.",
   }),
   purchaseEntry({
     id: "phase-3-003-global-hotel-search-hero",

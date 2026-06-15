@@ -50,8 +50,7 @@ This guide turns the Phase 3 premium image purchase plan into a practical buying
 - **Search on iStock/Adobe Stock/Shutterstock:** Global flights brand hero airport departure confidence homepage hero premium travel photography.
 - **What to avoid:** Readable airline logos; Boarding passes with personal data; Price or availability graphics.
 - **Crop notes:** Mobile — Must retain the travel cue in a tight portrait crop without relying on tiny text. Desktop — Must remain calm behind search UI at 16:9 and 21:9. Recommended ratios: 21:9, 16:9, 4:5.
-- **Why it is needed:** Purchased as a brand-level flight visual for homepage discovery and future route modules; avoid provider-real implications. Phase 4A registers the asset only and does not replace the live UI.
-- **Phase 4A purchase:** iStock Standard / Essentials file ID `1218436213`; source page: https://www.istockphoto.com/photo/modern-passenger-airplane-parked-to-terminal-building-gate-at-airside-apron-of-gm1218436213-356036421; local path: `/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg`; dimensions: 2047 x 1365; desktop/mobile crop approval pending.
+- **Why it is needed:** Brand-level flight visual for homepage discovery and future route modules; avoid provider-real implications.
 - **License requirement:** Commercial web and mobile-web license covering Kurioticket marketing, metasearch UI, paid acquisition landing pages, email crops, worldwide use, and retained receipt/license records.
 
 ### 3. Global hotels brand hero — generic premium stay `phase-3-003-global-hotel-search-hero`
@@ -638,9 +637,3 @@ This guide turns the Phase 3 premium image purchase plan into a practical buying
 - **Why it is needed:** Cars imagery must remain generic; Phase 4 must not change pricing, availability, redirects, or provider behavior.
 - **License requirement:** Commercial web and mobile-web license covering Kurioticket marketing, metasearch UI, paid acquisition landing pages, email crops, worldwide use, and retained receipt/license records.
 
-
-### Phase 4A additional purchased flight support image
-
-- **Purchase id:** `phase-4a-flight-support-aircraft-gangway-terminal`
-- **Use:** Secondary flight support image for future `flight-inspiration-card` or route-card support use; not wired into UI in Phase 4A.
-- **Phase 4A purchase:** iStock Standard / Essentials file ID `1470585865`; source page: https://www.istockphoto.com/photo/aircraft-is-attached-to-the-terminal-gangway-of-the-airport-building-preparation-for-gm1470585865-501392082; local path: `/images/premium/flights/kurioticket-flight-support-aircraft-gangway-terminal-002.jpg`; dimensions: 2047 x 1365; desktop/mobile crop approval pending.
