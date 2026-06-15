@@ -522,6 +522,27 @@ export const translations: TranslationDictionary = {
     "Sobald Sie Kurioticket verlassen oder eine Transaktion mit einem Partner abschließen, gelten die Bedingungen des Partners. Prüfen Sie vor dem Kauf alle Tarif-, Hotel-, Gepäck-, Änderungs-, Erstattungs-, Visa- und Reisendenanforderungen.",
   "legal.terms.developerNote":
     "Diese rechtlichen Entwürfe sind Platzhalter für die Startphase und sollten vor einer groß angelegten öffentlichen Einführung von qualifiziertem Rechtsbeistand geprüft werden.",
+  "legal.cookiePolicy.title": "Cookie-Richtlinie",
+  "legal.cookiePolicy.summary":
+    "Wie Kurioticket Cookies und ähnliche Technologien für Authentifizierung, Sicherheit, Einstellungen, Analysen und Leistung verwendet.",
+  "legal.cookiePolicy.lastUpdatedDate": "11. Mai 2026",
+  "legal.cookiePolicy.lastUpdated": "Letzte Aktualisierung: 11. Mai 2026",
+  "legal.cookiePolicy.tableOfContents": "INHALTSVERZEICHNIS",
+  "legal.cookiePolicy.sections.use.title": "Wie Cookies verwendet werden",
+  "legal.cookiePolicy.sections.use.paragraph1":
+    "Kurioticket kann Cookies für Authentifizierungssitzungen, Sicherheit, Betrugsprävention, Speicherung von Einstellungen, Analysen, Leistungsüberwachung und Funktionsexperimente verwenden.",
+  "legal.cookiePolicy.sections.use.paragraph2":
+    "Einige Cookies sind für Anmeldung, Dashboard-Zugriff, Support-Tickets, gespeicherte Reisefunktionen, Sicherheit und Einstellungen erforderlich.",
+  "legal.cookiePolicy.sections.third-parties.title": "Technologien von Drittanbietern",
+  "legal.cookiePolicy.sections.third-parties.paragraph1":
+    "Authentifizierungsanbieter, Analysetools, Hosting-Infrastruktur und Sicherheitsdienste können Cookies setzen oder lesen, soweit dies zur Bereitstellung sicherer Dienste erforderlich ist.",
+  "legal.cookiePolicy.sections.third-parties.paragraph2":
+    "Externe Anbieter-Websites haben nach der Weiterleitung ihre eigenen Cookie-Praktiken.",
+  "legal.cookiePolicy.sections.controls.title": "Kontrollmöglichkeiten",
+  "legal.cookiePolicy.sections.controls.paragraph1":
+    "Sie können Cookies über Ihre Browsereinstellungen steuern. Das Blockieren notwendiger Cookies kann dazu führen, dass Anmeldung, Dashboards, gespeicherte Elemente, Einstellungen und Support-Tools nicht ordnungsgemäß funktionieren.",
+  "legal.cookiePolicy.developerNote":
+    "Diese rechtlichen Entwürfe sind Platzhalter für die Startphase und sollten vor einer groß angelegten öffentlichen Einführung von qualifiziertem Rechtsbeistand geprüft werden.",
   createYourAccount: "Konto erstellen",
   createAccount: "Konto erstellen",
   continueWithGoogle: "Mit Google fortfahren",
