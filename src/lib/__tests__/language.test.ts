@@ -36,7 +36,7 @@ test("search filters by native label and canonical locale", () => {
   assert.ok(filtered.some((o) => o.code === "pt-br"));
 });
 
-test("selected available Spanish, French, and German locales persist and update document language", () => {
+test("selected available Spanish, French, German, and Italian locales persist and update document language", () => {
   const store = new Map<string, string>();
   const windowMock: WindowLike = {
     localStorage: {
@@ -67,6 +67,11 @@ test("selected available Spanish, French, and German locales persist and update 
   assert.equal(getLanguageFromStorage(), "de-de");
   assert.equal(documentMock.documentElement.lang, "de-DE");
   assert.equal(documentMock.documentElement.dir, "ltr");
+
+  setLanguageInStorage("it-IT");
+  assert.equal(getLanguageFromStorage(), "it-it");
+  assert.equal(documentMock.documentElement.lang, "it-IT");
+  assert.equal(documentMock.documentElement.dir, "ltr");
 });
 
 test("preparing locales are not persisted as selected", () => {
@@ -80,11 +85,11 @@ test("preparing locales are not persisted as selected", () => {
   };
   Object.defineProperty(globalThis, "window", { value: windowMock, configurable: true });
 
-  setLanguageInStorage("it-IT");
+  setLanguageInStorage("pt-BR");
   assert.equal(getLanguageFromStorage(), "en-us");
 
   setLanguageInStorage("es-ES");
-  setLanguageInStorage("it-IT");
+  setLanguageInStorage("pt-BR");
   assert.equal(getLanguageFromStorage(), "en-us");
 });
 
@@ -100,8 +105,10 @@ test("unknown locales fallback to english", () => {
   assert.equal(normalizeLanguage("xx-yy"), "en-us");
 });
 
-test("German shorthand locale normalizes to available German option", () => {
+test("German and Italian shorthand locales normalize to available options", () => {
   assert.equal(normalizeLanguage("de"), "de-de");
+  assert.equal(normalizeLanguage("it"), "it-it");
+  assert.equal(normalizeLanguage("it-IT"), "it-it");
 });
 
 test("Spanish and German dictionary shapes match English dictionary shape", () => {

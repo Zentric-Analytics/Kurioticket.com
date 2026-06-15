@@ -74,7 +74,7 @@ export const supportedLocales: SupportedLocale[] = [
     label: "Italian",
     nativeLabel: "Italiano",
     direction: "ltr",
-    status: preparing,
+    status: "available",
     countryCode: "IT",
     fallbackText: "IT",
     translationStatus: "partial",
