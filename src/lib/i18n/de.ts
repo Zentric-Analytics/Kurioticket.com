@@ -346,15 +346,31 @@ export const translations: TranslationDictionary = {
   language: "Sprache",
   languageSelectorTitle: "Sprache auswählen",
   languageSelectorSubtitle: "Wähle eine verfügbare Sprache für Kurioticket.",
+  openLanguagePreferences:
+    "Spracheinstellungen öffnen, aktuelle Sprache {{language}}",
+  websiteLanguageTitle: "Website-Sprache auswählen",
+  websiteLanguageDescription:
+    "Englisch (Vereinigte Staaten) ist die Standardsprache der Website. Kurioticket ändert die Sprache erst, nachdem Sie eine verfügbare Option ausgewählt haben.",
+  currentLanguage: "Aktuelle Sprache: {{language}}",
+  languagePreparingNotice:
+    "Weitere Sprachen werden vorbereitet. Nicht verfügbare Optionen übersetzen die Website noch nicht.",
+  languageSearchLabel: "Sprache suchen",
   languageSearchPlaceholder: "English, Español, Français, Deutsch suchen...",
+  languageOptionsLabel: "Sprachoptionen",
+  selectLanguageOption: "{{language}} auswählen",
+  languagePreparingAria: "{{language}} ist nicht verfügbar",
   languageCurrent: "Aktuelle Sprache",
   languageAvailable: "Verfügbar",
-  languageUnavailable: "Bald verfügbar",
+  languageUnavailable: "Nicht verfügbar",
   languageUnavailableMessage:
     "{{language}} ist noch nicht verfügbar. Die Übersetzungsunterstützung wird erweitert.",
   languageDefaultNote:
     "Deutsch ist jetzt für die Kurioticket-Oberfläche verfügbar.",
-  preparing: "Bald verfügbar",
+  globalLanguage: "GLOBALE SPRACHE",
+  closeLanguageSelector: "Schließen",
+  searchLanguage: "Sprache suchen",
+  noLanguagesFound: "Keine Sprachen gefunden",
+  preparing: "Nicht verfügbar",
   available: "Verfügbar",
   close: "Schließen",
   apply: "Anwenden",
