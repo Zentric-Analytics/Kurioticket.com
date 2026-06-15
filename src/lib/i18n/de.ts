@@ -71,6 +71,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.emptyTitle": "Noch keine gespeicherten Elemente",
   "accountDashboard.saved.emptyDescription":
     "Elemente, die Sie aus den Kurioticket-Planungstools speichern, erscheinen hier. Sie können auch den bestehenden Bereich für gespeicherte Reisen öffnen, sobald gespeicherte Daten verfügbar sind.",
+  "accountDashboard.saved.explore": "Explore",
   "accountDashboard.saved.openSavedTrips": "Gespeicherte Reisen öffnen",
   "accountDashboard.saved.searchFlights": "Flüge suchen",
   "accountDashboard.saved.searchHotels": "Hotels suchen",

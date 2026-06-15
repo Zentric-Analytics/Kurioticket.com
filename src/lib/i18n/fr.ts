@@ -191,6 +191,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.emptyTitle": "Aucun élément enregistré pour le moment",
   "accountDashboard.saved.emptyDescription":
     "Les éléments que vous enregistrez depuis les outils de planification de Kurioticket apparaîtront ici. Vous pouvez également ouvrir l’espace des voyages enregistrés lorsque des données enregistrées sont disponibles.",
+  "accountDashboard.saved.explore": "Explore",
   "accountDashboard.saved.openSavedTrips": "Ouvrir les voyages enregistrés",
   "accountDashboard.saved.searchFlights": "Rechercher des vols",
   "accountDashboard.saved.searchHotels": "Rechercher des hôtels",
