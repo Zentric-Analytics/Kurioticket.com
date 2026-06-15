@@ -178,7 +178,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false, mo
                     )}
                   >
                     <Icon className={cn("size-4 shrink-0", mobileOverviewTabs && "hidden lg:block")} strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
-                    <span>{t[item.labelKey]}</span>
+                    <span className="min-w-0 break-words leading-snug">{t[item.labelKey]}</span>
                   </Link>
                 );
               })}
@@ -189,7 +189,7 @@ export function AccountDashboardFrame({ children, mobileOverviewTabs = false, mo
             <div className="mx-auto mb-2 flex justify-center opacity-85">
               <TravelIllustration compact />
             </div>
-            <h2 className="text-[13px] font-semibold text-slate-900">{t["accountDashboard.promo.title"]}</h2>
+            <h2 className="text-[13px] font-semibold leading-snug text-slate-900">{t["accountDashboard.promo.title"]}</h2>
             <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">{t["accountDashboard.promo.body"]}</p>
             <Link
               href="/flights"
@@ -254,7 +254,7 @@ export function MobileAccountMenuPage() {
                 <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 transition group-hover:bg-white">
                   <Icon className="size-4.5" strokeWidth={2.2} aria-hidden="true" />
                 </span>
-                <span className="min-w-0 flex-1 truncate text-base font-bold text-slate-900">{t[item.labelKey]}</span>
+                <span className="min-w-0 flex-1 break-words text-base font-bold leading-snug text-slate-900">{t[item.labelKey]}</span>
                 <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
               </Link>
             );
