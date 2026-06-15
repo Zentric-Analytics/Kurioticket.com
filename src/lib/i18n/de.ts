@@ -826,6 +826,25 @@ export const translations: TranslationDictionary = {
     "Der Kurioticket-Support kann Ihnen helfen, die Nutzung der Plattform und die Grenzen der Reisehinweise zu verstehen, kann jedoch Partner- oder Airline-Richtlinien nicht außer Kraft setzen.",
   "legal.refundBookingDisclaimer.developerNote":
     "Diese Rechtsentwürfe sind Platzhalter für ein Startup und sollten vor einer größeren öffentlichen Einführung von qualifizierter Rechtsberatung geprüft werden.",
+  "legal.priceAvailabilityDisclaimer.title":
+    "Hinweis zu Preisen und Verfügbarkeit",
+  "legal.priceAvailabilityDisclaimer.summary":
+    "Erklärt, warum Reisepreise, Tarifregeln, Zimmerpreise und Verfügbarkeiten sich ändern können.",
+  "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "11. Mai 2026",
+  "legal.priceAvailabilityDisclaimer.lastUpdated":
+    "Zuletzt aktualisiert: 11. Mai 2026",
+  "legal.priceAvailabilityDisclaimer.sections.change.title":
+    "Preise können sich ändern",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph1":
+    "Flug- und Hotelpreise, Steuern, Gebühren, Gepäckregeln, Kabinenverfügbarkeit, Zimmer, Zeitpläne und Richtlinien können sich schnell ändern und abweichen, wenn Sie die Kaufseite eines Anbieters erreichen.",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph2":
+    "Kurioticket bemüht sich, aktuelle Anbieterdaten zu vergleichen, aber Anbieter-Verzögerungen, Ratenlimits, Cache-Zeitfenster, Währungsumrechnung, Partnerregeln und Nutzerauswahlen können die angezeigten Informationen beeinflussen.",
+  "legal.priceAvailabilityDisclaimer.sections.verify.title":
+    "Vor der Zahlung prüfen",
+  "legal.priceAvailabilityDisclaimer.sections.verify.paragraph1":
+    "Prüfen Sie vor dem Kauf immer die Website des externen Anbieters. Die Website des externen Anbieters ist die maßgebliche Quelle für den endgültigen Preis, die Verfügbarkeit, Tarifbedingungen, Zimmerbedingungen und Kaufbedingungen.",
+  "legal.priceAvailabilityDisclaimer.developerNote":
+    "Diese Rechtsentwürfe sind Platzhalter für ein Startup und sollten vor einer größeren öffentlichen Einführung von qualifizierter Rechtsberatung geprüft werden.",
   createYourAccount: "Konto erstellen",
   createAccount: "Konto erstellen",
   continueWithGoogle: "Mit Google fortfahren",
