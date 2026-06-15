@@ -805,6 +805,27 @@ export const translations: TranslationDictionary = {
     "Sie können Cookies über Ihre Browsereinstellungen steuern. Das Blockieren notwendiger Cookies kann dazu führen, dass Anmeldung, Dashboards, gespeicherte Elemente, Einstellungen und Support-Tools nicht ordnungsgemäß funktionieren.",
   "legal.cookiePolicy.developerNote":
     "Diese rechtlichen Entwürfe sind Platzhalter für die Startphase und sollten vor einer groß angelegten öffentlichen Einführung von qualifiziertem Rechtsbeistand geprüft werden.",
+  "legal.refundBookingDisclaimer.title":
+    "Hinweis zu Erstattungen und externen Anbietern",
+  "legal.refundBookingDisclaimer.summary":
+    "Stellt klar, dass Käufe, Ticketausstellung, Erstattungen, Stornierungen und Zahlungen für Reiseangebote außerhalb von Kurioticket erfolgen.",
+  "legal.refundBookingDisclaimer.lastUpdatedDate": "11. Mai 2026",
+  "legal.refundBookingDisclaimer.lastUpdated":
+    "Zuletzt aktualisiert: 11. Mai 2026",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.title":
+    "Keine direkte Ticketausstellung",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1":
+    "Kurioticket verkauft keine Flugtickets oder Hotelreservierungen. Wir leiten Nutzer an externe Fluggesellschaften, Hotels, Affiliate-Partner oder Reiseanbieter weiter, um Vergleichs- und Kaufschritte fortzusetzen.",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2":
+    "Ihr Kaufvertrag besteht mit dem externen Anbieter, der Ihre Zahlung akzeptiert, nicht mit Kurioticket.",
+  "legal.refundBookingDisclaimer.sections.refunds.title":
+    "Erstattungen und Änderungen",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph1":
+    "Erstattungen, Gutschriften, Flugplanänderungen, Stornierungen, verpasste Anschlüsse, Check-in-Probleme, Gepäckstreitigkeiten und Kaufprobleme werden von der externen Fluggesellschaft, dem Hotel oder dem Reiseanbieter bearbeitet.",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph2":
+    "Der Kurioticket-Support kann Ihnen helfen, die Nutzung der Plattform und die Grenzen der Reisehinweise zu verstehen, kann jedoch Partner- oder Airline-Richtlinien nicht außer Kraft setzen.",
+  "legal.refundBookingDisclaimer.developerNote":
+    "Diese Rechtsentwürfe sind Platzhalter für ein Startup und sollten vor einer größeren öffentlichen Einführung von qualifizierter Rechtsberatung geprüft werden.",
   createYourAccount: "Konto erstellen",
   createAccount: "Konto erstellen",
   continueWithGoogle: "Mit Google fortfahren",
