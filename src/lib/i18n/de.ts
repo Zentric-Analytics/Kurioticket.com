@@ -90,6 +90,20 @@ export const translations: TranslationDictionary = {
     "Sicherheit und Datenschutz",
   "accountDashboard.preferences.securityPrivacy.description":
     "Prüfen Sie aktuelle Datenschutz- und Plattformrichtlinien.",
+  "accountDashboard.support.eyebrow": "SUPPORT",
+  "accountDashboard.support.title": "Support",
+  "accountDashboard.support.description":
+    "Finden Sie Hilfe und Richtlinienressourcen, ohne inaktive Support-Tools als vollständige Workflows darzustellen.",
+  "accountDashboard.support.comingSoon": "Demnächst verfügbar",
+  "accountDashboard.support.helpCenter.title": "Hilfecenter",
+  "accountDashboard.support.helpCenter.description":
+    "Durchsuchen Sie den vorhandenen Supportbereich für Kurioticket-Hilfe und Hinweise zur Reiseplanung.",
+  "accountDashboard.support.contact.title": "Support kontaktieren",
+  "accountDashboard.support.contact.description":
+    "Kontaktoptionen für Konto-Supportanfragen werden vorbereitet.",
+  "accountDashboard.support.privacyData.title": "Datenschutz und Daten",
+  "accountDashboard.support.privacyData.description":
+    "Prüfen Sie rechtliche Informationen und Datenschutzinformationen zu Kontodaten und Plattformrichtlinien.",
   moreServiceInfoEyebrow: "Plattforminformationen",
   moreServiceInfoTitle: "Weitere Serviceinformationen",
   moreServiceInfoDescription:
