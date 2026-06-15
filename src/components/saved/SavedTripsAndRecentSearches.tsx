@@ -123,12 +123,15 @@ const resolveSavedTrip = (
   };
 };
 
-const getSavedTripsDateLocale = (locale: string) =>
-  locale.toLowerCase().startsWith("fr")
-    ? "fr-FR"
-    : locale.toLowerCase().startsWith("es")
-      ? "es-ES"
-      : "en-US";
+const getSavedTripsDateLocale = (locale: string) => {
+  const normalizedLocale = locale.toLowerCase();
+
+  if (normalizedLocale.startsWith("de")) return "de-DE";
+  if (normalizedLocale.startsWith("fr")) return "fr-FR";
+  if (normalizedLocale.startsWith("es")) return "es-ES";
+
+  return "en-US";
+};
 
 const parseDateValue = (value?: string) => {
   if (!value) return null;
