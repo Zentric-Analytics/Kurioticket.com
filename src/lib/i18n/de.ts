@@ -3,6 +3,77 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  moreServiceInfoEyebrow: "Plattforminformationen",
+  moreServiceInfoTitle: "Weitere Serviceinformationen",
+  moreServiceInfoDescription:
+    "Erfahren Sie, wie Kurioticket Reisenden hilft, Reiseoptionen mehrerer Anbieter an einem Ort zu suchen, zu vergleichen, zu speichern und zu organisieren.",
+  moreServiceInfoContextTitle: "Mit Kontext planen",
+  moreServiceInfoContextSubtitle: "Von Suchergebnissen bis zu Anbieter-Weiterleitungen",
+  moreServiceInfoContextCompare:
+    "Vergleichen Sie Optionen mehrerer Reiseanbieter.",
+  moreServiceInfoContextSave:
+    "Speichern Sie Reisen, Benachrichtigungen und Einstellungen, wenn Sie angemeldet sind.",
+  moreServiceInfoContextContinue:
+    "Fahren Sie mit Anbieterinformationen fort, bevor Sie extern buchen.",
+  moreServiceInfoHowHeading: "So funktioniert Kurioticket",
+  moreServiceInfoHowDescription:
+    "Diese Serviceinformationen erklären die Rolle von Kurioticket vor, während und nach einer Reisesuche.",
+  moreServiceInfoHowBadge: "GRUNDLAGEN DER REISEPLANUNG",
+  moreServiceInfoStepSearchTitle: "Mehrere Anbieter durchsuchen",
+  moreServiceInfoStepSearchSummary:
+    "Suchen Sie Reiseoptionen verschiedener Anbieter an einem Ort, statt jeden Anbieter einzeln zu öffnen.",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket bündelt verfügbare Informationen zu Flügen, Hotels, Routen und Reiseergebnissen in einer einzigen Sucherfahrung, damit Reisende Optionen effizienter prüfen können.",
+  moreServiceInfoStepCompareTitle: "Reiseoptionen vergleichen",
+  moreServiceInfoStepCompareSummary:
+    "Vergleichen Sie Preise, Routen, Hotels, Zeitpläne und verfügbare Reiseoptionen, bevor Sie entscheiden, was zu Ihrer Reise passt.",
+  moreServiceInfoStepCompareDetails:
+    "Ergebnisse können Anbieterinformationen, Zeiten, Reisezielinformationen und weitere Reisedaten enthalten, die Ihnen helfen, die Option zu bewerten, bevor Sie zum Anbieter weitergehen.",
+  moreServiceInfoStepSaveTitle: "Reisen und Benachrichtigungen speichern",
+  moreServiceInfoStepSaveSummary:
+    "Erstellen Sie ein Konto, um Reisen zu speichern, Routen zu verfolgen und Reisebenachrichtigungen für Ihre Planung zu verwalten.",
+  moreServiceInfoStepSaveDetails:
+    "Gespeicherte Reisen, letzte Suchen und Benachrichtigungen erleichtern es, zu Optionen zurückzukehren, die Sie in Betracht ziehen, und zugehörige Planungsdetails organisiert zu halten.",
+  moreServiceInfoStepRedirectsTitle: "Anbieter-Weiterleitungen erklärt",
+  moreServiceInfoStepRedirectsSummary:
+    "Wenn Sie ein Angebot auswählen, können Sie zu einem Reiseanbieter weitergeleitet werden, um Buchung, Zahlung, Bestätigung und Leistungserbringung abzuschließen.",
+  moreServiceInfoStepRedirectsDetails:
+    "Auf der Anbieterseite werden bei weitergeleiteten Angeboten Endpreise, Verfügbarkeit, Regeln, Zahlungsschritte, Belege, Buchungsänderungen, Stornierungen und Reisedokumente verwaltet.",
+  moreServiceInfoStepAccountTitle: "Konto- und Reisetools",
+  moreServiceInfoStepAccountSummary:
+    "Nutzen Sie Kontotools, um gespeicherte Suchen, Reisen, Benachrichtigungen und Einstellungen in einem Kurioticket-Arbeitsbereich zu organisieren.",
+  moreServiceInfoStepAccountDetails:
+    "Diese Tools unterstützen die Reiseplanung auf Kurioticket, während die anbieterspezifische Buchungsverwaltung beim Anbieter bleibt, wenn Ihre Buchung extern abgeschlossen wird.",
+  moreServiceInfoFaqHeading: "Häufig gestellte Fragen",
+  moreServiceInfoFaqDescription:
+    "Kurze Antworten zu Reisesuche, Anbieter-Weiterleitungen, gespeicherten Reisen und Kontotools.",
+  moreServiceInfoFaqWhatQuestion: "Was ist Kurioticket?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket ist eine Reise-Such- und Vergleichsplattform, mit der Sie Reiseoptionen mehrerer Anbieter finden, vergleichen, speichern und organisieren können.",
+  moreServiceInfoFaqSearchQuestion: "Wie funktioniert die Reisesuche?",
+  moreServiceInfoFaqSearchAnswer:
+    "Sie geben Reisedetails ein, und Kurioticket zeigt verfügbare Reiseoptionen und Anbieterinformationen an, die Ihnen beim Vergleichen helfen können.",
+  moreServiceInfoFaqRedirectQuestion:
+    "Warum werde ich zu einem anderen Anbieter weitergeleitet?",
+  moreServiceInfoFaqRedirectAnswer:
+    "Einige Angebote werden auf externen Anbieter-Websites abgeschlossen. Der Anbieter übernimmt die abschließenden Buchungsschritte, Zahlung, Bestätigung und Leistungserbringung.",
+  moreServiceInfoFaqPaymentsQuestion: "Verarbeitet Kurioticket Zahlungen?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "Bei weitergeleiteten Anbieterangeboten verarbeitet Kurioticket keine Zahlungen. Prüfen und schließen Sie die Zahlung direkt auf der Anbieterseite ab.",
+  moreServiceInfoFaqSaveQuestion:
+    "Kann ich Reisen und Benachrichtigungen speichern?",
+  moreServiceInfoFaqSaveAnswer:
+    "Ja. Kontotools können Ihnen helfen, Reisen zu speichern, Routen zu verfolgen, Benachrichtigungen zu verwalten und zu Reiseoptionen zurückzukehren, die Sie in Betracht ziehen.",
+  moreServiceInfoFaqAccountQuestion: "Ist ein Konto erforderlich?",
+  moreServiceInfoFaqAccountAnswer:
+    "Sie können Suchinformationen ohne alle Kontotools durchsuchen, aber zum Speichern von Reisen, Benachrichtigungen und Einstellungen kann eine Anmeldung erforderlich sein.",
+  moreServiceInfoFaqSupportQuestion: "Wie kontaktiere ich den Support?",
+  moreServiceInfoFaqSupportAnswer:
+    "Nutzen Sie die Kundensupport-Seite und geben Sie Ihre Konto-E-Mail-Adresse, Ihr Vorhaben sowie relevante Routen-, Hotel- oder Anbieterinformationen an.",
+  moreServiceInfoHelpTitle: "Benötigen Sie Hilfe?",
+  moreServiceInfoHelpDescription:
+    "Fragen zu Ihrem Konto, gespeicherten Reisen, Benachrichtigungen oder Anbieter-Weiterleitungen?",
+  moreServiceInfoSupportCta: "Kundensupport kontaktieren",
   signupPageTitle: "Konto erstellen",
   signupFullNameLabel: "Vollständiger Name",
   signupEmailLabel: "E-Mail",
