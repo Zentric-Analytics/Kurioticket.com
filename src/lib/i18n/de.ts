@@ -724,6 +724,22 @@ export const translations: TranslationDictionary = {
   print: "Drucken",
   tableOfContents: "Inhaltsverzeichnis",
   lastUpdated: "Zuletzt aktualisiert",
+  "legal.acceptableUsePolicy.title": "Richtlinie zur zulässigen Nutzung",
+  "legal.acceptableUsePolicy.summary":
+    "Verhaltensregeln für die sichere, faire und rechtmäßige Nutzung der Kurioticket-Systeme.",
+  "legal.acceptableUsePolicy.lastUpdatedDate": "11. Mai 2026",
+  "legal.acceptableUsePolicy.lastUpdated": "Zuletzt aktualisiert: 11. Mai 2026",
+  "legal.acceptableUsePolicy.tableOfContents": "INHALTSVERZEICHNIS",
+  "legal.acceptableUsePolicy.sections.prohibited.title": "Verbotenes Verhalten",
+  "legal.acceptableUsePolicy.sections.prohibited.paragraph1":
+    "Sie dürfen Kurioticket nicht scrapen, keine Websites von Fluggesellschaften über Kurioticket scrapen, keine Anbieter-APIs angreifen, keine missbräuchlichen Suchen automatisieren, keine betrügerischen Konten erstellen, keine gestohlenen Karten testen, keinen Support-Spam versenden und die Zuverlässigkeit der Plattform nicht beeinträchtigen.",
+  "legal.acceptableUsePolicy.sections.prohibited.paragraph2":
+    "Sie dürfen Kurioticket nicht verwenden, um rechtswidrige Reiseaktivitäten, Belästigung, Betrug, Missbrauch oder unbefugten Zugriff zu ermöglichen.",
+  "legal.acceptableUsePolicy.sections.enforcement.title": "Durchsetzung",
+  "legal.acceptableUsePolicy.sections.enforcement.paragraph1":
+    "Wir können den Zugriff drosseln, aussetzen, entfernen oder sperren, wenn dies erforderlich ist, um Nutzer, Partner, Anbieter, die Dienstsicherheit und den Plattformbetrieb zu schützen.",
+  "legal.acceptableUsePolicy.developerNote":
+    "Diese Rechtsentwürfe sind Platzhalter für ein Startup und sollten vor einer größeren öffentlichen Einführung von qualifizierter Rechtsberatung geprüft werden.",
   "legal.terms.title": "Nutzungsbedingungen",
   "legal.terms.summary":
     "Regeln für die Nutzung der Kurioticket-Suche, Konten, Dashboards, gespeicherten Reisetools und Partner-Weiterleitungen.",
