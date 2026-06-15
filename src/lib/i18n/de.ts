@@ -1276,5 +1276,49 @@ export const translations: TranslationDictionary = {
   remove: "Entfernen",
   searchAgain: "Erneut suchen",
   swapOriginDestination: "Abflugort und Ziel tauschen",
+  supportEyebrow: "Kurioticket-Helpdesk",
+  supportTitle: "Kundensupport",
+  supportBeforeContactHeading: "Bevor Sie uns kontaktieren",
+  supportBeforeContactDescription:
+    "Geben Sie die E-Mail-Adresse Ihres Kurioticket-Kontos an, was Sie tun wollten, gegebenenfalls die Route oder das Hotel sowie die Anbieter-Seite, zu der Sie weitergeleitet wurden. Bitte senden Sie keine vollständigen Zahlungskartennummern oder sensiblen Reisedokumentnummern.",
+  supportTicketHeading: "Support-Ticket erstellen",
+  supportFormEmailLabel: "E-Mail",
+  supportFormSubjectLabel: "Betreff",
+  supportFormCategoryLabel: "Kategorie",
+  supportCategorySearchHelp: "Hilfe zur Suche",
+  supportCategoryPriceAlerts: "Preisbenachrichtigungen",
+  supportCategoryPartnerRedirect: "Anbieter-Weiterleitung",
+  supportCategoryAccountHelp: "Hilfe zum Konto",
+  supportFormMessageLabel: "Wie können wir helfen?",
+  supportFormMessagePlaceholder:
+    "Teilen Sie uns die Route, das Hotel, die Benachrichtigung oder den Kontokontext mit.",
+  supportFormSubmit: "Anfrage senden",
+  supportFormSending: "Wird gesendet …",
+  supportFormSuccessPrefix: "Ticket",
+  supportFormSuccessSuffix: "geöffnet.",
+  supportFormErrorFallback:
+    "Ihre Support-Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+  supportFaqHeading: "Häufig gestellte Fragen",
+  supportFaqAccountQuestion: "Hilfe zu Konto und Anmeldung",
+  supportFaqAccountAnswer:
+    "Kurioticket kann bei Kontozugriff, Anmeldeproblemen, Registrierungsproblemen, Profilzugriff und kontobezogenen Plattformproblemen helfen.",
+  supportFaqSearchQuestion: "Hilfe zu Suche und Ergebnissen",
+  supportFaqSearchAnswer:
+    "Kurioticket kann helfen, wenn die Flug- oder Hotelsuche nicht funktioniert, Ergebnisse nicht geladen werden, Filter unklar sind oder Preise und Anbieter nicht wie erwartet angezeigt werden.",
+  supportFaqSavedTripsQuestion: "Gespeicherte Reisen und Benachrichtigungen",
+  supportFaqSavedTripsAnswer:
+    "Kurioticket kann bei gespeicherten Reisen, letzten Suchen, Preisbenachrichtigungen, Benachrichtigungsproblemen und mit dem Konto verknüpften Reisetools helfen.",
+  supportFaqRedirectQuestion: "Hilfe zu Buchung und Anbieter-Weiterleitung",
+  supportFaqRedirectAnswer:
+    "Kurioticket kann helfen, wenn eine Weiterleitung zu einem Partner oder Anbieter fehlschlägt, die falsche Seite öffnet oder die ausgewählten Reise- oder Suchdetails nicht beibehält.",
+  supportFaqAlreadyBookedQuestion: "Bereits bei einem Anbieter gebucht?",
+  supportFaqAlreadyBookedAnswer:
+    "Wenn Ihre Buchung bei einer Fluggesellschaft, einem Hotel, einem Reisebüro oder einem externen Anbieter abgeschlossen wurde, ist dieser Anbieter für Buchungsänderungen, Erstattungen, Stornierungen, Check-in, Boarding, Belege und Reisedokumente verantwortlich.",
+  supportFaqChangeBookingQuestion: "Kann Kurioticket meine Buchung ändern?",
+  supportFaqChangeBookingAnswer:
+    "Kurioticket kann nur bei Buchungen helfen, die direkt über Kurioticket vorgenommen wurden, sofern direkte Buchungen unterstützt werden. Wenden Sie sich bei Buchungen über externe Anbieter direkt an diesen Anbieter.",
+  supportFaqWhyRedirectedQuestion: "Warum wurde ich zu einem anderen Anbieter weitergeleitet?",
+  supportFaqWhyRedirectedAnswer:
+    "Kurioticket ist eine Plattform für Reisesuche und -vergleich. Einige Ergebnisse leiten zu vertrauenswürdigen Anbietern weiter, bei denen Sie Buchung, Zahlung und anbieterspezifischen Support abschließen.",
 
 };
