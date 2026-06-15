@@ -69,10 +69,15 @@ test("market coverage targets count replacement-ready backup candidates", () => 
     discoverVisibleTarget: 8,
     discoverBackupFreshTarget: 3,
   };
-  const usRouteIds = routes.filter((route) => route.market === "US").slice(0, 19).map((route) => route.id);
+  const usRoutes = routes.filter((route) => route.market === "US");
+  const freshUsRouteIds = [
+    ...usRoutes.filter((route) => route.isPopular && route.visibility === "visible").slice(0, 8),
+    ...usRoutes.filter((route) => route.isDiscover && (route.visibility === "visible" || route.visibility === "fallback")).slice(0, 8),
+    ...usRoutes.filter((route) => route.visibility === "backup").slice(0, 3),
+  ].map((route) => route.id);
   const targets = __homepageFareCoverageTest.computeHomepageFareMarketTargets(
     routes,
-    new Set(usRouteIds),
+    new Set(freshUsRouteIds),
     budget,
   );
 
@@ -110,10 +115,23 @@ test("fresh fares are preferred over last-known-good and missing never becomes p
   assert.equal(__homepageFareCoverageTest.isUsableHomepageFareSnapshotRecord({ snapshot: missing, now, currency: HOMEPAGE_FARE_DEFAULT_CURRENCY }), false);
 });
 
-function snapshot({ searchedAt, expiresAt }: { searchedAt: string; expiresAt: string }) {
+function snapshot({
+  origin = "JFK",
+  destination = "LHR",
+  departureDate = "2026-07-24",
+  searchedAt,
+  expiresAt,
+}: {
+  origin?: string;
+  destination?: string;
+  departureDate?: string;
+  searchedAt: string;
+  expiresAt: string;
+}) {
   return {
-    origin: "JFK",
-    destination: "LHR",
+    origin,
+    destination,
+    departureDate: new Date(`${departureDate}T00:00:00.000Z`),
     currency: "USD",
     price: 499,
     providerBacked: true,
@@ -187,4 +205,118 @@ test("underfill execution metadata reports budget, candidate, and provider cause
   const noOffers = { ...baseCounts(), stoppedReason: "provider_unavailable_no_offers" };
   __homepageFareCoverageTest.updateHomepageFareUnderfillExecutionMetadata(noOffers as never);
   assert.equal(noOffers.underfillCauseByMarket.US, "provider_unavailable_no_offers");
+});
+
+test("public homepage response uses exact-route last-known-good fares safely", () => {
+  const now = new Date("2026-06-09T00:00:00.000Z");
+  const entry = __homepageFareCoverageTest.formatHomepageFareSnapshotResponseEntry({
+    route: { id: "case-route", origin: "JFK", destination: "LHR" },
+    snapshot: snapshot({
+      origin: "jfk",
+      destination: "lhr",
+      searchedAt: "2026-06-05T00:00:00.000Z",
+      expiresAt: "2026-06-06T00:00:00.000Z",
+    }) as never,
+    now,
+    currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+    departureDate: "2026-07-24",
+  });
+
+  assert.equal(entry.price, 499);
+  assert.equal(entry.providerBacked, true);
+  assert.equal(entry.priceState, "last_known_good");
+  assert.equal(entry.search?.origin, "JFK");
+  assert.equal(entry.search?.destination, "LHR");
+});
+
+test("public homepage response rejects wrong-route snapshots", () => {
+  const now = new Date("2026-06-09T00:00:00.000Z");
+  const entry = __homepageFareCoverageTest.formatHomepageFareSnapshotResponseEntry({
+    route: { id: "wrong-route", origin: "JFK", destination: "CDG" },
+    snapshot: snapshot({
+      origin: "JFK",
+      destination: "LHR",
+      searchedAt: "2026-06-08T00:00:00.000Z",
+      expiresAt: "2026-06-10T00:00:00.000Z",
+    }) as never,
+    now,
+    currency: HOMEPAGE_FARE_DEFAULT_CURRENCY,
+    departureDate: "2026-07-24",
+  });
+
+  assert.equal(entry.unavailable, true);
+  assert.equal(entry.providerBacked, false);
+  assert.equal(entry.price, undefined);
+});
+
+test("visible popular and discovery gaps are prioritized before backup gaps", () => {
+  const now = new Date("2026-06-09T00:00:00.000Z");
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
+  const usPopular = routes.find((route) => route.market === "US" && route.isPopular && route.visibility === "visible");
+  const usDiscovery = routes.find((route) => route.market === "US" && route.isDiscover && route.visibility === "visible");
+  const usBackup = routes.find((route) => route.market === "US" && route.visibility === "backup");
+  assert.ok(usPopular);
+  assert.ok(usDiscovery);
+  assert.ok(usBackup);
+
+  const ordered = __homepageFareCoverageTest.prioritizeHomepageFareRefreshRoutes({
+    routes: [usBackup, usDiscovery, usPopular],
+    snapshotsByRouteId: new Map(),
+    freshRouteIds: new Set(),
+    marketTargets: { US: { targetMet: false, missingCount: 3 } } as never,
+    now,
+  });
+
+  assert.equal(ordered[0].id, usPopular.id);
+  assert.equal(ordered[1].id, usDiscovery.id);
+  assert.equal(ordered[2].id, usBackup.id);
+});
+
+test("already-ready markets are skipped while underfilled markets consume executor budget", () => {
+  const now = new Date("2026-06-09T00:00:00.000Z");
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
+  const usRoute = routes.find((route) => route.market === "US" && route.visibility === "visible");
+  const ngRoute = routes.find((route) => route.market === "NG" && route.visibility === "visible");
+  assert.ok(usRoute);
+  assert.ok(ngRoute);
+
+  const ordered = __homepageFareCoverageTest.prioritizeHomepageFareRefreshRoutes({
+    routes: [usRoute, ngRoute],
+    snapshotsByRouteId: new Map(),
+    freshRouteIds: new Set(),
+    marketTargets: {
+      US: { targetMet: true, missingCount: 0 },
+      NG: { targetMet: false, missingCount: 4 },
+    } as never,
+    now,
+  });
+
+  assert.deepEqual(ordered.map((route) => route.market), ["NG"]);
+});
+
+test("replacement executor prefers same-market historical-success candidates", () => {
+  const routes = __homepageFareCoverageTest.getRefreshRoutes("all-phase-3a");
+  const failedRoute = routes.find((route) => route.market === "NG" && route.visibility === "visible");
+  const sameMarketHistorical = routes.find((route) => route.market === "NG" && route.id !== failedRoute?.id && route.visibility === "visible");
+  assert.ok(failedRoute);
+  assert.ok(sameMarketHistorical);
+
+  const replacements = __homepageFareCoverageTest.getHomepageFareReplacementCandidates({
+    failedRoute,
+    routes,
+    snapshotsByRouteId: new Map([
+      [sameMarketHistorical.id, snapshot({
+        origin: sameMarketHistorical.origin,
+        destination: sameMarketHistorical.destination,
+        searchedAt: "2026-05-01T00:00:00.000Z",
+        expiresAt: "2026-05-02T00:00:00.000Z",
+      }) as never],
+    ]),
+    freshRouteIds: new Set(),
+    attemptedRouteIds: new Set([failedRoute.id]),
+    marketTargets: { NG: { targetMet: false, missingCount: 5 } } as never,
+    now: new Date("2026-06-09T00:00:00.000Z"),
+  });
+
+  assert.equal(replacements[0].id, sameMarketHistorical.id);
 });

@@ -14,6 +14,8 @@ import { Card } from "@/components/ui/Card";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn, formatTime } from "@/lib/utils";
 
 type DetailItem = {
@@ -29,6 +31,8 @@ export function FlightCard({
   flight: PublicFlightResult;
   isAccented?: boolean;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const { selectedOption } = useRegion();
   const currencyRates = useCurrencyRates();
   const displayPrice = formatDisplayPrice({
@@ -39,18 +43,27 @@ export function FlightCard({
     rates: currencyRates.rates,
     isFallbackRate: currencyRates.isFallback,
   });
-  const details = buildFlightDetails(flight);
+  const details = buildFlightDetails(flight, t);
   const visibleLegs = getVisibleLegs(flight);
   const showsProviderBackedReturn = visibleLegs.some(
     (leg) => leg.direction === "return",
   );
   const providerPrice = `${displayPrice.providerFormatted} ${displayPrice.sourceCurrency}`;
+  const priceAriaLabel = displayPrice.isConvertedEstimate
+    ? t("displayEstimateConvertedFromProviderPrice")
+        .replace("{{formatted}}", displayPrice.formatted)
+        .replace("{{providerPrice}}", providerPrice)
+    : providerPrice;
+  const priceTitle = displayPrice.isConvertedEstimate
+    ? t("convertedDisplayEstimateProviderPrice")
+        .replace("{{providerPrice}}", providerPrice)
+    : undefined;
   const priceLabel = displayPrice.isConvertedEstimate
-    ? "Estimated price"
-    : "Provider price";
+    ? t("estimatedPrice")
+    : t("providerPrice");
   const providerHandoffCopy = displayPrice.isConvertedEstimate
-    ? "Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking. Final provider currency may differ from your selected display currency."
-    : "Booking, payment, final price, availability, baggage, seat selection, and fare rules are confirmed by the provider before booking.";
+    ? t("flightCardProviderHandoffConverted")
+    : t("flightCardProviderHandoff");
 
   return (
     <Card
@@ -66,12 +79,12 @@ export function FlightCard({
           className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-indigo-500/55 via-purple-500/45 to-teal/40"
         />
       ) : null}
-      <div className="p-3 sm:p-3.5">
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_140px] lg:items-stretch">
+      <div className="p-2.5 sm:p-3">
+        <div className="grid gap-2.5 lg:grid-cols-[minmax(0,1fr)_132px] lg:items-stretch">
           <div className="min-w-0 space-y-2">
             <div className="flex min-w-0 items-center justify-between gap-2 border-b border-slate-100 pb-1.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
-                Flight option
+                {t("flightOption")}
               </p>
               <p className="min-w-0 truncate text-right text-xs font-semibold text-slate-700">
                 {flight.airlineName}
@@ -93,12 +106,12 @@ export function FlightCard({
             <FlightDetailLines details={details} />
           </div>
 
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[132px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
-            <div className="min-w-0 lg:flex lg:min-h-[82px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 lg:min-h-[118px] lg:shrink-0 lg:flex-col lg:items-stretch lg:justify-center lg:gap-2 lg:self-stretch lg:border-0 lg:bg-transparent lg:px-1 lg:py-3 lg:text-center">
+            <div className="min-w-0 lg:flex lg:min-h-[72px] lg:flex-col lg:items-center lg:justify-center lg:text-center">
               <div
-                className="text-xl font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-[1.35rem]"
-                aria-label={displayPrice.ariaLabel}
-                title={displayPrice.title}
+                className="text-lg font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-xl"
+                aria-label={priceAriaLabel}
+                title={priceTitle}
               >
                 {displayPrice.formatted}
               </div>
@@ -107,7 +120,7 @@ export function FlightCard({
               </p>
               {displayPrice.isConvertedEstimate ? (
                 <div className="mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
-                  <p>Provider price: {providerPrice}</p>
+                  <p>{t("providerPrice")}: {providerPrice}</p>
                 </div>
               ) : null}
             </div>
@@ -117,14 +130,14 @@ export function FlightCard({
               size="sm"
               className="shrink-0 whitespace-nowrap rounded-full bg-navy px-3.5 text-sm font-semibold hover:bg-navy-soft lg:w-full lg:justify-center"
             >
-              View Flight
+              {t("viewFlight")}
             </LinkButton>
           </div>
         </div>
 
         <div className="mt-2 rounded-xl border border-indigo-100 bg-indigo-50/50 px-2.5 py-1.5 text-xs font-medium leading-5 text-slate-600">
           {showsProviderBackedReturn
-            ? `Outbound and return details are shown from provider-normalized itinerary data. ${providerHandoffCopy}`
+            ? `${t("providerNormalizedItineraryPrefix")} ${providerHandoffCopy}`
             : providerHandoffCopy}
         </div>
       </div>
@@ -141,12 +154,15 @@ function FlightLegRow({
   leg: FlightLeg;
   compact: boolean;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
   return (
     <section
-      aria-label={formatLegTitle(leg)}
+      aria-label={formatLegTitle(leg, t)}
       className={cn(
-        "rounded-xl border border-slate-200 bg-slate-50/60 p-2.5",
-        compact ? "sm:p-2.5" : "sm:p-3",
+        "rounded-xl border border-slate-200 bg-slate-50/60 p-2",
+        compact ? "sm:p-2" : "sm:p-2.5",
       )}
     >
       <div className="flex min-w-0 gap-2.5">
@@ -155,7 +171,7 @@ function FlightLegRow({
         <div className="min-w-0 flex-1">
           <div className="mb-1.5 flex items-center justify-between gap-2">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
-              {formatLegTitle(leg)}
+              {formatLegTitle(leg, t)}
             </p>
             <p className="truncate text-xs font-medium text-slate-600">
               {leg.originAirport} → {leg.destinationAirport}
@@ -164,7 +180,7 @@ function FlightLegRow({
 
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
             <div className="min-w-0">
-              <div className="text-[17px] font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-lg">
+              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
                 {formatTime(leg.departureTime)}
               </div>
               <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
@@ -182,12 +198,12 @@ function FlightLegRow({
                 {leg.duration}
               </div>
               <div className="text-[11px] font-medium leading-4 text-slate-600">
-                {formatStopsLabel(leg.stops)}
+                {formatStopsLabel(leg.stops, t)}
               </div>
             </div>
 
             <div className="min-w-0 text-right">
-              <div className="text-[17px] font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-lg">
+              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
                 {formatTime(leg.arrivalTime)}
               </div>
               <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
@@ -199,9 +215,9 @@ function FlightLegRow({
           {leg.layovers.length ? (
             <p
               className="mt-1 truncate text-xs font-medium text-slate-600"
-              title={formatLayoverText(leg)}
+              title={formatLayoverText(leg, t)}
             >
-              {formatLayoverText(leg)}
+              {formatLayoverText(leg, t)}
             </p>
           ) : null}
         </div>
@@ -279,66 +295,80 @@ function getVisibleLegs(flight: PublicFlightResult): FlightLeg[] {
   ];
 }
 
-function buildFlightDetails(flight: PublicFlightResult): DetailItem[] {
+function buildFlightDetails(
+  flight: PublicFlightResult,
+  t: (key: string) => string,
+): DetailItem[] {
   return [
     {
-      label: "Baggage",
-      value: formatBaggageValue(flight.baggageInfo),
+      label: t("baggage"),
+      value: formatBaggageValue(flight.baggageInfo, t),
       icon: Luggage,
     },
     {
-      label: "Cabin",
-      value: formatCabinClass(flight.cabinClass),
+      label: t("cabin"),
+      value: formatCabinClass(flight.cabinClass, t),
       icon: Armchair,
     },
     {
-      label: "Seat selection",
-      value: "Provider rules apply",
+      label: t("seatSelection"),
+      value: t("providerRulesApply"),
       icon: Settings,
     },
     {
-      label: "Fare rules",
-      value: "Review before booking",
+      label: t("fareRules"),
+      value: t("reviewBeforeBooking"),
       icon: ShieldCheck,
     },
   ];
 }
 
-function formatLegTitle(leg: FlightLeg) {
-  if (leg.direction === "return") return "Return";
-  if (leg.direction === "outbound") return "Outbound";
-  return "Flight leg";
+function formatLegTitle(leg: FlightLeg, t: (key: string) => string) {
+  if (leg.direction === "return") return t("return");
+  if (leg.direction === "outbound") return t("outbound");
+  return t("flightLeg");
 }
 
-function formatStopsLabel(stops: number) {
-  return stops === 0 ? "Nonstop" : `${stops} stop${stops > 1 ? "s" : ""}`;
+function formatStopsLabel(stops: number, t: (key: string) => string) {
+  if (stops === 0) return t("nonstop");
+  return stops === 1
+    ? t("oneStop")
+    : t("stopCount").replace("{{count}}", String(stops));
 }
 
-function formatCabinClass(value?: string) {
-  if (!value) return "Check provider";
+function formatCabinClass(value: string | undefined, t: (key: string) => string) {
+  if (!value) return t("checkProvider");
+  const normalized = value.toLowerCase().replace(/[-_]/g, " ");
+  if (normalized === "economy") return t("economy");
+  if (normalized === "business") return t("business");
+  if (normalized === "first") return t("first");
+  if (normalized === "premium economy") return t("premiumEconomy");
   return value
     .replace(/[-_]/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function formatBaggageValue(value?: string) {
+function formatBaggageValue(value: string | undefined, t: (key: string) => string) {
   if (
     !value ||
     isProviderReviewCopy(value) ||
     /rules vary|vary by fare/i.test(value)
   ) {
-    return "Check provider";
+    return t("checkProvider");
   }
 
+  if (/carry-on included/i.test(value)) return t("carryOnIncluded");
   return value;
 }
 
-function formatLayoverText(leg: FlightLeg) {
+function formatLayoverText(leg: FlightLeg, t: (key: string) => string) {
   const firstLayover = leg.layovers[0];
   const firstConnection = `${firstLayover.airport} ${firstLayover.duration}`;
   const extraConnections =
-    leg.layovers.length > 1 ? ` +${leg.layovers.length - 1} more` : "";
-  return `Layover: ${firstConnection}${extraConnections}`;
+    leg.layovers.length > 1
+      ? ` +${t("moreCount").replace("{{count}}", String(leg.layovers.length - 1))}`
+      : "";
+  return `${t("layover")}: ${firstConnection}${extraConnections}`;
 }
 
 function isProviderReviewCopy(value: string) {

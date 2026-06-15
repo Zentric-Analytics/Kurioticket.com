@@ -2,7 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, ChevronDown, Minus, Plus, X } from "lucide-react";
 
@@ -10,6 +17,7 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 type PackageMode =
   | "hotel-flight"
@@ -20,35 +28,35 @@ type CabinClass = "economy" | "business" | "first";
 
 const packageModes: Array<{
   value: PackageMode;
-  label: string;
+  labelKey: string;
   includesFlight: boolean;
   includesHotel: boolean;
   includesCar: boolean;
 }> = [
   {
     value: "hotel-flight",
-    label: "Hotel + Flight",
+    labelKey: "deals.package.hotelFlight",
     includesFlight: true,
     includesHotel: true,
     includesCar: false,
   },
   {
     value: "hotel-flight-car",
-    label: "Hotel + Flight + Car",
+    labelKey: "deals.package.hotelFlightCar",
     includesFlight: true,
     includesHotel: true,
     includesCar: true,
   },
   {
     value: "flight-car",
-    label: "Flight + Car",
+    labelKey: "deals.package.flightCar",
     includesFlight: true,
     includesHotel: false,
     includesCar: true,
   },
   {
     value: "hotel-car",
-    label: "Hotel + Car",
+    labelKey: "deals.package.hotelCar",
     includesFlight: false,
     includesHotel: true,
     includesCar: true,
@@ -58,16 +66,17 @@ const packageModes: Array<{
 const dealsHeroImage =
   "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?auto=format&fit=crop&w=1200&q=80";
 
-const cabinClasses: Array<{ value: CabinClass; label: string }> = [
-  { value: "economy", label: "Economy" },
-  { value: "business", label: "Business" },
-  { value: "first", label: "First" },
+const cabinClasses: Array<{ value: CabinClass; labelKey: string }> = [
+  { value: "economy", labelKey: "deals.cabin.economy" },
+  { value: "business", labelKey: "deals.cabin.business" },
+  { value: "first", labelKey: "deals.cabin.first" },
 ];
 
 const destinationIdeas = [
   {
     city: "Tokyo",
-    country: "Japan",
+    cityKey: "deals.destination.tokyo.city",
+    countryKey: "deals.destination.tokyo.country",
     destinationQuery: "Tokyo",
     image:
       "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -75,7 +84,8 @@ const destinationIdeas = [
   },
   {
     city: "London",
-    country: "United Kingdom",
+    cityKey: "deals.destination.london.city",
+    countryKey: "deals.destination.london.country",
     destinationQuery: "London",
     image:
       "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -83,7 +93,8 @@ const destinationIdeas = [
   },
   {
     city: "Paris",
-    country: "France",
+    cityKey: "deals.destination.paris.city",
+    countryKey: "deals.destination.paris.country",
     destinationQuery: "Paris",
     image:
       "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -91,7 +102,8 @@ const destinationIdeas = [
   },
   {
     city: "Dubai",
-    country: "United Arab Emirates",
+    cityKey: "deals.destination.dubai.city",
+    countryKey: "deals.destination.dubai.country",
     destinationQuery: "Dubai",
     image:
       "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -99,7 +111,8 @@ const destinationIdeas = [
   },
   {
     city: "Cancun",
-    country: "Mexico",
+    cityKey: "deals.destination.cancun.city",
+    countryKey: "deals.destination.cancun.country",
     destinationQuery: "Cancun",
     image:
       "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
@@ -107,7 +120,8 @@ const destinationIdeas = [
   },
   {
     city: "Rome",
-    country: "Italy",
+    cityKey: "deals.destination.rome.city",
+    countryKey: "deals.destination.rome.country",
     destinationQuery: "Rome",
     image:
       "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
@@ -115,87 +129,15 @@ const destinationIdeas = [
   },
 ];
 
-const copy = {
-  en: {
-    title: "Find travel deals for your next trip",
-    subtitle: "Search flights, stays, and cars together in one place.",
-    modeLegend: "Choose package type",
-    origin: "Where from?",
-    destination: "Where to?",
-    dates: "Travel dates",
-    dateDialog: "Choose travel dates",
-    departDate: "Departure",
-    returnDate: "Return",
-    travelersRooms: "Travelers / rooms",
-    adults: "Adults",
-    children: "Children",
-    rooms: "Rooms",
-    driverAge: "Driver age",
-    cabinClass: "Cabin class",
-    clear: "Clear",
-    clearAll: "Clear all",
-    clearOrigin: "Clear origin",
-    clearDestination: "Clear destination",
-    done: "Done",
-    next: "Next",
-    previous: "Prev",
-    search: "Search",
-    errors: {
-      origin: "Enter a departure city or airport.",
-      destination: "Enter a destination.",
-      startDate: "Choose a start date.",
-      endDate: "Choose an end date.",
-      dateOrder: "End date must be after start date.",
-      adults: "At least one adult is required.",
-      children: "Children cannot be below zero.",
-      rooms: "At least one room is required.",
-      guests: "At least one guest is required.",
-    },
-    destinationIdeasTitle: "Places to start your deal search",
-    destinationIdeasSubtitle:
-      "Choose a destination idea, then compare provider results when you continue.",
-  },
-  fr: {
-    title: "Trouvez des offres voyage pour votre prochain trajet",
-    subtitle:
-      "Recherchez vols, séjours et voitures ensemble, puis comparez les résultats des fournisseurs lorsque vous continuez.",
-    modeLegend: "Choisir le type de forfait",
-    origin: "D’où partez-vous?",
-    destination: "Où allez-vous?",
-    dates: "Dates du voyage",
-    dateDialog: "Choisir les dates du voyage",
-    departDate: "Départ",
-    returnDate: "Retour",
-    travelersRooms: "Voyageurs / chambres",
-    adults: "Adultes",
-    children: "Enfants",
-    rooms: "Chambres",
-    driverAge: "Âge du conducteur",
-    cabinClass: "Classe cabine",
-    clear: "Effacer",
-    clearAll: "Tout effacer",
-    clearOrigin: "Effacer le point de départ",
-    clearDestination: "Effacer la destination",
-    done: "Terminé",
-    next: "Suiv.",
-    previous: "Préc.",
-    search: "Rechercher",
-    errors: {
-      origin: "Entrez une ville ou un aéroport de départ.",
-      destination: "Entrez une destination.",
-      startDate: "Choisissez une date de début.",
-      endDate: "Choisissez une date de fin.",
-      dateOrder: "La date de fin doit suivre la date de début.",
-      adults: "Au moins un adulte est requis.",
-      children: "Le nombre d’enfants ne peut pas être négatif.",
-      rooms: "Au moins une chambre est requise.",
-      guests: "Au moins un voyageur est requis.",
-    },
-    destinationIdeasTitle: "Places to start your deal search",
-    destinationIdeasSubtitle:
-      "Choose a destination idea, then compare provider results when you continue.",
-  },
-};
+const dealWeekdayKeys = [
+  "deals.weekday.sun",
+  "deals.weekday.mon",
+  "deals.weekday.tue",
+  "deals.weekday.wed",
+  "deals.weekday.thu",
+  "deals.weekday.fri",
+  "deals.weekday.sat",
+];
 
 const parseIsoDate = (value: string) => {
   if (!value) return null;
@@ -229,8 +171,6 @@ const isBeforeToday = (date: Date) =>
 const addMonths = (date: Date, offset: number) =>
   new Date(date.getFullYear(), date.getMonth() + offset, 1);
 
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
 const buildMonthCells = (monthDate: Date) => {
   const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
   const startOffset = firstDay.getDay();
@@ -254,11 +194,11 @@ const buildMonthCells = (monthDate: Date) => {
   });
 };
 
-const formatShortDate = (value: string) => {
+const formatShortDate = (value: string, locale: string) => {
   const parsedDate = parseIsoDate(value);
   if (!parsedDate) return "";
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
   }).format(parsedDate);
@@ -270,11 +210,13 @@ const clampCount = (value: number, minimum: number, maximum: number) => {
 };
 
 export default function DealsPage() {
-  const { locale } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
-  const lang = locale.startsWith("fr") ? "fr" : "en";
-  const dictionary = copy[lang];
+  const t = useCallback(
+    (key: string) => dictionary[key] ?? enTranslations[key] ?? key,
+    [dictionary],
+  );
   const [packageMode, setPackageMode] = useState<PackageMode>("hotel-flight");
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
@@ -307,41 +249,51 @@ export default function DealsPage() {
   const checkOutParsed = parseIsoDate(endDate);
 
   const dateSummary = useMemo(() => {
-    const formattedStart = formatShortDate(startDate);
-    const formattedEnd = formatShortDate(endDate);
+    const formattedStart = formatShortDate(startDate, locale);
+    const formattedEnd = formatShortDate(endDate, locale);
 
     if (!formattedStart) {
-      return includesFlight ? "Departure — Return" : "Check-in — Check-out";
+      return includesFlight
+        ? t("deals.dateFlightPlaceholder")
+        : t("deals.dateHotelPlaceholder");
     }
 
     return formattedEnd
       ? `${formattedStart} — ${formattedEnd}`
       : formattedStart;
-  }, [endDate, includesFlight, startDate]);
+  }, [endDate, includesFlight, locale, startDate, t]);
 
   const travelersSummary = useMemo(() => {
     const normalizedAdults = clampCount(adults, 1, 12);
     const normalizedChildren = clampCount(children, 0, 12 - normalizedAdults);
     const travelerCount = normalizedAdults + normalizedChildren;
-    const travelerLabel = travelerCount === 1 ? "traveler" : "travelers";
-    const cabinLabel =
-      cabinClasses.find((cabin) => cabin.value === cabinClass)?.label ??
-      "Economy";
+    const travelerLabel =
+      travelerCount === 1
+        ? t("deals.travelerSingular")
+        : t("deals.travelerPlural");
+    const cabinLabel = t(
+      cabinClasses.find((cabin) => cabin.value === cabinClass)?.labelKey ??
+        "deals.cabin.economy",
+    );
 
     if (includesHotel && includesFlight) {
       const normalizedRooms = clampCount(rooms, 1, 6);
-      return `${travelerCount} ${travelerLabel}, ${normalizedRooms} ${normalizedRooms === 1 ? "room" : "rooms"}`;
+      const roomLabel =
+        normalizedRooms === 1 ? t("deals.roomSingular") : t("deals.roomPlural");
+      return `${travelerCount} ${travelerLabel}, ${normalizedRooms} ${roomLabel}`;
     }
 
     if (includesHotel) {
       const normalizedRooms = clampCount(rooms, 1, 6);
-      return `${travelerCount} ${travelerLabel}, ${normalizedRooms} ${normalizedRooms === 1 ? "room" : "rooms"}`;
+      const roomLabel =
+        normalizedRooms === 1 ? t("deals.roomSingular") : t("deals.roomPlural");
+      return `${travelerCount} ${travelerLabel}, ${normalizedRooms} ${roomLabel}`;
     }
 
     return includesFlight
       ? `${travelerCount} ${travelerLabel}, ${cabinLabel}`
       : `${travelerCount} ${travelerLabel}`;
-  }, [adults, cabinClass, children, includesFlight, includesHotel, rooms]);
+  }, [adults, cabinClass, children, includesFlight, includesHotel, rooms, t]);
 
   const hasActiveDealsSearch =
     packageMode !== "hotel-flight" ||
@@ -511,47 +463,47 @@ export default function DealsPage() {
     setDriverAge(normalizedDriverAge);
 
     if (includesFlight && !trimmedOrigin) {
-      setError(dictionary.errors.origin);
+      setError(t("deals.error.origin"));
       return;
     }
 
     if (!trimmedDestination) {
-      setError(dictionary.errors.destination);
+      setError(t("deals.error.destination"));
       return;
     }
 
     if (!startDate) {
-      setError(dictionary.errors.startDate);
+      setError(t("deals.error.startDate"));
       return;
     }
 
     if (!endDate) {
-      setError(dictionary.errors.endDate);
+      setError(t("deals.error.endDate"));
       return;
     }
 
     if (endDate <= startDate) {
-      setError(dictionary.errors.dateOrder);
+      setError(t("deals.error.dateOrder"));
       return;
     }
 
     if (normalizedAdults < 1) {
-      setError(dictionary.errors.adults);
+      setError(t("deals.error.adults"));
       return;
     }
 
     if (normalizedChildren < 0) {
-      setError(dictionary.errors.children);
+      setError(t("deals.error.children"));
       return;
     }
 
     if (!includesFlight && normalizedAdults + normalizedChildren < 1) {
-      setError(dictionary.errors.guests);
+      setError(t("deals.error.guests"));
       return;
     }
 
     if (includesHotel && normalizedRooms < 1) {
-      setError(dictionary.errors.rooms);
+      setError(t("deals.error.rooms"));
       return;
     }
 
@@ -592,10 +544,12 @@ export default function DealsPage() {
     router.push(`/hotels/results?${params.toString()}`);
   };
 
+  const weekdays = dealWeekdayKeys.map(t);
+
   const countRows = [
     {
       key: "adults",
-      label: dictionary.adults,
+      label: t("adults"),
       value: clampCount(adults, 1, 12 - children),
       min: 1,
       max: 12 - children,
@@ -604,7 +558,7 @@ export default function DealsPage() {
     },
     {
       key: "children",
-      label: dictionary.children,
+      label: t("children"),
       value: clampCount(children, 0, 12 - adults),
       min: 0,
       max: 12 - adults,
@@ -615,7 +569,7 @@ export default function DealsPage() {
       ? [
           {
             key: "rooms",
-            label: dictionary.rooms,
+            label: t("rooms"),
             value: clampCount(rooms, 1, 6),
             min: 1,
             max: 6,
@@ -628,7 +582,7 @@ export default function DealsPage() {
       ? [
           {
             key: "driverAge",
-            label: dictionary.driverAge,
+            label: t("deals.driverAge"),
             value: clampCount(driverAge, 18, 99),
             min: 18,
             max: 99,
@@ -660,11 +614,11 @@ export default function DealsPage() {
 
           <div className="page-shell relative z-10 pt-10 sm:pt-14">
             <div className="max-w-[1040px]">
-              <h1 className="max-w-none text-balance text-4xl font-semibold leading-[1.12] tracking-[-0.015em] text-slate-800 sm:text-5xl lg:whitespace-nowrap lg:text-5xl lg:leading-[1.08]">
-                {dictionary.title}
+              <h1 className="max-w-none text-balance text-3xl font-semibold leading-[1.12] tracking-[-0.015em] text-slate-800 sm:text-4xl lg:whitespace-nowrap lg:text-4xl lg:leading-[1.08]">
+                {t("deals.heroTitle")}
               </h1>
-              <p className="mt-4 max-w-2xl text-lg font-medium leading-8 text-slate-700">
-                {dictionary.subtitle}
+              <p className="mt-3 max-w-2xl text-base font-medium leading-7 text-slate-700">
+                {t("deals.heroSubtitle")}
               </p>
             </div>
           </div>
@@ -674,9 +628,11 @@ export default function DealsPage() {
               <div className="px-1">
                 <fieldset
                   className="min-w-0"
-                  aria-label={dictionary.modeLegend}
+                  aria-label={t("deals.packageLegend")}
                 >
-                  <legend className="sr-only">{dictionary.modeLegend}</legend>
+                  <legend className="sr-only">
+                    {t("deals.packageLegend")}
+                  </legend>
                   <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
                     {packageModes.map((mode) => (
                       <label
@@ -695,7 +651,7 @@ export default function DealsPage() {
                           checked={packageMode === mode.value}
                           onChange={() => handleModeChange(mode.value)}
                         />
-                        {mode.label}
+                        {t(mode.labelKey)}
                       </label>
                     ))}
                   </div>
@@ -717,7 +673,7 @@ export default function DealsPage() {
                           htmlFor="package-origin"
                           className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600"
                         >
-                          {dictionary.origin}
+                          {t("deals.originLabel")}
                         </label>
                         <div className="relative">
                           <input
@@ -725,7 +681,7 @@ export default function DealsPage() {
                             id="package-origin"
                             value={origin}
                             onChange={(event) => setOrigin(event.target.value)}
-                            placeholder="City or airport"
+                            placeholder={t("deals.originPlaceholder")}
                             className="h-8 w-full rounded-md border-0 bg-transparent px-0 pr-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
                             autoComplete="address-level2"
                             required={includesFlight}
@@ -733,7 +689,7 @@ export default function DealsPage() {
                           {origin ? (
                             <button
                               type="button"
-                              aria-label={dictionary.clearOrigin}
+                              aria-label={t("deals.clearOrigin")}
                               onPointerDown={(event) => event.stopPropagation()}
                               onClick={() => {
                                 setOrigin("");
@@ -758,7 +714,7 @@ export default function DealsPage() {
                         htmlFor="package-destination"
                         className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600"
                       >
-                        {dictionary.destination}
+                        {t("deals.destinationLabel")}
                       </label>
                       <div className="relative">
                         <input
@@ -768,7 +724,7 @@ export default function DealsPage() {
                           onChange={(event) =>
                             setDestination(event.target.value)
                           }
-                          placeholder="City, airport, or area"
+                          placeholder={t("deals.destinationPlaceholder")}
                           className="h-8 w-full rounded-md border-0 bg-transparent px-0 pr-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
                           autoComplete="address-level2"
                           required
@@ -776,7 +732,7 @@ export default function DealsPage() {
                         {destination ? (
                           <button
                             type="button"
-                            aria-label={dictionary.clearDestination}
+                            aria-label={t("deals.clearDestination")}
                             onPointerDown={(event) => event.stopPropagation()}
                             onClick={() => {
                               setDestination("");
@@ -796,14 +752,14 @@ export default function DealsPage() {
                       className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                     >
                       <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
-                        {dictionary.dates}
+                        {t("deals.datesLabel")}
                       </span>
                       <button
                         type="button"
                         onClick={handleToggleDates}
                         aria-expanded={datesOpen}
                         aria-haspopup="dialog"
-                        aria-label={dictionary.dateDialog}
+                        aria-label={t("deals.dateDialog")}
                         className="flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
                       >
                         <Calendar
@@ -815,12 +771,12 @@ export default function DealsPage() {
                       {datesOpen ? (
                         <div className="absolute inset-x-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:inset-inline-end-auto sm:w-[min(92vw,620px)] sm:p-4">
                           <p className="mb-3 text-base font-semibold text-slate-900">
-                            {dictionary.dateDialog}
+                            {t("deals.dateDialog")}
                           </p>
                           <div className="mb-3 flex items-center justify-between">
                             <button
                               type="button"
-                              aria-label={dictionary.previous}
+                              aria-label={t("deals.previous")}
                               onClick={() =>
                                 setVisibleMonthDate((previousMonth) =>
                                   addMonths(previousMonth, -1),
@@ -828,11 +784,11 @@ export default function DealsPage() {
                               }
                               className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                             >
-                              {dictionary.previous}
+                              {t("deals.previous")}
                             </button>
                             <button
                               type="button"
-                              aria-label={dictionary.next}
+                              aria-label={t("deals.next")}
                               onClick={() =>
                                 setVisibleMonthDate((previousMonth) =>
                                   addMonths(previousMonth, 1),
@@ -840,7 +796,7 @@ export default function DealsPage() {
                               }
                               className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                             >
-                              {dictionary.next}
+                              {t("deals.next")}
                             </button>
                           </div>
                           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
@@ -854,7 +810,7 @@ export default function DealsPage() {
                               return (
                                 <div key={monthOffset}>
                                   <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                                    {monthDate.toLocaleDateString("en-US", {
+                                    {monthDate.toLocaleDateString(locale, {
                                       month: "long",
                                       year: "numeric",
                                     })}
@@ -893,8 +849,8 @@ export default function DealsPage() {
                                         <button
                                           key={iso}
                                           type="button"
-                                          aria-label={`Select ${day.toLocaleDateString(
-                                            "en-US",
+                                          aria-label={`${t("deals.selectDateAriaPrefix")} ${day.toLocaleDateString(
+                                            locale,
                                             {
                                               month: "long",
                                               day: "numeric",
@@ -931,14 +887,14 @@ export default function DealsPage() {
                               }}
                               className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                             >
-                              {dictionary.clear}
+                              {t("clear")}
                             </button>
                             <button
                               type="button"
                               onClick={() => setDatesOpen(false)}
                               className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                             >
-                              {dictionary.done}
+                              {t("done")}
                             </button>
                           </div>
                         </div>
@@ -950,14 +906,14 @@ export default function DealsPage() {
                       className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                     >
                       <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
-                        {dictionary.travelersRooms}
+                        {t("deals.travelersRoomsLabel")}
                       </span>
                       <button
                         type="button"
                         onClick={handleToggleTravelers}
                         aria-expanded={travelersOpen}
                         aria-haspopup="dialog"
-                        aria-label={dictionary.travelersRooms}
+                        aria-label={t("deals.travelersRoomsLabel")}
                         className="flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
                       >
                         <span className="truncate">{travelersSummary}</span>
@@ -1012,7 +968,7 @@ export default function DealsPage() {
                                   className="block text-sm font-semibold text-slate-900"
                                   htmlFor="package-cabin-class"
                                 >
-                                  {dictionary.cabinClass}
+                                  {t("deals.cabinClass")}
                                 </label>
                                 <select
                                   id="package-cabin-class"
@@ -1029,7 +985,7 @@ export default function DealsPage() {
                                       key={cabin.value}
                                       value={cabin.value}
                                     >
-                                      {cabin.label}
+                                      {t(cabin.labelKey)}
                                     </option>
                                   ))}
                                 </select>
@@ -1042,7 +998,7 @@ export default function DealsPage() {
                                 onClick={() => setTravelersOpen(false)}
                                 className="w-full rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                               >
-                                {dictionary.done}
+                                {t("done")}
                               </button>
                             </div>
                           </div>
@@ -1059,9 +1015,9 @@ export default function DealsPage() {
                       >
                         {isSubmitting
                           ? includesFlight
-                            ? "Searching flights..."
-                            : "Searching hotels..."
-                          : dictionary.search}
+                            ? t("searchingFlights")
+                            : t("searchingHotels")
+                          : t("search")}
                       </button>
                     </div>
                   </div>
@@ -1074,7 +1030,7 @@ export default function DealsPage() {
                       onClick={handleResetSearch}
                       className="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-white hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     >
-                      {dictionary.clearAll}
+                      {t("clearAll")}
                     </button>
                   </div>
                 ) : null}
@@ -1097,20 +1053,20 @@ export default function DealsPage() {
         <section className="page-shell pt-12 sm:pt-16 lg:pt-20">
           <div className="border-t border-slate-200/80 pt-8 sm:pt-10">
             <div className="max-w-2xl">
-              <h2 className="text-2xl font-extrabold [letter-spacing:-0.025em] text-slate-950">
-                {dictionary.destinationIdeasTitle}
+              <h2 className="text-xl font-extrabold [letter-spacing:-0.025em] text-slate-950 sm:text-2xl">
+                {t("deals.destinationIdeasTitle")}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                {dictionary.destinationIdeasSubtitle}
+                {t("deals.destinationIdeasSubtitle")}
               </p>
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
               {destinationIdeaCards.map((idea) => (
                 <Link
-                  key={idea.city}
+                  key={t(idea.cityKey)}
                   href={idea.href}
-                  aria-label={`Search trip ideas for ${idea.city}, ${idea.country}`}
+                  aria-label={`${t("deals.destinationCardAriaPrefix")} ${t(idea.cityKey)}, ${t(idea.countryKey)}`}
                   className="group block overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm shadow-slate-950/5 transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                 >
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
@@ -1123,11 +1079,11 @@ export default function DealsPage() {
                     />
                   </div>
                   <div className="p-3.5 sm:p-4">
-                    <p className="text-base font-extrabold text-slate-950 sm:text-lg">
-                      {idea.city}
+                    <p className="text-sm font-extrabold text-slate-950 sm:text-base">
+                      {t(idea.cityKey)}
                     </p>
                     <p className="mt-1 text-sm font-medium text-slate-600">
-                      {idea.country}
+                      {t(idea.countryKey)}
                     </p>
                   </div>
                 </Link>

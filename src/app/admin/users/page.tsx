@@ -6,7 +6,7 @@ import {
 import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { getPrisma } from "@/lib/prisma";
+import { withOptionalDb } from "@/lib/prisma";
 import { requireAdminSession } from "@/lib/auth-guards";
 import { getAdminEmails } from "@/lib/env";
 
@@ -37,7 +37,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     ...(role !== "ALL" ? { role: role as never } : {}),
     ...(status !== "ALL" ? { status: status as never } : {}),
   };
-  const users = await getPrisma().user.findMany({
+  const users = await withOptionalDb((db) => db.user.findMany({
     where,
     orderBy: { createdAt: "desc" },
     take: 100,
@@ -50,7 +50,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       createdAt: true,
       updatedAt: true,
     },
-  });
+  }), []);
   const adminEmails = new Set(getAdminEmails());
   const sortedUsers = [...users].sort((a, b) => {
     const aProtected = a.email
@@ -81,12 +81,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
             name="q"
             defaultValue={q}
             placeholder="Search by email or name"
-            className="rounded-md border border-border px-3 py-2 text-sm"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
           />
           <select
             name="role"
             defaultValue={role}
-            className="rounded-md border border-border px-3 py-2 text-sm"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
           >
             <option value="ALL">All roles</option>
             <option value="USER">User</option>
@@ -96,7 +96,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           <select
             name="status"
             defaultValue={status}
-            className="rounded-md border border-border px-3 py-2 text-sm"
+            className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm"
           >
             <option value="ALL">All statuses</option>
             <option value="ACTIVE">Active</option>

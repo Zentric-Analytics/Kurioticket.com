@@ -46,16 +46,55 @@ import { translations as zhCn } from "./zh-cn";
 import { translations as zhTw } from "./zh-tw";
 
 export const dictionaries: Record<string, TranslationDictionary> = {
-  "en-us": en, "en-gb": en, "fr-fr": fr, de, "es-es": es, it, nl, "pt-br": ptBr, "pt-pt": ptPt,
+  "en-us": en, "en-gb": en, fr, de, "es-es": es, it, nl, "pt-br": ptBr, "pt-pt": ptPt,
   pl, ru, uk, tr, "ar-sa": ar, he, "zh-cn": zhCn, "zh-tw": zhTw, ja, ko, hi, id, ms, th, vi, cs, da,
   fi, el, hu, no, ro, sk, sv, bg, hr, lt, lv, et, sl, sr, sw, yo, ig, ha, ur,
 };
 
 export type LocaleCode = keyof typeof dictionaries;
 export const localeOptions = supportedLocales.map((locale) => ({ ...locale }));
-export const publicLocaleOptions = localeOptions.filter((locale) => locale.translationStatus === "ready");
+export const availableLocaleOptions = localeOptions.filter((locale) => locale.status === "available");
+export const publicLocaleOptions = availableLocaleOptions;
 const fallbackLocale: LocaleCode = "en-us";
-const localeAliases: Record<string, string> = { en: "en-us", fr: "fr-fr", es: "es-es", ar: "ar-sa", pt: "pt-pt", zh: "zh-cn" };
+const localeAliases: Record<string, string> = {
+  en: "en-us",
+  "en-us": "en-us",
+  fr: "fr",
+  "fr-fr": "fr",
+  es: "es-es",
+  "es-es": "es-es",
+  de: "de",
+  "de-de": "de",
+  it: "it",
+  "it-it": "it",
+  nl: "nl",
+  "nl-nl": "nl",
+  ar: "ar-sa",
+  "ar-sa": "ar-sa",
+  pt: "pt-pt",
+  "pt-pt": "pt-pt",
+  "pt-br": "pt-br",
+  zh: "zh-cn",
+  "zh-cn": "zh-cn",
+  ja: "ja",
+  "ja-jp": "ja",
+  ko: "ko",
+  "ko-kr": "ko",
+  hi: "hi",
+  "hi-in": "hi",
+  tr: "tr",
+  "tr-tr": "tr",
+  pl: "pl",
+  "pl-pl": "pl",
+  sv: "sv",
+  "sv-se": "sv",
+  id: "id",
+  "id-id": "id",
+  th: "th",
+  "th-th": "th",
+  vi: "vi",
+  "vi-vn": "vi",
+};
 export function getTranslations(locale?: string | null): TranslationDictionary {
   if (!locale) return dictionaries[fallbackLocale];
   const normalized = locale.trim().toLowerCase();
@@ -65,7 +104,7 @@ export function getTranslations(locale?: string | null): TranslationDictionary {
 
 export function getLocaleCountryCode(code: string): string {
   const map: Record<string, string> = {
-    "en-us": "US", "en-gb": "GB", "fr-fr": "FR", de: "DE", "es-es": "ES", it: "IT", nl: "NL", "pt-br": "BR", "pt-pt": "PT",
+    "en-us": "US", "en-gb": "GB", fr: "FR", de: "DE", "es-es": "ES", it: "IT", nl: "NL", "pt-br": "BR", "pt-pt": "PT",
     pl: "PL", ru: "RU", uk: "UA", tr: "TR", "ar-sa": "SA", he: "IL", "zh-cn": "CN", "zh-tw": "TW", ja: "JP", ko: "KR", hi: "IN",
     id: "ID", ms: "MY", th: "TH", vi: "VN", cs: "CZ", da: "DK", fi: "FI", el: "GR", hu: "HU", no: "NO", ro: "RO", sk: "SK", sv: "SE",
     bg: "BG", hr: "HR", lt: "LT", lv: "LV", et: "EE", sl: "SI", sr: "RS", sw: "KE", yo: "NG", ig: "NG", ha: "NG", ur: "PK",

@@ -27,203 +27,36 @@ import {
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRouteProgress } from "@/components/layout/RouteProgress";
+import { getTranslations } from "@/lib/i18n";
+import { translations as enTranslations } from "@/lib/i18n/en";
+import {
+  addMonths,
+  buildCarResultsHref,
+  buildMonthCells,
+  buildPickupHref,
+  defaultDriverAge,
+  driverAgeOptions,
+  getDriverAgeOptionLabel,
+  getInitialValues,
+  isBeforeToday,
+  parseIsoDate,
+  timeOptions,
+  toIsoDate,
+  validateCarsForm,
+  type CarsFormErrors,
+  type CarsFormValues,
+} from "@/lib/cars/carsSearchUtils";
+import {
+  carsFaqItems,
+  pickupCards,
+  tripStyleCards,
+  type CarImageCard,
+  type CarPickupCard,
+} from "@/data/carsLandingContent";
 
-type CarsFormValues = {
-  pickupLocation: string;
-  pickupDate: string;
-  pickupTime: string;
-  dropoffDate: string;
-  dropoffTime: string;
-  driverAge: string;
-  returnToDifferentLocation: boolean;
-  dropoffLocation: string;
-};
-
-type CarsFormErrors = Partial<
-  Record<keyof CarsFormValues | "dateRange", string>
->;
-
-type CarImageCard = {
-  title: string;
-  subtitle: string;
-  pickupLocation: string;
-  image: string;
-  imageAlt: string;
-  ariaLabel: string;
-  cta?: string;
-  vehicleType?: string;
-};
-
-type CarPickupCard = Omit<CarImageCard, "ariaLabel" | "vehicleType">;
-
-const defaultDriverAge = "18-70";
-const defaultDriverAgeLabel = "Any age 18–70";
-const minimumDriverAge = 18;
-const maximumDriverAge = 70;
-
-const specificDriverAgeOptions = Array.from(
-  { length: maximumDriverAge - minimumDriverAge + 1 },
-  (_, index) => String(minimumDriverAge + index),
-);
-
-const driverAgeOptions = [defaultDriverAge, ...specificDriverAgeOptions];
-
-const timeOptions = Array.from({ length: 48 }, (_, index) => {
-  const hour = Math.floor(index / 2);
-  const minute = index % 2 === 0 ? "00" : "30";
-
-  return `${String(hour).padStart(2, "0")}:${minute}`;
-});
-
-const tripStyleCards: CarImageCard[] = [
-  {
-    title: "Economy cars",
-    subtitle: "Affordable city and solo-trip searches",
-    pickupLocation: "City center",
-    vehicleType: "economy",
-    cta: "Start an economy car search",
-    image:
-      "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Compact city cars traveling between downtown buildings",
-    ariaLabel: "Start an economy car search from City center pickup",
-  },
-  {
-    title: "SUVs",
-    subtitle: "Room for family trips, luggage, and longer drives",
-    pickupLocation: "Airport",
-    vehicleType: "suv",
-    cta: "Open SUV rental search",
-    image:
-      "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "SUV driving along an open road near mountains",
-    ariaLabel: "Open SUV rental search from Airport pickup",
-  },
-  {
-    title: "Luxury cars",
-    subtitle: "Premium search context for business or special trips",
-    pickupLocation: "Hotel area",
-    vehicleType: "luxury",
-    cta: "Plan a luxury car search",
-    image:
-      "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Premium car parked near an elegant modern building",
-    ariaLabel: "Plan a luxury car search from Hotel area pickup",
-  },
-  {
-    title: "Vans",
-    subtitle: "Search context for group travel and family luggage",
-    pickupLocation: "Airport",
-    vehicleType: "van",
-    cta: "Search vans for group trips",
-    image:
-      "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Passenger van traveling through a bright scenic road",
-    ariaLabel: "Search vans for group trips from Airport pickup",
-  },
-];
-
-const trustCards = [
-  {
-    title: "Built for complete trips",
-    description:
-      "Plan flights, stays, and ground transportation in one Kurioticket flow.",
-    icon: CheckCircle2,
-  },
-  {
-    title: "Pickup details first",
-    description:
-      "Enter pickup location, dates, times, and driver age so your rental search starts with the right trip details.",
-    icon: CalendarClock,
-  },
-  {
-    title: "Clear rental review",
-    description:
-      "Review final price, availability, fees, and rental rules with the provider before booking.",
-    icon: ShieldCheck,
-  },
-];
-
-const pickupCards: CarPickupCard[] = [
-  {
-    title: "Airport pickups",
-    subtitle: "Start from major airport arrival points",
-    pickupLocation: "Airport",
-    image:
-      "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Airplane parked at an airport gate at sunset",
-  },
-  {
-    title: "City center pickups",
-    subtitle: "Pick up near downtown hotels and business districts",
-    pickupLocation: "City center",
-    image:
-      "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Cars driving through a city street between tall buildings",
-  },
-  {
-    title: "Train station pickups",
-    subtitle: "Continue your trip after rail arrivals",
-    pickupLocation: "Train station",
-    image:
-      "https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Train platform with tracks leading into a city station",
-  },
-  {
-    title: "Hotel area pickups",
-    subtitle: "Plan a car pickup near where you are staying",
-    pickupLocation: "Hotel area",
-    image:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
-    imageAlt: "Hotel exterior with palm trees and a driveway",
-  },
-];
-
-const carsFaqItems = [
-  {
-    question: "What information do I need to search for a rental car?",
-    answer:
-      "Enter your pickup location, pickup and return dates, pickup and return times, driver age, and whether you plan to return the car to a different location.",
-  },
-  {
-    question: "Can I return the car to a different location?",
-    answer:
-      "Yes. Select Different return location in the search form and enter the drop-off city, airport, or address where you plan to return the car.",
-  },
-  {
-    question: "Why does driver age matter for rental cars?",
-    answer:
-      "Rental providers may apply different rules, fees, vehicle eligibility, or deposit requirements based on the driver’s age and location.",
-  },
-  {
-    question: "What should I check before booking a rental car?",
-    answer:
-      "Review the pickup and return location, dates, times, mileage policy, fuel policy, insurance options, cancellation terms, deposit requirements, and required documents before booking.",
-  },
-  {
-    question: "Where is the final rental price confirmed?",
-    answer:
-      "Final price, vehicle availability, taxes, fees, deposit requirements, and rental rules are confirmed by the provider before booking.",
-  },
-  {
-    question: "What documents might I need at pickup?",
-    answer:
-      "Rental providers may require a valid driver’s license, payment card, proof of identity, and any documents required by the pickup country or location.",
-  },
-];
-
-const getSearchParam = (params: URLSearchParams | null, key: string) =>
-  params?.get(key)?.trim() ?? "";
-
-const toIsoDate = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-};
-
-const formatDisplayDate = (isoDate: string) => {
+const formatCarDisplayDate = (isoDate: string, locale: string) => {
   if (!isoDate) {
     return "";
   }
@@ -234,199 +67,65 @@ const formatDisplayDate = (isoDate: string) => {
     return "";
   }
 
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     month: "short",
     day: "numeric",
   }).format(new Date(year, month - 1, day));
 };
 
-const parseIsoDate = (value: string) => {
-  if (!value) {
-    return null;
-  }
-
-  const [year, month, day] = value.split("-").map(Number);
-
-  if (!year || !month || !day) {
-    return null;
-  }
-
-  const parsed = new Date(year, month - 1, day);
-
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const startOfLocalDay = (date: Date) =>
-  new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-const isBeforeToday = (date: Date) =>
-  startOfLocalDay(date).getTime() < startOfLocalDay(new Date()).getTime();
-
-const addMonths = (date: Date, offset: number) =>
-  new Date(date.getFullYear(), date.getMonth() + offset, 1);
-
-type MonthCell = {
-  date: Date;
-  isCurrentMonth: boolean;
-};
-
-const buildMonthCells = (monthDate: Date): MonthCell[] => {
-  const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
-  const startOffset = firstDay.getDay();
-  const startDate = new Date(
-    monthDate.getFullYear(),
-    monthDate.getMonth(),
-    1 - startOffset,
+const formatCarWeekdays = (locale: string) =>
+  Array.from({ length: 7 }, (_, day) =>
+    new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
+      new Date(2024, 0, 7 + day),
+    ),
   );
 
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(
-      startDate.getFullYear(),
-      startDate.getMonth(),
-      startDate.getDate() + index,
-    );
+const formatCarFullDate = (date: Date, locale: string) =>
+  new Intl.DateTimeFormat(locale, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
 
-    return {
-      date,
-      isCurrentMonth: date.getMonth() === monthDate.getMonth(),
-    };
-  });
+const formatTimeRangeSummary = (
+  template: string,
+  pickupTime: string,
+  returnTime: string,
+) =>
+  template
+    .replace("{pickupTime}", pickupTime)
+    .replace("{returnTime}", returnTime);
+
+const trustCards = [
+  {
+    key: "carsTrust.0",
+    icon: CheckCircle2,
+  },
+  {
+    key: "carsTrust.1",
+    icon: CalendarClock,
+  },
+  {
+    key: "carsTrust.2",
+    icon: ShieldCheck,
+  },
+];
+
+type TranslatedCarImageCard = CarImageCard & {
+  title: string;
+  subtitle: string;
+  imageAlt: string;
+  ariaLabel: string;
+  cta?: string;
 };
 
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+function useCarsLandingTranslations() {
+  const { locale } = useLocale();
+  const dictionary = useMemo(() => getTranslations(locale), [locale]);
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
-const addDays = (date: Date, days: number) => {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-
-  return next;
-};
-
-const normalizeDriverAge = (value: string) => {
-  const trimmedValue = value.trim();
-
-  return driverAgeOptions.includes(trimmedValue)
-    ? trimmedValue
-    : defaultDriverAge;
-};
-
-const getDriverAgeOptionLabel = (age: string) =>
-  age === defaultDriverAge ? defaultDriverAgeLabel : age;
-
-const buildCarResultsHref = ({
-  pickupLocation,
-  vehicleType,
-}: {
-  pickupLocation: string;
-  vehicleType?: string;
-}) => {
-  const today = new Date();
-  const pickupDate = toIsoDate(addDays(today, 14));
-  const dropoffDate = toIsoDate(addDays(today, 17));
-  const params = new URLSearchParams({
-    pickupLocation,
-    pickupDate,
-    pickupTime: "10:00",
-    dropoffDate,
-    dropoffTime: "10:00",
-    driverAge: defaultDriverAge,
-    dropoffLocation: pickupLocation,
-  });
-
-  if (vehicleType) {
-    params.set("vehicleType", vehicleType);
-  }
-
-  return `/cars/results?${params.toString()}`;
-};
-
-const buildPickupHref = (pickupLocation: string) =>
-  buildCarResultsHref({ pickupLocation });
-
-const getInitialValues = (params: URLSearchParams | null): CarsFormValues => {
-  const pickupLocation = getSearchParam(params, "pickupLocation");
-  const dropoffLocation = getSearchParam(params, "dropoffLocation");
-  const differentDropoff = Boolean(
-    dropoffLocation && pickupLocation && dropoffLocation !== pickupLocation,
-  );
-
-  return {
-    pickupLocation,
-    pickupDate: getSearchParam(params, "pickupDate"),
-    pickupTime: getSearchParam(params, "pickupTime") || "10:00",
-    dropoffDate: getSearchParam(params, "dropoffDate"),
-    dropoffTime: getSearchParam(params, "dropoffTime") || "10:00",
-    driverAge: normalizeDriverAge(getSearchParam(params, "driverAge")),
-    returnToDifferentLocation: differentDropoff,
-    dropoffLocation: differentDropoff ? dropoffLocation : "",
-  };
-};
-
-const validateCarsForm = (
-  values: CarsFormValues,
-  todayIso: string,
-): CarsFormErrors => {
-  const errors: CarsFormErrors = {};
-  const pickupLocation = values.pickupLocation.trim();
-  const dropoffLocation = values.dropoffLocation.trim();
-  const driverAge = Number.parseInt(values.driverAge, 10);
-  const hasDefaultDriverAge = values.driverAge === defaultDriverAge;
-
-  if (!pickupLocation) {
-    errors.pickupLocation = "Enter a pickup location.";
-  }
-
-  if (!values.pickupDate) {
-    errors.pickupDate = "Select a pickup date.";
-  } else if (values.pickupDate < todayIso) {
-    errors.pickupDate = "Pickup date cannot be in the past.";
-  }
-
-  if (!values.pickupTime) {
-    errors.pickupTime = "Select a pickup time.";
-  }
-
-  if (!values.dropoffDate) {
-    errors.dropoffDate = "Select a drop-off date.";
-  } else if (values.dropoffDate < todayIso) {
-    errors.dropoffDate = "Drop-off date cannot be in the past.";
-  }
-
-  if (!values.dropoffTime) {
-    errors.dropoffTime = "Select a drop-off time.";
-  }
-
-  if (
-    !hasDefaultDriverAge &&
-    (!values.driverAge ||
-      Number.isNaN(driverAge) ||
-      String(driverAge) !== values.driverAge ||
-      driverAge < minimumDriverAge ||
-      driverAge > maximumDriverAge)
-  ) {
-    errors.driverAge = "Select Any age 18–70 or a driver age from 18 to 70.";
-  }
-
-  if (values.returnToDifferentLocation && !dropoffLocation) {
-    errors.dropoffLocation = "Enter a drop-off location.";
-  }
-
-  if (values.pickupDate && values.dropoffDate) {
-    if (values.dropoffDate < values.pickupDate) {
-      errors.dateRange = "Drop-off date cannot be before pickup date.";
-    } else if (
-      values.dropoffDate === values.pickupDate &&
-      values.pickupTime &&
-      values.dropoffTime &&
-      values.dropoffTime <= values.pickupTime
-    ) {
-      errors.dateRange =
-        "For same-day returns, drop-off time must be after pickup time.";
-    }
-  }
-
-  return errors;
-};
+  return { locale, t, dictionary };
+}
 
 export default function CarsPage() {
   return (
@@ -437,6 +136,32 @@ export default function CarsPage() {
 }
 
 function CarsSearchPage() {
+  const { dictionary, t } = useCarsLandingTranslations();
+  const translateCarImageCard = (
+    card: CarImageCard | CarPickupCard,
+  ): TranslatedCarImageCard => {
+    const key = card.translationKey;
+
+    return {
+      ...card,
+      title: dictionary[`${key}.title`] ?? enTranslations[`${key}.title`] ?? "",
+      subtitle:
+        dictionary[`${key}.subtitle`] ??
+        enTranslations[`${key}.subtitle`] ??
+        "",
+      imageAlt:
+        dictionary[`${key}.imageAlt`] ??
+        enTranslations[`${key}.imageAlt`] ??
+        "",
+      cta: card.ctaKey
+        ? (dictionary[card.ctaKey] ?? enTranslations[card.ctaKey] ?? "")
+        : undefined,
+      ariaLabel:
+        dictionary[`${key}.ariaLabel`] ??
+        enTranslations[`${key}.ariaLabel`] ??
+        "",
+    };
+  };
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
   const searchParams = useSearchParams();
@@ -541,9 +266,9 @@ function CarsSearchPage() {
             <div className="px-1">
               <h1
                 id="cars-search-heading"
-                className="text-[1.65rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[2rem] lg:whitespace-nowrap lg:text-[2.15rem] xl:text-[2.3rem]"
+                className="text-[1.5rem] font-semibold leading-[1.12] tracking-[-0.02em] text-slate-900 md:text-[1.8rem] lg:whitespace-nowrap lg:text-[2rem] xl:text-[2.1rem]"
               >
-                Search rental cars for every part of your trip
+                {t("searchRentalCarsEveryPartTrip")}
               </h1>
             </div>
 
@@ -566,13 +291,12 @@ function CarsSearchPage() {
               <div>
                 <h2
                   id="car-trip-style-heading"
-                  className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+                  className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
                 >
-                  Explore rental cars by trip style
+                  {t("exploreCarsByTripStyle")}
                 </h2>
                 <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  Choose a car type and we’ll open results with the search
-                  context ready.
+                  {t("carsTripStyleBody")}
                 </p>
               </div>
             </div>
@@ -580,7 +304,10 @@ function CarsSearchPage() {
             <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {tripStyleCards.map((card) => (
-                  <CarImageCardLink key={card.title} card={card} />
+                  <CarImageCardLink
+                    key={card.translationKey}
+                    card={translateCarImageCard(card)}
+                  />
                 ))}
               </div>
             </div>
@@ -590,10 +317,18 @@ function CarsSearchPage() {
             <div className="grid gap-2.5 sm:gap-4 md:grid-cols-3">
               {trustCards.map((card) => {
                 const Icon = card.icon;
+                const translatedTitle =
+                  dictionary[`${card.key}.title`] ??
+                  enTranslations[`${card.key}.title`] ??
+                  "";
+                const translatedDescription =
+                  dictionary[`${card.key}.description`] ??
+                  enTranslations[`${card.key}.description`] ??
+                  "";
 
                 return (
                   <article
-                    key={card.title}
+                    key={card.key}
                     className="relative isolate cursor-default overflow-hidden rounded-[1rem] border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.82),rgba(248,250,252,0.7)_58%,rgba(241,245,249,0.78))] p-4 shadow-[0_14px_34px_-32px_rgba(15,23,42,0.38)] ring-1 ring-white/70 backdrop-blur-sm sm:rounded-[1.5rem] sm:p-6"
                   >
                     <div className="pointer-events-none absolute inset-x-7 top-0 h-px bg-gradient-to-r from-transparent via-slate-300/80 to-transparent" />
@@ -605,10 +340,10 @@ function CarsSearchPage() {
                       <Icon className="h-5 w-5 stroke-[1.8]" />
                     </div>
                     <h2 className="relative text-base font-semibold leading-snug tracking-[-0.01em] text-slate-800">
-                      {card.title}
+                      {translatedTitle}
                     </h2>
                     <p className="relative mt-2 text-sm leading-6 text-slate-700">
-                      {card.description}
+                      {translatedDescription}
                     </p>
                   </article>
                 );
@@ -624,13 +359,12 @@ function CarsSearchPage() {
               <div>
                 <h2
                   id="car-pickup-ideas-heading"
-                  className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+                  className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
                 >
-                  Start with popular car pickup points
+                  {t("carsPickupPointsTitle")}
                 </h2>
                 <p className="mt-1.5 max-w-xl text-sm leading-6 text-slate-600 md:text-base">
-                  Choose a pickup style and we’ll open the cars results page
-                  with search details ready.
+                  {t("carsPickupPointsBody")}
                 </p>
               </div>
             </div>
@@ -638,7 +372,10 @@ function CarsSearchPage() {
             <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(240px,82vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
                 {pickupCards.map((card) => (
-                  <CarPickupCardLink key={card.title} card={card} />
+                  <CarPickupCardLink
+                    key={card.translationKey}
+                    card={translateCarImageCard(card)}
+                  />
                 ))}
               </div>
             </div>
@@ -653,37 +390,48 @@ function CarsSearchPage() {
 }
 
 function CarsFaqSection() {
+  const { dictionary, t } = useCarsLandingTranslations();
+
   return (
     <section className="space-y-4 px-1" aria-labelledby="cars-faq-heading">
       <div className="max-w-2xl">
         <h2
           id="cars-faq-heading"
-          className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
+          className="text-lg font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-2xl"
         >
-          Cars Frequently asked questions
+          {t("carsFaq.heading")}
         </h2>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 md:gap-4">
-        {carsFaqItems.map((item) => (
-          <details
-            key={item.question}
-            className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-4 py-4 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-indigo-200/80 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(79,70,229,0.36)] sm:px-5"
-          >
-            <summary className="flex min-h-12 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
-              <span>{item.question}</span>
-              <span
-                className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-indigo-200 group-open:text-indigo-600"
-                aria-hidden="true"
-              >
-                +
-              </span>
-            </summary>
-            <p className="mt-2.5 text-sm leading-6 text-slate-600">
-              {item.answer}
-            </p>
-          </details>
-        ))}
+        {carsFaqItems.map((item) => {
+          const translatedQuestion =
+            dictionary[item.questionKey] ??
+            enTranslations[item.questionKey] ??
+            "";
+          const translatedAnswer =
+            dictionary[item.answerKey] ?? enTranslations[item.answerKey] ?? "";
+
+          return (
+            <details
+              key={item.id}
+              className="group rounded-2xl border border-slate-200/80 bg-[linear-gradient(145deg,rgba(255,255,255,0.94),rgba(248,250,252,0.74))] px-4 py-4 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.34)] ring-1 ring-white/70 transition open:border-indigo-200/80 open:bg-white open:shadow-[0_18px_38px_-32px_rgba(79,70,229,0.36)] sm:px-5"
+            >
+              <summary className="flex min-h-12 cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold leading-5 text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden">
+                <span>{translatedQuestion}</span>
+                <span
+                  className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-sm leading-none text-slate-500 shadow-sm transition group-open:rotate-45 group-open:border-indigo-200 group-open:text-indigo-600"
+                  aria-hidden="true"
+                >
+                  +
+                </span>
+              </summary>
+              <p className="mt-2.5 text-sm leading-6 text-slate-600">
+                {translatedAnswer}
+              </p>
+            </details>
+          );
+        })}
       </div>
     </section>
   );
@@ -709,6 +457,7 @@ function CarsSearchBar({
   ) => void;
   values: CarsFormValues;
 }) {
+  const { t } = useCarsLandingTranslations();
   const pickupLocationRef = useRef<HTMLInputElement | null>(null);
   const dropoffLocationRef = useRef<HTMLInputElement | null>(null);
   const dateWrapRef = useRef<HTMLDivElement | null>(null);
@@ -820,7 +569,7 @@ function CarsSearchBar({
         <div className="overflow-visible border border-slate-200 bg-white p-0.5 shadow-[0_10px_28px_rgba(15,23,42,0.08)] sm:p-1">
           <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,1.9fr)_minmax(0,1.45fr)_minmax(0,1.1fr)_minmax(5.8rem,0.55fr)_104px] lg:gap-0">
             <SearchCell
-              label="Pickup location"
+              label={t("carsSearch.pickupLocationLabel")}
               error={errors.pickupLocation || errors.dropoffLocation}
               className="lg:border-r lg:border-r-slate-200/80"
             >
@@ -835,7 +584,7 @@ function CarsSearchBar({
                     onChange={(event) =>
                       updateValue("pickupLocation", event.target.value)
                     }
-                    placeholder="Airport, city, or address"
+                    placeholder={t("carsSearch.pickupLocationPlaceholder")}
                     className="h-7 w-full border-none bg-transparent py-0 pl-0 pr-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8"
                     autoComplete="off"
                   />
@@ -843,7 +592,7 @@ function CarsSearchBar({
                   {values.pickupLocation ? (
                     <button
                       type="button"
-                      aria-label="Clear pickup location"
+                      aria-label={t("carsSearch.clearPickupLocation")}
                       onClick={() => {
                         updateValue("pickupLocation", "");
                         pickupLocationRef.current?.focus();
@@ -866,7 +615,7 @@ function CarsSearchBar({
                       onChange={(event) =>
                         updateValue("dropoffLocation", event.target.value)
                       }
-                      placeholder="Return city, airport, or address"
+                      placeholder={t("carsSearch.returnLocationPlaceholder")}
                       className="h-7 w-full border-t border-slate-100 bg-transparent py-0 pl-0 pr-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8 lg:pt-2"
                       autoComplete="off"
                     />
@@ -874,7 +623,7 @@ function CarsSearchBar({
                     {values.dropoffLocation ? (
                       <button
                         type="button"
-                        aria-label="Clear return location"
+                        aria-label={t("carsSearch.clearReturnLocation")}
                         onClick={() => {
                           updateValue("dropoffLocation", "");
                           dropoffLocationRef.current?.focus();
@@ -887,14 +636,14 @@ function CarsSearchBar({
                   </div>
                 ) : (
                   <p className="truncate border-t border-slate-100 pt-1.5 text-sm font-semibold text-slate-500 lg:pt-2">
-                    Return to same location
+                    {t("carsSearch.returnToSameLocation")}
                   </p>
                 )}
               </div>
             </SearchCell>
 
             <SearchCell
-              label="Rental dates"
+              label={t("carsSearch.rentalDatesLabel")}
               error={dateError}
               className="relative lg:border-r lg:border-r-slate-200/80"
             >
@@ -918,7 +667,7 @@ function CarsSearchBar({
             </SearchCell>
 
             <SearchCell
-              label="Pickup / return time"
+              label={t("carsSearch.pickupReturnTimeLabel")}
               error={timeError}
               className="relative lg:border-r lg:border-r-slate-200/80"
             >
@@ -932,7 +681,10 @@ function CarsSearchBar({
               />
             </SearchCell>
 
-            <SearchCell label="Driver age" error={errors.driverAge}>
+            <SearchCell
+              label={t("carsSearch.driverAgeLabel")}
+              error={errors.driverAge}
+            >
               <select
                 id="driverAge"
                 name="driverAge"
@@ -944,7 +696,9 @@ function CarsSearchBar({
               >
                 {driverAgeOptions.map((age) => (
                   <option key={age} value={age}>
-                    {getDriverAgeOptionLabel(age)}
+                    {age === defaultDriverAge
+                      ? t("carsSearch.driverAgeAnyAge")
+                      : getDriverAgeOptionLabel(age)}
                   </option>
                 ))}
               </select>
@@ -953,11 +707,11 @@ function CarsSearchBar({
             <div className="sm:col-span-2 lg:col-span-1">
               <button
                 type="submit"
-                className="focus-ring inline-flex h-full min-h-12 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-indigo-600 lg:min-h-14"
+                className="focus-ring inline-flex h-full min-h-11 w-full items-center justify-center gap-2 bg-indigo-600 px-3 text-sm font-bold text-white shadow-lg shadow-indigo-600/20 transition hover:bg-indigo-500 active:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-75 disabled:hover:bg-indigo-600 lg:min-h-12"
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >
-                {isSubmitting ? "Searching cars..." : "Search"}
+                {isSubmitting ? t("searchingCars") : t("search")}
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
@@ -974,7 +728,7 @@ function CarsSearchBar({
               }
               className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
             />
-            Different return location
+            {t("carsSearch.differentReturnLocation")}
           </label>
 
           {hasActiveSearch ? (
@@ -984,7 +738,7 @@ function CarsSearchBar({
               className="focus-ring inline-flex items-center gap-1.5 px-2 py-1 text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-              Clear all
+              {t("clearAll")}
             </button>
           ) : null}
         </div>
@@ -994,6 +748,8 @@ function CarsSearchBar({
 }
 
 function CarsPageShell() {
+  const { t } = useCarsLandingTranslations();
+
   return (
     <>
       <AppHeader />
@@ -1004,7 +760,7 @@ function CarsPageShell() {
               className="h-5 w-5 animate-pulse text-indigo-600"
               aria-hidden="true"
             />
-            Preparing car search...
+            {t("carsSearchPreparing")}
           </div>
         </section>
       </main>
@@ -1013,7 +769,7 @@ function CarsPageShell() {
   );
 }
 
-function CarImageCardLink({ card }: { card: CarImageCard }) {
+function CarImageCardLink({ card }: { card: TranslatedCarImageCard }) {
   return (
     <Link
       href={
@@ -1036,7 +792,7 @@ function CarImageCardLink({ card }: { card: CarImageCard }) {
         <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-slate-900/5" />
       </div>
       <div className="flex flex-1 flex-col p-4 md:p-5">
-        <p className="text-lg font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-xl">
+        <p className="text-base font-semibold leading-tight tracking-[-0.012em] text-slate-900 md:text-lg">
           {card.title}
         </p>
         <p className="mt-2 text-sm font-medium leading-5 text-slate-600">
@@ -1056,12 +812,12 @@ function CarImageCardLink({ card }: { card: CarImageCard }) {
   );
 }
 
-function CarPickupCardLink({ card }: { card: CarPickupCard }) {
+function CarPickupCardLink({ card }: { card: TranslatedCarImageCard }) {
   return (
     <CarImageCardLink
       card={{
         ...card,
-        ariaLabel: `Open car results for ${card.pickupLocation} pickup`,
+        ariaLabel: card.ariaLabel,
       }}
     />
   );
@@ -1092,15 +848,17 @@ function RentalDatesField({
   visibleMonthDate: Date;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const pickupDisplay = formatDisplayDate(pickupDate);
-  const dropoffDisplay = formatDisplayDate(dropoffDate);
+  const { locale, t } = useCarsLandingTranslations();
+  const weekdays = useMemo(() => formatCarWeekdays(locale), [locale]);
+  const pickupDisplay = formatCarDisplayDate(pickupDate, locale);
+  const dropoffDisplay = formatCarDisplayDate(dropoffDate, locale);
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
   const dateSummary = pickupDisplay
     ? dropoffDisplay
       ? `${pickupDisplay} — ${dropoffDisplay}`
       : pickupDisplay
-    : "Pickup date — Return date";
+    : t("carsSearch.rentalDatePlaceholder");
 
   return (
     <div ref={wrapRef}>
@@ -1109,7 +867,7 @@ function RentalDatesField({
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        aria-label="Choose rental pickup and return dates"
+        aria-label={t("carsSearch.chooseRentalDatesAria")}
         className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
       >
         <Calendar
@@ -1126,28 +884,28 @@ function RentalDatesField({
       {isOpen ? (
         <div
           role="dialog"
-          aria-label="Rental date picker"
+          aria-label={t("carsSearch.rentalDatePickerAria")}
           className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4"
         >
           <p className="mb-3 text-base font-semibold text-slate-900">
-            Choose rental dates
+            {t("carsSearch.chooseRentalDates")}
           </p>
           <div className="mb-3 flex items-center justify-between">
             <button
               type="button"
-              aria-label="Previous month"
+              aria-label={t("carsSearch.previousMonth")}
               onClick={onPreviousMonth}
               className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Prev
+              {t("carsSearch.previousMonthShort")}
             </button>
             <button
               type="button"
-              aria-label="Next month"
+              aria-label={t("carsSearch.nextMonth")}
               onClick={onNextMonth}
               className="focus-ring rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Next
+              {t("carsSearch.nextMonthShort")}
             </button>
           </div>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
@@ -1158,7 +916,7 @@ function RentalDatesField({
               return (
                 <div key={monthOffset}>
                   <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                    {monthDate.toLocaleDateString("en-US", {
+                    {monthDate.toLocaleDateString(locale, {
                       month: "long",
                       year: "numeric",
                     })}
@@ -1200,14 +958,11 @@ function RentalDatesField({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`Select ${day.toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "long",
-                              day: "numeric",
-                              year: "numeric",
-                            },
-                          )}${isBeforePickup ? "; starts a new pickup date" : ""}`}
+                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${formatCarFullDate(day, locale)}${
+                            isBeforePickup
+                              ? `; ${t("carsSearch.startsNewPickupDate")}`
+                              : ""
+                          }`}
                           onClick={() => onSelectDate(day)}
                           disabled={isPastDate}
                           className={`focus-ring flex h-8 w-8 items-center justify-center justify-self-center rounded-full text-sm transition-colors disabled:cursor-not-allowed ${
@@ -1241,14 +996,14 @@ function RentalDatesField({
               onClick={onClear}
               className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Clear
+              {t("clear")}
             </button>
             <button
               type="button"
               onClick={onDone}
               className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
             >
-              Done
+              {t("done")}
             </button>
           </div>
         </div>
@@ -1275,6 +1030,13 @@ function TimeRangeField({
   ) => void;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
+  const { t } = useCarsLandingTranslations();
+  const timeSummary = formatTimeRangeSummary(
+    t("carsSearch.pickupReturnTimeSummary"),
+    pickupTime,
+    returnTime,
+  );
+
   return (
     <div ref={wrapRef}>
       <button
@@ -1282,12 +1044,10 @@ function TimeRangeField({
         onClick={onToggle}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        aria-label="Choose pickup and return times"
+        aria-label={t("carsSearch.choosePickupReturnTimesAria")}
         className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
       >
-        <span className="truncate">
-          {pickupTime} pickup — {returnTime} return
-        </span>
+        <span className="truncate">{timeSummary}</span>
         <ChevronDown
           className={`h-4 w-4 shrink-0 text-slate-500 transition-transform ${isOpen ? "rotate-180" : ""}`}
           aria-hidden="true"
@@ -1297,13 +1057,13 @@ function TimeRangeField({
       {isOpen ? (
         <div
           role="menu"
-          aria-label="Pickup and return time selector"
+          aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
           className="absolute left-0 right-0 top-[calc(100%+8px)] z-[180] w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:right-auto sm:w-[min(92vw,320px)]"
         >
           <div className="grid gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Pickup time
+                {t("carsSearch.pickupTimeLabel")}
               </span>
               <select
                 id="pickupTime"
@@ -1323,7 +1083,7 @@ function TimeRangeField({
 
             <label className="block">
               <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Return time
+                {t("carsSearch.returnTimeLabel")}
               </span>
               <select
                 id="dropoffTime"
@@ -1360,7 +1120,7 @@ function SearchCell({
 }) {
   return (
     <div
-      className={`min-h-[64px] border border-transparent bg-white px-2.5 py-2 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:min-h-[78px] lg:px-3 lg:py-2.5 ${className}`}
+      className={`min-h-[58px] border border-transparent bg-white px-2.5 py-1.5 transition hover:border-slate-200 focus-within:border-indigo-200 focus-within:bg-indigo-50/20 lg:min-h-[66px] lg:px-3 lg:py-2 ${className}`}
     >
       <label className="mb-0.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 lg:mb-1">
         {label}

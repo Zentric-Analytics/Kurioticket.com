@@ -8,14 +8,28 @@ import { type AirportOption } from "@/data/airports";
 import { FlightMobilePickerShell } from "@/components/search/FlightMobilePickerShell";
 import { cn } from "@/lib/utils";
 
+type MobileAirportPickerLabels = {
+  clear: string;
+  done: string;
+  chooseOrigin: string;
+  clearOrigin: string;
+  clearDestination: string;
+  searchAirportsAndCities: string;
+  searchAirportsOrCities: string;
+  startTypingCityOrAirport: string;
+  searchingAirportsAndCities: string;
+  noMatchingAirportsOrCities: string;
+};
+
 type MobileAirportPickerProps = {
   open: boolean;
-  title: "Choose origin" | "Choose destination";
+  title: string;
   inputId: string;
   value: string;
   suggestions: AirportOption[];
   isLoading: boolean;
   launcherRef?: RefObject<HTMLElement | null>;
+  labels: MobileAirportPickerLabels;
   onChange: (value: string) => void;
   onClear: () => void;
   onSelect: (option: AirportOption) => void;
@@ -30,6 +44,7 @@ export function MobileAirportPicker({
   suggestions,
   isLoading,
   launcherRef,
+  labels,
   onChange,
   onClear,
   onSelect,
@@ -69,14 +84,14 @@ export function MobileAirportPicker({
             }}
             className="focus-ring rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
           >
-            Clear
+            {labels.clear}
           </button>
           <button
             type="button"
             onClick={onClose}
             className="focus-ring rounded-xl bg-indigo-700 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-600"
           >
-            Done
+            {labels.done}
           </button>
         </div>
       )}
@@ -84,7 +99,7 @@ export function MobileAirportPicker({
       <div className="mx-auto w-full max-w-xl space-y-4">
         <div className="rounded-3xl border border-slate-200/80 bg-white/80 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <label className="mb-2 block text-xs font-extrabold uppercase tracking-[0.14em] text-slate-500" htmlFor={inputId}>
-            Search airports and cities
+            {labels.searchAirportsAndCities}
           </label>
           <div className="relative">
             <input
@@ -93,14 +108,14 @@ export function MobileAirportPicker({
               type="text"
               value={value}
               onChange={(event) => onChange(event.target.value)}
-              placeholder="Search airports or cities"
+              placeholder={labels.searchAirportsOrCities}
               autoComplete="off"
-              className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 pl-4 pr-14 text-lg font-semibold text-slate-900 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/15"
+              className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 pl-4 pr-14 text-base font-semibold text-slate-900 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/15"
             />
             {value.trim() ? (
               <button
                 type="button"
-                aria-label={title === "Choose origin" ? "Clear origin" : "Clear destination"}
+                aria-label={title === labels.chooseOrigin ? labels.clearOrigin : labels.clearDestination}
                 onClick={() => {
                   onClear();
                   window.requestAnimationFrame(() => inputRef.current?.focus());
@@ -116,11 +131,11 @@ export function MobileAirportPicker({
         <div className="space-y-2">
           {query.length < 2 ? (
             <p className="rounded-2xl border border-slate-200/70 bg-white/60 px-4 py-8 text-center text-sm font-medium text-slate-500">
-              Start typing a city or airport name to see suggestions.
+              {labels.startTypingCityOrAirport}
             </p>
           ) : isLoading ? (
             <p className="rounded-2xl border border-slate-200/70 bg-white/60 px-4 py-8 text-center text-sm font-medium text-slate-500">
-              Searching airports and cities…
+              {labels.searchingAirportsAndCities}
             </p>
           ) : suggestions.length ? (
             suggestions.map((option) => (
@@ -155,7 +170,7 @@ export function MobileAirportPicker({
             ))
           ) : (
             <p className="rounded-2xl border border-slate-200/70 bg-white/60 px-4 py-8 text-center text-sm font-medium text-slate-500">
-              No matching airports or cities.
+              {labels.noMatchingAirportsOrCities}
             </p>
           )}
         </div>

@@ -9,6 +9,7 @@ import {
   markOriginManualInput,
   type OriginFieldState,
 } from "@/lib/flights/defaultOrigin";
+import { getDefaultAirports } from "@/data/airports";
 import type { OriginSuggestionLocation } from "@/lib/flights/originAirportSuggestions";
 
 const emptyOrigin = (): OriginFieldState => ({
@@ -93,6 +94,8 @@ test("clearing origin is not immediately fought by default refill", () => {
 });
 
 test("MaxMind disabled or failing preserves existing empty behavior", () => {
-  assert.equal(getDefaultOriginAirport(null).airport?.code, "ATL");
+  const fallbackAirport = getDefaultAirports({ context: "origin", limit: 1 })[0];
+
+  assert.equal(getDefaultOriginAirport(null).airport?.code, fallbackAirport?.code);
   assert.deepEqual(applyDefaultOrigin(emptyOrigin(), null), emptyOrigin());
 });

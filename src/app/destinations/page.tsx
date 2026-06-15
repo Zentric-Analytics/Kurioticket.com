@@ -1,4 +1,7 @@
+"use client";
+
 import { AppHeader } from "@/components/layout/AppHeader";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { Footer } from "@/components/layout/Footer";
 import { DestinationCard } from "./DestinationCard";
 
@@ -18,14 +21,13 @@ type DestinationSeed = {
 
 type Destination = DestinationSeed & {
   region: RegionName;
-  imageAlt: string;
-  tag: string;
+  tagKey: string;
 };
 
 type DestinationSection = {
   region: RegionName;
   accent: string;
-  summary: string;
+  summaryKey: string;
   destinations: Destination[];
 };
 
@@ -132,47 +134,42 @@ function getDestinationPhotoUrl(name: string, country: string) {
   return image;
 }
 
-const destinationTags = [
-  "iconic skyline",
-  "landmark escape",
-  "culture capital",
-  "golden-hour views",
-  "coastal energy",
-  "food market nights",
-  "historic streets",
-  "design weekend",
+const destinationTagKeys = [
+  "destinations.tag.iconicSkyline",
+  "destinations.tag.landmarkEscape",
+  "destinations.tag.cultureCapital",
+  "destinations.tag.goldenHourViews",
+  "destinations.tag.coastalEnergy",
+  "destinations.tag.foodMarketNights",
+  "destinations.tag.historicStreets",
+  "destinations.tag.designWeekend",
 ] as const;
 
-const destinationSubtitle = "Bright views, flights, hotels, and deals";
+const destinationSubtitleKey = "destinations.card.subtitle";
 
 const regionDetails: Record<
   RegionName,
-  Pick<DestinationSection, "accent" | "summary">
+  Pick<DestinationSection, "accent" | "summaryKey">
 > = {
   Europe: {
     accent: "from-blue-600 to-violet-600",
-    summary:
-      "A focused edit of landmark cities, romantic canals, design capitals, and timeless food-and-culture weekends.",
+    summaryKey: "destinations.region.europe.summary",
   },
   "North America": {
     accent: "from-sky-600 to-indigo-700",
-    summary:
-      "Statement skylines, coastal icons, entertainment capitals, and cinematic city breaks worth planning around.",
+    summaryKey: "destinations.region.northAmerica.summary",
   },
   Asia: {
     accent: "from-rose-500 to-violet-700",
-    summary:
-      "Neon cityscapes, island escapes, street-food legends, temples, beaches, and premium shopping gateways.",
+    summaryKey: "destinations.region.asia.summary",
   },
   Africa: {
     accent: "from-emerald-600 to-violet-600",
-    summary:
-      "High-impact travel favorites with ocean scenery, safari access, creative capitals, and rich cultural texture.",
+    summaryKey: "destinations.region.africa.summary",
   },
   "Middle East": {
     accent: "from-amber-500 to-fuchsia-600",
-    summary:
-      "Luxury skylines, warm coasts, desert drama, heritage districts, and modern hospitality hubs.",
+    summaryKey: "destinations.region.middleEast.summary",
   },
 };
 
@@ -516,10 +513,6 @@ assertCuratedDestinationCount(destinationCatalog);
 assertPhotographicDestinationImages(destinationCatalog);
 assertUniqueDestinationImages(destinationCatalog);
 
-function getDestinationImageAlt(destination: DestinationSeed) {
-  return `${destination.name}, ${destination.country} travel photography`;
-}
-
 const destinationSections: DestinationSection[] = Object.entries(
   destinationCatalog,
 ).map(([region, destinations]) => {
@@ -532,21 +525,119 @@ const destinationSections: DestinationSection[] = Object.entries(
       ...destination,
       region: regionName,
       image: destination.image,
-      imageAlt: getDestinationImageAlt(destination),
-      tag: destinationTags[destinationIndex % destinationTags.length],
+      tagKey: destinationTagKeys[destinationIndex % destinationTagKeys.length],
     })),
   };
 });
+
+
+const regionLabelKeys: Record<RegionName, string> = {
+  Europe: "destinations.region.europe",
+  "North America": "destinations.region.northAmerica",
+  Asia: "destinations.region.asia",
+  Africa: "destinations.region.africa",
+  "Middle East": "destinations.region.middleEast",
+};
+
+const destinationNameKeys: Record<string, string> = {
+  London: "destinations.city.london",
+  Paris: "destinations.city.paris",
+  Rome: "destinations.city.rome",
+  Barcelona: "destinations.city.barcelona",
+  Amsterdam: "destinations.city.amsterdam",
+  Lisbon: "destinations.city.lisbon",
+  Prague: "destinations.city.prague",
+  Athens: "destinations.city.athens",
+  Venice: "destinations.city.venice",
+  Florence: "destinations.city.florence",
+  Berlin: "destinations.city.berlin",
+  Madrid: "destinations.city.madrid",
+  Copenhagen: "destinations.city.copenhagen",
+  Zurich: "destinations.city.zurich",
+  Vienna: "destinations.city.vienna",
+  Milan: "destinations.city.milan",
+  "New York": "destinations.city.newYork",
+  "Las Vegas": "destinations.city.lasVegas",
+  Toronto: "destinations.city.toronto",
+  "Los Angeles": "destinations.city.losAngeles",
+  Miami: "destinations.city.miami",
+  Vancouver: "destinations.city.vancouver",
+  Chicago: "destinations.city.chicago",
+  "San Francisco": "destinations.city.sanFrancisco",
+  Tokyo: "destinations.city.tokyo",
+  Singapore: "destinations.city.singapore",
+  Bangkok: "destinations.city.bangkok",
+  "Kuala Lumpur": "destinations.city.kualaLumpur",
+  Seoul: "destinations.city.seoul",
+  Osaka: "destinations.city.osaka",
+  Bali: "destinations.city.bali",
+  Phuket: "destinations.city.phuket",
+  "Cape Town": "destinations.city.capeTown",
+  Marrakech: "destinations.city.marrakech",
+  Nairobi: "destinations.city.nairobi",
+  Accra: "destinations.city.accra",
+  Lagos: "destinations.city.lagos",
+  Abuja: "destinations.city.abuja",
+  Dubai: "destinations.city.dubai",
+  Istanbul: "destinations.city.istanbul",
+  Doha: "destinations.city.doha",
+  "Abu Dhabi": "destinations.city.abuDhabi",
+  Muscat: "destinations.city.muscat",
+  Jeddah: "destinations.city.jeddah",
+};
+
+const destinationCountryKeys: Record<string, string> = {
+  "United Kingdom": "destinations.country.unitedKingdom",
+  France: "destinations.country.france",
+  Italy: "destinations.country.italy",
+  Spain: "destinations.country.spain",
+  Netherlands: "destinations.country.netherlands",
+  Portugal: "destinations.country.portugal",
+  Czechia: "destinations.country.czechia",
+  Greece: "destinations.country.greece",
+  Germany: "destinations.country.germany",
+  Denmark: "destinations.country.denmark",
+  Switzerland: "destinations.country.switzerland",
+  Austria: "destinations.country.austria",
+  "United States": "destinations.country.unitedStates",
+  Canada: "destinations.country.canada",
+  Japan: "destinations.country.japan",
+  Singapore: "destinations.country.singapore",
+  Thailand: "destinations.country.thailand",
+  Malaysia: "destinations.country.malaysia",
+  "South Korea": "destinations.country.southKorea",
+  Indonesia: "destinations.country.indonesia",
+  "South Africa": "destinations.country.southAfrica",
+  Morocco: "destinations.country.morocco",
+  Kenya: "destinations.country.kenya",
+  Ghana: "destinations.country.ghana",
+  Nigeria: "destinations.country.nigeria",
+  "United Arab Emirates": "destinations.country.unitedArabEmirates",
+  Turkey: "destinations.country.turkey",
+  Qatar: "destinations.country.qatar",
+  Oman: "destinations.country.oman",
+  "Saudi Arabia": "destinations.country.saudiArabia",
+};
+
+function translateValue(
+  dictionary: Record<string, string>,
+  key: string | undefined,
+  fallback: string,
+) {
+  return key ? dictionary[key] ?? fallback : fallback;
+}
 
 function getRegionId(region: string) {
   return region.toLowerCase().replaceAll(" ", "-");
 }
 
 function getDestinationHref(destination: Destination) {
-  return `/flights/results?destination=${encodeURIComponent(destination.name)}`;
+  return `/flights?destination=${encodeURIComponent(destination.name)}`;
 }
 
 export default function DestinationsPage() {
+  const { t: dictionary } = useLocale();
+
   return (
     <>
       <AppHeader />
@@ -594,19 +685,18 @@ export default function DestinationsPage() {
           <div className="page-shell relative py-7 sm:py-9 lg:py-10">
             <div className="max-w-3xl">
               <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-violet-50 shadow-sm shadow-black/10 backdrop-blur">
-                Destination discovery
+                {dictionary.destinationsHeroBadge}
               </p>
-              <h1 className="mt-4 text-4xl font-black tracking-[-0.04em] text-white drop-shadow-sm sm:text-5xl lg:text-6xl">
-                Where do you want to go next?
+              <h1 className="mt-4 text-3xl font-black tracking-[-0.035em] text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
+                {dictionary.destinationsHeroTitle}
               </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-violet-50/90 sm:text-lg">
-                Browse brighter, hand-picked city views, compare flights, and
-                find travel deals in minutes.
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-violet-50/90 sm:text-base">
+                {dictionary.destinationsHeroSubtitle}
               </p>
             </div>
 
             <nav
-              aria-label="Destination regions"
+              aria-label={dictionary.destinationsRegionsAriaLabel}
               className="mt-6 flex gap-2 overflow-x-auto border-t border-white/15 pt-4"
             >
               {destinationSections.map((section, sectionIndex) => {
@@ -623,7 +713,7 @@ export default function DestinationsPage() {
                         : "border-white/25 bg-white/10 text-white hover:border-white/45 hover:bg-white/18"
                     }`}
                   >
-                    {section.region}
+                    {translateValue(dictionary, regionLabelKeys[section.region], section.region)}
                   </a>
                 );
               })}
@@ -643,28 +733,45 @@ export default function DestinationsPage() {
                   <div
                     className={`mb-3 h-1.5 w-16 rounded-full bg-gradient-to-r ${section.accent}`}
                   />
-                  <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-                    {section.region}
+                  <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+                    {translateValue(dictionary, regionLabelKeys[section.region], section.region)}
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
-                    {section.summary}
+                    {dictionary[section.summaryKey]}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {section.destinations.map((destination) => (
-                    <DestinationCard
-                      key={`${destination.region}-${destination.name}`}
-                      href={getDestinationHref(destination)}
-                      name={destination.name}
-                      country={destination.country}
-                      image={destination.image}
-                      imageAlt={destination.imageAlt}
-                      imagePosition={destination.imagePosition}
-                      tag={destination.tag}
-                      subtitle={destinationSubtitle}
-                    />
-                  ))}
+                  {section.destinations.map((destination) => {
+                    const displayName = translateValue(
+                      dictionary,
+                      destinationNameKeys[destination.name],
+                      destination.name,
+                    );
+                    const displayCountry = translateValue(
+                      dictionary,
+                      destinationCountryKeys[destination.country],
+                      destination.country,
+                    );
+
+                    return (
+                      <DestinationCard
+                        key={`${destination.region}-${destination.name}`}
+                        href={getDestinationHref(destination)}
+                        name={displayName}
+                        country={displayCountry}
+                        image={destination.image}
+                        imageAlt={`${displayName}, ${displayCountry} ${dictionary.destinationsImageAltSuffix}`}
+                        imagePosition={destination.imagePosition}
+                        tag={dictionary[destination.tagKey]}
+                        subtitle={dictionary[destinationSubtitleKey]}
+                        ariaLabel={dictionary.destinationsCardAriaLabel.replace(
+                          "{destination}",
+                          displayName,
+                        )}
+                      />
+                    );
+                  })}
                 </div>
               </section>
             ))}

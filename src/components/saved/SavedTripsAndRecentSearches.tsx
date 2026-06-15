@@ -12,13 +12,18 @@ import {
 } from "lucide-react";
 
 import { PriceText } from "@/components/currency/PriceText";
+import { useLocale } from "@/components/layout/LocaleProvider";
 
 import {
   clearRecentSearches,
   readRecentSearches,
   removeRecentSearch,
+  type RecentFlightParams,
+  type RecentHotelParams,
   type RecentSearchEntry,
 } from "@/lib/recent-searches";
+import { translations as enTranslations } from "@/lib/i18n/en";
+import { translateHomeDiscoveryCopy } from "@/lib/i18n/homeDiscovery";
 import { readSavedTripIds, writeSavedTripIds } from "@/lib/saved-trips-local";
 import {
   getHomeDiscoveryByRegion,
@@ -81,15 +86,24 @@ const discoveryById = new Map<string, HomeDiscoveryItem>(
   allDiscoveryItems.map((item) => [item.id, item]),
 );
 
-const resolveSavedTrip = (id: string): ResolvedSavedTrip => {
+const resolveSavedTrip = (
+  id: string,
+  dictionary: Record<string, string>,
+): ResolvedSavedTrip => {
   const matched = discoveryById.get(id);
 
   if (!matched) {
     return {
       id,
-      title: "Saved trip",
-      route: "Destination details unavailable",
-      note: "This trip was saved on this device and can still be removed anytime.",
+      title:
+        dictionary.savedTripFallbackTitle ??
+        enTranslations.savedTripFallbackTitle,
+      route:
+        dictionary.savedTripFallbackRoute ??
+        enTranslations.savedTripFallbackRoute,
+      note:
+        dictionary.savedTripFallbackNote ??
+        enTranslations.savedTripFallbackNote,
       href: "/destinations",
       unresolved: true,
     };
@@ -97,27 +111,59 @@ const resolveSavedTrip = (id: string): ResolvedSavedTrip => {
 
   return {
     id,
-    title: matched.title,
+    title: translateHomeDiscoveryCopy(dictionary, matched).title,
     route: `${matched.originCity} (${matched.originCode}) → ${matched.destinationCity} (${matched.destinationCode})`,
-    note: matched.routeNote,
+    note: translateHomeDiscoveryCopy(dictionary, matched).routeNote,
     image: matched.image,
     imageAlt: matched.imageAlt,
     originCode: matched.originCode,
     destinationCode: matched.destinationCode,
-    href: `/flights/results?origin=${encodeURIComponent(matched.originCode)}&destination=${encodeURIComponent(matched.destinationCode)}`,
+    href: "/flights",
     unresolved: false,
   };
 };
 
-const formatDate = (value?: string) => {
-  if (!value) return "Flexible dates";
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+const getSavedTripsDateLocale = (locale: string) => {
+  const normalizedLocale = locale.toLowerCase();
+
+  if (normalizedLocale.startsWith("de")) return "de-DE";
+  if (normalizedLocale.startsWith("fr")) return "fr-FR";
+  if (normalizedLocale.startsWith("es")) return "es-ES";
+
+  return "en-US";
+};
+
+const parseDateValue = (value?: string) => {
+  if (!value) return null;
+  const parsed = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value,
+  );
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const formatRecentDate = (
+  value: string | undefined,
+  formatter: Intl.DateTimeFormat,
+  fallback: string,
+) => {
+  if (!value) return fallback;
+  const parsed = parseDateValue(value);
+  return parsed ? formatter.format(parsed) : value;
+};
+
+const isFlightParams = (
+  params: RecentSearchEntry["params"],
+): params is RecentFlightParams => "origin" in params && "cabinClass" in params;
+
+const isHotelParams = (
+  params: RecentSearchEntry["params"],
+): params is RecentHotelParams => "guests" in params && "rooms" in params;
+
+const cabinTranslationKeyByValue: Record<string, string> = {
+  economy: "savedTripsCabinEconomy",
+  "premium economy": "savedTripsCabinPremiumEconomy",
+  business: "savedTripsCabinBusiness",
+  first: "savedTripsCabinFirst",
 };
 
 const normalizeDestinationKey = (value: string) =>
@@ -271,6 +317,26 @@ function buildSavedTripHref(trip: ResolvedSavedTrip, fare?: SavedTripFare) {
 }
 
 export function SavedTripsAndRecentSearches() {
+  const { locale, t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const dateLocale = getSavedTripsDateLocale(locale);
+  const shortDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(dateLocale, {
+        month: "short",
+        day: "numeric",
+      }),
+    [dateLocale],
+  );
+  const searchedDateFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(dateLocale, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+    [dateLocale],
+  );
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [recentSearches, setRecentSearches] = useState<RecentSearchEntry[]>([]);
   const [savedTripFares, setSavedTripFares] = useState<
@@ -287,8 +353,8 @@ export function SavedTripsAndRecentSearches() {
   }, []);
 
   const savedTrips = useMemo(
-    () => savedIds.map((id) => resolveSavedTrip(id)),
-    [savedIds],
+    () => savedIds.map((id) => resolveSavedTrip(id, dictionary)),
+    [dictionary, savedIds],
   );
 
   useEffect(() => {
@@ -359,17 +425,79 @@ export function SavedTripsAndRecentSearches() {
     setRecentSearches([]);
   };
 
+  const formatTravelerCount = (count: number) =>
+    count === 1
+      ? t("savedTripsTravelerCountOne")
+      : t("savedTripsTravelerCountOther").replace("{{count}}", String(count));
+
+  const formatGuestCount = (count: number) =>
+    count === 1
+      ? t("savedTripsGuestCountOne")
+      : t("savedTripsGuestCountOther").replace("{{count}}", String(count));
+
+  const formatRoomCount = (count: number) =>
+    count === 1
+      ? t("savedTripsRoomCountOne")
+      : t("savedTripsRoomCountOther").replace("{{count}}", String(count));
+
+  const formatCabinClass = (value: string) => {
+    const key = cabinTranslationKeyByValue[value.trim().toLowerCase()];
+    return key ? t(key) : value;
+  };
+
+  const formatRecentSearchSubtitle = (entry: RecentSearchEntry) => {
+    if (entry.type === "flight" && isFlightParams(entry.params)) {
+      const outbound = formatRecentDate(
+        entry.params.departureDate,
+        shortDateFormatter,
+        entry.params.departureDate,
+      );
+      const inbound = entry.params.returnDate
+        ? formatRecentDate(
+            entry.params.returnDate,
+            shortDateFormatter,
+            entry.params.returnDate,
+          )
+        : t("savedTripsRecentOneWay");
+
+      return `${outbound}${entry.params.returnDate ? ` – ${inbound}` : ""} · ${formatTravelerCount(entry.params.travelers)} · ${formatCabinClass(entry.params.cabinClass)}`;
+    }
+
+    if (entry.type === "hotel" && isHotelParams(entry.params)) {
+      const checkIn = formatRecentDate(
+        entry.params.checkIn,
+        shortDateFormatter,
+        entry.params.checkIn,
+      );
+      const checkOut = formatRecentDate(
+        entry.params.checkOut,
+        shortDateFormatter,
+        entry.params.checkOut,
+      );
+
+      return `${checkIn} – ${checkOut} · ${formatGuestCount(entry.params.guests)} · ${formatRoomCount(entry.params.rooms)}`;
+    }
+
+    return entry.subtitle;
+  };
+
+  const formatSearchedLabel = (value?: string) =>
+    t("savedTripsSearchedDate").replace(
+      "{{date}}",
+      formatRecentDate(value, searchedDateFormatter, ""),
+    );
+
   return (
     <div className="page-shell">
       <div className="space-y-8 pb-2 md:space-y-10">
         <section className="space-y-4 md:space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
-                Saved trips ❤️
+              <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+                {t("savedTripsPageTitle")} ❤️
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Your handpicked itineraries and trending routes.
+                {t("savedTripsPageSubtitle")}
               </p>
             </div>
 
@@ -380,7 +508,7 @@ export function SavedTripsAndRecentSearches() {
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-rose-200 hover:text-rose-700"
               >
                 <Trash2 className="h-4 w-4" />
-                Clear all saved
+                {t("savedTripsClearAllSaved")}
               </button>
             ) : null}
           </div>
@@ -390,18 +518,17 @@ export function SavedTripsAndRecentSearches() {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.45)]">
                 <Heart className="h-7 w-7 fill-rose-500 text-rose-500" />
               </div>
-              <h3 className="mt-5 text-xl font-black tracking-tight text-slate-900">
-                Save destinations you love
+              <h3 className="mt-5 text-lg font-black tracking-tight text-slate-900">
+                {t("savedTripsEmptyTitle")}
               </h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
-                Tap the heart icon on any route to build your personal shortlist
-                and keep your next adventure one click away.
+                {t("savedTripsEmptyDescription")}
               </p>
               <Link
                 href="/destinations"
                 className="mt-5 inline-flex min-h-11 items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
               >
-                Explore destinations
+                {t("savedTripsExploreDestinations")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -420,7 +547,7 @@ export function SavedTripsAndRecentSearches() {
                     <button
                       type="button"
                       onClick={() => handleUnsaveTrip(trip.id)}
-                      aria-label="Remove from saved trips"
+                      aria-label={t("savedTripsRemoveSavedTrip")}
                       aria-pressed
                       className="focus-ring absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-900/20 transition hover:bg-rose-500"
                     >
@@ -436,12 +563,12 @@ export function SavedTripsAndRecentSearches() {
                       />
                     ) : (
                       <div className="flex h-48 w-full items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-bold uppercase tracking-[0.14em] text-slate-600">
-                        Saved trip
+                        {t("savedTripFallbackTitle")}
                       </div>
                     )}
 
                     <div className="space-y-3 p-5">
-                      <h3 className="pr-12 text-xl font-black leading-tight tracking-tight text-slate-900">
+                      <h3 className="pr-12 text-lg font-black leading-tight tracking-tight text-slate-900">
                         {trip.title}
                       </h3>
                       <p className="line-clamp-2 text-[11px] font-semibold uppercase tracking-[0.11em] text-slate-600">
@@ -453,10 +580,14 @@ export function SavedTripsAndRecentSearches() {
 
                       <div className="flex flex-wrap items-center gap-2 pt-0.5">
                         <span className="rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
-                          {trip.unresolved ? "Saved" : "Trending"}
+                          {trip.unresolved
+                            ? t("savedTripsSavedBadge")
+                            : t("savedTripsTrendingBadge")}
                         </span>
                         <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500">
-                          One way · Economy · 1 traveler
+                          {t("homeDiscoveryTripOneWay")} ·{" "}
+                          {t("homeDiscoveryCabinEconomy")} ·{" "}
+                          {t("homeDiscoveryTravelerCountOne")}
                         </p>
                       </div>
 
@@ -465,10 +596,10 @@ export function SavedTripsAndRecentSearches() {
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
                               {hasProviderFare
-                                ? "Provider fare"
-                                : "Current options"}
+                                ? t("savedTripsProviderFare")
+                                : t("savedTripsCurrentOptions")}
                             </p>
-                            <p className="text-lg font-black leading-tight text-slate-950">
+                            <p className="text-base font-black leading-tight text-slate-950">
                               {hasProviderFare ? (
                                 <PriceText
                                   amountUsd={fare.price}
@@ -476,7 +607,7 @@ export function SavedTripsAndRecentSearches() {
                                   sourceCurrency={fare.currency}
                                 />
                               ) : (
-                                "Compare current options"
+                                t("savedTripsCompareCurrentOptions")
                               )}
                             </p>
                           </div>
@@ -484,7 +615,9 @@ export function SavedTripsAndRecentSearches() {
                             href={tripHref}
                             className="inline-flex min-h-11 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
                           >
-                            {hasProviderFare ? "View fare" : "Search route"}
+                            {hasProviderFare
+                              ? t("savedTripsViewFare")
+                              : t("savedTripsSearchRoute")}
                             <ExternalLink className="h-4 w-4" />
                           </Link>
                         </div>
@@ -500,11 +633,11 @@ export function SavedTripsAndRecentSearches() {
         <section className="space-y-4 md:space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-slate-950">
-                Recent searches 🕘
+              <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+                {t("savedTripsRecentSearchesTitle")} 🕘
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Pick up where you left off and search again in one tap.
+                {t("savedTripsRecentSearchesSubtitle")}
               </p>
             </div>
 
@@ -515,7 +648,7 @@ export function SavedTripsAndRecentSearches() {
                 className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700"
               >
                 <Trash2 className="h-4 w-4" />
-                Clear all recent
+                {t("savedTripsClearAllRecent")}
               </button>
             ) : null}
           </div>
@@ -525,18 +658,17 @@ export function SavedTripsAndRecentSearches() {
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.45)]">
                 <Search className="h-7 w-7 text-slate-400" />
               </div>
-              <h3 className="mt-5 text-xl font-black tracking-tight text-slate-900">
-                Start a search to build momentum
+              <h3 className="mt-5 text-lg font-black tracking-tight text-slate-900">
+                {t("savedTripsNoRecentTitle")}
               </h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
-                We&apos;ll keep your latest routes and stays here so planning
-                feels faster every time you return.
+                {t("savedTripsNoRecentDescription")}
               </p>
               <Link
                 href="/"
                 className="mt-5 inline-flex min-h-11 items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
               >
-                Search new trips
+                {t("savedTripsSearchNewTrips")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -551,7 +683,7 @@ export function SavedTripsAndRecentSearches() {
                   >
                     <button
                       type="button"
-                      aria-label="Remove recent search"
+                      aria-label={t("savedTripsRemoveRecentSearch")}
                       onClick={() => handleRemoveRecent(entry.id)}
                       className="focus-ring absolute right-3 top-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
                     >
@@ -568,25 +700,27 @@ export function SavedTripsAndRecentSearches() {
                     ) : (
                       <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-bold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
                         {entry.type === "flight"
-                          ? "Flight search"
-                          : "Hotel search"}
+                          ? t("savedTripsFlightSearchFallback")
+                          : t("savedTripsHotelSearchFallback")}
                       </div>
                     )}
 
                     <div className="space-y-2.5 p-4">
                       <span className="inline-flex rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
-                        {entry.type === "flight" ? "Flight" : "Hotel"}
+                        {entry.type === "flight"
+                          ? t("savedTripsTypeFlight")
+                          : t("savedTripsTypeHotel")}
                       </span>
 
                       <h3 className="pr-12 text-lg font-black leading-tight tracking-tight text-slate-900">
                         {entry.label}
                       </h3>
                       <p className="line-clamp-2 text-sm leading-5 text-slate-600">
-                        {entry.subtitle}
+                        {formatRecentSearchSubtitle(entry)}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 pt-0.5">
                         <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-600">
-                          Searched {formatDate(entry.createdAt)}
+                          {formatSearchedLabel(entry.createdAt)}
                         </span>
                       </div>
                       <div className="mt-1 border-t border-slate-200/90 pt-2.5">
@@ -594,7 +728,7 @@ export function SavedTripsAndRecentSearches() {
                           href={entry.href}
                           className="inline-flex min-h-11 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:border-indigo-300 hover:bg-indigo-100 hover:text-indigo-900"
                         >
-                          Repeat search
+                          {t("savedTripsRepeatSearch")}
                           <ExternalLink className="h-4 w-4" />
                         </Link>
                       </div>

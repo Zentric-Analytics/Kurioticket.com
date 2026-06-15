@@ -9,7 +9,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Sign Up",
+  title: "Kurioticket",
 };
 
 export default function SignupPage() {

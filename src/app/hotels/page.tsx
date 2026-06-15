@@ -7,8 +7,10 @@ import { Building2, Calendar, ClipboardCheck } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { HotelSearchBar } from "@/components/search/HotelSearchBar";
 import { validateDestinationImages } from "@/data/destinationImageValidation";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 const addDays = (date: Date, days: number) => {
   const next = new Date(date);
@@ -35,128 +37,128 @@ type HotelDestinationCard = {
 
 const hotelDestinationCards: HotelDestinationCard[] = [
   {
-    title: "Japan",
-    subtitle: "Tokyo stays",
+    title: enTranslations["hotelDestination.Tokyo.title"],
+    subtitle: enTranslations["hotelDestination.Tokyo.subtitle"],
     destinationQuery: "Tokyo",
     image:
       "https://images.pexels.com/photos/31344755/pexels-photo-31344755.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "Tokyo skyline with dense high-rise buildings in daylight",
-    linkLabel: "Search hotels in Tokyo, Japan",
+    linkLabel: enTranslations["hotelDestination.Tokyo.linkLabel"],
   },
   {
-    title: "United Kingdom",
-    subtitle: "London stays",
+    title: enTranslations["hotelDestination.London.title"],
+    subtitle: enTranslations["hotelDestination.London.subtitle"],
     destinationQuery: "London",
     image:
       "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "Tower Bridge and the River Thames in London under a blue sky",
-    linkLabel: "Search hotels in London, United Kingdom",
+    linkLabel: enTranslations["hotelDestination.London.linkLabel"],
   },
   {
-    title: "France",
-    subtitle: "Paris stays",
+    title: enTranslations["hotelDestination.Paris.title"],
+    subtitle: enTranslations["hotelDestination.Paris.subtitle"],
     destinationQuery: "Paris",
     image:
       "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "Eiffel Tower and the Seine River in Paris at golden hour",
-    linkLabel: "Search hotels in Paris, France",
+    linkLabel: enTranslations["hotelDestination.Paris.linkLabel"],
   },
   {
-    title: "United States",
-    subtitle: "New York stays",
+    title: enTranslations["hotelDestination.New York.title"],
+    subtitle: enTranslations["hotelDestination.New York.subtitle"],
     destinationQuery: "New York",
     image:
       "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt:
       "New York City skyline with One World Trade Center and waterfront",
-    linkLabel: "Search hotels in New York, United States",
+    linkLabel: enTranslations["hotelDestination.New York.linkLabel"],
   },
 ];
 
 const moreHotelDestinationCards: HotelDestinationCard[] = [
   {
-    title: "Italy",
-    subtitle: "Rome stays",
+    title: enTranslations["hotelDestination.Rome.title"],
+    subtitle: enTranslations["hotelDestination.Rome.subtitle"],
     destinationQuery: "Rome",
     image:
       "https://images.pexels.com/photos/1701595/pexels-photo-1701595.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "The Colosseum in Rome beneath a clear blue sky",
-    linkLabel: "Search hotels in Rome, Italy",
+    linkLabel: enTranslations["hotelDestination.Rome.linkLabel"],
   },
   {
-    title: "United Arab Emirates",
-    subtitle: "Dubai stays",
+    title: enTranslations["hotelDestination.Dubai.title"],
+    subtitle: enTranslations["hotelDestination.Dubai.subtitle"],
     destinationQuery: "Dubai",
     image:
       "https://images.pexels.com/photos/21765772/pexels-photo-21765772.jpeg?auto=compress&cs=tinysrgb&w=1200",
     imageAlt: "Dubai skyline with the Burj Khalifa rising above skyscrapers",
-    linkLabel: "Search hotels in Dubai, United Arab Emirates",
+    linkLabel: enTranslations["hotelDestination.Dubai.linkLabel"],
   },
   {
-    title: "Singapore",
-    subtitle: "Singapore stays",
+    title: enTranslations["hotelDestination.Singapore.title"],
+    subtitle: enTranslations["hotelDestination.Singapore.subtitle"],
     destinationQuery: "Singapore",
     image:
       "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Marina Bay skyline in Singapore at dusk",
-    linkLabel: "Search hotels in Singapore, Singapore",
+    linkLabel: enTranslations["hotelDestination.Singapore.linkLabel"],
   },
   {
-    title: "Spain",
-    subtitle: "Barcelona stays",
+    title: enTranslations["hotelDestination.Barcelona.title"],
+    subtitle: enTranslations["hotelDestination.Barcelona.subtitle"],
     destinationQuery: "Barcelona",
     image:
       "https://images.unsplash.com/photo-1583422409516-2895a77efded?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Barcelona cityscape with Sagrada Familia in daylight",
-    linkLabel: "Search hotels in Barcelona, Spain",
+    linkLabel: enTranslations["hotelDestination.Barcelona.linkLabel"],
   },
 ];
 
 const globalHotelDestinationCards: HotelDestinationCard[] = [
   {
-    title: "Canada",
-    subtitle: "Toronto stays",
+    title: enTranslations["hotelDestination.Toronto.title"],
+    subtitle: enTranslations["hotelDestination.Toronto.subtitle"],
     destinationQuery: "Toronto",
     image:
       "https://images.unsplash.com/photo-1517090504586-fde19ea6066f?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Toronto skyline with the CN Tower beside Lake Ontario",
-    linkLabel: "Search hotels in Toronto, Canada",
+    linkLabel: enTranslations["hotelDestination.Toronto.linkLabel"],
   },
   {
-    title: "Netherlands",
-    subtitle: "Amsterdam stays",
+    title: enTranslations["hotelDestination.Amsterdam.title"],
+    subtitle: enTranslations["hotelDestination.Amsterdam.subtitle"],
     destinationQuery: "Amsterdam",
     image:
       "https://images.unsplash.com/photo-1512470876302-972faa2aa9a4?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Amsterdam canal houses and bridge along the water",
-    linkLabel: "Search hotels in Amsterdam, Netherlands",
+    linkLabel: enTranslations["hotelDestination.Amsterdam.linkLabel"],
   },
   {
-    title: "Thailand",
-    subtitle: "Bangkok stays",
+    title: enTranslations["hotelDestination.Bangkok.title"],
+    subtitle: enTranslations["hotelDestination.Bangkok.subtitle"],
     destinationQuery: "Bangkok",
     image:
       "https://images.unsplash.com/photo-1508009603885-50cf7c579365?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Bangkok city skyline and Chao Phraya river at sunset",
-    linkLabel: "Search hotels in Bangkok, Thailand",
+    linkLabel: enTranslations["hotelDestination.Bangkok.linkLabel"],
   },
   {
-    title: "Mexico",
-    subtitle: "Cancun stays",
+    title: enTranslations["hotelDestination.Cancun.title"],
+    subtitle: enTranslations["hotelDestination.Cancun.subtitle"],
     destinationQuery: "Cancun",
     image:
       "https://images.unsplash.com/photo-1552074284-5e88ef1aef18?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Cancun beach with white sand and turquoise water",
-    linkLabel: "Search hotels in Cancun, Mexico",
+    linkLabel: enTranslations["hotelDestination.Cancun.linkLabel"],
   },
   {
-    title: "Turkey",
-    subtitle: "Istanbul stays",
+    title: enTranslations["hotelDestination.Istanbul.title"],
+    subtitle: enTranslations["hotelDestination.Istanbul.subtitle"],
     destinationQuery: "Istanbul",
     image:
       "https://images.unsplash.com/photo-1527838832700-5059252407fa?auto=format&fit=crop&w=1200&q=80",
     imageAlt: "Istanbul waterfront with domes and minarets at golden hour",
-    linkLabel: "Search hotels in Istanbul, Turkey",
+    linkLabel: enTranslations["hotelDestination.Istanbul.linkLabel"],
   },
 ];
 
@@ -376,6 +378,43 @@ hotelInspirationCategoryChips.forEach((category) => {
 });
 
 export default function HotelsSearchPage() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const translateHotelCard = <TCard extends HotelDestinationCard>(
+    card: TCard,
+  ) => ({
+    ...card,
+    title:
+      dictionary[`hotelDestination.${card.destinationQuery}.title`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.title`] ??
+      card.title,
+    subtitle:
+      dictionary[`hotelDestination.${card.destinationQuery}.subtitle`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.subtitle`] ??
+      card.subtitle,
+    linkLabel:
+      dictionary[`hotelDestination.${card.destinationQuery}.linkLabel`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.linkLabel`] ??
+      card.linkLabel,
+  });
+  const translateHotelInspirationCategory = (
+    category: HotelInspirationCategory,
+  ) =>
+    dictionary[`hotelInspirationCategory.${category}`] ??
+    enTranslations[`hotelInspirationCategory.${category}`] ??
+    category;
+
+  const translateHotelInspirationCard = (card: HotelInspirationCard) => ({
+    ...translateHotelCard(card),
+    badge:
+      dictionary[`hotelInspirationBadge.${card.badge}`] ??
+      enTranslations[`hotelInspirationBadge.${card.badge}`] ??
+      card.badge,
+    detail:
+      dictionary[`hotelDestination.${card.destinationQuery}.detail`] ??
+      enTranslations[`hotelDestination.${card.destinationQuery}.detail`] ??
+      card.detail,
+  });
   const [selectedInspirationCategory, setSelectedInspirationCategory] =
     useState<HotelInspirationCategory>("Beach");
 
@@ -394,43 +433,30 @@ export default function HotelsSearchPage() {
       }).toString()}`;
   }, []);
 
-  const hotelDestinationLinks = useMemo(
-    () =>
-      hotelDestinationCards.map((card) => ({
-        ...card,
-        href: destinationCardHref(card.destinationQuery),
-      })),
-    [destinationCardHref],
+  const hotelDestinationLinks = hotelDestinationCards.map((card) => ({
+    ...translateHotelCard(card),
+    href: destinationCardHref(card.destinationQuery),
+  }));
+
+  const moreHotelDestinationLinks = moreHotelDestinationCards.map((card) => ({
+    ...translateHotelCard(card),
+    href: destinationCardHref(card.destinationQuery),
+  }));
+
+  const globalHotelDestinationLinks = globalHotelDestinationCards.map(
+    (card) => ({
+      ...translateHotelCard(card),
+      href: destinationCardHref(card.destinationQuery),
+    }),
   );
 
-  const moreHotelDestinationLinks = useMemo(
-    () =>
-      moreHotelDestinationCards.map((card) => ({
-        ...card,
-        href: destinationCardHref(card.destinationQuery),
-      })),
-    [destinationCardHref],
-  );
-
-  const globalHotelDestinationLinks = useMemo(
-    () =>
-      globalHotelDestinationCards.map((card) => ({
-        ...card,
-        href: destinationCardHref(card.destinationQuery),
-      })),
-    [destinationCardHref],
-  );
-
-  const hotelInspirationLinks = useMemo(
-    () =>
-      hotelInspirationCardsByCategory[selectedInspirationCategory].map(
-        (card) => ({
-          ...card,
-          href: destinationCardHref(card.destinationQuery),
-        }),
-      ),
-    [destinationCardHref, selectedInspirationCategory],
-  );
+  const hotelInspirationLinks = hotelInspirationCardsByCategory[
+    selectedInspirationCategory
+  ].map((card) => ({
+    ...translateHotelInspirationCard(card),
+    href: destinationCardHref(card.destinationQuery),
+  }));
+  const hotelSearchIntroLabel = t("hotelSearchIntroLabel");
 
   return (
     <>
@@ -439,7 +465,7 @@ export default function HotelsSearchPage() {
         <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
         <div className="relative mx-auto max-w-6xl space-y-11 md:space-y-14">
-          <HotelSearchBar />
+          <HotelSearchBar introLabel={hotelSearchIntroLabel} />
 
           <section
             className="space-y-4"
@@ -449,7 +475,7 @@ export default function HotelsSearchPage() {
               id="hotel-destinations-heading"
               className="px-1 text-[1.35rem] font-semibold leading-[1.18] tracking-[-0.014em] text-slate-800 md:text-[2rem]"
             >
-              Explore hotel stays by destination
+              {t("exploreHotelStaysByDestination")}
             </h2>
             <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.28)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(260px,86vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
@@ -472,7 +498,7 @@ export default function HotelsSearchPage() {
               id="more-hotel-destinations-heading"
               className="px-1 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
             >
-              Featured hotel destinations
+              {t("featuredHotelDestinations")}
             </h2>
             <div className="border border-slate-200/80 bg-slate-50/85 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(250px,84vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-4 [&::-webkit-scrollbar]:hidden">
@@ -499,16 +525,15 @@ export default function HotelsSearchPage() {
                     id="hotel-inspiration-heading"
                     className="text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
                   >
-                    Find stays for every kind of trip
+                    {t("findStaysEveryKindTrip")}
                   </h2>
                   <p className="mt-1.5 max-w-xl text-[0.9rem] leading-5 text-slate-600 md:mt-2 md:text-base md:leading-6">
-                    Browse destination ideas by the kind of stay you have in
-                    mind.
+                    {t("hotelInspirationBody")}
                   </p>
                 </div>
                 <div
                   className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] md:flex-wrap md:justify-end md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden"
-                  aria-label="Hotel inspiration categories"
+                  aria-label={t("hotelInspirationCategories")}
                 >
                   {hotelInspirationCategoryChips.map((chip) => {
                     const isSelected = chip === selectedInspirationCategory;
@@ -525,7 +550,7 @@ export default function HotelsSearchPage() {
                             : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                         }`}
                       >
-                        {chip}
+                        {translateHotelInspirationCategory(chip)}
                       </button>
                     );
                   })}
@@ -545,18 +570,18 @@ export default function HotelsSearchPage() {
             <div className="grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-3">
               {[
                 {
-                  title: "Compare provider offers",
-                  body: "View hotel options from travel providers in one place before you continue.",
+                  title: t("homeTrustCompareTitle"),
+                  body: t("hotelTrustCompareBody"),
                   icon: Building2,
                 },
                 {
-                  title: "Review stay details",
-                  body: "Check dates, guests, rooms, pricing context, and stay information before choosing.",
+                  title: t("hotelTrustReviewTitle"),
+                  body: t("hotelTrustReviewBody"),
                   icon: ClipboardCheck,
                 },
                 {
-                  title: "Continue with the provider",
-                  body: "When you choose an option, continue with the provider to confirm final price, availability, fees, and cancellation rules.",
+                  title: t("hotelTrustProviderTitle"),
+                  body: t("hotelTrustProviderBody"),
                   icon: Calendar,
                 },
               ].map((item, index) => {
@@ -601,7 +626,7 @@ export default function HotelsSearchPage() {
               id="global-hotel-destinations-heading"
               className="px-1 text-[1.2rem] font-semibold leading-[1.2] tracking-[-0.012em] text-slate-800 md:text-[1.85rem]"
             >
-              Explore stays around the world
+              {t("exploreStaysWorldwide")}
             </h2>
             <div className="border border-slate-200/80 bg-white/80 p-3 shadow-[0_16px_44px_-40px_rgba(15,23,42,0.26)] ring-1 ring-white/80 sm:p-6 md:p-7">
               <div className="grid auto-cols-[minmax(220px,76vw)] grid-flow-col gap-4 overflow-x-auto px-1 pb-3 pt-1 [scrollbar-width:none] [-ms-overflow-style:none] md:grid-flow-row md:auto-cols-auto md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 md:pt-0 lg:grid-cols-5 [&::-webkit-scrollbar]:hidden">

@@ -36,10 +36,10 @@ import {
   getPopularDestinationFareCandidatesByRegion,
   getPopularDestinationsByRegion,
 } from "@/data/marketHomeContent";
-import { generalFaqs, homepageMobileFaqLimit } from "@/content/faqs";
+import { getGeneralFaqs, homepageMobileFaqLimit } from "@/content/faqs";
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import { buildHomepageRouteCardFlightHref } from "@/lib/home/homepageRouteCardLinks";
-import { getTranslations } from "@/lib/i18n";
+import { translateHomeDiscoveryField } from "@/lib/i18n/homeDiscovery";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import {
   readSavedTripIds,
@@ -51,6 +51,121 @@ const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
 
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
+
+const HOME_POPULAR_DESTINATION_CITY_KEYS: Record<string, string> = {
+  Accra: "homePopularDestinationCity.accra",
+  "Addis Ababa": "homePopularDestinationCity.addisAbaba",
+  Amsterdam: "homePopularDestinationCity.amsterdam",
+  Atlanta: "homePopularDestinationCity.atlanta",
+  Bali: "homePopularDestinationCity.bali",
+  Bangkok: "homePopularDestinationCity.bangkok",
+  Barcelona: "homePopularDestinationCity.barcelona",
+  Bogota: "homePopularDestinationCity.bogota",
+  Boston: "homePopularDestinationCity.boston",
+  "Buenos Aires": "homePopularDestinationCity.buenosAires",
+  Cairo: "homePopularDestinationCity.cairo",
+  Calgary: "homePopularDestinationCity.calgary",
+  Cancun: "homePopularDestinationCity.cancun",
+  "Cape Town": "homePopularDestinationCity.capeTown",
+  Chicago: "homePopularDestinationCity.chicago",
+  Dallas: "homePopularDestinationCity.dallas",
+  "Dar es Salaam": "homePopularDestinationCity.darEsSalaam",
+  Denver: "homePopularDestinationCity.denver",
+  Doha: "homePopularDestinationCity.doha",
+  Dubai: "homePopularDestinationCity.dubai",
+  Halifax: "homePopularDestinationCity.halifax",
+  Hanoi: "homePopularDestinationCity.hanoi",
+  "Hong Kong": "homePopularDestinationCity.hongKong",
+  Istanbul: "homePopularDestinationCity.istanbul",
+  Jeddah: "homePopularDestinationCity.jeddah",
+  Johannesburg: "homePopularDestinationCity.johannesburg",
+  "Kuala Lumpur": "homePopularDestinationCity.kualaLumpur",
+  "Las Vegas": "homePopularDestinationCity.lasVegas",
+  Lima: "homePopularDestinationCity.lima",
+  Lisbon: "homePopularDestinationCity.lisbon",
+  London: "homePopularDestinationCity.london",
+  "Los Angeles": "homePopularDestinationCity.losAngeles",
+  Madrid: "homePopularDestinationCity.madrid",
+  Manila: "homePopularDestinationCity.manila",
+  Mauritius: "homePopularDestinationCity.mauritius",
+  Miami: "homePopularDestinationCity.miami",
+  Montreal: "homePopularDestinationCity.montreal",
+  Nairobi: "homePopularDestinationCity.nairobi",
+  "New York": "homePopularDestinationCity.newYork",
+  Orlando: "homePopularDestinationCity.orlando",
+  Paris: "homePopularDestinationCity.paris",
+  Phoenix: "homePopularDestinationCity.phoenix",
+  "Rio de Janeiro": "homePopularDestinationCity.rioDeJaneiro",
+  Riyadh: "homePopularDestinationCity.riyadh",
+  Rome: "homePopularDestinationCity.rome",
+  "San Francisco": "homePopularDestinationCity.sanFrancisco",
+  "San Jose": "homePopularDestinationCity.sanJose",
+  Santiago: "homePopularDestinationCity.santiago",
+  Seattle: "homePopularDestinationCity.seattle",
+  Seoul: "homePopularDestinationCity.seoul",
+  Singapore: "homePopularDestinationCity.singapore",
+  Taipei: "homePopularDestinationCity.taipei",
+  Toronto: "homePopularDestinationCity.toronto",
+  Vancouver: "homePopularDestinationCity.vancouver",
+  Vienna: "homePopularDestinationCity.vienna",
+  Washington: "homePopularDestinationCity.washington",
+  Zanzibar: "homePopularDestinationCity.zanzibar",
+  Zurich: "homePopularDestinationCity.zurich",
+};
+
+const HOME_POPULAR_DESTINATION_COUNTRY_KEYS: Record<string, string> = {
+  Argentina: "homePopularDestinationCountry.argentina",
+  Austria: "homePopularDestinationCountry.austria",
+  Brazil: "homePopularDestinationCountry.brazil",
+  Canada: "homePopularDestinationCountry.canada",
+  Chile: "homePopularDestinationCountry.chile",
+  Colombia: "homePopularDestinationCountry.colombia",
+  "Costa Rica": "homePopularDestinationCountry.costaRica",
+  Egypt: "homePopularDestinationCountry.egypt",
+  Ethiopia: "homePopularDestinationCountry.ethiopia",
+  France: "homePopularDestinationCountry.france",
+  Ghana: "homePopularDestinationCountry.ghana",
+  "Hong Kong": "homePopularDestinationCountry.hongKong",
+  Indonesia: "homePopularDestinationCountry.indonesia",
+  Italy: "homePopularDestinationCountry.italy",
+  Kenya: "homePopularDestinationCountry.kenya",
+  Malaysia: "homePopularDestinationCountry.malaysia",
+  Mauritius: "homePopularDestinationCountry.mauritius",
+  Mexico: "homePopularDestinationCountry.mexico",
+  Netherlands: "homePopularDestinationCountry.netherlands",
+  Peru: "homePopularDestinationCountry.peru",
+  Philippines: "homePopularDestinationCountry.philippines",
+  Portugal: "homePopularDestinationCountry.portugal",
+  Qatar: "homePopularDestinationCountry.qatar",
+  "Saudi Arabia": "homePopularDestinationCountry.saudiArabia",
+  Singapore: "homePopularDestinationCountry.singapore",
+  "South Africa": "homePopularDestinationCountry.southAfrica",
+  "South Korea": "homePopularDestinationCountry.southKorea",
+  Spain: "homePopularDestinationCountry.spain",
+  Switzerland: "homePopularDestinationCountry.switzerland",
+  Taiwan: "homePopularDestinationCountry.taiwan",
+  Tanzania: "homePopularDestinationCountry.tanzania",
+  Thailand: "homePopularDestinationCountry.thailand",
+  Türkiye: "homePopularDestinationCountry.turkiye",
+  "United Arab Emirates": "homePopularDestinationCountry.unitedArabEmirates",
+  "United Kingdom": "homePopularDestinationCountry.unitedKingdom",
+  "United States": "homePopularDestinationCountry.unitedStates",
+  Vietnam: "homePopularDestinationCountry.vietnam",
+};
+
+function translatePopularDestinationDisplayLabel(
+  dictionary: Record<string, string>,
+  fallbackLabel: string,
+  labelKeys: Record<string, string>,
+) {
+  const translationKey = labelKeys[fallbackLabel];
+
+  return translationKey
+    ? (dictionary[translationKey] ??
+        enTranslations[translationKey] ??
+        fallbackLabel)
+    : fallbackLabel;
+}
 
 type DestinationPriceSearch = {
   tripType: "one-way";
@@ -124,11 +239,12 @@ function isNewsletterEmail(value: string) {
 }
 
 export default function Home() {
-  const { locale } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const { mode: regionCode, selectedOption } = useRegion();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterMessage, setNewsletterMessage] = useState("");
-  const [newsletterStatus, setNewsletterStatus] = useState<NewsletterStatus>("idle");
+  const [newsletterStatus, setNewsletterStatus] =
+    useState<NewsletterStatus>("idle");
   const [newsletterPending, setNewsletterPending] = useState(false);
   const [savedTripIds, setSavedTripIds] = useState<string[]>([]);
   const [destinationPriceState, setDestinationPriceState] =
@@ -156,8 +272,13 @@ export default function Home() {
     });
   };
 
-  const dictionary = useMemo(() => getTranslations(locale), [locale]);
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const translateDiscoveryItemCopy = (
+    item: HomeDiscoveryCardItem,
+    field: "title" | "routeNote",
+  ) => translateHomeDiscoveryField(dictionary, item, field);
+  const translatedFaqs = getGeneralFaqs(t);
+
   const popularDestinationResolution = useMemo(
     () => getPopularDestinationsByRegion(regionCode),
     [regionCode],
@@ -176,15 +297,17 @@ export default function Home() {
     const replacementAwareDestinations = destinationPriceState.loading
       ? popularDestinations
       : popularDestinationFareCandidates;
-    const destinationsWithIndex = replacementAwareDestinations.map((destination, index) => {
-      const price = destinationPriceState.prices[destination.id];
-      const hasFreshPrice = hasFreshProviderPrice(price, {
-        originCode: destination.originCode,
-        destinationCode: destination.code,
-      });
+    const destinationsWithIndex = replacementAwareDestinations.map(
+      (destination, index) => {
+        const price = destinationPriceState.prices[destination.id];
+        const hasFreshPrice = hasFreshProviderPrice(price, {
+          originCode: destination.originCode,
+          destinationCode: destination.code,
+        });
 
-      return { destination, hasFreshPrice, index };
-    });
+        return { destination, hasFreshPrice, index };
+      },
+    );
 
     if (destinationPriceState.loading) {
       return destinationsWithIndex
@@ -240,7 +363,9 @@ export default function Home() {
     return groups;
   }, [discoveryCards]);
 
-  const handleNewsletterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleNewsletterSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
 
     if (newsletterPending) return;
@@ -248,7 +373,7 @@ export default function Home() {
     const email = newsletterEmail.trim();
     if (!isNewsletterEmail(email)) {
       setNewsletterStatus("error");
-      setNewsletterMessage("Enter a valid email address.");
+      setNewsletterMessage(t("homeNewsletterInvalidEmail"));
       return;
     }
 
@@ -267,23 +392,22 @@ export default function Home() {
           regionCode,
         }),
       });
-      const data = (await response.json().catch(() => null)) as
-        | { ok?: boolean; message?: string }
-        | null;
+      const data = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        message?: string;
+      } | null;
 
       if (!response.ok || !data?.ok) {
-        throw new Error(data?.message || "Unable to subscribe right now.");
+        throw new Error(data?.message || t("homeNewsletterUnableSubscribe"));
       }
 
       setNewsletterStatus("success");
-      setNewsletterMessage(data.message || t("homeNewsletterThanks"));
+      setNewsletterMessage(t("homeNewsletterThanks"));
       setNewsletterEmail("");
     } catch (error) {
       setNewsletterStatus("error");
       setNewsletterMessage(
-        error instanceof Error
-          ? error.message
-          : "We couldn’t subscribe you right now. Please try again soon.",
+        error instanceof Error ? error.message : t("homeNewsletterTryAgain"),
       );
     } finally {
       setNewsletterPending(false);
@@ -432,11 +556,11 @@ export default function Home() {
           <div className="page-shell relative pb-5 pt-8 sm:pb-6 sm:pt-10 lg:pt-12">
             <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
               <div className="space-y-2.5 pt-1">
-                <h1 className="max-w-3xl text-[2rem] font-semibold leading-[1.08] tracking-[-0.025em] text-slate-900 sm:text-[2.4rem] lg:text-[3rem]">
+                <h1 className="max-w-3xl text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.022em] text-slate-900 sm:text-[2.15rem] lg:text-[2.65rem]">
                   {t("homeHeroTitle")}
                 </h1>
 
-                <p className="max-w-xl text-base font-semibold leading-7 text-slate-700 sm:text-lg sm:leading-8">
+                <p className="max-w-xl text-sm font-semibold leading-6 text-slate-700 sm:text-base sm:leading-7">
                   {t("homeHeroSubtitle")}
                 </p>
               </div>
@@ -445,88 +569,100 @@ export default function Home() {
                 <SearchTabs
                   t={t as unknown as Record<string, string>}
                   compactHero
+                  locale={locale}
                 />
               </div>
             </div>
           </div>
         </section>
 
-        <section className="page-shell py-5">
-          <div className="flex items-center">
-            <h2 className="text-2xl font-bold tracking-normal text-slate-900">
-              {t("homePopularDestinations")}
-            </h2>
-          </div>
+        <section className="border-y border-slate-200/75 bg-[#fbfaf7] py-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:py-5 sm:shadow-none">
+          <div className="page-shell">
+            <div className="flex items-center">
+              <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
+                {t("homePopularDestinations")}
+              </h2>
+            </div>
 
-          <div className="relative mt-6">
-            <button
-              type="button"
-              aria-label="Previous destinations"
-              onClick={() => scrollDestinationsRail("left")}
-              className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
-            >
-              <ChevronLeft size={18} />
-            </button>
+            <div className="relative mt-6">
+              <button
+                type="button"
+                aria-label={t("homePreviousDestinations")}
+                onClick={() => scrollDestinationsRail("left")}
+                className="focus-ring absolute -left-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+              >
+                <ChevronLeft size={18} />
+              </button>
 
-            <button
-              type="button"
-              aria-label={t("homeNextDestinations")}
-              onClick={() => scrollDestinationsRail("right")}
-              className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
-            >
-              <ChevronRight size={18} />
-            </button>
+              <button
+                type="button"
+                aria-label={t("homeNextDestinations")}
+                onClick={() => scrollDestinationsRail("right")}
+                className="focus-ring absolute -right-2 top-1/2 z-10 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-[0_16px_30px_-20px_rgba(15,23,42,0.65)] transition hover:bg-white hover:text-slate-900 sm:flex"
+              >
+                <ChevronRight size={18} />
+              </button>
 
-            <div
-              ref={destinationsRailRef}
-              className="-mx-2 flex snap-x snap-mandatory gap-5 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {visiblePopularDestinations.map((destination) => {
-                const price = destinationPriceState.prices[destination.id];
+              <div
+                ref={destinationsRailRef}
+                className="-mx-2 flex snap-x snap-mandatory gap-4 overflow-x-auto px-2 pb-2 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              >
+                {visiblePopularDestinations.map((destination) => {
+                  const price = destinationPriceState.prices[destination.id];
+                  const city = translatePopularDestinationDisplayLabel(
+                    dictionary,
+                    destination.city,
+                    HOME_POPULAR_DESTINATION_CITY_KEYS,
+                  );
+                  const country = translatePopularDestinationDisplayLabel(
+                    dictionary,
+                    destination.country,
+                    HOME_POPULAR_DESTINATION_COUNTRY_KEYS,
+                  );
 
-                return (
-                  <DestinationCard
-                    key={destination.id}
-                    city={destination.city}
-                    country={destination.country}
-                    imageAlt={destination.imageAlt}
-                    saveLabelTemplate={t("homeSaveDestination")}
-                    image={destination.image}
-                    destinationId={destination.id}
-                    price={price}
-                    displayCurrency={selectedOption.currency}
-                    originCode={destination.originCode}
-                    destinationCode={destination.code}
-                    href={buildDestinationCardHref(price, {
-                      originCode: destination.originCode,
-                      destinationCode: destination.code,
-                      displayCurrency: selectedOption.currency,
-                      market: regionCode,
-                    })}
-                    isPriceLoading={destinationPriceState.loading}
-                    isSaved={savedTripIds.includes(destination.id)}
-                    onHeartToggle={handleSavedTripToggle}
-                  />
-                );
-              })}
+                  return (
+                    <DestinationCard
+                      key={destination.id}
+                      city={city}
+                      country={country}
+                      imageAlt={destination.imageAlt}
+                      saveLabelTemplate={t("homeSaveDestination")}
+                      image={destination.image}
+                      destinationId={destination.id}
+                      price={price}
+                      displayCurrency={selectedOption.currency}
+                      originCode={destination.originCode}
+                      destinationCode={destination.code}
+                      href={buildDestinationCardHref(price, {
+                        originCode: destination.originCode,
+                        destinationCode: destination.code,
+                        displayCurrency: selectedOption.currency,
+                        market: regionCode,
+                      })}
+                      isPriceLoading={destinationPriceState.loading}
+                      isSaved={savedTripIds.includes(destination.id)}
+                      onHeartToggle={handleSavedTripToggle}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="page-shell bg-transparent py-5 sm:py-6">
+        <section className="page-shell bg-white py-7 sm:bg-transparent sm:py-6">
           <div className="space-y-4 sm:space-y-5">
             <div className="space-y-2">
-              <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
-                Discover your next adventure here
+              <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+                {t("homeDiscoveryTitle")}
               </h2>
               <p className="text-sm font-normal leading-6 text-slate-600 sm:text-base">
-                Compare smart route ideas, flexible fares, and destinations
-                picked for your region.
+                {t("homeDiscoverySubtitle")}
               </p>
             </div>
             <div className="flex items-center justify-end sm:hidden">
               <div className="pointer-events-none mb-2 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/95 px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-sm">
-                Swipe for more
+                {t("homeDiscoverySwipeMore")}
                 <ChevronRight size={13} className="text-slate-500" />
               </div>
             </div>
@@ -550,10 +686,13 @@ export default function Home() {
                         image={card.item.image}
                         imageAlt={card.item.imageAlt}
                         destinationCode={card.item.destinationCode}
-                        title={card.item.title}
+                        title={translateDiscoveryItemCopy(card.item, "title")}
                         originCode={card.item.originCode}
                         destinationCodeLabel={card.item.destinationCode}
-                        routeNote={card.item.routeNote}
+                        routeNote={translateDiscoveryItemCopy(
+                          card.item,
+                          "routeNote",
+                        )}
                         compact
                         price={card.fare}
                         displayCurrency={selectedOption.currency}
@@ -584,10 +723,13 @@ export default function Home() {
                     image={card.item.image}
                     imageAlt={card.item.imageAlt}
                     destinationCode={card.item.destinationCode}
-                    title={card.item.title}
+                    title={translateDiscoveryItemCopy(card.item, "title")}
                     originCode={card.item.originCode}
                     destinationCodeLabel={card.item.destinationCode}
-                    routeNote={card.item.routeNote}
+                    routeNote={translateDiscoveryItemCopy(
+                      card.item,
+                      "routeNote",
+                    )}
                     price={card.fare}
                     displayCurrency={selectedOption.currency}
                     expectedOriginCode={card.item.originCode}
@@ -605,7 +747,7 @@ export default function Home() {
         <section className="page-shell bg-transparent py-4 sm:py-5">
           <div className="space-y-3">
             <div className="max-w-3xl space-y-1.5">
-              <h2 className="text-2xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-3xl">
+              <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
                 {t("homeTrustTitle")}
               </h2>
               <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
@@ -681,17 +823,16 @@ export default function Home() {
 
         <section className="page-shell pb-12 pt-2 sm:pt-3">
           <div className="max-w-3xl space-y-2">
-            <h2 className="text-2xl font-semibold tracking-normal text-slate-800 sm:font-bold sm:text-slate-900">
-              Frequently asked questions
+            <h2 className="text-xl font-semibold tracking-normal text-slate-800 sm:font-bold sm:text-slate-900">
+              {t("faqHeading")}
             </h2>
             <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-              Learn how Kurioticket helps you compare flights, hotels, and
-              travel options before booking with trusted providers.
+              {t("faqIntro")}
             </p>
           </div>
 
           <FaqAccordion
-            items={generalFaqs}
+            items={translatedFaqs}
             mobileLimit={homepageMobileFaqLimit}
             className="mt-5"
           />
@@ -700,7 +841,7 @@ export default function Home() {
             href="/faq"
             className="mt-4 inline-flex text-sm font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline sm:hidden"
           >
-            View all FAQs
+            {t("faqViewAll")}
           </Link>
         </section>
 
@@ -752,19 +893,23 @@ export default function Home() {
                     aria-busy={newsletterPending}
                     disabled={newsletterPending}
                   >
-                    {newsletterPending ? "Subscribing…" : t("homeSubscribe")}
+                    {newsletterPending
+                      ? t("homeSubscribing")
+                      : t("homeSubscribe")}
                   </button>
                 </form>
               </div>
 
               <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-600 sm:text-xs">
-                By subscribing, you agree to receive Kurioticket updates. You can unsubscribe anytime.
+                {t("homeNewsletterConsent")}
               </p>
 
               {newsletterMessage ? (
                 <p
                   className={`mt-2 text-xs font-semibold sm:text-sm ${
-                    newsletterStatus === "error" ? "text-red-700" : "text-slate-700"
+                    newsletterStatus === "error"
+                      ? "text-red-700"
+                      : "text-slate-700"
                   }`}
                   role="status"
                   aria-live="polite"
@@ -786,10 +931,12 @@ function DiscoveryCardImage({
   image,
   imageAlt,
   destinationCode,
+  destinationFallbackLabel,
 }: {
   image: string;
   imageAlt: string;
   destinationCode: string;
+  destinationFallbackLabel: string;
 }) {
   const [hasError, setHasError] = useState(false);
   const hasImage = Boolean(image?.trim());
@@ -799,7 +946,7 @@ function DiscoveryCardImage({
       <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gradient-to-br from-violet-200 via-fuchsia-100 to-cyan-100 text-slate-700">
         <Compass size={14} className="opacity-80" aria-hidden />
         <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">
-          Destination
+          {destinationFallbackLabel}
         </span>
         <span className="text-[11px] font-black tracking-[0.12em] text-slate-800">
           {destinationCode}
@@ -860,6 +1007,9 @@ function DiscoverySuggestionCard({
     itemId: string,
   ) => void;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
   return (
     <Link
       href={href}
@@ -868,7 +1018,9 @@ function DiscoverySuggestionCard({
       <button
         type="button"
         onClick={(event) => onHeartToggle(event, itemId)}
-        aria-label={isSaved ? "Remove from saved routes" : "Save route"}
+        aria-label={
+          isSaved ? t("homeRemoveFromSavedRoutes") : t("homeSaveRoute")
+        }
         aria-pressed={isSaved}
         className={`focus-ring absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
       >
@@ -882,6 +1034,7 @@ function DiscoverySuggestionCard({
           image={image}
           imageAlt={imageAlt}
           destinationCode={destinationCode}
+          destinationFallbackLabel={t("destinationImageFallback")}
         />
       </div>
 
@@ -900,12 +1053,13 @@ function DiscoverySuggestionCard({
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-0.5">
           <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
-            Route idea
+            {t("homeDiscoveryRouteIdeaBadge")}
           </span>
           <p
             className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
           >
-            One way · Economy · 1 traveler
+            {t("homeDiscoveryTripOneWay")} · {t("homeDiscoveryCabinEconomy")} ·{" "}
+            {t("homeDiscoveryTravelerCountOne")}
           </p>
         </div>
       </div>
@@ -964,7 +1118,10 @@ function hasFreshProviderPrice(
     return false;
   }
 
-  if (price.priceState === "last_known_good" || price.cachedProviderBacked === true) {
+  if (
+    price.priceState === "last_known_good" ||
+    price.cachedProviderBacked === true
+  ) {
     return true;
   }
 
@@ -1036,6 +1193,8 @@ function DiscoveryPricePill({
   expectedDestinationCode?: string;
   isLoading: boolean;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const currencyRates = useCurrencyRates();
   const hasProviderPrice = hasFreshProviderPrice(price, {
     originCode: expectedOriginCode,
@@ -1046,7 +1205,7 @@ function DiscoveryPricePill({
     return (
       <span
         className="inline-flex h-7 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
-        aria-label="Checking provider-backed route pricing"
+        aria-label={t("homeCheckingProviderRoutePricing")}
       />
     );
   }
@@ -1054,7 +1213,7 @@ function DiscoveryPricePill({
   if (!hasProviderPrice) {
     return (
       <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
-        Compare options
+        {t("homeCompareOptions")}
       </span>
     );
   }
@@ -1065,7 +1224,7 @@ function DiscoveryPricePill({
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
       <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
-        Compare options
+        {t("homeCompareOptions")}
       </span>
     );
   }
@@ -1080,8 +1239,8 @@ function DiscoveryPricePill({
     isFallbackRate: currencyRates.isFallback,
   });
   const estimateCopy = displayPrice.isConvertedEstimate
-    ? " Display estimate; final provider price may differ."
-    : " Final price confirmed by provider.";
+    ? ` ${t("displayEstimateFinalProviderMayDiffer")}`
+    : ` ${t("finalPriceConfirmedByProvider")}`;
 
   return (
     <span
@@ -1089,7 +1248,7 @@ function DiscoveryPricePill({
       aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
-      from {displayPrice.formatted}
+      {t("fromPrice").toLowerCase()} {displayPrice.formatted}
     </span>
   );
 }
@@ -1141,7 +1300,7 @@ function DestinationCard({
             className="object-cover transition duration-500 group-hover:scale-105"
           />
 
-          <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/72 via-slate-950/24 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/55 via-slate-950/16 to-transparent" />
 
           <button
             type="button"
@@ -1157,17 +1316,17 @@ function DestinationCard({
             <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
 
-          <div className="absolute bottom-4 left-4 pr-4 text-white">
-            <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">
+          <div className="absolute bottom-4 left-4 z-10 pr-4 text-white [text-shadow:0_2px_12px_rgba(15,23,42,0.55)]">
+            <h3 className="text-xl font-black tracking-tight sm:text-2xl">
               {city}
             </h3>
-            <p className="text-sm font-semibold text-white/95 drop-shadow-sm">
+            <p className="text-sm font-semibold text-white/95">
               {country}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center p-4">
+        <div className="flex min-h-[4.5rem] items-end px-4 pb-4 pt-3">
           <DestinationPricePill
             price={price}
             displayCurrency={displayCurrency}
@@ -1194,6 +1353,8 @@ function DestinationPricePill({
   expectedDestinationCode?: string;
   isLoading: boolean;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const currencyRates = useCurrencyRates();
   const hasProviderPrice = hasFreshProviderPrice(price, {
     originCode: expectedOriginCode,
@@ -1203,16 +1364,16 @@ function DestinationPricePill({
   if (isLoading) {
     return (
       <span
-        className="inline-flex h-8 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
-        aria-label="Prices update with provider results"
+        className="inline-flex h-9 w-32 animate-pulse rounded-full border border-slate-300 bg-white shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
+        aria-label={t("homePricesUpdateWithProviderResults")}
       />
     );
   }
 
   if (!hasProviderPrice) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
-        Explore fares
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
+        {t("homeExploreFares")}
       </span>
     );
   }
@@ -1222,8 +1383,8 @@ function DestinationPricePill({
 
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-3 py-1.5 text-sm font-medium text-slate-700">
-        Explore fares
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-[15px] font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
+        {t("homeExploreFares")}
       </span>
     );
   }
@@ -1238,16 +1399,16 @@ function DestinationPricePill({
     isFallbackRate: currencyRates.isFallback,
   });
   const estimateCopy = displayPrice.isConvertedEstimate
-    ? " Display estimate; final provider price may differ."
-    : " Final price confirmed by provider.";
+    ? ` ${t("displayEstimateFinalProviderMayDiffer")}`
+    : ` ${t("finalPriceConfirmedByProvider")}`;
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-200 bg-white/90 px-3 py-1.5 text-sm font-semibold text-slate-800 shadow-sm"
+      className="inline-flex text-[17px] font-extrabold leading-6 tracking-tight text-slate-950 sm:text-lg"
       aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
-      from {displayPrice.formatted}
+      {t("fromPrice").toLowerCase()} {displayPrice.formatted}
     </span>
   );
 }
@@ -1276,7 +1437,7 @@ function PromoPanel({
       }`}
     >
       <div className="relative z-10 max-w-xs">
-        <h2 className="text-2xl font-semibold leading-tight text-slate-800 sm:font-bold sm:text-slate-900">
+        <h2 className="text-xl font-semibold leading-tight text-slate-800 sm:font-bold sm:text-slate-900">
           {title}
         </h2>
 

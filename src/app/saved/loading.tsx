@@ -1,5 +1,6 @@
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
+import { LocalizedLoadingLabel } from "@/components/layout/LocalizedLoadingLabel";
 
 const savedCardSkeletons = Array.from({ length: 6 });
 
@@ -11,8 +12,8 @@ export default function SavedLoading() {
         className="flex-1 bg-[radial-gradient(circle_at_top,rgba(244,244,255,0.9),rgba(255,255,255,1)_42%)] pb-14 pt-6 md:pb-20 md:pt-10"
         role="status"
         aria-live="polite"
-        aria-label="Loading saved trips and recent searches"
       >
+        <LocalizedLoadingLabel labelKey="loadingSavedTripsAndRecentSearches" className="sr-only" />
         <section className="page-shell space-y-8" aria-hidden="true">
           <div className="rounded-3xl border border-indigo-100 bg-white/90 p-6 shadow-[0_18px_55px_-34px_rgba(67,56,202,0.55)] md:p-8">
             <div className="h-4 w-36 animate-pulse rounded-full bg-violet-100 motion-reduce:animate-none" />

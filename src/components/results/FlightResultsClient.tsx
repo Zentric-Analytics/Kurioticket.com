@@ -28,6 +28,7 @@ import { FlightCard } from "@/components/results/FlightCard";
 import { MobileAirportPicker } from "@/components/search/MobileAirportPicker";
 import { Button } from "@/components/ui/Button";
 import { FlightCardSkeleton } from "@/components/ui/Skeleton";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { useCurrencyRates } from "@/components/currency/CurrencyRatesProvider";
 import { useRegion } from "@/components/region/RegionProvider";
 import { airports, type AirportOption } from "@/data/airports";
@@ -37,6 +38,7 @@ import {
   type HomeDiscoveryItem,
 } from "@/data/homeDiscovery";
 import { buildDiscoveryLink } from "@/lib/home/buildDiscoveryLinks";
+import { translateHomeDiscoveryCopy } from "@/lib/i18n/homeDiscovery";
 import {
   clearRecentSearches,
   readRecentSearches,
@@ -51,6 +53,7 @@ import {
 import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
+import { translations as enTranslations } from "@/lib/i18n/en";
 
 const resultStackClass = "w-full max-w-[680px] lg:ml-4 xl:ml-6";
 const desktopFilterStickyTopClass =
@@ -69,21 +72,21 @@ const filterQueryParamKeys = [
   "fFlexible",
 ] as const;
 
-const loadingMessages = [
-  "Searching airlines...",
-  "Comparing prices...",
-  "Checking value-focused routes...",
-  "Finding lower-priced options...",
-  "Analyzing layover quality...",
-  "Comparing baggage-inclusive fares...",
+const loadingMessageKeys = [
+  "searchingAirlines",
+  "comparingPrices",
+  "checkingValueFocusedRoutes",
+  "findingLowerPricedOptions",
+  "analyzingLayoverQuality",
+  "comparingBaggageInclusiveFares",
 ];
 
 type CabinClassValue = "economy" | "business" | "first";
 
-const cabinClassOptions: Array<{ label: string; value: CabinClassValue }> = [
-  { label: "Economy", value: "economy" },
-  { label: "Business", value: "business" },
-  { label: "First", value: "first" },
+const cabinClassOptions: Array<{ labelKey: string; value: CabinClassValue }> = [
+  { labelKey: "economy", value: "economy" },
+  { labelKey: "business", value: "business" },
+  { labelKey: "first", value: "first" },
 ];
 
 const normalizeCabinClassValue = (
@@ -91,43 +94,59 @@ const normalizeCabinClassValue = (
 ): CabinClassValue =>
   value === "business" || value === "first" ? value : "economy";
 
-const flightFaqItems: Array<{ question: string; answer: string }> = [
-  {
-    question: "When is the best time to book a flight?",
-    answer:
-      "Flight prices can change based on route, season, demand, and availability. It is usually helpful to compare several dates, check nearby airports when possible, and review the full itinerary before choosing a fare.",
-  },
-  {
-    question: "What should I check before booking?",
-    answer:
-      "Review the departure and arrival times, total travel time, stopovers, baggage rules, seat selection options, cancellation terms, and ticket-change policy before completing your booking with the provider.",
-  },
-  {
-    question: "What is a flexible fare?",
-    answer:
-      "A flexible fare may allow changes or cancellations with fewer restrictions than a basic fare, but the exact rules depend on the airline or booking provider. Always review the fare conditions before purchase.",
-  },
-  {
-    question: "Are nonstop flights always better?",
-    answer:
-      "Not always. Nonstop flights can save time, while one-stop routes may offer different departure times, arrival windows, or fare options. Compare total travel time, layover length, and convenience before deciding.",
-  },
-  {
-    question: "How do baggage rules work?",
-    answer:
-      "Baggage allowance can vary by airline, route, cabin, fare type, and provider. Check whether carry-on, checked bags, and personal items are included before booking.",
-  },
-  {
-    question: "Can I change or cancel my ticket?",
-    answer:
-      "Change and cancellation options depend on the fare rules and provider policies. Some tickets may be non-refundable or include fees, so review the terms carefully before booking.",
-  },
-  {
-    question: "What should I know about international flights?",
-    answer:
-      "For international travel, review passport validity, visa requirements, transit rules, baggage policies, and arrival requirements for your destination before booking.",
-  },
-];
+const normalizeFlightResultsCalendarLocale = (
+  locale: string | null | undefined,
+) => {
+  const normalized =
+    locale?.trim().replace("_", "-").toLowerCase() ?? "";
+
+  if (normalized === "fr" || normalized.startsWith("fr-")) {
+    return "fr-FR";
+  }
+
+  if (normalized === "es" || normalized.startsWith("es-")) {
+    return "es-ES";
+  }
+
+  if (normalized === "de" || normalized.startsWith("de-")) {
+    return "de-DE";
+  }
+
+  return "en-US";
+};
+
+function getFlightFaqItems(t: (key: string) => string): Array<{ question: string; answer: string }> {
+  return [
+    {
+      question: t("flightFaqBestTimeQuestion"),
+      answer: t("flightFaqBestTimeAnswer"),
+    },
+    {
+      question: t("flightFaqBeforeBookingQuestion"),
+      answer: t("flightFaqBeforeBookingAnswer"),
+    },
+    {
+      question: t("flightFaqFlexibleFareQuestion"),
+      answer: t("flightFaqFlexibleFareAnswer"),
+    },
+    {
+      question: t("flightFaqNonstopQuestion"),
+      answer: t("flightFaqNonstopAnswer"),
+    },
+    {
+      question: t("flightFaqBaggageQuestion"),
+      answer: t("flightFaqBaggageAnswer"),
+    },
+    {
+      question: t("flightFaqChangeCancelQuestion"),
+      answer: t("flightFaqChangeCancelAnswer"),
+    },
+    {
+      question: t("flightFaqInternationalQuestion"),
+      answer: t("flightFaqInternationalAnswer"),
+    },
+  ];
+}
 
 type PlacesApiResponse = {
   suggestions?: AirportOption[];
@@ -394,6 +413,8 @@ function RecentSearchCard({
   entry: RecentSearchEntry;
   onRemove: (id: string) => void;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const cardContent = (
     <>
       <div className="relative h-full min-h-[112px] w-20 shrink-0 overflow-hidden bg-gradient-to-br from-indigo-700 via-violet-600 to-sky-400 sm:w-24">
@@ -414,7 +435,7 @@ function RecentSearchCard({
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-transparent" />
         <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-900 shadow-sm">
-          {entry.type === "flight" ? "Flight" : "Hotel"}
+          {entry.type === "flight" ? t("flights") : t("hotels")}
         </span>
       </div>
 
@@ -428,7 +449,7 @@ function RecentSearchCard({
           </p>
         </div>
         <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/75 px-2.5 py-1 text-xs font-bold text-slate-700 transition group-hover:border-indigo-200 group-hover:bg-indigo-50 group-hover:text-indigo-700 group-focus-visible:border-indigo-200 group-focus-visible:bg-indigo-50 group-focus-visible:text-indigo-700">
-          Search again
+          {t("searchAgain")}
           <ArrowRightLeft size={13} />
         </span>
       </div>
@@ -450,7 +471,7 @@ function RecentSearchCard({
 
       <button
         type="button"
-        aria-label={`Remove ${entry.label} from recent searches`}
+        aria-label={t("removeRecentSearch").replace("{{label}}", entry.label)}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
@@ -474,11 +495,15 @@ function SavedRouteCard({
     itemId: string,
   ) => void;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const copy = translateHomeDiscoveryCopy(dictionary, item);
+
   return (
     <article className="group relative min-w-[250px] snap-start overflow-hidden rounded-[1.45rem] border border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-xl sm:min-w-[280px] md:min-w-0">
       <Link
         href={buildDiscoveryLink(item)}
-        aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+        aria-label={`${t("explore")} ${item.originCode} ${t("to").toLowerCase()} ${item.destinationCode}`}
         className="focus-ring flex h-full flex-col"
       >
         <div className="relative h-32 overflow-hidden bg-slate-200">
@@ -497,16 +522,16 @@ function SavedRouteCard({
 
         <div className="flex flex-1 flex-col p-4">
           <h3 className="line-clamp-1 pr-8 text-base font-black leading-tight text-slate-950">
-            {item.title}
+            {copy.title}
           </h3>
           <p className="mt-1 text-sm font-semibold text-slate-500">
-            {item.originCity} to {item.destinationCity}
+            {item.originCity} {t("to").toLowerCase()} {item.destinationCity}
           </p>
           <p className="mt-2 line-clamp-2 flex-1 text-sm leading-6 text-slate-600">
-            {item.routeNote}
+            {copy.routeNote}
           </p>
           <span className="mt-4 inline-flex items-center justify-between rounded-full bg-slate-950 px-3 py-2 text-xs font-black text-white transition group-hover:bg-indigo-700 group-focus-visible:bg-indigo-700">
-            Explore route
+            {t("exploreRoute")}
             <ArrowRightLeft size={14} />
           </span>
         </div>
@@ -514,7 +539,7 @@ function SavedRouteCard({
 
       <button
         type="button"
-        aria-label={`Remove ${item.title} from saved routes`}
+        aria-label={`${t("remove")} ${copy.title}`}
         aria-pressed="true"
         onClick={(event) => onHeartToggle(event, item.id)}
         className="focus-ring absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-950/15 backdrop-blur transition hover:bg-rose-600"
@@ -526,6 +551,9 @@ function SavedRouteCard({
 }
 
 function FlightBookingFaqSection() {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+
   return (
     <section aria-labelledby="flight-booking-faq-heading" className="mt-8">
       <div className="max-w-3xl">
@@ -533,15 +561,15 @@ function FlightBookingFaqSection() {
           id="flight-booking-faq-heading"
           className="text-2xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-3xl"
         >
-          Flight booking FAQs
+          {t("flightBookingFaqs")}
         </h2>
         <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
-          Review common flight-search details before continuing with a provider.
+          {t("flightBookingFaqIntro")}
         </p>
       </div>
 
       <FaqAccordion
-        items={flightFaqItems}
+        items={getFlightFaqItems(t)}
         columns="three"
         compact
         className="mt-4"
@@ -551,6 +579,30 @@ function FlightBookingFaqSection() {
 }
 
 export function FlightResultsClient() {
+  const { t: dictionary, locale } = useLocale();
+  const t = useCallback(
+    (key: string) => dictionary[key] ?? enTranslations[key] ?? "",
+    [dictionary],
+  );
+  const calendarLocale = useMemo(
+    () => normalizeFlightResultsCalendarLocale(locale),
+    [locale],
+  );
+  const airportPickerLabels = useMemo(
+    () => ({
+      clear: dictionary.clear ?? enTranslations.clear ?? "",
+      done: dictionary.done ?? enTranslations.done ?? "",
+      chooseOrigin: dictionary.chooseOrigin ?? enTranslations.chooseOrigin ?? "",
+      clearOrigin: dictionary.clearOrigin ?? enTranslations.clearOrigin ?? "",
+      clearDestination: dictionary.clearDestination ?? enTranslations.clearDestination ?? "",
+      searchAirportsAndCities: dictionary.searchAirportsAndCities ?? enTranslations.searchAirportsAndCities ?? "",
+      searchAirportsOrCities: dictionary.searchAirportsOrCities ?? enTranslations.searchAirportsOrCities ?? "",
+      startTypingCityOrAirport: dictionary.startTypingCityOrAirport ?? enTranslations.startTypingCityOrAirport ?? "",
+      searchingAirportsAndCities: dictionary.searchingAirportsAndCities ?? enTranslations.searchingAirportsAndCities ?? "",
+      noMatchingAirportsOrCities: dictionary.noMatchingAirportsOrCities ?? enTranslations.noMatchingAirportsOrCities ?? "",
+    }),
+    [dictionary],
+  );
   const params = useSearchParams();
   const router = useRouter();
   const { selectedOption } = useRegion();
@@ -749,32 +801,33 @@ export function FlightResultsClient() {
       ? destinationSuggestions
       : destinationFallbackSuggestions;
   const mobileTripTypeSummary =
-    tripTypeInput === "one-way" ? "One-way" : "Round-trip";
-  const mobileOriginSummary = (originCode || originInput || "Origin").trim();
+    tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip");
+  const mobileOriginSummary = (originCode || originInput || t("origin")).trim();
   const mobileDestinationSummary = (
     destinationCode ||
     destinationInput ||
-    "Destination"
+    t("destination")
   ).trim();
   const mobileRouteSummary = `${mobileOriginSummary} → ${mobileDestinationSummary}`;
   const mobileDateSummary = departureDateInput
     ? tripTypeInput === "round-trip" && returnDateInput
-      ? `${formatCompactDateLabel(departureDateInput)} – ${formatCompactDateLabel(returnDateInput)}`
-      : formatCompactDateLabel(departureDateInput)
-    : "Travel dates";
+      ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
+      : formatCompactDateLabel(departureDateInput, calendarLocale)
+    : t("travelDates");
   const mobileTravelerTotal = Math.max(
     1,
     adultCount + childCount + infantCount,
   );
   const mobileTravelerSummary =
     mobileTravelerTotal === 1 && adultCount === 1
-      ? "1 adult"
-      : `${mobileTravelerTotal} travelers`;
+      ? `1 ${t("adultSingular")}`
+      : `${mobileTravelerTotal} ${t("travelerPlural")}`;
   const travelerCabinSummary = buildTravelerCabinSummary(
     adultCount,
     childCount,
     infantCount,
     cabinClassInput,
+    t,
   );
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
@@ -1168,7 +1221,7 @@ export function FlightResultsClient() {
     if (normalizedSearchValues.toString() !== searchValues.toString()) {
       const nextQuery = normalizedSearchValues.toString();
       router.replace(
-        nextQuery ? `/flights/results?${nextQuery}` : "/flights/results",
+        nextQuery ? `/flights/results?${nextQuery}` : "/flights",
         {
           scroll: false,
         },
@@ -1415,7 +1468,7 @@ export function FlightResultsClient() {
     if (!loading) return;
 
     const id = window.setInterval(() => {
-      setMessageIndex((current) => (current + 1) % loadingMessages.length);
+      setMessageIndex((current) => (current + 1) % loadingMessageKeys.length);
     }, 1100);
 
     return () => window.clearInterval(id);
@@ -1763,6 +1816,9 @@ export function FlightResultsClient() {
     [results],
   );
 
+  const mixedProviderCurrenciesLabel =
+    dictionary.mixedProviderCurrencies ?? enTranslations.mixedProviderCurrencies ?? "";
+
   const formatResultPriceLabel = useMemo(
     () =>
       (amount: number, sourceCurrency = priceLabelCurrency) =>
@@ -1775,12 +1831,13 @@ export function FlightResultsClient() {
               rates: currencyRates.rates,
               isFallbackRate: currencyRates.isFallback,
             }).formatted
-          : "Mixed provider currencies",
+          : mixedProviderCurrenciesLabel,
     [
       currencyRates.isFallback,
       currencyRates.rates,
       priceLabelCurrency,
       selectedCurrency,
+      mixedProviderCurrenciesLabel,
     ],
   );
 
@@ -1792,7 +1849,7 @@ export function FlightResultsClient() {
 
     const price = formatResultPriceLabel(flight.price, flight.currency);
     const duration = formatDurationFromMinutes(flight.durationMinutes);
-    const stops = formatStopsLabel(flight.stops);
+    const stops = formatStopsLabel(flight.stops, t);
     const airlineOrProvider = flight.airlineName || flight.provider;
     const departure = formatTime(flight.departureTime);
     const primary =
@@ -1808,7 +1865,7 @@ export function FlightResultsClient() {
     return {
       primary,
       context,
-      departure: `Departs ${departure}`,
+      departure: `${t("departs")} ${departure}`,
     };
   };
 
@@ -1843,9 +1900,9 @@ export function FlightResultsClient() {
 
     return Array.from(buckets, ([value, data]) => ({
       value,
-      label: stopLabel(value),
+      label: stopLabel(value, t),
       count: data.count,
-      secondaryLabel: `${data.count} option${data.count === 1 ? "" : "s"}`,
+      secondaryLabel: formatOptionsFound(data.count, t),
       rightLabel: Number.isFinite(data.minPrice)
         ? formatResultPriceLabel(
             data.minPrice,
@@ -1856,7 +1913,7 @@ export function FlightResultsClient() {
       (first, second) =>
         stopBucketSortValue(first.value) - stopBucketSortValue(second.value),
     );
-  }, [formatResultPriceLabel, results]);
+  }, [formatResultPriceLabel, results, t]);
 
   const airlineOptions = useMemo(
     () =>
@@ -1882,12 +1939,13 @@ export function FlightResultsClient() {
       flightQualityDefinitions
         .map((option) => ({
           ...option,
+          label: t(option.labelKey),
           count: results.filter((flight) =>
             flightHasQualityOption(flight, option.value),
           ).length,
         }))
         .filter((option) => option.count > 0),
-    [results],
+    [results, t],
   );
 
   const priceBounds = useMemo(() => {
@@ -2136,7 +2194,7 @@ export function FlightResultsClient() {
     const nextQuery = nextParams.toString();
     lastWrittenFilterQueryStringRef.current = nextQuery;
     router.replace(
-      nextQuery ? `/flights/results?${nextQuery}` : "/flights/results",
+      nextQuery ? `/flights/results?${nextQuery}` : "/flights",
       {
         scroll: false,
       },
@@ -2218,7 +2276,7 @@ export function FlightResultsClient() {
     timeBounds.takeoff,
   ]);
 
-  const activeFilterLabel = `${activeFilterCount} active`;
+  const activeFilterLabel = `${t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}`;
 
   const filtered = useMemo(
     () =>
@@ -2351,10 +2409,10 @@ export function FlightResultsClient() {
 
   if (!body) {
     return (
-      <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-6 sm:pt-8 lg:pt-8">
+      <main className="flex-1 bg-[radial-gradient(circle_at_top,_#eef4ff_0%,_#f8fafd_42%,_#f2f6fc_100%)] pb-8 pt-4 sm:pt-8 lg:pt-8">
         <section className="page-shell">
           <form
-            className="mx-auto mt-0 w-full max-w-5xl space-y-1.5"
+            className="mx-auto mt-0 w-full max-w-5xl space-y-3 sm:space-y-2"
             onSubmit={(event) => {
               event.preventDefault();
 
@@ -2415,55 +2473,95 @@ export function FlightResultsClient() {
 
             <div className="text-center">
               <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <h1 className="mx-auto w-max whitespace-nowrap text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-[clamp(1.9rem,5vw,2.75rem)]">
-                  Compare available flight options
+                <h1 className="mx-auto w-max whitespace-nowrap text-[1.35rem] font-semibold leading-tight tracking-tight text-slate-900 sm:text-[clamp(1.9rem,5vw,2.75rem)]">
+                  {t("compareAvailableFlightOptions")}
                 </h1>
               </div>
-              <div className="mx-auto mt-3 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <p className="mx-auto w-max whitespace-nowrap text-center text-xs leading-6 text-slate-600 sm:text-base">
-                  Review fares and choose the route that fits your trip in a few
-                  taps.
+              <div className="mx-auto mt-1.5 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden sm:mt-3">
+                <p className="mx-auto w-max whitespace-nowrap text-center text-[11px] leading-5 text-slate-600 sm:text-base sm:leading-6">
+                  {t("flightResultsHeroSubtitle")}
                 </p>
               </div>
             </div>
 
-            <div className="overflow-visible rounded-2xl border border-slate-200 bg-white p-1 shadow-[0_10px_28px_rgba(15,23,42,0.10)]">
-              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[132px_minmax(0,2.35fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
-                <div className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
-                  <label
-                    className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600"
-                    htmlFor="tripType"
-                  >
-                    Trip type
-                  </label>
-                  <select
-                    id="tripType"
-                    name="tripType"
-                    value={tripTypeInput}
-                    onChange={(event) =>
-                      handleTripTypeChange(event.target.value)
-                    }
-                    className="focus-ring h-8 w-full appearance-none rounded-md border-0 bg-transparent px-0 pr-6 text-[16px] font-medium text-slate-900 outline-none transition-colors md:text-sm"
-                  >
-                    <option value="round-trip">Round-trip</option>
-                    <option value="one-way">One-way</option>
-                  </select>
+            <div className="flex items-center justify-between gap-2 px-1 sm:px-1">
+              <div ref={tripTypeMenuRef} className="relative inline-flex">
+                <button
+                  type="button"
+                  aria-expanded={tripTypeMenuOpen}
+                  aria-haspopup="listbox"
+                  onClick={() => {
+                    setActiveSuggest(null);
+                    setDropdownPosition(null);
+                    setActiveDatePicker(null);
+                    setDatePickerPosition(null);
+                    setTravelerPopoverOpen(false);
+                    setTravelerPopoverPosition(null);
+                    setTripTypeMenuOpen((open) => !open);
+                  }}
+                  className="focus-ring inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-950 sm:h-auto sm:rounded-md sm:border-0 sm:bg-transparent sm:px-1 sm:text-sm sm:font-medium sm:shadow-none"
+                >
+                  {tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip")}
                   <ChevronDown
-                    size={14}
-                    className="pointer-events-none absolute bottom-3.5 right-3 text-slate-500"
+                    aria-hidden="true"
+                    className={cn(
+                      "h-4 w-4 text-slate-500 transition-transform",
+                      tripTypeMenuOpen && "rotate-180",
+                    )}
                   />
-                </div>
+                </button>
 
-                <div className="grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                {tripTypeMenuOpen ? (
                   <div
-                    className="relative min-h-[54px] px-0 py-0 pr-2"
+                    role="listbox"
+                    aria-label={t("tripType")}
+                    className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                  >
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={tripTypeInput === "round-trip"}
+                      onClick={() => handleTripTypeChange("round-trip")}
+                      className={cn(
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                        tripTypeInput === "round-trip"
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      {t("roundTrip")}
+                    </button>
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={tripTypeInput === "one-way"}
+                      onClick={() => handleTripTypeChange("one-way")}
+                      className={cn(
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                        tripTypeInput === "one-way"
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100",
+                      )}
+                    >
+                      {t("oneWay")}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(79,70,229,0.16)] ring-1 ring-indigo-100/80 backdrop-blur sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:ring-0">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
+                <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-stretch rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-indigo-500/40 lg:col-span-1 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                  <div
+                    className="relative min-h-[48px] px-0 py-0 pr-2 sm:min-h-[54px]"
                     ref={originWrapRef}
                   >
                     <label
-                      className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600"
+                      className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600"
                       htmlFor="origin"
                     >
-                      Origin
+                      {t("origin")}
                     </label>
                     <input
                       id="origin"
@@ -2491,14 +2589,14 @@ export function FlightResultsClient() {
                           setDropdownPosition(null);
                         }
                       }}
-                      placeholder="From?"
+                      placeholder={t("fromPlaceholder")}
                       autoComplete="off"
-                      className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-normal md:text-sm"
                     />
                     {originInput ? (
                       <button
                         type="button"
-                        aria-label="Clear origin"
+                        aria-label={t("clearOrigin")}
                         onMouseDown={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -2532,23 +2630,23 @@ export function FlightResultsClient() {
                   <div className="flex items-center justify-center">
                     <button
                       type="button"
-                      aria-label="Swap origin and destination"
+                      aria-label={t("swapOriginDestination")}
                       onClick={handleSwapLocations}
-                      className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                      className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-indigo-100 bg-indigo-50 text-indigo-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-100 hover:text-indigo-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 sm:border-slate-300 sm:bg-white sm:text-slate-600 sm:shadow-none sm:hover:border-slate-400 sm:hover:bg-slate-50 sm:hover:text-slate-900"
                     >
                       <ArrowRightLeft size={14} />
                     </button>
                   </div>
 
                   <div
-                    className="relative min-h-[54px] px-0 py-0 pl-2"
+                    className="relative min-h-[48px] px-0 py-0 pl-2 sm:min-h-[54px]"
                     ref={destinationWrapRef}
                   >
                     <label
-                      className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600"
+                      className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600"
                       htmlFor="destination"
                     >
-                      Destination
+                      {t("destination")}
                     </label>
                     <input
                       id="destination"
@@ -2577,14 +2675,14 @@ export function FlightResultsClient() {
                           setDropdownPosition(null);
                         }
                       }}
-                      placeholder="To?"
+                      placeholder={t("toPlaceholder")}
                       autoComplete="off"
-                      className="focus-ring h-8 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 md:text-sm"
+                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-normal md:text-sm"
                     />
                     {destinationInput ? (
                       <button
                         type="button"
-                        aria-label="Clear destination"
+                        aria-label={t("clearDestination")}
                         onMouseDown={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -2617,31 +2715,31 @@ export function FlightResultsClient() {
                 </div>
 
                 <div
-                  className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                  className="relative min-h-[50px] rounded-[1.25rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                   ref={departureWrapRef}
                 >
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
-                    Travel dates
+                  <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600">
+                    {t("travelDates")}
                   </label>
                   <button
                     type="button"
-                    aria-label="Travel dates"
+                    aria-label={t("travelDates")}
                     onClick={() => setActiveDatePicker("departure")}
-                    className="focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
+                    className="focus-ring flex h-7 w-full items-center gap-1.5 rounded-md border-0 bg-transparent px-0 pr-7 text-left text-[15px] font-semibold text-slate-950 outline-none transition-colors sm:h-8 sm:gap-2 sm:pr-8 sm:text-[16px] sm:font-normal md:text-sm"
                   >
                     <Calendar size={16} className="shrink-0 text-slate-500" />
                     <span className="truncate">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} — ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
-                        : "Travel dates"}
+                          ? `${formatDateLabel(departureDateInput, calendarLocale)} — ${formatDateLabel(returnDateInput, calendarLocale)}`
+                          : formatDateLabel(departureDateInput, calendarLocale)
+                        : t("travelDates")}
                     </span>
                   </button>
                   {departureDateInput || returnDateInput ? (
                     <button
                       type="button"
-                      aria-label="Clear travel dates"
+                      aria-label={t("clearTravelDates")}
                       onMouseDown={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -2662,15 +2760,15 @@ export function FlightResultsClient() {
                 </div>
 
                 <div
-                  className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                  className="relative min-h-[50px] rounded-[1.25rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                   ref={travelerCabinWrapRef}
                 >
-                  <label className="mb-1 block text-xs font-semibold uppercase tracking-wide leading-4 text-slate-600">
-                    Travelers
+                  <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600">
+                    {t("travelers")}
                   </label>
                   <button
                     type="button"
-                    aria-label="Travelers and cabin class"
+                    aria-label={t("travelersAndCabinClass")}
                     onClick={() => {
                       setTravelerPopoverOpen((current) => {
                         const next = !current;
@@ -2680,14 +2778,15 @@ export function FlightResultsClient() {
                         return next;
                       });
                     }}
-                    className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] text-slate-900 outline-none transition-colors md:text-sm"
+                    className="focus-ring flex h-7 w-full items-center justify-between gap-1.5 rounded-md border-0 bg-transparent px-0 text-left text-[15px] font-semibold text-slate-950 outline-none transition-colors sm:h-8 sm:gap-2 sm:text-[16px] sm:font-normal md:text-sm"
                   >
-                    <span className="block text-sm font-medium text-slate-900">
+                    <span className="block truncate text-[15px] font-semibold text-slate-950 sm:text-sm sm:font-medium sm:text-slate-900">
                       {buildTravelerCabinSummary(
                         adultCount,
                         childCount,
                         infantCount,
                         cabinClassInput,
+                        t,
                       )}
                     </span>
                     <ChevronDown
@@ -2698,12 +2797,14 @@ export function FlightResultsClient() {
                     />
                   </button>
                 </div>
-                <Button
-                  type="submit"
-                  className="mt-2 h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 sm:mt-3 lg:mt-0 lg:h-auto lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
-                >
-                  Search
-                </Button>
+                <div className="col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
+                  <Button
+                    type="submit"
+                    className="h-[50px] w-full rounded-[1.25rem] bg-gradient-to-r from-indigo-700 via-violet-600 to-fuchsia-600 px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(79,70,229,0.28)] transition-transform active:scale-[0.99] sm:h-12 sm:rounded-xl sm:bg-gradient-to-r sm:from-indigo-700 sm:to-violet-600 sm:shadow-md sm:shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
+                  >
+                    {t("search")}
+                  </Button>
+                </div>
               </div>
             </div>
           </form>
@@ -2779,7 +2880,7 @@ export function FlightResultsClient() {
                   onClick={handleClearRecentSearches}
                   className="focus-ring inline-flex min-h-9 shrink-0 items-center justify-center rounded-full px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:bg-white/70 hover:text-rose-700"
                 >
-                  Clear all
+                  {t("clear")} all
                 </button>
               </div>
 
@@ -2810,8 +2911,7 @@ export function FlightResultsClient() {
                   </p>
                 </div>
                 <p className="max-w-xs text-sm leading-6 text-slate-500">
-                  Jump back into route ideas you already liked—no account
-                  required.
+                  {t("quickResumeLatestSearchesBody")}
                 </p>
               </div>
 
@@ -2832,13 +2932,12 @@ export function FlightResultsClient() {
               <div className="mb-4 sm:max-w-3xl">
                 <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <h2 className="w-max whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
-                    Discover destinations from your region
+                    {t("discoverDestinationsFromRegion")}
                   </h2>
                 </div>
                 <div className="mt-1.5 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <p className="w-max whitespace-nowrap text-xs font-normal leading-6 text-slate-600 sm:text-base">
-                    Explore curated routes and start your next trip with
-                    confidence.
+                    {t("discoverDestinationsFromRegionBody")}
                   </p>
                 </div>
               </div>
@@ -2849,7 +2948,7 @@ export function FlightResultsClient() {
                     <Link
                       key={item.id}
                       href={buildDiscoveryLink(item)}
-                      aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                      aria-label={`${t("explore")} ${item.originCode} ${t("to").toLowerCase()} ${item.destinationCode}`}
                       className="group w-full overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                     >
                       <article className="flex h-full flex-col">
@@ -2901,7 +3000,7 @@ export function FlightResultsClient() {
                         <Link
                           key={item.id}
                           href={buildDiscoveryLink(item)}
-                          aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                          aria-label={`${t("explore")} ${item.originCode} ${t("to").toLowerCase()} ${item.destinationCode}`}
                           className="group rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_8px_22px_rgba(15,23,42,0.035)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_14px_28px_rgba(15,23,42,0.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:p-3"
                         >
                           <article className="flex h-full flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3">
@@ -2936,13 +3035,12 @@ export function FlightResultsClient() {
               <div className="mb-4 sm:max-w-3xl">
                 <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <h2 className="w-max whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
-                    Beach vacations
+                    {t("beachVacations")}
                   </h2>
                 </div>
                 <div className="mt-1.5 max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                   <p className="w-max whitespace-nowrap text-xs font-normal leading-6 text-slate-600 sm:text-base">
-                    Explore flight routes to sunny coastlines, island escapes,
-                    and warm-weather beach destinations.
+                    {t("beachVacationsBody")}
                   </p>
                 </div>
               </div>
@@ -2957,7 +3055,7 @@ export function FlightResultsClient() {
                         <Link
                           key={item.id}
                           href={buildDiscoveryLink(item)}
-                          aria-label={`Explore ${item.originCode} to ${item.destinationCode}`}
+                          aria-label={`${t("explore")} ${item.originCode} ${t("to").toLowerCase()} ${item.destinationCode}`}
                           className="group w-[10rem] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_22px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-[0_14px_30px_rgba(15,23,42,0.085)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 sm:w-auto"
                         >
                           <article className="flex h-full flex-col">
@@ -3088,8 +3186,8 @@ export function FlightResultsClient() {
       const mobileLabelClass =
         "mb-1.5 block text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500";
       const mobileTripTypeOptions = [
-        { label: "Round-trip", value: "round-trip" },
-        { label: "One-way", value: "one-way" },
+        { labelKey: "roundTrip", value: "round-trip" },
+        { labelKey: "oneWay", value: "one-way" },
       ];
 
       return (
@@ -3100,12 +3198,12 @@ export function FlightResultsClient() {
           <div className="shrink-0 border-b border-slate-200/80 bg-white px-4 pb-3 pt-[calc(0.85rem+env(safe-area-inset-top))]">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-black tracking-tight text-slate-950">
-                Edit flight search
+                {t("editFlightSearch")}
               </h2>
 
               <button
                 type="button"
-                aria-label="Close search form"
+                aria-label={t("closeSearchForm")}
                 onClick={closeMobileSearchDrawer}
                 className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
               >
@@ -3132,9 +3230,9 @@ export function FlightResultsClient() {
                   )}
                 >
                   <span className="min-w-0">
-                    <span className={mobileLabelClass}>Origin</span>
+                    <span className={mobileLabelClass}>{t("origin")}</span>
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {originInput.trim() || "From?"}
+                      {originInput.trim() || t("fromPlaceholder")}
                     </span>
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
@@ -3157,9 +3255,9 @@ export function FlightResultsClient() {
                   )}
                 >
                   <span className="min-w-0">
-                    <span className={mobileLabelClass}>Destination</span>
+                    <span className={mobileLabelClass}>{t("destination")}</span>
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
-                      {destinationInput.trim() || "To?"}
+                      {destinationInput.trim() || t("toPlaceholder")}
                     </span>
                   </span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-500" />
@@ -3185,13 +3283,13 @@ export function FlightResultsClient() {
                 >
                   <Calendar className="h-5 w-5 shrink-0 text-indigo-700" />
                   <span className="min-w-0">
-                    <span className={mobileLabelClass}>Travel dates</span>
+                    <span className={mobileLabelClass}>{t("travelDates")}</span>
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
-                        : "Travel dates"}
+                          ? `${formatDateLabel(departureDateInput, calendarLocale)} – ${formatDateLabel(returnDateInput, calendarLocale)}`
+                          : formatDateLabel(departureDateInput, calendarLocale)
+                        : t("travelDates")}
                     </span>
                   </span>
                 </button>
@@ -3215,13 +3313,14 @@ export function FlightResultsClient() {
                   )}
                 >
                   <span className="min-w-0">
-                    <span className={mobileLabelClass}>Travelers / cabin</span>
+                    <span className={mobileLabelClass}>{t("travelersAndCabin")}</span>
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
                       {buildTravelerCabinSummary(
                         adultCount,
                         childCount,
                         infantCount,
                         cabinClassInput,
+                        t,
                       )}
                     </span>
                   </span>
@@ -3231,12 +3330,12 @@ export function FlightResultsClient() {
 
               <div className="rounded-3xl border border-slate-200 bg-white p-1.5 shadow-sm shadow-slate-900/[0.03]">
                 <span className="mb-2 block px-2 text-[0.68rem] font-black uppercase leading-4 tracking-[0.16em] text-slate-500">
-                  Trip type
+                  {t("tripType")}
                 </span>
                 <div
                   className="grid grid-cols-2 gap-1.5"
                   role="group"
-                  aria-label="Trip type"
+                  aria-label={t("tripType")}
                 >
                   {mobileTripTypeOptions.map((option) => {
                     const selected = tripTypeInput === option.value;
@@ -3254,7 +3353,7 @@ export function FlightResultsClient() {
                             : "bg-slate-100 text-slate-700 hover:bg-slate-200",
                         )}
                       >
-                        {option.label}
+                        {t(option.labelKey)}
                       </button>
                     );
                   })}
@@ -3265,7 +3364,7 @@ export function FlightResultsClient() {
                 type="submit"
                 className="mt-1 h-[52px] w-full rounded-2xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20"
               >
-                Search
+                {t("search")}
               </Button>
             </div>
           </div>
@@ -3278,7 +3377,7 @@ export function FlightResultsClient() {
           <div className="overflow-visible rounded-sm border border-slate-300 bg-white p-1 shadow-[0_8px_22px_rgba(15,23,42,0.12)]">
             <button
               type="button"
-              aria-label="Edit flight search"
+              aria-label={t("editFlightSearch")}
               onClick={expandStickySearch}
               className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-left transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
             >
@@ -3315,7 +3414,7 @@ export function FlightResultsClient() {
               </span>
               <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-[2px] border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 shadow-sm transition group-hover:border-indigo-200 group-hover:bg-white sm:self-center">
                 <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
-                Edit
+                {t("edit")}
               </span>
             </button>
           </div>
@@ -3336,11 +3435,11 @@ export function FlightResultsClient() {
         <div className="flex flex-col gap-0">
           <div className="flex items-center justify-between sm:hidden">
             <span className="text-sm font-semibold text-slate-500">
-              Edit search
+              {t("editSearch")}
             </span>
             <button
               type="button"
-              aria-label="Close search form"
+              aria-label={t("closeSearchForm")}
               onClick={closeMobileSearchDrawer}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
             >
@@ -3370,10 +3469,10 @@ export function FlightResultsClient() {
                 >
                   <span className="min-w-0">
                     <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
-                      Trip type
+                      {t("tripType")}
                     </span>
                     <span className="block truncate text-sm font-semibold text-slate-950">
-                      {tripTypeInput === "one-way" ? "One-way" : "Round-trip"}
+                      {tripTypeInput === "one-way" ? t("oneWay") : t("roundTrip")}
                     </span>
                   </span>
                   <ChevronDown
@@ -3388,7 +3487,7 @@ export function FlightResultsClient() {
                 {tripTypeMenuOpen ? (
                   <div
                     role="listbox"
-                    aria-label="Trip type"
+                    aria-label={t("tripType")}
                     className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
                   >
                     <button
@@ -3403,7 +3502,7 @@ export function FlightResultsClient() {
                           : "text-slate-700 hover:bg-slate-100",
                       )}
                     >
-                      Round-trip
+                      {t("roundTrip")}
                     </button>
 
                     <button
@@ -3418,7 +3517,7 @@ export function FlightResultsClient() {
                           : "text-slate-700 hover:bg-slate-100",
                       )}
                     >
-                      One-way
+                      {t("oneWay")}
                     </button>
                   </div>
                 ) : null}
@@ -3433,7 +3532,7 @@ export function FlightResultsClient() {
                     className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
                     htmlFor="results-origin"
                   >
-                    Origin
+                    {t("origin")}
                   </label>
                   <input
                     id="results-origin"
@@ -3472,7 +3571,7 @@ export function FlightResultsClient() {
                         setDropdownPosition(null);
                       }
                     }}
-                    placeholder="From?"
+                    placeholder={t("fromPlaceholder")}
                     autoComplete="off"
                     className="h-8 w-full border-0 bg-transparent p-0 pr-7 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
                   />
@@ -3480,7 +3579,7 @@ export function FlightResultsClient() {
                   {originInput ? (
                     <button
                       type="button"
-                      aria-label="Clear origin"
+                      aria-label={t("clearOrigin")}
                       onMouseDown={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -3515,7 +3614,7 @@ export function FlightResultsClient() {
                 <div className="flex items-center justify-center">
                   <button
                     type="button"
-                    aria-label="Swap origin and destination"
+                    aria-label={t("swapOriginDestination")}
                     onClick={handleSwapLocations}
                     className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                   >
@@ -3531,7 +3630,7 @@ export function FlightResultsClient() {
                     className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
                     htmlFor="results-destination"
                   >
-                    Destination
+                    {t("destination")}
                   </label>
                   <input
                     id="results-destination"
@@ -3571,7 +3670,7 @@ export function FlightResultsClient() {
                         setDropdownPosition(null);
                       }
                     }}
-                    placeholder="To?"
+                    placeholder={t("toPlaceholder")}
                     autoComplete="off"
                     className="h-8 w-full border-0 bg-transparent p-0 pr-7 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
                   />
@@ -3579,7 +3678,7 @@ export function FlightResultsClient() {
                   {destinationInput ? (
                     <button
                       type="button"
-                      aria-label="Clear destination"
+                      aria-label={t("clearDestination")}
                       onMouseDown={(event) => {
                         event.preventDefault();
                         event.stopPropagation();
@@ -3629,14 +3728,14 @@ export function FlightResultsClient() {
                   <Calendar className="h-4 w-4 shrink-0 text-indigo-700" />
                   <span className="min-w-0">
                     <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
-                      Travel dates
+                      {t("travelDates")}
                     </span>
                     <span className="block truncate text-sm font-semibold text-slate-950">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput)} – ${formatDateLabel(returnDateInput)}`
-                          : formatDateLabel(departureDateInput)
-                        : "Travel dates"}
+                          ? `${formatDateLabel(departureDateInput, calendarLocale)} – ${formatDateLabel(returnDateInput, calendarLocale)}`
+                          : formatDateLabel(departureDateInput, calendarLocale)
+                        : t("travelDates")}
                     </span>
                   </span>
                 </button>
@@ -3691,7 +3790,7 @@ export function FlightResultsClient() {
                 >
                   <span className="min-w-0">
                     <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
-                      Travelers
+                      {t("travelers")}
                     </span>
                     <span className="block truncate text-sm font-semibold text-slate-950">
                       {buildTravelerCabinSummary(
@@ -3699,6 +3798,7 @@ export function FlightResultsClient() {
                         childCount,
                         infantCount,
                         cabinClassInput,
+                        t,
                       )}
                     </span>
                   </span>
@@ -3761,7 +3861,7 @@ export function FlightResultsClient() {
                 type="submit"
                 className="h-full min-h-[54px] w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:min-w-[112px] lg:rounded-l-none lg:rounded-r-xl"
               >
-                Search
+                {t("search")}
               </Button>
             </div>
           </div>
@@ -3778,15 +3878,15 @@ export function FlightResultsClient() {
           variant="secondary"
           aria-label={
             activeFilterCount > 0
-              ? `Open filters, ${activeFilterLabel}`
-              : "Open filters"
+              ? t("openFiltersWithCount").replace("{{count}}", activeFilterLabel)
+              : t("openFilters")
           }
           className="relative h-16 w-[72px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
           onClick={() => setFiltersOpen(true)}
         >
           <span className="flex flex-col items-center justify-center gap-1 leading-none">
             <SlidersHorizontal size={17} strokeWidth={2.3} />
-            <span>Filters</span>
+            <span>{t("filters")}</span>
           </span>
           {activeFilterCount > 0 ? (
             <span className="absolute right-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
@@ -3846,12 +3946,13 @@ export function FlightResultsClient() {
         <>
           <MobileAirportPicker
             open={activeMobileAirportPicker === "origin"}
-            title="Choose origin"
+            title={t("chooseOrigin")}
             inputId="results-mobile-origin-picker-search"
             value={originInput}
             suggestions={originSuggestions}
             isLoading={originSuggestionsLoading}
             launcherRef={mobileOriginLauncherRef}
+            labels={airportPickerLabels}
             onChange={(nextValue) => {
               setOriginInput(nextValue);
               setOriginCode("");
@@ -3875,12 +3976,13 @@ export function FlightResultsClient() {
           />
           <MobileAirportPicker
             open={activeMobileAirportPicker === "destination"}
-            title="Choose destination"
+            title={t("chooseDestination")}
             inputId="results-mobile-destination-picker-search"
             value={destinationInput}
             suggestions={destinationSuggestions}
             isLoading={destinationSuggestionsLoading}
             launcherRef={mobileDestinationLauncherRef}
+            labels={airportPickerLabels}
             onChange={(nextValue) => {
               setDestinationInput(nextValue);
               setDestinationCode("");
@@ -3919,7 +4021,7 @@ export function FlightResultsClient() {
         </div>
       </section>
 
-      <div className="page-shell grid gap-5 pb-6 pt-5 sm:pt-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="page-shell grid gap-4 pb-5 pt-4 sm:pt-5 lg:grid-cols-[232px_minmax(0,1fr)]">
         <aside className={cn("hidden lg:block", desktopFilterStickyTopClass)}>
           <Filters
             layout="desktop"
@@ -3963,7 +4065,7 @@ export function FlightResultsClient() {
           {loading ? (
             <div className="space-y-4">
               <div className="rounded-xl border border-teal/20 bg-white p-5 text-sm font-bold text-teal-dark shadow-sm">
-                {loadingMessages[messageIndex]}
+                {t(loadingMessageKeys[messageIndex])}
               </div>
               <FlightCardSkeleton />
               <FlightCardSkeleton />
@@ -3978,7 +4080,7 @@ export function FlightResultsClient() {
               <div className="w-full">
                 <div className="hidden auto-rows-fr grid-cols-3 gap-2 sm:grid">
                   <SummarySortButton
-                    label="Cheapest"
+                    label={t("cheapest")}
                     details={buildSummaryDetails(
                       sortSummaries.cheapest,
                       "cheapest",
@@ -3991,7 +4093,7 @@ export function FlightResultsClient() {
                   />
 
                   <SummarySortButton
-                    label="Best"
+                    label={t("best")}
                     details={buildSummaryDetails(sortSummaries.best, "best")}
                     active={sortMode === "best"}
                     onClick={() => {
@@ -4001,7 +4103,7 @@ export function FlightResultsClient() {
                   />
 
                   <SummarySortButton
-                    label="Quickest"
+                    label={t("quickest")}
                     details={buildSummaryDetails(
                       sortSummaries.fastest,
                       "fastest",
@@ -4016,7 +4118,7 @@ export function FlightResultsClient() {
 
                 <div className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-1 sm:hidden">
                   <SummarySortButton
-                    label="Cheapest"
+                    label={t("cheapest")}
                     details={buildSummaryDetails(
                       sortSummaries.cheapest,
                       "cheapest",
@@ -4030,7 +4132,7 @@ export function FlightResultsClient() {
                   />
 
                   <SummarySortButton
-                    label="Best"
+                    label={t("best")}
                     details={buildSummaryDetails(sortSummaries.best, "best")}
                     active={sortMode === "best"}
                     mobile
@@ -4041,7 +4143,7 @@ export function FlightResultsClient() {
                   />
 
                   <SummarySortButton
-                    label="Quickest"
+                    label={t("quickest")}
                     details={buildSummaryDetails(
                       sortSummaries.fastest,
                       "fastest",
@@ -4059,16 +4161,14 @@ export function FlightResultsClient() {
               <div className="space-y-3 sm:hidden">
                 <div className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
                   <p className="text-sm font-bold text-navy">
-                    {sortedResults.length} option
-                    {sortedResults.length === 1 ? "" : "s"} found
+                    {formatResultsFound(sortedResults.length, t)}
                   </p>
                 </div>
               </div>
 
               <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
                 <p className="text-sm font-bold text-navy">
-                  {sortedResults.length} option
-                  {sortedResults.length === 1 ? "" : "s"} found
+                  {formatResultsFound(sortedResults.length, t)}
                 </p>
 
                 <Button
@@ -4078,19 +4178,17 @@ export function FlightResultsClient() {
                 >
                   <SlidersHorizontal size={17} />
                   {activeFilterCount > 0
-                    ? `Filters · ${activeFilterCount}`
-                    : "Filters"}
+                    ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
+                    : t("filters")}
                 </Button>
               </div>
 
               {warnings.length > 0 ? (
                 <div
-                  className="w-full rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900 shadow-sm"
+                  className="w-full rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold leading-6 text-amber-900 shadow-sm"
                   role="status"
                 >
-                  Some provider checks may be limited for this search. Review
-                  final availability and fare details with the provider before
-                  booking.
+                  {t("limitedProviderChecks")}
                 </div>
               ) : null}
 
@@ -4101,7 +4199,7 @@ export function FlightResultsClient() {
                     aria-live="polite"
                     className="rounded-xl border border-indigo-100 bg-white p-4 text-sm font-semibold text-slate-600 shadow-sm"
                   >
-                    Updating results...
+                    {t("updatingResults")}
                   </div>
                   <FlightCardSkeleton />
                   <FlightCardSkeleton />
@@ -4115,9 +4213,8 @@ export function FlightResultsClient() {
                   />
                 ))
               ) : (
-                <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-semibold text-muted shadow-sm">
-                  No flights match these filters. Widen your filters to see more
-                  live options.
+                <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm font-semibold text-muted shadow-sm">
+                  {t("noFlightsMatchFilters")}
                 </div>
               )}
             </div>
@@ -4143,7 +4240,7 @@ export function FlightResultsClient() {
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold text-slate-900">
-                Filters
+                {t("filters")}
               </h2>
               {activeFilterCount > 0 ? (
                 <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
@@ -4154,7 +4251,7 @@ export function FlightResultsClient() {
             <Button
               variant="ghost"
               className="h-10 w-10 px-0"
-              aria-label="Close filters"
+              aria-label={t("closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
               <X size={20} />
@@ -4208,7 +4305,7 @@ export function FlightResultsClient() {
               setFiltersOpen(false);
             }}
           >
-            Done
+            {t("done")}
           </Button>
         </div>
       </aside>
@@ -4303,28 +4400,28 @@ function formatDateValue(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-function formatDateLabel(value: string): string {
+function formatDateLabel(value: string, locale = "en-US"): string {
   if (!value) return "";
 
   const date = new Date(`${value}T00:00:00`);
 
   if (Number.isNaN(date.getTime())) return value;
 
-  return date.toLocaleDateString("en-GB", {
+  return new Intl.DateTimeFormat(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
-  });
+  }).format(date);
 }
 
-function formatCompactDateLabel(value: string): string {
+function formatCompactDateLabel(value: string, locale = "en-US"): string {
   if (!value) return "";
 
   const date = new Date(`${value}T00:00:00`);
 
   if (Number.isNaN(date.getTime())) return value;
 
-  return new Intl.DateTimeFormat("en", {
+  return new Intl.DateTimeFormat(locale, {
     day: "2-digit",
     month: "short",
   }).format(date);
@@ -4556,11 +4653,9 @@ function isSameDateValue(date: Date, value: string): boolean {
   return Boolean(value) && formatDateValue(date) === value;
 }
 
-function cabinClassLabel(value: string) {
-  return (
-    cabinClassOptions.find((option) => option.value === value)?.label ||
-    "Economy"
-  );
+function cabinClassLabel(value: string, t: (key: string) => string) {
+  const option = cabinClassOptions.find((item) => item.value === value);
+  return option ? t(option.labelKey) : t("economy");
 }
 
 function pluralize(count: number, singular: string, plural: string) {
@@ -4572,18 +4667,19 @@ function buildTravelerCabinSummary(
   children: number,
   infants: number,
   cabinClass: string,
+  t: (key: string) => string,
 ) {
-  const parts = [pluralize(adults, "adult", "adults")];
+  const parts = [pluralize(adults, t("adultSingular"), t("adultPlural"))];
 
   if (children > 0) {
-    parts.push(pluralize(children, "child", "children"));
+    parts.push(pluralize(children, t("childSingular"), t("childPlural")));
   }
 
   if (infants > 0) {
-    parts.push(pluralize(infants, "infant", "infants"));
+    parts.push(pluralize(infants, t("infantSingular"), t("infantPlural")));
   }
 
-  parts.push(cabinClassLabel(cabinClass));
+  parts.push(cabinClassLabel(cabinClass, t));
 
   return parts.join(", ");
 }
@@ -4617,10 +4713,21 @@ function DatePickerPopover({
   onToday: () => void;
   onClose: () => void;
 }) {
+  const { t: dictionary, locale } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const calendarLocale = normalizeFlightResultsCalendarLocale(locale);
   const leftMonth = startOfMonth(month);
   const rightMonth = addMonths(leftMonth, 1);
   const today = new Date();
-  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekdays = [
+    t("weekdayMon"),
+    t("weekdayTue"),
+    t("weekdayWed"),
+    t("weekdayThu"),
+    t("weekdayFri"),
+    t("weekdaySat"),
+    t("weekdaySun"),
+  ];
 
   const dialogStyle = mobileSheet
     ? ({
@@ -4649,10 +4756,10 @@ function DatePickerPopover({
   const renderMonth = (renderedMonth: Date) => (
     <div className="min-w-0">
       <p className="mb-2 text-center text-sm font-bold text-slate-900">
-        {renderedMonth.toLocaleDateString("en-GB", {
+        {new Intl.DateTimeFormat(calendarLocale, {
           month: "long",
           year: "numeric",
-        })}
+        }).format(renderedMonth)}
       </p>
 
       <div className="mb-2 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
@@ -4720,8 +4827,8 @@ function DatePickerPopover({
       aria-modal={mobileSheet ? "true" : undefined}
       aria-label={
         tripType !== "round-trip" || activePicker === "departure"
-          ? "Select departure date"
-          : "Select return date"
+          ? t("selectDepartureDate")
+          : t("selectReturnDate")
       }
       style={dialogStyle}
       className={cn(
@@ -4735,17 +4842,17 @@ function DatePickerPopover({
         <div className="mb-3 flex shrink-0 items-center justify-between border-b border-slate-200 pb-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Travel dates
+              {t("travelDates")}
             </p>
-            <h3 className="text-lg font-bold text-slate-950">
+            <h3 className="text-base font-bold text-slate-950">
               {tripType !== "round-trip" || activePicker === "departure"
-                ? "Select departure"
-                : "Select return"}
+                ? t("selectDeparture")
+                : t("selectReturn")}
             </h3>
           </div>
           <button
             type="button"
-            aria-label="Close date picker"
+            aria-label={t("closeDatePicker")}
             onClick={onClose}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
           >
@@ -4757,20 +4864,20 @@ function DatePickerPopover({
       <div className="mb-3 flex shrink-0 items-center justify-between">
         <button
           type="button"
-          aria-label="Previous month"
+          aria-label={t("previousMonth")}
           className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm"
           onClick={() => onMonthChange(addMonths(leftMonth, -1))}
         >
-          Prev
+          {t("previousShort")}
         </button>
 
         <button
           type="button"
-          aria-label="Next month"
+          aria-label={t("nextMonth")}
           className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm"
           onClick={() => onMonthChange(addMonths(leftMonth, 1))}
         >
-          Next
+          {t("nextShort")}
         </button>
       </div>
 
@@ -4785,7 +4892,7 @@ function DatePickerPopover({
           className="min-h-9 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:border-indigo-500 sm:text-sm"
           onClick={onClear}
         >
-          Clear
+          {t("clear")}
         </button>
 
         <button
@@ -4793,7 +4900,7 @@ function DatePickerPopover({
           className="min-h-11 rounded-xl bg-[#0a66c2] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#085aa9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-1"
           onClick={onToday}
         >
-          Done
+          {t("done")}
         </button>
       </div>
     </div>
@@ -4827,6 +4934,8 @@ function TravelerCabinPopover({
   onCabinClassChange: (value: CabinClassValue) => void;
   onClose: () => void;
 }) {
+  const { t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
   const dialogStyle = mobileSheet
     ? ({
         position: "fixed",
@@ -4856,7 +4965,7 @@ function TravelerCabinPopover({
       id="flight-traveler-cabin-popover"
       role="dialog"
       aria-modal={mobileSheet ? "true" : undefined}
-      aria-label="Travelers and cabin class"
+      aria-label={t("travelersAndCabinClass")}
       style={dialogStyle}
       className={cn(
         "w-full border border-slate-200 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.14)]",
@@ -4869,15 +4978,15 @@ function TravelerCabinPopover({
         <div className="flex shrink-0 items-center justify-between border-b border-slate-200 p-4 pb-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-              Travelers
+              {t("travelers")}
             </p>
-            <h3 className="text-lg font-bold text-slate-950">
-              Travelers and cabin
+            <h3 className="text-base font-bold text-slate-950">
+              {t("travelersAndCabin")}
             </h3>
           </div>
           <button
             type="button"
-            aria-label="Close travelers and cabin selector"
+            aria-label={t("closeTravelersAndCabinSelector")}
             onClick={onClose}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-lg font-medium leading-none text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
           >
@@ -4895,12 +5004,12 @@ function TravelerCabinPopover({
       >
         <div>
           {!mobileSheet ? (
-            <h3 className="text-sm font-semibold text-slate-900">Travelers</h3>
+            <h3 className="text-sm font-semibold text-slate-900">{t("travelers")}</h3>
           ) : null}
 
           <div className="mt-3 divide-y divide-slate-100">
             <CounterRow
-              label="Adults"
+              label={t("adultPlural")}
               description="18+"
               value={adultCount}
               min={1}
@@ -4909,7 +5018,7 @@ function TravelerCabinPopover({
             />
 
             <CounterRow
-              label="Children"
+              label={t("childPlural")}
               description="0–17"
               value={childCount}
               min={0}
@@ -4918,8 +5027,8 @@ function TravelerCabinPopover({
             />
 
             <CounterRow
-              label="Infants on lap"
-              description="Under 2"
+              label={t("infantsOnLap")}
+              description={t("under2")}
               value={infantCount}
               min={0}
               max={adultCount}
@@ -4930,7 +5039,7 @@ function TravelerCabinPopover({
 
         <div className="mt-2 border-t border-slate-200 pt-2">
           <h3 className="text-xs font-semibold uppercase tracking-wide leading-4 text-slate-700">
-            Cabin Class
+            {t("cabinClass")}
           </h3>
           <div className="mt-2 grid grid-cols-3 gap-1">
             {cabinClassOptions.map((option) => {
@@ -4949,7 +5058,7 @@ function TravelerCabinPopover({
                       : "border-slate-300 text-slate-700 hover:bg-slate-50",
                   )}
                 >
-                  {option.label}
+                  {t(option.labelKey)}
                 </button>
               );
             })}
@@ -4964,7 +5073,7 @@ function TravelerCabinPopover({
             onClick={onClose}
             className="min-h-12 w-full rounded-xl bg-[#0a66c2] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#085aa9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40 focus-visible:ring-offset-1"
           >
-            Done
+            {t("done")}
           </button>
         </div>
       ) : null}
@@ -5107,10 +5216,10 @@ type TimeBounds = {
 };
 
 const flightQualityDefinitions = [
-  { value: "wifi", label: "Wi-Fi" },
-  { value: "power", label: "Power outlets" },
-  { value: "entertainment", label: "Entertainment" },
-  { value: "comfort", label: "Better comfort" },
+  { value: "wifi", labelKey: "wifi" },
+  { value: "power", labelKey: "powerOutlets" },
+  { value: "entertainment", labelKey: "entertainment" },
+  { value: "comfort", labelKey: "betterComfort" },
 ];
 
 function getTimeMinutes(value: string) {
@@ -5135,14 +5244,16 @@ function getTimeMinutes(value: string) {
   return hours * 60 + minutes;
 }
 
-function formatTimeFromMinutes(value: number) {
+function formatTimeFromMinutes(value: number, locale = "en-US") {
   const normalized = Math.max(0, Math.min(1439, value));
   const hours24 = Math.floor(normalized / 60);
   const minutes = normalized % 60;
-  const period = hours24 >= 12 ? "PM" : "AM";
-  const hours12 = hours24 % 12 || 12;
+  const date = new Date(2000, 0, 1, hours24, minutes);
 
-  return `${hours12}:${String(minutes).padStart(2, "0")} ${period}`;
+  return new Intl.DateTimeFormat(locale, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
 }
 
 function formatDurationFromMinutes(totalMinutes: number) {
@@ -5156,14 +5267,24 @@ function formatDurationFromMinutes(totalMinutes: number) {
   return `${hours}h ${remainingMinutes}m`;
 }
 
+function formatOptionsFound(count: number, t: (key: string) => string) {
+  const key = count === 1 ? "optionFound" : "optionsFound";
+  return t(key).replace("{{count}}", String(count));
+}
+
+function formatResultsFound(count: number, t: (key: string) => string) {
+  const key = count === 1 ? "resultFound" : "resultsFound";
+  return t(key).replace("{{count}}", String(count));
+}
+
 function getStopBucket(stops: number) {
   return stops >= 2 ? "2+" : String(stops);
 }
 
-function stopLabel(bucket: string) {
-  if (bucket === "0") return "Nonstop";
-  if (bucket === "1") return "1 stop";
-  return "2+ stops";
+function stopLabel(bucket: string, t: (key: string) => string) {
+  if (bucket === "0") return t("nonstop");
+  if (bucket === "1") return t("oneStop");
+  return t("twoPlusStops");
 }
 
 function stopBucketSortValue(bucket: string) {
@@ -5329,6 +5450,9 @@ function Filters({
   setFlexibleOnly: (value: boolean) => void;
   onFilterChange: () => void;
 }) {
+  const { t: dictionary, locale } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const calendarLocale = normalizeFlightResultsCalendarLocale(locale);
   const currencyRates = useCurrencyRates();
   const filterRangeClass =
     "h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 outline-none transition disabled:cursor-not-allowed disabled:opacity-60 [&::-webkit-slider-runnable-track]:h-2 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-gradient-to-r [&::-webkit-slider-runnable-track]:from-indigo-600 [&::-webkit-slider-runnable-track]:to-violet-500 [&::-webkit-slider-thumb]:mt-[-4px] [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-violet-600 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-track]:h-2 [&::-moz-range-track]:rounded-full [&::-moz-range-track]:bg-slate-200 [&::-moz-range-progress]:h-2 [&::-moz-range-progress]:rounded-full [&::-moz-range-progress]:bg-violet-600 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-violet-600 [&::-moz-range-thumb]:shadow-md";
@@ -5342,7 +5466,7 @@ function Filters({
           rates: currencyRates.rates,
           isFallbackRate: currencyRates.isFallback,
         }).formatted
-      : "Mixed provider currencies";
+      : t("mixedProviderCurrencies");
 
   return (
     <div
@@ -5354,12 +5478,12 @@ function Filters({
     >
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
-          <h2 className="text-base font-semibold text-white/95">Filter by</h2>
+          <h2 className="text-base font-semibold text-white/95">{t("filterBy")}</h2>
         </div>
         <div className="flex items-center gap-2">
           {activeFilterCount > 0 ? (
             <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-white/70">
-              {activeFilterCount} active
+              {t("activeFilterCount").replace("{{count}}", String(activeFilterCount))}
             </span>
           ) : null}
           <SlidersHorizontal className="text-white/90" size={18} />
@@ -5370,19 +5494,19 @@ function Filters({
         <section>
           {layout === "desktop" ? (
             <div className="mb-3">
-              <h3 className="text-sm font-semibold text-slate-900">Price</h3>
+              <h3 className="text-sm font-semibold text-slate-900">{t("price")}</h3>
             </div>
           ) : (
             <div className="mb-1.5 flex items-center justify-between gap-3 text-sm font-semibold leading-5 text-slate-800">
-              <span>Price</span>
+              <span>{t("price")}</span>
               <span className="shrink-0 text-xs font-medium text-navy">
                 {priceBounds.max
                   ? priceLabelCurrency
                     ? `${formatFilterPrice(priceBounds.min)} - ${formatFilterPrice(
                         Math.min(maxPrice, priceBounds.max),
                       )}`
-                    : "Mixed provider currencies"
-                  : "Loading prices"}
+                    : t("mixedProviderCurrencies")
+                  : t("loadingPrices")}
               </span>
             </div>
           )}
@@ -5413,7 +5537,7 @@ function Filters({
           </div>
         </section>
 
-        <FilterSection title="Times">
+        <FilterSection title={t("times")}>
           <div className="grid grid-cols-2 border-b border-slate-200/70">
             <button
               type="button"
@@ -5425,7 +5549,7 @@ function Filters({
                   : "border-transparent text-slate-600 hover:text-slate-900",
               )}
             >
-              Take-off
+              {t("takeoff")}
             </button>
             <button
               type="button"
@@ -5437,18 +5561,18 @@ function Filters({
                   : "border-transparent text-slate-600 hover:text-slate-900",
               )}
             >
-              Landing
+              {t("landing")}
             </button>
           </div>
 
           {timeFilterMode === "takeoff" ? (
             <div className="mt-2">
               <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-                <span>Take-off time from origin</span>
+                <span>{t("takeoffTimeFromOrigin")}</span>
                 <span className="font-mono text-navy">
                   {timeBounds.takeoff && maxTakeoffMinutes !== null
-                    ? formatTimeFromMinutes(maxTakeoffMinutes)
-                    : "Loading"}
+                    ? formatTimeFromMinutes(maxTakeoffMinutes, calendarLocale)
+                    : t("loading")}
                 </span>
               </div>
               <input
@@ -5467,12 +5591,12 @@ function Filters({
               <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
                 <span>
                   {timeBounds.takeoff
-                    ? formatTimeFromMinutes(timeBounds.takeoff.min)
+                    ? formatTimeFromMinutes(timeBounds.takeoff.min, calendarLocale)
                     : "—"}
                 </span>
                 <span>
                   {timeBounds.takeoff
-                    ? formatTimeFromMinutes(timeBounds.takeoff.max)
+                    ? formatTimeFromMinutes(timeBounds.takeoff.max, calendarLocale)
                     : "—"}
                 </span>
               </div>
@@ -5480,11 +5604,11 @@ function Filters({
           ) : (
             <div className="mt-2">
               <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-                <span>Landing time at destination</span>
+                <span>{t("landingTimeAtDestination")}</span>
                 <span className="font-mono text-navy">
                   {timeBounds.landing && maxLandingMinutes !== null
-                    ? formatTimeFromMinutes(maxLandingMinutes)
-                    : "Loading"}
+                    ? formatTimeFromMinutes(maxLandingMinutes, calendarLocale)
+                    : t("loading")}
                 </span>
               </div>
               <input
@@ -5503,12 +5627,12 @@ function Filters({
               <div className="mt-1.5 flex justify-between text-[11px] font-medium text-slate-500">
                 <span>
                   {timeBounds.landing
-                    ? formatTimeFromMinutes(timeBounds.landing.min)
+                    ? formatTimeFromMinutes(timeBounds.landing.min, calendarLocale)
                     : "—"}
                 </span>
                 <span>
                   {timeBounds.landing
-                    ? formatTimeFromMinutes(timeBounds.landing.max)
+                    ? formatTimeFromMinutes(timeBounds.landing.max, calendarLocale)
                     : "—"}
                 </span>
               </div>
@@ -5516,13 +5640,13 @@ function Filters({
           )}
         </FilterSection>
 
-        <FilterSection title="Duration">
+        <FilterSection title={t("duration")}>
           <div className="mb-1.5 flex items-center justify-between text-xs font-medium text-slate-600">
-            <span>Total trip time</span>
+            <span>{t("totalTripTime")}</span>
             <span className="font-mono text-navy">
               {durationBounds && maxDurationMinutes !== null
                 ? formatDurationFromMinutes(maxDurationMinutes)
-                : "Loading"}
+                : t("loading")}
             </span>
           </div>
 
@@ -5555,7 +5679,7 @@ function Filters({
         </FilterSection>
 
         {flightQualityOptions.length ? (
-          <FilterSection title="Flight quality">
+          <FilterSection title={t("flightQuality")}>
             {flightQualityOptions.map((option) => (
               <FilterOptionRow
                 key={option.value}
@@ -5572,8 +5696,8 @@ function Filters({
         ) : null}
 
         <FilterSection
-          title="Stops"
-          emptyText="Stops appear after results load."
+          title={t("stops")}
+          emptyText={t("stopsAppearAfterResultsLoad")}
         >
           {stopOptions.map((option) => (
             <FilterOptionRow
@@ -5592,8 +5716,8 @@ function Filters({
         </FilterSection>
 
         <FilterSection
-          title="Airlines"
-          emptyText="Airlines appear after results load."
+          title={t("airlines")}
+          emptyText={t("airlinesAppearAfterResultsLoad")}
         >
           {airlineOptions.map((option) => (
             <FilterOptionRow
@@ -5610,8 +5734,8 @@ function Filters({
         </FilterSection>
 
         <FilterSection
-          title="Airports"
-          emptyText="Airports appear after results load."
+          title={t("airports")}
+          emptyText={t("airportsAppearAfterResultsLoad")}
         >
           {airportOptions.map((option) => (
             <FilterOptionRow
@@ -5627,9 +5751,9 @@ function Filters({
           ))}
         </FilterSection>
 
-        <FilterSection title="Amenities">
+        <FilterSection title={t("amenities")}>
           <FilterOptionRow
-            label="Baggage included"
+            label={t("baggageIncluded")}
             checked={baggageIncludedOnly}
             onChange={() => {
               onFilterChange();
@@ -5637,7 +5761,7 @@ function Filters({
             }}
           />
           <FilterOptionRow
-            label="Flexible/refundable"
+            label={t("flexibleRefundable")}
             checked={flexibleOnly}
             onChange={() => {
               onFilterChange();
@@ -5708,8 +5832,11 @@ function SummarySortButton({
   );
 }
 
-function formatStopsLabel(stops: number) {
-  return stops === 0 ? "Nonstop" : `${stops} stop${stops > 1 ? "s" : ""}`;
+function formatStopsLabel(stops: number, t: (key: string) => string) {
+  if (stops === 0) return t("nonstop");
+  return stops === 1
+    ? t("oneStop")
+    : t("stopCount").replace("{{count}}", String(stops));
 }
 
 function FilterSection({

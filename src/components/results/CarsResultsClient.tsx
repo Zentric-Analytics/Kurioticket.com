@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
+import { useLocale } from "@/components/layout/LocaleProvider";
+import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 type CarsResultsValues = {
@@ -36,17 +38,20 @@ type CarsResultsValues = {
   driverAge: string;
 };
 
+type CarFilterOption = {
+  id: string;
+  labelKey: string;
+};
+
 type CarFilterGroup = {
   id: string;
-  title: string;
-  options: string[];
+  titleKey: string;
+  options: CarFilterOption[];
 };
 
 type SelectedCarFilters = Record<string, string[]>;
 
 const defaultDriverAge = "18-70";
-const driverAgeRangeLabel = "Any driver age 18–70";
-
 const minimumDriverAge = 18;
 const maximumDriverAge = 70;
 
@@ -68,72 +73,136 @@ const driverAgeOptions = [
 const carFilterGroups: CarFilterGroup[] = [
   {
     id: "vehicleType",
-    title: "Vehicle type",
-    options: ["Small cars", "Medium cars", "SUVs"],
+    titleKey: "carsResults.vehicleType",
+    options: [
+      { id: "smallCars", labelKey: "carsResults.smallCars" },
+      { id: "mediumCars", labelKey: "carsResults.mediumCars" },
+      { id: "suvs", labelKey: "carsResults.suvs" },
+    ],
   },
   {
     id: "transmission",
-    title: "Transmission",
-    options: ["Automatic", "Manual"],
+    titleKey: "carsResults.transmission",
+    options: [
+      { id: "automatic", labelKey: "carsResults.automatic" },
+      { id: "manual", labelKey: "carsResults.manual" },
+    ],
   },
   {
     id: "seats",
-    title: "Seats",
-    options: ["4+ seats", "5+ seats", "7+ seats"],
+    titleKey: "carsResults.seats",
+    options: [
+      { id: "seats4Plus", labelKey: "carsResults.seats4Plus" },
+      { id: "seats5Plus", labelKey: "carsResults.seats5Plus" },
+      { id: "seats7Plus", labelKey: "carsResults.seats7Plus" },
+    ],
   },
   {
     id: "bags",
-    title: "Bags",
-    options: ["2+ bags", "3+ bags", "4+ bags"],
+    titleKey: "carsResults.bags",
+    options: [
+      { id: "bags2Plus", labelKey: "carsResults.bags2Plus" },
+      { id: "bags3Plus", labelKey: "carsResults.bags3Plus" },
+      { id: "bags4Plus", labelKey: "carsResults.bags4Plus" },
+    ],
   },
   {
     id: "fuelPolicy",
-    title: "Fuel policy",
-    options: ["Full-to-full", "Same-to-same"],
+    titleKey: "carsResults.fuelPolicy",
+    options: [
+      { id: "fullToFull", labelKey: "carsResults.fullToFull" },
+      { id: "sameToSame", labelKey: "carsResults.sameToSame" },
+    ],
   },
   {
     id: "mileagePolicy",
-    title: "Mileage policy",
-    options: ["Unlimited mileage", "Limited mileage"],
+    titleKey: "carsResults.mileagePolicy",
+    options: [
+      { id: "unlimitedMileage", labelKey: "carsResults.unlimitedMileage" },
+      { id: "limitedMileage", labelKey: "carsResults.limitedMileage" },
+    ],
   },
   {
     id: "cancellation",
-    title: "Cancellation",
-    options: ["Free cancellation", "Pay at pickup"],
+    titleKey: "carsResults.cancellation",
+    options: [
+      { id: "freeCancellation", labelKey: "carsResults.freeCancellation" },
+      { id: "payAtPickup", labelKey: "carsResults.payAtPickup" },
+    ],
   },
   {
     id: "pickupLocationType",
-    title: "Pickup location type",
-    options: ["Airport counter", "Shuttle pickup", "City location"],
+    titleKey: "carsResults.pickupLocationType",
+    options: [
+      { id: "airportCounter", labelKey: "carsResults.airportCounter" },
+      { id: "shuttlePickup", labelKey: "carsResults.shuttlePickup" },
+      { id: "cityLocation", labelKey: "carsResults.cityLocation" },
+    ],
   },
 ];
 
-const formatCompactDate = (date: string) => {
+const getCarsResultsIntlLocale = (locale: string) => {
+  const normalizedLocale = locale.toLowerCase();
+
+  if (normalizedLocale.startsWith("de")) {
+    return "de-DE";
+  }
+
+  if (normalizedLocale.startsWith("es")) {
+    return "es-ES";
+  }
+
+  if (normalizedLocale.startsWith("fr")) {
+    return "fr-FR";
+  }
+
+  return "en-US";
+};
+
+const usesTwentyFourHourCarsResultsTime = (intlLocale: string) =>
+  ["de", "es", "fr"].some((localePrefix) =>
+    intlLocale.toLowerCase().startsWith(localePrefix),
+  );
+
+const curatedLocationTranslationKeys: Record<string, string> = {
+  Airport: "carsResults.location.airport",
+  "City center": "carsResults.location.cityCenter",
+  "Hotel area": "carsResults.location.hotelArea",
+  "Train station": "carsResults.location.trainStation",
+};
+
+const interpolate = (template: string, values: Record<string, string>) =>
+  Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, value),
+    template,
+  );
+
+const formatCompactDate = (date: string, intlLocale: string, fallback: string) => {
   if (!date) {
-    return "Select dates";
+    return fallback;
   }
 
   const [year, month, day] = date.split("-").map(Number);
 
   return year && month && day
-    ? new Intl.DateTimeFormat("en-US", {
-        month: "short",
+    ? new Intl.DateTimeFormat(intlLocale, {
         day: "numeric",
+        month: "short",
       }).format(new Date(year, month - 1, day))
     : date;
 };
 
-const formatDate = (date: string) => {
+const formatDate = (date: string, intlLocale: string, fallback: string) => {
   if (!date) {
-    return "Select date";
+    return fallback;
   }
 
   const [year, month, day] = date.split("-").map(Number);
 
   return year && month && day
-    ? new Intl.DateTimeFormat("en-US", {
-        month: "short",
+    ? new Intl.DateTimeFormat(intlLocale, {
         day: "numeric",
+        month: "short",
         year: "numeric",
       }).format(new Date(year, month - 1, day))
     : date;
@@ -191,13 +260,22 @@ const buildMonthCells = (monthDate: Date) => {
   });
 };
 
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const getWeekdays = (intlLocale: string) =>
+  Array.from({ length: 7 }, (_, index) =>
+    new Intl.DateTimeFormat(intlLocale, { weekday: "short" }).format(
+      new Date(2024, 0, 7 + index),
+    ),
+  );
 
-const formatTimeLabel = (time: string) => {
+const formatTimeLabel = (time: string, intlLocale: string) => {
   const [hourValue, minuteValue] = time.split(":").map(Number);
 
   if (Number.isNaN(hourValue) || Number.isNaN(minuteValue)) {
-    return time || "10:00 AM";
+    return time || (usesTwentyFourHourCarsResultsTime(intlLocale) ? "10:00" : "10:00 AM");
+  }
+
+  if (usesTwentyFourHourCarsResultsTime(intlLocale)) {
+    return `${String(hourValue).padStart(2, "0")}:${String(minuteValue).padStart(2, "0")}`;
   }
 
   const period = hourValue >= 12 ? "PM" : "AM";
@@ -209,16 +287,28 @@ const formatTimeLabel = (time: string) => {
 const normalizeDriverAge = (value: string) =>
   driverAgeOptions.includes(value) ? value : defaultDriverAge;
 
-const getDriverAgeOptionLabel = (age: string) =>
-  age === defaultDriverAge ? driverAgeRangeLabel : `${age} years old`;
+const getCuratedLocationLabel = (location: string, t: (key: string) => string) => {
+  const trimmedLocation = location.trim();
+  const translationKey = curatedLocationTranslationKeys[trimmedLocation];
+
+  return translationKey ? t(translationKey) : trimmedLocation;
+};
+
+const getDriverAgeOptionLabel = (
+  age: string,
+  t: (key: string) => string,
+) =>
+  age === defaultDriverAge
+    ? t("carsResults.anyDriverAgeRange")
+    : `${age} ${t("carsResults.yearsOld")}`;
 
 const fieldShellClass =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
+  "relative min-h-[50px] rounded-xl border border-slate-300 bg-white px-3 py-1 transition-[min-height,padding,border-color,box-shadow] duration-200 hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0";
 
 const searchFormGridClass =
   "grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.16fr)_minmax(0,1.08fr)_minmax(0,1.28fr)_minmax(0,1.08fr)_minmax(7rem,0.62fr)_104px] lg:gap-0";
 
-const compactFieldShellClass = "min-h-[48px] py-1 lg:min-h-[46px]";
+const compactFieldShellClass = "min-h-[46px] py-1 lg:min-h-[44px]";
 
 const fieldLabelClass =
   "mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600";
@@ -227,6 +317,9 @@ const fieldInputClass =
   "focus-ring h-8 w-full border-0 bg-transparent p-0 text-[16px] font-medium text-slate-900 outline-none placeholder:text-slate-400 md:text-sm";
 
 export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
+  const { locale, t: dictionary } = useLocale();
+  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
+  const intlLocale = getCarsResultsIntlLocale(locale);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [selectedCarFilters, setSelectedCarFilters] =
@@ -269,11 +362,18 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
     return new Date(today.getFullYear(), today.getMonth(), 1);
   });
   const hasSearchContext = Boolean(pickupLocation || pickupDate || dropoffDate);
-  const locationSummary = pickupLocation.trim()
-    ? dropoffLocation.trim() && dropoffLocation.trim() !== pickupLocation.trim()
-      ? `${pickupLocation.trim()} to ${dropoffLocation.trim()}`
-      : pickupLocation.trim()
-    : "Pickup location needed";
+  const trimmedPickupLocation = pickupLocation.trim();
+  const trimmedDropoffLocation = dropoffLocation.trim();
+  const pickupLocationLabel = getCuratedLocationLabel(trimmedPickupLocation, t);
+  const dropoffLocationLabel = getCuratedLocationLabel(trimmedDropoffLocation, t);
+  const locationSummary = trimmedPickupLocation
+    ? trimmedDropoffLocation && trimmedDropoffLocation !== trimmedPickupLocation
+      ? interpolate(t("carsResults.pickupToReturn"), {
+          pickup: pickupLocationLabel,
+          return: dropoffLocationLabel,
+        })
+      : pickupLocationLabel
+    : t("carsResults.pickupLocationNeeded");
   const activeFilterCount = useMemo(
     () =>
       Object.values(selectedCarFilters).reduce(
@@ -282,22 +382,37 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       ),
     [selectedCarFilters],
   );
-  const activeFilterLabel = `${activeFilterCount} active`;
+  const activeFilterLabel = interpolate(t("carsResults.activeFilterCount"), {
+    count: String(activeFilterCount),
+  });
   const showFullSearchForm = !isSearchBarCompact || isSearchExpandedWhileSticky;
   const showCompactSearchSummary =
     isSearchBarCompact && !isSearchExpandedWhileSticky;
-  const pickupSummary = pickupLocation.trim() || "Pickup location";
+  const pickupSummary = pickupLocationLabel || t("carsResults.pickupLocation");
   const returnSummary =
-    dropoffLocation.trim() || pickupLocation.trim() || "Return location";
+    dropoffLocationLabel || pickupLocationLabel || t("carsResults.returnLocation");
   const rentalDateSummary = pickupDate
     ? dropoffDate
-      ? `${formatCompactDate(pickupDate)} — ${formatCompactDate(dropoffDate)}`
-      : formatCompactDate(pickupDate)
-    : "Select rental dates";
-  const timeSummary = `${formatTimeLabel(pickupTime)} — ${formatTimeLabel(
+      ? `${formatCompactDate(
+          pickupDate,
+          intlLocale,
+          t("carsResults.selectDates"),
+        )} — ${formatCompactDate(
+          dropoffDate,
+          intlLocale,
+          t("carsResults.selectDates"),
+        )}`
+      : formatCompactDate(
+          pickupDate,
+          intlLocale,
+          t("carsResults.selectDates"),
+        )
+    : t("carsResults.selectRentalDates");
+  const timeSummary = `${formatTimeLabel(pickupTime, intlLocale)} — ${formatTimeLabel(
     dropoffTime,
+    intlLocale,
   )}`;
-  const driverAgeSummary = getDriverAgeOptionLabel(driverAge);
+  const driverAgeSummary = getDriverAgeOptionLabel(driverAge, t);
   const isExpandedStickySearchActive =
     isSearchBarCompact && isSearchExpandedWhileSticky;
   const canAutoCollapseExpandedSearch =
@@ -490,15 +605,17 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
         variant="secondary"
         aria-label={
           activeFilterCount > 0
-            ? `Open filters, ${activeFilterLabel}`
-            : "Open filters"
+            ? interpolate(t("carsResults.openFiltersWithCount"), {
+                count: String(activeFilterCount),
+              })
+            : t("carsResults.openFilters")
         }
-        className="relative h-16 w-[72px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+        className="relative h-14 w-[68px] shrink-0 rounded-md border border-slate-200/90 bg-white px-2 text-[11px] font-semibold text-slate-700 shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:text-slate-900 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
         onClick={() => setFiltersOpen(true)}
       >
         <span className="flex flex-col items-center justify-center gap-1 leading-none">
           <SlidersHorizontal size={17} strokeWidth={2.3} aria-hidden="true" />
-          <span>Filters</span>
+          <span>{t("filters")}</span>
         </span>
         {activeFilterCount > 0 ? (
           <span className="absolute right-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
@@ -510,10 +627,10 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
       <button
         type="button"
         onClick={openMobileSearchDrawer}
-        className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+        className="flex h-14 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
       >
         <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
-          <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
+          <span className="block truncate text-sm font-bold leading-5 text-slate-950">
             {pickupSummary} → {returnSummary}
           </span>
           <span className="mt-1 block truncate text-[12px] font-semibold leading-4 text-slate-600">
@@ -572,7 +689,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           {compactSummaryVisible ? (
             <button
               type="button"
-              aria-label="Edit car search"
+              aria-label={t("carsResults.editCarSearch")}
               onClick={expandStickySearch}
               className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-left transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
             >
@@ -605,7 +722,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               </span>
               <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-[2px] border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-indigo-700 shadow-sm transition group-hover:border-indigo-200 group-hover:bg-white sm:self-center">
                 <SquarePen className="h-3.5 w-3.5" aria-hidden="true" />
-                Edit
+                {t("carsResults.edit")}
               </span>
             </button>
           ) : null}
@@ -616,7 +733,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 icon={MapPin}
                 inputRef={pickupInputRef}
                 isCompact={isCompactSearch}
-                label="Pickup location"
+                label={t("carsResults.pickupLocation")}
                 name="pickupLocation"
                 onChange={(nextValue) => {
                   markExpandedSearchInteraction();
@@ -627,16 +744,16 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                   setPickupLocation("");
                   pickupInputRef.current?.focus();
                 }}
-                placeholder="Airport, city, or address"
+                placeholder={t("carsSearch.pickupLocationPlaceholder")}
                 value={pickupLocation}
-                clearLabel="Clear pickup location"
+                clearLabel={t("carsSearch.clearPickupLocation")}
                 className="lg:rounded-l-xl"
               />
               <SearchInputCell
                 icon={MapPin}
                 inputRef={dropoffInputRef}
                 isCompact={isCompactSearch}
-                label="Return location"
+                label={t("carsResults.returnLocation")}
                 name="dropoffLocation"
                 onChange={(nextValue) => {
                   markExpandedSearchInteraction();
@@ -647,9 +764,9 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                   setDropoffLocation("");
                   dropoffInputRef.current?.focus();
                 }}
-                placeholder="Same as pickup"
+                placeholder={t("carsResults.sameAsPickup")}
                 value={dropoffLocation}
-                clearLabel="Clear return location"
+                clearLabel={t("carsSearch.clearReturnLocation")}
               />
               <SearchDateCell
                 dropoffDate={dropoffDate}
@@ -681,6 +798,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 }}
                 pickupDate={pickupDate}
                 visibleMonthDate={visibleMonthDate}
+                t={t}
+                intlLocale={intlLocale}
                 wrapRef={dateWrapRef}
               />
               <SearchTimeCell
@@ -702,6 +821,8 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                   markExpandedSearchInteraction();
                   setPickupTime(nextTime);
                 }}
+                t={t}
+                intlLocale={intlLocale}
                 wrapRef={timeWrapRef}
               />
               <DriverAgeCell
@@ -719,6 +840,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                   setDatesOpen(false);
                   setTimesOpen(false);
                 }}
+                t={t}
                 wrapRef={driverAgeWrapRef}
               />
               <Button
@@ -729,7 +851,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
                 )}
               >
                 <Search className="h-4 w-4" aria-hidden="true" />
-                Search
+                {t("carsResults.searchCars")}
               </Button>
             </div>
           ) : null}
@@ -759,16 +881,16 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
-                Edit search
+                {t("carsResults.editSearch")}
               </p>
-              <h2 className="mt-1 text-lg font-bold text-slate-950">
-                Car rental search
+              <h2 className="mt-1 text-base font-bold text-slate-950">
+                {t("carsResults.carRentalSearch")}
               </h2>
             </div>
             <Button
               type="button"
               variant="secondary"
-              aria-label="Close edit search"
+              aria-label={t("carsResults.closeEditSearch")}
               className="h-10 w-10 rounded-full border-slate-200 bg-white p-0 text-slate-700 shadow-sm"
               onClick={closeMobileSearchDrawer}
             >
@@ -797,21 +919,23 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             )}
           >
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">
-              Cars results
+              {t("carsResults.resultsLabel")}
             </p>
             <Button
               type="button"
               variant="secondary"
               aria-label={
                 activeFilterCount > 0
-                  ? `Open filters, ${activeFilterLabel}`
-                  : "Open filters"
+                  ? interpolate(t("carsResults.openFiltersWithCount"), {
+                      count: String(activeFilterCount),
+                    })
+                  : t("carsResults.openFilters")
               }
               className="relative h-10 rounded-md border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
               onClick={() => setFiltersOpen(true)}
             >
               <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-              Filters
+              {t("filters")}
               {activeFilterCount > 0 ? (
                 <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-bold leading-none text-indigo-700 ring-1 ring-indigo-100">
                   {activeFilterCount}
@@ -832,18 +956,19 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             onClear={clearCarFilters}
             onToggle={toggleCarFilter}
             selectedFilters={selectedCarFilters}
+            t={t}
           />
         </aside>
 
-        <section className="min-w-0 space-y-4" aria-label="Car results">
+        <section className="min-w-0 space-y-4" aria-label={t("carsResults.carResultsAria")}>
           <h1 id="cars-results-heading" className="sr-only">
-            Cars results for {locationSummary}
+            {interpolate(t("carsResults.resultsFor"), { location: locationSummary })}
           </h1>
 
           <div className="hidden w-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between">
             <div className="min-w-0">
               <h2 className="truncate text-sm font-bold text-navy">
-                Cars results for {locationSummary}
+                {interpolate(t("carsResults.resultsFor"), { location: locationSummary })}
               </h2>
               <p className="mt-1 text-xs font-semibold text-slate-500">
                 {rentalDateSummary} · {timeSummary} · {driverAgeSummary}
@@ -858,12 +983,12 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             >
               <SlidersHorizontal size={17} aria-hidden="true" />
               {activeFilterCount > 0
-                ? `Filters · ${activeFilterCount}`
-                : "Filters"}
+                ? t("filtersWithCount").replace("{{count}}", String(activeFilterCount))
+                : t("filters")}
             </Button>
           </div>
 
-          <CarsResultsShell hasSearchContext={hasSearchContext} />
+          <CarsResultsShell hasSearchContext={hasSearchContext} t={t} />
         </section>
       </div>
 
@@ -880,13 +1005,13 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
           "fixed bottom-0 left-0 right-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
-        aria-label="Car filters"
+        aria-label={t("carsResults.carFiltersAria")}
       >
         <div className="flex-1 overflow-auto p-5 pb-3">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold text-slate-900">
-                Filters
+                {t("filters")}
               </h2>
               {activeFilterCount > 0 ? (
                 <p className="mt-1 inline-flex rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-100">
@@ -897,7 +1022,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             <Button
               variant="ghost"
               className="h-10 w-10 px-0"
-              aria-label="Close filters"
+              aria-label={t("carsResults.closeFilters")}
               onClick={() => setFiltersOpen(false)}
             >
               <X size={20} />
@@ -909,6 +1034,7 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
             onClear={clearCarFilters}
             onToggle={toggleCarFilter}
             selectedFilters={selectedCarFilters}
+            t={t}
           />
         </div>
 
@@ -920,15 +1046,16 @@ export function CarsResultsClient({ values }: { values: CarsResultsValues }) {
               className="h-11 w-full rounded-xl border-slate-300 text-sm font-bold text-slate-700"
               onClick={clearCarFilters}
             >
-              Reset filters
+              {t("carsResults.resetFilters")}
             </Button>
           ) : null}
           <Button
             type="button"
-            className="h-12 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-base font-bold text-white shadow-lg shadow-indigo-700/20"
+            className="h-11 w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 text-sm font-bold text-white shadow-lg shadow-indigo-700/20"
             onClick={() => setFiltersOpen(false)}
           >
-            Done{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""}
+            {t("done")}
+            {activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""}
           </Button>
         </div>
       </aside>
@@ -1012,6 +1139,8 @@ function SearchDateCell({
   onToggle,
   pickupDate,
   visibleMonthDate,
+  t,
+  intlLocale,
   wrapRef,
 }: {
   dropoffDate: string;
@@ -1025,15 +1154,26 @@ function SearchDateCell({
   onToggle: () => void;
   pickupDate: string;
   visibleMonthDate: Date;
+  t: (key: string) => string;
+  intlLocale: string;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
-  const pickupDisplay = formatDate(pickupDate);
-  const dropoffDisplay = formatDate(dropoffDate);
+  const pickupDisplay = formatDate(
+    pickupDate,
+    intlLocale,
+    t("carsResults.selectDate"),
+  );
+  const dropoffDisplay = formatDate(
+    dropoffDate,
+    intlLocale,
+    t("carsResults.selectDate"),
+  );
   const summary = pickupDate
     ? dropoffDate
       ? `${pickupDisplay} — ${dropoffDisplay}`
       : pickupDisplay
-    : "Pickup date — Return date";
+    : t("carsResults.rentalDatePlaceholder");
+  const weekdays = getWeekdays(intlLocale);
   const pickupParsed = parseIsoDate(pickupDate);
   const dropoffParsed = parseIsoDate(dropoffDate);
 
@@ -1047,7 +1187,7 @@ function SearchDateCell({
           className="h-3.5 w-3.5 text-violet-600"
           aria-hidden="true"
         />
-        Rental dates
+        {t("carsResults.rentalDates")}
       </div>
       <button
         type="button"
@@ -1071,24 +1211,24 @@ function SearchDateCell({
       {isOpen ? (
         <div
           role="dialog"
-          aria-label="Rental date range calendar"
+          aria-label={t("carsResults.rentalDateRangeCalendar")}
           className="absolute left-0 right-0 top-[calc(100%+10px)] z-[80] max-h-[min(72vh,620px)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:right-auto sm:w-[min(92vw,640px)] sm:p-4"
         >
           <div className="mb-3 flex items-center justify-between gap-2">
             <button
               type="button"
-              aria-label="Previous month"
+              aria-label={t("carsSearch.previousMonth")}
               onClick={onPreviousMonth}
               className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-700 transition hover:bg-slate-50"
             >
               <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </button>
             <p className="text-center text-sm font-bold text-slate-900">
-              Select pickup, then return
+              {t("carsResults.selectPickupThenReturn")}
             </p>
             <button
               type="button"
-              aria-label="Next month"
+              aria-label={t("carsSearch.nextMonth")}
               onClick={onNextMonth}
               className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 text-slate-700 transition hover:bg-slate-50"
             >
@@ -1103,10 +1243,10 @@ function SearchDateCell({
               return (
                 <div key={monthOffset}>
                   <p className="mb-2 text-center text-sm font-bold text-slate-800">
-                    {monthDate.toLocaleDateString("en-US", {
+                    {new Intl.DateTimeFormat(intlLocale, {
                       month: "long",
                       year: "numeric",
-                    })}
+                    }).format(monthDate)}
                   </p>
                   <div className="mb-1.5 grid grid-cols-7 gap-1 text-center text-[0.7rem] font-bold text-slate-500">
                     {weekdays.map((weekday) => (
@@ -1145,14 +1285,18 @@ function SearchDateCell({
                         <button
                           key={iso}
                           type="button"
-                          aria-label={`Select ${day.toLocaleDateString(
-                            "en-US",
+                          aria-label={`${t("carsSearch.selectDateAriaPrefix")} ${new Intl.DateTimeFormat(
+                            intlLocale,
                             {
                               month: "long",
                               day: "numeric",
                               year: "numeric",
                             },
-                          )}${isBeforePickup ? "; starts a new pickup date" : ""}`}
+                          ).format(day)}${
+                            isBeforePickup
+                              ? `; ${t("carsSearch.startsNewPickupDate")}`
+                              : ""
+                          }`}
                           onClick={() => onSelectDate(day)}
                           disabled={isPastDate}
                           className={cn(
@@ -1183,14 +1327,14 @@ function SearchDateCell({
               onClick={onClear}
               className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              Clear
+              {t("clear")}
             </button>
             <button
               type="button"
               onClick={onDone}
               className="focus-ring rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
             >
-              Done
+              {t("done")}
             </button>
           </div>
         </div>
@@ -1207,6 +1351,8 @@ function SearchTimeCell({
   pickupTime,
   setDropoffTime,
   setPickupTime,
+  t,
+  intlLocale,
   wrapRef,
 }: {
   dropoffTime: string;
@@ -1216,6 +1362,8 @@ function SearchTimeCell({
   pickupTime: string;
   setDropoffTime: (time: string) => void;
   setPickupTime: (time: string) => void;
+  t: (key: string) => string;
+  intlLocale: string;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
   return (
@@ -1225,7 +1373,7 @@ function SearchTimeCell({
     >
       <div className={fieldLabelClass}>
         <Clock3 className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
-        Pickup / return time
+        {t("carsResults.pickupReturnTime")}
       </div>
       <button
         type="button"
@@ -1235,7 +1383,7 @@ function SearchTimeCell({
         className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-left text-[16px] font-medium text-slate-900 outline-none md:text-sm"
       >
         <span className="truncate">
-          {formatTimeLabel(pickupTime)} — {formatTimeLabel(dropoffTime)}
+          {formatTimeLabel(pickupTime, intlLocale)} — {formatTimeLabel(dropoffTime, intlLocale)}
         </span>
         <ChevronDown
           className={cn(
@@ -1249,13 +1397,13 @@ function SearchTimeCell({
       {isOpen ? (
         <div
           role="menu"
-          aria-label="Pickup and return time selector"
+          aria-label={t("carsResults.pickupReturnTimeSelector")}
           className="absolute left-0 right-0 top-[calc(100%+10px)] z-[80] rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:right-auto sm:w-[min(92vw,340px)]"
         >
           <div className="grid gap-3">
             <label className="block">
               <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                Pickup time
+                {t("carsResults.pickupTime")}
               </span>
               <select
                 value={pickupTime}
@@ -1264,14 +1412,14 @@ function SearchTimeCell({
               >
                 {timeOptions.map((time) => (
                   <option key={`pickup-${time}`} value={time}>
-                    {formatTimeLabel(time)}
+                    {formatTimeLabel(time, intlLocale)}
                   </option>
                 ))}
               </select>
             </label>
             <label className="block">
               <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">
-                Return time
+                {t("carsResults.returnTime")}
               </span>
               <select
                 value={dropoffTime}
@@ -1280,7 +1428,7 @@ function SearchTimeCell({
               >
                 {timeOptions.map((time) => (
                   <option key={`return-${time}`} value={time}>
-                    {formatTimeLabel(time)}
+                    {formatTimeLabel(time, intlLocale)}
                   </option>
                 ))}
               </select>
@@ -1298,6 +1446,7 @@ function DriverAgeCell({
   isOpen,
   onSelect,
   onToggle,
+  t,
   wrapRef,
 }: {
   driverAge: string;
@@ -1305,6 +1454,7 @@ function DriverAgeCell({
   isOpen: boolean;
   onSelect: (age: string) => void;
   onToggle: () => void;
+  t: (key: string) => string;
   wrapRef: RefObject<HTMLDivElement | null>;
 }) {
   const visibleOptions = useMemo(() => driverAgeOptions, []);
@@ -1316,7 +1466,7 @@ function DriverAgeCell({
     >
       <div className={fieldLabelClass}>
         <Users className="h-3.5 w-3.5 text-violet-600" aria-hidden="true" />
-        Driver age
+        {t("carsResults.driverAge")}
       </div>
       <button
         type="button"
@@ -1325,7 +1475,7 @@ function DriverAgeCell({
         aria-haspopup="listbox"
         className="focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent p-0 text-left text-[16px] font-medium text-slate-900 outline-none md:text-sm"
       >
-        <span className="truncate">{getDriverAgeOptionLabel(driverAge)}</span>
+        <span className="truncate">{getDriverAgeOptionLabel(driverAge, t)}</span>
         <ChevronDown
           className={cn(
             "h-4 w-4 shrink-0 text-slate-500 transition-transform",
@@ -1338,7 +1488,7 @@ function DriverAgeCell({
       {isOpen ? (
         <div
           role="listbox"
-          aria-label="Driver age"
+          aria-label={t("carsResults.driverAge")}
           className="absolute left-0 right-0 top-[calc(100%+10px)] z-[80] max-h-72 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:right-auto sm:w-56"
         >
           {visibleOptions.map((age) => (
@@ -1355,7 +1505,7 @@ function DriverAgeCell({
                   : "text-slate-700",
               )}
             >
-              {getDriverAgeOptionLabel(age)}
+              {getDriverAgeOptionLabel(age, t)}
               {age === driverAge ? (
                 <CheckCircle2
                   className="h-4 w-4 text-indigo-700"
@@ -1370,15 +1520,21 @@ function DriverAgeCell({
   );
 }
 
-function CarsResultsShell({ hasSearchContext }: { hasSearchContext: boolean }) {
+function CarsResultsShell({
+  hasSearchContext,
+  t,
+}: {
+  hasSearchContext: boolean;
+  t: (key: string) => string;
+}) {
   return (
     <div
       className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-semibold text-muted shadow-sm"
       role="status"
     >
       {hasSearchContext
-        ? "Live car inventory is not available to display for this search yet. Update the search details above or check again later."
-        : "Enter pickup details above to prepare a car search."}
+        ? t("carsResults.emptyInventory")
+        : t("carsResults.enterPickupDetails")}
     </div>
   );
 }
@@ -1389,12 +1545,14 @@ function CarFilters({
   onClear,
   onToggle,
   selectedFilters,
+  t,
 }: {
   activeFilterCount: number;
   layout: "desktop" | "mobile";
   onClear: () => void;
   onToggle: (groupId: string, option: string) => void;
   selectedFilters: SelectedCarFilters;
+  t: (key: string) => string;
 }) {
   return (
     <div
@@ -1406,11 +1564,13 @@ function CarFilters({
       )}
     >
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
-        <h2 className="text-base font-semibold text-white/95">Filter by</h2>
+        <h2 className="text-base font-semibold text-white/95">{t("carsResults.filterBy")}</h2>
         <div className="flex shrink-0 items-center gap-2">
           {activeFilterCount > 0 ? (
             <span className="rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold text-indigo-700 shadow-sm ring-1 ring-white/70">
-              {activeFilterCount} active
+              {interpolate(t("carsResults.activeFilterCount"), {
+                count: String(activeFilterCount),
+              })}
             </span>
           ) : null}
           <SlidersHorizontal
@@ -1425,14 +1585,16 @@ function CarFilters({
         {activeFilterCount > 0 ? (
           <div className="flex items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50/70 px-3 py-2.5">
             <span className="text-sm font-semibold text-indigo-950">
-              {activeFilterCount} selected
+              {interpolate(t("carsResults.selectedFilterCount"), {
+                count: String(activeFilterCount),
+              })}
             </span>
             <button
               type="button"
               className="focus-ring rounded-lg bg-white px-2.5 py-1 text-xs font-bold text-indigo-700 shadow-sm transition hover:bg-indigo-50"
               onClick={onClear}
             >
-              Reset
+              {t("carsResults.reset")}
             </button>
           </div>
         ) : null}
@@ -1443,6 +1605,7 @@ function CarFilters({
             group={group}
             onToggle={onToggle}
             selectedOptions={selectedFilters[group.id] ?? []}
+            t={t}
           />
         ))}
       </div>
@@ -1454,21 +1617,23 @@ function FilterSection({
   group,
   onToggle,
   selectedOptions,
+  t,
 }: {
   group: CarFilterGroup;
   onToggle: (groupId: string, option: string) => void;
   selectedOptions: string[];
+  t: (key: string) => string;
 }) {
   return (
     <section className="rounded-xl border border-slate-200/80 bg-white px-3 py-3 shadow-sm shadow-slate-900/[0.025]">
-      <h3 className="text-sm font-semibold text-slate-900">{group.title}</h3>
+      <h3 className="text-sm font-semibold text-slate-900">{t(group.titleKey)}</h3>
       <div className="mt-2 space-y-1.5">
         {group.options.map((option) => {
-          const isSelected = selectedOptions.includes(option);
+          const isSelected = selectedOptions.includes(option.id);
 
           return (
             <label
-              key={option}
+              key={option.id}
               className={cn(
                 "flex cursor-pointer items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all",
                 isSelected
@@ -1480,9 +1645,9 @@ function FilterSection({
                 type="checkbox"
                 className="h-3.5 w-3.5 shrink-0 rounded border-slate-300 accent-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                 checked={isSelected}
-                onChange={() => onToggle(group.id, option)}
+                onChange={() => onToggle(group.id, option.id)}
               />
-              <span className="min-w-0 flex-1 truncate">{option}</span>
+              <span className="min-w-0 flex-1 truncate">{t(option.labelKey)}</span>
               {isSelected ? (
                 <CheckCircle2
                   className="h-4 w-4 shrink-0 text-indigo-700"

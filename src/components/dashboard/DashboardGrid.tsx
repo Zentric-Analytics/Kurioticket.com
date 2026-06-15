@@ -1,16 +1,13 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell,
   Bookmark,
   BriefcaseBusiness,
-  Building2,
-  Car,
   ChevronRight,
-  Clock3,
   Grid2X2,
   Headphones,
   LifeBuoy,
@@ -18,68 +15,69 @@ import {
   Luggage,
   Mail,
   Plane,
-  Route,
   Settings,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
+import type { TranslationDictionary } from "@/lib/i18n/types";
 
 const navItems = [
-  { label: "Overview", href: "/dashboard", icon: Grid2X2 },
-  { label: "Trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-  { label: "Saved", href: "/dashboard/saved", icon: Bookmark },
-  { label: "Price alerts", href: "/dashboard/alerts", icon: Bell },
-  { label: "Preferences", href: "/dashboard/preferences", icon: Settings },
-  { label: "Support", href: "/dashboard/support", icon: LifeBuoy },
+  { labelKey: "accountDashboard.nav.overview", href: "/dashboard", icon: Grid2X2 },
+  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
+  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
+  { labelKey: "accountDashboard.nav.priceAlerts", href: "/dashboard/alerts", icon: Bell },
+  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
+  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
+  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
 ];
 
-const quickActions = [
-  {
-    title: "Search flights",
-    body: "Find the best flight deals",
-    href: "/flights/results",
-    icon: Plane,
-  },
-  {
-    title: "Search hotels",
-    body: "Find the perfect stay",
-    href: "/hotels",
-    icon: Building2,
-  },
-  {
-    title: "Search cars",
-    body: "Compare car rental deals",
-    href: "/cars",
-    icon: Car,
-  },
-  {
-    title: "View saved trips",
-    body: "See your saved trips and ideas",
-    href: "/dashboard/saved",
-    icon: Bookmark,
-  },
-];
-
-const snapshotItems = [
-  { label: "Trips", value: "0", href: "/dashboard/trips", linkText: "View trips", icon: BriefcaseBusiness },
-  { label: "Saved", value: "0", href: "/dashboard/saved", linkText: "View saved", icon: Bookmark },
-  { label: "Price alerts", value: "0", href: "/dashboard/alerts", linkText: "View price alerts", icon: Bell },
-  { label: "Recent searches", value: "0", href: "/flights/results", linkText: "Start searching", icon: Clock3 },
+const mobileAccountNavItems = [
+  { labelKey: "accountDashboard.personalDetails.title", href: "/dashboard", icon: UserRound },
+  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
+  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
+  { labelKey: "accountDashboard.nav.priceAlerts", href: "/dashboard/alerts", icon: Bell },
+  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
+  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
+  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
 ];
 
 type AccountDashboardFrameProps = {
   children: ReactNode;
   mobileOverviewTabs?: boolean;
+  mobileBackHref?: string;
 };
 
 type DashboardOverviewProps = {
   initials: string;
   displayName: string;
   userEmail?: string | null;
+  userName?: string | null;
+};
+
+type PersonalDetailsDraft = {
+  name: string;
+  displayName: string;
+  email: string;
+  phone: string;
+  dateOfBirth: string;
+  gender: string;
+  nationality: string;
+  address: string;
+};
+
+type PersonalDetailRow = {
+  key: keyof PersonalDetailsDraft;
+  label: string;
+  fallback: string;
+  helper?: string;
+  inputType?: "text" | "tel" | "date" | "email";
+  options?: Array<{ value: string; label: string }>;
+  multiline?: boolean;
+  readOnly?: boolean;
 };
 
 type ListRowProps = {
@@ -127,128 +125,220 @@ function TravelIllustration({ compact = false, variant = "luggage" }: { compact?
   );
 }
 
-export function AccountDashboardFrame({ children, mobileOverviewTabs = false }: AccountDashboardFrameProps) {
+function SavedEmptyStateIllustration() {
+  return (
+    <svg
+      className="mx-auto h-auto w-full max-w-[19rem] shrink-0 text-violet-700 drop-shadow-[0_28px_42px_rgba(79,70,229,0.14)] sm:max-w-[23rem] lg:mx-0 lg:max-w-[24rem]"
+      viewBox="0 0 420 360"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <circle cx="195" cy="138" r="112" fill="#ede9fe" />
+      <circle cx="195" cy="138" r="82" fill="#f5f3ff" />
+      <path d="M125 86c22 15 41 12 59 18 23 8 33 28 62 21 20-5 33-22 58-15" stroke="#ddd6fe" strokeWidth="11" strokeLinecap="round" />
+      <path d="M99 158c30-13 62-4 85 14 36 28 60 19 86 1 20-14 40-13 58 0" stroke="#ddd6fe" strokeWidth="11" strokeLinecap="round" />
+      <path d="M143 51c10 18 26 26 52 26M222 43c-8 24-3 46 15 66M103 117c28-7 45-32 45-57M268 60c-9 18-4 36 14 54" stroke="#c4b5fd" strokeWidth="5" strokeLinecap="round" opacity=".72" />
+      <path d="M261 96c23-18 49-27 76-29" stroke="#7c3aed" strokeWidth="3" strokeDasharray="9 8" strokeLinecap="round" />
+      <path d="M337 51l11 16 18-3 4 7-16 8 4 19-7 3-11-17-19 4-4-7 17-9-4-18 7-3Z" fill="#4f46e5" />
+      <circle cx="76" cy="170" r="7" fill="#c4b5fd" />
+      <circle cx="356" cy="162" r="4" fill="#c4b5fd" />
+      <circle cx="92" cy="201" r="3.5" fill="#ddd6fe" />
+      <ellipse cx="202" cy="329" rx="154" ry="10" fill="#ddd6fe" opacity=".95" />
+
+      <rect x="60" y="224" width="64" height="96" rx="8" fill="#8b5cf6" />
+      <path d="M77 224v-23c0-5 4-9 9-9h13c5 0 9 4 9 9v23" stroke="#6d28d9" strokeWidth="8" strokeLinecap="round" />
+      <path d="M79 242v58M96 242v58M113 242v58" stroke="#7c3aed" strokeWidth="5" strokeLinecap="round" opacity=".75" />
+      <circle cx="76" cy="324" r="6" fill="#312e81" />
+      <circle cx="112" cy="324" r="6" fill="#312e81" />
+
+      <path d="M204 314c-33-2-51-11-55-30-4-18 7-37 24-52l49 12 17 50c-6 14-17 21-35 20Z" fill="#312e81" />
+      <path d="M231 320h87c-13-38-39-61-77-69l-34 9c-5 26 3 46 24 60Z" fill="#312e81" />
+      <path d="M166 206c8-29 24-45 50-46 27 1 45 17 53 48l-24 73h-79v-75Z" fill="#5b36e6" />
+      <path d="M194 158c-2 12 2 22 13 28 11 0 19-5 24-15v-30l-31-7-6 24Z" fill="#ffd0b5" />
+      <path d="M216 166c5 0 12-4 16-10v16c-5 7-13 11-23 11-7-4-11-10-13-18 6 1 13 1 20 1Z" fill="#e9a384" opacity=".55" />
+      <path d="M175 139c-3-23 12-40 35-39 21 1 35 17 34 38-6 6-13 7-20 3-6-3-10-8-18-5-9 3-14 10-31 3Z" fill="#22146f" />
+      <circle cx="175" cy="133" r="18" fill="#22146f" />
+      <path d="M197 140c8-14 26-10 34 1v17c-2 12-10 20-22 22-15-3-23-12-24-28 2-8 6-12 12-12Z" fill="#ffd0b5" />
+      <circle cx="215" cy="153" r="2.8" fill="#111827" />
+      <path d="M229 153c4 3 4 8 0 12M210 169c8 5 16 4 23-3" stroke="#2e1065" strokeWidth="3" strokeLinecap="round" />
+      <path d="M240 224c17 10 33 8 48-6" stroke="#ffd0b5" strokeWidth="16" strokeLinecap="round" />
+      <path d="M289 218c8-9 12-19 12-29" stroke="#ffd0b5" strokeWidth="14" strokeLinecap="round" />
+      <path d="M159 218c-9 20-8 39 5 58" stroke="#ffd0b5" strokeWidth="16" strokeLinecap="round" />
+      <path d="M166 274c14 3 28-3 42-17" stroke="#ffd0b5" strokeWidth="14" strokeLinecap="round" />
+      <path d="M262 193c19-35 67-22 70 18 2 28-24 48-69 79-45-31-71-51-69-79 3-40 51-53 68-18Z" fill="#4f46e5" />
+      <path d="M278 211h28v55l-14-10-14 10v-55Z" fill="#fff" opacity=".92" />
+      <path d="M205 253c11-1 24-7 37-19" stroke="#ffd0b5" strokeWidth="14" strokeLinecap="round" />
+      <path d="M168 205c-10 14-15 29-15 45M263 203c11 16 16 31 14 47" stroke="#4421c8" strokeWidth="10" strokeLinecap="round" />
+
+      <path d="M334 317c-12-38 0-68 39-91-1 43-14 73-39 91Z" fill="#8b5cf6" opacity=".78" />
+      <path d="M349 316c4-32 22-55 53-70-4 41-21 65-53 70Z" fill="#7c3aed" opacity=".66" />
+      <rect x="328" y="306" width="49" height="24" rx="4" fill="#a78bfa" />
+    </svg>
+  );
+}
+
+export function AccountDashboardFrame({ children, mobileOverviewTabs = false, mobileBackHref }: AccountDashboardFrameProps) {
   const pathname = usePathname();
+  const { t } = useLocale();
+  const resolvedMobileBackHref = mobileBackHref;
 
   return (
-    <div className={cn("grid min-w-0 items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15.75rem_minmax(0,1fr)]", mobileOverviewTabs && "gap-3 sm:gap-4")}>
-      <aside className="min-w-0 lg:sticky lg:top-5 lg:self-start" aria-label="Account navigation">
+    <div
+      className={cn(
+        "grid min-w-0 items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15.75rem_minmax(0,1fr)]",
+        mobileOverviewTabs && "gap-3 sm:gap-4",
+      )}
+    >
+      <aside className="hidden min-w-0 lg:block" aria-label="Account navigation">
         <div
           className={cn(
-            "border border-violet-100/80 bg-white shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)] lg:min-h-[calc(100vh-7.25rem)]",
+            "border border-violet-100/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)] backdrop-blur-[1px]",
             mobileOverviewTabs
-              ? "-mx-4 border-x-0 px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:p-2.5 lg:shadow-[0_22px_60px_-50px_rgba(49,46,129,0.45)]"
-              : "rounded-[1.25rem] p-2 lg:p-2.5",
+              ? "-mx-4 border-x-0 bg-white px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:border-black/25 lg:bg-violet-50/35 lg:p-2.5 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)]"
+              : "rounded-[1.25rem] bg-violet-50/35 p-2 lg:p-2.5",
           )}
         >
-          <nav className="overflow-x-auto lg:overflow-visible">
-            <div className={cn("flex min-w-max lg:min-w-0 lg:flex-col lg:gap-1.5", mobileOverviewTabs ? "gap-7 lg:gap-1.5" : "gap-2")}>
+          <nav>
+            <div
+              className={cn(
+                "flex min-w-0 flex-wrap lg:flex-col lg:flex-nowrap lg:gap-1.5",
+                mobileOverviewTabs
+                  ? "max-w-full flex-nowrap gap-x-6 gap-y-0 overflow-x-auto overscroll-x-contain [scrollbar-width:none] lg:gap-1.5 lg:overflow-visible [&::-webkit-scrollbar]:hidden"
+                  : "gap-2",
+              )}
+            >
               {navItems.map((item) => {
                 const active = isActiveDashboardRoute(pathname, item.href);
                 const Icon = item.icon;
 
                 return (
                   <Link
-                    key={item.label}
+                    key={item.href}
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "focus-ring flex items-center gap-2.5 text-[13px] font-semibold transition hover:bg-violet-50 hover:text-violet-700 lg:rounded-xl lg:px-3.5 lg:py-2.5",
-                      mobileOverviewTabs && "relative whitespace-nowrap rounded-none px-0 py-3.5 text-[13px] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent lg:rounded-xl lg:px-3.5 lg:py-2.5 lg:after:hidden",
+                      "focus-ring flex items-center gap-2.5 text-[13px] font-semibold transition hover:bg-white/55 hover:text-violet-700 lg:rounded-xl lg:px-3.5 lg:py-2.5",
+                      mobileOverviewTabs && "relative shrink-0 whitespace-nowrap rounded-none px-0 py-3 text-sm sm:text-[13px] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent lg:rounded-xl lg:px-3.5 lg:py-2.5 lg:after:hidden",
                       !mobileOverviewTabs && "rounded-xl px-3.5 py-2.5",
                       active
                         ? cn(
-                          "text-violet-700 lg:bg-violet-50 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]",
-                          mobileOverviewTabs && "after:bg-violet-700 lg:bg-violet-50 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.08),0_10px_28px_-22px_rgba(79,70,229,0.55)]",
+                          "text-violet-700 lg:bg-white/65 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.10),0_10px_26px_-24px_rgba(79,70,229,0.55)]",
+                          mobileOverviewTabs && "after:bg-violet-700 lg:bg-white/65 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.10),0_10px_26px_-24px_rgba(79,70,229,0.55)]",
                         )
-                        : "text-slate-900",
+                        : "text-slate-800",
                     )}
                   >
                     <Icon className={cn("size-4 shrink-0", mobileOverviewTabs && "hidden lg:block")} strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
-                    <span>{item.label}</span>
+                    <span className="min-w-0 break-words leading-snug">{t[item.labelKey]}</span>
                   </Link>
                 );
               })}
             </div>
           </nav>
 
-          <div className="mt-5 hidden rounded-2xl border border-violet-100/80 bg-gradient-to-b from-violet-50/55 to-white p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] lg:block lg:mt-14 xl:mt-16">
+          <div className="mt-5 hidden rounded-2xl border border-violet-100/60 bg-violet-50/45 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] lg:block lg:mt-14 xl:mt-16">
             <div className="mx-auto mb-2 flex justify-center opacity-85">
               <TravelIllustration compact />
             </div>
-            <h2 className="text-[13px] font-semibold text-slate-900">Book your next trip</h2>
-            <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">Find great deals on flights and hotels.</p>
+            <h2 className="text-[13px] font-semibold leading-snug text-slate-900">{t["accountDashboard.promo.title"]}</h2>
+            <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">{t["accountDashboard.promo.body"]}</p>
             <Link
-              href="/flights/results"
-              className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200 bg-white px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-violet-50"
+              href="/flights"
+              className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200/80 bg-white/75 px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-white"
             >
               <Plane className="size-3.5" aria-hidden="true" />
-              Search flights
+              {t["accountDashboard.promo.cta"]}
             </Link>
           </div>
         </div>
       </aside>
-      <div className="min-w-0 space-y-3.5 sm:space-y-4">{children}</div>
+      <div className="min-w-0 space-y-3.5 sm:space-y-4">
+        <MobileAccountBackLink href={resolvedMobileBackHref} />
+        {children}
+      </div>
     </div>
   );
 }
 
-function QuickActionTile({ title, body, href, icon: Icon }: { title: string; body: string; href: string; icon: LucideIcon }) {
+export function MobileAccountBackLink({ href = "/dashboard/account" }: { href?: string }) {
+  const { t } = useLocale();
+
   return (
     <Link
       href={href}
-      className="focus-ring group flex min-h-20 min-w-0 items-center gap-3 rounded-xl border border-slate-300/80 bg-white/95 p-3 shadow-[0_18px_48px_-36px_rgba(30,27,75,0.62)] transition hover:-translate-y-0.5 hover:border-violet-300 hover:bg-white hover:shadow-[0_22px_54px_-34px_rgba(79,70,229,0.52)]"
+      aria-label={t["accountDashboard.mobile.backAriaLabel"]}
+      className="focus-ring inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 pr-3 text-sm font-black text-violet-700 transition hover:bg-violet-50 lg:hidden"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/80 text-violet-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.78)]">
-        <Icon className="size-5" strokeWidth={2.25} aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-slate-950">{title}</span>
-        <span className="mt-1 block text-xs leading-5 text-slate-700">{body}</span>
-      </span>
-      <ChevronRight className="size-4 shrink-0 text-slate-700 transition group-hover:translate-x-0.5 group-hover:text-violet-800" strokeWidth={2.4} aria-hidden="true" />
+      <span className="text-xl leading-none" aria-hidden="true">‹</span>
+      <span>{t.myAccount}</span>
     </Link>
   );
 }
 
-function QuickActionListRow({ title, body, href, icon: Icon }: { title: string; body: string; href: string; icon: LucideIcon }) {
+export function MobileAccountMenuPage() {
+  const { t } = useLocale();
+
   return (
-    <Link
-      href={href}
-      className="focus-ring group flex min-w-0 items-center gap-3 border-b border-slate-200 px-3 py-3 transition last:border-b-0 hover:bg-violet-50/60"
-    >
-      <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-100/70 text-violet-700">
-        <Icon className="size-5" strokeWidth={2.3} aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-slate-950">{title}</span>
-        <span className="mt-0.5 block text-sm leading-5 text-slate-700">{body}</span>
-      </span>
-      <ChevronRight className="size-4 shrink-0 text-slate-950 transition group-hover:translate-x-0.5 group-hover:text-violet-800" strokeWidth={2.5} aria-hidden="true" />
-    </Link>
+    <section className="mx-auto max-w-2xl overflow-x-hidden lg:hidden" aria-labelledby="mobile-account-title">
+      <div className="mb-5 px-1">
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Kurioticket</p>
+        <h1 id="mobile-account-title" className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950">
+          {t.myAccount}
+        </h1>
+      </div>
+
+      <div className="overflow-hidden rounded-[1.35rem] border border-violet-100 bg-white shadow-[0_22px_58px_-48px_rgba(49,46,129,0.55)]">
+        <div className="border-b border-slate-100 bg-violet-50/55 px-5 py-4">
+          <h2 className="text-sm font-black text-slate-950">{t["accountDashboard.mobile.manageAccount"]}</h2>
+        </div>
+
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]}>
+          {mobileAccountNavItems.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group flex min-h-14 w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-violet-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500"
+              >
+                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 transition group-hover:bg-white">
+                  <Icon className="size-4.5" strokeWidth={2.2} aria-hidden="true" />
+                </span>
+                <span className="min-w-0 flex-1 break-words text-base font-bold leading-snug text-slate-900">{t[item.labelKey]}</span>
+                <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </section>
   );
 }
 
 function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
+  const { t } = useLocale();
+
   return (
     <section
-      className="overflow-hidden rounded-2xl border border-slate-300/80 bg-[linear-gradient(135deg,#ffffff_0%,#faf8ff_58%,#f8fafc_100%)] shadow-[0_24px_66px_-46px_rgba(49,46,129,0.62)]"
+      className="border-b border-slate-200/80 pb-4 sm:pb-5"
       aria-labelledby="dashboard-title"
     >
-      <div className="flex min-w-0 items-center gap-4 p-4 sm:p-5 lg:p-5">
+      <div className="flex min-w-0 items-center gap-3 px-1 py-1 sm:gap-5 sm:px-2 sm:py-3">
         <div
-          className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-2xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
+          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
           aria-hidden="true"
         >
           {initials}
         </div>
         <div className="min-w-0">
           <h1 id="dashboard-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-            Welcome back, {displayName} 👋
+            {t["accountDashboard.overview.welcome"].replace("{name}", displayName)} 👋
           </h1>
-          {userEmail ? <p className="mt-1.5 break-words text-xs font-semibold text-slate-600 sm:text-sm">{userEmail}</p> : null}
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
-            Manage your trips, saved items, and preferences.
+          {userEmail ? <p className="mt-1 break-all text-sm font-semibold text-slate-600 sm:mt-1.5 sm:break-words sm:text-sm">{userEmail}</p> : null}
+          <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
+            {t["accountDashboard.overview.subtitle"]}
           </p>
         </div>
       </div>
@@ -256,71 +346,327 @@ function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOv
   );
 }
 
-function QuickActionsRow() {
-  return (
-    <>
-      <section
-        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_20px_60px_-48px_rgba(49,46,129,0.6)] lg:hidden"
-        aria-labelledby="quick-actions-title"
-      >
-        <div className="px-4 pt-3.5">
-          <h2 id="quick-actions-title" className="text-base font-semibold text-slate-950">Quick actions</h2>
-        </div>
-        <div className="m-3 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          {quickActions.map((action) => (
-            <QuickActionListRow key={action.title} {...action} />
-          ))}
-        </div>
-      </section>
+const genderOptions = [
+  { value: "Male", labelKey: "accountDashboard.personalDetails.gender.male" },
+  { value: "Female", labelKey: "accountDashboard.personalDetails.gender.female" },
+  { value: "I prefer not to say", labelKey: "accountDashboard.personalDetails.gender.preferNotToSay" },
+];
+const dateOfBirthMonthOptions = [
+  { value: "January", labelKey: "accountDashboard.personalDetails.month.january" },
+  { value: "February", labelKey: "accountDashboard.personalDetails.month.february" },
+  { value: "March", labelKey: "accountDashboard.personalDetails.month.march" },
+  { value: "April", labelKey: "accountDashboard.personalDetails.month.april" },
+  { value: "May", labelKey: "accountDashboard.personalDetails.month.may" },
+  { value: "June", labelKey: "accountDashboard.personalDetails.month.june" },
+  { value: "July", labelKey: "accountDashboard.personalDetails.month.july" },
+  { value: "August", labelKey: "accountDashboard.personalDetails.month.august" },
+  { value: "September", labelKey: "accountDashboard.personalDetails.month.september" },
+  { value: "October", labelKey: "accountDashboard.personalDetails.month.october" },
+  { value: "November", labelKey: "accountDashboard.personalDetails.month.november" },
+  { value: "December", labelKey: "accountDashboard.personalDetails.month.december" },
+];
+const dateOfBirthMonths = dateOfBirthMonthOptions.map((month) => month.value);
 
-      <section aria-label="Quick actions" className="hidden min-w-0 gap-3 lg:grid lg:grid-cols-2 xl:grid-cols-4">
-        {quickActions.map((action) => (
-          <QuickActionTile key={action.title} {...action} />
-        ))}
-      </section>
-    </>
+const dateOfBirthDays = Array.from({ length: 31 }, (_, index) => String(index + 1).padStart(2, "0"));
+
+const minDateOfBirthYear = 1900;
+const currentDateOfBirthYear = new Date().getFullYear();
+const dateOfBirthYears = Array.from(
+  { length: currentDateOfBirthYear - minDateOfBirthYear + 1 },
+  (_, index) => String(currentDateOfBirthYear - index),
+);
+
+function getPersonalDetailRows(t: TranslationDictionary): PersonalDetailRow[] {
+  return [
+    { key: "name", label: t["accountDashboard.personalDetails.name"], fallback: t["accountDashboard.personalDetails.addName"] },
+    { key: "displayName", label: t["accountDashboard.personalDetails.displayName"], fallback: t["accountDashboard.personalDetails.chooseDisplayName"] },
+    {
+      key: "email",
+      label: t["accountDashboard.personalDetails.emailAddress"],
+      fallback: t["accountDashboard.personalDetails.addEmailAddress"],
+      inputType: "email",
+      readOnly: true,
+    },
+    {
+      key: "phone",
+      label: t["accountDashboard.personalDetails.phoneNumber"],
+      fallback: t["accountDashboard.personalDetails.addPhoneNumber"],
+      inputType: "tel",
+    },
+    { key: "dateOfBirth", label: t["accountDashboard.personalDetails.dateOfBirth"], fallback: t["accountDashboard.personalDetails.addDateOfBirth"] },
+    {
+      key: "gender",
+      label: t["accountDashboard.personalDetails.gender"],
+      fallback: t["accountDashboard.personalDetails.addGender"],
+      options: genderOptions.map((option) => ({ value: option.value, label: t[option.labelKey] })),
+    },
+    { key: "nationality", label: t["accountDashboard.personalDetails.nationality"], fallback: t["accountDashboard.personalDetails.addNationality"] },
+    { key: "address", label: t["accountDashboard.personalDetails.address"], fallback: t["accountDashboard.personalDetails.addAddress"], multiline: true },
+  ];
+}
+
+function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: DashboardOverviewProps): PersonalDetailsDraft {
+  const trimmedName = userName?.trim() ?? "";
+  const trimmedDisplayName = trimmedName ? displayName.trim() : "";
+
+  return {
+    name: trimmedName,
+    displayName: trimmedDisplayName,
+    email: userEmail?.trim() ?? "",
+    phone: "",
+    dateOfBirth: "",
+    gender: "",
+    nationality: "",
+    address: "",
+  };
+}
+
+function DetailValue({ value, fallback, helper }: { value: string; fallback: string; helper?: string }) {
+  return (
+    <div className="min-w-0 space-y-0.5 text-left">
+      <p className={cn("break-words text-[15px] font-semibold leading-5 text-slate-900 sm:text-sm sm:leading-6", !value && "text-slate-500")}>{value || fallback}</p>
+      {helper ? <p className="max-w-lg text-[13px] leading-5 text-slate-500 sm:text-sm sm:leading-6">{helper}</p> : null}
+    </div>
   );
 }
 
-function SnapshotLink({ label, value, href, linkText, icon: Icon }: { label: string; value: string; href?: string; linkText: string; icon: LucideIcon }) {
-  const content = (
-    <div className="flex min-w-0 items-start gap-2 px-2 py-3 sm:gap-3 sm:px-4 lg:min-h-20 lg:items-center lg:gap-2.5 lg:border-l lg:border-slate-300/80 lg:first:border-l-0">
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/75 text-violet-800 sm:size-10">
-        <Icon className="size-4.5 sm:size-5" strokeWidth={2.25} aria-hidden="true" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <dt className="text-xs font-semibold leading-tight text-slate-800 lg:truncate">{label}</dt>
-        <dd className="mt-1 text-xl font-bold leading-none text-slate-950">{value}</dd>
-        <p className="mt-1 text-[11px] font-bold leading-tight text-violet-800 sm:text-xs lg:hidden">{linkText}</p>
-      </div>
-      <p className="hidden shrink-0 text-[11px] font-bold text-violet-800 sm:text-xs lg:block">{linkText}</p>
-      <ChevronRight className="hidden size-3.5 shrink-0 text-slate-700 lg:block" strokeWidth={2.4} aria-hidden="true" />
+function normalizeDateOfBirthDay(day: string) {
+  const normalizedDay = day.padStart(2, "0");
+
+  return dateOfBirthDays.includes(normalizedDay) ? normalizedDay : "";
+}
+
+function parseDateOfBirthParts(value: string) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return { day: "", month: "", year: "" };
+  }
+
+  const isoDateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmedValue);
+
+  if (isoDateMatch) {
+    const [, year, monthNumber, day] = isoDateMatch;
+    const monthIndex = Number(monthNumber) - 1;
+
+    return {
+      day: normalizeDateOfBirthDay(day),
+      month: dateOfBirthMonths[monthIndex] ?? "",
+      year,
+    };
+  }
+
+  const [day = "", month = "", year = ""] = trimmedValue.split(/\s+/);
+
+  return {
+    day: normalizeDateOfBirthDay(day),
+    month: dateOfBirthMonths.includes(month) ? month : "",
+    year,
+  };
+}
+
+function formatDateOfBirthParts(parts: { day: string; month: string; year: string }) {
+  const normalizedDay = parts.day ? parts.day.padStart(2, "0") : "";
+
+  return [normalizedDay, parts.month, parts.year].filter(Boolean).join(" ");
+}
+
+function DateOfBirthInput({ value, onChange, className }: { value: string; onChange: (value: string) => void; className: string }) {
+  const { t } = useLocale();
+  const [parts, setParts] = useState(() => parseDateOfBirthParts(value));
+
+  const updatePart = (part: keyof typeof parts, nextValue: string) => {
+    const nextParts = {
+      ...parts,
+      [part]: nextValue,
+    };
+
+    setParts(nextParts);
+    onChange(formatDateOfBirthParts(nextParts));
+  };
+
+  return (
+    <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,0.85fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
+      <select className={className} value={parts.day} onChange={(event) => updatePart("day", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthDay"]}>
+        <option value="" disabled hidden>
+          DD
+        </option>
+        {dateOfBirthDays.map((day) => (
+          <option key={day} value={day}>
+            {day}
+          </option>
+        ))}
+      </select>
+      <select className={className} value={parts.month} onChange={(event) => updatePart("month", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthMonth"]}>
+        <option value="" disabled hidden>
+          {t["accountDashboard.personalDetails.monthPlaceholder"]}
+        </option>
+        {dateOfBirthMonthOptions.map((month) => (
+          <option key={month.value} value={month.value}>
+            {t[month.labelKey]}
+          </option>
+        ))}
+      </select>
+      <select className={className} value={parts.year} onChange={(event) => updatePart("year", event.target.value)} aria-label={t["accountDashboard.personalDetails.dateOfBirthYear"]}>
+        <option value="" disabled hidden>
+          YYYY
+        </option>
+        {dateOfBirthYears.map((year) => (
+          <option key={year} value={year}>
+            {year}
+          </option>
+        ))}
+      </select>
     </div>
   );
+}
 
-  if (!href) {
-    return content;
+function DetailInput({ row, value, onChange }: { row: PersonalDetailRow; value: string; onChange: (key: keyof PersonalDetailsDraft, value: string) => void }) {
+  const baseClassName = cn(
+    "w-full min-w-0 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[15px] font-medium text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 sm:py-2.5 sm:text-sm",
+    row.readOnly && "cursor-not-allowed bg-slate-50 text-slate-500 focus:border-slate-200 focus:ring-0",
+  );
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    onChange(row.key, event.target.value);
+  };
+
+  if (row.key === "dateOfBirth") {
+    return <DateOfBirthInput value={value} onChange={(nextValue) => onChange(row.key, nextValue)} className={baseClassName} />;
+  }
+
+  if (row.options) {
+    return (
+      <select className={baseClassName} value={value} onChange={handleChange} disabled={row.readOnly} aria-label={row.label}>
+        <option value="" disabled hidden>
+          {row.fallback}
+        </option>
+        {row.options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  if (row.multiline) {
+    return (
+      <textarea
+        className={cn(baseClassName, "min-h-28 resize-y")}
+        value={value}
+        onChange={handleChange}
+        placeholder={row.fallback}
+        readOnly={row.readOnly}
+        rows={4}
+      />
+    );
   }
 
   return (
-    <Link href={href} className="focus-ring block rounded-2xl border border-slate-200 transition hover:bg-violet-50/70 lg:border-0">
-      {content}
-    </Link>
+    <input
+      className={baseClassName}
+      type={row.inputType ?? "text"}
+      value={value}
+      onChange={handleChange}
+      placeholder={row.fallback}
+      readOnly={row.readOnly}
+    />
   );
 }
 
-function SetupRow({ title, body, href, icon: Icon }: { title: string; body: string; href: string; icon: LucideIcon }) {
+function PersonalDetailsSection(props: DashboardOverviewProps) {
+  const { t } = useLocale();
+  const initialValues = getPersonalDetailsInitialValues(props);
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState<PersonalDetailsDraft>(initialValues);
+  const personalDetailRows = getPersonalDetailRows(t);
+
+  const handleEdit = () => {
+    setDraft(initialValues);
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setDraft(initialValues);
+    setIsEditing(false);
+  };
+
+  const updateDraft = (key: keyof PersonalDetailsDraft, value: string) => {
+    setDraft((current) => ({ ...current, [key]: value }));
+  };
+
   return (
-    <Link href={href} className="focus-ring group flex min-w-0 items-center gap-3 px-5 py-3.5 transition hover:bg-violet-50/70 sm:px-6">
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-violet-200/80 bg-violet-100/70 text-violet-800">
-        <Icon className="size-4" strokeWidth={2.25} aria-hidden="true" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-slate-950">{title}</span>
-        <span className="mt-1 block text-xs leading-5 text-slate-700">{body}</span>
-      </span>
-      <ChevronRight className="size-4 shrink-0 text-slate-700 transition group-hover:translate-x-0.5 group-hover:text-violet-800" strokeWidth={2.4} aria-hidden="true" />
-    </Link>
+    <section
+      className="min-w-0"
+      aria-labelledby="personal-details-title"
+    >
+      <div className="flex min-w-0 flex-col gap-2 px-1 pb-3 pt-1 sm:gap-4 sm:px-2 sm:pb-5 sm:pt-2 md:flex-row md:items-center md:justify-between">
+        <div className="min-w-0">
+          <h2 id="personal-details-title" className="text-[22px] font-bold tracking-tight text-slate-950 sm:text-2xl">
+            {t["accountDashboard.personalDetails.title"]}
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-2 sm:text-sm sm:leading-6">
+            {t["accountDashboard.personalDetails.subtitle"]}
+          </p>
+        </div>
+      </div>
+
+      <div className="divide-y divide-slate-200 border-y border-slate-200/90">
+        {personalDetailRows.map((row) => {
+          const readOnlyValue = initialValues[row.key];
+          const editValue = draft[row.key];
+
+          return (
+            <div key={row.key} className="grid min-w-0 gap-1 px-1 py-2.5 sm:gap-1.5 sm:px-2 sm:py-4 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-5">
+              <div className="text-[15px] font-semibold text-slate-700 sm:text-sm">{row.label}</div>
+              {isEditing ? (
+                <div className="min-w-0 space-y-1.5">
+                  <DetailInput row={row} value={editValue} onChange={updateDraft} />
+                  {row.helper ? <p className="text-sm leading-6 text-slate-500">{row.helper}</p> : null}
+                </div>
+              ) : (
+                <DetailValue value={readOnlyValue} fallback={row.fallback} helper={row.helper} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="px-1 py-4 sm:px-2 sm:py-5">
+        {isEditing ? (
+          <div className="flex min-w-0 flex-col gap-3 sm:items-end">
+            <p className="text-sm leading-6 text-slate-500 sm:text-right">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
+              >
+                {t["accountDashboard.personalDetails.cancel"]}
+              </button>
+              <button
+                type="button"
+                disabled
+                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 text-sm font-semibold text-slate-500"
+              >
+                {t["accountDashboard.personalDetails.saveChanges"]}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-violet-700 px-5 text-[15px] font-semibold text-white shadow-[0_16px_34px_-22px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 sm:min-h-11 sm:w-auto sm:text-sm"
+            >
+              {t["accountDashboard.personalDetails.edit"]}
+            </button>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -331,11 +677,11 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
         <Icon size={20} aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold text-navy">{title}</h3>
-          {status ? <span className="rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted">{status}</span> : null}
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h3 className="min-w-0 break-words font-semibold text-navy">{title}</h3>
+          {status ? <span className="break-words rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted">{status}</span> : null}
         </div>
-        <p className="mt-1 text-sm leading-6 text-muted">{body}</p>
+        <p className="mt-1 break-words text-sm leading-6 text-muted">{body}</p>
       </div>
       {href ? <ChevronRight className="mt-2 size-4 shrink-0 text-teal-dark" aria-hidden="true" /> : null}
     </div>
@@ -352,183 +698,180 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
   );
 }
 
-export function DashboardOverview({ initials, displayName, userEmail }: DashboardOverviewProps) {
+export function DashboardOverview({ initials, displayName, userEmail, userName }: DashboardOverviewProps) {
   return (
-    <div className="mx-auto min-w-0 max-w-[62rem] space-y-3.5 sm:space-y-4 xl:max-w-[64rem]">
+    <div className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
       <AccountIdentityHeader initials={initials} displayName={displayName} userEmail={userEmail} />
-      <QuickActionsRow />
-
-      <section
-        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
-        aria-label="Your travel status"
-      >
-        <div className="px-5 pt-4 lg:hidden">
-          <h2 className="text-base font-semibold text-slate-950">Your travel status</h2>
-        </div>
-        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 p-4 pt-4 sm:gap-5 sm:p-6 lg:grid-cols-[auto_minmax(0,1fr)_auto] xl:px-7 xl:py-7">
-          <TravelIllustration />
-          <div className="min-w-0">
-            <h2 className="hidden text-base font-semibold text-slate-950 lg:block">Your travel status</h2>
-            <h3 className="mt-0 text-lg font-bold tracking-tight text-slate-950 sm:text-[1.6rem] lg:mt-3">No upcoming trips yet</h3>
-            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-700 lg:mt-2.5">
-              Trips you book or save will appear here when available.
-            </p>
-            <div className="mt-4 flex flex-row gap-2 max-[380px]:flex-col lg:mt-5 lg:gap-3">
-              <Link
-                href="/flights/results"
-                className="focus-ring inline-flex h-10 items-center justify-center whitespace-nowrap rounded-xl bg-violet-700 px-3 text-[13px] font-bold text-white transition hover:bg-violet-800 max-[380px]:w-full sm:px-4 sm:text-sm"
-              >
-                Search flights
-              </Link>
-              <Link
-                href="/hotels"
-                className="focus-ring inline-flex h-10 items-center justify-center whitespace-nowrap rounded-xl border border-violet-500 bg-white px-3 text-[13px] font-bold text-violet-700 transition hover:bg-violet-50 max-[380px]:w-full sm:px-4 sm:text-sm"
-              >
-                Search hotels
-              </Link>
-            </div>
-          </div>
-          <div className="hidden lg:flex">
-            <TravelIllustration variant="globe" />
-          </div>
-        </div>
-      </section>
-
-      <section
-        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
-        aria-labelledby="snapshot-title"
-      >
-        <div className="px-5 pt-4 sm:px-6">
-          <h2 id="snapshot-title" className="text-base font-semibold text-slate-950">Account snapshot</h2>
-        </div>
-        <dl className="grid grid-cols-2 gap-1.5 p-2.5 sm:p-3 lg:grid-cols-4 lg:gap-0">
-          {snapshotItems.map((item) => (
-            <SnapshotLink key={item.label} {...item} />
-          ))}
-        </dl>
-      </section>
-
-      <section
-        className="overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-[0_24px_70px_-48px_rgba(49,46,129,0.6)]"
-        aria-labelledby="setup-title"
-      >
-        <div className="border-b border-slate-300/80 px-5 py-3.5 sm:px-6">
-          <h2 id="setup-title" className="text-base font-semibold text-slate-950">Finish setting up your account</h2>
-        </div>
-        <div className="divide-y divide-slate-300/80">
-          <SetupRow
-            title="Personal details"
-            body="Add your name, phone number and more"
-            href="/dashboard/preferences"
-            icon={UserRound}
-          />
-          <SetupRow
-            title="Travel preferences"
-            body="Set your preferred travel options"
-            href="/dashboard/preferences"
-            icon={Plane}
-          />
-          <SetupRow
-            title="Security and privacy"
-            body="Manage your password and privacy settings"
-            href="/dashboard/preferences"
-            icon={ShieldCheck}
-          />
-        </div>
-      </section>
+      <PersonalDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
     </div>
   );
 }
 
-export function TripsDashboardPage() {
-  return (
-    <Card className="overflow-hidden p-0">
-      <div className="border-b border-border bg-surface-muted/70 px-5 py-5 sm:px-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Trips</p>
-        <h1 className="mt-2 text-3xl font-bold text-navy">Trips</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-          Booked and saved trip activity tied to your account will appear here when it exists.
-        </p>
-      </div>
-      <div className="px-5 py-6 sm:px-6">
-        <div className="rounded-2xl border border-dashed border-border bg-white p-6">
-          <Route className="size-10 text-teal-dark" aria-hidden="true" />
-          <h2 className="mt-4 text-2xl font-bold text-navy">No trips booked yet</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            When real booked or saved trip activity is available for your account, it will be organized here. Start with a flight or hotel search to keep planning.
-          </p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/flights/results">Search flights</LinkButton>
-            <LinkButton href="/hotels" variant="secondary">Search hotels</LinkButton>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 export function SavedDashboardPage() {
+  const { t } = useLocale();
+
   return (
-    <Card className="overflow-hidden p-0">
-      <div className="border-b border-border bg-surface-muted/70 px-5 py-5 sm:px-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Saved</p>
-        <h1 className="mt-2 text-3xl font-bold text-navy">Saved</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-          Saved trips, routes, stays, and planning items connected to your account belong here.
+    <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
+      <div className="px-1 text-left sm:px-2">
+        <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
+          {t["accountDashboard.saved.title"]}
+        </h1>
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base lg:mx-0">
+          {t["accountDashboard.saved.description"]}
         </p>
       </div>
-      <div className="px-5 py-6 sm:px-6">
-        <div className="rounded-2xl border border-dashed border-border bg-white p-6">
-          <Bookmark className="size-10 text-teal-dark" aria-hidden="true" />
-          <h2 className="mt-4 text-2xl font-bold text-navy">No saved items yet</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            Items you save from Kurioticket planning tools will appear here. You can also open the existing saved trips area when saved data is available.
-          </p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/saved">Open saved trips</LinkButton>
-            <LinkButton href="/flights/results" variant="secondary">Search flights</LinkButton>
-            <LinkButton href="/hotels" variant="secondary">Search hotels</LinkButton>
+      <div className="px-1 py-7 sm:px-2 sm:py-9 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-14 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
+        <div className="grid items-center gap-8 lg:grid-cols-[minmax(17rem,0.92fr)_minmax(0,1fr)] lg:gap-14">
+          <SavedEmptyStateIllustration />
+          <div className="mx-auto max-w-md text-center lg:mx-0 lg:text-left">
+            <h2 className="text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem]">
+              {t["accountDashboard.saved.emptyTitle"]}
+            </h2>
+            <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600 lg:mx-0">
+              {t["accountDashboard.saved.emptyDescription"]}
+            </p>
+            <LinkButton
+              href="/"
+              size="lg"
+              className="mt-7 w-full rounded-xl bg-violet-700 px-8 text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] hover:bg-violet-800 sm:max-w-[19rem] lg:w-auto lg:min-w-36"
+            >
+              {t["accountDashboard.saved.explore"]}
+            </LinkButton>
           </div>
         </div>
       </div>
-    </Card>
+    </section>
   );
 }
 
 export function PreferencesDashboardPage() {
+  const { t } = useLocale();
+
   return (
     <section aria-labelledby="preferences-title" className="space-y-4">
       <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Preferences</p>
-        <h1 id="preferences-title" className="mt-2 text-3xl font-bold text-navy">Preferences</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
+          {t["accountDashboard.preferences.eyebrow"]}
+        </p>
+        <h1 id="preferences-title" className="mt-2 text-3xl font-bold text-navy">
+          {t["accountDashboard.preferences.title"]}
+        </h1>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Account settings are grouped here as clean shortcuts. Controls that are not active yet are marked clearly.
+          {t["accountDashboard.preferences.description"]}
         </p>
       </div>
       <div className="grid gap-3">
-        <ListRow title="Personal details" body="Review your account profile details when editable profile controls are available." icon={UserRound} status="Coming soon" />
-        <ListRow title="Notification preferences" body="Manage email and alert preferences as notification controls are added." icon={Mail} status="Coming soon" />
-        <ListRow title="Travel preferences" body="Keep preferred planning defaults easy to find for future account settings." icon={Settings} status="Coming soon" />
-        <ListRow title="Security and privacy" body="Review current privacy and platform policy information." href="/legal" icon={ShieldCheck} />
+        <ListRow
+          title={t["accountDashboard.preferences.personalDetails.title"]}
+          body={t["accountDashboard.preferences.personalDetails.description"]}
+          icon={UserRound}
+          status={t["accountDashboard.preferences.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.preferences.notifications.title"]}
+          body={t["accountDashboard.preferences.notifications.description"]}
+          icon={Mail}
+          status={t["accountDashboard.preferences.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.preferences.travel.title"]}
+          body={t["accountDashboard.preferences.travel.description"]}
+          icon={Settings}
+          status={t["accountDashboard.preferences.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.preferences.securityPrivacy.title"]}
+          body={t["accountDashboard.preferences.securityPrivacy.description"]}
+          href="/legal"
+          icon={ShieldCheck}
+        />
+      </div>
+    </section>
+  );
+}
+
+export function SecurityDashboardPage() {
+  const { t } = useLocale();
+
+  return (
+    <section aria-labelledby="security-title" className="space-y-4">
+      <div className="max-w-3xl">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
+          {t["accountDashboard.security.eyebrow"]}
+        </p>
+        <h1 id="security-title" className="mt-2 text-3xl font-bold text-navy">
+          {t["accountDashboard.security.title"]}
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-muted">
+          {t["accountDashboard.security.description"]}
+        </p>
+      </div>
+      <div className="grid gap-3">
+        <ListRow
+          title={t["accountDashboard.security.password.title"]}
+          body={t["accountDashboard.security.password.description"]}
+          icon={LockKeyhole}
+          status={t["accountDashboard.security.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.security.twoStep.title"]}
+          body={t["accountDashboard.security.twoStep.description"]}
+          icon={ShieldCheck}
+          status={t["accountDashboard.security.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.security.activeSessions.title"]}
+          body={t["accountDashboard.security.activeSessions.description"]}
+          icon={UserRound}
+          status={t["accountDashboard.security.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.security.privacy.title"]}
+          body={t["accountDashboard.security.privacy.description"]}
+          href="/legal"
+          icon={LockKeyhole}
+        />
       </div>
     </section>
   );
 }
 
 export function SupportDashboardPage() {
+  const { t } = useLocale();
+
   return (
     <section aria-labelledby="support-title" className="space-y-4">
       <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">Support</p>
-        <h1 id="support-title" className="mt-2 text-3xl font-bold text-navy">Support</h1>
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
+          {t["accountDashboard.support.eyebrow"]}
+        </p>
+        <h1 id="support-title" className="mt-2 text-3xl font-bold text-navy">
+          {t["accountDashboard.support.title"]}
+        </h1>
         <p className="mt-3 text-sm leading-6 text-muted">
-          Find help and policy resources without presenting inactive support tools as complete workflows.
+          {t["accountDashboard.support.description"]}
         </p>
       </div>
       <div className="grid gap-3">
-        <ListRow title="Help center" body="Browse the existing support area for Kurioticket help and travel-planning guidance." href="/support" icon={LifeBuoy} />
-        <ListRow title="Contact support" body="Contact options are being prepared for account support requests." icon={Headphones} status="Coming soon" />
-        <ListRow title="Privacy and data" body="Review legal and privacy information for account data and platform policies." href="/legal" icon={LockKeyhole} />
+        <ListRow
+          title={t["accountDashboard.support.helpCenter.title"]}
+          body={t["accountDashboard.support.helpCenter.description"]}
+          href="/support"
+          icon={LifeBuoy}
+        />
+        <ListRow
+          title={t["accountDashboard.support.contact.title"]}
+          body={t["accountDashboard.support.contact.description"]}
+          icon={Headphones}
+          status={t["accountDashboard.support.comingSoon"]}
+        />
+        <ListRow
+          title={t["accountDashboard.support.privacyData.title"]}
+          body={t["accountDashboard.support.privacyData.description"]}
+          href="/legal"
+          icon={LockKeyhole}
+        />
       </div>
     </section>
   );
