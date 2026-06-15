@@ -491,6 +491,37 @@ export const translations: TranslationDictionary = {
   print: "Drucken",
   tableOfContents: "Inhaltsverzeichnis",
   lastUpdated: "Zuletzt aktualisiert",
+  "legal.lastUpdated": "Letzte Aktualisierung",
+  "legal.print": "Drucken",
+  "legal.tableOfContents": "Inhaltsverzeichnis",
+  "legal.terms.title": "Nutzungsbedingungen",
+  "legal.terms.summary":
+    "Regeln für die Nutzung der Kurioticket-Suche, Konten, Dashboards, gespeicherten Reisetools und Partner-Weiterleitungen.",
+  "legal.terms.lastUpdatedDate": "11. Mai 2026",
+  "legal.terms.lastUpdated": "Letzte Aktualisierung: 11. Mai 2026",
+  "legal.terms.tableOfContents": "INHALTSVERZEICHNIS",
+  "legal.terms.sections.overview.title": "Überblick",
+  "legal.terms.sections.overview.paragraph1":
+    "Kurioticket LLC („Kurioticket“, „wir“, „uns“ oder „unser“) betreibt eine Reise-Such- und Vergleichsplattform, die Nutzern hilft, Flüge, Hotels und Mietwagen zu suchen, Anbieteroptionen zu vergleichen, Reisepläne zu speichern und Benachrichtigungen zu erstellen.",
+  "legal.terms.sections.overview.paragraph2":
+    "Kurioticket ist keine Fluggesellschaft, kein Hotel, kein Online-Reisebüro, kein Reisebüro, kein Zahlungsabwickler für Reisekäufe und kein Ticketaussteller. Käufe, Tarifregeln, Ticketausstellung, Änderungen des Reiseplans, Stornierungen, Erstattungen, Boarding, Check-in und Reisedokumente werden vom externen Anbieter abgewickelt.",
+  "legal.terms.sections.accounts.title": "Konten",
+  "legal.terms.sections.accounts.paragraph1":
+    "Sie können Reiseergebnisse ohne Konto suchen und anzeigen. Für gespeicherte Flüge, gespeicherte Hotels, gespeicherte Suchen, Benachrichtigungen, Dashboards und Support-Tickets ist ein Konto erforderlich.",
+  "legal.terms.sections.accounts.paragraph2":
+    "Sie sind dafür verantwortlich, Ihre Anmeldedaten zu schützen und für Aktivitäten unter Ihrem Konto einzustehen.",
+  "legal.terms.sections.acceptable-use.title": "Zulässige Nutzung",
+  "legal.terms.sections.acceptable-use.paragraph1":
+    "Sie dürfen Such-, Benachrichtigungs-, Support-, Konto- oder Anbieter-Weiterleitungssysteme nicht missbrauchen, Anbieterintegrationen nicht zurückentwickeln, nicht versuchen, Ratenbegrenzungen zu umgehen, und Kurioticket nicht für betrügerische, rechtswidrige oder schädliche Aktivitäten nutzen.",
+  "legal.terms.sections.acceptable-use.paragraph2":
+    "Wir können den Zugriff aussetzen, wenn Aktivitäten die Zuverlässigkeit der Plattform, Anbieterbeziehungen, Dienstsicherheit oder Nutzersicherheit gefährden.",
+  "legal.terms.sections.partner-services.title": "Partnerdienste",
+  "legal.terms.sections.partner-services.paragraph1":
+    "Reiseergebnisse können Preise, Verfügbarkeit, Richtlinien, Routendaten, Hoteldaten und externe Anbieterlinks enthalten, die von APIs, Fluggesellschaften, Hotels oder Affiliate-Partnern bereitgestellt werden.",
+  "legal.terms.sections.partner-services.paragraph2":
+    "Sobald Sie Kurioticket verlassen oder eine Transaktion mit einem Partner abschließen, gelten die Bedingungen des Partners. Prüfen Sie vor dem Kauf alle Tarif-, Hotel-, Gepäck-, Änderungs-, Erstattungs-, Visa- und Reisendenanforderungen.",
+  "legal.terms.developerNote":
+    "Diese rechtlichen Entwürfe sind Platzhalter für die Startphase und sollten vor einer groß angelegten öffentlichen Einführung von qualifiziertem Rechtsbeistand geprüft werden.",
   createYourAccount: "Konto erstellen",
   createAccount: "Konto erstellen",
   continueWithGoogle: "Mit Google fortfahren",

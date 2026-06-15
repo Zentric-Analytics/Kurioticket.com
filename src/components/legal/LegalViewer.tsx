@@ -28,15 +28,14 @@ function getTermsDocumentTranslation(
 
   return {
     ...document,
-    title: t["legal.terms.title"],
-    summary: t["legal.terms.summary"],
-    lastUpdated: t["legal.terms.lastUpdatedDate"],
+    title: getTranslation(t, "legal.terms.title", document.title),
+    summary: getTranslation(t, "legal.terms.summary", document.summary),
+    lastUpdated: getTranslation(t, "legal.terms.lastUpdatedDate", document.lastUpdated),
     sections: document.sections.map((section) => ({
       ...section,
-      title: t[`legal.terms.sections.${section.id}.title`],
-      paragraphs: section.paragraphs.map(
-        (_paragraph, index) =>
-          t[`legal.terms.sections.${section.id}.paragraph${index + 1}`]
+      title: getTranslation(t, `legal.terms.sections.${section.id}.title`, section.title),
+      paragraphs: section.paragraphs.map((paragraph, index) =>
+        getTranslation(t, `legal.terms.sections.${section.id}.paragraph${index + 1}`, paragraph)
       ),
     })),
   };
@@ -361,7 +360,11 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
   const isPriceAvailabilityDisclaimer = document.slug === "price-availability-disclaimer";
   const isPartnerRedirectDisclaimer = document.slug === "partner-redirect-disclaimer";
   const lastUpdatedText = isTermsOfService
-    ? t["legal.terms.lastUpdated"]
+    ? getTranslation(
+        t,
+        "legal.terms.lastUpdated",
+        `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`
+      )
     : isAcceptableUsePolicy
       ? getTranslation(
           t,
@@ -412,7 +415,7 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
                     )
                   : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
   const developerNote = isTermsOfService
-    ? t["legal.terms.developerNote"]
+    ? getTranslation(t, "legal.terms.developerNote", legalDeveloperNote)
     : isAcceptableUsePolicy
       ? getTranslation(
           t,
