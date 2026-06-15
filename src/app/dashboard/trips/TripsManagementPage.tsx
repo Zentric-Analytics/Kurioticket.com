@@ -187,7 +187,7 @@ export function TripsManagementPage() {
       </div>
 
       <section aria-labelledby="mobile-trips-panel-title" className="space-y-7 lg:hidden">
-        <div className="flex min-w-0 items-center gap-7 overflow-hidden" role="tablist" aria-label="Trip status filters">
+        <div className="flex min-w-0 items-center gap-7 overflow-hidden" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
           {mobileTripTabs.map((tab) => {
             const isActive = activeMobileTab === tab.id;
 
@@ -241,7 +241,7 @@ export function TripsManagementPage() {
       </section>
 
       <section aria-labelledby="desktop-trips-panel-title" className="hidden pt-2 lg:block">
-        <div className="border-b border-slate-200/80" role="tablist" aria-label="Trip status filters">
+        <div className="border-b border-slate-200/80" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
           <div className="flex min-w-0 gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {desktopTripTabs.map((tab) => {
               const isActive = activeDesktopTab === tab.id;
