@@ -517,9 +517,6 @@ export const translations: TranslationDictionary = {
   print: "Drucken",
   tableOfContents: "Inhaltsverzeichnis",
   lastUpdated: "Zuletzt aktualisiert",
-  "legal.lastUpdated": "Letzte Aktualisierung",
-  "legal.print": "Drucken",
-  "legal.tableOfContents": "Inhaltsverzeichnis",
   "legal.terms.title": "Nutzungsbedingungen",
   "legal.terms.summary":
     "Regeln für die Nutzung der Kurioticket-Suche, Konten, Dashboards, gespeicherten Reisetools und Partner-Weiterleitungen.",
