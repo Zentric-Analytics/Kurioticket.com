@@ -402,7 +402,7 @@ export default function Home() {
       }
 
       setNewsletterStatus("success");
-      setNewsletterMessage(data.message || t("homeNewsletterThanks"));
+      setNewsletterMessage(t("homeNewsletterThanks"));
       setNewsletterEmail("");
     } catch (error) {
       setNewsletterStatus("error");

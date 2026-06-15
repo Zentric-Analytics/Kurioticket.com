@@ -355,8 +355,7 @@ export const translations: TranslationDictionary = {
   homeNewsletterBody: "Erhalte wöchentliche kuratierte Flug- und Hotelupdates.",
   homeNewsletterPlaceholder: "E-Mail eingeben",
   homeSubscribe: "Abonnieren",
-  homeNewsletterThanks:
-    "Danke! Wir halten dich mit Reiseangeboten auf dem Laufenden.",
+  homeNewsletterThanks: "Danke! Sie haben Kurioticket-Updates abonniert.",
   homeHeroImageAlt: "Luxuriöses tropisches Resort am ruhigen Wasser",
   homeNextDestinations: "Nächste Reiseziele",
   homeEmailAddress: "E-Mail-Adresse",
