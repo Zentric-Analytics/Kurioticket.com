@@ -1619,5 +1619,14 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedQuestion: "Warum wurde ich zu einem anderen Anbieter weitergeleitet?",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket ist eine Plattform für Reisesuche und -vergleich. Einige Ergebnisse leiten zu vertrauenswürdigen Anbietern weiter, bei denen Sie Buchung, Zahlung und anbieterspezifischen Support abschließen.",
+  aboutPageEyebrow: "Über Kurioticket",
+  aboutPageTitle: "Über uns",
+  aboutPageIntroPrimary:
+    "Kurioticket ist eine Reise-Such- und Vergleichsplattform, die Reisenden hilft, Flüge, Hotels, Mietwagen und Reiseangebote zu suchen, zu vergleichen und zu entdecken.",
+  aboutPageIntroSecondary:
+    "Unser Ziel ist es, Reiseplanung übersichtlicher zu machen, indem verfügbare Optionen und Anbieterinformationen an einem einfachen Ort zusammengeführt werden, damit Reisende ihre Auswahl prüfen können, bevor sie mit dem Anbieter fortfahren, der zu ihrer Reise passt.",
+  aboutPagePlanningCardHeading: "Ein praktisches Tool für die Reiseplanung",
+  aboutPagePlanningCardBody:
+    "Kurioticket hilft Reisenden dabei, Reiseoptionen mit nützlichem Kontext zu bewerten. Verfügbarkeit, Preise, Regeln und abschließende Buchungsschritte können je nach Anbieter variieren. Deshalb sollten Reisende die Anbieterseite sorgfältig prüfen, bevor sie eine Entscheidung treffen.",
 
 };
