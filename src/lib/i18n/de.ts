@@ -1015,6 +1015,45 @@ export const translations: TranslationDictionary = {
   footerPrivacy: "Datenschutz",
   footerTerms: "Bedingungen",
   footerCookies: "Cookies",
+  serviceGuaranteeEyebrow: "Kurioticket-Serviceversprechen",
+  serviceGuaranteeTitle: "Servicegarantie",
+  serviceGuaranteeDescription:
+    "Wir möchten, dass Reisende verstehen, wie Kurioticket funktioniert und was sie bei der Nutzung unserer Plattform erwarten können.",
+  serviceGuaranteeFaqHeading: "Häufig gestellte Fragen",
+  serviceGuaranteeFaqDescription:
+    "Diese Antworten erklären die Rolle von Kurioticket als Reise-Such- und Vergleichsplattform.",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Was garantiert Kurioticket?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket soll Reisenden helfen, Reiseoptionen klar zu vergleichen. Wir möchten eine zuverlässige Plattform, transparente Suchinformationen und klare Wege zu den Buchungsseiten der Anbieter bereitstellen.",
+  serviceGuaranteeFaqResultsDisplayedQuestion:
+    "Wie werden Reiseergebnisse angezeigt?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "Ergebnisse werden anhand der von Reiseanbietern verfügbaren Informationen angezeigt, einschließlich Routen, Daten, Preisen und Anbieterdetails, sofern verfügbar.",
+  serviceGuaranteeFaqRedirectedQuestion:
+    "Warum werde ich zu einem anderen Anbieter weitergeleitet?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "Einige Ergebnisse werden auf der Website eines externen Anbieters abgeschlossen. Wenn Sie eine dieser Optionen auswählen, leitet Kurioticket Sie weiter, damit der Anbieter Buchung, Zahlung und reisespezifischen Service übernehmen kann.",
+  serviceGuaranteeFaqBookDirectlyQuestion: "Buche ich direkt bei Kurioticket?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket ist in erster Linie eine Reise-Such- und Vergleichsplattform. Wenn ein Ergebnis zu einem Anbieter weiterleitet, wird die Buchung bei diesem Anbieter und nicht auf Kurioticket abgeschlossen.",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "Sind Preise immer garantiert?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "Nein. Preise können sich je nach Verfügbarkeit beim Anbieter, Steuern, Gebühren, Währung und Zeitpunkt ändern. Prüfen Sie vor der Buchung immer den Endpreis auf der Anbieterseite.",
+  serviceGuaranteeFaqChooseProvidersQuestion:
+    "Wie wählt Kurioticket Anbieter aus?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket arbeitet mit Reiseanbietern und Datenquellen zusammen, die relevante Suchergebnisse bereitstellen können. Verfügbarkeit, Preise und angezeigte Optionen können je nach Route, Reiseziel und Anbieterabdeckung variieren.",
+  serviceGuaranteeFaqEncounterIssueQuestion:
+    "Was soll ich tun, wenn ein Problem auftritt?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "Wenn das Problem mit der Suche, dem Kontozugriff, gespeicherten Reisen, Benachrichtigungen oder einer Weiterleitung von Kurioticket zusammenhängt, kontaktieren Sie den Kurioticket-Support. Wenn Sie bereits bei einem Anbieter gebucht haben, wenden Sie sich für Buchungsänderungen, Erstattungen, Stornierungen oder Reisedokumente an diesen Anbieter.",
+  serviceGuaranteeFaqContactSupportQuestion:
+    "Wie kann ich den Support kontaktieren?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "Nutzen Sie die Kundensupport-Seite und geben Sie die E-Mail-Adresse Ihres Kontos, Ihr Anliegen sowie alle Routen-, Hotel- oder Anbieterdetails an, die uns bei der Prüfung des Problems helfen können.",
+  serviceGuaranteeHelpCardTitle:
+    "Benötigen Sie Hilfe mit Ihrem Konto oder Ihrer Suche?",
+  serviceGuaranteeSupportCta: "Kundensupport kontaktieren",
   flightQuoteUnavailable: "Flugangebot nicht verfügbar",
 
   "hotelResults.openFilters": "Filter öffnen",
