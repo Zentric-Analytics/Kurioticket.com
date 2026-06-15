@@ -20,7 +20,6 @@ import {
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -122,6 +121,32 @@ function TravelIllustration({ compact = false, variant = "luggage" }: { compact?
           <Luggage className={cn("relative fill-violet-500/20 text-violet-700 drop-shadow-sm", compact ? "size-12" : "size-12 sm:size-16")} />
         </>
       )}
+    </div>
+  );
+}
+
+function SavedEmptyStateIllustration() {
+  return (
+    <div
+      className="relative isolate mx-auto flex size-52 shrink-0 items-center justify-center overflow-hidden rounded-[2rem] bg-gradient-to-br from-violet-100 via-white to-indigo-100 text-violet-700 shadow-[0_28px_70px_-48px_rgba(79,70,229,0.95)] ring-1 ring-violet-100 sm:size-60 lg:mx-0 lg:size-72"
+      aria-hidden="true"
+    >
+      <div className="absolute left-8 top-8 size-28 rounded-full bg-violet-200/45 blur-2xl" />
+      <div className="absolute bottom-8 right-8 size-24 rounded-full bg-indigo-200/55 blur-2xl" />
+      <div className="absolute left-6 top-10 h-4 w-16 rounded-full bg-white/75" />
+      <div className="absolute right-8 top-16 h-5 w-20 rounded-full bg-white/80" />
+      <div className="absolute bottom-13 h-4 w-36 rounded-full bg-violet-300/25 blur-sm" />
+      <div className="absolute bottom-10 left-12 h-16 w-24 rounded-[1.4rem] border border-violet-300/60 bg-white/70 shadow-sm sm:left-14 sm:h-20 sm:w-28 lg:left-16 lg:h-24 lg:w-32">
+        <div className="absolute -top-4 left-1/2 h-6 w-10 -translate-x-1/2 rounded-t-full border-4 border-b-0 border-violet-400/75" />
+        <div className="absolute inset-x-4 top-5 h-2 rounded-full bg-violet-200" />
+        <div className="absolute inset-x-4 top-9 h-2 rounded-full bg-violet-100" />
+      </div>
+      <div className="absolute right-12 top-20 flex size-20 rotate-6 items-center justify-center rounded-[1.4rem] bg-violet-600 text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.95)] sm:right-14 sm:size-24 lg:right-16 lg:size-28">
+        <Bookmark className="size-10 fill-current sm:size-12 lg:size-14" strokeWidth={2.2} />
+      </div>
+      <Plane className="absolute left-16 top-16 size-8 -rotate-12 fill-violet-500/20 text-violet-600 sm:left-20 sm:size-9 lg:left-24 lg:size-11" strokeWidth={2.1} />
+      <div className="absolute bottom-16 right-12 size-4 rounded-full bg-violet-400/70" />
+      <div className="absolute bottom-24 right-28 size-2 rounded-full bg-indigo-400/70" />
     </div>
   );
 }
@@ -660,41 +685,36 @@ export function SavedDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <Card className="overflow-hidden p-0">
-      <div className="border-b border-border bg-surface-muted/70 px-5 py-5 sm:px-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
-          {t["accountDashboard.saved.eyebrow"]}
-        </p>
-        <h1 className="mt-2 text-3xl font-bold text-navy">
+    <section className="mx-auto max-w-5xl space-y-6" aria-labelledby="saved-dashboard-title">
+      <div className="px-1 text-center lg:text-left">
+        <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
           {t["accountDashboard.saved.title"]}
         </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base lg:mx-0">
           {t["accountDashboard.saved.description"]}
         </p>
       </div>
-      <div className="px-5 py-6 sm:px-6">
-        <div className="rounded-2xl border border-dashed border-border bg-white p-6">
-          <Bookmark className="size-10 text-teal-dark" aria-hidden="true" />
-          <h2 className="mt-4 text-2xl font-bold text-navy">
-            {t["accountDashboard.saved.emptyTitle"]}
-          </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-            {t["accountDashboard.saved.emptyDescription"]}
-          </p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <LinkButton href="/saved">
-              {t["accountDashboard.saved.openSavedTrips"]}
-            </LinkButton>
-            <LinkButton href="/flights" variant="secondary">
-              {t["accountDashboard.saved.searchFlights"]}
-            </LinkButton>
-            <LinkButton href="/hotels" variant="secondary">
-              {t["accountDashboard.saved.searchHotels"]}
+      <div className="overflow-hidden rounded-[2rem] border border-violet-100 bg-white px-5 py-8 shadow-[0_28px_80px_-60px_rgba(49,46,129,0.65)] sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+        <div className="grid items-center gap-8 lg:grid-cols-[minmax(16rem,0.9fr)_minmax(0,1fr)] lg:gap-12">
+          <SavedEmptyStateIllustration />
+          <div className="mx-auto max-w-md text-center lg:mx-0 lg:text-left">
+            <h2 className="text-2xl font-black tracking-[-0.025em] text-slate-950 sm:text-3xl">
+              {t["accountDashboard.saved.emptyTitle"]}
+            </h2>
+            <p className="mt-3 text-base leading-7 text-slate-600">
+              {t["accountDashboard.saved.emptyDescription"]}
+            </p>
+            <LinkButton
+              href="/"
+              size="lg"
+              className="mt-7 w-full rounded-xl bg-violet-700 px-8 text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] hover:bg-violet-800 sm:w-auto"
+            >
+              {t["accountDashboard.saved.explore"]}
             </LinkButton>
           </div>
         </div>
       </div>
-    </Card>
+    </section>
   );
 }
 
