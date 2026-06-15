@@ -695,9 +695,25 @@ export const translations: TranslationDictionary = {
   termsOfService: "Nutzungsbedingungen",
   privacyPolicy: "Datenschutzrichtlinie",
   cookiePolicy: "Cookie-Richtlinie",
-  "legal.lastUpdated": "Letzte Aktualisierung",
+  "legal.lastUpdated": "Zuletzt aktualisiert",
   "legal.print": "Drucken",
   "legal.tableOfContents": "INHALTSVERZEICHNIS",
+  "legal.affiliateDisclosure.title": "Affiliate-Hinweis",
+  "legal.affiliateDisclosure.summary":
+    "Wie Kurioticket Provisionen erhalten kann, wenn Nutzer über vertrauenswürdige Partner klicken oder buchen.",
+  "legal.affiliateDisclosure.lastUpdatedDate": "11. Mai 2026",
+  "legal.affiliateDisclosure.lastUpdated": "Zuletzt aktualisiert: 11. Mai 2026",
+  "legal.affiliateDisclosure.tableOfContents": "INHALTSVERZEICHNIS",
+  "legal.affiliateDisclosure.sections.model.title": "Affiliate-Modell",
+  "legal.affiliateDisclosure.sections.model.paragraph1":
+    "Kurioticket bietet kostenlose Flug- und Hotelsuchen ohne Servicegebühren an. Wir können Affiliate-Provisionen erhalten, wenn Nutzer über Links zu Fluggesellschaften, Hotels oder Reisepartnern klicken, buchen oder kaufen.",
+  "legal.affiliateDisclosure.sections.model.paragraph2":
+    "Kurioticket kann von Partnern eine Vergütung erhalten, wenn Nutzer über Anbieterlinks klicken oder buchen. Dies hilft dabei, den Dienst zu betreiben und zu verbessern.",
+  "legal.affiliateDisclosure.sections.ranking.title": "Ranking-Integrität",
+  "legal.affiliateDisclosure.sections.ranking.paragraph1":
+    "Kurioticket strebt an, Ergebnisse nach Nutzwertsignalen wie Preis, Dauer, Zwischenstopps, Vertrauen, Komfort und Stressreduzierung zu sortieren. Affiliate-Beziehungen dürfen keine künstliche Dringlichkeit, versteckten Gebühren oder irreführenden Empfehlungen erzeugen.",
+  "legal.affiliateDisclosure.developerNote":
+    "Diese Rechtsentwürfe sind Platzhalter für ein Startup und sollten vor einer größeren öffentlichen Einführung von qualifizierter Rechtsberatung geprüft werden.",
   "legal.privacy.title": "Datenschutzrichtlinie",
   "legal.privacy.summary":
     "Wie Kurioticket LLC („Kurioticket“, „wir“, „uns“ oder „unser“) Konto-, Such-, Benachrichtigungs-, Support- und E-Mail-Daten erhebt, verwendet, speichert und schützt.",
