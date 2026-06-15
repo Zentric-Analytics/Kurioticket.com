@@ -712,8 +712,8 @@ export function SavedDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto max-w-5xl space-y-6" aria-labelledby="saved-dashboard-title">
-      <div className="px-1 text-center lg:text-left">
+    <section className="mx-auto min-w-0 max-w-[62rem] space-y-6 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
+      <div className="px-1 text-left sm:px-2">
         <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
           {t["accountDashboard.saved.title"]}
         </h1>
@@ -721,7 +721,7 @@ export function SavedDashboardPage() {
           {t["accountDashboard.saved.description"]}
         </p>
       </div>
-      <div className="px-0 py-7 sm:py-9 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-10 lg:py-14 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-12">
+      <div className="px-1 py-7 sm:px-2 sm:py-9 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-14 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
         <div className="grid items-center gap-8 lg:grid-cols-[minmax(17rem,0.92fr)_minmax(0,1fr)] lg:gap-14">
           <SavedEmptyStateIllustration />
           <div className="mx-auto max-w-md text-center lg:mx-0 lg:text-left">
