@@ -102,6 +102,10 @@ export type RegisteredImage = {
   creator?: string;
   license?: string;
   licenseNotes?: string;
+  vendor?: string;
+  collection?: string;
+  stockFileId?: string;
+  dimensions?: { width: number; height: number };
   pageSurfaces: string[];
   intendedSlot: string;
   cropNotes?: string;

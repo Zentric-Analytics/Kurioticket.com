@@ -48,6 +48,13 @@ Store purchase records outside runtime source code until Phase 4 implementation.
 - Model/property release status, if available.
 - Approved product(s), usage(s), and target surface(s).
 
+## Phase 4A registered purchased flight assets
+
+Phase 4A registers the first purchased premium flight assets in `src/data/images/imageRegistry.ts` and `src/data/images/imagePurchasePlan.ts` without changing any rendered UI image URLs. The local runtime paths reserved for final assets are:
+
+- `/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg` — iStock Standard / Essentials file ID `1218436213`, primary Flights hero/global flight search hero candidate, launch-critical, desktop/mobile crop approval pending.
+- `/images/premium/flights/kurioticket-flight-support-aircraft-gangway-terminal-002.jpg` — iStock Standard / Essentials file ID `1470585865`, secondary flight support candidate, desktop/mobile crop approval pending.
+
 ## 3. Marking an image as purchased
 
 1. Add the original and license files under the purchase-id folder.
