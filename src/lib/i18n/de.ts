@@ -860,6 +860,24 @@ export const translations: TranslationDictionary = {
     "Prüfen Sie vor dem Kauf immer die Website des externen Anbieters. Die Website des externen Anbieters ist die maßgebliche Quelle für den endgültigen Preis, die Verfügbarkeit, Tarifbedingungen, Zimmerbedingungen und Kaufbedingungen.",
   "legal.priceAvailabilityDisclaimer.developerNote":
     "Diese Rechtsentwürfe sind Platzhalter für ein Startup und sollten vor einer größeren öffentlichen Einführung von qualifizierter Rechtsberatung geprüft werden.",
+  "legal.partnerRedirectDisclaimer.title": "Hinweis zu Partner-Weiterleitungen",
+  "legal.partnerRedirectDisclaimer.summary":
+    "Was passiert, wenn Kurioticket Nutzer zu Fluggesellschaften, Hotels, Affiliate-Partnern oder Reiseanbietern weiterleitet.",
+  "legal.partnerRedirectDisclaimer.lastUpdatedDate": "11. Mai 2026",
+  "legal.partnerRedirectDisclaimer.lastUpdated":
+    "Zuletzt aktualisiert: 11. Mai 2026",
+  "legal.partnerRedirectDisclaimer.sections.redirect.title":
+    "Sichere Weiterleitungen",
+  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph1":
+    "Wenn Sie zu einem externen Anbieter fortfahren, leitet Kurioticket Sie zu einer Fluggesellschaft, einem Hotel, einem Affiliate-Partner oder einem Reiseanbieter weiter. Wir können Weiterleitungsmetadaten wie Anbieter, Route, Preis, Zeitstempel, Nutzertyp und Quellseite für Analysen, Support, Missbrauchsprävention und Affiliate-Tracking protokollieren.",
+  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph2":
+    "Kurioticket füllt keine Websites von Fluggesellschaften automatisch aus, scrapt keine Websites von Fluggesellschaften und schließt keine Partnerkäufe in Ihrem Namen ab.",
+  "legal.partnerRedirectDisclaimer.sections.external-terms.title":
+    "Externe Bedingungen",
+  "legal.partnerRedirectDisclaimer.sections.external-terms.paragraph1":
+    "Externe Partnerseiten unterliegen ihren eigenen Bedingungen, Datenschutzrichtlinien, Erstattungsrichtlinien, Cookies, Barrierefreiheitspraktiken und Kundensupport-Prozessen.",
+  "legal.partnerRedirectDisclaimer.developerNote":
+    "Diese Rechtsentwürfe sind Platzhalter für ein Startup und sollten vor einer größeren öffentlichen Einführung von qualifizierter Rechtsberatung geprüft werden.",
   createYourAccount: "Konto erstellen",
   createAccount: "Konto erstellen",
   continueWithGoogle: "Mit Google fortfahren",
