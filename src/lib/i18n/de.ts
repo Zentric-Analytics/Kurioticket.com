@@ -71,6 +71,25 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.addNationality": "Nationalität hinzufügen",
   "accountDashboard.personalDetails.addAddress": "Adresse hinzufügen",
   "accountDashboard.personalDetails.edit": "Bearbeiten",
+  "accountDashboard.preferences.eyebrow": "EINSTELLUNGEN",
+  "accountDashboard.preferences.title": "Einstellungen",
+  "accountDashboard.preferences.description":
+    "Kontoeinstellungen sind hier als übersichtliche Verknüpfungen gruppiert. Funktionen, die noch nicht aktiv sind, sind klar gekennzeichnet.",
+  "accountDashboard.preferences.comingSoon": "Demnächst verfügbar",
+  "accountDashboard.preferences.personalDetails.title": "Persönliche Daten",
+  "accountDashboard.preferences.personalDetails.description":
+    "Prüfen Sie Ihre Kontoprofil-Daten, sobald bearbeitbare Profiloptionen verfügbar sind.",
+  "accountDashboard.preferences.notifications.title":
+    "Benachrichtigungseinstellungen",
+  "accountDashboard.preferences.notifications.description":
+    "Verwalten Sie E-Mail- und Benachrichtigungseinstellungen, sobald Benachrichtigungsoptionen hinzugefügt werden.",
+  "accountDashboard.preferences.travel.title": "Reiseeinstellungen",
+  "accountDashboard.preferences.travel.description":
+    "Halten Sie bevorzugte Planungsvorgaben für zukünftige Kontoeinstellungen leicht auffindbar.",
+  "accountDashboard.preferences.securityPrivacy.title":
+    "Sicherheit und Datenschutz",
+  "accountDashboard.preferences.securityPrivacy.description":
+    "Prüfen Sie aktuelle Datenschutz- und Plattformrichtlinien.",
   moreServiceInfoEyebrow: "Plattforminformationen",
   moreServiceInfoTitle: "Weitere Serviceinformationen",
   moreServiceInfoDescription:

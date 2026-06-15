@@ -625,11 +625,11 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
         <Icon size={20} aria-hidden="true" />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-semibold text-navy">{title}</h3>
-          {status ? <span className="rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted">{status}</span> : null}
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <h3 className="min-w-0 break-words font-semibold text-navy">{title}</h3>
+          {status ? <span className="break-words rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted">{status}</span> : null}
         </div>
-        <p className="mt-1 text-sm leading-6 text-muted">{body}</p>
+        <p className="mt-1 break-words text-sm leading-6 text-muted">{body}</p>
       </div>
       {href ? <ChevronRight className="mt-2 size-4 shrink-0 text-teal-dark" aria-hidden="true" /> : null}
     </div>
