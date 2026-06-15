@@ -288,6 +288,8 @@ export function StandaloneFlightSearchForm({
   const [draftCabinClass, setDraftCabinClass] = useState<CabinClass>("economy");
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasActiveDesktopPopover =
+    originOpen || destinationOpen || datesOpen || travelersOpen;
 
   const originQuery = origin.trim();
   const destinationQuery = destination.trim();
@@ -508,8 +510,39 @@ export function StandaloneFlightSearchForm({
     };
   }, []);
 
+  const closeDesktopPopovers = () => {
+    setOriginOpen(false);
+    setDestinationOpen(false);
+    setDatesOpen(false);
+    setTravelersOpen(false);
+  };
+
+  const openOriginDesktopPopover = () => {
+    setDestinationOpen(false);
+    setDatesOpen(false);
+    setTravelersOpen(false);
+    setOriginOpen(true);
+  };
+
+  const openDestinationDesktopPopover = () => {
+    setOriginOpen(false);
+    setDatesOpen(false);
+    setTravelersOpen(false);
+    setDestinationOpen(true);
+  };
+
+  const openDatesDesktopPopover = () => {
+    setOriginOpen(false);
+    setDestinationOpen(false);
+    setTravelersOpen(false);
+    setDatesOpen(true);
+  };
+
   const openTravelers = () => {
     const normalizedCabinClass = normalizeCabinClass(cabinClass);
+    setOriginOpen(false);
+    setDestinationOpen(false);
+    setDatesOpen(false);
     setCabinClass(normalizedCabinClass);
     setDraftAdultCount(adultCount);
     setDraftChildCount(childCount);
@@ -632,6 +665,8 @@ export function StandaloneFlightSearchForm({
     if (event.key === "ArrowDown") {
       event.preventDefault();
       closeOther();
+      setDatesOpen(false);
+      setTravelersOpen(false);
       setOpen(true);
       setActive((active + 1) % list.length);
     }
@@ -639,6 +674,8 @@ export function StandaloneFlightSearchForm({
     if (event.key === "ArrowUp") {
       event.preventDefault();
       closeOther();
+      setDatesOpen(false);
+      setTravelersOpen(false);
       setOpen(true);
       setActive((active - 1 + list.length) % list.length);
     }
@@ -1266,8 +1303,25 @@ export function StandaloneFlightSearchForm({
   };
 
   return (
-    <section className="relative isolate z-[120] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-2xl sm:border-slate-200/90 sm:bg-white/95 sm:p-2 sm:shadow-[0_18px_46px_rgba(15,23,42,0.13)] sm:ring-1 sm:ring-white/70">
-      <form onSubmit={onSubmit} className="space-y-2 sm:space-y-1.5">
+    <section
+      className={cn(
+        "relative isolate z-[120] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-2xl sm:border-slate-200/90 sm:bg-white/95 sm:p-2 sm:shadow-[0_18px_46px_rgba(15,23,42,0.13)] sm:ring-1 sm:ring-white/70",
+        hasActiveDesktopPopover && "sm:z-[320]",
+      )}
+    >
+      {hasActiveDesktopPopover ? (
+        <button
+          type="button"
+          aria-label={t("close") || "Close active flight search popover"}
+          onClick={closeDesktopPopovers}
+          className="fixed inset-0 z-0 hidden cursor-default bg-white/20 backdrop-blur-[1px] sm:block"
+          tabIndex={-1}
+        />
+      ) : null}
+      <form
+        onSubmit={onSubmit}
+        className="relative z-10 space-y-2 sm:space-y-1.5"
+      >
         <div
           role="radiogroup"
           aria-label={t("tripType") || "Trip type"}
@@ -1340,13 +1394,9 @@ export function StandaloneFlightSearchForm({
               placeholder={t("cityOrAirport")}
               open={originOpen || activeMobileAirportPicker === "origin"}
               onMobileOpen={() => setActiveMobileAirportPicker("origin")}
-              onDesktopFocus={() => {
-                setDestinationOpen(false);
-                setOriginOpen(true);
-              }}
+              onDesktopFocus={openOriginDesktopPopover}
               onChange={(nextValue) => {
-                setDestinationOpen(false);
-                setOriginOpen(true);
+                openOriginDesktopPopover();
                 setOriginState((current) =>
                   markOriginManualInput(current, nextValue),
                 );
@@ -1360,7 +1410,10 @@ export function StandaloneFlightSearchForm({
               onKeyDown={(event) => onAirportKeyNav(event, "origin")}
               mobileLauncherRef={originMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("origin")}
-              className="lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-transparent lg:focus-within:ring-0"
+              className={cn(
+                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-transparent lg:focus-within:ring-0",
+                originOpen && "sm:z-20",
+              )}
             />
 
             <div className="relative z-10 -my-2 flex h-4 items-center justify-center lg:my-0 lg:h-auto lg:before:absolute lg:before:left-1/2 lg:before:top-3 lg:before:h-[calc(100%-1.5rem)] lg:before:w-px lg:before:-translate-x-1/2 lg:before:bg-slate-200">
@@ -1386,13 +1439,9 @@ export function StandaloneFlightSearchForm({
                 destinationOpen || activeMobileAirportPicker === "destination"
               }
               onMobileOpen={() => setActiveMobileAirportPicker("destination")}
-              onDesktopFocus={() => {
-                setOriginOpen(false);
-                setDestinationOpen(true);
-              }}
+              onDesktopFocus={openDestinationDesktopPopover}
               onChange={(nextValue) => {
-                setOriginOpen(false);
-                setDestinationOpen(true);
+                openDestinationDesktopPopover();
                 setDestination(nextValue);
                 setDestinationCode("");
                 setDestinationHighlight(0);
@@ -1405,11 +1454,17 @@ export function StandaloneFlightSearchForm({
               onKeyDown={(event) => onAirportKeyNav(event, "destination")}
               mobileLauncherRef={destinationMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("destination")}
-              className="lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-transparent lg:focus-within:ring-0"
+              className={cn(
+                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-transparent lg:focus-within:ring-0",
+                destinationOpen && "sm:z-20",
+              )}
             />
           </div>
 
-          <div ref={dateWrapRef} className={searchFieldShellClassName}>
+          <div
+            ref={dateWrapRef}
+            className={cn(searchFieldShellClassName, datesOpen && "sm:z-20")}
+          >
             <label className={searchFieldLabelClassName}>
               {t("travelDates")}
             </label>
@@ -1420,9 +1475,11 @@ export function StandaloneFlightSearchForm({
               aria-expanded={datesOpen}
               aria-haspopup="dialog"
               onClick={() => {
-                setOriginOpen(false);
-                setDestinationOpen(false);
-                setDatesOpen((prev) => !prev);
+                if (datesOpen) {
+                  setDatesOpen(false);
+                  return;
+                }
+                openDatesDesktopPopover();
               }}
               className={searchFieldValueButtonClassName}
             >
@@ -1491,7 +1548,13 @@ export function StandaloneFlightSearchForm({
             ) : null}
           </div>
 
-          <div ref={travelersWrapRef} className={searchFieldShellClassName}>
+          <div
+            ref={travelersWrapRef}
+            className={cn(
+              searchFieldShellClassName,
+              travelersOpen && "sm:z-20",
+            )}
+          >
             <label className={searchFieldLabelClassName}>
               {t("travelers")}
             </label>
@@ -1505,8 +1568,6 @@ export function StandaloneFlightSearchForm({
                   closeTravelers();
                   return;
                 }
-                setOriginOpen(false);
-                setDestinationOpen(false);
                 openTravelers();
               }}
               className={searchFieldValueButtonClassName}
