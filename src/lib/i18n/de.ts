@@ -805,6 +805,21 @@ export const translations: TranslationDictionary = {
     "Sie können Cookies über Ihre Browsereinstellungen steuern. Das Blockieren notwendiger Cookies kann dazu führen, dass Anmeldung, Dashboards, gespeicherte Elemente, Einstellungen und Support-Tools nicht ordnungsgemäß funktionieren.",
   "legal.cookiePolicy.developerNote":
     "Diese rechtlichen Entwürfe sind Platzhalter für die Startphase und sollten vor einer groß angelegten öffentlichen Einführung von qualifiziertem Rechtsbeistand geprüft werden.",
+  "legal.dataDeletionPolicy.title": "Richtlinie zur Datenlöschung",
+  "legal.dataDeletionPolicy.summary":
+    "Wie Nutzer die Löschung ihres Kontos beantragen können und welche Daten möglicherweise aufbewahrt werden müssen.",
+  "legal.dataDeletionPolicy.lastUpdatedDate": "11. Mai 2026",
+  "legal.dataDeletionPolicy.lastUpdated":
+    "Zuletzt aktualisiert: 11. Mai 2026",
+  "legal.dataDeletionPolicy.sections.request.title": "Löschanfragen",
+  "legal.dataDeletionPolicy.sections.request.paragraph1":
+    "Sie können die Löschung Ihres Kontos über die Kontoeinstellungen oder den Support beantragen. Wir bearbeiten Löschanfragen im Einklang mit geltendem Recht, Anforderungen zur Identitätsprüfung, Betrugsprävention, rechtlichen Verpflichtungen und Sicherheitsanforderungen.",
+  "legal.dataDeletionPolicy.sections.retention.title":
+    "Aufbewahrte Datensätze",
+  "legal.dataDeletionPolicy.sections.retention.paragraph1":
+    "Einige Datensätze können für berechtigte geschäftliche Zwecke, Sicherheit, Analysen, rechtliche Zwecke, Missbrauchsprävention oder Streitbeilegung aufbewahrt werden. Wir minimieren aufbewahrte personenbezogene Daten, soweit dies praktikabel ist.",
+  "legal.dataDeletionPolicy.developerNote":
+    "Diese Rechtsentwürfe sind Platzhalter für ein Startup und sollten vor einer größeren öffentlichen Einführung von qualifizierter Rechtsberatung geprüft werden.",
   "legal.refundBookingDisclaimer.title":
     "Hinweis zu Erstattungen und externen Anbietern",
   "legal.refundBookingDisclaimer.summary":
