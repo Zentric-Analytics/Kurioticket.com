@@ -617,6 +617,10 @@ export function StandaloneFlightSearchForm({
       field === "origin" ? setOriginHighlight : setDestinationHighlight;
     const open = field === "origin" ? originOpen : destinationOpen;
     const setOpen = field === "origin" ? setOriginOpen : setDestinationOpen;
+    const closeOther =
+      field === "origin"
+        ? () => setDestinationOpen(false)
+        : () => setOriginOpen(false);
 
     if (event.key === "Escape") {
       setOpen(false);
@@ -627,12 +631,14 @@ export function StandaloneFlightSearchForm({
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
+      closeOther();
       setOpen(true);
       setActive((active + 1) % list.length);
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
+      closeOther();
       setOpen(true);
       setActive((active - 1 + list.length) % list.length);
     }
@@ -883,8 +889,9 @@ export function StandaloneFlightSearchForm({
     const query = field === "origin" ? originQuery : destinationQuery;
     const loading = field === "origin" ? originLoading : destinationLoading;
     const active = field === "origin" ? originHighlight : destinationHighlight;
+    const open = field === "origin" ? originOpen : destinationOpen;
 
-    if (query.length < 2) return null;
+    if (!open || query.length < 2) return null;
 
     return (
       <div className="absolute left-0 top-[calc(100%+10px)] z-[140] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block">
@@ -1259,7 +1266,7 @@ export function StandaloneFlightSearchForm({
   };
 
   return (
-    <section className="relative z-30 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-2xl sm:border-slate-200/90 sm:bg-white/95 sm:p-2 sm:shadow-[0_18px_46px_rgba(15,23,42,0.13)] sm:ring-1 sm:ring-white/70">
+    <section className="relative isolate z-[120] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-2xl sm:border-slate-200/90 sm:bg-white/95 sm:p-2 sm:shadow-[0_18px_46px_rgba(15,23,42,0.13)] sm:ring-1 sm:ring-white/70">
       <form onSubmit={onSubmit} className="space-y-2 sm:space-y-1.5">
         <div
           role="radiogroup"
@@ -1333,8 +1340,13 @@ export function StandaloneFlightSearchForm({
               placeholder={t("cityOrAirport")}
               open={originOpen || activeMobileAirportPicker === "origin"}
               onMobileOpen={() => setActiveMobileAirportPicker("origin")}
-              onDesktopFocus={() => setOriginOpen(true)}
+              onDesktopFocus={() => {
+                setDestinationOpen(false);
+                setOriginOpen(true);
+              }}
               onChange={(nextValue) => {
+                setDestinationOpen(false);
+                setOriginOpen(true);
                 setOriginState((current) =>
                   markOriginManualInput(current, nextValue),
                 );
@@ -1374,8 +1386,13 @@ export function StandaloneFlightSearchForm({
                 destinationOpen || activeMobileAirportPicker === "destination"
               }
               onMobileOpen={() => setActiveMobileAirportPicker("destination")}
-              onDesktopFocus={() => setDestinationOpen(true)}
+              onDesktopFocus={() => {
+                setOriginOpen(false);
+                setDestinationOpen(true);
+              }}
               onChange={(nextValue) => {
+                setOriginOpen(false);
+                setDestinationOpen(true);
                 setDestination(nextValue);
                 setDestinationCode("");
                 setDestinationHighlight(0);
@@ -1402,7 +1419,11 @@ export function StandaloneFlightSearchForm({
               aria-label={t("chooseTravelDates")}
               aria-expanded={datesOpen}
               aria-haspopup="dialog"
-              onClick={() => setDatesOpen((prev) => !prev)}
+              onClick={() => {
+                setOriginOpen(false);
+                setDestinationOpen(false);
+                setDatesOpen((prev) => !prev);
+              }}
               className={searchFieldValueButtonClassName}
             >
               <span>{dateSummary}</span>
@@ -1444,7 +1465,7 @@ export function StandaloneFlightSearchForm({
                 >
                   {renderDateCalendar(true)}
                 </FlightMobilePickerShell>
-                <div className="absolute right-0 top-[calc(100%+10px)] z-[150] hidden w-[min(92vw,690px)] rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
+                <div className="absolute right-0 top-[calc(100%+10px)] z-[260] hidden w-[min(92vw,690px)] rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
                   {renderDateCalendar(false)}
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
                     <button
@@ -1484,6 +1505,8 @@ export function StandaloneFlightSearchForm({
                   closeTravelers();
                   return;
                 }
+                setOriginOpen(false);
+                setDestinationOpen(false);
                 openTravelers();
               }}
               className={searchFieldValueButtonClassName}
@@ -1520,7 +1543,7 @@ export function StandaloneFlightSearchForm({
                 >
                   {renderTravelersPicker()}
                 </FlightMobilePickerShell>
-                <div className="absolute right-0 top-[calc(100%+10px)] z-[150] hidden w-[min(92vw,380px)] rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
+                <div className="absolute right-0 top-[calc(100%+10px)] z-[260] hidden w-[min(92vw,380px)] rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
                   {renderTravelersPicker(false)}
                   <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">
                     <button
