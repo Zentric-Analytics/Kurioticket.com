@@ -180,7 +180,6 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.emptyTitle": "Aún no tienes elementos guardados",
   "accountDashboard.saved.emptyDescription":
     "Los elementos que guardes desde las herramientas de planificación de Kurioticket aparecerán aquí. También puedes abrir el área de viajes guardados cuando haya datos guardados disponibles.",
-  "accountDashboard.saved.explore": "Explore",
   "accountDashboard.saved.openSavedTrips": "Abrir viajes guardados",
   "accountDashboard.saved.searchFlights": "Buscar vuelos",
   "accountDashboard.saved.searchHotels": "Buscar hoteles",

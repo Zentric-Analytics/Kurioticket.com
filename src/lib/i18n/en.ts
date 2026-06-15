@@ -174,10 +174,9 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.title": "Saved",
   "accountDashboard.saved.description":
     "Saved trips, routes, stays, and planning items connected to your account belong here.",
-  "accountDashboard.saved.emptyTitle": "No saved items found.",
+  "accountDashboard.saved.emptyTitle": "No saved items yet",
   "accountDashboard.saved.emptyDescription":
-    "Explore the homepage to find some travel inspiration!",
-  "accountDashboard.saved.explore": "Explore",
+    "Items you save from Kurioticket planning tools will appear here. You can also open the existing saved trips area when saved data is available.",
   "accountDashboard.saved.openSavedTrips": "Open saved trips",
   "accountDashboard.saved.searchFlights": "Search flights",
   "accountDashboard.saved.searchHotels": "Search hotels",

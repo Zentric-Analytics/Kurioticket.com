@@ -20,6 +20,8 @@ import {
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { Card } from "@/components/ui/Card";
+import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
@@ -121,59 +123,6 @@ function TravelIllustration({ compact = false, variant = "luggage" }: { compact?
         </>
       )}
     </div>
-  );
-}
-
-function SavedTravelIllustration() {
-  return (
-    <svg
-      className="h-auto w-full max-w-[21rem] sm:max-w-[23rem] lg:max-w-[21.5rem] xl:max-w-[23rem]"
-      viewBox="0 0 360 300"
-      role="img"
-      aria-label="Traveler saving travel inspiration"
-    >
-      <defs>
-        <linearGradient id="saved-heart-gradient" x1="206" x2="286" y1="108" y2="187" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#7c3aed" />
-          <stop offset="1" stopColor="#3216d8" />
-        </linearGradient>
-        <linearGradient id="saved-shirt-gradient" x1="128" x2="183" y1="144" y2="218" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#7c3aed" />
-          <stop offset="1" stopColor="#4f46e5" />
-        </linearGradient>
-        <linearGradient id="saved-luggage-gradient" x1="34" x2="91" y1="168" y2="282" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#8b5cf6" />
-          <stop offset="1" stopColor="#6d5dfc" />
-        </linearGradient>
-      </defs>
-      <circle cx="167" cy="108" r="102" fill="#ede9fe" opacity=".82" />
-      <path d="M83 126c26-19 56-45 55-88M111 189c37-30 94-53 151-52M101 62c43 24 94 34 150 29" fill="none" stroke="#ddd6fe" strokeLinecap="round" strokeWidth="8" />
-      <path d="M89 92c23-36 62-62 106-62 20 0 39 5 55 14M77 129c-1-5-1-11-1-16" fill="none" stroke="#c4b5fd" strokeLinecap="round" strokeWidth="7" opacity=".8" />
-      <path d="M288 78c18 12 28 32 30 54" fill="none" stroke="#7c3aed" strokeDasharray="7 7" strokeLinecap="round" strokeWidth="3" />
-      <path d="m291 58 28 25M289 83l30-24M304 70l33-16" fill="none" stroke="#4f46e5" strokeLinecap="round" strokeWidth="6" />
-      <path d="M97 284h198" stroke="#c4b5fd" strokeLinecap="round" strokeWidth="5" />
-      <path d="M60 163h12c8 0 15 7 15 15v92H45v-92c0-8 7-15 15-15Z" fill="url(#saved-luggage-gradient)" />
-      <path d="M58 163v-17h18v17" fill="none" stroke="#6d5dfc" strokeLinecap="round" strokeWidth="7" />
-      <path d="M58 184v68M72 184v68" stroke="#a78bfa" strokeLinecap="round" strokeWidth="4" />
-      <circle cx="54" cy="278" r="5" fill="#312e81" />
-      <circle cx="82" cy="278" r="5" fill="#312e81" />
-      <path d="M195 258c28 0 70-3 76-20 7-20-37-31-69-37l-59-6c-28 6-44 27-44 63h96Z" fill="#27135f" />
-      <path d="M134 205c-13 20-18 43-16 66h47c6-20 12-40 16-61l-47-5Z" fill="#312e81" />
-      <path d="M128 137c19-11 45-9 61 8 9 35 6 63-8 84-23 4-44-2-63-16 0-28 3-53 10-76Z" fill="url(#saved-shirt-gradient)" />
-      <circle cx="166" cy="95" r="27" fill="#ffd6c9" />
-      <path d="M138 98c-10-8-13-23-4-34 8-10 23-12 34-5 14-3 28 7 28 23 0 12-8 22-19 25-1-11-8-18-19-18-9 0-16 3-20 9Z" fill="#241066" />
-      <path d="M188 91c8 0 11 12 3 17" fill="#ffd6c9" />
-      <path d="M157 113c8 7 19 6 26-1" fill="none" stroke="#312e81" strokeLinecap="round" strokeWidth="3" />
-      <path d="M140 160c9 27 27 43 53 48" fill="none" stroke="#ffd6c9" strokeLinecap="round" strokeWidth="16" />
-      <path d="M207 183c-8-10-11-23-8-37 5-24 34-33 50-12 17-21 45-12 50 12 6 30-29 58-50 71-14-9-30-21-42-34Z" fill="url(#saved-heart-gradient)" />
-      <path d="M241 145h24v45l-12-8-12 8v-45Z" fill="#ffffff" opacity=".92" />
-      <path d="M302 235c7-28 22-47 48-58-3 28-17 48-48 58ZM291 268c5-29 22-47 51-52-7 30-24 47-51 52Z" fill="#8b5cf6" opacity=".72" />
-      <path d="M293 282v-45" stroke="#6d5dfc" strokeLinecap="round" strokeWidth="5" />
-      <path d="M269 278h52" stroke="#c4b5fd" strokeLinecap="round" strokeWidth="5" />
-      <circle cx="31" cy="129" r="7" fill="#c4b5fd" />
-      <circle cx="336" cy="144" r="4" fill="#c4b5fd" />
-      <circle cx="44" cy="149" r="3" fill="#ddd6fe" />
-    </svg>
   );
 }
 
@@ -711,37 +660,41 @@ export function SavedDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="saved-dashboard-title" className="mx-auto min-w-0 max-w-[62rem] space-y-12 lg:space-y-9 xl:max-w-[64rem]">
-      <div className="max-w-3xl">
-        <h1 id="saved-dashboard-title" className="text-[2.5rem] font-black leading-none tracking-[-0.045em] text-slate-950 sm:text-5xl">
+    <Card className="overflow-hidden p-0">
+      <div className="border-b border-border bg-surface-muted/70 px-5 py-5 sm:px-6">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
+          {t["accountDashboard.saved.eyebrow"]}
+        </p>
+        <h1 className="mt-2 text-3xl font-bold text-navy">
           {t["accountDashboard.saved.title"]}
         </h1>
-        <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
           {t["accountDashboard.saved.description"]}
         </p>
       </div>
-      <div className="px-0 py-0 sm:px-0 lg:min-h-[26.75rem] lg:rounded-[1.75rem] lg:border lg:border-slate-200 lg:bg-white lg:px-10 lg:py-11 lg:shadow-[0_24px_70px_-54px_rgba(49,46,129,0.45),inset_0_1px_0_rgba(255,255,255,0.9)] xl:px-12">
-        <div className="grid items-center gap-12 lg:grid-cols-[minmax(20rem,1.06fr)_minmax(17.5rem,0.94fr)] lg:gap-11">
-          <div className="flex justify-center lg:justify-start">
-            <SavedTravelIllustration />
-          </div>
-          <div className="mx-auto max-w-[19rem] text-center lg:mx-0 lg:max-w-sm lg:text-left">
-            <h2 className="text-[1.7rem] font-black leading-tight tracking-[-0.04em] text-slate-950 lg:text-2xl">
-              {t["accountDashboard.saved.emptyTitle"]}
-            </h2>
-            <p className="mt-4 text-base font-medium leading-7 text-slate-700">
-              {t["accountDashboard.saved.emptyDescription"]}
-            </p>
-            <Link
-              href="/"
-              className="focus-ring mt-8 inline-flex h-14 w-full cursor-pointer items-center justify-center rounded-xl bg-violet-700 px-8 text-base font-bold text-white shadow-[0_18px_36px_-20px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 active:scale-[0.99] lg:h-12 lg:w-auto lg:min-w-36"
-            >
-              {t["accountDashboard.saved.explore"]}
-            </Link>
+      <div className="px-5 py-6 sm:px-6">
+        <div className="rounded-2xl border border-dashed border-border bg-white p-6">
+          <Bookmark className="size-10 text-teal-dark" aria-hidden="true" />
+          <h2 className="mt-4 text-2xl font-bold text-navy">
+            {t["accountDashboard.saved.emptyTitle"]}
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+            {t["accountDashboard.saved.emptyDescription"]}
+          </p>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <LinkButton href="/saved">
+              {t["accountDashboard.saved.openSavedTrips"]}
+            </LinkButton>
+            <LinkButton href="/flights" variant="secondary">
+              {t["accountDashboard.saved.searchFlights"]}
+            </LinkButton>
+            <LinkButton href="/hotels" variant="secondary">
+              {t["accountDashboard.saved.searchHotels"]}
+            </LinkButton>
           </div>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }
 
