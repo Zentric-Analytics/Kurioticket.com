@@ -873,59 +873,61 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell mt-6 border-t border-slate-200/70 bg-gradient-to-b from-slate-50/80 via-white to-white py-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:mt-9 sm:py-11">
-          <div className="space-y-4">
-            <div className="max-w-3xl space-y-1.5">
-              <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
-                {t("homeTrustTitle")}
-              </h2>
-              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-                {t("homeTrustSubtitle")}
-              </p>
-            </div>
+        <section className="page-shell mt-6 bg-gradient-to-b from-slate-50/80 via-white to-white py-9 sm:mt-9 sm:py-11">
+          <div className="rounded-[1.5rem] border border-indigo-100/90 bg-gradient-to-br from-white via-white to-slate-50/70 p-5 shadow-[0_20px_55px_-40px_rgba(79,70,229,0.55),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-slate-200/70 sm:p-7 lg:p-8">
+            <div className="space-y-4">
+              <div className="max-w-3xl space-y-1.5">
+                <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
+                  {t("homeTrustTitle")}
+                </h2>
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+                  {t("homeTrustSubtitle")}
+                </p>
+              </div>
 
-            <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6">
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-indigo-100/80">
-                  <CompareOffersIllustration />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">
-                    {t("homeTrustCompareTitle")}
-                  </h3>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                    {t("homeTrustCompareBody")}
-                  </p>
-                </div>
-              </article>
+              <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6">
+                <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
+                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-indigo-100/80">
+                    <CompareOffersIllustration />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold leading-6 text-slate-900">
+                      {t("homeTrustCompareTitle")}
+                    </h3>
+                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                      {t("homeTrustCompareBody")}
+                    </p>
+                  </div>
+                </article>
 
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-violet-100/80">
-                  <PricingContextIllustration />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">
-                    {t("homeTrustPricingTitle")}
-                  </h3>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                    {t("homeTrustPricingBody")}
-                  </p>
-                </div>
-              </article>
+                <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
+                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-violet-100/80">
+                    <PricingContextIllustration />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold leading-6 text-slate-900">
+                      {t("homeTrustPricingTitle")}
+                    </h3>
+                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                      {t("homeTrustPricingBody")}
+                    </p>
+                  </div>
+                </article>
 
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-blue-100/80">
-                  <SecureHandoffIllustration />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">
-                    {t("homeTrustHandoffTitle")}
-                  </h3>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                    {t("homeTrustHandoffBody")}
-                  </p>
-                </div>
-              </article>
+                <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
+                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-blue-100/80">
+                    <SecureHandoffIllustration />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold leading-6 text-slate-900">
+                      {t("homeTrustHandoffTitle")}
+                    </h3>
+                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                      {t("homeTrustHandoffBody")}
+                    </p>
+                  </div>
+                </article>
+              </div>
             </div>
           </div>
         </section>
