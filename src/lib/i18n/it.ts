@@ -454,7 +454,6 @@ export const translations: TranslationDictionary = {
   price: "Prezzo",
   mixedProviderCurrencies: "Valute dei fornitori miste",
   loadingPrices: "Caricamento prezzi",
-  filterBy: "Filtra per",
   activeFilterCount: "{{count}} attivi",
   takeoff: "Partenza",
   landing: "Arrivo",
