@@ -8,11 +8,15 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  type RefObject,
   type SetStateAction,
 } from "react";
 
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 
 import {
   ArrowRightLeft,
@@ -248,6 +252,117 @@ const desktopTravelersFieldClassName = "z-[2147483500]";
 const desktopTravelersPopoverClassName = "z-[2147483600]";
 const mobileDoneButtonClassName =
   "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
+
+type DesktopTopLayerPopoverProps = {
+  open: boolean;
+  launcherRef: RefObject<HTMLElement | null>;
+  align?: "left" | "center" | "right";
+  width: number;
+  maxViewportGutter?: number;
+  offset?: number;
+  className?: string;
+  children: ReactNode;
+};
+
+const subscribeToViewportChanges = (onStoreChange: () => void) => {
+  if (typeof window === "undefined") return () => {};
+
+  window.addEventListener("resize", onStoreChange);
+  window.addEventListener("scroll", onStoreChange, true);
+
+  return () => {
+    window.removeEventListener("resize", onStoreChange);
+    window.removeEventListener("scroll", onStoreChange, true);
+  };
+};
+
+const getDesktopPopoverServerSnapshot = () => "server";
+
+function DesktopTopLayerPopover({
+  open,
+  launcherRef,
+  align = "left",
+  width,
+  maxViewportGutter = 16,
+  offset = 12,
+  className,
+  children,
+}: DesktopTopLayerPopoverProps) {
+  const [anchorRect, setAnchorRect] = useState<{
+    bottom: number;
+    left: number;
+    right: number;
+    width: number;
+  } | null>(null);
+
+  const viewportSnapshot = useSyncExternalStore(
+    subscribeToViewportChanges,
+    () => (typeof window === "undefined"
+      ? getDesktopPopoverServerSnapshot()
+      : `${window.innerWidth}:${window.scrollX}:${window.scrollY}`),
+    getDesktopPopoverServerSnapshot
+  );
+
+  const updateAnchorRect = useCallback(() => {
+    const rect = launcherRef.current?.getBoundingClientRect();
+    setAnchorRect(rect
+      ? {
+          bottom: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+        }
+      : null);
+  }, [launcherRef]);
+
+  useEffect(() => {
+    if (!open) {
+      window.requestAnimationFrame(() => setAnchorRect(null));
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(updateAnchorRect);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [open, updateAnchorRect, viewportSnapshot]);
+
+  if (!open || typeof document === "undefined" || !anchorRect) return null;
+
+  const viewportWidth = window.innerWidth;
+  const maxWidth = Math.max(0, viewportWidth - maxViewportGutter * 2);
+  const panelWidth = Math.min(width, maxWidth);
+  const unclampedLeft =
+    align === "center"
+      ? anchorRect.left + anchorRect.width / 2 - panelWidth / 2
+      : align === "right"
+        ? anchorRect.right - panelWidth
+        : anchorRect.left;
+  const left = Math.min(
+    viewportWidth - maxViewportGutter - panelWidth,
+    Math.max(maxViewportGutter, unclampedLeft)
+  );
+
+  return createPortal(
+    <div
+      data-desktop-search-popover="true"
+      data-viewport-snapshot={viewportSnapshot}
+      style={{
+        left,
+        top: anchorRect.bottom + offset,
+        width: panelWidth,
+        maxWidth,
+      }}
+      className={cn(
+        "fixed hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
+        desktopPopoverPanelClassName,
+        className
+      )}
+    >
+      <div className="absolute inset-0 bg-white" aria-hidden="true" />
+      <div className="relative">{children}</div>
+    </div>,
+    document.body
+  );
+}
 
 
 export function SearchTabs({
@@ -745,16 +860,6 @@ export function SearchTabs({
   }, []);
 
   useEffect(() => {
-    const normalized = normalizeCabinClass(cabinClass);
-    if (cabinClass !== normalized) setCabinClass(normalized);
-  }, [cabinClass]);
-
-  useEffect(() => {
-    const normalized = normalizeCabinClass(draftCabinClass);
-    if (draftCabinClass !== normalized) setDraftCabinClass(normalized);
-  }, [draftCabinClass]);
-
-  useEffect(() => {
     if (!activeMobileAirportPicker) return;
 
     const inputRef = activeMobileAirportPicker === "origin"
@@ -952,7 +1057,8 @@ export function SearchTabs({
       const eventTarget = event.target as Node;
       if (
         eventTarget instanceof Element &&
-        eventTarget.closest("[data-flight-mobile-picker-shell]")
+        (eventTarget.closest("[data-flight-mobile-picker-shell]") ||
+          eventTarget.closest("[data-desktop-search-popover]"))
       ) {
         return;
       }
@@ -2272,26 +2378,34 @@ export function SearchTabs({
   };
 
   const renderDesktopCalendarPopover = ({
+    launcherRef,
     mode,
     visibleMonth,
     setVisibleMonth,
     onClear,
     onDone,
   }: {
+    launcherRef: RefObject<HTMLElement | null>;
     mode: "flights" | "hotels";
     visibleMonth: Date;
     setVisibleMonth: Dispatch<SetStateAction<Date>>;
     onClear: () => void;
     onDone: () => void;
   }) => (
+    <DesktopTopLayerPopover
+      open
+      launcherRef={launcherRef}
+      align={mode === "flights" ? "center" : "left"}
+      width={mode === "flights" ? 760 : 660}
+      className={cn(
+        "p-4",
+        mode === "flights" && "lg:p-5"
+      )}
+    >
     <div
       role="dialog"
       aria-label={translate("chooseTravelDates") || "Choose travel dates"}
-      className={cn(
-        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,660px)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
-        desktopPopoverPanelClassName,
-        mode === "flights" && "lg:left-1/2 lg:w-[min(760px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:p-5"
-      )}
+      className="bg-white"
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
@@ -2346,6 +2460,7 @@ export function SearchTabs({
         </button>
       </div>
     </div>
+    </DesktopTopLayerPopover>
   );
 
   const passengerRows = [
@@ -2951,6 +3066,7 @@ export function SearchTabs({
                       {renderFlightDateCalendar()}
                     </FlightMobilePickerShell>
                     {renderDesktopCalendarPopover({
+                      launcherRef: flightDatesLauncherRef,
                       mode: "flights",
                       visibleMonth: visibleMonthDate,
                       setVisibleMonth: setVisibleMonthDate,
@@ -3027,13 +3143,17 @@ export function SearchTabs({
                     >
                       {renderTravelersCabinPicker()}
                     </FlightMobilePickerShell>
+                    <DesktopTopLayerPopover
+                      open
+                      launcherRef={travelersLauncherRef}
+                      align="right"
+                      width={360}
+                      className={cn("p-4", desktopTravelersPopoverClassName)}
+                    >
                     <div
                       role="dialog"
                       aria-label="Travelers and cabin"
-                      className={cn(
-                        "absolute right-0 top-[calc(100%+12px)] hidden w-[min(92vw,360px)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
-                        desktopTravelersPopoverClassName
-                      )}
+                      className="bg-white"
                     >
                       <div>
                         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
@@ -3056,6 +3176,7 @@ export function SearchTabs({
                         <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
                       </div>
                     </div>
+                    </DesktopTopLayerPopover>
                   </>
                 ) : null}
               </div>
@@ -3248,6 +3369,7 @@ export function SearchTabs({
                   <>
                     <div ref={hotelDatesPanelRef}>
                       {renderDesktopCalendarPopover({
+                        launcherRef: hotelDatesMobileLauncherRef,
                         mode: "hotels",
                         visibleMonth: hotelVisibleMonthDate,
                         setVisibleMonth: setHotelVisibleMonthDate,
@@ -3300,11 +3422,17 @@ export function SearchTabs({
                   />
                 </button>
                 {hotelGuestsRoomsOpen ? (
+                  <DesktopTopLayerPopover
+                    open
+                    launcherRef={hotelGuestsRoomsMobileLauncherRef}
+                    align="right"
+                    width={360}
+                    className="p-4"
+                  >
                   <div
-                    className={cn(
-                      "absolute right-0 top-[calc(100%+10px)] hidden w-[min(92vw,360px)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
-                      desktopPopoverPanelClassName
-                    )}
+                    role="dialog"
+                    aria-label="Guests and rooms"
+                    className="bg-white"
                   >
                     <div className="mb-3">
                       <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
@@ -3453,6 +3581,7 @@ export function SearchTabs({
                       </div>
                     </div>
                   </div>
+                  </DesktopTopLayerPopover>
                 ) : null}
               </div>
               <div className={hotelSubmitWrapClassName}>
