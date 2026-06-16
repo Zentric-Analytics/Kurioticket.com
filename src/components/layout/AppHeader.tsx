@@ -647,7 +647,7 @@ export function AppHeader({
   return (
     <>
       <header className="relative z-50 border-b border-white/10 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
-        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-3 md:pt-4">
+        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link
               href="/"
@@ -1044,7 +1044,7 @@ export function AppHeader({
           </div>
 
           <nav className="hidden md:block" aria-label="Primary">
-            <div className="flex min-h-[50px] items-center justify-start pt-2.5 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
+            <div className="flex min-h-[44px] items-center justify-start pt-1.5 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
               <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
                 {desktopPrimaryNavItems.map((item) => {
                   const Icon = item.icon;
