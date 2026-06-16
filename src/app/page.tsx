@@ -666,7 +666,7 @@ export default function Home() {
       <AppHeader hideMobileSecondaryNavLinks />
 
       <main className="flex-1 bg-white">
-        <section className="relative min-h-[540px] overflow-visible bg-[#f8f7ff] sm:min-h-[610px] lg:min-h-[680px]">
+        <section className="relative min-h-[580px] overflow-visible bg-[#f8f7ff] sm:min-h-[660px] lg:min-h-[740px]">
           <div className="absolute inset-0">
             <Image
               src={heroImage}
@@ -674,13 +674,13 @@ export default function Home() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-[58%_center] sm:object-[56%_center] lg:object-[54%_46%]"
+              className="object-cover object-[62%_center] sm:object-[60%_center] lg:object-[58%_48%]"
             />
 
-            <div className="absolute inset-0 bg-[linear-gradient(112deg,rgba(255,255,255,0.9)_0%,rgba(255,255,255,0.78)_32%,rgba(255,255,255,0.34)_58%,rgba(255,255,255,0.08)_100%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_26%_24%,rgba(255,255,255,0.38)_0%,rgba(255,255,255,0.18)_34%,rgba(255,255,255,0)_66%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(112deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.62)_32%,rgba(255,255,255,0.2)_58%,rgba(255,255,255,0.02)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_22%,rgba(255,255,255,0.28)_0%,rgba(255,255,255,0.12)_34%,rgba(255,255,255,0)_66%)]" />
 
-            <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/45 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/30 to-transparent" />
           </div>
 
           <div className="page-shell relative pb-10 pt-8 sm:pb-14 sm:pt-10 lg:pb-20 lg:pt-12">
