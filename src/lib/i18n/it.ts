@@ -5,7 +5,7 @@ export const translations: TranslationDictionary = {
   ...en,
 
   flights: "Voli",
-  hotels: "Hotel",
+  hotels: "Alberghi",
   cars: "Auto",
   deals: "Offerte",
   destinations: "Destinazioni",
