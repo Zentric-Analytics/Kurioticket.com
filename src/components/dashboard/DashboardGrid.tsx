@@ -765,7 +765,7 @@ function SecuritySettingRow({ title, body, action, danger = false, onAction, sta
         onClick={onAction}
         aria-describedby={statusId}
         className={cn(
-          "focus-ring -my-2 -mr-2 inline-flex min-h-10 items-center justify-center justify-self-end rounded-lg border-0 bg-transparent px-2 py-2 text-right text-sm font-medium leading-6 transition hover:underline sm:my-0 sm:mr-0 sm:min-h-10 sm:w-auto sm:rounded-xl sm:border sm:px-4 sm:py-0 sm:text-sm sm:font-semibold sm:no-underline",
+          "focus-ring -my-2 -mr-2 inline-flex min-h-10 cursor-pointer items-center justify-center justify-self-end rounded-lg border-0 bg-transparent px-2 py-2 text-right text-sm font-medium leading-6 transition hover:underline sm:my-0 sm:mr-0 sm:min-h-10 sm:w-auto sm:rounded-xl sm:border sm:px-4 sm:py-0 sm:text-sm sm:font-semibold sm:no-underline",
           danger
             ? "text-red-600 sm:border-red-200 sm:bg-red-50 sm:text-red-700 sm:hover:border-red-300 sm:hover:bg-red-100"
             : "text-violet-700 sm:border-violet-200 sm:bg-white sm:hover:border-violet-300 sm:hover:bg-violet-50",
