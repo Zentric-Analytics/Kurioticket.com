@@ -12,7 +12,17 @@ import {
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
+
+const formatTranslation = (
+  template: string,
+  values: Record<string, string | number>,
+) =>
+  Object.entries(values).reduce(
+    (label, [key, value]) => label.replaceAll(`{{${key}}}`, String(value)),
+    template,
+  );
 
 const popularCountryCurrencyCodes = [
   "US",
@@ -115,6 +125,7 @@ export function CountryCurrencySelector({
     selectedOption,
     options,
   } = useRegion();
+  const { t } = useLocale();
 
   const [open, setOpen] = useState(false);
   const [dialogEntered, setDialogEntered] = useState(false);
@@ -453,6 +464,9 @@ export function CountryCurrencySelector({
       return (
         option.code.toLowerCase().includes(normalizedQuery) ||
         option.country.toLowerCase().includes(normalizedQuery) ||
+        (t[`countryCurrency.country.${option.code}`] ?? "")
+          .toLowerCase()
+          .includes(normalizedQuery) ||
         option.currency.toLowerCase().includes(normalizedQuery)
       );
     });
@@ -460,6 +474,7 @@ export function CountryCurrencySelector({
     countryCurrencyQuery,
     options,
     popularCountryCurrencies,
+    t,
     showAllCountryCurrencies,
   ]);
 
@@ -472,11 +487,22 @@ export function CountryCurrencySelector({
       ? filteredCountryCurrencies.slice(0, curatedMobileCountryCurrencyCount)
       : filteredCountryCurrencies;
   const countryCurrencyListLabel = showingFullCountryCurrencyCatalog
-    ? "All countries and currencies"
-    : "Popular country and currency";
+    ? t.countryCurrencyAllCountriesAndCurrencies
+    : t.countryCurrencyPopularCountryAndCurrency;
   const countryCurrencyCountLabel = showingFullCountryCurrencyCatalog
     ? filteredCountryCurrencies.length
     : displayedCountryCurrencies.length;
+  const countryCurrencyOptionCountLabel = formatTranslation(
+    countryCurrencyCountLabel === 1
+      ? t.countryCurrencyOptionCountSingular
+      : t.countryCurrencyOptionCountPlural,
+    { count: countryCurrencyCountLabel },
+  );
+  const getCountryDisplayName = useCallback(
+    (option: (typeof options)[number]) =>
+      t[`countryCurrency.country.${option.code}`] ?? option.country,
+    [t],
+  );
 
   const handleCountryCurrencySelect = (option: (typeof options)[number]) => {
     const isAlreadyActive =
@@ -515,12 +541,15 @@ export function CountryCurrencySelector({
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls={open ? dialogId : undefined}
-        aria-label={`Open country and currency selector, current selection ${selectedOption.code}, ${selectedCurrency}`}
+        aria-label={formatTranslation(t.openCountryCurrencySelector, {
+          code: selectedOption.code,
+          currency: selectedCurrency,
+        })}
       >
         {isMobileVariant ? (
           <span className="min-w-0">
             <span className="block text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
-              Country and currency
+              {t.countryAndCurrency}
             </span>
             <span className="mt-0.5 block truncate text-sm font-black text-slate-950">
               {selectedOption.code} · {selectedCurrency}
@@ -579,15 +608,14 @@ export function CountryCurrencySelector({
                         id={titleId}
                         className="text-xl font-semibold tracking-tight text-slate-950"
                       >
-                        Choose country and currency
+                        {t.chooseCountryAndCurrency}
                       </h2>
 
                       <p
                         id={descriptionId}
                         className="mt-2 max-w-2xl text-sm leading-6 text-slate-600"
                       >
-                        Select the country and currency used for display prices.
-                        Airport suggestions use your detected location.
+                        {t.countryCurrencyDescription}
                       </p>
                     </div>
 
@@ -595,7 +623,7 @@ export function CountryCurrencySelector({
                       type="button"
                       onClick={closeDialog}
                       className="cursor-pointer rounded-none p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-                      aria-label="Close country and currency selector"
+                      aria-label={t.closeCountryCurrencySelector}
                     >
                       <X size={18} aria-hidden="true" />
                     </button>
@@ -605,7 +633,7 @@ export function CountryCurrencySelector({
                     htmlFor={countryCurrencySearchId}
                     className="mt-5 block text-sm font-medium text-slate-800"
                   >
-                    Search country or currency
+                    {t.searchCountryOrCurrency}
                   </label>
 
                   <div className="mt-2 flex items-center gap-2 rounded-none border border-slate-300 bg-white px-3.5 py-3 transition-colors focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-100">
@@ -622,7 +650,7 @@ export function CountryCurrencySelector({
                       onChange={(event) =>
                         setCountryCurrencyQuery(event.target.value)
                       }
-                      placeholder="Search country or currency"
+                      placeholder={t.searchCountryOrCurrency}
                       className="h-6 w-full min-w-0 border-0 bg-transparent text-base font-medium text-slate-900 outline-none placeholder:font-normal placeholder:text-slate-400 md:text-sm"
                       aria-controls={countryCurrencyListId}
                     />
@@ -642,8 +670,7 @@ export function CountryCurrencySelector({
                     </h3>
 
                     <span className="text-xs font-medium text-slate-500">
-                      {countryCurrencyCountLabel}{" "}
-                      {countryCurrencyCountLabel === 1 ? "option" : "options"}
+                      {countryCurrencyOptionCountLabel}
                     </span>
                   </div>
 
@@ -664,7 +691,14 @@ export function CountryCurrencySelector({
                           type="button"
                           role="radio"
                           aria-checked={isActive}
-                          aria-label={`Select ${option.country}, ${option.code}, ${option.currency}`}
+                          aria-label={formatTranslation(
+                            t.selectCountryCurrencyOption,
+                            {
+                              country: getCountryDisplayName(option),
+                              code: option.code,
+                              currency: option.currency,
+                            },
+                          )}
                           onClick={() => handleCountryCurrencySelect(option)}
                           className={`group flex cursor-pointer items-center justify-between gap-3 rounded-none border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                             isActive
@@ -678,7 +712,7 @@ export function CountryCurrencySelector({
                             </span>
 
                             <span className="mt-1 block truncate text-sm font-normal text-slate-700">
-                              {option.country}
+                              {getCountryDisplayName(option)}
                             </span>
                           </span>
 
@@ -700,7 +734,7 @@ export function CountryCurrencySelector({
                   {displayedCountryCurrencies.length === 0 ? (
                     <div className="rounded-none border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center">
                       <p className="text-sm font-semibold text-slate-900">
-                        No countries or currencies found
+                        {t.noCountriesOrCurrenciesFound}
                       </p>
                     </div>
                   ) : null}
@@ -711,7 +745,7 @@ export function CountryCurrencySelector({
                       onClick={handleShowMoreCountryCurrencies}
                       className="mt-4 flex min-h-12 w-full cursor-pointer items-center justify-center rounded-none border border-slate-900 bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-violet-700 hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2"
                     >
-                      Show more results
+                      {t.showMoreResults}
                     </button>
                   ) : null}
                 </div>
