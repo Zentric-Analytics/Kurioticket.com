@@ -274,7 +274,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="relative hidden sm:block">
+      <section className="relative hidden overflow-visible sm:block">
         <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
           <div className="absolute inset-0 overflow-hidden">
             <Image
@@ -285,29 +285,24 @@ export function FlightLandingClient() {
               sizes="100vw"
               className="object-cover object-[55%_46%]"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/35 to-slate-950/10" />
-            <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/75 via-slate-950/25 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/62 via-slate-950/22 to-slate-950/10" />
+            <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/52 via-slate-950/16 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/70 via-slate-950/24 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[32rem] flex-col justify-end pb-28 pt-14 lg:min-h-[36rem] lg:pb-32 lg:pt-20">
-            <div className="max-w-3xl">
-              <div className="rounded-[1.75rem] border border-white/15 bg-slate-950/28 p-6 text-white shadow-[0_24px_70px_rgba(15,23,42,0.30)] backdrop-blur-sm lg:p-7">
-                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-white shadow-sm">
-                  <Plane className="h-3.5 w-3.5" aria-hidden="true" />
-                  {t("flights")}
-                </div>
-                <h1 className="max-w-3xl text-[2.55rem] font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-sm lg:text-[3.35rem]">
-                  {heroTitle}
-                </h1>
-                <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-white/90 drop-shadow-sm lg:text-lg lg:leading-8">
-                  {heroSubtitle}
-                </p>
-              </div>
+          <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-end pb-36 pt-16 lg:min-h-[36rem] lg:pb-40 lg:pt-20">
+            <div className="max-w-3xl pt-6 text-right text-white lg:pt-10">
+              <h1 className="text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.55)] lg:text-[3.55rem]">
+                {heroTitle}
+              </h1>
+              <p className="ml-auto mt-4 max-w-2xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.55)] lg:text-lg lg:leading-8">
+                {heroSubtitle}
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="page-shell relative z-20 -mt-20">
+        <div className="page-shell relative z-20 -mt-28 lg:-mt-32">
           <div className="mx-auto max-w-6xl rounded-[1.5rem] border border-slate-200/80 bg-white p-3 shadow-[0_22px_60px_rgba(15,23,42,0.18)]">
             <StandaloneFlightSearchForm localizeCalendarLabels />
           </div>
@@ -315,7 +310,7 @@ export function FlightLandingClient() {
       </section>
 
       <section className="page-shell">
-        <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-6 sm:grid-cols-3">
+        <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-8 sm:grid-cols-3 lg:mt-10">
           {[
             {
               title: t("flightLandingFeatureSearchReadyTitle"),
