@@ -1028,7 +1028,7 @@ function DiscoverySuggestionCard({
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden ${compact ? "h-[118px]" : "h-[156px] md:h-[150px] lg:h-[158px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden ${compact ? "h-[148px]" : "h-[196px] md:h-[190px] lg:h-[198px]"}`}
       >
         <DiscoveryCardImage
           image={image}
@@ -1204,7 +1204,7 @@ function DiscoveryPricePill({
   if (isLoading) {
     return (
       <span
-        className="inline-flex h-8 w-[7.5rem] animate-pulse rounded-full border border-slate-300 bg-white shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
+        className="inline-flex h-10 w-[9rem] animate-pulse rounded-full border border-slate-300 bg-white shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:h-11 sm:w-[10rem]"
         aria-label={t("homeCheckingProviderRoutePricing")}
       />
     );
@@ -1212,7 +1212,7 @@ function DiscoveryPricePill({
 
   if (!hasProviderPrice) {
     return (
-      <span className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-extrabold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1223,7 +1223,7 @@ function DiscoveryPricePill({
 
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
-      <span className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-extrabold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1244,7 +1244,7 @@ function DiscoveryPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-extrabold leading-5 tracking-tight text-slate-950 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
+      className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-base font-black leading-6 tracking-tight text-slate-950 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-lg sm:leading-7"
       aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
