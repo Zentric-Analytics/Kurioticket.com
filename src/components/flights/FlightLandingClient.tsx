@@ -475,7 +475,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-12 space-y-12 sm:mt-14 lg:mt-16">
+      <section className="page-shell mt-12 sm:mt-14 lg:mt-16">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
@@ -491,8 +491,10 @@ export function FlightLandingClient() {
             ))}
           </div>
         </div>
+      </section>
 
-        <section className="mx-auto max-w-6xl border-y border-slate-200/80 bg-gradient-to-b from-white/80 via-indigo-50/35 to-slate-50/80 px-4 py-5 sm:px-5 sm:py-6">
+      <section className="mt-12 border-y border-slate-300/80 bg-gradient-to-b from-slate-100/80 via-indigo-50/70 to-violet-50/60 sm:mt-14">
+        <div className="page-shell py-5 sm:py-6">
           <div className="divide-y divide-slate-200/70 sm:grid sm:grid-cols-3 sm:gap-5 sm:divide-y-0 sm:[&>article+article]:border-l sm:[&>article+article]:border-slate-200/70 sm:[&>article+article]:pl-5">
             {[
               {
@@ -534,8 +536,10 @@ export function FlightLandingClient() {
               </article>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
+      <section className="page-shell mt-12 space-y-12 sm:mt-14 lg:mt-16">
         {routeInspirationCards.length > 0 ? (
           <div>
             <div className="mb-5 max-w-3xl">
