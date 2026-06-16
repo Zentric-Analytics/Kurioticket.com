@@ -241,13 +241,9 @@ const findDiscoveryImageForHotel = (destination: string) => {
 
 const desktopOverlayRootClassName = "relative isolate z-[2147482800]";
 const desktopOverlayGuardClassName =
-  "fixed inset-0 z-[2147483000] hidden bg-white/85 backdrop-blur-[1px] sm:block";
+  "fixed inset-0 z-[2147483000] hidden bg-transparent sm:block";
 const desktopActiveFieldClassName = "z-[2147483200]";
 const desktopPopoverPanelClassName = "z-[2147483400]";
-const desktopCalendarPopoverClassName =
-  "absolute left-1/2 top-[calc(100%+12px)] hidden w-[min(660px,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.04] sm:block lg:p-5";
-const desktopCompactPopoverClassName =
-  "absolute right-0 top-[calc(100%+12px)] hidden w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.04] sm:block";
 const desktopTravelersFieldClassName = "z-[2147483500]";
 const desktopTravelersPopoverClassName = "z-[2147483600]";
 const mobileDoneButtonClassName =
@@ -748,6 +744,15 @@ export function SearchTabs({
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    const normalized = normalizeCabinClass(cabinClass);
+    if (cabinClass !== normalized) setCabinClass(normalized);
+  }, [cabinClass]);
+
+  useEffect(() => {
+    const normalized = normalizeCabinClass(draftCabinClass);
+    if (draftCabinClass !== normalized) setDraftCabinClass(normalized);
+  }, [draftCabinClass]);
 
   useEffect(() => {
     if (!activeMobileAirportPicker) return;
@@ -2283,9 +2288,9 @@ export function SearchTabs({
       role="dialog"
       aria-label={translate("chooseTravelDates") || "Choose travel dates"}
       className={cn(
-        desktopCalendarPopoverClassName,
+        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
         desktopPopoverPanelClassName,
-        mode === "flights" && "lg:w-[min(760px,calc(100vw-3rem))]"
+        mode === "flights" && "lg:left-1/2 lg:w-[min(760px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:p-5"
       )}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -3026,7 +3031,7 @@ export function SearchTabs({
                       role="dialog"
                       aria-label="Travelers and cabin"
                       className={cn(
-                        desktopCompactPopoverClassName,
+                        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
                         desktopTravelersPopoverClassName
                       )}
                     >
@@ -3297,7 +3302,7 @@ export function SearchTabs({
                 {hotelGuestsRoomsOpen ? (
                   <div
                     className={cn(
-                      desktopCompactPopoverClassName,
+                      "absolute left-0 top-[calc(100%+10px)] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block",
                       desktopPopoverPanelClassName
                     )}
                   >
