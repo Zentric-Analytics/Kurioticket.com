@@ -704,7 +704,7 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="page-shell relative z-30 -mt-16 pb-6 sm:hidden">
+        <div className="page-shell relative z-30 -mt-24 pb-6 sm:hidden">
           <SearchTabs
             t={t as unknown as Record<string, string>}
             compactHero
