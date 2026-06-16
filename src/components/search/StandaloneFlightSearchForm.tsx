@@ -930,14 +930,14 @@ export function StandaloneFlightSearchForm({
         anchorRef={anchorRef}
         desiredWidth={520}
         align="start"
-        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.02]"
+        className="rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.02]"
       >
         {loading ? (
           <p className="px-4 py-5 text-center text-sm font-medium text-slate-500">
             {t("searchingAirportsAndCities")}
           </p>
         ) : suggestions.length ? (
-          <div className="max-h-[min(52vh,360px)] overflow-y-auto py-1">
+          <div className="max-h-[min(44vh,320px)] overflow-y-auto overscroll-contain py-1">
             {suggestions.map((option, index) => (
               <button
                 key={`${field}-${option.code}-${option.airport}`}
@@ -1170,10 +1170,10 @@ export function StandaloneFlightSearchForm({
           </p>
           <div
             className={cn(
-              "overflow-hidden border border-slate-200 bg-white",
+              "overflow-hidden border-slate-200",
               compact
-                ? "rounded-3xl shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
-                : "rounded-2xl shadow-sm",
+                ? "rounded-3xl border bg-white shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
+                : "rounded-2xl border bg-slate-50/70",
             )}
           >
             {passengerRows.map((row) => {
@@ -1189,7 +1189,7 @@ export function StandaloneFlightSearchForm({
                   key={row.key}
                   className={cn(
                     "flex items-center justify-between gap-4 border-b border-slate-100 last:border-b-0",
-                    compact ? "px-4 py-4" : "px-4 py-3",
+                    compact ? "px-4 py-4" : "px-4 py-3.5",
                   )}
                 >
                   <span className="min-w-0">
@@ -1219,7 +1219,7 @@ export function StandaloneFlightSearchForm({
                           );
                       }}
                       disabled={!canDecrement}
-                      className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                      className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 disabled:shadow-none sm:h-10 sm:w-10"
                     >
                       <Minus className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -1255,7 +1255,7 @@ export function StandaloneFlightSearchForm({
                         }
                       }}
                       disabled={!canIncrement}
-                      className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                      className="focus-ring inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300 disabled:shadow-none sm:h-10 sm:w-10"
                     >
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -1268,10 +1268,10 @@ export function StandaloneFlightSearchForm({
 
         <div
           className={cn(
-            "border border-slate-200 bg-white p-4",
+            "border-slate-200",
             compact
-              ? "rounded-3xl shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
-              : "rounded-2xl shadow-sm",
+              ? "rounded-3xl border bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
+              : "rounded-2xl border bg-slate-50/70 p-3",
           )}
         >
           <div className="mb-3 flex items-center justify-between">
@@ -1287,7 +1287,7 @@ export function StandaloneFlightSearchForm({
                 onClick={() => setDraftCabinClass(normalizeCabinClass(value))}
                 className={cn(
                   "focus-ring border px-2 text-center text-sm leading-4 transition-all",
-                  compact ? "min-h-11 rounded-2xl" : "min-h-10 rounded-xl",
+                  compact ? "min-h-11 rounded-2xl" : "min-h-11 rounded-xl",
                   draftCabinClass === value
                     ? "border-indigo-500 bg-indigo-700 font-extrabold text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]"
                     : "border-slate-200 bg-slate-50/80 font-bold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800",
@@ -1368,7 +1368,7 @@ export function StandaloneFlightSearchForm({
         </div>
 
         <div className="grid grid-cols-1 gap-1 sm:gap-3 lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px] lg:items-stretch lg:gap-0">
-          <div className="grid grid-cols-1 gap-1 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:bg-white lg:shadow-none lg:transition-colors lg:hover:border-slate-400 lg:focus-within:border-indigo-500 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-indigo-500/25">
+          <div className="grid grid-cols-1 gap-1 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:rounded-l-xl lg:border-r lg:border-slate-200 lg:bg-white">
             <AirportFieldControl
               ref={originWrapRef}
               inputRef={originInputRef}
@@ -1394,8 +1394,9 @@ export function StandaloneFlightSearchForm({
               mobileLauncherRef={originMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("origin")}
               className={cn(
-                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
-                originOpen && "sm:z-20",
+                "lg:min-h-[58px] lg:rounded-l-xl lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-indigo-50/60 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-indigo-300/80",
+                originOpen &&
+                  "sm:z-20 lg:bg-indigo-50/60 lg:ring-1 lg:ring-inset lg:ring-indigo-300/80",
               )}
             />
 
@@ -1438,8 +1439,9 @@ export function StandaloneFlightSearchForm({
               mobileLauncherRef={destinationMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("destination")}
               className={cn(
-                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
-                destinationOpen && "sm:z-20",
+                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-indigo-50/60 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-indigo-300/80",
+                destinationOpen &&
+                  "sm:z-20 lg:bg-indigo-50/60 lg:ring-1 lg:ring-inset lg:ring-indigo-300/80",
               )}
             />
           </div>
@@ -1510,10 +1512,10 @@ export function StandaloneFlightSearchForm({
                   anchorRef={datesMobileLauncherRef}
                   desiredWidth={690}
                   align="end"
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03]"
+                  className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_22px_54px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] xl:p-5"
                 >
                   {renderDateCalendar(false)}
-                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
                     <button
                       type="button"
                       onClick={() => {
@@ -1598,10 +1600,10 @@ export function StandaloneFlightSearchForm({
                   anchorRef={travelersLauncherRef}
                   desiredWidth={380}
                   align="end"
-                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03]"
+                  className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_22px_54px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03]"
                 >
                   {renderTravelersPicker(false)}
-                  <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">
+                  <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
                     <button
                       type="button"
                       onClick={applyTravelersDraft}
@@ -1775,7 +1777,10 @@ type DesktopFlightPopoverProps = {
   anchorRef: React.RefObject<HTMLElement | null>;
   desiredWidth: number;
   align?: "start" | "end";
+  offset?: number;
+  maxHeight?: number | string;
   className?: string;
+  contentClassName?: string;
   children: React.ReactNode;
 };
 
@@ -1784,7 +1789,10 @@ function DesktopFlightPopover({
   anchorRef,
   desiredWidth,
   align = "start",
+  offset = 10,
+  maxHeight,
   className,
+  contentClassName,
   children,
 }: DesktopFlightPopoverProps) {
   const [position, setPosition] = useState<{
@@ -1832,7 +1840,7 @@ function DesktopFlightPopover({
         Math.max(gutter, preferredLeft),
         Math.max(gutter, viewportWidth - width - gutter),
       );
-      const top = Math.max(gutter, anchorRect.bottom + 10);
+      const top = Math.max(gutter, anchorRect.bottom + offset);
 
       setPosition({ left, top, width });
     };
@@ -1845,7 +1853,7 @@ function DesktopFlightPopover({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [align, anchorRef, desiredWidth, isDesktop, open]);
+  }, [align, anchorRef, desiredWidth, isDesktop, offset, open]);
 
   if (!open || !isDesktop || !position || typeof document === "undefined")
     return null;
@@ -1853,12 +1861,15 @@ function DesktopFlightPopover({
   return createPortal(
     <div
       data-standalone-flight-desktop-popover
-      className="fixed z-[1000] overflow-y-auto"
+      className={cn("fixed z-[1000]", contentClassName)}
       style={{
         left: position.left,
         top: position.top,
         width: position.width,
-        maxHeight: `calc(100vh - ${position.top + 16}px)`,
+        maxHeight:
+          typeof maxHeight === "number"
+            ? `${maxHeight}px`
+            : maxHeight,
       }}
     >
       <div className={cn("bg-white", className)}>{children}</div>
