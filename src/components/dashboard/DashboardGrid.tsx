@@ -755,13 +755,13 @@ function SecuritySettingRow({ title, body, action, danger = false }: SecuritySet
   return (
     <div className="grid min-w-0 gap-3 px-1 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:px-2 sm:py-6">
       <div className="min-w-0">
-        <h2 className="text-base font-bold tracking-[-0.01em] text-slate-950 sm:text-[17px]">{title}</h2>
-        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">{body}</p>
+        <h2 className="text-base font-semibold text-navy sm:text-[17px]">{title}</h2>
+        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">{body}</p>
       </div>
       <button
         type="button"
         className={cn(
-          "focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl border px-4 text-sm font-bold transition sm:w-auto",
+          "focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl border px-4 text-sm font-semibold transition sm:w-auto",
           danger
             ? "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100"
             : "border-violet-200 bg-white text-violet-700 hover:border-violet-300 hover:bg-violet-50",
@@ -779,10 +779,10 @@ export function SecurityDashboardPage() {
   return (
     <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 xl:max-w-[64rem]">
       <div className="px-1 text-left sm:px-2">
-        <h1 id="security-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
+        <h1 id="security-title" className="text-3xl font-bold text-navy">
           {t["accountDashboard.security.title"]}
         </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
           {t["accountDashboard.security.description"]}
         </p>
       </div>
