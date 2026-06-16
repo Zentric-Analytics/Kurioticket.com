@@ -9,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { useRouter } from "next/navigation";
 
@@ -84,6 +85,7 @@ const searchFieldValueButtonClassName =
   "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
 const mobileDoneButtonClassName =
   "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
+const desktopPopoverSelector = "[data-standalone-flight-desktop-popover]";
 
 const normalizeSuggestionText = (value: string) =>
   value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
@@ -288,9 +290,6 @@ export function StandaloneFlightSearchForm({
   const [draftCabinClass, setDraftCabinClass] = useState<CabinClass>("economy");
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const hasActiveDesktopPopover =
-    originOpen || destinationOpen || datesOpen || travelersOpen;
-
   const originQuery = origin.trim();
   const destinationQuery = destination.trim();
   const visibleOriginSuggestions =
@@ -480,7 +479,8 @@ export function StandaloneFlightSearchForm({
       const eventTarget = event.target as Node;
       if (
         eventTarget instanceof Element &&
-        eventTarget.closest("[data-flight-mobile-picker-shell]")
+        (eventTarget.closest("[data-flight-mobile-picker-shell]") ||
+          eventTarget.closest(desktopPopoverSelector))
       )
         return;
 
@@ -509,13 +509,6 @@ export function StandaloneFlightSearchForm({
       document.removeEventListener("keydown", onEscape);
     };
   }, []);
-
-  const closeDesktopPopovers = () => {
-    setOriginOpen(false);
-    setDestinationOpen(false);
-    setDatesOpen(false);
-    setTravelersOpen(false);
-  };
 
   const openOriginDesktopPopover = () => {
     setDestinationOpen(false);
@@ -927,11 +920,18 @@ export function StandaloneFlightSearchForm({
     const loading = field === "origin" ? originLoading : destinationLoading;
     const active = field === "origin" ? originHighlight : destinationHighlight;
     const open = field === "origin" ? originOpen : destinationOpen;
+    const anchorRef = field === "origin" ? originWrapRef : destinationWrapRef;
 
     if (!open || query.length < 2) return null;
 
     return (
-      <div className="absolute left-0 top-[calc(100%+10px)] z-[260] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.02] sm:block">
+      <DesktopFlightPopover
+        open={open}
+        anchorRef={anchorRef}
+        desiredWidth={520}
+        align="start"
+        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.02]"
+      >
         {loading ? (
           <p className="px-4 py-5 text-center text-sm font-medium text-slate-500">
             {t("searchingAirportsAndCities")}
@@ -975,7 +975,7 @@ export function StandaloneFlightSearchForm({
             {t("noMatchingAirportsOrCities")}
           </p>
         )}
-      </div>
+      </DesktopFlightPopover>
     );
   };
 
@@ -1303,25 +1303,8 @@ export function StandaloneFlightSearchForm({
   };
 
   return (
-    <section
-      className={cn(
-        "relative isolate z-[120] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-[1.35rem] sm:border-slate-200 sm:bg-white sm:p-2.5 sm:shadow-[0_22px_58px_rgba(15,23,42,0.18)] sm:ring-1 sm:ring-slate-950/[0.04]",
-        hasActiveDesktopPopover && "sm:z-[320]",
-      )}
-    >
-      {hasActiveDesktopPopover ? (
-        <button
-          type="button"
-          aria-label={t("close") || "Close active flight search popover"}
-          onClick={closeDesktopPopovers}
-          className="fixed inset-0 z-0 hidden cursor-default bg-white/75 backdrop-blur-[4px] sm:block"
-          tabIndex={-1}
-        />
-      ) : null}
-      <form
-        onSubmit={onSubmit}
-        className="relative z-10 space-y-2 sm:space-y-1.5"
-      >
+    <section className="relative isolate z-[120] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-[1.35rem] sm:border-slate-200 sm:bg-white sm:p-2.5 sm:shadow-[0_22px_58px_rgba(15,23,42,0.18)] sm:ring-1 sm:ring-slate-950/[0.04]">
+      <form onSubmit={onSubmit} className="relative space-y-2 sm:space-y-1.5">
         <div
           role="radiogroup"
           aria-label={t("tripType") || "Trip type"}
@@ -1522,7 +1505,13 @@ export function StandaloneFlightSearchForm({
                 >
                   {renderDateCalendar(true)}
                 </FlightMobilePickerShell>
-                <div className="absolute right-0 top-[calc(100%+10px)] z-[260] hidden w-[min(92vw,690px)] rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
+                <DesktopFlightPopover
+                  open={datesOpen}
+                  anchorRef={datesMobileLauncherRef}
+                  desiredWidth={690}
+                  align="end"
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03]"
+                >
                   {renderDateCalendar(false)}
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
                     <button
@@ -1543,7 +1532,7 @@ export function StandaloneFlightSearchForm({
                       {t("done")}
                     </button>
                   </div>
-                </div>
+                </DesktopFlightPopover>
               </>
             ) : null}
           </div>
@@ -1604,7 +1593,13 @@ export function StandaloneFlightSearchForm({
                 >
                   {renderTravelersPicker()}
                 </FlightMobilePickerShell>
-                <div className="absolute right-0 top-[calc(100%+10px)] z-[260] hidden w-[min(92vw,380px)] rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block">
+                <DesktopFlightPopover
+                  open={travelersOpen}
+                  anchorRef={travelersLauncherRef}
+                  desiredWidth={380}
+                  align="end"
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03]"
+                >
                   {renderTravelersPicker(false)}
                   <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">
                     <button
@@ -1615,7 +1610,7 @@ export function StandaloneFlightSearchForm({
                       {t("done")}
                     </button>
                   </div>
-                </div>
+                </DesktopFlightPopover>
               </>
             ) : null}
           </div>
@@ -1774,6 +1769,103 @@ const AirportFieldControl = React.forwardRef<
     </div>
   );
 });
+
+type DesktopFlightPopoverProps = {
+  open: boolean;
+  anchorRef: React.RefObject<HTMLElement | null>;
+  desiredWidth: number;
+  align?: "start" | "end";
+  className?: string;
+  children: React.ReactNode;
+};
+
+function DesktopFlightPopover({
+  open,
+  anchorRef,
+  desiredWidth,
+  align = "start",
+  className,
+  children,
+}: DesktopFlightPopoverProps) {
+  const [position, setPosition] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const desktopMediaQuery = window.matchMedia("(min-width: 640px)");
+    const syncDesktopState = () => setIsDesktop(desktopMediaQuery.matches);
+
+    syncDesktopState();
+    desktopMediaQuery.addEventListener("change", syncDesktopState);
+
+    return () =>
+      desktopMediaQuery.removeEventListener("change", syncDesktopState);
+  }, []);
+
+  useEffect(() => {
+    if (!open || !isDesktop || typeof window === "undefined") {
+      return;
+    }
+
+    const updatePosition = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) {
+        setPosition(null);
+        return;
+      }
+
+      const gutter = 16;
+      const anchorRect = anchor.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const width = Math.min(
+        desiredWidth,
+        Math.max(0, viewportWidth - gutter * 2),
+      );
+      const preferredLeft =
+        align === "end" ? anchorRect.right - width : anchorRect.left;
+      const left = Math.min(
+        Math.max(gutter, preferredLeft),
+        Math.max(gutter, viewportWidth - width - gutter),
+      );
+      const top = Math.max(gutter, anchorRect.bottom + 10);
+
+      setPosition({ left, top, width });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [align, anchorRef, desiredWidth, isDesktop, open]);
+
+  if (!open || !isDesktop || !position || typeof document === "undefined")
+    return null;
+
+  return createPortal(
+    <div
+      data-standalone-flight-desktop-popover
+      className="fixed z-[1000] overflow-y-auto"
+      style={{
+        left: position.left,
+        top: position.top,
+        width: position.width,
+        maxHeight: `calc(100vh - ${position.top + 16}px)`,
+      }}
+    >
+      <div className={cn("bg-white", className)}>{children}</div>
+    </div>,
+    document.body,
+  );
+}
 
 function useAirportSuggestions({
   query,
