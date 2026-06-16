@@ -1832,7 +1832,14 @@ export const translations: TranslationDictionary = {
 
   compareAvailableFlightOptions: "Verfügbare Flugoptionen vergleichen",
   flightResultsHeroSubtitle: "Prüfen Sie Tarife und wählen Sie in wenigen Schritten die passende Route für Ihre Reise.",
+  quickResumeLatestSearches: "Schnelle Rückkehr zu Ihren letzten Suchen",
   quickResumeLatestSearchesBody: "Springen Sie zurück zu Routenvorschlägen, die Ihnen gefallen haben – kein Konto erforderlich.",
+  quickRoutesFromLatestSearches: "Schnelle Routen aus Ihren letzten Suchen",
+  savedRoutes: "Gespeicherte Routen",
+  savedRoutesOnDevice: "Routen, die Sie auf diesem Gerät gespeichert haben.",
+  moreFlightRoutesToExplore: "Weitere Flugrouten zum Entdecken",
+  moreFlightRoutesToExploreBody:
+    "Durchstöbern Sie Routenvorschläge aus Ihrer Region und öffnen Sie eine, wenn Sie bereit sind, Daten und Tarifdetails zu vergleichen.",
   filtersWithCount: "Filter · {{count}}",
   chooseOrigin: "Abflugort auswählen",
   chooseDestination: "Ziel auswählen",

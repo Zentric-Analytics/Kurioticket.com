@@ -1155,6 +1155,14 @@ export const translations: TranslationDictionary = {
   quickResumeLatestSearches: "Reprendre rapidement vos recherches récentes",
   quickResumeLatestSearchesBody:
     "Revenez aux idées d’itinéraires que vous avez déjà aimées, sans compte requis.",
+  quickRoutesFromLatestSearches:
+    "Itinéraires rapides depuis vos dernières recherches",
+  clearAll: "Tout effacer",
+  savedRoutes: "Itinéraires enregistrés",
+  savedRoutesOnDevice: "Itinéraires enregistrés sur cet appareil.",
+  moreFlightRoutesToExplore: "Plus d’itinéraires de vol à explorer",
+  moreFlightRoutesToExploreBody:
+    "Parcourez des idées d’itinéraires depuis votre région et ouvrez-en une lorsque vous êtes prêt à comparer les dates et les détails tarifaires.",
   exploreRoute: "Explorer l’itinéraire",
   filtersWithCount: "Filtres · {{count}}",
   sort: "Trier",
@@ -1295,7 +1303,6 @@ export const translations: TranslationDictionary = {
   nextMonthShort: "Suiv.",
   done: "Terminé",
   clear: "Effacer",
-  clearAll: "Tout effacer",
   adults: "Adultes",
   children: "Enfants",
   infants: "Bébés",
