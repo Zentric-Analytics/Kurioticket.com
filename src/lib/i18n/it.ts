@@ -89,6 +89,16 @@ export const translations: TranslationDictionary = {
   login: "Accedi",
   signIn: "Accedi",
   signUp: "Registrati",
+  loginPageTitle: "Accedi",
+  loginPageSubtitle:
+    "Salva le ricerche, gestisci gli avvisi e accedi alla tua dashboard di viaggio.",
+  loginEmailLabel: "Email",
+  loginPasswordLabel: "Password",
+  loginForgotPassword: "Password dimenticata?",
+  loginSubmit: "Accedi",
+  loginGoogle: "Continua con Google",
+  loginSignupPrompt: "Nuovo su Kurioticket?",
+  loginCreateAccount: "Crea un account",
 
   openLanguagePreferences:
     "Apri le preferenze lingua, lingua attuale {{language}}",
