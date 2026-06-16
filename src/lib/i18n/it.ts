@@ -78,6 +78,21 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.emptyDescription":
     "Esplora la homepage per trovare ispirazione di viaggio.",
   "accountDashboard.saved.explore": "Esplora",
+
+  "accountDashboard.priceAlerts.eyebrow": "STRUMENTI ACCOUNT",
+  "accountDashboard.priceAlerts.title": "Avvisi sui prezzi",
+  "accountDashboard.priceAlerts.description": "Visualizza gli avvisi supportati dai fornitori salvati nel tuo account Kurioticket.",
+  "accountDashboard.priceAlerts.empty.title": "Nessun avviso sui prezzi ancora.",
+  "accountDashboard.priceAlerts.empty.body": "Salva ricerche o tratte per tenere traccia dei viaggi che ti interessano.",
+  "accountDashboard.priceAlerts.guidance.flight.title": "Inizia con un volo",
+  "accountDashboard.priceAlerts.guidance.flight.body": "Confronta opzioni di volo supportate dai fornitori prima di salvare viaggi o tratte.",
+  "accountDashboard.priceAlerts.guidance.stays.title": "Controlla i soggiorni",
+  "accountDashboard.priceAlerts.guidance.stays.body": "Cerca hotel con dettagli aggiornati dei fornitori prima di aggiungere qualcosa ai tuoi piani.",
+  "accountDashboard.priceAlerts.guidance.organized.title": "Mantieni organizzata la pianificazione",
+  "accountDashboard.priceAlerts.guidance.organized.body": "Il tuo account mostra dati di viaggio salvati senza attività inventate o prezzi statici.",
+  "accountDashboard.priceAlerts.cta.flights": "Cerca voli",
+  "accountDashboard.priceAlerts.cta.hotels": "Cerca hotel",
+  "accountDashboard.priceAlerts.cta.cars": "Cerca auto",
   "accountDashboard.security.eyebrow": "SICUREZZA",
   "accountDashboard.security.title": "Impostazioni di sicurezza",
   "accountDashboard.security.description":
