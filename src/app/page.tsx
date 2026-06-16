@@ -1013,7 +1013,7 @@ function DiscoverySuggestionCard({
   return (
     <Link
       href={href}
-      className={`group relative flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white ${compact ? "p-2.5" : "p-3"} shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5`}
+      className="group relative flex min-w-0 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_16px_30px_-24px_rgba(15,23,42,0.55)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_38px_-22px_rgba(15,23,42,0.58)] active:-translate-y-0.5"
     >
       <button
         type="button"
@@ -1022,13 +1022,13 @@ function DiscoverySuggestionCard({
           isSaved ? t("homeRemoveFromSavedRoutes") : t("homeSaveRoute")
         }
         aria-pressed={isSaved}
-        className={`focus-ring absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
+        className={`focus-ring absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
       >
         <Heart size={15} className={isSaved ? "fill-current" : ""} />
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden rounded-lg ${compact ? "h-[98px]" : "h-[136px] md:h-[128px] lg:h-[136px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden ${compact ? "h-[104px]" : "h-[138px] md:h-[132px] lg:h-[142px]"}`}
       >
         <DiscoveryCardImage
           image={image}
@@ -1039,41 +1039,51 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`min-w-0 flex-1 ${compact ? "space-y-1.5 pt-2" : "space-y-2 pt-2.5"}`}
+        className={`flex min-w-0 flex-1 flex-col ${compact ? "px-3 pb-3 pt-2.5" : "px-3.5 pb-3.5 pt-3"}`}
       >
-        <p
-          className={`line-clamp-2 break-words text-slate-900 ${compact ? "text-sm font-extrabold leading-5 pr-10" : "text-sm font-bold leading-5 md:text-[0.95rem] pr-10"}`}
-        >
-          {title}
-        </p>
-        <p
-          className={`line-clamp-2 text-slate-700 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
-        >
-          {originCode} → {destinationCodeLabel} · {routeNote}
-        </p>
-        <div className="flex flex-wrap items-center gap-2 pt-0.5">
-          <span className="rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
-            {t("homeDiscoveryRouteIdeaBadge")}
-          </span>
+        <div className="min-w-0">
           <p
-            className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
+            className={`font-black tracking-tight text-slate-950 ${compact ? "text-lg leading-6" : "text-xl leading-7"}`}
           >
-            {t("homeDiscoveryTripOneWay")} · {t("homeDiscoveryCabinEconomy")} ·{" "}
-            {t("homeDiscoveryTravelerCountOne")}
+            {originCode} → {destinationCodeLabel}
+          </p>
+          <p
+            className={`mt-1 line-clamp-1 text-slate-600 ${compact ? "text-xs font-semibold leading-4" : "text-sm font-semibold leading-5"}`}
+          >
+            {title}
+          </p>
+          <p
+            className={`mt-1 line-clamp-2 text-slate-500 ${compact ? "text-[11px] font-medium leading-4" : "text-xs font-medium leading-5"}`}
+          >
+            {routeNote}
           </p>
         </div>
-      </div>
 
-      <div
-        className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}
-      >
-        <DiscoveryPricePill
-          price={price}
-          displayCurrency={displayCurrency}
-          expectedOriginCode={expectedOriginCode}
-          expectedDestinationCode={expectedDestinationCode}
-          isLoading={Boolean(isPriceLoading)}
-        />
+        <div
+          className={`mt-2 grid gap-1.5 text-slate-700 ${compact ? "text-[11px]" : "text-xs"} font-semibold sm:grid-cols-1 lg:grid-cols-3`}
+        >
+          <span className="rounded-full bg-slate-100 px-2 py-1 text-center">
+            {t("homeDiscoveryTripOneWay")}
+          </span>
+          <span className="rounded-full bg-slate-100 px-2 py-1 text-center">
+            {t("homeDiscoveryCabinEconomy")}
+          </span>
+          <span className="rounded-full bg-slate-100 px-2 py-1 text-center">
+            {t("homeDiscoveryTravelerCountOne")}
+          </span>
+        </div>
+
+        <div
+          className={`mt-auto border-t border-slate-200/90 ${compact ? "pt-2.5" : "pt-3"}`}
+        >
+          <DiscoveryPricePill
+            price={price}
+            displayCurrency={displayCurrency}
+            expectedOriginCode={expectedOriginCode}
+            expectedDestinationCode={expectedDestinationCode}
+            isLoading={Boolean(isPriceLoading)}
+          />
+        </div>
       </div>
     </Link>
   );
@@ -1204,7 +1214,7 @@ function DiscoveryPricePill({
   if (isLoading) {
     return (
       <span
-        className="inline-flex h-7 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
+        className="inline-flex h-9 w-full animate-pulse rounded-xl border border-slate-200 bg-slate-100/90"
         aria-label={t("homeCheckingProviderRoutePricing")}
       />
     );
@@ -1212,7 +1222,7 @@ function DiscoveryPricePill({
 
   if (!hasProviderPrice) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+      <span className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-700">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1223,7 +1233,7 @@ function DiscoveryPricePill({
 
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+      <span className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-50/90 px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] text-slate-700">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1244,7 +1254,7 @@ function DiscoveryPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-800 shadow-sm"
+      className="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-slate-950 px-3 py-2 text-xs font-extrabold uppercase tracking-[0.08em] text-white shadow-sm"
       aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
