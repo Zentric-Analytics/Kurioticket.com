@@ -1013,7 +1013,7 @@ function DiscoverySuggestionCard({
   return (
     <Link
       href={href}
-      className={`group relative flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white ${compact ? "p-2.5" : "p-3"} shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5`}
+      className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
     >
       <button
         type="button"
@@ -1022,13 +1022,13 @@ function DiscoverySuggestionCard({
           isSaved ? t("homeRemoveFromSavedRoutes") : t("homeSaveRoute")
         }
         aria-pressed={isSaved}
-        className={`focus-ring absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
+        className={`focus-ring absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
       >
         <Heart size={15} className={isSaved ? "fill-current" : ""} />
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden rounded-lg ${compact ? "h-[110px]" : "h-[148px] md:h-[144px] lg:h-[152px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden ${compact ? "h-[118px]" : "h-[156px] md:h-[150px] lg:h-[158px]"}`}
       >
         <DiscoveryCardImage
           image={image}
@@ -1039,7 +1039,7 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`min-w-0 flex-1 ${compact ? "space-y-1.5 pt-2.5" : "space-y-2 pt-3"}`}
+        className={`min-w-0 flex-1 bg-white ${compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-2 px-3 pt-3"}`}
       >
         <p
           className={`line-clamp-2 break-words text-slate-900 ${compact ? "pr-10 text-sm font-extrabold leading-5" : "pr-10 text-sm font-extrabold leading-5 md:text-[0.95rem]"}`}
@@ -1065,7 +1065,7 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`mt-3 border-t border-slate-300/80 pt-3 ${compact ? "" : "md:mt-3.5 md:pt-3.5"}`}
+        className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-3 pt-3"}`}
       >
         <DiscoveryPricePill
           price={price}
