@@ -236,8 +236,19 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
     desktopCropRequirement: "Must support a 16:9 and 21:9 hero crop with overlay-safe space across the left half.",
     recommendedAspectRatios: ["21:9", "16:9", "4:5"],
     launchCritical: true,
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath: "/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/businesswoman-arriving-in-a-modern-city-with-rolling-luggage-gm2236043419-651355204?searchscope=image%2Cfilm",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2236043419",
+    dimensions: "2047 x 1380",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
     buyingBatch: "A",
-    notes: "Highest-impact replacement for the current free-approved homepage hero; no URL replacement happens until Phase 4.",
+    notes:
+      "Purchased iStock asset is stored locally for future homepage hero replacement; final desktop/mobile crop approval remains pending staging QA, and no live UI replacement happens in this PR.",
   }),
   purchaseEntry({
     id: "phase-3-002-global-flight-search-hero",
