@@ -281,11 +281,11 @@ export function FlightLandingClient() {
               fill
               priority
               sizes="(min-width: 1280px) 1180px, 100vw"
-              className="object-cover object-[50%_42%] opacity-28"
+              className="object-cover object-[50%_42%] opacity-60"
             />
           </div>
-          <div className="absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-r from-white via-white/98 to-white/90" />
-          <div className="absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-b from-white/50 via-white/35 to-white/92" />
+          <div className="absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-r from-white/95 via-white/75 to-white/35" />
+          <div className="absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-b from-white/20 via-white/20 to-white/85" />
 
           <div className="px-6 py-6 lg:px-8 lg:py-7">
             <div className="max-w-3xl">
