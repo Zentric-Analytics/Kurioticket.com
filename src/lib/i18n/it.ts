@@ -71,6 +71,17 @@ export const translations: TranslationDictionary = {
   "accountMenu.priceAlerts.description": "Visualizza gli avvisi salvati",
   "accountMenu.accountSettings.label": "Impostazioni account",
   "accountMenu.accountSettings.description": "Profilo e preferenze",
+  "accountSettings.eyebrow": "IL MIO ACCOUNT",
+  "accountSettings.title": "Impostazioni account",
+  "accountSettings.description":
+    "Gestisci i dettagli e le preferenze dell’account dal tuo account Kurioticket.",
+  "accountSettings.notifications.title": "Preferenze di notifica",
+  "accountSettings.notifications.description":
+    "Rivedi le informazioni e-mail dell’account e conserva i dettagli delle preferenze in un unico posto.",
+  "accountSettings.privacy.title": "Controlli privacy",
+  "accountSettings.privacy.description":
+    "Consulta le informazioni sulla privacy, le indicazioni sui dati dell’account e le politiche della piattaforma.",
+  "accountSettings.privacy.legalCenterCta": "Consulta il centro legale",
   "accountDashboard.saved.title": "Salvati",
   "accountDashboard.saved.description":
     "I viaggi, le tratte, i soggiorni e gli elementi di pianificazione salvati collegati al tuo account vengono visualizzati qui.",
