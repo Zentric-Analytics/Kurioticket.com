@@ -127,54 +127,12 @@ function TravelIllustration({ compact = false, variant = "luggage" }: { compact?
 
 function SavedEmptyStateIllustration() {
   return (
-    <svg
-      className="mx-auto h-auto w-full max-w-[19rem] shrink-0 text-violet-700 drop-shadow-[0_28px_42px_rgba(79,70,229,0.14)] sm:max-w-[23rem] lg:mx-0 lg:max-w-[24rem]"
-      viewBox="0 0 420 360"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+    <div
+      className="mx-auto flex size-20 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 shadow-[0_18px_42px_-28px_rgba(79,70,229,0.85)] sm:size-24"
       aria-hidden="true"
     >
-      <circle cx="195" cy="138" r="112" fill="#ede9fe" />
-      <circle cx="195" cy="138" r="82" fill="#f5f3ff" />
-      <path d="M125 86c22 15 41 12 59 18 23 8 33 28 62 21 20-5 33-22 58-15" stroke="#ddd6fe" strokeWidth="11" strokeLinecap="round" />
-      <path d="M99 158c30-13 62-4 85 14 36 28 60 19 86 1 20-14 40-13 58 0" stroke="#ddd6fe" strokeWidth="11" strokeLinecap="round" />
-      <path d="M143 51c10 18 26 26 52 26M222 43c-8 24-3 46 15 66M103 117c28-7 45-32 45-57M268 60c-9 18-4 36 14 54" stroke="#c4b5fd" strokeWidth="5" strokeLinecap="round" opacity=".72" />
-      <path d="M261 96c23-18 49-27 76-29" stroke="#7c3aed" strokeWidth="3" strokeDasharray="9 8" strokeLinecap="round" />
-      <path d="M337 51l11 16 18-3 4 7-16 8 4 19-7 3-11-17-19 4-4-7 17-9-4-18 7-3Z" fill="#4f46e5" />
-      <circle cx="76" cy="170" r="7" fill="#c4b5fd" />
-      <circle cx="356" cy="162" r="4" fill="#c4b5fd" />
-      <circle cx="92" cy="201" r="3.5" fill="#ddd6fe" />
-      <ellipse cx="202" cy="329" rx="154" ry="10" fill="#ddd6fe" opacity=".95" />
-
-      <rect x="60" y="224" width="64" height="96" rx="8" fill="#8b5cf6" />
-      <path d="M77 224v-23c0-5 4-9 9-9h13c5 0 9 4 9 9v23" stroke="#6d28d9" strokeWidth="8" strokeLinecap="round" />
-      <path d="M79 242v58M96 242v58M113 242v58" stroke="#7c3aed" strokeWidth="5" strokeLinecap="round" opacity=".75" />
-      <circle cx="76" cy="324" r="6" fill="#312e81" />
-      <circle cx="112" cy="324" r="6" fill="#312e81" />
-
-      <path d="M204 314c-33-2-51-11-55-30-4-18 7-37 24-52l49 12 17 50c-6 14-17 21-35 20Z" fill="#312e81" />
-      <path d="M231 320h87c-13-38-39-61-77-69l-34 9c-5 26 3 46 24 60Z" fill="#312e81" />
-      <path d="M166 206c8-29 24-45 50-46 27 1 45 17 53 48l-24 73h-79v-75Z" fill="#5b36e6" />
-      <path d="M194 158c-2 12 2 22 13 28 11 0 19-5 24-15v-30l-31-7-6 24Z" fill="#ffd0b5" />
-      <path d="M216 166c5 0 12-4 16-10v16c-5 7-13 11-23 11-7-4-11-10-13-18 6 1 13 1 20 1Z" fill="#e9a384" opacity=".55" />
-      <path d="M175 139c-3-23 12-40 35-39 21 1 35 17 34 38-6 6-13 7-20 3-6-3-10-8-18-5-9 3-14 10-31 3Z" fill="#22146f" />
-      <circle cx="175" cy="133" r="18" fill="#22146f" />
-      <path d="M197 140c8-14 26-10 34 1v17c-2 12-10 20-22 22-15-3-23-12-24-28 2-8 6-12 12-12Z" fill="#ffd0b5" />
-      <circle cx="215" cy="153" r="2.8" fill="#111827" />
-      <path d="M229 153c4 3 4 8 0 12M210 169c8 5 16 4 23-3" stroke="#2e1065" strokeWidth="3" strokeLinecap="round" />
-      <path d="M240 224c17 10 33 8 48-6" stroke="#ffd0b5" strokeWidth="16" strokeLinecap="round" />
-      <path d="M289 218c8-9 12-19 12-29" stroke="#ffd0b5" strokeWidth="14" strokeLinecap="round" />
-      <path d="M159 218c-9 20-8 39 5 58" stroke="#ffd0b5" strokeWidth="16" strokeLinecap="round" />
-      <path d="M166 274c14 3 28-3 42-17" stroke="#ffd0b5" strokeWidth="14" strokeLinecap="round" />
-      <path d="M262 193c19-35 67-22 70 18 2 28-24 48-69 79-45-31-71-51-69-79 3-40 51-53 68-18Z" fill="#4f46e5" />
-      <path d="M278 211h28v55l-14-10-14 10v-55Z" fill="#fff" opacity=".92" />
-      <path d="M205 253c11-1 24-7 37-19" stroke="#ffd0b5" strokeWidth="14" strokeLinecap="round" />
-      <path d="M168 205c-10 14-15 29-15 45M263 203c11 16 16 31 14 47" stroke="#4421c8" strokeWidth="10" strokeLinecap="round" />
-
-      <path d="M334 317c-12-38 0-68 39-91-1 43-14 73-39 91Z" fill="#8b5cf6" opacity=".78" />
-      <path d="M349 316c4-32 22-55 53-70-4 41-21 65-53 70Z" fill="#7c3aed" opacity=".66" />
-      <rect x="328" y="306" width="49" height="24" rx="4" fill="#a78bfa" />
-    </svg>
+      <Bookmark className="size-9 stroke-[1.8] sm:size-11" />
+    </div>
   );
 }
 
@@ -722,23 +680,21 @@ export function SavedDashboardPage() {
         </p>
       </div>
       <div className="px-1 py-7 sm:px-2 sm:py-9 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-14 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
-        <div className="grid items-center gap-8 lg:grid-cols-[minmax(17rem,0.92fr)_minmax(0,1fr)] lg:gap-14">
+        <div className="mx-auto flex max-w-md flex-col items-center text-center">
           <SavedEmptyStateIllustration />
-          <div className="mx-auto max-w-md text-center lg:mx-0 lg:text-left">
-            <h2 className="text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem]">
-              {t["accountDashboard.saved.emptyTitle"]}
-            </h2>
-            <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600 lg:mx-0">
-              {t["accountDashboard.saved.emptyDescription"]}
-            </p>
-            <LinkButton
-              href="/"
-              size="lg"
-              className="mt-7 w-full rounded-xl bg-violet-700 px-8 text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] hover:bg-violet-800 sm:max-w-[19rem] lg:w-auto lg:min-w-36"
-            >
-              {t["accountDashboard.saved.explore"]}
-            </LinkButton>
-          </div>
+          <h2 className="mt-6 text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem]">
+            {t["accountDashboard.saved.emptyTitle"]}
+          </h2>
+          <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600">
+            {t["accountDashboard.saved.emptyDescription"]}
+          </p>
+          <LinkButton
+            href="/"
+            size="lg"
+            className="mt-7 w-full rounded-xl bg-violet-700 px-8 text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] hover:bg-violet-800 sm:max-w-[19rem] lg:w-auto lg:min-w-36"
+          >
+            {t["accountDashboard.saved.explore"]}
+          </LinkButton>
         </div>
       </div>
     </section>
