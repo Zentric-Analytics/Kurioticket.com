@@ -22,7 +22,7 @@ export const translations: TranslationDictionary = {
   preparing: "Não disponível",
   flights: "Voos",
   hotels: "Hotéis",
-  cars: "Auto",
+  cars: "Carros",
   deals: "Ofertas",
   destinations: "Destinos",
   explore: "Explorar",
