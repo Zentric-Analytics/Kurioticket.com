@@ -3,7 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { AccountDashboardFrame, SecurityDashboardPage } from "@/components/dashboard/DashboardGrid";
 
 export const metadata = {
-  title: "Security",
+  title: "Security settings",
 };
 
 export default function SecurityPage() {

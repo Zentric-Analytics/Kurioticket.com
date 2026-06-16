@@ -126,22 +126,24 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.securityPrivacy.description":
     "Prüfen Sie aktuelle Datenschutz- und Plattformrichtlinien.",
   "accountDashboard.security.eyebrow": "SICHERHEIT",
-  "accountDashboard.security.title": "Sicherheit",
+  "accountDashboard.security.title": "Sicherheitseinstellungen",
   "accountDashboard.security.description":
-    "Verwalten Sie die Sicherheits- und Datenschutzeinstellungen Ihres Kontos.",
-  "accountDashboard.security.comingSoon": "Demnächst verfügbar",
-  "accountDashboard.security.password.title": "Passwort",
-  "accountDashboard.security.password.description":
-    "Verwalten Sie Ihr Passwort und die Anmeldesicherheit.",
-  "accountDashboard.security.twoStep.title": "Zwei-Schritt-Verifizierung",
-  "accountDashboard.security.twoStep.description":
-    "Fügen Sie Ihrem Konto eine zusätzliche Schutzebene hinzu.",
+    "Ändern Sie Ihre Sicherheitseinstellungen, richten Sie sichere Authentifizierung ein oder verwalten Sie den Kontozugriff.",
+  "accountDashboard.security.passkeys.title": "Passkeys",
+  "accountDashboard.security.passkeys.description":
+    "Melden Sie sich sicher an, ohne sich ein Passwort merken zu müssen.",
+  "accountDashboard.security.twoFactor.title": "Zwei-Faktor-Authentifizierung",
+  "accountDashboard.security.twoFactor.description":
+    "Fügen Sie Ihrem Konto eine zusätzliche Sicherheitsebene hinzu.",
   "accountDashboard.security.activeSessions.title": "Aktive Sitzungen",
   "accountDashboard.security.activeSessions.description":
-    "Überprüfen Sie Geräte, die in Ihrem Konto angemeldet sind.",
-  "accountDashboard.security.privacy.title": "Datenschutz",
-  "accountDashboard.security.privacy.description":
-    "Prüfen Sie, wie Ihre Kontoinformationen verwendet werden.",
+    "Prüfen Sie, wo Ihr Konto angemeldet ist, und melden Sie andere Geräte ab.",
+  "accountDashboard.security.deleteAccount.title": "Konto löschen",
+  "accountDashboard.security.deleteAccount.description":
+    "Löschen Sie Ihr Kurioticket-Konto dauerhaft.",
+  "accountDashboard.security.action.setUp": "Einrichten",
+  "accountDashboard.security.action.manage": "Verwalten",
+  "accountDashboard.security.action.deleteAccount": "Konto löschen",
   "accountDashboard.support.eyebrow": "SUPPORT",
   "accountDashboard.support.title": "Support",
   "accountDashboard.support.description":

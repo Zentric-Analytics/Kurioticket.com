@@ -251,22 +251,24 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.securityPrivacy.description":
     "Revisa la información actual de privacidad y políticas de la plataforma.",
   "accountDashboard.security.eyebrow": "SEGURIDAD",
-  "accountDashboard.security.title": "Seguridad",
+  "accountDashboard.security.title": "Configuración de seguridad",
   "accountDashboard.security.description":
-    "Gestiona la seguridad y la privacidad de tu cuenta.",
-  "accountDashboard.security.comingSoon": "Próximamente",
-  "accountDashboard.security.password.title": "Contraseña",
-  "accountDashboard.security.password.description":
-    "Gestiona tu contraseña y la seguridad de inicio de sesión.",
-  "accountDashboard.security.twoStep.title": "Verificación en dos pasos",
-  "accountDashboard.security.twoStep.description":
-    "Añade una capa adicional de protección a tu cuenta.",
+    "Cambia tu configuración de seguridad, configura autenticación segura o administra el acceso a la cuenta.",
+  "accountDashboard.security.passkeys.title": "Llaves de acceso",
+  "accountDashboard.security.passkeys.description":
+    "Inicia sesión de forma segura sin tener que recordar una contraseña.",
+  "accountDashboard.security.twoFactor.title": "Autenticación de dos factores",
+  "accountDashboard.security.twoFactor.description":
+    "Añade una capa adicional de seguridad a tu cuenta.",
   "accountDashboard.security.activeSessions.title": "Sesiones activas",
   "accountDashboard.security.activeSessions.description":
-    "Revisa los dispositivos con sesión iniciada en tu cuenta.",
-  "accountDashboard.security.privacy.title": "Privacidad",
-  "accountDashboard.security.privacy.description":
-    "Revisa cómo se usa la información de tu cuenta.",
+    "Revisa dónde está iniciada tu cuenta y cierra sesión en otros dispositivos.",
+  "accountDashboard.security.deleteAccount.title": "Eliminar cuenta",
+  "accountDashboard.security.deleteAccount.description":
+    "Elimina permanentemente tu cuenta de Kurioticket.",
+  "accountDashboard.security.action.setUp": "Configurar",
+  "accountDashboard.security.action.manage": "Administrar",
+  "accountDashboard.security.action.deleteAccount": "Eliminar cuenta",
   "accountDashboard.support.eyebrow": "SOPORTE",
   "accountDashboard.support.title": "Soporte",
   "accountDashboard.support.description":

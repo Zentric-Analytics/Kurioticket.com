@@ -248,22 +248,24 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.securityPrivacy.description":
     "Review current privacy and platform policy information.",
   "accountDashboard.security.eyebrow": "SECURITY",
-  "accountDashboard.security.title": "Security",
+  "accountDashboard.security.title": "Security settings",
   "accountDashboard.security.description":
-    "Manage your account security and privacy settings.",
-  "accountDashboard.security.comingSoon": "Coming soon",
-  "accountDashboard.security.password.title": "Password",
-  "accountDashboard.security.password.description":
-    "Manage your password and sign-in security.",
-  "accountDashboard.security.twoStep.title": "Two-step verification",
-  "accountDashboard.security.twoStep.description":
-    "Add an extra layer of protection to your account.",
+    "Change your security settings, set up secure authentication, or manage account access.",
+  "accountDashboard.security.passkeys.title": "Passkeys",
+  "accountDashboard.security.passkeys.description":
+    "Sign in securely without needing to remember a password.",
+  "accountDashboard.security.twoFactor.title": "Two-factor authentication",
+  "accountDashboard.security.twoFactor.description":
+    "Add an extra layer of security to your account.",
   "accountDashboard.security.activeSessions.title": "Active sessions",
   "accountDashboard.security.activeSessions.description":
-    "Review devices signed in to your account.",
-  "accountDashboard.security.privacy.title": "Privacy",
-  "accountDashboard.security.privacy.description":
-    "Review how your account information is used.",
+    "Review where your account is signed in and sign out from other devices.",
+  "accountDashboard.security.deleteAccount.title": "Delete account",
+  "accountDashboard.security.deleteAccount.description":
+    "Permanently delete your Kurioticket account.",
+  "accountDashboard.security.action.setUp": "Set up",
+  "accountDashboard.security.action.manage": "Manage",
+  "accountDashboard.security.action.deleteAccount": "Delete account",
   "accountDashboard.support.eyebrow": "SUPPORT",
   "accountDashboard.support.title": "Support",
   "accountDashboard.support.description":

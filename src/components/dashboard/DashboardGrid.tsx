@@ -85,6 +85,13 @@ type ListRowProps = {
   status?: string;
 };
 
+type SecuritySettingRowProps = {
+  title: string;
+  body: string;
+  action: string;
+  danger?: boolean;
+};
+
 function isActiveDashboardRoute(pathname: string, href: string) {
   if (href === "/dashboard") {
     return pathname === href;
@@ -744,46 +751,62 @@ export function PreferencesDashboardPage() {
   );
 }
 
+function SecuritySettingRow({ title, body, action, danger = false }: SecuritySettingRowProps) {
+  return (
+    <div className="grid min-w-0 gap-3 px-1 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-6 sm:px-2 sm:py-6">
+      <div className="min-w-0">
+        <h2 className="text-base font-bold tracking-[-0.01em] text-slate-950 sm:text-[17px]">{title}</h2>
+        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">{body}</p>
+      </div>
+      <button
+        type="button"
+        className={cn(
+          "focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl border px-4 text-sm font-bold transition sm:w-auto",
+          danger
+            ? "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100"
+            : "border-violet-200 bg-white text-violet-700 hover:border-violet-300 hover:bg-violet-50",
+        )}
+      >
+        {action}
+      </button>
+    </div>
+  );
+}
+
 export function SecurityDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
-          {t["accountDashboard.security.eyebrow"]}
-        </p>
-        <h1 id="security-title" className="mt-2 text-3xl font-bold text-navy">
+    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 xl:max-w-[64rem]">
+      <div className="px-1 text-left sm:px-2">
+        <h1 id="security-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
           {t["accountDashboard.security.title"]}
         </h1>
-        <p className="mt-3 text-sm leading-6 text-muted">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
           {t["accountDashboard.security.description"]}
         </p>
       </div>
-      <div className="grid gap-3">
-        <ListRow
-          title={t["accountDashboard.security.password.title"]}
-          body={t["accountDashboard.security.password.description"]}
-          icon={LockKeyhole}
-          status={t["accountDashboard.security.comingSoon"]}
+      <div className="divide-y divide-slate-200/90 border-y border-slate-200/90">
+        <SecuritySettingRow
+          title={t["accountDashboard.security.passkeys.title"]}
+          body={t["accountDashboard.security.passkeys.description"]}
+          action={t["accountDashboard.security.action.setUp"]}
         />
-        <ListRow
-          title={t["accountDashboard.security.twoStep.title"]}
-          body={t["accountDashboard.security.twoStep.description"]}
-          icon={ShieldCheck}
-          status={t["accountDashboard.security.comingSoon"]}
+        <SecuritySettingRow
+          title={t["accountDashboard.security.twoFactor.title"]}
+          body={t["accountDashboard.security.twoFactor.description"]}
+          action={t["accountDashboard.security.action.setUp"]}
         />
-        <ListRow
+        <SecuritySettingRow
           title={t["accountDashboard.security.activeSessions.title"]}
           body={t["accountDashboard.security.activeSessions.description"]}
-          icon={UserRound}
-          status={t["accountDashboard.security.comingSoon"]}
+          action={t["accountDashboard.security.action.manage"]}
         />
-        <ListRow
-          title={t["accountDashboard.security.privacy.title"]}
-          body={t["accountDashboard.security.privacy.description"]}
-          href="/legal"
-          icon={LockKeyhole}
+        <SecuritySettingRow
+          title={t["accountDashboard.security.deleteAccount.title"]}
+          body={t["accountDashboard.security.deleteAccount.description"]}
+          action={t["accountDashboard.security.action.deleteAccount"]}
+          danger
         />
       </div>
     </section>
