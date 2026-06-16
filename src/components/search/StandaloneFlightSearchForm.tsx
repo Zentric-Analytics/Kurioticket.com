@@ -1311,12 +1311,12 @@ export function StandaloneFlightSearchForm({
   };
 
   return (
-    <section className="relative isolate z-[120] rounded-2xl border border-white/75 bg-white p-3 shadow-[0_18px_44px_rgba(15,23,42,0.14)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_28px_70px_rgba(15,23,42,0.24)]">
+    <section className="relative isolate z-[120] rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_18px_44px_rgba(15,23,42,0.14)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_28px_70px_rgba(15,23,42,0.22)]">
       <form onSubmit={onSubmit} className="relative space-y-3 sm:space-y-3">
         <div
           role="radiogroup"
           aria-label={t("tripType") || "Trip type"}
-          className="inline-flex items-center gap-3 rounded-lg bg-white/80 px-0.5 py-1 sm:gap-1 sm:rounded-full sm:border sm:border-slate-200 sm:bg-slate-100/80 sm:p-1"
+          className="inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5"
         >
           {[
             ["round-trip", t("roundTrip")],
@@ -1349,9 +1349,9 @@ export function StandaloneFlightSearchForm({
                 if (nextTripType === "one-way") setReturnDate("");
               }}
               className={cn(
-                "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold",
+                "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold",
                 tripType === value &&
-                  "text-slate-950 sm:bg-white sm:text-indigo-700 sm:shadow-sm sm:ring-1 sm:ring-indigo-100",
+                  "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100 sm:bg-indigo-50/80 sm:text-indigo-800 sm:shadow-none",
               )}
             >
               <span
@@ -1375,7 +1375,7 @@ export function StandaloneFlightSearchForm({
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px] lg:items-stretch lg:gap-0">
+        <div className="grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px] lg:items-stretch lg:gap-0">
           <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-r lg:border-slate-200 lg:bg-transparent">
             <AirportFieldControl
               ref={originWrapRef}

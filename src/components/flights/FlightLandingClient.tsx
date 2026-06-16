@@ -303,7 +303,7 @@ export function FlightLandingClient() {
           </div>
         </div>
 
-        <div className="page-shell relative z-30 -mt-32 pb-2 lg:-mt-36">
+        <div className="page-shell relative z-30 -mt-40 pb-4 lg:-mt-44">
           <div className="mx-auto max-w-6xl">
             <StandaloneFlightSearchForm localizeCalendarLabels />
           </div>
