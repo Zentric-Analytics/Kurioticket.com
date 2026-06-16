@@ -677,10 +677,9 @@ export default function Home() {
               className="object-cover object-[62%_center] sm:object-[60%_center] lg:object-[58%_48%]"
             />
 
-            <div className="absolute inset-0 bg-[linear-gradient(112deg,rgba(255,255,255,0.78)_0%,rgba(255,255,255,0.62)_32%,rgba(255,255,255,0.2)_58%,rgba(255,255,255,0.02)_100%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_22%,rgba(255,255,255,0.28)_0%,rgba(255,255,255,0.12)_34%,rgba(255,255,255,0)_66%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(112deg,rgba(255,255,255,0.68)_0%,rgba(255,255,255,0.44)_30%,rgba(255,255,255,0.10)_55%,rgba(255,255,255,0)_100%)]" />
 
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/30 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#f8f7ff]/80 via-[#f8f7ff]/18 to-transparent" />
           </div>
 
           <div className="page-shell relative pb-10 pt-8 sm:pb-14 sm:pt-10 lg:pb-20 lg:pt-12">
