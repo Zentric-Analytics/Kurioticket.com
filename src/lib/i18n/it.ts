@@ -78,6 +78,25 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.emptyDescription":
     "Esplora la homepage per trovare ispirazione di viaggio.",
   "accountDashboard.saved.explore": "Esplora",
+  "accountDashboard.security.eyebrow": "SICUREZZA",
+  "accountDashboard.security.title": "Impostazioni di sicurezza",
+  "accountDashboard.security.description":
+    "Modifica le impostazioni di sicurezza, configura l’autenticazione sicura o gestisci l’accesso all’account.",
+  "accountDashboard.security.passkeys.title": "Passkey",
+  "accountDashboard.security.passkeys.description":
+    "Accedi in modo sicuro senza dover ricordare una password.",
+  "accountDashboard.security.twoFactor.title": "Autenticazione a due fattori",
+  "accountDashboard.security.twoFactor.description":
+    "Aggiungi un livello extra di sicurezza al tuo account.",
+  "accountDashboard.security.activeSessions.title": "Sessioni attive",
+  "accountDashboard.security.activeSessions.description":
+    "Controlla dove il tuo account ha effettuato l’accesso e disconnettiti dagli altri dispositivi.",
+  "accountDashboard.security.deleteAccount.title": "Elimina account",
+  "accountDashboard.security.deleteAccount.description":
+    "Elimina definitivamente il tuo account Kurioticket.",
+  "accountDashboard.security.action.setUp": "Configura",
+  "accountDashboard.security.action.manage": "Gestisci",
+  "accountDashboard.security.action.deleteAccount": "Elimina account",
   myAccount: "Il mio account",
   account: "Account",
   openAccountMenu: "Apri menu account",
