@@ -532,13 +532,13 @@ export const translations: TranslationDictionary = {
   "deals.error.destination": "Inserisci una destinazione.",
   "deals.error.startDate": "Scegli una data di inizio.",
   "deals.error.endDate": "Scegli una data di fine.",
-  "deals.error.dateOrder": "La data di fine deve essere successiva alla data di inizio.",
+  "deals.error.dateOrder":
+    "La data di fine deve essere successiva alla data di inizio.",
   "deals.error.adults": "È richiesto almeno un adulto.",
   "deals.error.children": "I bambini non possono essere meno di zero.",
   "deals.error.rooms": "È richiesta almeno una camera.",
   "deals.error.guests": "È richiesto almeno un ospite.",
-  "deals.destinationIdeasTitle":
-    "Luoghi da cui iniziare la ricerca di offerte",
+  "deals.destinationIdeasTitle": "Luoghi da cui iniziare la ricerca di offerte",
   "deals.destinationIdeasSubtitle":
     "Scegli un’idea di destinazione, poi confronta i risultati dei fornitori quando continui.",
   "deals.destinationCardAriaPrefix": "Cerca idee di viaggio per",
@@ -573,6 +573,190 @@ export const translations: TranslationDictionary = {
   footerTermsOfService: "Termini di servizio",
   footerCookiePolicy: "Informativa sui cookie",
   legalCenter: "Centro legale",
+  "legal.lastUpdated": "Ultimo aggiornamento",
+  "legal.print": "Stampa",
+  "legal.tableOfContents": "INDICE",
+  "legal.terms.title": "Termini di servizio",
+  "legal.terms.summary":
+    "Regole per l’utilizzo della ricerca Kurioticket, degli account, delle dashboard, degli strumenti di viaggio salvati e dei reindirizzamenti ai partner.",
+  "legal.terms.lastUpdatedDate": "11 maggio 2026",
+  "legal.terms.lastUpdated": "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.terms.tableOfContents": "INDICE",
+  "legal.terms.sections.overview.title": "Panoramica",
+  "legal.terms.sections.overview.paragraph1":
+    "Kurioticket LLC (“Kurioticket”, “noi” o “nostro”) gestisce una piattaforma di ricerca e confronto viaggi che aiuta gli utenti a cercare voli, hotel e auto, confrontare le opzioni dei fornitori, salvare piani di viaggio e creare avvisi.",
+  "legal.terms.sections.overview.paragraph2":
+    "Kurioticket non è una compagnia aerea, un hotel, un’agenzia di viaggio online, un’agenzia di viaggio, un processore di pagamento per acquisti di viaggio o un emittente di biglietti. Acquisti, regole tariffarie, emissione dei biglietti, modifiche agli itinerari, cancellazioni, rimborsi, imbarco, check-in e documenti di viaggio sono gestiti dal fornitore esterno.",
+  "legal.terms.sections.accounts.title": "Account",
+  "legal.terms.sections.accounts.paragraph1":
+    "Puoi cercare e visualizzare risultati di viaggio senza un account. Un account è necessario per voli salvati, hotel salvati, ricerche salvate, avvisi, dashboard e ticket di supporto.",
+  "legal.terms.sections.accounts.paragraph2":
+    "Sei responsabile della protezione delle tue credenziali di accesso e dell’attività svolta tramite il tuo account.",
+  "legal.terms.sections.acceptable-use.title": "Uso accettabile",
+  "legal.terms.sections.acceptable-use.paragraph1":
+    "Non puoi abusare dei sistemi di ricerca, avvisi, supporto, account o reindirizzamento ai fornitori; decodificare le integrazioni dei fornitori; tentare di aggirare i limiti di frequenza; o usare Kurioticket per attività fraudolente, illegali o dannose.",
+  "legal.terms.sections.acceptable-use.paragraph2":
+    "Possiamo sospendere l’accesso se l’attività minaccia l’affidabilità della piattaforma, i rapporti con i fornitori, la sicurezza del servizio o la sicurezza degli utenti.",
+  "legal.terms.sections.partner-services.title": "Servizi dei partner",
+  "legal.terms.sections.partner-services.paragraph1":
+    "I risultati di viaggio possono includere prezzi, disponibilità, politiche, dati sulle rotte, dati sugli hotel e link a fornitori esterni forniti da API, compagnie aeree, hotel o partner affiliati.",
+  "legal.terms.sections.partner-services.paragraph2":
+    "I termini dei partner si applicano una volta che lasci Kurioticket o completi una transazione con un partner. Rivedi tutti i requisiti relativi a tariffe, hotel, bagagli, modifiche, rimborsi, visti e viaggiatori prima dell’acquisto.",
+  "legal.terms.developerNote":
+    "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
+  "legal.acceptableUsePolicy.title": "Politica di uso accettabile",
+  "legal.acceptableUsePolicy.summary":
+    "Regole di comportamento per un uso sicuro, equo e legale dei sistemi Kurioticket.",
+  "legal.acceptableUsePolicy.lastUpdatedDate": "11 maggio 2026",
+  "legal.acceptableUsePolicy.lastUpdated":
+    "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.acceptableUsePolicy.tableOfContents": "INDICE",
+  "legal.acceptableUsePolicy.sections.prohibited.title": "Condotta vietata",
+  "legal.acceptableUsePolicy.sections.prohibited.paragraph1":
+    "Non puoi effettuare scraping di Kurioticket, effettuare scraping di siti web di compagnie aeree tramite Kurioticket, attaccare API di fornitori, automatizzare ricerche abusive, creare account fraudolenti, testare carte rubate, inviare spam al supporto o interferire con l’affidabilità della piattaforma.",
+  "legal.acceptableUsePolicy.sections.prohibited.paragraph2":
+    "Non puoi utilizzare Kurioticket per facilitare attività di viaggio illegali, molestie, frodi, abusi o accessi non autorizzati.",
+  "legal.acceptableUsePolicy.sections.enforcement.title": "Applicazione",
+  "legal.acceptableUsePolicy.sections.enforcement.paragraph1":
+    "Possiamo limitare, sospendere, rimuovere o bloccare l’accesso quando necessario per proteggere utenti, partner, fornitori, sicurezza del servizio e operazioni della piattaforma.",
+  "legal.acceptableUsePolicy.developerNote":
+    "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
+  "legal.privacy.title": "Informativa sulla privacy",
+  "legal.privacy.summary":
+    "Come Kurioticket LLC (“Kurioticket”, “noi” o “nostro”) raccoglie, utilizza, archivia e protegge i dati relativi ad account, ricerche, avvisi, assistenza ed e-mail.",
+  "legal.privacy.lastUpdatedDate": "11 maggio 2026",
+  "legal.privacy.lastUpdated": "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.privacy.tableOfContents": "INDICE",
+  "legal.privacy.sections.data-we-collect.title": "Dati che raccogliamo",
+  "legal.privacy.sections.data-we-collect.paragraph1":
+    "Raccogliamo dati dell’account come nome, e-mail, password con hash, identificatori del fornitore di autenticazione e preferenze di viaggio opzionali. Non richiediamo dati del passaporto, documenti di identità governativi o indirizzo di casa al momento della registrazione.",
+  "legal.privacy.sections.data-we-collect.paragraph2":
+    "Raccogliamo dati di prodotto come ricerche, voli salvati, hotel salvati, ricerche salvate, avvisi di prezzo, reindirizzamenti, ticket di supporto, notifiche, eventi di analisi e utilizzo delle funzionalità.",
+  "legal.privacy.sections.vendors.title": "Fornitori di servizi",
+  "legal.privacy.sections.vendors.paragraph1":
+    "Possiamo utilizzare fornitori di servizi terzi per aiutarci a gestire i nostri servizi, inviare comunicazioni, proteggere la piattaforma, misurare le prestazioni e supportare le funzionalità del prodotto.",
+  "legal.privacy.sections.vendors.paragraph2":
+    "Kurioticket non richiede né archivia numeri di carta di credito per le prenotazioni di viaggio. Kurioticket non archivia dati del passaporto.",
+  "legal.privacy.sections.choices.title": "Le tue scelte",
+  "legal.privacy.sections.choices.paragraph1":
+    "Puoi aggiornare le preferenze di notifica, richiedere l’eliminazione dell’account e richiedere l’accesso o la correzione dei dati ove previsto dalle leggi sulla privacy applicabili.",
+  "legal.privacy.sections.choices.paragraph2":
+    "Conserviamo solo i dati utili per il funzionamento del prodotto, la sicurezza, l’assistenza, l’analisi, la conformità o legittime esigenze aziendali.",
+  "legal.privacy.developerNote":
+    "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
+  "legal.cookiePolicy.title": "Politica sui cookie",
+  "legal.cookiePolicy.summary":
+    "Come Kurioticket utilizza cookie e tecnologie simili per autenticazione, sicurezza, preferenze, analisi e prestazioni.",
+  "legal.cookiePolicy.lastUpdatedDate": "11 maggio 2026",
+  "legal.cookiePolicy.lastUpdated": "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.cookiePolicy.tableOfContents": "INDICE",
+  "legal.cookiePolicy.sections.use.title": "Come vengono utilizzati i cookie",
+  "legal.cookiePolicy.sections.use.paragraph1":
+    "Kurioticket può utilizzare cookie per sessioni di autenticazione, sicurezza, prevenzione delle frodi, memorizzazione delle preferenze, analisi, monitoraggio delle prestazioni ed esperimenti sulle funzionalità.",
+  "legal.cookiePolicy.sections.use.paragraph2":
+    "Alcuni cookie sono necessari per accesso, dashboard, ticket di supporto, funzionalità di viaggio salvate, sicurezza e preferenze.",
+  "legal.cookiePolicy.sections.third-parties.title":
+    "Tecnologie di terze parti",
+  "legal.cookiePolicy.sections.third-parties.paragraph1":
+    "Fornitori di autenticazione, strumenti di analisi, infrastruttura di hosting e servizi di sicurezza possono impostare o leggere cookie secondo necessità per fornire servizi sicuri.",
+  "legal.cookiePolicy.sections.third-parties.paragraph2":
+    "I siti dei fornitori esterni hanno le proprie pratiche sui cookie dopo il reindirizzamento.",
+  "legal.cookiePolicy.sections.controls.title": "Controlli",
+  "legal.cookiePolicy.sections.controls.paragraph1":
+    "Puoi controllare i cookie tramite le impostazioni del browser. Bloccare i cookie necessari può impedire il corretto funzionamento di accesso, dashboard, elementi salvati, preferenze e strumenti di supporto.",
+  "legal.cookiePolicy.developerNote":
+    "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
+  "legal.affiliateDisclosure.title": "Informativa sugli affiliati",
+  "legal.affiliateDisclosure.summary":
+    "Come Kurioticket può guadagnare commissioni quando gli utenti fanno clic o prenotano tramite partner affidabili.",
+  "legal.affiliateDisclosure.lastUpdatedDate": "11 maggio 2026",
+  "legal.affiliateDisclosure.lastUpdated":
+    "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.affiliateDisclosure.tableOfContents": "INDICE",
+  "legal.affiliateDisclosure.sections.model.title": "Modello di affiliazione",
+  "legal.affiliateDisclosure.sections.model.paragraph1":
+    "Kurioticket offre ricerca gratuita di voli e hotel senza commissioni di servizio. Possiamo guadagnare commissioni di affiliazione quando gli utenti fanno clic, prenotano o acquistano tramite link di compagnie aeree, hotel o partner di viaggio.",
+  "legal.affiliateDisclosure.sections.model.paragraph2":
+    "Kurioticket può ricevere compensi dai partner quando gli utenti fanno clic o prenotano tramite link dei fornitori. Questo aiuta a gestire e migliorare il servizio.",
+  "legal.affiliateDisclosure.sections.ranking.title":
+    "Integrità del posizionamento",
+  "legal.affiliateDisclosure.sections.ranking.paragraph1":
+    "Kurioticket mira a ordinare i risultati in base a segnali di valore per l’utente come prezzo, durata, scali, affidabilità, comfort e riduzione dello stress. I rapporti di affiliazione non devono creare falsa urgenza, costi nascosti o raccomandazioni fuorvianti.",
+  "legal.affiliateDisclosure.developerNote":
+    "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
+  "legal.dataDeletionPolicy.title": "Politica di eliminazione dei dati",
+  "legal.dataDeletionPolicy.summary":
+    "Come gli utenti possono richiedere l’eliminazione dell’account e quali dati potrebbe essere necessario conservare.",
+  "legal.dataDeletionPolicy.lastUpdatedDate": "11 maggio 2026",
+  "legal.dataDeletionPolicy.lastUpdated":
+    "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.dataDeletionPolicy.sections.request.title":
+    "Richieste di eliminazione",
+  "legal.dataDeletionPolicy.sections.request.paragraph1":
+    "Puoi richiedere l’eliminazione dell’account dalle impostazioni dell’account o tramite il supporto. Elaboreremo le richieste di eliminazione in conformità alla legge applicabile, alle esigenze di verifica dell’identità, alla prevenzione delle frodi, agli obblighi legali e ai requisiti di sicurezza.",
+  "legal.dataDeletionPolicy.sections.retention.title": "Registri conservati",
+  "legal.dataDeletionPolicy.sections.retention.paragraph1":
+    "Alcuni registri possono essere conservati per finalità commerciali legittime, sicurezza, analisi, motivi legali, prevenzione degli abusi o risoluzione delle controversie. Riduciamo al minimo i dati personali conservati ove pratico.",
+  "legal.dataDeletionPolicy.developerNote":
+    "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
+  "legal.refundBookingDisclaimer.title":
+    "Avviso su rimborsi e fornitori esterni",
+  "legal.refundBookingDisclaimer.summary":
+    "Chiarisce che acquisti, emissione dei biglietti, rimborsi, cancellazioni e pagamenti per inventario di viaggio avvengono al di fuori di Kurioticket.",
+  "legal.refundBookingDisclaimer.lastUpdatedDate": "11 maggio 2026",
+  "legal.refundBookingDisclaimer.lastUpdated":
+    "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.title":
+    "Nessuna emissione diretta di biglietti",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1":
+    "Kurioticket non vende biglietti aerei né prenotazioni alberghiere. Reindirizziamo gli utenti a compagnie aeree, hotel, partner affiliati o fornitori di viaggio esterni per continuare i passaggi di confronto e acquisto.",
+  "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2":
+    "Il tuo contratto di acquisto è con il fornitore esterno che accetta il tuo pagamento, non con Kurioticket.",
+  "legal.refundBookingDisclaimer.sections.refunds.title":
+    "Rimborsi e modifiche",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph1":
+    "Rimborsi, crediti, modifiche di orario, cancellazioni, coincidenze perse, problemi di check-in, controversie sui bagagli e problemi di acquisto sono gestiti dalla compagnia aerea, dall’hotel o dal fornitore di viaggio esterno.",
+  "legal.refundBookingDisclaimer.sections.refunds.paragraph2":
+    "Il supporto Kurioticket può aiutarti a comprendere l’uso della piattaforma e i limiti della guida di viaggio, ma non può annullare le politiche dei partner o delle compagnie aeree.",
+  "legal.refundBookingDisclaimer.developerNote":
+    "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
+  "legal.priceAvailabilityDisclaimer.title": "Avviso su prezzi e disponibilità",
+  "legal.priceAvailabilityDisclaimer.summary":
+    "Spiega perché prezzi di viaggio, regole tariffarie, tariffe delle camere e disponibilità possono cambiare.",
+  "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "11 maggio 2026",
+  "legal.priceAvailabilityDisclaimer.lastUpdated":
+    "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.priceAvailabilityDisclaimer.sections.change.title":
+    "I prezzi possono cambiare",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph1":
+    "Prezzi di voli e hotel, tasse, commissioni, regole sui bagagli, disponibilità in cabina, camere, orari e politiche possono cambiare rapidamente e possono differire quando raggiungi la pagina di acquisto del fornitore.",
+  "legal.priceAvailabilityDisclaimer.sections.change.paragraph2":
+    "Kurioticket mira a confrontare dati attuali dei fornitori, ma ritardi dei fornitori, limiti di frequenza, finestre di cache, conversione di valuta, regole dei partner e selezioni dell’utente possono influire sulle informazioni visualizzate.",
+  "legal.priceAvailabilityDisclaimer.sections.verify.title":
+    "Verifica prima del pagamento",
+  "legal.priceAvailabilityDisclaimer.sections.verify.paragraph1":
+    "Rivedi sempre il sito del fornitore esterno prima dell’acquisto. Il sito del fornitore esterno è la fonte autorevole per prezzo finale, disponibilità, condizioni tariffarie, condizioni della camera e termini di acquisto.",
+  "legal.priceAvailabilityDisclaimer.developerNote":
+    "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
+  "legal.partnerRedirectDisclaimer.title":
+    "Avviso sui reindirizzamenti ai partner",
+  "legal.partnerRedirectDisclaimer.summary":
+    "Cosa accade quando Kurioticket reindirizza gli utenti a compagnie aeree, hotel, partner affiliati o fornitori di viaggio.",
+  "legal.partnerRedirectDisclaimer.lastUpdatedDate": "11 maggio 2026",
+  "legal.partnerRedirectDisclaimer.lastUpdated":
+    "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.partnerRedirectDisclaimer.sections.redirect.title":
+    "Reindirizzamenti sicuri",
+  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph1":
+    "Quando prosegui verso un fornitore esterno, Kurioticket ti reindirizza a una compagnia aerea, un hotel, un partner affiliato o un fornitore di viaggio. Possiamo registrare metadati del reindirizzamento come fornitore, rotta, prezzo, timestamp, tipo di utente e pagina di origine per analisi, supporto, prevenzione degli abusi e tracciamento degli affiliati.",
+  "legal.partnerRedirectDisclaimer.sections.redirect.paragraph2":
+    "Kurioticket non compila automaticamente siti web di compagnie aeree, non effettua scraping di siti web di compagnie aeree né completa acquisti con partner per tuo conto.",
+  "legal.partnerRedirectDisclaimer.sections.external-terms.title":
+    "Termini esterni",
+  "legal.partnerRedirectDisclaimer.sections.external-terms.paragraph1":
+    "I siti dei partner esterni sono regolati dai propri termini, informative sulla privacy, politiche di rimborso, cookie, pratiche di accessibilità e processi di assistenza clienti.",
+  "legal.partnerRedirectDisclaimer.developerNote":
+    "Questi documenti legali sono bozze provvisorie per una startup e devono essere revisionati da un consulente legale qualificato prima di un lancio pubblico su larga scala.",
   footerAboutKurioticket: "Informazioni su Kurioticket",
   footerAboutUs: "Chi siamo",
   footerHowItWorks: "Come funziona Kurioticket",
@@ -1183,10 +1367,13 @@ export const translations: TranslationDictionary = {
   "carsResults.selectDates": "Seleziona date",
   "carsResults.rentalDates": "Date del noleggio",
   "carsResults.rentalDatePlaceholder": "Data di ritiro — Data di riconsegna",
-  "carsResults.rentalDateRangeCalendar": "Calendario intervallo date del noleggio",
-  "carsResults.selectPickupThenReturn": "Seleziona il ritiro, poi la riconsegna",
+  "carsResults.rentalDateRangeCalendar":
+    "Calendario intervallo date del noleggio",
+  "carsResults.selectPickupThenReturn":
+    "Seleziona il ritiro, poi la riconsegna",
   "carsResults.pickupReturnTime": "Orario di ritiro / riconsegna",
-  "carsResults.pickupReturnTimeSelector": "Selettore orario di ritiro e riconsegna",
+  "carsResults.pickupReturnTimeSelector":
+    "Selettore orario di ritiro e riconsegna",
   "carsResults.pickupTime": "Orario di ritiro",
   "carsResults.returnTime": "Orario di riconsegna",
   "carsResults.driverAge": "Età del conducente",
@@ -1339,10 +1526,12 @@ export const translations: TranslationDictionary = {
     "Perché vengo reindirizzato a un altro fornitore?",
   serviceGuaranteeFaqRedirectedAnswer:
     "Alcuni risultati si completano sul sito di un fornitore esterno. Quando scegli una di queste opzioni, Kurioticket ti reindirizza affinché il fornitore possa gestire prenotazione, pagamento e assistenza specifica per il viaggio.",
-  serviceGuaranteeFaqBookDirectlyQuestion: "Prenoto direttamente su Kurioticket?",
+  serviceGuaranteeFaqBookDirectlyQuestion:
+    "Prenoto direttamente su Kurioticket?",
   serviceGuaranteeFaqBookDirectlyAnswer:
     "Kurioticket è principalmente una piattaforma di ricerca e confronto viaggi. Se un risultato reindirizza a un fornitore, la prenotazione viene completata con quel fornitore anziché su Kurioticket.",
-  serviceGuaranteeFaqPricesGuaranteedQuestion: "I prezzi sono sempre garantiti?",
+  serviceGuaranteeFaqPricesGuaranteedQuestion:
+    "I prezzi sono sempre garantiti?",
   serviceGuaranteeFaqPricesGuaranteedAnswer:
     "No. I prezzi possono cambiare in base a disponibilità del fornitore, tasse, commissioni, valuta e tempistiche. Controlla sempre il prezzo finale sulla pagina del fornitore prima di prenotare.",
   serviceGuaranteeFaqChooseProvidersQuestion:
@@ -1353,7 +1542,8 @@ export const translations: TranslationDictionary = {
     "Cosa devo fare se riscontro un problema?",
   serviceGuaranteeFaqEncounterIssueAnswer:
     "Se il problema riguarda la ricerca, l’accesso all’account, i viaggi salvati, gli avvisi o un reindirizzamento da Kurioticket, contatta il supporto Kurioticket. Se hai già prenotato con un fornitore, contatta quel fornitore per modifiche alla prenotazione, rimborsi, cancellazioni o documenti di viaggio.",
-  serviceGuaranteeFaqContactSupportQuestion: "Come posso contattare il supporto?",
+  serviceGuaranteeFaqContactSupportQuestion:
+    "Come posso contattare il supporto?",
   serviceGuaranteeFaqContactSupportAnswer:
     "Usa la pagina Assistenza clienti e includi l’email del tuo account, ciò che stavi cercando di fare e qualsiasi dettaglio su tratta, hotel o fornitore che possa aiutarci a esaminare il problema.",
   serviceGuaranteeHelpCardTitle:
