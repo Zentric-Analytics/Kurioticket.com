@@ -196,7 +196,7 @@ export const translations: TranslationDictionary = {
   searchFlights: "Cerca voli",
   searchHotels: "Cerca hotel",
   passengers: "Passeggeri",
-  economy: "Economy",
+  economy: "Economica",
   business: "Business",
   first: "Prima",
   adultSingular: "adulto",
