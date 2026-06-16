@@ -231,7 +231,7 @@ export function FlightLandingClient() {
     heroTitle === englishHeroTitle && heroSubtitle === englishHeroSubtitle;
 
   const desktopHeroImageUrl =
-    "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=2400&q=92";
+    "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg";
 
   return (
     <main className="flex-1 bg-slate-50 pb-12 pt-4 sm:pt-6">
