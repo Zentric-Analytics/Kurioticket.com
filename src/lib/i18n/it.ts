@@ -261,4 +261,76 @@ export const translations: TranslationDictionary = {
   homeDestinationNewYorkCity: "New York",
   homeDestinationNewYorkCountry: "Stati Uniti",
   homeDestinationNewYorkAlt: "New York, Stati Uniti",
+
+  flightLandingHeroTitle:
+    "Trova il tuo prossimo volo conveniente con facilità.",
+  flightLandingHeroSubtitle:
+    "Cerca rotte, confronta date ed esplora opzioni di volo per il tuo prossimo viaggio.",
+  flightLandingHeroImageAlt: "Ala di aereo sopra nuvole luminose",
+  flightLandingFeatureSearchReadyTitle: "Rotte pronte per la ricerca",
+  flightLandingFeatureSearchReadyBody:
+    "Inserisci dettagli di viaggio reali prima che i risultati vengano richiesti ai fornitori di voli.",
+  flightLandingFeatureCompareTitle: "Confronta con il contesto",
+  flightLandingFeatureCompareBody:
+    "Usa date, numero di viaggiatori, cabina, durata, scali e dettagli della rotta per valutare le opzioni.",
+  flightLandingFeatureProviderTitle: "Verifica del fornitore",
+  flightLandingFeatureProviderBody:
+    "Conferma sempre disponibilità finale, prezzo e regole con il fornitore prima di prenotare.",
+  discoverDestinationsFromRegion: "Scopri destinazioni dalla tua regione",
+  discoverDestinationsFromRegionBody:
+    "Esplora rotte selezionate e inizia il tuo prossimo viaggio con fiducia.",
+  flightLandingStartThisSearch: "Avvia questa ricerca",
+  flightLandingRouteIdeasTitle: "Idee di rotta per viaggi flessibili",
+  flightLandingRouteIdeasBody:
+    "Sfoglia le idee di rotta, poi avvia una ricerca reale con date e viaggiatori prima di confrontare i voli disponibili.",
+  flightLandingRouteConnector: "verso",
+  flightLandingRouteAriaLabel: "Cerca voli da {{origin}} a {{destination}}",
+  "flightLandingCity.Cancun": "Cancun",
+  "flightLandingCity.Cape Town": "Cape Town",
+  "flightLandingCity.Lisbon": "Lisbona",
+  "flightLandingCity.New York": "New York",
+  "flightLandingCity.Sydney": "Sydney",
+  "flightLandingCity.Toronto": "Toronto",
+  "flightLandingCity.Zanzibar": "Zanzibar",
+  beachVacations: "Vacanze al mare",
+  beachVacationsBody:
+    "Esplora rotte di volo verso coste soleggiate, fughe su isole e destinazioni balneari dal clima caldo.",
+  flightBookingFaqs: "Domande frequenti sulla prenotazione dei voli",
+  flightBookingFaqIntro:
+    "Rivedi i dettagli comuni della ricerca voli prima di continuare con un fornitore.",
+  flightFaqBestTimeQuestion:
+    "Qual è il momento migliore per prenotare un volo?",
+  flightFaqBestTimeAnswer:
+    "I prezzi dei voli possono cambiare in base a rotta, stagione, domanda e disponibilità. Di solito è utile confrontare più date, controllare aeroporti vicini quando possibile e rivedere l’intero itinerario prima di scegliere una tariffa.",
+  flightFaqBeforeBookingQuestion: "Cosa devo controllare prima di prenotare?",
+  flightFaqBeforeBookingAnswer:
+    "Controlla gli orari di partenza e arrivo, la durata totale del viaggio, gli scali, le regole sui bagagli, le opzioni di selezione del posto, i termini di cancellazione e la politica di modifica del biglietto prima di completare la prenotazione con il fornitore.",
+  flightFaqFlexibleFareQuestion: "Che cos’è una tariffa flessibile?",
+  flightFaqFlexibleFareAnswer:
+    "Una tariffa flessibile può consentire modifiche o cancellazioni con meno restrizioni rispetto a una tariffa base, ma le regole esatte dipendono dalla compagnia aerea o dal fornitore di prenotazione. Controlla sempre le condizioni tariffarie prima dell’acquisto.",
+  flightFaqNonstopQuestion: "I voli nonstop sono sempre migliori?",
+  flightFaqNonstopAnswer:
+    "Non sempre. I voli nonstop possono far risparmiare tempo, mentre le rotte con uno scalo possono offrire orari di partenza diversi, finestre di arrivo diverse o opzioni tariffarie differenti. Confronta durata totale del viaggio, durata dello scalo e comodità prima di decidere.",
+  flightFaqBaggageQuestion: "Come funzionano le regole sui bagagli?",
+  flightFaqBaggageAnswer:
+    "La franchigia bagaglio può variare in base a compagnia aerea, rotta, cabina, tipo di tariffa e fornitore. Controlla prima della prenotazione se bagaglio a mano, bagagli registrati e oggetti personali sono inclusi.",
+  flightFaqChangeCancelQuestion:
+    "Posso modificare o cancellare il mio biglietto?",
+  flightFaqChangeCancelAnswer:
+    "Le opzioni di modifica e cancellazione dipendono dalle regole tariffarie e dalle politiche del fornitore. Alcuni biglietti possono essere non rimborsabili o prevedere commissioni, quindi rivedi attentamente i termini prima di prenotare.",
+  flightFaqInternationalQuestion: "Cosa devo sapere sui voli internazionali?",
+  flightFaqInternationalAnswer:
+    "Per i viaggi internazionali, controlla validità del passaporto, requisiti di visto, regole di transito, politiche sui bagagli e requisiti di arrivo della destinazione prima di prenotare.",
+  "homeDiscoveryRoute.fallback-yyz-cun.title": "Fuga al mare a Cancun",
+  "homeDiscoveryRoute.fallback-yyz-cun.routeNote":
+    "Spiagge turchesi e soggiorni in resort per facili pause al caldo.",
+  "homeDiscoveryRoute.fallback-syd-dps.title": "Pausa sull’isola di Bali",
+  "homeDiscoveryRoute.fallback-syd-dps.routeNote":
+    "Ville tropicali, risaie terrazzate e coste pronte per il surf.",
+  "homeDiscoveryRoute.fallback-fra-cpt.title": "Avventura a Cape Town",
+  "homeDiscoveryRoute.fallback-fra-cpt.routeNote":
+    "Escursioni sulla Table Mountain, strade costiere e gite tra i vigneti.",
+  "homeDiscoveryRoute.fallback-jnb-znz.title": "Relax sull’isola di Zanzibar",
+  "homeDiscoveryRoute.fallback-jnb-znz.routeNote":
+    "Spiagge dell’Oceano Indiano, vicoli di Stone Town e barriere per immersioni.",
 };
