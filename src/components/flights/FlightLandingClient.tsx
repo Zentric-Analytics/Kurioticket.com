@@ -274,37 +274,36 @@ export function FlightLandingClient() {
         </div>
 
         <div className="relative isolate hidden overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_20px_58px_rgba(15,23,42,0.12)] ring-1 ring-white/70 sm:block">
-          <div className="grid min-h-[31rem] grid-cols-1 lg:min-h-[34rem] lg:grid-cols-[minmax(0,0.95fr)_minmax(25rem,1.05fr)]">
-            <div className="relative z-10 flex flex-col justify-between gap-6 bg-white px-6 py-6 lg:px-8 lg:py-8">
-              <div className="max-w-2xl">
+          <div className="relative h-[20rem] overflow-hidden bg-slate-100 lg:h-[25rem]">
+            <Image
+              src={desktopHeroImageUrl}
+              alt={t("flightLandingHeroImageAlt")}
+              fill
+              priority
+              sizes="(min-width: 1280px) 1152px, (min-width: 640px) calc(100vw - 2rem), 100vw"
+              className="object-cover object-[54%_44%]"
+            />
+            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/25 to-transparent" />
+          </div>
+
+          <div className="bg-white px-6 py-6 lg:px-8 lg:py-8">
+            <div className="mx-auto max-w-6xl">
+              <div className="max-w-4xl">
                 <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-700 shadow-sm">
                   <Plane className="h-3.5 w-3.5" aria-hidden="true" />
                   {t("flights")}
                 </div>
-                <h1 className="max-w-3xl text-[2.45rem] font-semibold leading-[1.08] tracking-[-0.035em] text-slate-950 lg:text-[3rem]">
+                <h1 className="max-w-4xl text-[2.45rem] font-semibold leading-[1.08] tracking-[-0.035em] text-slate-950 lg:text-[3rem]">
                   {heroTitle}
                 </h1>
-                <p className="mt-3 max-w-xl text-base font-medium leading-7 text-slate-700">
+                <p className="mt-3 max-w-3xl text-base font-medium leading-7 text-slate-700">
                   {heroSubtitle}
                 </p>
               </div>
 
-              <div className="rounded-[1.35rem] border border-slate-200/80 bg-white/95 p-3 shadow-[0_18px_46px_rgba(15,23,42,0.10)] lg:mr-[-7.5rem]">
+              <div className="mt-6 rounded-[1.35rem] border border-slate-200/80 bg-white p-3 shadow-[0_18px_46px_rgba(15,23,42,0.10)]">
                 <StandaloneFlightSearchForm localizeCalendarLabels />
               </div>
-            </div>
-
-            <div className="relative min-h-[20rem] overflow-hidden bg-slate-100">
-              <Image
-                src={desktopHeroImageUrl}
-                alt={t("flightLandingHeroImageAlt")}
-                fill
-                priority
-                sizes="(min-width: 1280px) 620px, (min-width: 1024px) 52vw, 100vw"
-                className="object-cover object-[54%_44%]"
-              />
-              <div className="absolute inset-y-0 left-0 w-20 bg-gradient-to-r from-white/55 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/20 to-transparent" />
             </div>
           </div>
         </div>
