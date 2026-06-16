@@ -672,7 +672,7 @@ export function SavedDashboardPage() {
   return (
     <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
       <div className="px-1 text-left sm:px-2">
-        <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
+        <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
           {t["accountDashboard.saved.title"]}
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base lg:mx-0">
@@ -682,7 +682,7 @@ export function SavedDashboardPage() {
       <div className="px-1 py-7 sm:px-2 sm:py-9 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-14 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
         <div className="mx-auto flex max-w-md flex-col items-center text-center">
           <SavedEmptyStateIllustration />
-          <h2 className="mt-6 text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem]">
+          <h2 className="mt-6 text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem] lg:font-bold">
             {t["accountDashboard.saved.emptyTitle"]}
           </h2>
           <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600">
