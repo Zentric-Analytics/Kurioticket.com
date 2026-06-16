@@ -330,9 +330,6 @@ function RouteCard({
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
-          <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-indigo-700 shadow-sm backdrop-blur">
-            {item.originCode} → {item.destinationCode}
-          </div>
         </div>
         <div className="flex flex-1 flex-col p-5">
           <h3 className="text-lg font-bold tracking-tight text-slate-950">
@@ -341,10 +338,13 @@ function RouteCard({
           <p className="mt-1 text-sm font-medium text-slate-700">
             {routeText.originCity} {routeConnector} {routeText.destinationCity}
           </p>
+          <span className="mt-2 inline-flex w-fit items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-indigo-700">
+            {item.originCode} → {item.destinationCode}
+          </span>
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
             {routeText.routeNote}
           </p>
-          <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
+          <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-semibold text-indigo-700 transition group-hover:border-indigo-300 group-hover:bg-indigo-100 group-hover:text-indigo-800">
             {t("flightLandingStartThisSearch")}
             <Plane className="h-4 w-4 transition group-hover:translate-x-0.5" />
           </span>
@@ -475,7 +475,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-12 sm:mt-14 lg:mt-16">
+      <section className="page-shell mt-14 sm:mt-16 lg:mt-20">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
