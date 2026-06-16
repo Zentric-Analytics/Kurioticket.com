@@ -879,8 +879,8 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell mt-6 bg-gradient-to-b from-slate-50/80 via-white to-white py-9 sm:mt-9 sm:py-11">
-          <div className="rounded-[1.5rem] border border-indigo-100/90 bg-gradient-to-br from-white via-white to-slate-50/70 p-5 shadow-[0_20px_55px_-40px_rgba(79,70,229,0.55),inset_0_1px_0_rgba(255,255,255,0.9)] ring-1 ring-slate-200/70 sm:p-7 lg:p-8">
+        <section className="mt-6 border-y border-slate-200/90 bg-gradient-to-b from-white via-slate-50/75 to-white sm:mt-9">
+          <div className="page-shell py-9 sm:py-11">
             <div className="space-y-4">
               <div className="max-w-3xl space-y-1.5">
                 <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
