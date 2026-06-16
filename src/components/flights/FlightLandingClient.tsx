@@ -274,7 +274,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="relative hidden overflow-visible sm:block">
+      <section className="relative hidden overflow-visible pb-16 sm:block lg:pb-20">
         <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
           <div className="absolute inset-0 overflow-hidden">
             <Image
@@ -301,11 +301,11 @@ export function FlightLandingClient() {
               </p>
             </div>
           </div>
-        </div>
 
-        <div className="page-shell relative z-30 -mt-40 pb-4 lg:-mt-44">
-          <div className="mx-auto max-w-6xl">
-            <StandaloneFlightSearchForm localizeCalendarLabels />
+          <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 lg:bottom-[-56px]">
+            <div className="mx-auto max-w-6xl">
+              <StandaloneFlightSearchForm localizeCalendarLabels />
+            </div>
           </div>
         </div>
       </section>
