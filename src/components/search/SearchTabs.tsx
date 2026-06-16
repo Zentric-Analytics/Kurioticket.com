@@ -2471,14 +2471,14 @@ export function SearchTabs({
   );
 
   const passengerRows = [
-    { key: "adults", label: t.adultPlural || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
-    { key: "children", label: t.childPlural || "Children", subtitle: "Ages 2–17", count: draftChildCount, min: 0 },
-    { key: "infants", label: t.infantPlural || "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
+    { key: "adults", label: translate("adultPlural") || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
+    { key: "children", label: translate("childPlural") || "Children", subtitle: translate("childAgeRange") || "Ages 2–17", count: draftChildCount, min: 0 },
+    { key: "infants", label: translate("infantPlural") || "Infants", subtitle: translate("under2") || "Under 2", count: draftInfantCount, min: 0 },
   ];
   const cabinOptions = [
-    ["economy", t.economy || "Economy"],
-    ["business", t.business || "Business"],
-    ["first", t.first || "First"],
+    ["economy", translate("economy") || "Economy"],
+    ["business", translate("business") || "Business"],
+    ["first", translate("first") || "First"],
   ];
 
   const renderPassengerControlRows = (compact = false) => (
@@ -2586,7 +2586,7 @@ export function SearchTabs({
       {!compact ? (
         <div className="mb-3 flex items-center justify-between">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-            {t.cabinClass || "Cabin class"}
+            {translate("cabinClass") || "Cabin class"}
           </p>
         </div>
       ) : null}
@@ -2618,7 +2618,7 @@ export function SearchTabs({
     <div className="space-y-4">
       <div>
         <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-          {t.passengers || "Passengers"}
+          {translate("passengers") || "Passengers"}
         </p>
         {renderPassengerControlRows()}
       </div>
@@ -3164,7 +3164,7 @@ export function SearchTabs({
                     >
                       <div>
                         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-                          {t.passengers || "Passengers"}
+                          {translate("passengers") || "Passengers"}
                         </p>
                         <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
                           {t.travelers || "Travelers"}
@@ -3174,7 +3174,7 @@ export function SearchTabs({
                         {renderPassengerControlRows(true)}
                         <div>
                           <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-                            {t.cabinClass || "Cabin class"}
+                            {translate("cabinClass") || "Cabin class"}
                           </p>
                           {renderCabinClassPicker(true)}
                         </div>
