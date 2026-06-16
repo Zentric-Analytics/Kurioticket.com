@@ -1062,4 +1062,50 @@ export const translations: TranslationDictionary = {
   "carsFaq.5.question": "Quali documenti potrei dover presentare al ritiro?",
   "carsFaq.5.answer":
     "I fornitori di noleggio possono richiedere una patente di guida valida, una carta di pagamento, un documento di identità e qualsiasi documento richiesto dal paese o dal luogo di ritiro.",
+  supportEyebrow: "Help desk Kurioticket",
+  supportTitle: "Assistenza clienti",
+  supportBeforeContactHeading: "Prima di contattarci",
+  supportBeforeContactDescription:
+    "Includi l’email del tuo account Kurioticket, cosa stavi cercando di fare, la tratta o l’hotel se pertinente e l’eventuale pagina del fornitore a cui sei stato reindirizzato. Non inviare numeri completi di carte di pagamento o documenti di viaggio sensibili.",
+  supportTicketHeading: "Crea una richiesta di supporto",
+  supportFormEmailLabel: "Email",
+  supportFormSubjectLabel: "Oggetto",
+  supportFormCategoryLabel: "Categoria",
+  supportCategorySearchHelp: "Aiuto per ricerca",
+  supportCategoryPriceAlerts: "Avvisi sui prezzi",
+  supportCategoryPartnerRedirect: "Reindirizzamento al fornitore",
+  supportCategoryAccountHelp: "Aiuto per account",
+  supportFormMessageLabel: "Come possiamo aiutarti?",
+  supportFormMessagePlaceholder:
+    "Condividi la tratta, l’hotel, l’avviso o il contesto dell’account.",
+  supportFormSubmit: "Invia richiesta",
+  supportFormSending: "Invio in corso...",
+  supportFormSuccessPrefix: "Richiesta",
+  supportFormSuccessSuffix: "aperta.",
+  supportFormErrorFallback: "Impossibile aprire la richiesta.",
+  supportFaqHeading: "Domande frequenti",
+  supportFaqAccountQuestion: "Aiuto per account e accesso",
+  supportFaqAccountAnswer:
+    "Kurioticket può aiutarti con l’accesso all’account, problemi di accesso, problemi di registrazione, accesso al profilo e problemi della piattaforma legati all’account.",
+  supportFaqSearchQuestion: "Aiuto per ricerca e risultati",
+  supportFaqSearchAnswer:
+    "Kurioticket può aiutarti quando la ricerca di voli o hotel non funziona, i risultati non si caricano, i filtri sono poco chiari oppure prezzi e fornitori non vengono visualizzati come previsto.",
+  supportFaqSavedTripsQuestion: "Viaggi salvati e avvisi",
+  supportFaqSavedTripsAnswer:
+    "Kurioticket può aiutarti con viaggi salvati, ricerche recenti, avvisi sui prezzi, problemi di notifica e strumenti di viaggio collegati all’account.",
+  supportFaqRedirectQuestion:
+    "Aiuto per prenotazioni e reindirizzamenti ai fornitori",
+  supportFaqRedirectAnswer:
+    "Kurioticket può aiutarti se un reindirizzamento a un partner o fornitore non riesce, apre la pagina sbagliata o non conserva il viaggio selezionato o i dettagli della ricerca.",
+  supportFaqAlreadyBookedQuestion: "Hai già prenotato con un fornitore?",
+  supportFaqAlreadyBookedAnswer:
+    "Se la prenotazione è stata completata con una compagnia aerea, un hotel, un’agenzia di viaggio o un fornitore esterno, quel fornitore è responsabile di modifiche alla prenotazione, rimborsi, cancellazioni, check-in, imbarco, ricevute e documenti di viaggio.",
+  supportFaqChangeBookingQuestion:
+    "Kurioticket può modificare la mia prenotazione?",
+  supportFaqChangeBookingAnswer:
+    "Kurioticket può aiutare solo con prenotazioni effettuate direttamente tramite Kurioticket, se e quando la prenotazione diretta è supportata. Per prenotazioni completate con fornitori esterni, contatta direttamente quel fornitore.",
+  supportFaqWhyRedirectedQuestion:
+    "Perché sono stato reindirizzato a un altro fornitore?",
+  supportFaqWhyRedirectedAnswer:
+    "Kurioticket è una piattaforma di ricerca e confronto viaggi, e alcuni risultati reindirizzano a fornitori affidabili presso cui completi la prenotazione, il pagamento e l’assistenza specifica del fornitore.",
 };
