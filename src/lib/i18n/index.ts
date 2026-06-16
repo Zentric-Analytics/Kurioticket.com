@@ -71,7 +71,7 @@ const localeAliases: Record<string, string> = {
   "nl-nl": "nl",
   ar: "ar-sa",
   "ar-sa": "ar-sa",
-  pt: "pt-pt",
+  pt: "pt-br",
   "pt-pt": "pt-pt",
   "pt-br": "pt-br",
   zh: "zh-cn",

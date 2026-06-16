@@ -72,6 +72,7 @@ export function normalizeLanguage(value?: string | null): LanguageCode {
   if (normalized === "es") return "es-es";
   if (normalized === "de") return "de-de";
   if (normalized === "it") return "it-it";
+  if (normalized === "pt") return "pt-br";
 
   return getDefaultLanguage();
 }

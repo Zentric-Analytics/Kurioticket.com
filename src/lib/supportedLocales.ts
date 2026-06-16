@@ -82,10 +82,10 @@ export const supportedLocales: SupportedLocale[] = [
   {
     code: "pt-br",
     locale: "pt-BR",
-    label: "Portuguese (Brazil)",
+    label: "Português (Brasil)",
     nativeLabel: "Português",
     direction: "ltr",
-    status: preparing,
+    status: "available",
     countryCode: "BR",
     fallbackText: "BR",
     translationStatus: "partial",
