@@ -711,7 +711,7 @@ export function CountryCurrencySelector({
                               {option.code} · {option.currency}
                             </span>
 
-                            <span className="mt-1 block truncate text-sm font-normal text-slate-700">
+                            <span className="mt-1 block break-words text-sm font-normal text-slate-700">
                               {getCountryDisplayName(option)}
                             </span>
                           </span>
