@@ -156,6 +156,10 @@ const getCarsResultsIntlLocale = (locale: string) => {
     return "fr-FR";
   }
 
+  if (normalizedLocale.startsWith("it")) {
+    return "it-IT";
+  }
+
   return "en-US";
 };
 
