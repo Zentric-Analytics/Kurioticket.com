@@ -333,6 +333,10 @@ export const translations: TranslationDictionary = {
   search: "Cerca",
   searchFlights: "Cerca voli",
   searchHotels: "Cerca hotel",
+  searchingHotels: "Ricerca hotel in corso...",
+  filterBy: "Filtra per",
+  "hotelResults.liveSearchUnavailable":
+    "La ricerca hotel in tempo reale è temporaneamente non disponibile. Riprova tra poco.",
   passengers: "Passeggeri",
   economy: "Economica",
   business: "Business",
