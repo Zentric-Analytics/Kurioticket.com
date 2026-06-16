@@ -1,5 +1,5 @@
 import { imageInventory } from "./imageInventory";
-import type { ImageUsage, InventoriedImage } from "./imageTypes";
+import type { ImageDimensions, ImageUsage, ImageVendor, InventoriedImage } from "./imageTypes";
 
 export type ImagePurchaseCategory = {
   id: string;
@@ -14,9 +14,9 @@ export type ImagePurchaseCategory = {
 };
 
 export type ImagePurchaseBatch = "A" | "B" | "C";
-export type ImagePurchaseApprovalStatus = "shopping-needed";
+export type ImagePurchaseApprovalStatus = "shopping-needed" | "purchased-pending-crops";
 export type ImagePurchaseSourceType = "premium-stock" | "owned" | "provider";
-export type ImagePurchaseVendor = "iStock" | "Adobe Stock" | "Shutterstock" | "Getty/iStock";
+export type ImagePurchaseVendor = ImageVendor;
 
 export type PremiumImagePurchaseEntry = {
   id: string;
@@ -41,24 +41,91 @@ export type PremiumImagePurchaseEntry = {
   licenseRequirement: string;
   launchCritical: boolean;
   approvalStatus: ImagePurchaseApprovalStatus;
+  purchasedAssetPath?: string;
+  sourcePage?: string;
+  vendor?: ImagePurchaseVendor;
+  license?: string;
+  collection?: string;
+  stockFileId?: string;
+  dimensions?: ImageDimensions;
+  cropApprovalNotes?: string;
   buyingBatch: ImagePurchaseBatch;
   notes: string;
+};
+
+export type PurchasedPremiumImageAsset = {
+  id: string;
+  title: string;
+  runtimePath: string;
+  vendor: ImagePurchaseVendor;
+  license: string;
+  collection: string;
+  stockFileId: string;
+  dimensions: ImageDimensions;
+  sourcePage: string;
+  intendedUse: string;
+  registrySlot?: string;
+  approvalStatus: Extract<ImagePurchaseApprovalStatus, "purchased-pending-crops">;
+  cropApprovalNotes: string;
 };
 
 const premiumCandidates = imageInventory.filter((image) => image.premiumReplacementRequired);
 const standardVendors: ImagePurchaseVendor[] = ["iStock", "Adobe Stock", "Shutterstock", "Getty/iStock"];
 const standardLicenseRequirement =
   "Commercial web and mobile-web license covering Kurioticket marketing, metasearch UI, paid acquisition landing pages, email crops, worldwide use, and retained receipt/license records.";
+const purchasedPendingCropApprovalNotes =
+  "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
 
-function purchaseEntry(entry: Omit<PremiumImagePurchaseEntry, "acceptableVendors" | "approvalStatus" | "preferredSourceType" | "licenseRequirement">): PremiumImagePurchaseEntry {
+type PurchaseEntryInput = Omit<
+  PremiumImagePurchaseEntry,
+  "acceptableVendors" | "approvalStatus" | "preferredSourceType" | "licenseRequirement"
+> &
+  Partial<Pick<PremiumImagePurchaseEntry, "approvalStatus">>;
+
+function purchaseEntry(entry: PurchaseEntryInput): PremiumImagePurchaseEntry {
   return {
     ...entry,
     preferredSourceType: "premium-stock",
     acceptableVendors: [...standardVendors],
     licenseRequirement: standardLicenseRequirement,
-    approvalStatus: "shopping-needed",
+    approvalStatus: entry.approvalStatus ?? "shopping-needed",
   };
 }
+
+export const phase4aPurchasedPremiumFlightAssets: PurchasedPremiumImageAsset[] = [
+  {
+    id: "phase-3-002-global-flight-search-hero",
+    title: "Global flights brand hero - airport departure confidence",
+    runtimePath: "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "1218436213",
+    dimensions: "2047 x 1365",
+    sourcePage:
+      "https://www.istockphoto.com/photo/modern-passenger-airplane-parked-to-terminal-building-gate-at-airside-apron-of-gm1218436213-356036421",
+    intendedUse: "Primary Flights hero / global flight search hero",
+    registrySlot: "phase-3-002-global-flight-search-hero",
+    approvalStatus: "purchased-pending-crops",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  {
+    id: "premium-flight-support-aircraft-gangway-terminal-istock-1470585865",
+    title: "Secondary flight support image - aircraft at terminal gangway",
+    runtimePath: "/images/premium/flights/kurioticket-flight-support-aircraft-gangway-terminal-002.jpg",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "1470585865",
+    dimensions: "2047 x 1365",
+    sourcePage:
+      "https://www.istockphoto.com/photo/aircraft-is-attached-to-the-terminal-gangway-of-the-airport-building-preparation-for-gm1470585865-501392082",
+    intendedUse: "Secondary flight support image",
+    registrySlot: "premium-flight-support-aircraft-gangway-terminal-istock-1470585865",
+    approvalStatus: "purchased-pending-crops",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+];
 
 const categoryDefinitions: Array<Omit<ImagePurchaseCategory, "pageSurfaces" | "candidateCount">> = [
   {
@@ -189,8 +256,19 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
     desktopCropRequirement: "Must remain calm behind search UI at 16:9 and 21:9.",
     recommendedAspectRatios: ["21:9", "16:9", "4:5"],
     launchCritical: true,
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath: "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/modern-passenger-airplane-parked-to-terminal-building-gate-at-airside-apron-of-gm1218436213-356036421",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "1218436213",
+    dimensions: "2047 x 1365",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
     buyingBatch: "A",
-    notes: "Brand-level flight visual for homepage discovery and future route modules; avoid provider-real implications.",
+    notes:
+      "Purchased iStock asset is stored locally for Phase 4A governance; final desktop/mobile crop approval remains pending staging QA, and no URL replacement happens in this PR.",
   }),
   purchaseEntry({
     id: "phase-3-003-global-hotel-search-hero",
