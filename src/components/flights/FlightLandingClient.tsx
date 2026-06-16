@@ -303,15 +303,15 @@ export function FlightLandingClient() {
           </div>
         </div>
 
-        <div className="page-shell relative z-30 -mt-36 lg:-mt-40">
-          <div className="mx-auto max-w-6xl rounded-[1.5rem] border border-slate-200/80 bg-white p-3 shadow-[0_26px_70px_rgba(15,23,42,0.2)]">
+        <div className="page-shell relative z-30 -mt-32 pb-2 lg:-mt-36">
+          <div className="mx-auto max-w-6xl">
             <StandaloneFlightSearchForm localizeCalendarLabels />
           </div>
         </div>
       </section>
 
       <section className="page-shell">
-        <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-12 sm:grid-cols-3 lg:mt-14">
+        <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-10 sm:grid-cols-3 lg:mt-12">
           {[
             {
               title: t("flightLandingFeatureSearchReadyTitle"),
