@@ -15,9 +15,6 @@ import {
   Plane,
   Sparkles,
   Mail,
-  SearchCheck,
-  BadgeDollarSign,
-  ShieldCheck,
 } from "lucide-react";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
@@ -46,6 +43,129 @@ import {
   toggleSavedTripId,
   writeSavedTripIds,
 } from "@/lib/saved-trips-local";
+
+
+function CompareOffersIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="64" height="64" rx="18" fill="url(#compareTile)" />
+      <rect x="13" y="18" width="24" height="17" rx="5" fill="white" />
+      <rect x="17" y="23" width="12" height="3" rx="1.5" fill="#4F46E5" />
+      <rect x="17" y="29" width="16" height="2" rx="1" fill="#C7D2FE" />
+      <rect x="29" y="25" width="23" height="18" rx="5" fill="#F8FAFC" />
+      <rect x="34" y="30" width="10" height="3" rx="1.5" fill="#0D9488" />
+      <rect x="34" y="36" width="13" height="2" rx="1" fill="#99F6E4" />
+      <circle cx="29" cy="34" r="11" fill="#EEF2FF" fillOpacity="0.78" />
+      <circle cx="29" cy="34" r="8" stroke="#312E81" strokeWidth="3" />
+      <path
+        d="M35 40L43 48"
+        stroke="#312E81"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M23.5 34.5L27 38L34.5 30"
+        stroke="#14B8A6"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <defs>
+        <linearGradient id="compareTile" x1="6" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#EEF2FF" />
+          <stop offset="1" stopColor="#ECFEFF" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function PricingContextIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="64" height="64" rx="18" fill="url(#pricingTile)" />
+      <path
+        d="M19 13H43C45.2091 13 47 14.7909 47 17V49L42.5 46.5L38 49L33.5 46.5L29 49L24.5 46.5L19 49V13Z"
+        fill="white"
+      />
+      <rect x="24" y="21" width="17" height="3" rx="1.5" fill="#7C3AED" />
+      <rect x="24" y="29" width="12" height="2.5" rx="1.25" fill="#DDD6FE" />
+      <rect x="24" y="36" width="15" height="2.5" rx="1.25" fill="#DDD6FE" />
+      <circle cx="43" cy="41" r="9" fill="#CCFBF1" />
+      <path
+        d="M39.5 41.5L42 44L47 38.5"
+        stroke="#0F766E"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="18" cy="20" r="5" fill="#FDE68A" />
+      <path d="M18 17.6V22.4" stroke="#A16207" strokeWidth="1.8" strokeLinecap="round" />
+      <defs>
+        <linearGradient id="pricingTile" x1="5" y1="5" x2="59" y2="59" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F5F3FF" />
+          <stop offset="1" stopColor="#EFF6FF" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function SecureHandoffIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="64" height="64" rx="18" fill="url(#handoffTile)" />
+      <rect x="30" y="16" width="22" height="18" rx="5" fill="white" />
+      <rect x="34" y="21" width="11" height="3" rx="1.5" fill="#2563EB" />
+      <rect x="34" y="28" width="14" height="2" rx="1" fill="#BFDBFE" />
+      <path
+        d="M15 20L29 15L43 20V31C43 41.5 36 47.5 29 50C22 47.5 15 41.5 15 31V20Z"
+        fill="#EEF2FF"
+        stroke="#312E81"
+        strokeWidth="2.8"
+        strokeLinejoin="round"
+      />
+      <rect x="24" y="29" width="10" height="9" rx="2" fill="#14B8A6" />
+      <path
+        d="M26 29V26.5C26 24.8 27.3 23.5 29 23.5C30.7 23.5 32 24.8 32 26.5V29"
+        stroke="#0F766E"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M41 42H50M50 42L46 38M50 42L46 46"
+        stroke="#2563EB"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <defs>
+        <linearGradient id="handoffTile" x1="6" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#EFF6FF" />
+          <stop offset="1" stopColor="#F0FDFA" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
 
 const heroImage =
   "/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg";
@@ -766,8 +886,8 @@ export default function Home() {
 
             <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6">
               <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
-                  <SearchCheck size={20} strokeWidth={2} />
+                <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-indigo-100/80">
+                  <CompareOffersIllustration />
                 </div>
                 <div>
                   <h3 className="text-base font-bold leading-6 text-slate-900">
@@ -780,8 +900,8 @@ export default function Home() {
               </article>
 
               <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
-                  <BadgeDollarSign size={20} strokeWidth={2} />
+                <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-violet-100/80">
+                  <PricingContextIllustration />
                 </div>
                 <div>
                   <h3 className="text-base font-bold leading-6 text-slate-900">
@@ -794,8 +914,8 @@ export default function Home() {
               </article>
 
               <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                  <ShieldCheck size={20} strokeWidth={2} />
+                <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-blue-100/80">
+                  <SecureHandoffIllustration />
                 </div>
                 <div>
                   <h3 className="text-base font-bold leading-6 text-slate-900">
