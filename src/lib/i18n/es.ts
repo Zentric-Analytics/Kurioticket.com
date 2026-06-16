@@ -2106,6 +2106,12 @@ export const translations: TranslationDictionary = {
   quickResumeLatestSearches: "Retoma rápidamente tus búsquedas recientes",
   quickResumeLatestSearchesBody:
     "Vuelve a las ideas de ruta que ya te gustaron, sin necesidad de cuenta.",
+  quickRoutesFromLatestSearches: "Rutas rápidas de tus últimas búsquedas",
+  savedRoutes: "Rutas guardadas",
+  savedRoutesOnDevice: "Rutas que guardaste en este dispositivo.",
+  moreFlightRoutesToExplore: "Más rutas de vuelo para explorar",
+  moreFlightRoutesToExploreBody:
+    "Explora ideas de rutas de tu región y abre una cuando estés listo para comparar fechas y detalles de tarifas.",
   flightLandingHeroTitle: "Reserva tus próximos vuelos con facilidad",
   flightLandingHeroSubtitle:
     "Busca rutas, compara fechas y explora opciones de vuelo para tu próximo viaje.",

@@ -112,6 +112,10 @@ const normalizeFlightResultsCalendarLocale = (
     return "de-DE";
   }
 
+  if (normalized === "it" || normalized.startsWith("it-")) {
+    return "it-IT";
+  }
+
   return "en-US";
 };
 
@@ -2869,10 +2873,10 @@ export function FlightResultsClient() {
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-indigo-600">
-                    Recent searches
+                    {t("quickResumeLatestSearches")}
                   </p>
                   <h2 className="mt-0.5 text-base font-bold tracking-tight text-slate-950 sm:text-lg">
-                    Quick routes from your latest searches
+                    {t("quickRoutesFromLatestSearches")}
                   </h2>
                 </div>
                 <button
@@ -2880,7 +2884,7 @@ export function FlightResultsClient() {
                   onClick={handleClearRecentSearches}
                   className="focus-ring inline-flex min-h-9 shrink-0 items-center justify-center rounded-full px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:bg-white/70 hover:text-rose-700"
                 >
-                  {t("clear")} all
+                  {t("clearAll")}
                 </button>
               </div>
 
@@ -2901,13 +2905,13 @@ export function FlightResultsClient() {
               <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.22em] text-rose-600">
-                    Saved routes ❤️
+                    {t("savedRoutes")} ❤️
                   </p>
                   <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-                    Saved routes
+                    {t("savedRoutes")}
                   </h2>
                   <p className="mt-1 text-sm leading-6 text-slate-600 sm:text-base">
-                    Routes you saved on this device.
+                    {t("savedRoutesOnDevice")}
                   </p>
                 </div>
                 <p className="max-w-xs text-sm leading-6 text-slate-500">
@@ -2982,13 +2986,12 @@ export function FlightResultsClient() {
                 <div className="mb-4 flex flex-col gap-2 sm:max-w-3xl">
                   <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                     <h2 className="w-max whitespace-nowrap text-xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">
-                      More flight routes to explore
+                      {t("moreFlightRoutesToExplore")}
                     </h2>
                   </div>
                   <div className="max-w-full overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                     <p className="w-max whitespace-nowrap text-xs font-normal leading-6 text-slate-600 sm:text-base">
-                      Browse route ideas from your region and open one when you
-                      are ready to compare dates and fare details.
+                      {t("moreFlightRoutesToExploreBody")}
                     </p>
                   </div>
                 </div>
