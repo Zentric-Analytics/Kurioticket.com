@@ -338,15 +338,15 @@ function RouteCard({
           <p className="mt-1 text-sm font-medium text-slate-700">
             {routeText.originCity} {routeConnector} {routeText.destinationCity}
           </p>
-          <span className="mt-2 inline-flex w-fit items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-indigo-700">
+          <p className="mt-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-indigo-700/90">
             {item.originCode} → {item.destinationCode}
-          </span>
+          </p>
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
             {routeText.routeNote}
           </p>
-          <span className="mt-4 inline-flex w-fit items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-sm font-semibold text-indigo-700 transition group-hover:border-indigo-300 group-hover:bg-indigo-100 group-hover:text-indigo-800">
+          <span className="mt-5 inline-flex h-11 w-fit items-center justify-center gap-2 rounded-xl border border-indigo-200/90 bg-white px-4 text-sm font-bold text-indigo-700 shadow-[0_1px_2px_rgba(15,23,42,0.04)] ring-1 ring-indigo-100/70 transition duration-200 group-hover:border-indigo-300 group-hover:bg-indigo-50 group-hover:text-indigo-800 group-hover:shadow-[0_8px_18px_rgba(79,70,229,0.12)] group-active:translate-y-px">
             {t("flightLandingStartThisSearch")}
-            <Plane className="h-4 w-4 transition group-hover:translate-x-0.5" />
+            <Plane className="h-4 w-4 shrink-0 stroke-[2.4] transition duration-200 group-hover:translate-x-0.5" />
           </span>
         </div>
       </article>
@@ -475,7 +475,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-14 sm:mt-16 lg:mt-20">
+      <section className="page-shell mt-16 sm:mt-24 lg:mt-28">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
