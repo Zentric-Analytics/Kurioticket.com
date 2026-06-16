@@ -419,6 +419,9 @@ export const translations: TranslationDictionary = {
   filterBy: "Filtra per",
   "hotelResults.liveSearchUnavailable":
     "La ricerca hotel in tempo reale è temporaneamente non disponibile. Riprova tra poco.",
+  "hotelResults.budgetPrice": "Budget / Prezzo",
+  "hotelResults.totalUpTo": "Totale fino a",
+  "hotelResults.starRating": "Valutazione in stelle",
   passengers: "Passeggeri",
   economy: "Economica",
   business: "Business",
