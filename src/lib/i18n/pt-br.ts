@@ -24,6 +24,8 @@ export const translations: TranslationDictionary = {
   hotels: "Hotéis",
   cars: "Carros",
   deals: "Ofertas",
+  login: "Entrar",
+  signUp: "Criar conta",
   destinations: "Destinos",
   explore: "Explorar",
   search: "Pesquisar",
