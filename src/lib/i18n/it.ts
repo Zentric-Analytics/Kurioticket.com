@@ -175,7 +175,7 @@ export const translations: TranslationDictionary = {
   hotelSearchDestinationLabel: "Destinazione",
   hotelSearchDestinationPlaceholder: "Città, zona o punto di riferimento",
   hotelSearchTravelDatesLabel: "DATE DI VIAGGIO",
-  hotelSearchDatePlaceholder: "Check-in — Check-out",
+  hotelSearchDatePlaceholder: "Arrivo — Partenza",
   hotelSearchGuestsLabel: "OSPITI",
   chooseGuestsAndRooms: "Scegli ospiti e camere",
   guestsAndRooms: "Ospiti e camere",
