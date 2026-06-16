@@ -1311,7 +1311,7 @@ export function StandaloneFlightSearchForm({
   };
 
   return (
-    <section className="relative isolate z-[120] rounded-2xl border border-slate-200/80 bg-white p-3 shadow-[0_18px_44px_rgba(15,23,42,0.14)] ring-1 ring-slate-950/[0.04] sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_28px_70px_rgba(15,23,42,0.22)]">
+    <section className="relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
       <form onSubmit={onSubmit} className="relative space-y-3 sm:space-y-3">
         <div
           role="radiogroup"
