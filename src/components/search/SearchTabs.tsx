@@ -2288,7 +2288,7 @@ export function SearchTabs({
       role="dialog"
       aria-label={translate("chooseTravelDates") || "Choose travel dates"}
       className={cn(
-        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
+        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,660px)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
         desktopPopoverPanelClassName,
         mode === "flights" && "lg:left-1/2 lg:w-[min(760px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:p-5"
       )}
@@ -3031,7 +3031,7 @@ export function SearchTabs({
                       role="dialog"
                       aria-label="Travelers and cabin"
                       className={cn(
-                        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
+                        "absolute right-0 top-[calc(100%+12px)] hidden w-[min(92vw,360px)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
                         desktopTravelersPopoverClassName
                       )}
                     >
@@ -3302,7 +3302,7 @@ export function SearchTabs({
                 {hotelGuestsRoomsOpen ? (
                   <div
                     className={cn(
-                      "absolute left-0 top-[calc(100%+10px)] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block",
+                      "absolute right-0 top-[calc(100%+10px)] hidden w-[min(92vw,360px)] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
                       desktopPopoverPanelClassName
                     )}
                   >
