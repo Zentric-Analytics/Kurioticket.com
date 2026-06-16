@@ -89,6 +89,37 @@ export const translations: TranslationDictionary = {
   login: "Accedi",
   signIn: "Accedi",
   signUp: "Registrati",
+  signupPageTitle: "Crea il tuo account",
+  signupFullNameLabel: "Nome completo",
+  signupEmailLabel: "Email",
+  signupPasswordLabel: "Password",
+  signupAgreementBeforeTerms: "Creando un account, accetti i ",
+  signupTermsLink: "Termini",
+  signupAgreementBetweenLinks: ", l’",
+  signupPrivacyPolicyLink: "Informativa sulla privacy",
+  signupAgreementAfterPrivacy:
+    " e le informative sui reindirizzamenti ai partner.",
+  signupSubmit: "Registrati",
+  signupCreatingAccount: "Creazione account...",
+  signupGoogle: "Continua con Google",
+  signupAlreadyHaveAccount: "Hai già un account?",
+  signupLoginLink: "Accedi",
+  signupErrorFullNameRequired: "Inserisci il tuo nome completo.",
+  signupErrorInvalidEmail: "Inserisci un indirizzo email valido.",
+  signupErrorPasswordRequirements:
+    "La password deve contenere almeno 8 caratteri.",
+  signupErrorUnableCreate:
+    "Non è stato possibile creare il tuo account. Riprova.",
+  signupErrorRateLimited:
+    "Troppi tentativi di registrazione. Attendi e riprova.",
+  signupErrorDuplicateEmail: "Esiste già un account con questa email.",
+  signupErrorUnableSendVerification:
+    "Non è possibile inviare il codice di verifica in questo momento. Riprova.",
+  signupVerificationRequiredRedirecting:
+    "Verifica richiesta. Reindirizzamento...",
+  signupAutomaticLoginFailed:
+    "Il tuo account è stato creato, ma l’accesso automatico non è riuscito. Accedi con la nuova password.",
+  signupAccountCreatedRedirecting: "Account creato. Reindirizzamento...",
   loginPageTitle: "Accedi",
   loginPageSubtitle:
     "Salva le ricerche, gestisci gli avvisi e accedi alla tua dashboard di viaggio.",
