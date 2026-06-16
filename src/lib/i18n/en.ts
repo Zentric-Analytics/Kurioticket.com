@@ -153,7 +153,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.nav.saved": "Saved",
   "accountDashboard.nav.priceAlerts": "Price alerts",
   "accountDashboard.nav.preference": "Preference",
-  "accountDashboard.nav.security": "Security",
+  "accountDashboard.nav.security": "Security settings",
   "accountDashboard.nav.support": "Support",
   "accountDashboard.trips.title": "My Trips",
   "accountDashboard.trips.subtitle": "View and manage your trips in one place.",
