@@ -242,6 +242,7 @@ export function StandaloneFlightSearchForm({
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
 
+  const standaloneFormCardRef = useRef<HTMLElement>(null);
   const originWrapRef = useRef<HTMLDivElement>(null);
   const originInputRef = useRef<HTMLInputElement>(null);
   const originMobileLauncherRef = useRef<HTMLButtonElement>(null);
@@ -524,6 +525,41 @@ export function StandaloneFlightSearchForm({
 
     if (!hasOpenDesktopPopover || typeof window === "undefined") return;
 
+    const desktopMediaQuery = window.matchMedia("(min-width: 640px)");
+    if (!desktopMediaQuery.matches) return;
+
+    const getActiveDesktopAnchor = () => {
+      if (originOpen) return originWrapRef.current;
+      if (destinationOpen) return destinationWrapRef.current;
+      if (datesOpen)
+        return datesMobileLauncherRef.current ?? dateWrapRef.current;
+      if (travelersOpen)
+        return travelersLauncherRef.current ?? travelersWrapRef.current;
+
+      return null;
+    };
+
+    const isMeaningfullyVisible = (element: HTMLElement | null) => {
+      if (!element) return false;
+
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const threshold = 24;
+      const visibleHeight =
+        Math.min(rect.bottom, viewportHeight - threshold) -
+        Math.max(rect.top, threshold);
+      const minimumVisibleHeight = Math.min(
+        32,
+        Math.max(1, rect.height * 0.25),
+      );
+
+      return (
+        rect.bottom > threshold &&
+        rect.top < viewportHeight - threshold &&
+        visibleHeight >= minimumVisibleHeight
+      );
+    };
+
     const closeDesktopPopovers = () => {
       setOriginOpen(false);
       setDestinationOpen(false);
@@ -537,6 +573,16 @@ export function StandaloneFlightSearchForm({
       if (
         eventTarget instanceof Element &&
         eventTarget.closest(desktopPopoverSelector)
+      ) {
+        return;
+      }
+
+      const activeAnchor = getActiveDesktopAnchor();
+      const formCard = standaloneFormCardRef.current;
+
+      if (
+        isMeaningfullyVisible(activeAnchor) ||
+        isMeaningfullyVisible(formCard)
       ) {
         return;
       }
@@ -1200,14 +1246,19 @@ export function StandaloneFlightSearchForm({
     return (
       <div
         className={cn(
-          "mx-auto w-full max-w-xl",
-          compact ? "space-y-4" : "space-y-3",
+          "mx-auto w-full",
+          compact ? "max-w-xl space-y-4" : "space-y-3",
         )}
       >
         <div>
-          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+          <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
             Passengers
           </p>
+          {!compact ? (
+            <h2 className="mb-2 text-lg font-extrabold tracking-tight text-slate-950">
+              {t("travelers") || "Travelers"}
+            </h2>
+          ) : null}
           <div
             className={cn(
               "overflow-hidden",
@@ -1229,7 +1280,7 @@ export function StandaloneFlightSearchForm({
                   key={row.key}
                   className={cn(
                     "flex items-center justify-between gap-4 border-b border-slate-100 last:border-b-0",
-                    compact ? "px-4 py-4" : "px-1 py-3",
+                    compact ? "px-4 py-4" : "px-0 py-2.5",
                   )}
                 >
                   <span className="min-w-0">
@@ -1261,7 +1312,9 @@ export function StandaloneFlightSearchForm({
                       disabled={!canDecrement}
                       className={cn(
                         "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
-                        compact ? "h-9 w-9 shadow-sm sm:h-10 sm:w-10" : "h-8 w-8",
+                        compact
+                          ? "h-9 w-9 shadow-sm sm:h-10 sm:w-10"
+                          : "h-7 w-7",
                       )}
                     >
                       <Minus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1300,7 +1353,9 @@ export function StandaloneFlightSearchForm({
                       disabled={!canIncrement}
                       className={cn(
                         "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
-                        compact ? "h-9 w-9 shadow-sm sm:h-10 sm:w-10" : "h-8 w-8",
+                        compact
+                          ? "h-9 w-9 shadow-sm sm:h-10 sm:w-10"
+                          : "h-7 w-7",
                       )}
                     >
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1316,7 +1371,7 @@ export function StandaloneFlightSearchForm({
           className={cn(
             compact
               ? "rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
-              : "border-t border-slate-100 pt-4",
+              : "pt-1",
           )}
         >
           <div className="mb-3 flex items-center justify-between">
@@ -1332,7 +1387,7 @@ export function StandaloneFlightSearchForm({
                 onClick={() => setDraftCabinClass(normalizeCabinClass(value))}
                 className={cn(
                   "focus-ring border px-2 text-center text-sm leading-4 transition-all",
-                  compact ? "min-h-11 rounded-2xl" : "min-h-10 rounded-xl",
+                  compact ? "min-h-11 rounded-2xl" : "min-h-9 rounded-xl",
                   draftCabinClass === value
                     ? "border-indigo-500 bg-indigo-700 font-extrabold text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]"
                     : "border-slate-200 bg-slate-50/80 font-bold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800",
@@ -1348,7 +1403,10 @@ export function StandaloneFlightSearchForm({
   };
 
   return (
-    <section className="relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
+    <section
+      ref={standaloneFormCardRef}
+      className="relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
+    >
       <form onSubmit={onSubmit} className="relative space-y-3 sm:space-y-3">
         <div
           role="radiogroup"
@@ -1643,12 +1701,12 @@ export function StandaloneFlightSearchForm({
                 <DesktopFlightPopover
                   open={travelersOpen}
                   anchorRef={travelersLauncherRef}
-                  desiredWidth={380}
+                  desiredWidth={360}
                   align="end"
-                  className="rounded-[1.35rem] border border-slate-200 bg-white p-5 shadow-[0_22px_54px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03]"
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.15)] ring-1 ring-slate-950/[0.03]"
                 >
                   {renderTravelersPicker(false)}
-                  <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
+                  <div className="mt-4 flex justify-end border-t border-slate-100 pt-3">
                     <button
                       type="button"
                       onClick={applyTravelersDraft}
@@ -1911,10 +1969,7 @@ function DesktopFlightPopover({
         left: position.left,
         top: position.top,
         width: position.width,
-        maxHeight:
-          typeof maxHeight === "number"
-            ? `${maxHeight}px`
-            : maxHeight,
+        maxHeight: typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
       }}
     >
       <div className={cn("bg-white", className)}>{children}</div>
