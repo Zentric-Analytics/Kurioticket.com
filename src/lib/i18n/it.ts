@@ -277,6 +277,55 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.us-dtw-msy.title": "Weekend jazz a New Orleans",
   "homeDiscoveryRoute.us-dtw-msy.routeNote":
     "Tratta ricca di cultura per jazz club, cucina creola e serate nel Quartiere Francese.",
+  "homeDiscoveryRoute.ng-los-lhr.title": "Mix business e weekend a Londra",
+  "homeDiscoveryRoute.ng-los-lhr.routeNote":
+    "Rotta intercontinentale frequente per viaggi di lavoro ed estensioni leisure.",
+  "homeDiscoveryRoute.ng-los-dxb.title": "Scalo shopping a Dubai",
+  "homeDiscoveryRoute.ng-los-dxb.routeNote":
+    "Popolare per pause shopping, viaggi in famiglia e coincidenze successive.",
+  "homeDiscoveryRoute.ng-abv-acc.title": "Rapido viaggio regionale ad Accra",
+  "homeDiscoveryRoute.ng-abv-acc.routeNote":
+    "Breve tratta regionale con collegamenti efficienti tra città.",
+  "homeDiscoveryRoute.ng-los-nbo.title": "Porta d’accesso ai safari di Nairobi",
+  "homeDiscoveryRoute.ng-los-nbo.routeNote":
+    "Accesso all’Africa orientale per hub business ed estensioni safari.",
+  "homeDiscoveryRoute.ng-abv-jnb.title": "City break a Johannesburg",
+  "homeDiscoveryRoute.ng-abv-jnb.routeNote":
+    "Forte connettività verso sud per riunioni e soggiorni urbani.",
+  "homeDiscoveryRoute.ng-los-ist.title": "Rotta di collegamento per Istanbul",
+  "homeDiscoveryRoute.ng-los-ist.routeNote":
+    "Ottimo hub per collegamenti con l’Europa e uno scalo in una città vivace.",
+  "homeDiscoveryRoute.ng-abv-cdg.title": "Fuga di stile a Parigi",
+  "homeDiscoveryRoute.ng-abv-cdg.routeNote":
+    "Classica rotta europea per moda, musei e gastronomia.",
+  "homeDiscoveryRoute.ng-los-doh.title": "Transito premium a Doha",
+  "homeDiscoveryRoute.ng-los-doh.routeNote":
+    "Itinerario orientato al comfort con collegamenti globali successivi fluidi.",
+  "homeDiscoveryRoute.ng-los-kig.title": "Weekend nella città pulita di Kigali",
+  "homeDiscoveryRoute.ng-los-kig.routeNote":
+    "Hub regionale in crescita con colline verdi e spostamenti urbani semplici.",
+  "homeDiscoveryRoute.ng-abv-cai.title": "Tappa culturale al Cairo",
+  "homeDiscoveryRoute.ng-abv-cai.routeNote":
+    "Porta d’accesso a tour della storia del Nilo e vivaci mercati della città vecchia.",
+  "homeDiscoveryRoute.ng-los-add.title": "Collegamento est-africano per Addis Abeba",
+  "homeDiscoveryRoute.ng-los-add.routeNote":
+    "Importante punto di transito con scene gastronomiche e culturali in crescita.",
+  "homeDiscoveryRoute.ng-abv-fco.title": "Fuga tra i monumenti di Roma",
+  "homeDiscoveryRoute.ng-abv-fco.routeNote":
+    "Classico europeo per rovine, piazze e serate rilassate.",
+  "homeDiscoveryRoute.ng-los-nrt.title": "Energia urbana a lungo raggio di Tokyo",
+  "homeDiscoveryRoute.ng-los-nrt.routeNote":
+    "Importante porta d’accesso all’Asia con quartieri al neon e trasporti ferroviari efficienti.",
+  "homeDiscoveryRoute.ng-abv-mad.title": "Viaggio tra tapas e arte a Madrid",
+  "homeDiscoveryRoute.ng-abv-mad.routeNote":
+    "Rotta per un city break europeo tra musei, boulevard e serate tardive.",
+  "homeDiscoveryRoute.ng-los-cpt.title": "Avventura costiera a Città del Capo",
+  "homeDiscoveryRoute.ng-los-cpt.routeNote":
+    "Rotta panoramica in Sudafrica con spiagge, montagne e vigneti.",
+  "homeDiscoveryRoute.ng-abv-rob.title": "Viaggio regionale sul mare a Monrovia",
+  "homeDiscoveryRoute.ng-abv-rob.routeNote":
+    "City break dell’Africa occidentale con spiagge atlantiche e mercati locali.",
+
   "homeDiscoveryRoute.us-phl-san.title": "Pausa costiera a San Diego",
   "homeDiscoveryRoute.us-phl-san.routeNote":
     "Fuga coast-to-coast con spiagge, crociere nel porto e clima mite.",
