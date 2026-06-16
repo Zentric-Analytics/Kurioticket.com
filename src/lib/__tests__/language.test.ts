@@ -168,3 +168,92 @@ test("Spanish, French, German, Italian, and Portuguese dictionary shapes match E
   assert.equal(getTranslations("it-IT").flights, itTranslations.flights);
   assert.equal(getTranslations("pt-BR").websiteLanguageTitle, "Escolha o idioma do site");
 });
+
+
+test("active locale dictionaries do not keep audited cross-language UI fallbacks", () => {
+  const auditedValuesByLocale = {
+    english: {
+      flights: enTranslations.flights,
+      hotels: enTranslations.hotels,
+      cars: enTranslations.cars,
+      deals: enTranslations.deals,
+      saved: enTranslations.saved,
+    },
+    spanish: {
+      legal: esTranslations.legal,
+      selectedFlightCabinBusiness: esTranslations.selectedFlightCabinBusiness,
+    },
+    french: {
+      destinations: frTranslations.destinations,
+      destination: frTranslations.destination,
+      hotelSearchDestinationLabel: frTranslations.hotelSearchDestinationLabel,
+    },
+    german: {
+      hotels: deTranslations.hotels,
+      support: deTranslations.support,
+      economy: deTranslations.economy,
+      business: deTranslations.business,
+      first: deTranslations.first,
+      nonstop: deTranslations.nonstop,
+      priceAlertHotel: deTranslations["accountDashboard.priceAlerts.alertType.hotel"],
+      supportTitle: deTranslations["accountDashboard.support.title"],
+    },
+    italian: {
+      menu: itTranslations.menu,
+      account: itTranslations.account,
+      dashboard: itTranslations.dashboard,
+      signupEmailLabel: itTranslations.signupEmailLabel,
+      signupPasswordLabel: itTranslations.signupPasswordLabel,
+      selectedFlightCabinBusiness: itTranslations.selectedFlightCabinBusiness,
+      footerPrivacy: itTranslations.footerPrivacy,
+      premiumEconomy: itTranslations.premiumEconomy,
+    },
+    portugueseBrazil: {
+      cars: ptBrTranslations.cars,
+      flights: ptBrTranslations.flights,
+      search: ptBrTranslations.search,
+    },
+  };
+
+  assert.deepEqual(auditedValuesByLocale.english, {
+    flights: "Flights",
+    hotels: "Hotels",
+    cars: "Cars",
+    deals: "Deals",
+    saved: "Saved",
+  });
+  assert.deepEqual(auditedValuesByLocale.spanish, {
+    legal: "Información legal",
+    selectedFlightCabinBusiness: "Clase ejecutiva",
+  });
+  assert.deepEqual(auditedValuesByLocale.french, {
+    destinations: "Voyages",
+    destination: "Lieu d’arrivée",
+    hotelSearchDestinationLabel: "Lieu de séjour",
+  });
+  assert.deepEqual(auditedValuesByLocale.german, {
+    hotels: "Unterkünfte",
+    support: "Hilfe",
+    economy: "Touristenklasse",
+    business: "Geschäftsklasse",
+    first: "Erste Klasse",
+    nonstop: "Direktflug",
+    priceAlertHotel: "Unterkunft",
+    supportTitle: "Hilfe",
+  });
+  assert.deepEqual(auditedValuesByLocale.italian, {
+    menu: "Menù",
+    account: "Profilo",
+    dashboard: "Pannello",
+    signupEmailLabel: "E-mail",
+    signupPasswordLabel: "Parola d’accesso",
+    selectedFlightCabinBusiness: "Classe affari",
+    footerPrivacy: "Riservatezza",
+    premiumEconomy: "Economica premium",
+  });
+  assert.deepEqual(auditedValuesByLocale.portugueseBrazil, {
+    cars: "Carros",
+    flights: "Voos",
+    search: "Pesquisar",
+  });
+});
