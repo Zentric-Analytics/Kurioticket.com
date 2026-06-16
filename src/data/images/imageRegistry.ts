@@ -2,6 +2,7 @@ import type { RegisteredImage } from "./imageTypes";
 
 const unsplashLicense = "Unsplash License";
 const pexelsLicense = "Pexels License";
+const premiumHomepageCropNotes = "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
 const premiumFlightCropNotes = "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
 
 export const hotelbedsProviderImagePattern: RegisteredImage = {
@@ -28,6 +29,34 @@ export const hotelbedsProviderImagePattern: RegisteredImage = {
 };
 
 export const imageRegistry: RegisteredImage[] = [
+  {
+    id: "phase-3-001-global-homepage-hero",
+    url: "/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
+    alt: "Traveler with rolling luggage arriving in a modern city",
+    product: "global",
+    usage: "homepage-hero",
+    source: "premium-stock",
+    status: "premium-approved",
+    sourcePage:
+      "https://www.istockphoto.com/photo/businesswoman-arriving-in-a-modern-city-with-rolling-luggage-gm2236043419-651355204?searchscope=image%2Cfilm",
+    license: "Standard",
+    licenseNotes: "iStock Standard license; Essentials collection; binary stored locally for future homepage hero crop QA.",
+    vendor: "iStock",
+    collection: "Essentials",
+    stockFileId: "2236043419",
+    dimensions: "2047 x 1380",
+    pageSurfaces: ["Homepage hero"],
+    intendedSlot: "Kurioticket global homepage hero future replacement.",
+    cropNotes: premiumHomepageCropNotes,
+    focalPoint: "center",
+    desktopApproved: false,
+    mobileApproved: false,
+    launchCritical: true,
+    contentRole: "marketing",
+    productionPriority: "p0-launch-critical",
+    premiumReplacementRequired: false,
+    notes: "Registered for future homepage hero replacement; this PR does not change live UI.",
+  },
   {
     id: "phase-3-002-global-flight-search-hero",
     url: "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg",
