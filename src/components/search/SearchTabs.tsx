@@ -3414,7 +3414,7 @@ export function SearchTabs({
                     hotelGuestsRoomsOpen
                   }
                   aria-haspopup="dialog"
-                  aria-label="Choose guests and rooms"
+                  aria-label={translate("chooseGuestsAndRooms") || "Choose guests and rooms"}
                   className={cn(hotelFieldValueClassName, "justify-between")}
                 >
                   <span className="truncate">
@@ -3438,23 +3438,23 @@ export function SearchTabs({
                   >
                   <div
                     role="dialog"
-                    aria-label="Guests and rooms"
+                    aria-label={translate("guestsAndRooms") || "Guests and rooms"}
                     className="bg-white"
                   >
                     <div className="mb-3">
                       <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-                        Stay details
+                        {translate("hotelStayDetails") || "Stay details"}
                       </p>
                       <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
-                        Guests and rooms
+                        {translate("guestsAndRooms") || "Guests and rooms"}
                       </h3>
                     </div>
                     <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white">
                       {[
                         {
                           key: "adults",
-                          label: "Adults",
-                          helper: "Guests 18+",
+                          label: translate("adults") || "Adults",
+                          helper: translate("hotelAdultHelper") || "Guests 18+",
                           value: hotelAdultCount,
                           min: 1,
                           max: 12 - hotelChildCount,
@@ -3469,8 +3469,8 @@ export function SearchTabs({
                         },
                         {
                           key: "children",
-                          label: "Children",
-                          helper: "Ages 0–17",
+                          label: translate("children") || "Children",
+                          helper: translate("hotelChildrenHelper") || "Ages 0–17",
                           value: hotelChildCount,
                           min: 0,
                           max: 12 - hotelAdultCount,
@@ -3485,8 +3485,8 @@ export function SearchTabs({
                         },
                         {
                           key: "rooms",
-                          label: "Rooms",
-                          helper: "Up to 6 rooms",
+                          label: translate("rooms") || "Rooms",
+                          helper: translate("hotelRoomsHelper") || "Up to 6 rooms",
                           value: Number(rooms),
                           min: 1,
                           max: 6,
@@ -3554,17 +3554,21 @@ export function SearchTabs({
                         <div className="flex items-center justify-between gap-4">
                           <div className="min-w-0">
                             <p className="text-sm font-medium tracking-tight text-slate-900">
-                              Pet-friendly
+                              {translate("petFriendly") || "Pet-friendly"}
                             </p>
                             <p className="mt-0.5 text-xs font-medium leading-5 text-slate-600">
-                              Only show stays that allow pets
+                              {translate("onlyShowPetFriendlyStays") ||
+                                "Only show stays that allow pets"}
                             </p>
                           </div>
                           <button
                             type="button"
                             role="switch"
                             aria-checked={hotelPetFriendly}
-                            aria-label="Toggle pet-friendly stays"
+                            aria-label={
+                              translate("togglePetFriendlyStays") ||
+                              "Toggle pet-friendly stays"
+                            }
                             onClick={() =>
                               setHotelPetFriendly((prev) => !prev)
                             }
@@ -3654,7 +3658,7 @@ export function SearchTabs({
 
           <HotelMobilePickerShell
             open={hotelGuestsRoomsOpen}
-            title="Guests and rooms"
+            title={translate("guestsAndRooms") || "Guests and rooms"}
             titleId="homepage-hotel-mobile-guests-title"
             launcherRef={hotelGuestsRoomsMobileLauncherRef}
             onClose={() => setHotelGuestsRoomsOpen(false)}
@@ -3674,7 +3678,7 @@ export function SearchTabs({
               {[
                 {
                   key: "adults",
-                  label: "Adults",
+                  label: translate("adults") || "Adults",
                   value: hotelAdultCount,
                   min: 1,
                   max: 12 - hotelChildCount,
@@ -3684,7 +3688,7 @@ export function SearchTabs({
                 },
                 {
                   key: "children",
-                  label: "Children",
+                  label: translate("children") || "Children",
                   value: hotelChildCount,
                   min: 0,
                   max: 12 - hotelAdultCount,
@@ -3694,7 +3698,7 @@ export function SearchTabs({
                 },
                 {
                   key: "rooms",
-                  label: "Rooms",
+                  label: translate("rooms") || "Rooms",
                   value: Number(rooms),
                   min: 1,
                   max: 6,
@@ -3737,16 +3741,22 @@ export function SearchTabs({
               })}
               <div className="flex items-center justify-between gap-4 px-1 py-4">
                 <div>
-                  <p className="text-[15px] font-bold text-slate-950">Pet-friendly</p>
+                  <p className="text-[15px] font-bold text-slate-950">
+                    {translate("petFriendly") || "Pet-friendly"}
+                  </p>
                   <p className="text-sm leading-5 text-slate-600">
-                    Only show stays that allow pets
+                    {translate("onlyShowPetFriendlyStays") ||
+                      "Only show stays that allow pets"}
                   </p>
                 </div>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={hotelPetFriendly}
-                  aria-label="Toggle pet-friendly stays"
+                  aria-label={
+                    translate("togglePetFriendlyStays") ||
+                    "Toggle pet-friendly stays"
+                  }
                   onClick={() => setHotelPetFriendly((prev) => !prev)}
                   className={cn(
                     "focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",
