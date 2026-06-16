@@ -285,32 +285,33 @@ export function FlightLandingClient() {
               sizes="100vw"
               className="object-cover object-[55%_46%]"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/62 via-slate-950/22 to-slate-950/10" />
-            <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/52 via-slate-950/16 to-transparent" />
-            <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/70 via-slate-950/24 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/68 via-slate-950/24 to-slate-950/8" />
+            <div className="absolute inset-y-0 left-0 w-[76%] bg-gradient-to-r from-slate-950/74 via-slate-950/34 to-transparent" />
+            <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/48 via-slate-950/14 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/76 via-slate-950/26 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-end pb-36 pt-16 lg:min-h-[36rem] lg:pb-40 lg:pt-20">
-            <div className="max-w-3xl pt-6 text-right text-white lg:pt-10">
-              <h1 className="text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.55)] lg:text-[3.55rem]">
+          <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-16 lg:min-h-[36rem] lg:pb-40 lg:pt-20">
+            <div className="max-w-3xl pt-6 text-left text-white lg:pt-10">
+              <h1 className="text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.55rem]">
                 {heroTitle}
               </h1>
-              <p className="ml-auto mt-4 max-w-2xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.55)] lg:text-lg lg:leading-8">
+              <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] lg:text-lg lg:leading-8">
                 {heroSubtitle}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="page-shell relative z-20 -mt-28 lg:-mt-32">
-          <div className="mx-auto max-w-6xl rounded-[1.5rem] border border-slate-200/80 bg-white p-3 shadow-[0_22px_60px_rgba(15,23,42,0.18)]">
+        <div className="page-shell relative z-30 -mt-36 lg:-mt-40">
+          <div className="mx-auto max-w-6xl rounded-[1.5rem] border border-slate-200/80 bg-white p-3 shadow-[0_26px_70px_rgba(15,23,42,0.2)]">
             <StandaloneFlightSearchForm localizeCalendarLabels />
           </div>
         </div>
       </section>
 
       <section className="page-shell">
-        <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-8 sm:grid-cols-3 lg:mt-10">
+        <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-12 sm:grid-cols-3 lg:mt-14">
           {[
             {
               title: t("flightLandingFeatureSearchReadyTitle"),
