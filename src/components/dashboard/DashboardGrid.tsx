@@ -4,7 +4,6 @@ import { useState, type ChangeEvent, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bell,
   Bookmark,
   BriefcaseBusiness,
   ChevronRight,
@@ -29,7 +28,6 @@ const navItems = [
   { labelKey: "accountDashboard.nav.overview", href: "/dashboard", icon: Grid2X2 },
   { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
   { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
-  { labelKey: "accountDashboard.nav.priceAlerts", href: "/dashboard/alerts", icon: Bell },
   { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
   { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
   { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
@@ -39,7 +37,6 @@ const mobileAccountNavItems = [
   { labelKey: "accountDashboard.personalDetails.title", href: "/dashboard", icon: UserRound },
   { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
   { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
-  { labelKey: "accountDashboard.nav.priceAlerts", href: "/dashboard/alerts", icon: Bell },
   { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
   { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
   { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
