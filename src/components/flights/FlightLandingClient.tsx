@@ -310,8 +310,24 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell">
-        <div className="mx-auto mt-4 grid max-w-6xl gap-3 sm:mt-10 sm:grid-cols-3 lg:mt-12">
+      <section className="page-shell mt-8 space-y-12 sm:mt-10 lg:mt-12">
+        <div>
+          <div className="mb-5 max-w-3xl">
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
+              {t("discoverDestinationsFromRegion")}
+            </h2>
+            <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
+              {t("discoverDestinationsFromRegionBody")}
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {discoveryCards.map((item, index) => (
+              <RouteCard key={item.id} item={item} priority={index < 2} t={t} />
+            ))}
+          </div>
+        </div>
+
+        <div className="mx-auto grid max-w-6xl gap-3 sm:grid-cols-3">
           {[
             {
               title: t("flightLandingFeatureSearchReadyTitle"),
@@ -340,24 +356,6 @@ export function FlightLandingClient() {
               <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
             </article>
           ))}
-        </div>
-      </section>
-
-      <section className="page-shell mt-12 space-y-12">
-        <div>
-          <div className="mb-5 max-w-3xl">
-            <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
-              {t("discoverDestinationsFromRegion")}
-            </h2>
-            <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
-              {t("discoverDestinationsFromRegionBody")}
-            </p>
-          </div>
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {discoveryCards.map((item, index) => (
-              <RouteCard key={item.id} item={item} priority={index < 2} t={t} />
-            ))}
-          </div>
         </div>
 
         {routeInspirationCards.length > 0 ? (
