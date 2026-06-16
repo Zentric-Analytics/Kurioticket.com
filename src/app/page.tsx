@@ -879,7 +879,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="mt-6 border-y border-slate-200/90 bg-gradient-to-b from-white via-slate-50/75 to-white sm:mt-9">
+        <section className="mt-6 border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-indigo-50/35 to-slate-50/80 sm:mt-9">
           <div className="page-shell py-9 sm:py-11">
             <div className="space-y-4">
               <div className="max-w-3xl space-y-1.5">
