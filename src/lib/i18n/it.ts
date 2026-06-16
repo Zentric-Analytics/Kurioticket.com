@@ -85,6 +85,22 @@ export const translations: TranslationDictionary = {
   faqQuestionLiveCached:
     "I risultati di ricerca sono in tempo reale o memorizzati nella cache?",
   faqQuestionManageChanges: "Dove posso gestire modifiche o cancellazioni?",
+  faqAnswerFindOptions:
+    "Kurioticket cerca offerte in tempo reale dai fornitori di viaggio e riunisce le opzioni in un unico posto, così puoi confrontare prezzi, tratte, soggiorni e dettagli prima di scegliere.",
+  faqAnswerSellDirectly:
+    "Kurioticket ti aiuta a confrontare le opzioni di viaggio. Quando scegli un’offerta, vieni reindirizzato al fornitore selezionato per controllare i dettagli e completare la prenotazione sul suo sito.",
+  faqAnswerPriceChanges:
+    "I prezzi e la disponibilità possono cambiare in tempo reale perché compagnie aeree, hotel e fornitori di viaggio aggiornano spesso l’inventario. Controlla sempre il prezzo finale nella pagina di pagamento del fornitore prima di prenotare.",
+  faqAnswerCompareProviders:
+    "Sì. Kurioticket è progettato per aiutarti a confrontare le opzioni affiancate, così puoi valutare prezzo, orari, dettagli della tratta, dettagli dell’hotel e valore complessivo.",
+  faqAnswerSecureBooking:
+    "La prenotazione e il pagamento vengono completati nel flusso di pagamento del fornitore. Prima di confermare, controlla sempre i termini del fornitore, la politica di cancellazione e il prezzo finale.",
+  faqAnswerPreferences:
+    "Sì. Kurioticket ti consente di impostare le preferenze di paese e valuta visualizzate, e puoi scegliere qualsiasi lingua disponibile del sito dal selettore della lingua.",
+  faqAnswerLiveCached:
+    "Kurioticket utilizza risultati di ricerca dei fornitori che possono aggiornarsi quando disponibilità e prezzi cambiano. Questo aiuta a mostrare opzioni aggiornate, ma la disponibilità finale viene confermata dal fornitore.",
+  faqAnswerManageChanges:
+    "Modifiche al viaggio, cancellazioni, rimborsi e assistenza sulla prenotazione sono di solito gestiti dal fornitore presso cui è stata completata la prenotazione. Usa i dettagli di conferma di quel fornitore per le richieste di assistenza.",
 
   homeNewsletterTitle: "Anticipa ogni offerta...",
   homeNewsletterBody: "Ricevi offerte selezionate...",
