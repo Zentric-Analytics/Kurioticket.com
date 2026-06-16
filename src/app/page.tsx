@@ -666,7 +666,7 @@ export default function Home() {
       <AppHeader hideMobileSecondaryNavLinks />
 
       <main className="flex-1 bg-white">
-        <section className="relative min-h-[560px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
+        <section className="relative min-h-[500px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
           <div className="absolute inset-0">
             <Image
               src={heroImage}
@@ -691,7 +691,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="relative z-10 mt-64 w-full max-w-[1280px] translate-y-12 sm:hidden">
+              <div className="relative z-10 mt-52 w-full max-w-[1280px] translate-y-8 sm:hidden">
                 <SearchTabs
                   t={t as unknown as Record<string, string>}
                   compactHero
@@ -712,7 +712,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-24 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
+        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-20 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
           <div className="page-shell">
             <div className="flex items-center">
               <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
