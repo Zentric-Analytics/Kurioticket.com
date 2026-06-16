@@ -1628,4 +1628,24 @@ export const translations: TranslationDictionary = {
     "Uno strumento pratico per pianificare i viaggi",
   aboutPagePlanningCardBody:
     "Kurioticket si concentra sull’aiutare i viaggiatori a valutare le opzioni di viaggio con un contesto utile. Disponibilità, prezzi, regole e passaggi finali di prenotazione possono variare in base al fornitore, quindi i viaggiatori dovrebbero controllare attentamente la pagina del fornitore prima di prendere una decisione.",
+  howItWorksEyebrow: "Come funziona Kurioticket",
+  howItWorksTitle: "Come funziona Kurioticket",
+  howItWorksIntro:
+    "Kurioticket aiuta i viaggiatori a passare dalla ricerca al confronto e poi al fornitore quando viene selezionata un’offerta.",
+  howItWorksFlowHeading: "Flusso di base",
+  "howItWorks.steps.search.title": "Cerca opzioni di viaggio",
+  "howItWorks.steps.search.description":
+    "Inserisci i dettagli del viaggio per cercare voli, hotel, auto o offerte di viaggio disponibili.",
+  "howItWorks.steps.compare.title": "Confronta i risultati disponibili",
+  "howItWorks.steps.compare.description":
+    "Esamina le opzioni disponibili, i prezzi, gli orari, i dettagli del fornitore e altre informazioni di viaggio quando disponibili.",
+  "howItWorks.steps.choose.title": "Scegli un’offerta",
+  "howItWorks.steps.choose.description":
+    "Seleziona l’opzione più adatta ai tuoi piani dopo aver esaminato i dettagli disponibili.",
+  "howItWorks.steps.continue.title": "Continua con il fornitore",
+  "howItWorks.steps.continue.description":
+    "Quando vieni reindirizzato, continua sul sito del fornitore per controllare i dettagli finali e completare eventuali passaggi di prenotazione.",
+  "howItWorks.providerWebsites.title": "Siti web dei fornitori",
+  "howItWorks.providerWebsites.description":
+    "Alcune prenotazioni possono essere completate sui siti web dei fornitori dopo il reindirizzamento da Kurioticket. Controlla la pagina del fornitore per disponibilità finale, prezzi, termini, passaggi di pagamento e dettagli della prenotazione prima di completare un acquisto.",
 };
