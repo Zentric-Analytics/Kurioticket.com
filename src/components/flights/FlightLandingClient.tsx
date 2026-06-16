@@ -291,8 +291,8 @@ export function FlightLandingClient() {
             <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/76 via-slate-950/26 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-16 lg:min-h-[36rem] lg:pb-40 lg:pt-20">
-            <div className="max-w-3xl pt-6 text-left text-white lg:pt-10">
+          <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-8 lg:min-h-[36rem] lg:pb-40 lg:pt-12">
+            <div className="max-w-3xl pt-0 text-left text-white lg:pt-2">
               <h1 className="text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.55rem]">
                 {heroTitle}
               </h1>
