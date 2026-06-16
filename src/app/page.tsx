@@ -666,7 +666,7 @@ export default function Home() {
       <AppHeader hideMobileSecondaryNavLinks />
 
       <main className="flex-1 bg-white">
-        <section className="relative min-h-[580px] overflow-visible bg-[#f8f7ff] sm:min-h-[660px] lg:min-h-[740px]">
+        <section className="relative min-h-[580px] overflow-visible bg-slate-950 sm:min-h-[660px] lg:min-h-[740px]">
           <div className="absolute inset-0">
             <Image
               src={heroImage}
