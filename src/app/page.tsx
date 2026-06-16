@@ -51,6 +51,8 @@ const heroImage =
   "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
 
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
+const HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT =
+  HOME_DISCOVERY_VISIBLE_CARD_COUNT + 2;
 
 const destinationImageFallback =
   "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95";
@@ -336,7 +338,7 @@ export default function Home() {
   const fallbackDiscoveryCards = useMemo<HomeDiscoveryFareCard[]>(
     () =>
       getHomeDiscoveryByRegion(regionCode)
-        .slice(0, HOME_DISCOVERY_VISIBLE_CARD_COUNT)
+        .slice(0, HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT)
         .map((item) => ({
           item: {
             id: item.id,
@@ -356,6 +358,10 @@ export default function Home() {
   const discoveryCards = discoveryFareCardState.cards.length
     ? discoveryFareCardState.cards
     : fallbackDiscoveryCards;
+  const desktopDiscoveryCards = useMemo(
+    () => discoveryCards.slice(0, HOME_DISCOVERY_VISIBLE_CARD_COUNT),
+    [discoveryCards],
+  );
   const mobileDiscoveryGroups = useMemo(() => {
     const groups = [];
 
@@ -492,7 +498,7 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             regionCode,
-            limit: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+            limit: HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT,
             currency: "USD",
           }),
           signal: controller.signal,
@@ -712,7 +718,7 @@ export default function Home() {
             </div>
 
             <div className="hidden grid-cols-3 gap-3 sm:grid md:grid-cols-4 lg:grid-cols-4">
-              {discoveryCards.map((card) => {
+              {desktopDiscoveryCards.map((card) => {
                 return (
                   <DiscoverySuggestionCard
                     key={card.item.id}
