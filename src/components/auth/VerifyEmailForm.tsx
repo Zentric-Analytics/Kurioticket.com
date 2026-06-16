@@ -5,8 +5,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+import { useLocale } from "@/components/layout/LocaleProvider";
 
 export function VerifyEmailForm({ email }: { email: string }) {
+  const { t } = useLocale();
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -52,10 +54,10 @@ export function VerifyEmailForm({ email }: { email: string }) {
 
   return (
     <Card className="mx-auto w-full max-w-md p-5">
-      <h1 className="text-2xl font-bold text-navy">Verify your email</h1>
-      <p className="mt-2 text-sm text-muted">Enter the 6-digit code we sent to your email. Codes expire after 10 minutes.</p>
+      <h1 className="text-2xl font-bold text-navy">{t.verifyEmailPageTitle}</h1>
+      <p className="mt-2 text-sm text-muted">{t.verifyEmailPageSubtitle}</p>
       <form action={submit} className="mt-5 grid gap-4">
-        <Field label="Verification code">
+        <Field label={t.verifyEmailCodeLabel}>
           <Input
             name="code"
             inputMode="numeric"
@@ -69,13 +71,13 @@ export function VerifyEmailForm({ email }: { email: string }) {
         </Field>
         {error ? <p className="text-sm text-danger">{error}</p> : null}
         {message ? <p className="text-sm text-teal-dark">{message}</p> : null}
-        <Button disabled={loading || code.length !== 6}>{loading ? "Verifying..." : "Verify email"}</Button>
+        <Button disabled={loading || code.length !== 6}>{loading ? t.verifyEmailSubmitting : t.verifyEmailSubmit}</Button>
       </form>
       <Button type="button" variant="secondary" className="mt-3 w-full" disabled={resending} onClick={resendCode}>
-        {resending ? "Sending..." : "Send a new code"}
+        {resending ? t.verifyEmailResendSending : t.verifyEmailResendCode}
       </Button>
       <p className="mt-4 text-sm text-muted">
-        Already verified? <Link className="font-semibold text-teal-dark" href="/auth/signin?callbackUrl=/dashboard">Log in</Link>
+        {t.verifyEmailAlreadyVerifiedPrompt} <Link className="font-semibold text-teal-dark" href="/auth/signin?callbackUrl=/dashboard">{t.verifyEmailLoginLink}</Link>
       </p>
     </Card>
   );
