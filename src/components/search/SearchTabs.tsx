@@ -102,6 +102,13 @@ const normalizeHomepageCalendarLocale = (
     return "de-DE";
   }
 
+  if (
+    normalized === "it" ||
+    normalized.startsWith("it-")
+  ) {
+    return "it-IT";
+  }
+
   return "en-US";
 };
 
