@@ -156,12 +156,12 @@ export function PriceAlertsContent({
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
   return (
-    <>
+    <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="price-alerts-title">
       <div className="max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
           {t("accountDashboard.priceAlerts.eyebrow")}
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-navy">
+        <h1 id="price-alerts-title" className="mt-2 text-3xl font-bold text-navy">
           {t("accountDashboard.priceAlerts.title")}
         </h1>
         <p className="mt-3 text-sm leading-6 text-muted">
@@ -170,7 +170,7 @@ export function PriceAlertsContent({
       </div>
 
       {loadError ? (
-        <Card className="mt-5 p-5">
+        <Card className="p-5">
           <h2 className="font-bold text-navy">
             {t("accountDashboard.priceAlerts.error.title")}
           </h2>
@@ -182,18 +182,16 @@ export function PriceAlertsContent({
           </LinkButton>
         </Card>
       ) : alerts.length > 0 ? (
-        <div className="mt-5 grid gap-4">
+        <div className="grid gap-4">
           {alerts.map((alert) => (
             <AlertCard key={alert.id} alert={alert} t={t} />
           ))}
         </div>
       ) : (
-        <div className="mt-5">
-          <EmptyAlertsState t={t} />
-        </div>
+        <EmptyAlertsState t={t} />
       )}
 
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <LinkButton href="/flights">
           {t("accountDashboard.priceAlerts.cta.flights")}
         </LinkButton>
@@ -204,6 +202,6 @@ export function PriceAlertsContent({
           {t("accountDashboard.priceAlerts.cta.cars")}
         </LinkButton>
       </div>
-    </>
+    </section>
   );
 }
