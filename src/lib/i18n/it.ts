@@ -234,6 +234,43 @@ export const translations: TranslationDictionary = {
   "accountDashboard.nav.preference": "Preferenze",
   "accountDashboard.nav.security": "Impostazioni di sicurezza",
   "accountDashboard.nav.support": "Assistenza",
+  "accountDashboard.trips.title": "I miei viaggi",
+  "accountDashboard.trips.subtitle":
+    "Visualizza e gestisci i tuoi viaggi in un unico posto.",
+  "accountDashboard.trips.findReservation": "Trova una prenotazione",
+  "accountDashboard.trips.lookup.title": "Inserisci i dettagli della prenotazione",
+  "accountDashboard.trips.lookup.body":
+    "Inserisci il codice di prenotazione e l’indirizzo e-mail per trovare e gestire la tua prenotazione.",
+  "accountDashboard.trips.lookup.closeAriaLabel":
+    "Chiudi la ricerca della prenotazione",
+  "accountDashboard.trips.lookup.reservationCode": "Codice di prenotazione",
+  "accountDashboard.trips.lookup.emailAddress": "Indirizzo e-mail",
+  "accountDashboard.trips.lookup.submit": "Trova prenotazione",
+  "accountDashboard.trips.lookup.unavailable":
+    "La ricerca della prenotazione non è ancora disponibile.",
+  "accountDashboard.trips.current.empty.title":
+    "Quale sarà la prossima destinazione?",
+  "accountDashboard.trips.current.empty.body":
+    "Non hai ancora iniziato alcun viaggio. Quando effettuerai una prenotazione, apparirà qui.",
+  "accountDashboard.trips.history.title": "Cronologia viaggi",
+  "accountDashboard.trips.history.filtersAriaLabel":
+    "Filtri della cronologia viaggi",
+  "accountDashboard.trips.history.tabs.active": "Attivi",
+  "accountDashboard.trips.history.tabs.past": "Passati",
+  "accountDashboard.trips.history.tabs.cancelled": "Cancellati",
+  "accountDashboard.trips.history.empty.past.title":
+    "La cronologia dei tuoi viaggi apparirà qui",
+  "accountDashboard.trips.history.empty.past.body":
+    "I viaggi completati saranno elencati qui per consentirti di rivedere piani e dettagli passati.",
+  "accountDashboard.trips.history.empty.cancelled.title":
+    "Nessun viaggio cancellato al momento",
+  "accountDashboard.trips.history.empty.cancelled.body":
+    "I viaggi che cancelli appariranno qui per una consultazione semplice.",
+  "accountDashboard.trips.illustration.currentAriaLabel": "Illustrazione di viaggio",
+  "accountDashboard.trips.illustration.historyAriaLabel":
+    "Illustrazione della cronologia viaggi",
+  "accountDashboard.trips.illustration.cancelledAriaLabel":
+    "Illustrazione di viaggio cancellato",
   "accountDashboard.promo.title": "Prenota il tuo prossimo viaggio",
   "accountDashboard.promo.body": "Trova ottime offerte su voli e hotel.",
   "accountDashboard.promo.cta": "Cerca voli",
