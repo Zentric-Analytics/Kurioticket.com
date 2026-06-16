@@ -90,6 +90,8 @@ type SecuritySettingRowProps = {
   body: string;
   action: string;
   danger?: boolean;
+  onAction: () => void;
+  statusId?: string;
 };
 
 function isActiveDashboardRoute(pathname: string, href: string) {
@@ -751,7 +753,7 @@ export function PreferencesDashboardPage() {
   );
 }
 
-function SecuritySettingRow({ title, body, action, danger = false }: SecuritySettingRowProps) {
+function SecuritySettingRow({ title, body, action, danger = false, onAction, statusId }: SecuritySettingRowProps) {
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-1 py-3.5 sm:gap-6 sm:px-2 sm:py-6">
       <div className="min-w-0">
@@ -760,8 +762,10 @@ function SecuritySettingRow({ title, body, action, danger = false }: SecuritySet
       </div>
       <button
         type="button"
+        onClick={onAction}
+        aria-describedby={statusId}
         className={cn(
-          "focus-ring justify-self-end rounded-none border-0 bg-transparent p-0 text-right text-sm font-medium leading-6 transition hover:underline sm:inline-flex sm:min-h-10 sm:w-auto sm:items-center sm:justify-center sm:rounded-xl sm:border sm:px-4 sm:text-sm sm:font-semibold sm:no-underline",
+          "focus-ring -my-2 -mr-2 inline-flex min-h-10 items-center justify-center justify-self-end rounded-lg border-0 bg-transparent px-2 py-2 text-right text-sm font-medium leading-6 transition hover:underline sm:my-0 sm:mr-0 sm:min-h-10 sm:w-auto sm:rounded-xl sm:border sm:px-4 sm:py-0 sm:text-sm sm:font-semibold sm:no-underline",
           danger
             ? "text-red-600 sm:border-red-200 sm:bg-red-50 sm:text-red-700 sm:hover:border-red-300 sm:hover:bg-red-100"
             : "text-violet-700 sm:border-violet-200 sm:bg-white sm:hover:border-violet-300 sm:hover:bg-violet-50",
@@ -775,6 +779,12 @@ function SecuritySettingRow({ title, body, action, danger = false }: SecuritySet
 
 export function SecurityDashboardPage() {
   const { t } = useLocale();
+  const [actionMessage, setActionMessage] = useState("");
+  const securityActionStatusId = "security-action-status";
+
+  const handleUnavailableSecurityAction = () => {
+    setActionMessage("This security action is not available yet.");
+  };
 
   return (
     <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 lg:space-y-5 xl:max-w-[64rem]">
@@ -791,24 +801,40 @@ export function SecurityDashboardPage() {
           title={t["accountDashboard.security.passkeys.title"]}
           body={t["accountDashboard.security.passkeys.description"]}
           action={t["accountDashboard.security.action.setUp"]}
+          onAction={handleUnavailableSecurityAction}
+          statusId={securityActionStatusId}
         />
         <SecuritySettingRow
           title={t["accountDashboard.security.twoFactor.title"]}
           body={t["accountDashboard.security.twoFactor.description"]}
           action={t["accountDashboard.security.action.setUp"]}
+          onAction={handleUnavailableSecurityAction}
+          statusId={securityActionStatusId}
         />
         <SecuritySettingRow
           title={t["accountDashboard.security.activeSessions.title"]}
           body={t["accountDashboard.security.activeSessions.description"]}
           action={t["accountDashboard.security.action.manage"]}
+          onAction={handleUnavailableSecurityAction}
+          statusId={securityActionStatusId}
         />
         <SecuritySettingRow
           title={t["accountDashboard.security.deleteAccount.title"]}
           body={t["accountDashboard.security.deleteAccount.description"]}
           action={t["accountDashboard.security.action.deleteAccount"]}
+          onAction={handleUnavailableSecurityAction}
+          statusId={securityActionStatusId}
           danger
         />
       </div>
+      <p
+        id={securityActionStatusId}
+        role="status"
+        aria-live="polite"
+        className="min-h-5 px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2"
+      >
+        {actionMessage}
+      </p>
     </section>
   );
 }
