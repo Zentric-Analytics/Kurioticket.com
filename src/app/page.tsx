@@ -1028,7 +1028,7 @@ function DiscoverySuggestionCard({
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden rounded-lg ${compact ? "h-[98px]" : "h-[136px] md:h-[128px] lg:h-[136px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden rounded-lg ${compact ? "h-[110px]" : "h-[148px] md:h-[144px] lg:h-[152px]"}`}
       >
         <DiscoveryCardImage
           image={image}
@@ -1039,15 +1039,15 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`min-w-0 flex-1 ${compact ? "space-y-1.5 pt-2" : "space-y-2 pt-2.5"}`}
+        className={`min-w-0 flex-1 ${compact ? "space-y-1.5 pt-2.5" : "space-y-2 pt-3"}`}
       >
         <p
-          className={`line-clamp-2 break-words text-slate-900 ${compact ? "text-sm font-extrabold leading-5 pr-10" : "text-sm font-bold leading-5 md:text-[0.95rem] pr-10"}`}
+          className={`line-clamp-2 break-words text-slate-900 ${compact ? "pr-10 text-sm font-extrabold leading-5" : "pr-10 text-sm font-extrabold leading-5 md:text-[0.95rem]"}`}
         >
           {title}
         </p>
         <p
-          className={`line-clamp-2 text-slate-700 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
+          className={`line-clamp-2 text-slate-700 ${compact ? "text-xs font-semibold leading-5" : "text-xs font-semibold leading-5 md:text-sm"}`}
         >
           {originCode} → {destinationCodeLabel} · {routeNote}
         </p>
@@ -1065,7 +1065,7 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}
+        className={`mt-3 border-t border-slate-300/80 pt-3 ${compact ? "" : "md:mt-3.5 md:pt-3.5"}`}
       >
         <DiscoveryPricePill
           price={price}
@@ -1204,7 +1204,7 @@ function DiscoveryPricePill({
   if (isLoading) {
     return (
       <span
-        className="inline-flex h-7 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
+        className="inline-flex h-8 w-[7.5rem] animate-pulse rounded-full border border-slate-300 bg-white shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
         aria-label={t("homeCheckingProviderRoutePricing")}
       />
     );
@@ -1212,7 +1212,7 @@ function DiscoveryPricePill({
 
   if (!hasProviderPrice) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1223,7 +1223,7 @@ function DiscoveryPricePill({
 
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+      <span className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1244,7 +1244,7 @@ function DiscoveryPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-800 shadow-sm"
+      className="inline-flex rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-extrabold leading-5 tracking-tight text-slate-950 shadow-[0_8px_18px_-14px_rgba(15,23,42,0.8)]"
       aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
