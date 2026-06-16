@@ -693,6 +693,14 @@ export default function Home() {
             </div>
           </div>
 
+          <div className="page-shell absolute inset-x-0 bottom-[-140px] z-30 sm:hidden">
+            <SearchTabs
+              t={t as unknown as Record<string, string>}
+              compactHero
+              locale={locale}
+            />
+          </div>
+
           <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 hidden sm:block lg:bottom-[-56px]">
             <div className="mx-auto max-w-[1280px]">
               <SearchTabs
@@ -704,15 +712,7 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="page-shell relative z-30 -mt-24 pb-6 sm:hidden">
-          <SearchTabs
-            t={t as unknown as Record<string, string>}
-            compactHero
-            locale={locale}
-          />
-        </div>
-
-        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
+        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[34rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
           <div className="page-shell">
             <div className="flex items-center">
               <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
