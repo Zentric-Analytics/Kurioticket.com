@@ -1098,6 +1098,7 @@ export const translations: TranslationDictionary = {
   exploreStaysWorldwide: "Esplora soggiorni in tutto il mondo",
   search: "Cerca",
   searchFlights: "Cerca voli",
+  searchCars: "Cerca auto",
   searchHotels: "Cerca hotel",
   searchingFlights: "Ricerca voli in corso...",
   searchingCars: "Ricerca auto in corso...",

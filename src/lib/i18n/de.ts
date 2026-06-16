@@ -75,6 +75,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.openSavedTrips": "Gespeicherte Reisen öffnen",
   "accountDashboard.saved.searchFlights": "Flüge suchen",
   "accountDashboard.saved.searchHotels": "Hotels suchen",
+  searchCars: "Autos suchen",
   searchHotels: "Hotels suchen",
   "accountSettings.eyebrow": "MEIN KONTO",
   "accountSettings.title": "Kontoeinstellungen",

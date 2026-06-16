@@ -109,6 +109,13 @@ const normalizeHomepageCalendarLocale = (
     return "it-IT";
   }
 
+  if (
+    normalized === "pt" ||
+    normalized.startsWith("pt-")
+  ) {
+    return "pt-BR";
+  }
+
   return "en-US";
 };
 

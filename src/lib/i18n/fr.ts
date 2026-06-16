@@ -1325,6 +1325,7 @@ export const translations: TranslationDictionary = {
   guestPlural: "voyageurs",
   roomSingular: "chambre",
   roomPlural: "chambres",
+  searchCars: "Rechercher des voitures",
   searchHotels: "Rechercher des hôtels",
   searchingHotels: "Recherche d’hôtels…",
   hotelSearchGuestsLabel: "Voyageurs",

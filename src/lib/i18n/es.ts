@@ -585,6 +585,7 @@ export const translations: TranslationDictionary = {
   search: "Buscar",
   searchingFlights: "Buscando vuelos...",
   searchFlights: "Buscar vuelos",
+  searchCars: "Buscar autos",
   searchHotels: "Buscar hoteles",
   searchingCars: "Buscando autos...",
   searchingHotels: "Buscando hoteles...",
