@@ -2,6 +2,7 @@ import type { RegisteredImage } from "./imageTypes";
 
 const unsplashLicense = "Unsplash License";
 const pexelsLicense = "Pexels License";
+const premiumFlightCropNotes = "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
 
 export const hotelbedsProviderImagePattern: RegisteredImage = {
   id: "provider-hotelbeds-giata-bigger-pattern",
@@ -27,6 +28,62 @@ export const hotelbedsProviderImagePattern: RegisteredImage = {
 };
 
 export const imageRegistry: RegisteredImage[] = [
+  {
+    id: "phase-3-002-global-flight-search-hero",
+    url: "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg",
+    alt: "Passenger airplane parked at an airport terminal gate at sunset",
+    product: "global",
+    usage: "homepage-hero",
+    source: "premium-stock",
+    status: "premium-approved",
+    sourcePage:
+      "https://www.istockphoto.com/photo/modern-passenger-airplane-parked-to-terminal-building-gate-at-airside-apron-of-gm1218436213-356036421",
+    license: "Standard",
+    licenseNotes: "iStock Standard license; Essentials collection; binary stored locally for future crop QA.",
+    vendor: "iStock",
+    collection: "Essentials",
+    stockFileId: "1218436213",
+    dimensions: "2047 x 1365",
+    pageSurfaces: ["Primary Flights hero", "Global flight search hero"],
+    intendedSlot: "Primary Flights hero / global flight search hero.",
+    cropNotes: premiumFlightCropNotes,
+    focalPoint: "center",
+    desktopApproved: false,
+    mobileApproved: false,
+    launchCritical: true,
+    contentRole: "marketing",
+    productionPriority: "p0-launch-critical",
+    premiumReplacementRequired: false,
+    notes: "Registered in Phase 4A for future UI replacement after staging crop QA; no live URL replacement in this PR.",
+  },
+  {
+    id: "premium-flight-support-aircraft-gangway-terminal-istock-1470585865",
+    url: "/images/premium/flights/kurioticket-flight-support-aircraft-gangway-terminal-002.jpg",
+    alt: "Passenger airplane connected to an airport terminal gangway during ground support",
+    product: "flights",
+    usage: "flight-inspiration-card",
+    source: "premium-stock",
+    status: "premium-approved",
+    sourcePage:
+      "https://www.istockphoto.com/photo/aircraft-is-attached-to-the-terminal-gangway-of-the-airport-building-preparation-for-gm1470585865-501392082",
+    license: "Standard",
+    licenseNotes: "iStock Standard license; Essentials collection; binary stored locally for future crop QA.",
+    vendor: "iStock",
+    collection: "Essentials",
+    stockFileId: "1470585865",
+    dimensions: "2047 x 1365",
+    pageSurfaces: ["Secondary flight support imagery"],
+    intendedSlot: "Secondary flight support image for future flights marketing and discovery surfaces.",
+    cropNotes: premiumFlightCropNotes,
+    focalPoint: "center",
+    desktopApproved: false,
+    mobileApproved: false,
+    launchCritical: false,
+    contentRole: "marketing",
+    productionPriority: "p2-supporting",
+    premiumReplacementRequired: false,
+    notes: "Registered in Phase 4A for future flight support use after staging crop QA; no live URL replacement in this PR.",
+  },
   {
     id: "homepage-hero-hotel-terrace-unsplash",
     url: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85",
