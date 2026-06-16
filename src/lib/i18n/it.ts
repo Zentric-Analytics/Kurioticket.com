@@ -203,7 +203,8 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Rome.detail": "Italia",
   "hotelDestination.Dubai.title": "Emirati Arabi Uniti",
   "hotelDestination.Dubai.subtitle": "Soggiorni a Dubai",
-  "hotelDestination.Dubai.linkLabel": "Cerca hotel a Dubai, Emirati Arabi Uniti",
+  "hotelDestination.Dubai.linkLabel":
+    "Cerca hotel a Dubai, Emirati Arabi Uniti",
   "hotelDestination.Dubai.detail": "Emirati Arabi Uniti",
   "hotelDestination.Singapore.title": "Singapore",
   "hotelDestination.Singapore.subtitle": "Soggiorni a Singapore",
@@ -219,7 +220,8 @@ export const translations: TranslationDictionary = {
   "hotelDestination.Toronto.detail": "Canada",
   "hotelDestination.Amsterdam.title": "Paesi Bassi",
   "hotelDestination.Amsterdam.subtitle": "Soggiorni ad Amsterdam",
-  "hotelDestination.Amsterdam.linkLabel": "Cerca hotel ad Amsterdam, Paesi Bassi",
+  "hotelDestination.Amsterdam.linkLabel":
+    "Cerca hotel ad Amsterdam, Paesi Bassi",
   "hotelDestination.Amsterdam.detail": "Paesi Bassi",
   "hotelDestination.Bangkok.title": "Thailandia",
   "hotelDestination.Bangkok.subtitle": "Soggiorni a Bangkok",
@@ -264,11 +266,14 @@ export const translations: TranslationDictionary = {
   "hotelInspirationCategory.Family trips": "Viaggi in famiglia",
   "hotelInspirationCategory.Relaxed stays": "Soggiorni rilassanti",
   "hotelInspirationCategory.Weekend ideas": "Idee per il weekend",
-  "hotelTrustCompareBody": "Visualizza opzioni hotel dai fornitori di viaggio in un unico posto prima di continuare.",
-  "hotelTrustReviewTitle": "Controlla i dettagli del soggiorno",
-  "hotelTrustReviewBody": "Controlla date, ospiti, camere, contesto dei prezzi e informazioni sul soggiorno prima di scegliere.",
-  "hotelTrustProviderTitle": "Continua con il fornitore",
-  "hotelTrustProviderBody": "Quando scegli un’opzione, continua con il fornitore per confermare prezzo finale, disponibilità, commissioni e regole di cancellazione.",
+  hotelTrustCompareBody:
+    "Visualizza opzioni hotel dai fornitori di viaggio in un unico posto prima di continuare.",
+  hotelTrustReviewTitle: "Controlla i dettagli del soggiorno",
+  hotelTrustReviewBody:
+    "Controlla date, ospiti, camere, contesto dei prezzi e informazioni sul soggiorno prima di scegliere.",
+  hotelTrustProviderTitle: "Continua con il fornitore",
+  hotelTrustProviderBody:
+    "Quando scegli un’opzione, continua con il fornitore per confermare prezzo finale, disponibilità, commissioni e regole di cancellazione.",
 
   faqHeading: "Domande frequenti",
   faqIntro:
@@ -409,7 +414,8 @@ export const translations: TranslationDictionary = {
   exploreHotelStaysByDestination: "Esplora soggiorni in hotel per destinazione",
   featuredHotelDestinations: "Destinazioni hotel in evidenza",
   findStaysEveryKindTrip: "Trova soggiorni per ogni tipo di viaggio",
-  hotelInspirationBody: "Sfoglia idee di destinazione in base al tipo di soggiorno che hai in mente.",
+  hotelInspirationBody:
+    "Sfoglia idee di destinazione in base al tipo di soggiorno che hai in mente.",
   hotelInspirationCategories: "Categorie di ispirazione hotel",
   exploreStaysWorldwide: "Esplora soggiorni in tutto il mondo",
   search: "Cerca",
@@ -485,7 +491,8 @@ export const translations: TranslationDictionary = {
   amenities: "Servizi",
   baggageIncluded: "Bagaglio incluso",
   flexibleRefundable: "Flessibile/rimborsabile",
-  stopsAppearAfterResultsLoad: "Gli scali compaiono dopo il caricamento dei risultati.",
+  stopsAppearAfterResultsLoad:
+    "Gli scali compaiono dopo il caricamento dei risultati.",
   airlinesAppearAfterResultsLoad:
     "Le compagnie aeree compaiono dopo il caricamento dei risultati.",
   airportsAppearAfterResultsLoad:
@@ -712,13 +719,15 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-cai.title": "Tappa culturale al Cairo",
   "homeDiscoveryRoute.ng-abv-cai.routeNote":
     "Porta d’accesso a tour della storia del Nilo e vivaci mercati della città vecchia.",
-  "homeDiscoveryRoute.ng-los-add.title": "Collegamento est-africano per Addis Abeba",
+  "homeDiscoveryRoute.ng-los-add.title":
+    "Collegamento est-africano per Addis Abeba",
   "homeDiscoveryRoute.ng-los-add.routeNote":
     "Importante punto di transito con scene gastronomiche e culturali in crescita.",
   "homeDiscoveryRoute.ng-abv-fco.title": "Fuga tra i monumenti di Roma",
   "homeDiscoveryRoute.ng-abv-fco.routeNote":
     "Classico europeo per rovine, piazze e serate rilassate.",
-  "homeDiscoveryRoute.ng-los-nrt.title": "Energia urbana a lungo raggio di Tokyo",
+  "homeDiscoveryRoute.ng-los-nrt.title":
+    "Energia urbana a lungo raggio di Tokyo",
   "homeDiscoveryRoute.ng-los-nrt.routeNote":
     "Importante porta d’accesso all’Asia con quartieri al neon e trasporti ferroviari efficienti.",
   "homeDiscoveryRoute.ng-abv-mad.title": "Viaggio tra tapas e arte a Madrid",
@@ -727,7 +736,8 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-los-cpt.title": "Avventura costiera a Città del Capo",
   "homeDiscoveryRoute.ng-los-cpt.routeNote":
     "Rotta panoramica in Sudafrica con spiagge, montagne e vigneti.",
-  "homeDiscoveryRoute.ng-abv-rob.title": "Viaggio regionale sul mare a Monrovia",
+  "homeDiscoveryRoute.ng-abv-rob.title":
+    "Viaggio regionale sul mare a Monrovia",
   "homeDiscoveryRoute.ng-abv-rob.routeNote":
     "City break dell’Africa occidentale con spiagge atlantiche e mercati locali.",
 
@@ -822,4 +832,135 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.fallback-jnb-znz.title": "Relax sull’isola di Zanzibar",
   "homeDiscoveryRoute.fallback-jnb-znz.routeNote":
     "Spiagge dell’Oceano Indiano, vicoli di Stone Town e barriere per immersioni.",
+
+  searchRentalCarsEveryPartTrip:
+    "Cerca auto a noleggio per ogni parte del tuo viaggio",
+  exploreCarsByTripStyle: "Esplora auto a noleggio per stile di viaggio",
+  carsTripStyleBody:
+    "Scegli un tipo di auto e apriremo i risultati con il contesto di ricerca già pronto.",
+  "carsTripStyle.economy.title": "Auto economiche",
+  "carsTripStyle.economy.subtitle":
+    "Ricerche convenienti per città e viaggi in solitaria",
+  "carsTripStyle.economy.cta": "Avvia una ricerca per auto economiche",
+  "carsTripStyle.economy.ariaLabel":
+    "Avvia una ricerca per auto economiche dal ritiro in centro città",
+  "carsTripStyle.economy.imageAlt":
+    "Auto compatte in città tra edifici del centro",
+  "carsTripStyle.suv.title": "SUV",
+  "carsTripStyle.suv.subtitle":
+    "Spaziosi per viaggi in famiglia, bagagli e tragitti più lunghi",
+  "carsTripStyle.suv.cta": "Apri una ricerca per noleggio SUV",
+  "carsTripStyle.suv.ariaLabel":
+    "Apri una ricerca per noleggio SUV dal ritiro in aeroporto",
+  "carsTripStyle.suv.imageAlt": "SUV su una strada aperta vicino alle montagne",
+  "carsTripStyle.luxury.title": "Auto di lusso",
+  "carsTripStyle.luxury.subtitle":
+    "Contesto di ricerca premium per viaggi di lavoro o occasioni speciali",
+  "carsTripStyle.luxury.cta": "Pianifica una ricerca per auto di lusso",
+  "carsTripStyle.luxury.ariaLabel":
+    "Pianifica una ricerca per auto di lusso dal ritiro in zona hotel",
+  "carsTripStyle.luxury.imageAlt":
+    "Auto premium parcheggiata vicino a un elegante edificio moderno",
+  "carsTripStyle.van.title": "Furgoni",
+  "carsTripStyle.van.subtitle":
+    "Contesto di ricerca per viaggi di gruppo e bagagli familiari",
+  "carsTripStyle.van.cta": "Cerca furgoni per viaggi di gruppo",
+  "carsTripStyle.van.ariaLabel":
+    "Cerca furgoni per viaggi di gruppo dal ritiro in aeroporto",
+  "carsTripStyle.van.imageAlt":
+    "Furgone passeggeri su una strada panoramica luminosa",
+  "carsTrust.0.title": "Pensato per viaggi completi",
+  "carsTrust.0.description":
+    "Pianifica voli, soggiorni e trasporti a terra in un unico flusso Kurioticket.",
+  "carsTrust.1.title": "Prima i dettagli del ritiro",
+  "carsTrust.1.description":
+    "Inserisci luogo di ritiro, date, orari ed età del conducente, così la ricerca del noleggio parte con i dettagli corretti.",
+  "carsTrust.2.title": "Revisione chiara del noleggio",
+  "carsTrust.2.description":
+    "Controlla prezzo finale, disponibilità, commissioni e regole del noleggio con il fornitore prima di prenotare.",
+  carsPickupPointsTitle: "Inizia dai punti di ritiro auto più popolari",
+  carsPickupPointsBody:
+    "Scegli uno stile di ritiro e apriremo la pagina dei risultati auto con i dettagli di ricerca già pronti.",
+  "carsPickup.Airport.title": "Ritiri in aeroporto",
+  "carsPickup.Airport.subtitle":
+    "Parti dai principali punti di arrivo aeroportuali",
+  "carsPickup.Airport.ariaLabel":
+    "Apri i risultati auto per il ritiro in aeroporto",
+  "carsPickup.Airport.imageAlt":
+    "Aereo parcheggiato a un gate aeroportuale al tramonto",
+  "carsPickup.City center.title": "Ritiri in centro città",
+  "carsPickup.City center.subtitle":
+    "Ritira vicino agli hotel del centro e ai quartieri business",
+  "carsPickup.City center.ariaLabel":
+    "Apri i risultati auto per il ritiro in centro città",
+  "carsPickup.City center.imageAlt":
+    "Auto in transito su una strada urbana tra edifici alti",
+  "carsPickup.Train station.title": "Ritiri in stazione ferroviaria",
+  "carsPickup.Train station.subtitle":
+    "Continua il viaggio dopo l’arrivo in treno",
+  "carsPickup.Train station.ariaLabel":
+    "Apri i risultati auto per il ritiro in stazione ferroviaria",
+  "carsPickup.Train station.imageAlt":
+    "Binari ferroviari che conducono a una stazione urbana",
+  "carsPickup.Hotel area.title": "Ritiri in zona hotel",
+  "carsPickup.Hotel area.subtitle":
+    "Pianifica il ritiro dell’auto vicino al luogo in cui soggiorni",
+  "carsPickup.Hotel area.ariaLabel":
+    "Apri i risultati auto per il ritiro in zona hotel",
+  "carsPickup.Hotel area.imageAlt":
+    "Esterno di un hotel con palme e vialetto d’accesso",
+  "carsSearch.pickupLocationLabel": "LUOGO DI RITIRO",
+  "carsSearch.pickupLocationPlaceholder": "Aeroporto, città o indirizzo",
+  "carsSearch.returnLocationPlaceholder":
+    "Città, aeroporto o indirizzo di riconsegna",
+  "carsSearch.returnToSameLocation": "Riconsegna nello stesso luogo",
+  "carsSearch.differentReturnLocation": "Luogo di riconsegna diverso",
+  "carsSearch.rentalDatesLabel": "DATE DEL NOLEGGIO",
+  "carsSearch.rentalDatePlaceholder": "Data di ritiro — Data di riconsegna",
+  "carsSearch.pickupReturnTimeLabel": "ORARIO DI RITIRO / RICONSEGNA",
+  "carsSearch.pickupReturnTimeSummary":
+    "Ritiro {pickupTime} — riconsegna {returnTime}",
+  "carsSearch.driverAgeLabel": "ETÀ DEL CONDUCENTE",
+  "carsSearch.driverAgeAnyAge": "Qualsiasi età",
+  "carsSearch.clearPickupLocation": "Cancella luogo di ritiro",
+  "carsSearch.clearReturnLocation": "Cancella luogo di riconsegna",
+  "carsSearch.chooseRentalDatesAria":
+    "Scegli le date di ritiro e riconsegna del noleggio",
+  "carsSearch.rentalDatePickerAria": "Selettore date del noleggio",
+  "carsSearch.chooseRentalDates": "Scegli le date del noleggio",
+  "carsSearch.previousMonth": "Mese precedente",
+  "carsSearch.previousMonthShort": "Prec",
+  "carsSearch.nextMonth": "Mese successivo",
+  "carsSearch.nextMonthShort": "Succ",
+  "carsSearch.selectDateAriaPrefix": "Seleziona",
+  "carsSearch.startsNewPickupDate": "inizia una nuova data di ritiro",
+  "carsSearch.choosePickupReturnTimesAria":
+    "Scegli gli orari di ritiro e riconsegna",
+  "carsSearch.pickupReturnTimeSelectorAria":
+    "Selettore orario di ritiro e riconsegna",
+  "carsSearch.pickupTimeLabel": "Orario di ritiro",
+  "carsSearch.returnTimeLabel": "Orario di riconsegna",
+  carsSearchPreparing: "Preparazione della ricerca auto...",
+  "carsFaq.heading": "Domande frequenti sulle auto",
+  "carsFaq.0.question":
+    "Quali informazioni mi servono per cercare un’auto a noleggio?",
+  "carsFaq.0.answer":
+    "Inserisci il luogo di ritiro, le date di ritiro e riconsegna, gli orari di ritiro e riconsegna, l’età del conducente e se prevedi di riconsegnare l’auto in un luogo diverso.",
+  "carsFaq.1.question": "Posso riconsegnare l’auto in un luogo diverso?",
+  "carsFaq.1.answer":
+    "Sì. Seleziona “Luogo di riconsegna diverso” nel modulo di ricerca e inserisci la città, l’aeroporto o l’indirizzo in cui prevedi di riconsegnare l’auto.",
+  "carsFaq.2.question":
+    "Perché l’età del conducente è importante per le auto a noleggio?",
+  "carsFaq.2.answer":
+    "I fornitori di noleggio possono applicare regole, commissioni, idoneità dei veicoli o requisiti di deposito diversi in base all’età e alla località del conducente.",
+  "carsFaq.3.question":
+    "Cosa devo controllare prima di prenotare un’auto a noleggio?",
+  "carsFaq.3.answer":
+    "Controlla luogo di ritiro e riconsegna, date, orari, politica sul chilometraggio, politica carburante, opzioni assicurative, termini di cancellazione, requisiti di deposito e documenti richiesti prima di prenotare.",
+  "carsFaq.4.question": "Dove viene confermato il prezzo finale del noleggio?",
+  "carsFaq.4.answer":
+    "Prezzo finale, disponibilità del veicolo, tasse, commissioni, requisiti di deposito e regole del noleggio sono confermati dal fornitore prima della prenotazione.",
+  "carsFaq.5.question": "Quali documenti potrei dover presentare al ritiro?",
+  "carsFaq.5.answer":
+    "I fornitori di noleggio possono richiedere una patente di guida valida, una carta di pagamento, un documento di identità e qualsiasi documento richiesto dal paese o dal luogo di ritiro.",
 };
