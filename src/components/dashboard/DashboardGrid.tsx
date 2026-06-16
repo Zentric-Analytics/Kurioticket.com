@@ -753,15 +753,15 @@ export function PreferencesDashboardPage() {
 
 function SecuritySettingRow({ title, body, action, danger = false }: SecuritySettingRowProps) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 px-1 py-7 sm:gap-6 sm:px-2 sm:py-6">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-1 py-3.5 sm:gap-6 sm:px-2 sm:py-6">
       <div className="min-w-0">
-        <h2 className="text-[1.35rem] font-medium leading-tight text-slate-950 sm:text-[17px] sm:font-semibold sm:text-navy">{title}</h2>
-        <p className="mt-4 max-w-[17rem] text-[1.05rem] leading-8 text-slate-600 sm:mt-1.5 sm:max-w-2xl sm:text-sm sm:leading-6 sm:text-muted">{body}</p>
+        <h2 className="text-[15px] font-semibold leading-5 text-slate-950 sm:text-[17px] sm:font-semibold sm:text-navy">{title}</h2>
+        <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-1.5 sm:max-w-2xl sm:text-sm sm:leading-6 sm:text-muted">{body}</p>
       </div>
       <button
         type="button"
         className={cn(
-          "focus-ring justify-self-end rounded-none border-0 bg-transparent p-0 text-right text-[1.05rem] font-medium leading-6 transition hover:underline sm:inline-flex sm:min-h-10 sm:w-auto sm:items-center sm:justify-center sm:rounded-xl sm:border sm:px-4 sm:text-sm sm:font-semibold sm:no-underline",
+          "focus-ring justify-self-end rounded-none border-0 bg-transparent p-0 text-right text-sm font-medium leading-6 transition hover:underline sm:inline-flex sm:min-h-10 sm:w-auto sm:items-center sm:justify-center sm:rounded-xl sm:border sm:px-4 sm:text-sm sm:font-semibold sm:no-underline",
           danger
             ? "text-red-600 sm:border-red-200 sm:bg-red-50 sm:text-red-700 sm:hover:border-red-300 sm:hover:bg-red-100"
             : "text-violet-700 sm:border-violet-200 sm:bg-white sm:hover:border-violet-300 sm:hover:bg-violet-50",
@@ -777,12 +777,12 @@ export function SecurityDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-7 lg:space-y-5 xl:max-w-[64rem]">
+    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 lg:space-y-5 xl:max-w-[64rem]">
       <div className="px-1 text-left sm:px-2">
-        <h1 id="security-title" className="text-[2.45rem] font-black leading-tight tracking-[-0.04em] text-slate-950 sm:text-3xl sm:font-bold sm:tracking-normal sm:text-navy">
+        <h1 id="security-title" className="text-2xl font-bold leading-tight tracking-tight text-slate-950 sm:text-3xl sm:font-bold sm:tracking-normal sm:text-navy">
           {t["accountDashboard.security.title"]}
         </h1>
-        <p className="mt-7 max-w-none text-[1.15rem] leading-9 text-slate-600 sm:mt-3 sm:max-w-2xl sm:text-sm sm:leading-6 sm:text-muted">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:mt-3 sm:max-w-2xl sm:text-sm sm:leading-6 sm:text-muted">
           {t["accountDashboard.security.description"]}
         </p>
       </div>
