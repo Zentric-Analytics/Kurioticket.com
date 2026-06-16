@@ -705,7 +705,7 @@ export function PreferencesDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="preferences-title" className="space-y-4">
+    <section aria-labelledby="preferences-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
       <div className="max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
           {t["accountDashboard.preferences.eyebrow"]}
@@ -751,7 +751,7 @@ export function SecurityDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="security-title" className="space-y-4">
+    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
       <div className="max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
           {t["accountDashboard.security.eyebrow"]}
@@ -797,7 +797,7 @@ export function SupportDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="support-title" className="space-y-4">
+    <section aria-labelledby="support-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
       <div className="max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
           {t["accountDashboard.support.eyebrow"]}
