@@ -348,6 +348,7 @@ export const translations: TranslationDictionary = {
   travelerSingular: "viaggiatore",
   travelerPlural: "viaggiatori",
   cabinClass: "Classe di cabina",
+  cityOrAirport: "Città o aeroporto",
 
   homeDiscoveryRouteIdeaBadge: "Idea di viaggio",
   homeDiscoveryTripOneWay: "Solo andata",
