@@ -2169,7 +2169,7 @@ export function SearchTabs({
               {value.trim() ? (
                 <button
                   type="button"
-                  aria-label={title === (t.chooseOrigin || "Choose origin") ? "Clear origin" : "Clear destination"}
+                  aria-label={title === (t.chooseOrigin || "Choose origin") ? (t.clearOrigin || "Clear origin") : (t.clearDestination || "Clear destination")}
                   onClick={() => {
                     onClear();
                     focusInput();

@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 
 import { ArrowLeft } from "lucide-react";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
 
 type FlightMobilePickerShellProps = {
@@ -34,6 +35,7 @@ export function FlightMobilePickerShell({
   className,
   contentClassName,
 }: FlightMobilePickerShellProps) {
+  const { t } = useLocale();
   const portalElement = typeof document === "undefined" ? null : document.body;
 
   useEffect(() => {
@@ -121,7 +123,7 @@ export function FlightMobilePickerShell({
               className="focus-ring inline-flex min-h-10 items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Back
+              {t.back}
             </button>
             <h2 id={titleId} className="min-w-0 truncate text-base font-bold text-slate-950">
               {title}
@@ -131,7 +133,7 @@ export function FlightMobilePickerShell({
               onClick={onClose}
               className="focus-ring min-h-10 rounded-full px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             >
-              Cancel
+              {t.cancel}
             </button>
           </div>
         </div>

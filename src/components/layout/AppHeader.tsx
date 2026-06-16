@@ -1123,7 +1123,7 @@ export function AppHeader({
                 <button
                   type="button"
                   className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45"
-                  aria-label="Close mobile menu backdrop"
+                  aria-label={t.closeMobileMenu}
                   onClick={() => setMobileMenuOpen(false)}
                 />
 
@@ -1131,13 +1131,13 @@ export function AppHeader({
                   id="mobile-menu-drawer"
                   role="dialog"
                   aria-modal="true"
-                  aria-label="Mobile menu"
+                  aria-label={t.menu}
                   className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
                   <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
                     <div className="min-w-0">
                       <h2 className="truncate text-xl font-semibold tracking-[-0.02em] text-slate-950">
-                        Menu
+                        {t.menu}
                       </h2>
                     </div>
 
@@ -1145,7 +1145,7 @@ export function AppHeader({
                       type="button"
                       onClick={() => setMobileMenuOpen(false)}
                       className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      aria-label="Close mobile menu"
+                      aria-label={t.closeMobileMenu}
                     >
                       <X size={18} aria-hidden="true" />
                     </button>

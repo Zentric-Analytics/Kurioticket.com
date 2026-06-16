@@ -1303,6 +1303,8 @@ export const translations: TranslationDictionary = {
   nextMonthShort: "Suiv.",
   done: "Terminé",
   clear: "Effacer",
+  back: "Retour",
+  cancel: "Annuler",
   adults: "Adultes",
   children: "Enfants",
   infants: "Bébés",
