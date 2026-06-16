@@ -666,7 +666,7 @@ export default function Home() {
       <AppHeader hideMobileSecondaryNavLinks />
 
       <main className="flex-1 bg-white">
-        <section className="relative min-h-[500px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
+        <section className="relative min-h-[560px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
           <div className="absolute inset-0">
             <Image
               src={heroImage}
@@ -677,20 +677,21 @@ export default function Home() {
               className="object-cover object-[62%_center] sm:object-[60%_center] lg:object-[58%_48%]"
             />
           </div>
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/62 via-slate-950/22 to-slate-950/42 sm:hidden" />
 
-          <div className="page-shell relative z-10 pb-10 pt-8 sm:pb-44 sm:pt-10 lg:pb-48 lg:pt-12">
-            <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
-              <div className="space-y-2.5 pt-1">
-                <h1 className="max-w-3xl text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.022em] text-slate-900 sm:text-[2.15rem] lg:text-[2.65rem]">
+          <div className="page-shell relative z-10 pb-0 pt-9 sm:pb-44 sm:pt-10 lg:pb-48 lg:pt-12">
+            <div className="grid content-start gap-5 pb-0 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
+              <div className="max-w-[20rem] space-y-2.5 pt-1 drop-shadow-[0_2px_12px_rgba(15,23,42,0.45)] sm:max-w-none sm:drop-shadow-none">
+                <h1 className="max-w-3xl text-[1.82rem] font-semibold leading-[1.08] tracking-[-0.024em] text-white sm:text-[2.15rem] sm:text-slate-900 lg:text-[2.65rem]">
                   {t("homeHeroTitle")}
                 </h1>
 
-                <p className="max-w-xl text-sm font-semibold leading-6 text-slate-700 sm:text-base sm:leading-7">
+                <p className="max-w-[17.5rem] text-sm font-semibold leading-6 text-white/90 sm:max-w-xl sm:text-base sm:leading-7 sm:text-slate-700">
                   {t("homeHeroSubtitle")}
                 </p>
               </div>
 
-              <div className="relative z-10 mt-0.5 w-full max-w-[1280px] sm:hidden">
+              <div className="relative z-10 mt-64 w-full max-w-[1280px] translate-y-12 sm:hidden">
                 <SearchTabs
                   t={t as unknown as Record<string, string>}
                   compactHero
@@ -711,7 +712,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-slate-200/75 bg-[#fbfaf7] py-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
+        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-24 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
           <div className="page-shell">
             <div className="flex items-center">
               <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
