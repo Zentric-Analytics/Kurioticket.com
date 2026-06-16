@@ -573,6 +573,29 @@ export const translations: TranslationDictionary = {
   footerTermsOfService: "Termini di servizio",
   footerCookiePolicy: "Informativa sui cookie",
   legalCenter: "Centro legale",
+  "legalCenter.heroLabel": "Informazioni legali",
+  "legalCenter.heroTitle": "Centro legale",
+  "legalCenter.heroDescription":
+    "Accedi a informazioni legali e sulle politiche importanti relative all’uso di Kurioticket.",
+  "legalCenter.resourcesHeading": "Risorse legali",
+  "legalCenter.resourcesDescription":
+    "Scegli una politica qui sotto per saperne di più sui termini legali e sulle pratiche relative ai dati di Kurioticket.",
+  "legalCenter.policiesBadge": "POLITICHE",
+  "legalCenter.privacyPolicy.title": "Informativa sulla privacy",
+  "legalCenter.privacyPolicy.description":
+    "Scopri come Kurioticket gestisce informazioni personali, dati dell’account, dettagli di ricerca e scelte sulla privacy quando usi la piattaforma.",
+  "legalCenter.privacyPolicy.cta": "Visualizza l’informativa sulla privacy",
+  "legalCenter.termsOfService.title": "Termini di servizio",
+  "legalCenter.termsOfService.description":
+    "Consulta i termini che spiegano l’uso accettabile, le responsabilità dell’account, i reindirizzamenti ai fornitori e le regole della piattaforma Kurioticket.",
+  "legalCenter.termsOfService.cta": "Visualizza i termini di servizio",
+  "legalCenter.cookiePolicy.title": "Informativa sui cookie",
+  "legalCenter.cookiePolicy.description":
+    "Scopri come cookie e tecnologie simili supportano funzionalità del sito, preferenze, analisi e miglioramenti del servizio.",
+  "legalCenter.cookiePolicy.cta": "Visualizza l’informativa sui cookie",
+  "legalCenter.additionalResourcesTitle": "Risorse legali aggiuntive",
+  "legalCenter.additionalResourcesDescription":
+    "Potrebbero essere aggiunte ulteriori risorse legali man mano che Kurioticket cresce.",
   "legal.lastUpdated": "Ultimo aggiornamento",
   "legal.print": "Stampa",
   "legal.tableOfContents": "INDICE",
