@@ -165,22 +165,24 @@ export const translations: TranslationDictionary = {
     "Trouvez de bonnes offres sur les vols et les hôtels.",
   "accountDashboard.promo.cta": "Rechercher des vols",
   "accountDashboard.security.eyebrow": "SÉCURITÉ",
-  "accountDashboard.security.title": "Sécurité",
+  "accountDashboard.security.title": "Paramètres de sécurité",
   "accountDashboard.security.description":
-    "Gérez la sécurité de votre compte et vos paramètres de confidentialité.",
-  "accountDashboard.security.comingSoon": "Bientôt disponible",
-  "accountDashboard.security.password.title": "Mot de passe",
-  "accountDashboard.security.password.description":
-    "Gérez votre mot de passe et la sécurité de connexion.",
-  "accountDashboard.security.twoStep.title": "Vérification en deux étapes",
-  "accountDashboard.security.twoStep.description":
-    "Ajoutez une couche de protection supplémentaire à votre compte.",
+    "Modifiez vos paramètres de sécurité, configurez une authentification sécurisée ou gérez l’accès au compte.",
+  "accountDashboard.security.passkeys.title": "Clés d’accès",
+  "accountDashboard.security.passkeys.description":
+    "Connectez-vous en toute sécurité sans devoir mémoriser un mot de passe.",
+  "accountDashboard.security.twoFactor.title": "Authentification à deux facteurs",
+  "accountDashboard.security.twoFactor.description":
+    "Ajoutez une couche de sécurité supplémentaire à votre compte.",
   "accountDashboard.security.activeSessions.title": "Sessions actives",
   "accountDashboard.security.activeSessions.description":
-    "Consultez les appareils connectés à votre compte.",
-  "accountDashboard.security.privacy.title": "Confidentialité",
-  "accountDashboard.security.privacy.description":
-    "Consultez la manière dont les informations de votre compte sont utilisées.",
+    "Vérifiez où votre compte est connecté et déconnectez les autres appareils.",
+  "accountDashboard.security.deleteAccount.title": "Supprimer le compte",
+  "accountDashboard.security.deleteAccount.description":
+    "Supprimez définitivement votre compte Kurioticket.",
+  "accountDashboard.security.action.setUp": "Configurer",
+  "accountDashboard.security.action.manage": "Gérer",
+  "accountDashboard.security.action.deleteAccount": "Supprimer le compte",
   "accountDashboard.trips.title": "Mes voyages",
   "accountDashboard.trips.subtitle": "Consultez et gérez vos voyages au même endroit.",
   "accountDashboard.trips.findReservation": "Trouver une réservation",
