@@ -52,6 +52,9 @@ const heroImage =
 
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
 
+const destinationImageFallback =
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95";
+
 const HOME_POPULAR_DESTINATION_CITY_KEYS: Record<string, string> = {
   Accra: "homePopularDestinationCity.accra",
   "Addis Ababa": "homePopularDestinationCity.addisAbaba",
@@ -1286,17 +1289,24 @@ function DestinationCard({
     itemId: string,
   ) => void;
 }) {
+  const [imageSource, setImageSource] = useState(image);
+
   return (
     <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
       <Link href={href} className="focus-ring block">
         <div className="relative h-72 sm:h-80">
           <Image
-            src={image}
+            src={imageSource}
             alt={imageAlt}
             fill
             quality={92}
             sizes="(min-width: 1280px) 22rem, (min-width: 640px) 22rem, 18.5rem"
             className="object-cover transition duration-500 group-hover:scale-105"
+            onError={() => {
+              if (imageSource !== destinationImageFallback) {
+                setImageSource(destinationImageFallback);
+              }
+            }}
           />
 
           <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/55 via-slate-950/16 to-transparent" />
