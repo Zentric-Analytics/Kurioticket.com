@@ -94,4 +94,17 @@ export type TranslationDictionary = {
   globalLanguage: string;
   closeLanguageSelector: string;
   preparing: string;
+  countryAndCurrency: string;
+  openCountryCurrencySelector: string;
+  chooseCountryAndCurrency: string;
+  countryCurrencyDescription: string;
+  closeCountryCurrencySelector: string;
+  searchCountryOrCurrency: string;
+  countryCurrencyAllCountriesAndCurrencies: string;
+  countryCurrencyPopularCountryAndCurrency: string;
+  countryCurrencyOptionCountSingular: string;
+  countryCurrencyOptionCountPlural: string;
+  selectCountryCurrencyOption: string;
+  noCountriesOrCurrenciesFound: string;
+  showMoreResults: string;
 };
