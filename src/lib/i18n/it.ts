@@ -166,36 +166,39 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.us-jfk-mia.title": "Weekend sulle spiagge di Miami",
   "homeDiscoveryRoute.us-jfk-mia.routeNote":
     "Tratta nonstop ad alta frequenza per fughe al caldo.",
+  "homeDiscoveryRoute.us-bos-mia.title": "Pausa al sole invernale di Miami",
+  "homeDiscoveryRoute.us-bos-mia.routeNote":
+    "Rotta verso il sole con spiagge, ristoranti e quartieri artistici.",
   "homeDiscoveryRoute.us-ord-las.title":
     "Viaggio nell’intrattenimento di Las Vegas",
   "homeDiscoveryRoute.us-ord-las.routeNote":
     "Popolare per eventi, spettacoli e voli flessibili nel weekend.",
   "homeDiscoveryRoute.us-lax-sfo.title": "Corridoio rapido per San Francisco",
   "homeDiscoveryRoute.us-lax-sfo.routeNote":
-    "Breve tratta molto usata per lavoro con frequenti orari giornalieri.",
+    "Breve tratta molto usata per lavoro, con frequenti orari giornalieri.",
   "homeDiscoveryRoute.us-atl-mco.title": "Fuga in famiglia a Orlando",
   "homeDiscoveryRoute.us-atl-mco.routeNote":
     "Tratta per parchi a tema con opzioni di orario adatte alle famiglie.",
   "homeDiscoveryRoute.us-dfw-sea.title": "Viaggio tra caffè e natura a Seattle",
   "homeDiscoveryRoute.us-dfw-sea.routeNote":
-    "Ideale per scene gastronomiche urbane e gite nel Pacific Northwest.",
+    "Ideale per scene gastronomiche urbane e gite nel Pacifico nord-occidentale.",
   "homeDiscoveryRoute.us-mia-cun.title": "Breve fuga leisure a Cancun",
   "homeDiscoveryRoute.us-mia-cun.routeNote":
     "Rapida tratta internazionale per resort sulla spiaggia e weekend lunghi.",
   "homeDiscoveryRoute.us-ord-pdx.title":
     "Weekend tra cibo e foreste a Portland",
   "homeDiscoveryRoute.us-ord-pdx.routeNote":
-    "City break nel Pacific Northwest tra torrefazioni, parchi e cascate vicine.",
+    "City break nel Pacifico nord-occidentale tra torrefazioni, parchi e cascate vicine.",
   "homeDiscoveryRoute.us-sea-hnl.title": "Pausa tropicale a Honolulu",
   "homeDiscoveryRoute.us-sea-hnl.routeNote":
-    "Fuga diretta sulle isole per spiagge, surf e viste sui vulcani.",
+    "Fuga diretta su un’isola con spiagge, surf e viste sui vulcani.",
   "homeDiscoveryRoute.us-bos-sju.title": "Weekend lungo caraibico a San Juan",
   "homeDiscoveryRoute.us-bos-sju.routeNote":
-    "Tratta verso un territorio USA al caldo con centro storico e spiagge.",
+    "Tratta verso un territorio USA caldo, con centro storico e spiagge.",
   "homeDiscoveryRoute.us-den-phx.title":
     "Viaggio nel sole desertico di Phoenix",
   "homeDiscoveryRoute.us-den-phx.routeNote":
-    "Breve tratta occidentale per weekend di golf ed escursioni nel deserto di Sonora.",
+    "Breve tratta verso ovest per weekend di golf ed escursioni nel deserto di Sonora.",
   "homeDiscoveryRoute.us-iad-bna.title":
     "Fuga nella città della musica Nashville",
   "homeDiscoveryRoute.us-iad-bna.routeNote":
@@ -214,7 +217,7 @@ export const translations: TranslationDictionary = {
     "Popolare tratta domestica per festival, startup e food truck.",
   "homeDiscoveryRoute.us-dtw-msy.title": "Weekend jazz a New Orleans",
   "homeDiscoveryRoute.us-dtw-msy.routeNote":
-    "Tratta ricca di cultura per jazz club, cucina creola e serate nel French Quarter.",
+    "Tratta ricca di cultura per jazz club, cucina creola e serate nel Quartiere Francese.",
   "homeDiscoveryRoute.us-phl-san.title": "Pausa costiera a San Diego",
   "homeDiscoveryRoute.us-phl-san.routeNote":
     "Fuga coast-to-coast con spiagge, crociere nel porto e clima mite.",
