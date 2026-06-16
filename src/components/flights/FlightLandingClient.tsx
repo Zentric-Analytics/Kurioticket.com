@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Plane, SearchCheck, ShieldCheck } from "lucide-react";
+import { Plane } from "lucide-react";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -35,6 +35,171 @@ const beachDestinationKeywords = [
   "sydney",
   "zanzibar",
 ];
+
+function SearchReadyIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="64" height="64" rx="18" fill="url(#flightSearchTile)" />
+      <rect x="12" y="15" width="35" height="31" rx="8" fill="white" />
+      <rect x="17" y="21" width="17" height="3" rx="1.5" fill="#4F46E5" />
+      <rect x="17" y="29" width="23" height="2.5" rx="1.25" fill="#C7D2FE" />
+      <path
+        d="M19 37H37"
+        stroke="#CBD5E1"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M22 37L27.5 32L32.5 37L27.5 42L22 37Z"
+        fill="#DBEAFE"
+      />
+      <circle cx="43" cy="40" r="10" fill="#EEF2FF" fillOpacity="0.92" />
+      <circle cx="43" cy="40" r="7" stroke="#312E81" strokeWidth="2.8" />
+      <path
+        d="M48 45L54 51"
+        stroke="#312E81"
+        strokeWidth="3.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M39.5 40.5L42 43L47 37.5"
+        stroke="#14B8A6"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <defs>
+        <linearGradient
+          id="flightSearchTile"
+          x1="6"
+          y1="5"
+          x2="58"
+          y2="59"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#EEF2FF" />
+          <stop offset="1" stopColor="#ECFEFF" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function CompareFlightsIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="64" height="64" rx="18" fill="url(#flightCompareTile)" />
+      <rect x="11" y="17" width="30" height="15" rx="5" fill="white" />
+      <rect x="17" y="23" width="10" height="3" rx="1.5" fill="#7C3AED" />
+      <path
+        d="M29 24.5H35"
+        stroke="#DDD6FE"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <rect x="23" y="32" width="30" height="15" rx="5" fill="#F8FAFC" />
+      <rect x="29" y="38" width="10" height="3" rx="1.5" fill="#0D9488" />
+      <path
+        d="M41 39.5H47"
+        stroke="#99F6E4"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M18 43C22.5 35.5 33.5 28.5 46 24"
+        stroke="#312E81"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeDasharray="1 5"
+      />
+      <path
+        d="M41 22.5L47 24L43 28.5"
+        stroke="#312E81"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="18" cy="43" r="4" fill="#DBEAFE" stroke="#2563EB" strokeWidth="2" />
+      <circle cx="46" cy="24" r="4" fill="#CCFBF1" stroke="#0D9488" strokeWidth="2" />
+      <defs>
+        <linearGradient
+          id="flightCompareTile"
+          x1="5"
+          y1="5"
+          x2="59"
+          y2="59"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#F5F3FF" />
+          <stop offset="1" stopColor="#EFF6FF" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function ProviderHandoffIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="64" height="64" rx="18" fill="url(#flightProviderTile)" />
+      <rect x="18" y="14" width="31" height="25" rx="7" fill="white" />
+      <rect x="23" y="20" width="14" height="3" rx="1.5" fill="#2563EB" />
+      <rect x="23" y="28" width="20" height="2.5" rx="1.25" fill="#BFDBFE" />
+      <path
+        d="M15 34L27 30L39 34V41C39 48 34.5 52.5 27 55C19.5 52.5 15 48 15 41V34Z"
+        fill="#EEF2FF"
+        stroke="#312E81"
+        strokeWidth="2.6"
+        strokeLinejoin="round"
+      />
+      <rect x="23" y="40" width="8" height="7" rx="1.8" fill="#14B8A6" />
+      <path
+        d="M25 40V38C25 36.9 25.9 36 27 36C28.1 36 29 36.9 29 38V40"
+        stroke="#0F766E"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M41 47H52M52 47L48 43M52 47L48 51"
+        stroke="#2563EB"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <defs>
+        <linearGradient
+          id="flightProviderTile"
+          x1="6"
+          y1="5"
+          x2="58"
+          y2="59"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#EFF6FF" />
+          <stop offset="1" stopColor="#F0FDFA" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
 
 function getFlightFaqItems(
   t: (key: string) => string,
@@ -327,36 +492,49 @@ export function FlightLandingClient() {
           </div>
         </div>
 
-        <div className="mx-auto grid max-w-6xl gap-3 sm:grid-cols-3">
-          {[
-            {
-              title: t("flightLandingFeatureSearchReadyTitle"),
-              body: t("flightLandingFeatureSearchReadyBody"),
-              icon: SearchCheck,
-            },
-            {
-              title: t("flightLandingFeatureCompareTitle"),
-              body: t("flightLandingFeatureCompareBody"),
-              icon: Plane,
-            },
-            {
-              title: t("flightLandingFeatureProviderTitle"),
-              body: t("flightLandingFeatureProviderBody"),
-              icon: ShieldCheck,
-            },
-          ].map(({ title, body, icon: Icon }) => (
-            <article
-              key={title}
-              className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
-            >
-              <Icon className="h-5 w-5 text-indigo-700" aria-hidden="true" />
-              <h2 className="mt-3 text-base font-semibold text-slate-950">
-                {title}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
-            </article>
-          ))}
-        </div>
+        <section className="mx-auto max-w-6xl border-y border-slate-200/80 bg-gradient-to-b from-white/80 via-indigo-50/35 to-slate-50/80 px-4 py-5 sm:px-5 sm:py-6">
+          <div className="divide-y divide-slate-200/70 sm:grid sm:grid-cols-3 sm:gap-5 sm:divide-y-0 sm:[&>article+article]:border-l sm:[&>article+article]:border-slate-200/70 sm:[&>article+article]:pl-5">
+            {[
+              {
+                title: t("flightLandingFeatureSearchReadyTitle"),
+                body: t("flightLandingFeatureSearchReadyBody"),
+                illustration: <SearchReadyIllustration />,
+                ringClassName: "ring-indigo-100/80",
+              },
+              {
+                title: t("flightLandingFeatureCompareTitle"),
+                body: t("flightLandingFeatureCompareBody"),
+                illustration: <CompareFlightsIllustration />,
+                ringClassName: "ring-violet-100/80",
+              },
+              {
+                title: t("flightLandingFeatureProviderTitle"),
+                body: t("flightLandingFeatureProviderBody"),
+                illustration: <ProviderHandoffIllustration />,
+                ringClassName: "ring-blue-100/80",
+              },
+            ].map(({ title, body, illustration, ringClassName }) => (
+              <article
+                key={title}
+                className="flex items-start gap-3.5 py-4 first:pt-1 last:pb-1 sm:px-2 sm:py-2"
+              >
+                <div
+                  className={`inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ${ringClassName}`}
+                >
+                  {illustration}
+                </div>
+                <div>
+                  <h2 className="text-base font-bold leading-6 text-slate-950">
+                    {title}
+                  </h2>
+                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                    {body}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
 
         {routeInspirationCards.length > 0 ? (
           <div>
