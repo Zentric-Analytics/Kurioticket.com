@@ -874,8 +874,8 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell bg-transparent py-4 sm:py-5">
-          <div className="space-y-3">
+        <section className="page-shell mt-6 border-t border-slate-200/70 bg-gradient-to-b from-slate-50/80 via-white to-white py-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:mt-9 sm:py-11">
+          <div className="space-y-4">
             <div className="max-w-3xl space-y-1.5">
               <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
                 {t("homeTrustTitle")}
