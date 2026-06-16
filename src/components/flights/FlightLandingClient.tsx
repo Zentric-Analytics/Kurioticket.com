@@ -273,7 +273,7 @@ export function FlightLandingClient() {
           </div>
         </div>
 
-        <div className="relative isolate hidden overflow-visible rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_18px_54px_rgba(15,23,42,0.11)] ring-1 ring-white/70 sm:block">
+        <div className="relative isolate hidden overflow-visible rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_20px_58px_rgba(15,23,42,0.12)] ring-1 ring-white/70 sm:block">
           <div className="absolute inset-0 -z-20 overflow-hidden rounded-[1.75rem] bg-slate-100">
             <Image
               src={desktopHeroImageUrl}
@@ -281,13 +281,13 @@ export function FlightLandingClient() {
               fill
               priority
               sizes="(min-width: 1280px) 1180px, 100vw"
-              className="object-cover object-[50%_42%] opacity-55"
+              className="object-cover object-[50%_42%] opacity-28"
             />
           </div>
-          <div className="absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-r from-white via-white/95 to-white/82" />
-          <div className="absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-b from-white/35 via-white/20 to-white/88" />
+          <div className="absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-r from-white via-white/98 to-white/90" />
+          <div className="absolute inset-0 -z-10 rounded-[1.75rem] bg-gradient-to-b from-white/50 via-white/35 to-white/92" />
 
-          <div className="px-6 py-7 lg:px-8 lg:py-8">
+          <div className="px-6 py-6 lg:px-8 lg:py-7">
             <div className="max-w-3xl">
               <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/90 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-indigo-700 shadow-sm">
                 <Plane className="h-3.5 w-3.5" aria-hidden="true" />
@@ -301,7 +301,7 @@ export function FlightLandingClient() {
               </p>
             </div>
 
-            <div className="mt-6 max-w-6xl">
+            <div className="mt-5 max-w-6xl">
               <StandaloneFlightSearchForm localizeCalendarLabels />
             </div>
           </div>

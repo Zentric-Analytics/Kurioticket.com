@@ -77,11 +77,11 @@ const formatFlightsWeekdays = (locale: string) =>
   );
 
 const searchFieldShellClassName =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-r sm:border-slate-200 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-200 sm:focus-within:border-indigo-500 sm:focus-within:bg-white sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/25 lg:flex lg:flex-col lg:justify-center";
+  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-r sm:border-slate-200 sm:bg-white sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-300 sm:focus-within:border-indigo-500 sm:focus-within:bg-white sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/25 lg:flex lg:flex-col lg:justify-center";
 const searchFieldLabelClassName =
-  "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-600";
+  "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
 const searchFieldValueButtonClassName =
-  "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-900 sm:focus-visible:shadow-none";
+  "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
 const mobileDoneButtonClassName =
   "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
 
@@ -931,7 +931,7 @@ export function StandaloneFlightSearchForm({
     if (!open || query.length < 2) return null;
 
     return (
-      <div className="absolute left-0 top-[calc(100%+10px)] z-[140] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block">
+      <div className="absolute left-0 top-[calc(100%+10px)] z-[260] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.18)] ring-1 ring-slate-950/[0.02] sm:block">
         {loading ? (
           <p className="px-4 py-5 text-center text-sm font-medium text-slate-500">
             {t("searchingAirportsAndCities")}
@@ -1305,7 +1305,7 @@ export function StandaloneFlightSearchForm({
   return (
     <section
       className={cn(
-        "relative isolate z-[120] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-2xl sm:border-slate-200/90 sm:bg-white/95 sm:p-2 sm:shadow-[0_18px_46px_rgba(15,23,42,0.13)] sm:ring-1 sm:ring-white/70",
+        "relative isolate z-[120] rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-[1.35rem] sm:border-slate-200 sm:bg-white sm:p-2.5 sm:shadow-[0_22px_58px_rgba(15,23,42,0.18)] sm:ring-1 sm:ring-slate-950/[0.04]",
         hasActiveDesktopPopover && "sm:z-[320]",
       )}
     >
@@ -1314,7 +1314,7 @@ export function StandaloneFlightSearchForm({
           type="button"
           aria-label={t("close") || "Close active flight search popover"}
           onClick={closeDesktopPopovers}
-          className="fixed inset-0 z-0 hidden cursor-default bg-white/20 backdrop-blur-[1px] sm:block"
+          className="fixed inset-0 z-0 hidden cursor-default bg-white/75 backdrop-blur-[4px] sm:block"
           tabIndex={-1}
         />
       ) : null}
@@ -1325,7 +1325,7 @@ export function StandaloneFlightSearchForm({
         <div
           role="radiogroup"
           aria-label={t("tripType") || "Trip type"}
-          className="inline-flex items-center gap-3 rounded-lg bg-white/80 px-0.5 py-1 sm:gap-1 sm:rounded-xl sm:border sm:border-slate-200/90 sm:bg-slate-100/80 sm:p-1 sm:shadow-inner"
+          className="inline-flex items-center gap-3 rounded-lg bg-white/80 px-0.5 py-1 sm:gap-1 sm:rounded-xl sm:border sm:border-slate-200 sm:bg-slate-100 sm:p-1 sm:shadow-inner"
         >
           {[
             ["round-trip", t("roundTrip")],
@@ -1411,7 +1411,7 @@ export function StandaloneFlightSearchForm({
               mobileLauncherRef={originMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("origin")}
               className={cn(
-                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-transparent lg:focus-within:ring-0",
+                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
                 originOpen && "sm:z-20",
               )}
             />
@@ -1455,7 +1455,7 @@ export function StandaloneFlightSearchForm({
               mobileLauncherRef={destinationMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("destination")}
               className={cn(
-                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-transparent lg:focus-within:ring-0",
+                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-white lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-white lg:focus-within:ring-0",
                 destinationOpen && "sm:z-20",
               )}
             />
@@ -1757,7 +1757,7 @@ const AirportFieldControl = React.forwardRef<
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           autoComplete="off"
-          className="h-7 w-full rounded-none border-0 bg-transparent pr-9 text-[15px] font-medium tracking-[-0.01em] text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-500"
+          className="h-7 w-full rounded-none border-0 bg-transparent pr-9 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
         />
         {value ? (
           <button
