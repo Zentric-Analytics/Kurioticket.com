@@ -165,21 +165,21 @@ function RouteCard({
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
-          <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-indigo-700 shadow-sm backdrop-blur">
+          <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-indigo-700 shadow-sm backdrop-blur">
             {item.originCode} → {item.destinationCode}
           </div>
         </div>
         <div className="flex flex-1 flex-col p-5">
-          <h3 className="text-lg font-extrabold tracking-tight text-slate-950">
+          <h3 className="text-lg font-bold tracking-tight text-slate-950">
             {routeText.title}
           </h3>
-          <p className="mt-1 text-sm font-semibold text-slate-700">
+          <p className="mt-1 text-sm font-medium text-slate-700">
             {routeText.originCity} {routeConnector} {routeText.destinationCity}
           </p>
           <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-600">
             {routeText.routeNote}
           </p>
-          <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-indigo-700">
+          <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-indigo-700">
             {t("flightLandingStartThisSearch")}
             <Plane className="h-4 w-4 transition group-hover:translate-x-0.5" />
           </span>
@@ -310,10 +310,10 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-8 space-y-12 sm:mt-10 lg:mt-12">
+      <section className="page-shell mt-12 space-y-12 sm:mt-14 lg:mt-16">
         <div>
           <div className="mb-5 max-w-3xl">
-            <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
               {t("discoverDestinationsFromRegion")}
             </h2>
             <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
@@ -350,7 +350,7 @@ export function FlightLandingClient() {
               className="rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.05)]"
             >
               <Icon className="h-5 w-5 text-indigo-700" aria-hidden="true" />
-              <h2 className="mt-3 text-base font-extrabold text-slate-950">
+              <h2 className="mt-3 text-base font-semibold text-slate-950">
                 {title}
               </h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
