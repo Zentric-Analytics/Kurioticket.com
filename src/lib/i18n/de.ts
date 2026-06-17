@@ -1905,6 +1905,7 @@ export const translations: TranslationDictionary = {
   departs: "Abflug",
   updatingResults: "Ergebnisse werden aktualisiert…",
   noFlightsMatchFilters: "Keine Flüge entsprechen diesen Filtern. Erweitern Sie Ihre Filter, um mehr Live-Optionen zu sehen.",
+  unableToSearchFlights: "Flüge konnten nicht gesucht werden.",
   limitedProviderChecks: "Einige Anbieterprüfungen können für diese Suche eingeschränkt sein. Prüfen Sie endgültige Verfügbarkeit und Tarifdetails vor der Buchung beim Anbieter.",
   closeFilters: "Filter schließen",
   editFlightSearch: "Flugsuche bearbeiten",

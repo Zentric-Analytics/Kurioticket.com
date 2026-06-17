@@ -2430,6 +2430,7 @@ export const translations: TranslationDictionary = {
   departs: "Departs",
   updatingResults: "Updating results...",
   noFlightsMatchFilters: "No flights match these filters. Widen your filters to see more live options.",
+  unableToSearchFlights: "Unable to search flights.",
   limitedProviderChecks: "Some provider checks may be limited for this search. Review final availability and fare details with the provider before booking.",
   closeFilters: "Close filters",
   editFlightSearch: "Edit flight search",

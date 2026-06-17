@@ -1204,6 +1204,7 @@ export const translations: TranslationDictionary = {
   updatingResults: "Aggiornamento risultati...",
   noFlightsMatchFilters:
     "Nessun volo corrisponde a questi filtri. Allarga i filtri per vedere più opzioni disponibili.",
+  unableToSearchFlights: "Impossibile cercare voli.",
   limitedProviderChecks:
     "Alcuni controlli dei fornitori potrebbero essere limitati per questa ricerca. Verifica disponibilità finale e dettagli tariffari con il fornitore prima di prenotare.",
   closeFilters: "Chiudi filtri",
