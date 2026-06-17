@@ -1008,6 +1008,29 @@ export const translations: TranslationDictionary = {
   footerTermsOfService: "Termos de serviço",
   footerCookiePolicy: "Política de cookies",
   legalCenter: "Centro jurídico",
+  "legalCenter.heroLabel": "Informações legais",
+  "legalCenter.heroTitle": "Centro jurídico",
+  "legalCenter.heroDescription":
+    "Acesse informações legais e de políticas importantes relacionadas ao uso do Kurioticket.",
+  "legalCenter.resourcesHeading": "Recursos jurídicos",
+  "legalCenter.resourcesDescription":
+    "Escolha uma política abaixo para saber mais sobre os termos legais e as práticas de dados do Kurioticket.",
+  "legalCenter.policiesBadge": "POLÍTICAS",
+  "legalCenter.privacyPolicy.title": "Política de privacidade",
+  "legalCenter.privacyPolicy.description":
+    "Saiba como o Kurioticket trata informações pessoais, dados da conta, detalhes de pesquisa e escolhas de privacidade quando você usa a plataforma.",
+  "legalCenter.privacyPolicy.cta": "Ver Política de privacidade",
+  "legalCenter.termsOfService.title": "Termos de serviço",
+  "legalCenter.termsOfService.description":
+    "Revise os termos que explicam o uso aceitável, as responsabilidades da conta, os redirecionamentos para provedores e as regras da plataforma Kurioticket.",
+  "legalCenter.termsOfService.cta": "Ver Termos de serviço",
+  "legalCenter.cookiePolicy.title": "Política de cookies",
+  "legalCenter.cookiePolicy.description":
+    "Entenda como cookies e tecnologias semelhantes ajudam na funcionalidade do site, preferências, análises e melhorias do serviço.",
+  "legalCenter.cookiePolicy.cta": "Ver Política de cookies",
+  "legalCenter.additionalResourcesTitle": "Recursos jurídicos adicionais",
+  "legalCenter.additionalResourcesDescription":
+    "Recursos jurídicos adicionais poderão ser adicionados à medida que o Kurioticket crescer.",
   footerAboutKurioticket: "Sobre o Kurioticket",
   footerAboutUs: "Sobre nós",
   footerHowItWorks: "Como o Kurioticket funciona",
