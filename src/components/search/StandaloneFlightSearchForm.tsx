@@ -1225,14 +1225,14 @@ export function StandaloneFlightSearchForm({
       {
         key: "children",
         label: t("childPlural") || "Children",
-        subtitle: "Ages 2–17",
+        subtitle: t("childAgeRange") || "Ages 2–17",
         count: draftChildCount,
         min: 0,
       },
       {
         key: "infants",
         label: t("infantPlural") || "Infants",
-        subtitle: "Under 2",
+        subtitle: t("under2") || "Under 2",
         count: draftInfantCount,
         min: 0,
       },
@@ -1252,11 +1252,11 @@ export function StandaloneFlightSearchForm({
       >
         <div>
           <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-            Passengers
+            {t("passengers") || "Passengers"}
           </p>
           {!compact ? (
             <h2 className="mb-2 text-lg font-extrabold tracking-tight text-slate-950">
-              {t("travelers") || "Travelers"}
+              {t("passengers") || t("travelers") || "Travelers"}
             </h2>
           ) : null}
           <div
@@ -1679,7 +1679,7 @@ export function StandaloneFlightSearchForm({
               <>
                 <FlightMobilePickerShell
                   open={travelersOpen}
-                  title={t("travelers")}
+                  title={t("passengers") || t("travelers") || "Travelers"}
                   titleId="standalone-flight-mobile-travelers-title"
                   launcherRef={travelersLauncherRef}
                   onClose={closeTravelers}

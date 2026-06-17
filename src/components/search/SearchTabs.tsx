@@ -3138,7 +3138,7 @@ export function SearchTabs({
                   <>
                     <FlightMobilePickerShell
                       open={travelersMenuOpen}
-                      title={t.travelers}
+                      title={translate("passengers") || t.travelers || "Travelers"}
                       titleId="homepage-flight-travelers-title"
                       launcherRef={travelersLauncherRef}
                       footer={
@@ -3174,7 +3174,7 @@ export function SearchTabs({
                           {translate("passengers") || "Passengers"}
                         </p>
                         <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
-                          {t.travelers || "Travelers"}
+                          {translate("passengers") || t.travelers || "Travelers"}
                         </h3>
                       </div>
                       <div className="mt-3 space-y-4">
