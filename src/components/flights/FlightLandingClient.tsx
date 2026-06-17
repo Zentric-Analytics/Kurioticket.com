@@ -475,7 +475,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-20 sm:mt-28 lg:mt-32">
+      <section className="page-shell mt-24 sm:mt-32 lg:mt-36">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
