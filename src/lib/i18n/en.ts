@@ -150,14 +150,14 @@ export const translations: TranslationDictionary = {
   support: "Support",
   dashboard: "Dashboard",
   "accountDashboard.nav.overview": "Overview",
-  "accountDashboard.nav.trips": "My Trips",
+  "accountDashboard.nav.trips": "Trips",
   "accountDashboard.nav.saved": "Saved",
   "accountDashboard.nav.priceAlerts": "Price alerts",
-  "accountDashboard.nav.preference": "Preference",
-  "accountDashboard.nav.security": "Security settings",
+  "accountDashboard.nav.preference": "Preferences",
+  "accountDashboard.nav.security": "Security",
   "accountDashboard.nav.support": "Support",
   "accountDashboard.trips.title": "My Trips",
-  "accountDashboard.trips.subtitle": "View and manage your trips in one place.",
+  "accountDashboard.trips.subtitle": "View your upcoming, past, and cancelled trips.",
   "accountDashboard.trips.findReservation": "Find a reservation",
   "accountDashboard.trips.lookup.title": "Enter booking details",
   "accountDashboard.trips.lookup.body": "Enter your reservation code and email address to locate and manage your booking.",
@@ -208,11 +208,11 @@ export const translations: TranslationDictionary = {
   "accountDashboard.promo.cta": "Search flights",
   "accountDashboard.overview.welcome": "Welcome back, {name}",
   "accountDashboard.overview.subtitle":
-    "Manage your trips, saved items, and preferences.",
+    "View and update your personal details and account information.",
   "accountDashboard.saved.eyebrow": "SAVED",
   "accountDashboard.saved.title": "Saved",
   "accountDashboard.saved.description":
-    "Saved trips, routes, stays, and planning items connected to your account belong here.",
+    "View your saved trips, routes, stays, and recent searches.",
   "accountDashboard.saved.emptyTitle": "No saved items found.",
   "accountDashboard.saved.emptyDescription":
     "Explore the homepage to find some travel inspiration!",
@@ -234,7 +234,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.eyebrow": "PREFERENCES",
   "accountDashboard.preferences.title": "Preferences",
   "accountDashboard.preferences.description":
-    "Account settings are grouped here as clean shortcuts. Controls that are not active yet are marked clearly.",
+    "Manage your preferences and personalize your experience.",
   "accountDashboard.preferences.comingSoon": "Coming soon",
   "accountDashboard.preferences.personalDetails.title": "Personal details",
   "accountDashboard.preferences.personalDetails.description":
@@ -251,7 +251,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.eyebrow": "SECURITY",
   "accountDashboard.security.title": "Security settings",
   "accountDashboard.security.description":
-    "Change your security settings, set up secure authentication, or manage account access.",
+    "Update your password and manage account security.",
   "accountDashboard.security.passkeys.title": "Passkeys",
   "accountDashboard.security.passkeys.description":
     "Sign in securely without needing to remember a password.",
@@ -270,7 +270,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.support.eyebrow": "SUPPORT",
   "accountDashboard.support.title": "Support",
   "accountDashboard.support.description":
-    "Find help and policy resources without presenting inactive support tools as complete workflows.",
+    "Get help and contact customer support.",
   "accountDashboard.support.comingSoon": "Coming soon",
   "accountDashboard.support.helpCenter.title": "Help center",
   "accountDashboard.support.helpCenter.description":
@@ -283,6 +283,10 @@ export const translations: TranslationDictionary = {
     "Review legal and privacy information for account data and platform policies.",
   "accountDashboard.mobile.backAriaLabel": "Back to My account",
   "accountDashboard.mobile.manageAccount": "Manage account",
+  "accountDashboard.hub.title": "My Account",
+  "accountDashboard.hub.description": "Manage your trips, saved items, preferences, and account settings in one place.",
+  "accountDashboard.hub.infoTitle": "Everything in one place",
+  "accountDashboard.hub.infoBody": "Quick access to your account, trips, preferences, and support.",
   "accountDashboard.personalDetails.title": "Personal details",
   "accountDashboard.personalDetails.subtitle":
     "Update your information and manage how it is used across Kurioticket.",
