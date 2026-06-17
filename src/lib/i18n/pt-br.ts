@@ -2672,6 +2672,26 @@ export const translations: TranslationDictionary = {
   "legal.dataDeletionPolicy.sections.retention.title": "Registros mantidos",
   "legal.dataDeletionPolicy.sections.retention.paragraph1": "Alguns registros podem ser mantidos por motivos comerciais legítimos, segurança, análises, questões legais, prevenção de abuso ou resolução de disputas. Minimizamos os dados pessoais mantidos sempre que viável.",
   "legal.dataDeletionPolicy.developerNote": "Estes rascunhos legais são placeholders iniciais e devem ser revisados por assessoria jurídica qualificada antes de um lançamento público em grande escala.",
+  "accountDashboard.security.eyebrow": "SEGURANÇA",
+  "accountDashboard.security.title": "Configurações de segurança",
+  "accountDashboard.security.description":
+    "Atualize sua senha e gerencie a segurança da conta.",
+  "accountDashboard.security.passkeys.title": "Passkeys",
+  "accountDashboard.security.passkeys.description":
+    "Entre com segurança sem precisar lembrar uma senha.",
+  "accountDashboard.security.twoFactor.title": "Autenticação de dois fatores",
+  "accountDashboard.security.twoFactor.description":
+    "Adicione uma camada extra de segurança à sua conta.",
+  "accountDashboard.security.activeSessions.title": "Sessões ativas",
+  "accountDashboard.security.activeSessions.description":
+    "Veja onde sua conta está conectada e saia de outros dispositivos.",
+  "accountDashboard.security.deleteAccount.title": "Excluir conta",
+  "accountDashboard.security.deleteAccount.description":
+    "Exclua permanentemente sua conta Kurioticket.",
+  "accountDashboard.security.action.setUp": "Configurar",
+  "accountDashboard.security.action.manage": "Gerenciar",
+  "accountDashboard.security.action.deleteAccount": "Excluir conta",
+
   "legal.refundBookingDisclaimer.title": "Aviso sobre reembolsos e provedores externos",
   "legal.refundBookingDisclaimer.summary": "Esclarece que compras, emissão de passagens, reembolsos, cancelamentos e pagamentos por inventário de viagem ocorrem fora do Kurioticket.",
   "legal.refundBookingDisclaimer.lastUpdatedDate": "11 de maio de 2026",
