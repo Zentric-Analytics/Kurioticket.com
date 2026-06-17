@@ -42,6 +42,7 @@ export const translations: TranslationDictionary = {
   "countryCurrency.country.CN": "China",
   "countryCurrency.country.IN": "India",
   "countryCurrency.country.BR": "Brazil",
+  "countryCurrency.country.PT": "Portugal",
   "countryCurrency.country.MX": "Mexico",
   "countryCurrency.country.SG": "Singapore",
   destinations: "Destinations",
