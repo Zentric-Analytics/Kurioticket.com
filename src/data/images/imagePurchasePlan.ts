@@ -75,6 +75,97 @@ const standardLicenseRequirement =
   "Commercial web and mobile-web license covering Kurioticket marketing, metasearch UI, paid acquisition landing pages, email crops, worldwide use, and retained receipt/license records.";
 const purchasedPendingCropApprovalNotes =
   "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
+const purchasedHomepageDestinationAssets: Record<
+  string,
+  Pick<
+    PremiumImagePurchaseEntry,
+    | "approvalStatus"
+    | "purchasedAssetPath"
+    | "sourcePage"
+    | "vendor"
+    | "license"
+    | "collection"
+    | "stockFileId"
+    | "dimensions"
+    | "cropApprovalNotes"
+  >
+> = {
+  "phase-3-007-home-destination-new-york": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-new-york-statue-liberty-skyline-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/the-statue-of-liberty-with-one-world-trade-center-background-landmarks-of-new-york-gm875655298-244448255",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "875655298",
+    dimensions: "5818 x 3884",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-011-home-destination-miami": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-miami-skyline-waterfront-001.jpg",
+    sourcePage: "https://www.istockphoto.com/photo/gm2226617855",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2226617855",
+    dimensions: "8192 x 5464",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-012-home-destination-las-vegas": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-las-vegas-strip-night-drone-001.jpg",
+    sourcePage: "https://www.istockphoto.com/photo/gm2210332790",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2210332790",
+    dimensions: "8192 x 4320",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-013-home-destination-los-angeles": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-los-angeles-palm-skyline-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/elysian-park-and-the-view-towards-los-angeles-downtown-usa-with-a-palm-tree-alley-in-gm2189888489-608312569",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2189888489",
+    dimensions: "8064 x 6048",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-008-home-destination-london": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-london-tower-bridge-thames-001.jpg",
+    sourcePage: "https://www.istockphoto.com/photo/gm2243786140",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2243786140",
+    dimensions: "5467 x 3645",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-009-home-destination-paris": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-paris-eiffel-tower-buildings-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/eiffel-tower-paris-with-facades-of-old-buildings-in-the-forefront-during-daylight-gm1372132465-441313089",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "1372132465",
+    dimensions: "8000 x 5336",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+};
 
 type PurchaseEntryInput = Omit<
   PremiumImagePurchaseEntry,
@@ -380,8 +471,10 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
     ["phase-3-022-home-destination-cancun", "Cancun", "Mexico", "North America", "inventory-data-markethomecontent-ts-destinations-marketing-1552074284-5e88ef1aef18", "premium Cancun beach scene with turquoise water and no specific resort implication"],
     ["phase-3-023-home-destination-amsterdam", "Amsterdam", "Netherlands", "Europe", "inventory-data-markethomecontent-ts-destinations-marketing-1512470876302-972faa2aa9a4", "premium Amsterdam canal scene with bridge, bikes, or house fronts preserved"],
     ["phase-3-024-home-destination-barcelona", "Barcelona", "Spain", "Europe", "inventory-data-markethomecontent-ts-destinations-marketing-1583422409516-2895a77efded", "premium Barcelona city scene with Sagrada Familia or Eixample context"],
-  ].map(([id, destination, country, region, targetId, brief], index) =>
-    purchaseEntry({
+  ].map(([id, destination, country, region, targetId, brief], index) => {
+    const purchasedAsset = purchasedHomepageDestinationAssets[id];
+
+    return purchaseEntry({
       id,
       title: `Homepage destination card — ${destination}`,
       product: "destinations",
@@ -401,9 +494,12 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
       recommendedAspectRatios: ["16:9", "3:2", "4:5", "1:1"],
       launchCritical: true,
       buyingBatch: index < 10 ? "A" : "B",
-      notes: "Purchase as a reusable premium destination-card asset; do not replace the current URL until Phase 4.",
-    }),
-  ),
+      notes: purchasedAsset
+        ? "Purchased iStock asset is stored locally for the live US homepage destination-card replacement; final desktop/mobile crop approval remains pending staging QA."
+        : "Purchase as a reusable premium destination-card asset; do not replace the current URL until Phase 4.",
+      ...purchasedAsset,
+    });
+  }),
   ...[
     ["phase-3-025-hotel-destination-tokyo", "Tokyo", "Japan", "Asia", "hotel-destination-tokyo-pexels", "premium Tokyo skyline or neighborhood arrival scene for hotel browsing"],
     ["phase-3-026-hotel-destination-rome", "Rome", "Italy", "Europe", "hotel-destination-rome-pexels", "premium Rome historic city scene with Colosseum or streetscape context"],
