@@ -1,4 +1,4 @@
-import { MobileAccountMenuPage } from "@/components/dashboard/DashboardGrid";
+import { AccountMenuPage } from "@/components/dashboard/DashboardGrid";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 
@@ -12,7 +12,7 @@ export default function AccountPage() {
       <AppHeader />
       <main className="flex-1 bg-white pb-10 pt-6 sm:pt-8 lg:pt-28">
         <div className="page-shell min-w-0">
-          <MobileAccountMenuPage />
+          <AccountMenuPage />
         </div>
       </main>
       <Footer />
