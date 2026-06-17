@@ -247,7 +247,6 @@ export const translations: TranslationDictionary = {
   travelerSingular: "viajante",
   travelerPlural: "viajantes",
   cabinClass: "Classe de cabine",
-  done: "Concluído",
   homeHeroTitle: "Encontre voos baratos para qualquer lugar",
   homeHeroSubtitle:
     "Pesquise e compare voos de vários fornecedores de viagem antes de reservar com parceiros confiáveis.",
