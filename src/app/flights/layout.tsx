@@ -42,7 +42,7 @@ export default function FlightsLayout({ children }: { children: ReactNode }) {
         }
 
         main.bg-slate-50 > section.border-y + section.page-shell {
-          margin-top: 5.25rem;
+          margin-top: 3.5rem;
         }
 
         @media (min-width: 640px) {
@@ -57,7 +57,7 @@ export default function FlightsLayout({ children }: { children: ReactNode }) {
           }
 
           main.bg-slate-50 > section.border-y + section.page-shell {
-            margin-top: 5.75rem;
+            margin-top: 3.75rem;
           }
         }
 
@@ -68,7 +68,7 @@ export default function FlightsLayout({ children }: { children: ReactNode }) {
           }
 
           main.bg-slate-50 > section.border-y + section.page-shell {
-            margin-top: 6.25rem;
+            margin-top: 4rem;
           }
         }
       `}</style>
