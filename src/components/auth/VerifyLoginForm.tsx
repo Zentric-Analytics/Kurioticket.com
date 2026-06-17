@@ -7,7 +7,6 @@ import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
-import { useLocale } from "@/components/layout/LocaleProvider";
 
 type VerifyLoginFormProps = {
   email: string;
@@ -22,7 +21,6 @@ export function VerifyLoginForm({
   email,
   callbackUrl = "/",
 }: VerifyLoginFormProps) {
-  const { t } = useLocale();
   const [code, setCode] = useState("");
   const [resendPassword, setResendPassword] = useState("");
   const [error, setError] = useState("");
@@ -147,15 +145,16 @@ export function VerifyLoginForm({
   return (
     <Card className="mx-auto w-full max-w-md p-5">
       <h1 className="text-2xl font-bold text-navy">
-        {t.verifyLoginPageTitle}
+        Verify your login
       </h1>
 
       <p className="mt-2 text-sm text-muted">
-        {t.verifyLoginPageSubtitle}
+        Enter the 6-digit code we sent to your email.
+        Codes expire after 10 minutes.
       </p>
 
       <form action={submit} className="mt-5 grid gap-4">
-        <Field label={t.verifyLoginCodeLabel}>
+        <Field label="Login code">
           <Input
             name="code"
             inputMode="numeric"
@@ -193,16 +192,16 @@ export function VerifyLoginForm({
 
         <Button disabled={busy || code.length !== 6}>
           {busy
-            ? t.verifyLoginSubmitting
-            : t.verifyLoginSubmit}
+            ? "Verifying…"
+            : "Verify login"}
         </Button>
       </form>
 
       <div className="mt-4 grid gap-3 rounded-md border border-teal/20 p-3">
         <p className="text-sm text-muted">
-          {t.verifyLoginNewCodePrompt}
+          Need a new code? Enter your password so we can safely resend one.
         </p>
-        <Field label={t.verifyLoginPasswordLabel}>
+        <Field label="Password for resend">
           <Input
             type="password"
             autoComplete="current-password"
@@ -218,20 +217,20 @@ export function VerifyLoginForm({
           disabled={busy || resending || cooldownSeconds > 0}
         >
           {resending
-            ? t.verifyLoginSendingCode
+            ? "Sending code…"
             : cooldownSeconds > 0
-              ? t.verifyLoginResendIn.replaceAll("{{seconds}}", String(cooldownSeconds))
-              : t.verifyLoginResendCode}
+              ? `Resend in ${cooldownSeconds}s`
+              : "Resend code"}
         </Button>
       </div>
 
       <p className="mt-4 text-sm text-muted">
-        {t.verifyLoginStartOverPrompt}{" "}
+        Need to start over?{" "}
         <Link
           className="font-semibold text-teal-dark"
           href="/auth/signin"
         >
-          {t.verifyLoginAgainLink}
+          Log in again
         </Link>
       </p>
     </Card>

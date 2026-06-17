@@ -6,13 +6,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
-import { useLocale } from "@/components/layout/LocaleProvider";
 import { forgotPasswordSchema } from "@/lib/validation";
 
 const successMessage = "If an account exists, we sent password reset instructions.";
 
 export function ForgotPasswordForm() {
-  const { t } = useLocale();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,14 +54,14 @@ export function ForgotPasswordForm() {
 
   return (
     <Card className="mx-auto w-full max-w-md p-5">
-      <h1 className="text-2xl font-bold text-navy">{t.forgotPasswordPageTitle}</h1>
+      <h1 className="text-2xl font-bold text-navy">Reset your password</h1>
 
       <p className="mt-2 text-sm text-muted">
-        {t.forgotPasswordPageSubtitle}
+        Enter your email and we&apos;ll send instructions to reset your password.
       </p>
 
       <form action={submit} className="mt-5 grid gap-4">
-        <Field label={t.loginEmailLabel}>
+        <Field label="Email">
           <Input
             name="email"
             type="email"
@@ -82,11 +80,11 @@ export function ForgotPasswordForm() {
           </p>
         ) : null}
 
-        <Button disabled={loading}>{loading ? t.forgotPasswordSending : t.forgotPasswordSubmit}</Button>
+        <Button disabled={loading}>{loading ? "Sending..." : "Send reset link"}</Button>
       </form>
 
       <p className="mt-4 text-sm text-muted">
-        {t.forgotPasswordRememberPrompt} <Link className="font-semibold text-teal-dark" href="/auth/signin">{t.forgotPasswordLoginLink}</Link>
+        Remember your password? <Link className="font-semibold text-teal-dark" href="/auth/signin">Log in</Link>
       </p>
     </Card>
   );
