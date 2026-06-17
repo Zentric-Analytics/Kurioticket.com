@@ -497,16 +497,16 @@ export default function HotelsSearchPage() {
           </div>
         </section>
 
-        <div className="page-shell relative z-30 -mt-16 sm:-mt-14 lg:-mt-16">
-          <div className="mx-auto max-w-6xl">
+        <div className="page-shell relative z-30 -mt-24 sm:-mt-24 lg:-mt-28">
+          <div className="mx-auto max-w-[1180px]">
             <HotelSearchBar
               introLabel={hotelSearchIntroLabel}
-              className="[&>p]:hidden [&>form]:!mt-0"
+              className="max-w-[1180px] [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-2.5 [&>form>div]:!shadow-[0_30px_72px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3 lg:[&>form>div]:!p-3.5"
             />
           </div>
         </div>
 
-        <div className="page-shell relative mx-auto mt-16 max-w-6xl space-y-11 sm:mt-18 md:mt-20 md:space-y-14 lg:mt-20">
+        <div className="page-shell relative mx-auto mt-24 max-w-6xl space-y-11 sm:mt-24 md:mt-24 md:space-y-14 lg:mt-24">
           <section
             className="space-y-4"
             aria-labelledby="hotel-destinations-heading"
