@@ -539,93 +539,95 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-32 space-y-12 sm:mt-36 lg:mt-40">
-        {routeInspirationCards.length > 0 ? (
-          <div>
-            <div className="mb-5 max-w-3xl">
-              <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
-                {t("flightLandingRouteIdeasTitle")}
+      <section className="mt-20 sm:mt-24 lg:mt-28">
+        <div className="page-shell space-y-12">
+          {routeInspirationCards.length > 0 ? (
+            <div>
+              <div className="mb-5 max-w-3xl">
+                <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
+                  {t("flightLandingRouteIdeasTitle")}
+                </h2>
+                <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
+                  {t("flightLandingRouteIdeasBody")}
+                </p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {routeInspirationCards.map((item) => {
+                  const routeText = getRouteText(item, t);
+
+                  return (
+                    <Link
+                      key={item.id}
+                      href={buildDiscoveryLink(item)}
+                      className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_16px_36px_rgba(79,70,229,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    >
+                      <article className="flex h-full flex-col">
+                        <div className="relative h-32 overflow-hidden bg-slate-100">
+                          <Image
+                            src={item.image}
+                            alt={routeText.imageAlt}
+                            fill
+                            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                            className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
+                          />
+                        </div>
+                        <div className="flex flex-1 flex-col p-5">
+                          <p className="text-[0.72rem] font-bold uppercase leading-4 tracking-[0.14em] text-indigo-700/85">
+                            {item.originCode} → {item.destinationCode}
+                          </p>
+                          <h3 className="mt-3 text-lg font-bold leading-6 tracking-[-0.015em] text-slate-950">
+                            {routeText.destinationCity}
+                          </h3>
+                          <p className="mt-2.5 line-clamp-2 text-sm font-medium leading-6 text-slate-600">
+                            {routeText.routeNote}
+                          </p>
+                        </div>
+                      </article>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
+
+          {beachVacationCards.length > 0 ? (
+            <div>
+              <div className="mb-5 max-w-3xl">
+                <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
+                  {t("beachVacations")}
+                </h2>
+                <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
+                  {t("beachVacationsBody")}
+                </p>
+              </div>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {beachVacationCards.map((item) => (
+                  <RouteCard key={item.id} item={item} t={t} />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <section aria-labelledby="flight-booking-faq-heading">
+            <div className="max-w-3xl">
+              <h2
+                id="flight-booking-faq-heading"
+                className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"
+              >
+                {t("flightBookingFaqs")}
               </h2>
               <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
-                {t("flightLandingRouteIdeasBody")}
+                {t("flightBookingFaqIntro")}
               </p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {routeInspirationCards.map((item) => {
-                const routeText = getRouteText(item, t);
-
-                return (
-                  <Link
-                    key={item.id}
-                    href={buildDiscoveryLink(item)}
-                    className="group block overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_16px_36px_rgba(79,70,229,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-                  >
-                    <article className="flex h-full flex-col">
-                      <div className="relative h-32 overflow-hidden bg-slate-100">
-                        <Image
-                          src={item.image}
-                          alt={routeText.imageAlt}
-                          fill
-                          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                          className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
-                        />
-                      </div>
-                      <div className="flex flex-1 flex-col p-5">
-                        <p className="text-[0.72rem] font-bold uppercase leading-4 tracking-[0.14em] text-indigo-700/85">
-                          {item.originCode} → {item.destinationCode}
-                        </p>
-                        <h3 className="mt-3 text-lg font-bold leading-6 tracking-[-0.015em] text-slate-950">
-                          {routeText.destinationCity}
-                        </h3>
-                        <p className="mt-2.5 line-clamp-2 text-sm font-medium leading-6 text-slate-600">
-                          {routeText.routeNote}
-                        </p>
-                      </div>
-                    </article>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
-
-        {beachVacationCards.length > 0 ? (
-          <div>
-            <div className="mb-5 max-w-3xl">
-              <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">
-                {t("beachVacations")}
-              </h2>
-              <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
-                {t("beachVacationsBody")}
-              </p>
-            </div>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {beachVacationCards.map((item) => (
-                <RouteCard key={item.id} item={item} t={t} />
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        <section aria-labelledby="flight-booking-faq-heading">
-          <div className="max-w-3xl">
-            <h2
-              id="flight-booking-faq-heading"
-              className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl"
-            >
-              {t("flightBookingFaqs")}
-            </h2>
-            <p className="mt-2 text-sm font-medium leading-6 text-slate-600 sm:text-base">
-              {t("flightBookingFaqIntro")}
-            </p>
-          </div>
-          <FaqAccordion
-            items={getFlightFaqItems(t)}
-            columns="three"
-            compact
-            className="mt-4"
-          />
-        </section>
+            <FaqAccordion
+              items={getFlightFaqItems(t)}
+              columns="three"
+              compact
+              className="mt-4"
+            />
+          </section>
+        </div>
       </section>
     </main>
   );
