@@ -539,7 +539,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-20 space-y-12 sm:mt-24 lg:mt-28">
+      <section className="page-shell mt-24 space-y-12 sm:mt-28 lg:mt-32">
         {routeInspirationCards.length > 0 ? (
           <div>
             <div className="mb-5 max-w-3xl">
@@ -558,15 +558,15 @@ export function FlightLandingClient() {
                   <Link
                     key={item.id}
                     href={buildDiscoveryLink(item)}
-                    className="group rounded-2xl border border-slate-200/75 bg-white/95 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.045)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_16px_34px_rgba(79,70,229,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                    className="group rounded-3xl border border-slate-200/80 bg-white p-5 shadow-[0_12px_32px_rgba(15,23,42,0.055)] transition duration-200 hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_16px_36px_rgba(79,70,229,0.11)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
                   >
-                    <p className="text-[0.7rem] font-extrabold uppercase leading-4 tracking-[0.16em] text-indigo-700/90">
+                    <p className="text-[0.72rem] font-bold uppercase leading-4 tracking-[0.14em] text-indigo-700/85">
                       {item.originCode} → {item.destinationCode}
                     </p>
-                    <h3 className="mt-3 text-base font-extrabold leading-6 tracking-tight text-slate-950">
+                    <h3 className="mt-3 text-lg font-bold leading-6 tracking-[-0.015em] text-slate-950">
                       {routeText.destinationCity}
                     </h3>
-                    <p className="mt-2 line-clamp-2 text-sm font-medium leading-6 text-slate-600">
+                    <p className="mt-2.5 line-clamp-2 text-sm font-medium leading-6 text-slate-600">
                       {routeText.routeNote}
                     </p>
                   </Link>
