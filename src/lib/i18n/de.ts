@@ -2062,4 +2062,22 @@ export const translations: TranslationDictionary = {
   aboutPagePlanningCardBody:
     "Kurioticket hilft Reisenden dabei, Reiseoptionen mit nützlichem Kontext zu bewerten. Verfügbarkeit, Preise, Regeln und abschließende Buchungsschritte können je nach Anbieter variieren. Deshalb sollten Reisende die Anbieterseite sorgfältig prüfen, bevor sie eine Entscheidung treffen.",
 
+  "accountDashboard.hub.title": "Mein Konto",
+  "accountDashboard.hub.description": "Verwalte deine Reisen, gespeicherten Elemente, Einstellungen und Kontoeinstellungen an einem Ort.",
+  "accountDashboard.hub.manageAccount": "Konto verwalten",
+  "accountDashboard.hub.personalDetails": "Persönliche Daten",
+  "accountDashboard.hub.securitySettings": "Sicherheitseinstellungen",
+  "accountDashboard.hub.travelActivity": "Reiseaktivität",
+  "accountDashboard.hub.myTrips": "Meine Reisen",
+  "accountDashboard.hub.savedTrips": "Gespeicherte Reisen",
+  "accountDashboard.hub.recentSearches": "Letzte Suchen",
+  "accountDashboard.hub.priceAlerts": "Preisalarme",
+  "accountDashboard.hub.preferences": "Einstellungen",
+  "accountDashboard.hub.languageRegionCurrency": "Sprache, Region und Währung",
+  "accountDashboard.hub.emailPreferences": "E-Mail-Einstellungen",
+  "accountDashboard.hub.travelPreferences": "Reiseeinstellungen",
+  "accountDashboard.hub.helpAndSupport": "Hilfe und Support",
+  "accountDashboard.hub.contactSupport": "Support kontaktieren",
+  "accountDashboard.hub.faq": "FAQ",
+  "accountDashboard.hub.serviceGuarantee": "Servicegarantie",
 };

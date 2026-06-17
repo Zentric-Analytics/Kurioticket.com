@@ -29,52 +29,52 @@ import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 
 type AccountDashboardRowItem = {
-  label: string;
+  labelKey: string;
   href: string;
   icon: LucideIcon;
 };
 
 type AccountDashboardPanelItem = {
-  title: string;
+  titleKey: string;
   icon: LucideIcon;
   rows: AccountDashboardRowItem[];
 };
 
 const accountDashboardPanels: AccountDashboardPanelItem[] = [
   {
-    title: "Manage account",
+    titleKey: "accountDashboard.hub.manageAccount",
     icon: UserRound,
     rows: [
-      { label: "Personal details", href: "/dashboard", icon: UserRound },
-      { label: "Security settings", href: "/dashboard/security", icon: ShieldCheck },
+      { labelKey: "accountDashboard.hub.personalDetails", href: "/dashboard", icon: UserRound },
+      { labelKey: "accountDashboard.hub.securitySettings", href: "/dashboard/security", icon: ShieldCheck },
     ],
   },
   {
-    title: "Travel activity",
+    titleKey: "accountDashboard.hub.travelActivity",
     icon: Plane,
     rows: [
-      { label: "My trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-      { label: "Saved trips", href: "/dashboard/saved", icon: Bookmark },
-      { label: "Recent searches", href: "/saved", icon: Search },
-      { label: "Price alerts", href: "/dashboard/alerts", icon: Bell },
+      { labelKey: "accountDashboard.hub.myTrips", href: "/dashboard/trips", icon: BriefcaseBusiness },
+      { labelKey: "accountDashboard.hub.savedTrips", href: "/dashboard/saved", icon: Bookmark },
+      { labelKey: "accountDashboard.hub.recentSearches", href: "/saved", icon: Search },
+      { labelKey: "accountDashboard.hub.priceAlerts", href: "/dashboard/alerts", icon: Bell },
     ],
   },
   {
-    title: "Preferences",
+    titleKey: "accountDashboard.hub.preferences",
     icon: SlidersHorizontal,
     rows: [
-      { label: "Language, region & currency", href: "/dashboard/preferences", icon: Globe2 },
-      { label: "Email preferences", href: "/dashboard/preferences", icon: Mail },
-      { label: "Travel preferences", href: "/dashboard/preferences", icon: Settings },
+      { labelKey: "accountDashboard.hub.languageRegionCurrency", href: "/dashboard/preferences", icon: Globe2 },
+      { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/preferences", icon: Mail },
+      { labelKey: "accountDashboard.hub.travelPreferences", href: "/dashboard/preferences", icon: Settings },
     ],
   },
   {
-    title: "Help and support",
+    titleKey: "accountDashboard.hub.helpAndSupport",
     icon: LifeBuoy,
     rows: [
-      { label: "Contact support", href: "/dashboard/support", icon: Headphones },
-      { label: "FAQ", href: "/faq", icon: CircleHelp },
-      { label: "Service guarantee", href: "/support", icon: Sparkles },
+      { labelKey: "accountDashboard.hub.contactSupport", href: "/dashboard/support", icon: Headphones },
+      { labelKey: "accountDashboard.hub.faq", href: "/faq", icon: CircleHelp },
+      { labelKey: "accountDashboard.hub.serviceGuarantee", href: "/support", icon: Sparkles },
     ],
   },
 ];
@@ -160,6 +160,7 @@ export function AccountSectionHeader({ title, description, titleId }: { title: s
 }
 
 function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
+  const { t } = useLocale();
   const RowIcon = row.icon;
 
   return (
@@ -169,7 +170,7 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
     >
       <RowIcon className="size-[18px] shrink-0 text-blue-600 transition group-hover/row:text-violet-700" strokeWidth={2.1} aria-hidden="true" />
       <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-slate-800">
-        {row.label}
+        {t[row.labelKey]}
       </span>
       <ChevronRight className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5 group-hover/row:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
     </Link>
@@ -177,25 +178,27 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
 }
 
 function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) {
+  const { t } = useLocale();
   const PanelIcon = panel.icon;
+  const title = t[panel.titleKey];
 
   return (
     <section
       className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.55)] sm:p-[18px]"
-      aria-labelledby={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+      aria-labelledby={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`}
     >
       <div className="mb-3 flex items-center gap-3 pb-1">
         <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
           <PanelIcon className="size-5" strokeWidth={2.15} aria-hidden="true" />
         </span>
-        <h2 id={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="text-xl font-bold leading-6 text-slate-950">
-          {panel.title}
+        <h2 id={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`} className="text-xl font-bold leading-6 text-slate-950">
+          {title}
         </h2>
       </div>
 
       <div className="divide-y divide-slate-100 border-t border-slate-200">
         {panel.rows.map((row) => (
-          <div key={`${row.href}-${row.label}`}>
+          <div key={`${row.href}-${row.labelKey}`}>
             <AccountDashboardRow row={row} />
           </div>
         ))}
@@ -237,7 +240,7 @@ export function AccountMenuPage() {
       <div className="bg-[#f3f7fc] px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-7 lg:px-8 lg:pb-11 lg:pt-8">
         <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1160px] gap-4 md:grid-cols-2 lg:gap-5">
           {accountDashboardPanels.map((panel) => (
-            <AccountDashboardPanel key={panel.title} panel={panel} />
+            <AccountDashboardPanel key={panel.titleKey} panel={panel} />
           ))}
         </nav>
       </div>
