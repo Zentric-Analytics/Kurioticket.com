@@ -1306,6 +1306,8 @@ export const translations: TranslationDictionary = {
   outbound: "Aller",
   return: "Retour",
   nonstop: "Sans escale",
+  stopSingular: "escale",
+  stopPlural: "escales",
   flightLeg: "Segment de vol",
   layover: "Escale",
   moreCount: "{{count}} de plus",
