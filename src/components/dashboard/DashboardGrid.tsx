@@ -36,7 +36,6 @@ type AccountDashboardRowItem = {
 type AccountDashboardPanelItem = {
   title: string;
   icon: LucideIcon;
-  minHeightClass: string;
   rows: AccountDashboardRowItem[];
 };
 
@@ -44,7 +43,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
   {
     title: "Manage account",
     icon: UserRound,
-    minHeightClass: "lg:min-h-[210px]",
     rows: [
       { label: "Personal details", href: "/dashboard", icon: UserRound },
       { label: "Security settings", href: "/dashboard/security", icon: ShieldCheck },
@@ -53,7 +51,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
   {
     title: "Travel activity",
     icon: Plane,
-    minHeightClass: "lg:min-h-[260px]",
     rows: [
       { label: "My trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
       { label: "Saved trips", href: "/dashboard/saved", icon: Bookmark },
@@ -64,7 +61,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
   {
     title: "Preferences",
     icon: SlidersHorizontal,
-    minHeightClass: "lg:min-h-[235px]",
     rows: [
       { label: "Language, region & currency", href: "/dashboard/preferences", icon: Globe2 },
       { label: "Email preferences", href: "/dashboard/preferences", icon: Mail },
@@ -74,7 +70,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
   {
     title: "Help and support",
     icon: LifeBuoy,
-    minHeightClass: "lg:min-h-[235px]",
     rows: [
       { label: "Contact support", href: "/dashboard/support", icon: Headphones },
       { label: "FAQ", href: "/faq", icon: CircleHelp },
@@ -169,13 +164,13 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   return (
     <Link
       href={row.href}
-      className="focus-ring group/row flex min-h-[52px] items-center gap-3 bg-white/35 px-4 py-3 text-left transition duration-200 hover:bg-blue-50/70 focus-visible:relative focus-visible:z-10 sm:min-h-[56px]"
+      className="focus-ring group/row flex min-h-11 items-center gap-3 px-3 py-2.5 text-left transition duration-150 hover:bg-blue-50/60 focus-visible:relative focus-visible:z-10 sm:min-h-12"
     >
-      <RowIcon className="size-5 shrink-0 text-blue-700 transition group-hover/row:text-violet-700" strokeWidth={2.15} aria-hidden="true" />
-      <span className="min-w-0 flex-1 text-sm font-semibold leading-5 text-slate-900 sm:text-[15px]">
+      <RowIcon className="size-[18px] shrink-0 text-blue-600 transition group-hover/row:text-violet-700" strokeWidth={2.1} aria-hidden="true" />
+      <span className="min-w-0 flex-1 text-sm font-semibold leading-5 text-slate-800">
         {row.label}
       </span>
-      <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5 group-hover/row:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
+      <ChevronRight className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5 group-hover/row:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
     </Link>
   );
 }
@@ -185,24 +180,21 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
 
   return (
     <section
-      className={cn(
-        "flex flex-col px-1 py-2 sm:px-2 sm:py-3",
-        panel.minHeightClass,
-      )}
+      className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)] sm:p-[18px]"
       aria-labelledby={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
     >
-      <div className="mb-4 flex items-center gap-3 sm:mb-[18px]">
-        <span className="inline-flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-100 to-violet-100 text-violet-800 ring-1 ring-blue-200/80">
-          <PanelIcon className="size-5" strokeWidth={2.25} aria-hidden="true" />
+      <div className="mb-3 flex items-center gap-3">
+        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+          <PanelIcon className="size-5" strokeWidth={2.15} aria-hidden="true" />
         </span>
-        <h2 id={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="text-lg font-black tracking-[-0.025em] text-slate-950 sm:text-xl">
+        <h2 id={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="text-[16px] font-bold leading-6 text-slate-900">
           {panel.title}
         </h2>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white/30">
-        {panel.rows.map((row, index) => (
-          <div key={`${row.href}-${row.label}`} className={index === panel.rows.length - 1 ? undefined : "border-b border-slate-200/90"}>
+      <div>
+        {panel.rows.map((row) => (
+          <div key={`${row.href}-${row.label}`} className="border-t border-slate-100">
             <AccountDashboardRow row={row} />
           </div>
         ))}
@@ -215,40 +207,25 @@ export function AccountMenuPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto max-w-[1160px] overflow-x-hidden" aria-labelledby="account-title">
-      <div className="grid gap-6 pb-8 pt-10 sm:pb-9 sm:pt-12 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center lg:pb-9 lg:pt-[52px]">
-        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-          <div
-            className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-violet-600 to-indigo-800 text-2xl font-black text-white shadow-[0_22px_44px_-24px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-[72px] sm:text-3xl"
-            aria-hidden="true"
-          >
-            KT
-          </div>
-          <div className="min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Kurioticket</p>
-            <h1 id="account-title" className="mt-2 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:text-[44px] lg:leading-[1.02]">
-              {t["accountDashboard.hub.title"]}
-            </h1>
-            <p className="mt-3 max-w-[680px] text-base leading-7 text-slate-600">
-              {t["accountDashboard.hub.description"]}
-            </p>
-          </div>
+    <section className="mx-auto max-w-[1088px] overflow-x-hidden" aria-labelledby="account-title">
+      <div className="mb-6 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
+        <div
+          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 via-violet-600 to-indigo-800 text-xl font-bold text-white shadow-sm ring-1 ring-white"
+          aria-hidden="true"
+        >
+          KT
         </div>
-
-        <div className="relative hidden min-h-36 overflow-hidden text-violet-700 lg:block" aria-hidden="true">
-          <div className="absolute right-2 top-1 size-24 rounded-full bg-blue-200/30 blur-sm" />
-          <div className="absolute bottom-0 left-10 size-28 rounded-full bg-violet-200/30 blur-sm" />
-          <Plane className="absolute right-10 top-8 size-9 rotate-12 text-violet-600/70" strokeWidth={1.8} />
-          <div className="absolute bottom-4 left-5 right-5 flex items-end gap-2 text-blue-500/20">
-            <span className="h-10 flex-1 rounded-t-xl bg-current" />
-            <span className="h-16 flex-1 rounded-t-xl bg-current opacity-75" />
-            <span className="h-8 flex-1 rounded-t-xl bg-current opacity-90" />
-            <span className="h-12 flex-1 rounded-t-xl bg-current opacity-60" />
-          </div>
+        <div className="min-w-0">
+          <h1 id="account-title" className="text-[32px] font-bold leading-[1.15] tracking-tight text-slate-900">
+            {t["accountDashboard.hub.title"]}
+          </h1>
+          <p className="mt-2 max-w-[680px] text-sm leading-6 text-slate-600">
+            {t["accountDashboard.hub.description"]}
+          </p>
         </div>
       </div>
 
-      <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="rounded-[2rem] border border-blue-100/80 bg-slate-50/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] grid gap-5 md:grid-cols-2 lg:gap-6 lg:p-5">
+      <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="grid gap-4 md:grid-cols-2 lg:gap-5">
         {accountDashboardPanels.map((panel) => (
           <AccountDashboardPanel key={panel.title} panel={panel} />
         ))}
