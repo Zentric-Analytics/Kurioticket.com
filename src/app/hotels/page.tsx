@@ -503,7 +503,7 @@ export default function HotelsSearchPage() {
           </div>
         </section>
 
-        <div className="page-shell relative mx-auto mt-36 max-w-6xl space-y-11 sm:mt-32 md:mt-36 md:space-y-14 lg:mt-40">
+        <div className="page-shell relative mx-auto mt-64 max-w-6xl space-y-11 sm:mt-56 md:mt-60 md:space-y-14 lg:mt-64">
           <section
             className="space-y-4"
             aria-labelledby="hotel-destinations-heading"
