@@ -91,6 +91,32 @@ const buildMonthCells = (monthDate: Date): MonthCell[] => {
   });
 };
 
+const normalizeHotelCalendarLocale = (locale: string | null | undefined) => {
+  const normalized = locale?.trim().replace("_", "-").toLowerCase() ?? "";
+
+  if (normalized === "fr" || normalized.startsWith("fr-")) {
+    return "fr-FR";
+  }
+
+  if (normalized === "es" || normalized.startsWith("es-")) {
+    return "es-ES";
+  }
+
+  if (normalized === "de" || normalized.startsWith("de-")) {
+    return "de-DE";
+  }
+
+  if (normalized === "it" || normalized.startsWith("it-")) {
+    return "it-IT";
+  }
+
+  if (normalized === "pt" || normalized.startsWith("pt-")) {
+    return "pt-BR";
+  }
+
+  return "en-US";
+};
+
 const formatWeekdays = (locale: string) =>
   Array.from({ length: 7 }, (_, day) =>
     new Intl.DateTimeFormat(locale, { weekday: "short" }).format(
@@ -283,9 +309,18 @@ export function HotelSearchBar({
     return currentMonthStart();
   });
 
+  const calendarLocale = useMemo(
+    () => normalizeHotelCalendarLocale(locale),
+    [locale],
+  );
+  const weekdays = useMemo(
+    () => formatWeekdays(calendarLocale),
+    [calendarLocale],
+  );
+
   const dateSummary = useMemo(() => {
-    const formattedCheckIn = formatShortDate(checkIn, locale);
-    const formattedCheckOut = formatShortDate(checkOut, locale);
+    const formattedCheckIn = formatShortDate(checkIn, calendarLocale);
+    const formattedCheckOut = formatShortDate(checkOut, calendarLocale);
 
     if (!formattedCheckIn) {
       return t("hotelSearchDatePlaceholder");
@@ -296,7 +331,7 @@ export function HotelSearchBar({
     }
 
     return formattedCheckIn;
-  }, [checkIn, checkOut, locale, t]);
+  }, [calendarLocale, checkIn, checkOut, t]);
 
   const totalHotelGuests = hotelAdultCount + hotelChildCount;
 
@@ -312,7 +347,6 @@ export function HotelSearchBar({
     return `${normalizedGuests} ${guestLabel}, ${normalizedRooms} ${roomLabel}`;
   }, [rooms, t, totalHotelGuests]);
 
-  const weekdays = useMemo(() => formatWeekdays(locale), [locale]);
   const hotelSearchIntroLabel = introLabel ?? t("hotelSearchIntroLabel");
 
   const mobileSearchSummary = useMemo(() => {
@@ -1224,7 +1258,7 @@ export function HotelSearchBar({
                       return (
                         <div key={monthOffset}>
                           <p className="mb-1.5 text-center text-sm font-semibold text-slate-800">
-                            {monthDate.toLocaleDateString(locale, {
+                            {monthDate.toLocaleDateString(calendarLocale, {
                               month: "long",
                               year: "numeric",
                             })}
@@ -1265,7 +1299,7 @@ export function HotelSearchBar({
                                   type="button"
                                   aria-label={`${t(
                                     "hotelResults.selectDateAriaPrefix",
-                                  )} ${day.toLocaleDateString(locale, {
+                                  )} ${day.toLocaleDateString(calendarLocale, {
                                     month: "long",
                                     day: "numeric",
                                     year: "numeric",
@@ -1588,7 +1622,7 @@ export function HotelSearchBar({
               return (
                 <div key={monthOffset}>
                   <p className="mb-1 text-center text-sm font-black text-slate-900">
-                    {monthDate.toLocaleDateString(locale, {
+                    {monthDate.toLocaleDateString(calendarLocale, {
                       month: "long",
                       year: "numeric",
                     })}
@@ -1633,7 +1667,7 @@ export function HotelSearchBar({
                           type="button"
                           aria-label={`${t(
                             "hotelResults.selectDateAriaPrefix",
-                          )} ${day.toLocaleDateString(locale, {
+                          )} ${day.toLocaleDateString(calendarLocale, {
                             month: "long",
                             day: "numeric",
                             year: "numeric",
