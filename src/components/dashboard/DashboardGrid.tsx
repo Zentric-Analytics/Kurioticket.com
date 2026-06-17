@@ -2,6 +2,7 @@
 
 import { useState, type ChangeEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Bell,
   Bookmark,
@@ -164,10 +165,10 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   return (
     <Link
       href={row.href}
-      className="focus-ring group/row flex min-h-11 items-center gap-3 px-3 py-2.5 text-left transition duration-150 hover:bg-blue-50/60 focus-visible:relative focus-visible:z-10 sm:min-h-12"
+      className="focus-ring group/row flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition duration-150 hover:bg-blue-50/70 focus-visible:relative focus-visible:z-10 sm:min-h-12"
     >
       <RowIcon className="size-[18px] shrink-0 text-blue-600 transition group-hover/row:text-violet-700" strokeWidth={2.1} aria-hidden="true" />
-      <span className="min-w-0 flex-1 text-sm font-semibold leading-5 text-slate-800">
+      <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-slate-800">
         {row.label}
       </span>
       <ChevronRight className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5 group-hover/row:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
@@ -180,21 +181,21 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
 
   return (
     <section
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)] sm:p-[18px]"
+      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.55)] sm:p-[18px]"
       aria-labelledby={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
     >
-      <div className="mb-3 flex items-center gap-3">
-        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
+      <div className="mb-3 flex items-center gap-3 pb-1">
+        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
           <PanelIcon className="size-5" strokeWidth={2.15} aria-hidden="true" />
         </span>
-        <h2 id={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="text-[16px] font-bold leading-6 text-slate-900">
+        <h2 id={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="text-xl font-bold leading-6 text-slate-950">
           {panel.title}
         </h2>
       </div>
 
-      <div>
+      <div className="divide-y divide-slate-100 border-t border-slate-200">
         {panel.rows.map((row) => (
-          <div key={`${row.href}-${row.label}`} className="border-t border-slate-100">
+          <div key={`${row.href}-${row.label}`}>
             <AccountDashboardRow row={row} />
           </div>
         ))}
@@ -207,29 +208,39 @@ export function AccountMenuPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto max-w-[1088px] overflow-x-hidden" aria-labelledby="account-title">
-      <div className="mb-6 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:gap-4">
+    <section className="overflow-x-hidden" aria-labelledby="account-title">
+      <div className="relative isolate flex h-[230px] w-full items-center overflow-hidden bg-slate-950 sm:h-[270px] lg:h-[320px]">
+        <Image
+          src="/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg"
+          alt="Airplane parked at an airport terminal gate"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center lg:object-[center_right]"
+        />
         <div
-          className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 via-violet-600 to-indigo-800 text-xl font-bold text-white shadow-sm ring-1 ring-white"
+          className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/45 to-slate-950/10"
           aria-hidden="true"
-        >
-          KT
-        </div>
-        <div className="min-w-0">
-          <h1 id="account-title" className="text-[32px] font-bold leading-[1.15] tracking-tight text-slate-900">
-            {t["accountDashboard.hub.title"]}
-          </h1>
-          <p className="mt-2 max-w-[680px] text-sm leading-6 text-slate-600">
-            {t["accountDashboard.hub.description"]}
-          </p>
+        />
+        <div className="page-shell relative z-10 min-w-0 py-8">
+          <div className="max-w-[520px]">
+            <h1 id="account-title" className="text-3xl font-black leading-[1.05] tracking-tight text-white sm:text-[44px] lg:text-5xl">
+              {t["accountDashboard.hub.title"]}
+            </h1>
+            <p className="mt-4 max-w-[520px] text-sm leading-6 text-white/90 sm:text-base sm:leading-7 lg:text-lg">
+              {t["accountDashboard.hub.description"]}
+            </p>
+          </div>
         </div>
       </div>
 
-      <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="grid gap-4 md:grid-cols-2 lg:gap-5">
-        {accountDashboardPanels.map((panel) => (
-          <AccountDashboardPanel key={panel.title} panel={panel} />
-        ))}
-      </nav>
+      <div className="bg-[#f3f7fc] px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-11">
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1160px] gap-4 md:grid-cols-2 lg:gap-5">
+          {accountDashboardPanels.map((panel) => (
+            <AccountDashboardPanel key={panel.title} panel={panel} />
+          ))}
+        </nav>
+      </div>
     </section>
   );
 }
