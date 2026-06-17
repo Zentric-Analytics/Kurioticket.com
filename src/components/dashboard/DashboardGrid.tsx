@@ -166,13 +166,13 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   return (
     <Link
       href={row.href}
-      className="focus-ring group/row flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition duration-150 hover:bg-blue-50/70 focus-visible:relative focus-visible:z-10 sm:min-h-12"
+      className="focus-ring group/row flex min-h-12 items-center gap-3 border-t border-slate-100 px-5 py-2 text-left transition duration-150 hover:bg-slate-50 focus-visible:relative focus-visible:z-10 sm:min-h-[52px]"
     >
-      <RowIcon className="size-[18px] shrink-0 text-blue-600 transition group-hover/row:text-violet-700" strokeWidth={2.1} aria-hidden="true" />
-      <span className="min-w-0 flex-1 text-[15px] font-semibold leading-5 text-slate-800">
+      <RowIcon className="size-[18px] shrink-0 text-blue-600" strokeWidth={2} aria-hidden="true" />
+      <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-slate-800">
         {t[row.labelKey]}
       </span>
-      <ChevronRight className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5 group-hover/row:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
+      <ChevronRight className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5" strokeWidth={2} aria-hidden="true" />
     </Link>
   );
 }
@@ -184,19 +184,19 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
 
   return (
     <section
-      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_14px_34px_-28px_rgba(15,23,42,0.55)] sm:p-[18px]"
+      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
       aria-labelledby={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`}
     >
-      <div className="mb-3 flex items-center gap-3 pb-1">
-        <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-          <PanelIcon className="size-5" strokeWidth={2.15} aria-hidden="true" />
+      <div className="flex items-center gap-3 px-5 pb-3.5 pt-[18px]">
+        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100/80">
+          <PanelIcon className="size-5" strokeWidth={2} aria-hidden="true" />
         </span>
-        <h2 id={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`} className="text-xl font-bold leading-6 text-slate-950">
+        <h2 id={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`} className="text-lg font-semibold leading-6 text-slate-900">
           {title}
         </h2>
       </div>
 
-      <div className="divide-y divide-slate-100 border-t border-slate-200">
+      <div>
         {panel.rows.map((row) => (
           <div key={`${row.href}-${row.labelKey}`}>
             <AccountDashboardRow row={row} />
@@ -238,7 +238,7 @@ export function AccountMenuPage() {
       </div>
 
       <div className="bg-[#f3f7fc] px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-7 lg:px-8 lg:pb-11 lg:pt-8">
-        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1160px] gap-4 md:grid-cols-2 lg:gap-5">
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1120px] gap-4 md:grid-cols-2 lg:gap-5">
           {accountDashboardPanels.map((panel) => (
             <AccountDashboardPanel key={panel.titleKey} panel={panel} />
           ))}
