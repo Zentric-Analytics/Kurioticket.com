@@ -5,6 +5,7 @@ const pexelsLicense = "Pexels License";
 const premiumHomepageCropNotes = "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
 const premiumHomepageDestinationApprovedCropNotes = "Homepage destination-card crop approved on staging after visual QA.";
 const premiumFlightCropNotes = "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
+const premiumHotelCropNotes = "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
 
 export const hotelbedsProviderImagePattern: RegisteredImage = {
   id: "provider-hotelbeds-giata-bigger-pattern",
@@ -85,6 +86,34 @@ export const imageRegistry: RegisteredImage[] = [
     productionPriority: "p0-launch-critical",
     premiumReplacementRequired: false,
     notes: "Registered in Phase 4A for future UI replacement after staging crop QA; no live URL replacement in this PR.",
+  },
+  {
+    id: "phase-3-003-global-hotel-search-hero",
+    url: "/images/premium/hotels/kurioticket-hotels-hero-bellboy-guest-arrival-lobby-001.jpg",
+    alt: "Hotel bellboy welcoming a guest with luggage in a premium lobby",
+    product: "hotels",
+    usage: "homepage-hero",
+    source: "premium-stock",
+    status: "premium-approved",
+    sourcePage:
+      "https://www.istockphoto.com/photo/elegant-bellboy-greeting-hotel-visitor-gm2202326055-619930311?searchscope=image%2Cfilm",
+    license: "Standard",
+    licenseNotes: "iStock Standard license; Essentials collection; binary stored locally for hotels landing hero crop QA.",
+    vendor: "iStock",
+    collection: "Essentials",
+    stockFileId: "2202326055",
+    dimensions: "2048 x 1365",
+    pageSurfaces: ["Hotels landing hero"],
+    intendedSlot: "Hotels landing page hero image behind the hotel search entry point.",
+    cropNotes: premiumHotelCropNotes,
+    focalPoint: "center",
+    desktopApproved: false,
+    mobileApproved: false,
+    launchCritical: true,
+    contentRole: "marketing",
+    productionPriority: "p0-launch-critical",
+    premiumReplacementRequired: false,
+    notes: "Purchased for hotels landing hero; final desktop/mobile crop approval pending staging QA.",
   },
   {
     id: "premium-flight-support-aircraft-gangway-terminal-istock-1470585865",

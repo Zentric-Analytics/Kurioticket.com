@@ -35,6 +35,11 @@ type HotelDestinationCard = {
   linkLabel: string;
 };
 
+const hotelsHeroImage =
+  "/images/premium/hotels/kurioticket-hotels-hero-bellboy-guest-arrival-lobby-001.jpg";
+const hotelsHeroImageAlt =
+  "Hotel bellboy welcoming a guest with luggage in a premium lobby";
+
 const hotelDestinationCards: HotelDestinationCard[] = [
   {
     title: enTranslations["hotelDestination.Tokyo.title"],
@@ -461,12 +466,40 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16 pt-8 sm:pt-10 lg:pt-12">
-        <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
-        <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
-        <div className="relative mx-auto max-w-6xl space-y-11 md:space-y-14">
-          <HotelSearchBar introLabel={hotelSearchIntroLabel} />
+      <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
+        <section className="relative isolate overflow-hidden bg-slate-950">
+          <Image
+            src={hotelsHeroImage}
+            alt={hotelsHeroImageAlt}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[50%_44%] sm:object-[50%_46%]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/72 via-slate-950/34 to-slate-950/12" />
+          <div className="absolute inset-y-0 left-0 w-[82%] bg-gradient-to-r from-slate-950/72 via-slate-950/38 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/82 via-slate-950/34 to-transparent" />
 
+          <div className="page-shell relative z-10 flex min-h-[34rem] flex-col justify-end pb-7 pt-16 sm:min-h-[33rem] sm:pb-9 sm:pt-20 lg:min-h-[35rem] lg:pb-10">
+            <div className="max-w-2xl pb-5 text-white sm:pb-7 lg:pb-8">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
+                Premium stays, clearly compared
+              </p>
+              <h1 className="mt-3 text-[2.35rem] font-semibold leading-[1.02] tracking-[-0.035em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] sm:text-[3rem] lg:text-[3.6rem]">
+                Find the stay that starts the trip right.
+              </h1>
+              <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] sm:text-lg">
+                Compare hotels in one place, from polished city arrivals to easy resort escapes.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-white/16 bg-white/96 p-2 shadow-[0_24px_60px_-32px_rgba(15,23,42,0.62)] ring-1 ring-white/45 backdrop-blur-md sm:rounded-[1.5rem] sm:p-3">
+              <HotelSearchBar introLabel={hotelSearchIntroLabel} />
+            </div>
+          </div>
+        </section>
+
+        <div className="page-shell relative mx-auto mt-10 max-w-6xl space-y-11 md:mt-12 md:space-y-14">
           <section
             className="space-y-4"
             aria-labelledby="hotel-destinations-heading"
