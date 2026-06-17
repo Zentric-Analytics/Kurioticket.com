@@ -216,7 +216,7 @@ export function AccountMenuPage() {
 
   return (
     <section className="mx-auto max-w-[1160px] overflow-x-hidden" aria-labelledby="account-title">
-      <div className="mb-6 grid gap-6 rounded-[1.75rem] border border-blue-100 bg-white p-5 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.35)] sm:mb-8 sm:p-7 lg:mb-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center lg:p-8">
+      <div className="grid gap-6 pb-8 pt-10 sm:pb-9 sm:pt-12 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center lg:pb-9 lg:pt-[52px]">
         <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
           <div
             className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-violet-600 to-indigo-800 text-2xl font-black text-white shadow-[0_22px_44px_-24px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-[72px] sm:text-3xl"
@@ -235,15 +235,15 @@ export function AccountMenuPage() {
           </div>
         </div>
 
-        <div className="relative hidden min-h-36 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-600 via-violet-600 to-indigo-800 p-5 text-white shadow-[0_24px_60px_-42px_rgba(79,70,229,0.9)] lg:block" aria-hidden="true">
-          <div className="absolute -right-8 -top-8 size-28 rounded-full bg-white/15" />
-          <div className="absolute -bottom-10 left-8 size-32 rounded-full bg-blue-200/20" />
-          <Plane className="absolute right-8 top-8 size-9 rotate-12 text-white/90" strokeWidth={1.8} />
-          <div className="absolute bottom-5 left-5 right-5 flex items-end gap-2 text-white/45">
-            <span className="h-10 flex-1 rounded-t-xl bg-white/35" />
-            <span className="h-16 flex-1 rounded-t-xl bg-white/25" />
-            <span className="h-8 flex-1 rounded-t-xl bg-white/30" />
-            <span className="h-12 flex-1 rounded-t-xl bg-white/20" />
+        <div className="relative hidden min-h-36 overflow-hidden text-violet-700 lg:block" aria-hidden="true">
+          <div className="absolute right-2 top-1 size-24 rounded-full bg-blue-200/30 blur-sm" />
+          <div className="absolute bottom-0 left-10 size-28 rounded-full bg-violet-200/30 blur-sm" />
+          <Plane className="absolute right-10 top-8 size-9 rotate-12 text-violet-600/70" strokeWidth={1.8} />
+          <div className="absolute bottom-4 left-5 right-5 flex items-end gap-2 text-blue-500/20">
+            <span className="h-10 flex-1 rounded-t-xl bg-current" />
+            <span className="h-16 flex-1 rounded-t-xl bg-current opacity-75" />
+            <span className="h-8 flex-1 rounded-t-xl bg-current opacity-90" />
+            <span className="h-12 flex-1 rounded-t-xl bg-current opacity-60" />
           </div>
         </div>
       </div>
