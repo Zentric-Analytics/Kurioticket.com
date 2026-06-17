@@ -474,11 +474,11 @@ export default function HotelsSearchPage() {
             fill
             priority
             sizes="100vw"
-            className="object-cover object-[50%_44%] sm:object-[50%_46%]"
+            className="object-cover object-[50%_44%] brightness-[1.06] saturate-[1.06] sm:object-[50%_46%]"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/72 via-slate-950/34 to-slate-950/12" />
-          <div className="absolute inset-y-0 left-0 w-[82%] bg-gradient-to-r from-slate-950/72 via-slate-950/38 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-slate-950/82 via-slate-950/34 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/48 via-slate-950/16 to-transparent" />
+          <div className="absolute inset-y-0 left-0 w-[74%] bg-gradient-to-r from-slate-950/66 via-slate-950/28 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
 
           <div className="page-shell relative z-10 flex min-h-[34rem] flex-col justify-end pb-7 pt-16 sm:min-h-[33rem] sm:pb-9 sm:pt-20 lg:min-h-[35rem] lg:pb-10">
             <div className="max-w-2xl pb-5 text-white sm:pb-7 lg:pb-8">
