@@ -482,7 +482,7 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[34rem] flex-col justify-end pb-48 pt-16 sm:min-h-[33rem] sm:pb-36 sm:pt-20 lg:min-h-[35rem] lg:pb-40">
+          <div className="page-shell relative z-10 flex min-h-[30rem] flex-col justify-end pb-36 pt-16 sm:min-h-[30rem] sm:pb-32 sm:pt-20 lg:min-h-[32rem] lg:pb-36">
             <div className="max-w-2xl text-white">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
                 Premium stays, clearly compared
@@ -497,16 +497,16 @@ export default function HotelsSearchPage() {
           </div>
         </section>
 
-        <div className="page-shell relative z-30 -mt-24 sm:-mt-24 lg:-mt-28">
-          <div className="mx-auto max-w-[1180px]">
+        <div className="page-shell relative z-30 -mt-40 sm:-mt-36 lg:-mt-40">
+          <div className="mx-auto max-w-6xl">
             <HotelSearchBar
               introLabel={hotelSearchIntroLabel}
-              className="max-w-[1180px] [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-2.5 [&>form>div]:!shadow-[0_30px_72px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3 lg:[&>form>div]:!p-3.5"
+              className="[&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-2.5 [&>form>div]:!shadow-[0_30px_72px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3 lg:[&>form>div]:!p-3.5"
             />
           </div>
         </div>
 
-        <div className="page-shell relative mx-auto mt-24 max-w-6xl space-y-11 sm:mt-24 md:mt-24 md:space-y-14 lg:mt-24">
+        <div className="page-shell relative mx-auto mt-14 max-w-6xl space-y-11 sm:mt-16 md:mt-18 md:space-y-14 lg:mt-20">
           <section
             className="space-y-4"
             aria-labelledby="hotel-destinations-heading"
