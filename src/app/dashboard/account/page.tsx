@@ -10,10 +10,8 @@ export default function AccountPage() {
   return (
     <>
       <AppHeader />
-      <main className="flex-1 bg-[#f5f7fb] pb-16 pt-10 lg:pb-20 lg:pt-12">
-        <div className="page-shell min-w-0">
-          <AccountMenuPage />
-        </div>
+      <main className="flex-1 bg-slate-50 pb-16 lg:pb-20">
+        <AccountMenuPage />
       </main>
       <Footer />
     </>
