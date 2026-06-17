@@ -40,6 +40,15 @@ export const translations: TranslationDictionary = {
   "accountMenu.accountSettings.label": "Configurações da conta",
   "accountMenu.accountSettings.description": "Perfil e preferências",
   myAccount: "Minha conta",
+  "accountDashboard.trips.title": "Minhas viagens",
+  "accountDashboard.trips.subtitle": "Veja suas viagens futuras, passadas e canceladas.",
+  "accountDashboard.trips.findReservation": "Encontrar uma reserva",
+  "accountDashboard.trips.current.empty.title": "Para onde agora?",
+  "accountDashboard.trips.current.empty.body":
+    "Você ainda não iniciou nenhuma viagem. Quando fizer uma reserva, ela aparecerá aqui.",
+  "accountDashboard.trips.history.tabs.active": "Ativas",
+  "accountDashboard.trips.history.tabs.past": "Passadas",
+  "accountDashboard.trips.history.tabs.cancelled": "Canceladas",
   destinationsHeroBadge: "DESCOBERTA DE DESTINOS",
   destinationsHeroTitle: "Para onde você quer ir agora?",
   destinationsHeroSubtitle:
