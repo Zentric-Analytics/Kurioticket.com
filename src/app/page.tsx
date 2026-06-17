@@ -985,16 +985,16 @@ export default function Home() {
         </section>
 
         <section className="page-shell pb-8 pt-1 sm:pb-10 lg:pb-12">
-          <div className="mx-auto max-w-[1060px] overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03]">
+          <div className="mx-auto max-w-[980px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03]">
             <div className="h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-400" />
-            <div className="grid items-center gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(23rem,0.88fr)] lg:gap-8 lg:p-7">
-              <div className="flex items-start gap-3.5">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100 sm:h-12 sm:w-12">
+            <div className="grid items-center gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.76fr)] lg:gap-6 lg:p-6">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100 sm:h-11 sm:w-11">
                   <Mail className="size-5" />
                 </span>
 
-                <div className="max-w-xl space-y-2">
-                  <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl lg:leading-tight">
+                <div className="max-w-xl space-y-1.5">
+                  <h2 className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl lg:text-[1.35rem] lg:leading-tight">
                     {t("homeNewsletterTitle")}
                   </h2>
 
@@ -1004,9 +1004,9 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="space-y-3 lg:max-w-[28rem] lg:justify-self-end lg:self-center">
+              <div className="space-y-2.5 lg:max-w-[24rem] lg:justify-self-end lg:self-center">
                 <form
-                  className="flex flex-col gap-3 sm:flex-row"
+                  className="flex flex-col gap-2.5 sm:flex-row"
                   onSubmit={handleNewsletterSubmit}
                   aria-busy={newsletterPending}
                 >
@@ -1021,7 +1021,7 @@ export default function Home() {
                       }
                     }}
                     placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-12 min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 text-sm font-semibold text-slate-950 shadow-inner shadow-slate-200/50 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:min-w-[17rem] sm:px-5"
+                    className="focus-ring h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 text-sm font-semibold text-slate-950 shadow-inner shadow-slate-200/50 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:min-w-[14rem] sm:px-4"
                     aria-label={t("homeEmailAddress")}
                     disabled={newsletterPending}
                     required
@@ -1029,7 +1029,7 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    className="focus-ring h-12 shrink-0 whitespace-nowrap rounded-2xl bg-indigo-700 px-6 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:px-6"
+                    className="focus-ring h-11 shrink-0 whitespace-nowrap rounded-xl bg-indigo-700 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:px-5"
                     aria-busy={newsletterPending}
                     disabled={newsletterPending}
                   >
