@@ -41,6 +41,41 @@ export default function FlightsLayout({ children }: { children: ReactNode }) {
           line-height: 1.62rem;
         }
 
+        [data-standalone-flight-desktop-popover] p.mb-1,
+        [data-flight-mobile-picker-shell] p.mb-1 {
+          display: none;
+        }
+
+        [data-standalone-flight-desktop-popover] div:has(> p.mb-1) > h2 {
+          margin-bottom: 0.8rem;
+          font-size: 1.08rem;
+          font-weight: 700;
+          letter-spacing: -0.02em;
+          color: rgb(15 23 42);
+        }
+
+        [data-standalone-flight-desktop-popover] div:has(> p.mb-1) span.block.text-base,
+        [data-flight-mobile-picker-shell] div:has(> p.mb-1) span.block.text-base {
+          text-transform: capitalize;
+          font-weight: 650;
+          letter-spacing: -0.01em;
+        }
+
+        [data-standalone-flight-desktop-popover] span.min-w-8,
+        [data-flight-mobile-picker-shell] span.min-w-8 {
+          font-weight: 700;
+        }
+
+        [data-standalone-flight-desktop-popover] p.uppercase {
+          font-weight: 650;
+          letter-spacing: 0.12em;
+        }
+
+        [data-standalone-flight-desktop-popover] .grid.grid-cols-3 button,
+        [data-flight-mobile-picker-shell] .grid.grid-cols-3 button {
+          font-weight: 600;
+        }
+
         main.bg-slate-50 > section.page-shell.space-y-12 > div > div.mb-5 > h2,
         main.bg-slate-50 > section.page-shell.space-y-12 > section > div > h2 {
           font-weight: 700;
