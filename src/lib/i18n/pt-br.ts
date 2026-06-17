@@ -1103,6 +1103,42 @@ export const translations: TranslationDictionary = {
   "legalCenter.additionalResourcesTitle": "Recursos jurídicos adicionais",
   "legalCenter.additionalResourcesDescription":
     "Recursos jurídicos adicionais poderão ser adicionados à medida que o Kurioticket crescer.",
+  "legal.index.heroLabel": "Sistema de documentos jurídicos",
+  "legal.index.heroTitle": "Centro jurídico",
+  "legal.index.developerNote":
+    "Estes rascunhos legais são placeholders iniciais e devem ser revisados por assessoria jurídica qualificada antes de um lançamento público em grande escala.",
+  "legal.index.lastUpdated": "Última atualização",
+  "legal.index.lastUpdatedDate": "11 de maio de 2026",
+  "legal.index.documents.termsOfService.title": "Termos de serviço",
+  "legal.index.documents.termsOfService.summary":
+    "Regras para usar a pesquisa do Kurioticket, contas, painéis, ferramentas de viagem salvas e redirecionamentos para parceiros.",
+  "legal.index.documents.privacyPolicy.title": "Política de privacidade",
+  "legal.index.documents.privacyPolicy.summary":
+    "Como a Kurioticket LLC (“Kurioticket”, “nós”, “nos” ou “nosso”) coleta, usa, armazena e protege dados de conta, pesquisa, alertas, suporte e e-mail.",
+  "legal.index.documents.cookiePolicy.title": "Política de cookies",
+  "legal.index.documents.cookiePolicy.summary":
+    "Como o Kurioticket usa cookies e tecnologias semelhantes para autenticação, segurança, preferências, análises e desempenho.",
+  "legal.index.documents.affiliateDisclosure.title": "Divulgação de afiliados",
+  "legal.index.documents.affiliateDisclosure.summary":
+    "Como o Kurioticket pode receber comissões quando usuários clicam ou reservam por meio de parceiros confiáveis.",
+  "legal.index.documents.refundBookingDisclaimer.title":
+    "Aviso sobre reembolsos e provedores externos",
+  "legal.index.documents.refundBookingDisclaimer.summary":
+    "Esclarece que compras, emissão de passagens, reembolsos, cancelamentos e pagamentos de inventário de viagem acontecem fora do Kurioticket.",
+  "legal.index.documents.acceptableUsePolicy.title": "Política de uso aceitável",
+  "legal.index.documents.acceptableUsePolicy.summary":
+    "Regras de conduta para o uso seguro, justo e legal dos sistemas do Kurioticket.",
+  "legal.index.documents.dataDeletionPolicy.title": "Política de exclusão de dados",
+  "legal.index.documents.dataDeletionPolicy.summary":
+    "Como usuários podem solicitar a exclusão da conta e quais dados talvez precisem ser mantidos.",
+  "legal.index.documents.priceAvailabilityDisclaimer.title":
+    "Aviso sobre preços e disponibilidade",
+  "legal.index.documents.priceAvailabilityDisclaimer.summary":
+    "Explica por que preços de viagem, regras de tarifa, diárias de quartos e disponibilidade podem mudar.",
+  "legal.index.documents.partnerRedirectDisclaimer.title":
+    "Aviso sobre redirecionamento para parceiros",
+  "legal.index.documents.partnerRedirectDisclaimer.summary":
+    "O que acontece quando o Kurioticket redireciona usuários para companhias aéreas, hotéis, parceiros afiliados ou provedores de viagem.",
   footerAboutKurioticket: "Sobre o Kurioticket",
   footerAboutUs: "Sobre nós",
   footerHowItWorks: "Como o Kurioticket funciona",
