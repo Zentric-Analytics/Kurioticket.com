@@ -439,7 +439,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="relative hidden overflow-visible pb-16 sm:block lg:pb-20">
+      <section className="relative hidden overflow-visible pb-28 sm:block lg:pb-32">
         <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
           <div className="absolute inset-0 overflow-hidden">
             <Image
