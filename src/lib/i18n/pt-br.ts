@@ -378,7 +378,7 @@ export const translations: TranslationDictionary = {
   flightDetailsLoading: "Carregando detalhes do voo...",
   flightQuoteUnavailable: "Cotação do voo indisponível",
   flightSearchAgainCurrentPrices:
-    "Pesquise novamente para ver os preços atuais.",
+    "Esta cotação de voo não está mais disponível. Pesquise novamente para ver os preços atuais.",
   flightDetailsProviderDisclaimer:
     "O preço final, a disponibilidade, a reserva e as regras da tarifa são confirmados pelo provedor.",
   selectedFlights: "Voos selecionados",
