@@ -389,8 +389,19 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
     desktopCropRequirement: "Wide crop should preserve premium atmosphere with room for copy/search UI.",
     recommendedAspectRatios: ["16:9", "3:2", "4:5"],
     launchCritical: true,
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath: "/images/premium/hotels/kurioticket-hotels-hero-bellboy-guest-arrival-lobby-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/elegant-bellboy-greeting-hotel-visitor-gm2202326055-619930311?searchscope=image%2Cfilm",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2202326055",
+    dimensions: "2048 x 1365",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
     buyingBatch: "A",
-    notes: "Can inform the Phase 4 hotel fallback art direction but must remain generic.",
+    notes:
+      "Purchased iStock asset is stored locally and the live hotels landing hero replacement is happening in this phase; final desktop/mobile crop QA remains pending staging review.",
   }),
   purchaseEntry({
     id: "phase-3-004-global-destination-grid-hero",
