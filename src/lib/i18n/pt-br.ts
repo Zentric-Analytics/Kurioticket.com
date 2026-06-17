@@ -242,7 +242,6 @@ export const translations: TranslationDictionary = {
   travelers: "Viajantes",
   guests: "Hóspedes",
   rooms: "Quartos",
-  cityOrHotel: "Cidade ou hotel",
   chooseGuestsAndRooms: "Escolha hóspedes e quartos",
   guestsAndRooms: "Hóspedes e quartos",
   adults: "Adultos",
@@ -402,18 +401,18 @@ export const translations: TranslationDictionary = {
   homeDiscoveryTravelerCountOne: "1 viajante",
   homeCompareOptions: "Comparar opções",
   homeExploreFares: "Explorar tarifas",
-  homeTrustTitle: "Por que viajantes comparam no Kurioticket",
+  homeTrustTitle: "Por que os viajantes comparam no Kurioticket",
   homeTrustSubtitle:
-    "O Kurioticket ajuda você a comparar ofertas de fornecedores de forma justa e concluir a reserva no site do fornecedor.",
-  homeTrustCompareTitle: "Compare ofertas de fornecedores",
+    "O Kurioticket ajuda você a comparar ofertas de provedores de forma justa e concluir a reserva no site do provedor.",
+  homeTrustCompareTitle: "Comparar ofertas de provedores",
   homeTrustCompareBody:
-    "Veja opções de voos e hotéis de vários fornecedores de viagem em um só lugar.",
+    "Veja opções de voos e hotéis de vários provedores de viagem em um só lugar.",
   homeTrustPricingTitle: "Contexto de preços transparente",
   homeTrustPricingBody:
-    "Revise preço, detalhes da rota ou estadia e termos importantes antes de continuar.",
-  homeTrustHandoffTitle: "Redirecionamento seguro para o fornecedor",
+    "Revise preços, detalhes da rota ou da estadia e termos importantes antes de continuar.",
+  homeTrustHandoffTitle: "Redirecionamento seguro para o provedor",
   homeTrustHandoffBody:
-    "Ao escolher uma oferta, você continua para o fornecedor para concluir a reserva com segurança.",
+    "Ao escolher uma oferta, você continua para o provedor para concluir a reserva com segurança.",
   homePromoFlightsTitle: "Ofertas de voos de companhias aéreas",
   homePromoFlightsBody:
     "Pesquise tarifas por tempo limitado e compare itinerários de fornecedores.",
