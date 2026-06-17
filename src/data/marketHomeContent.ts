@@ -31,7 +31,7 @@ export const popularDestinationsByMarket: Record<
       originCode: "JFK",
       city: "New York",
       country: "United States",
-      imageAlt: "New York skyline and city streets",
+      imageAlt: "Statue of Liberty with One World Trade Center and Lower Manhattan skyline",
       image:
         "/images/premium/homepage/destinations/kurioticket-homepage-destination-new-york-statue-liberty-skyline-001.jpg",
     },
@@ -41,7 +41,7 @@ export const popularDestinationsByMarket: Record<
       originCode: "BOS",
       city: "Miami",
       country: "United States",
-      imageAlt: "Miami Beach lifeguard tower and palms",
+      imageAlt: "Miami waterfront skyline with palm trees and downtown towers",
       image:
         "/images/premium/homepage/destinations/kurioticket-homepage-destination-miami-skyline-waterfront-001.jpg",
     },
@@ -51,7 +51,7 @@ export const popularDestinationsByMarket: Record<
       originCode: "ORD",
       city: "Las Vegas",
       country: "United States",
-      imageAlt: "Las Vegas strip lights at night",
+      imageAlt: "Las Vegas Strip skyline at night from above",
       image:
         "/images/premium/homepage/destinations/kurioticket-homepage-destination-las-vegas-strip-night-drone-001.jpg",
     },
@@ -61,7 +61,7 @@ export const popularDestinationsByMarket: Record<
       originCode: "JFK",
       city: "Los Angeles",
       country: "United States",
-      imageAlt: "Los Angeles skyline and palm trees",
+      imageAlt: "Los Angeles skyline viewed through palm trees at golden hour",
       image:
         "/images/premium/homepage/destinations/kurioticket-homepage-destination-los-angeles-palm-skyline-001.jpg",
     },
@@ -71,7 +71,7 @@ export const popularDestinationsByMarket: Record<
       originCode: "JFK",
       city: "London",
       country: "United Kingdom",
-      imageAlt: "London skyline and historic landmarks",
+      imageAlt: "Tower Bridge over the River Thames in London",
       image:
         "/images/premium/homepage/destinations/kurioticket-homepage-destination-london-tower-bridge-thames-001.jpg",
     },
@@ -81,7 +81,7 @@ export const popularDestinationsByMarket: Record<
       originCode: "JFK",
       city: "Paris",
       country: "France",
-      imageAlt: "Eiffel Tower above Paris streets",
+      imageAlt: "Eiffel Tower framed by Paris apartment buildings",
       image:
         "/images/premium/homepage/destinations/kurioticket-homepage-destination-paris-eiffel-tower-buildings-001.jpg",
     },
