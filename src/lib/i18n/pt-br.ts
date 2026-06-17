@@ -40,26 +40,6 @@ export const translations: TranslationDictionary = {
   "accountMenu.accountSettings.label": "Configurações da conta",
   "accountMenu.accountSettings.description": "Perfil e preferências",
   myAccount: "Minha conta",
-  "accountDashboard.priceAlerts.eyebrow": "FERRAMENTAS DA CONTA",
-  "accountDashboard.priceAlerts.title": "Alertas de preço",
-  "accountDashboard.priceAlerts.description":
-    "Veja registros de alertas baseados em provedores salvos na sua conta Kurioticket.",
-  "accountDashboard.priceAlerts.empty.title": "Ainda não há alertas de preço.",
-  "accountDashboard.priceAlerts.empty.body":
-    "Salve pesquisas ou rotas para acompanhar viagens importantes para você.",
-  "accountDashboard.priceAlerts.guidance.flight.title": "Comece com um voo",
-  "accountDashboard.priceAlerts.guidance.flight.body":
-    "Compare opções de voo baseadas em provedores antes de salvar viagens ou rotas.",
-  "accountDashboard.priceAlerts.guidance.stays.title": "Revise estadias",
-  "accountDashboard.priceAlerts.guidance.stays.body":
-    "Pesquise hotéis com detalhes atuais dos provedores antes de adicionar algo aos seus planos.",
-  "accountDashboard.priceAlerts.guidance.organized.title":
-    "Mantenha o planejamento organizado",
-  "accountDashboard.priceAlerts.guidance.organized.body":
-    "Sua conta mostra registros de viagem salvos sem atividades inventadas ou preços estáticos.",
-  "accountDashboard.priceAlerts.cta.flights": "Pesquisar voos",
-  "accountDashboard.priceAlerts.cta.hotels": "Pesquisar hotéis",
-  "accountDashboard.priceAlerts.cta.cars": "Pesquisar carros",
   "accountDashboard.trips.title": "Minhas viagens",
   "accountDashboard.trips.subtitle": "Veja suas viagens futuras, passadas e canceladas.",
   "accountDashboard.trips.findReservation": "Encontrar uma reserva",
