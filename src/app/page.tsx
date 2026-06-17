@@ -713,8 +713,9 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[29rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
-          <div className="page-shell">
+        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[25rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
+          <div className="mx-auto h-px w-[calc(100%-2rem)] max-w-[1280px] bg-slate-200/80 sm:hidden" />
+          <div className="page-shell pt-5 sm:pt-0">
             <div className="flex items-center">
               <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
                 {t("homePopularDestinations")}
