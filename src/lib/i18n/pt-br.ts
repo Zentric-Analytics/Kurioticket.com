@@ -2415,6 +2415,27 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedAnswer:
     "O Kurioticket é uma plataforma de pesquisa e comparação de viagens, e alguns resultados redirecionam para provedores confiáveis onde você conclui a reserva, o pagamento e o suporte específico do provedor.",
 
+  howItWorksEyebrow: "Como o Kurioticket funciona",
+  howItWorksTitle: "Como o Kurioticket funciona",
+  howItWorksIntro:
+    "O Kurioticket ajuda viajantes a passar da pesquisa para a comparação e, depois, para o provedor quando uma oferta é selecionada.",
+  howItWorksFlowHeading: "Fluxo básico",
+  "howItWorks.steps.search.title": "Pesquise opções de viagem",
+  "howItWorks.steps.search.description":
+    "Informe os detalhes da sua viagem para procurar voos, hotéis, carros ou ofertas de viagem disponíveis.",
+  "howItWorks.steps.compare.title": "Compare os resultados disponíveis",
+  "howItWorks.steps.compare.description":
+    "Revise opções disponíveis, preços, horários, detalhes do provedor e outras informações de viagem quando exibidas.",
+  "howItWorks.steps.choose.title": "Escolha uma oferta",
+  "howItWorks.steps.choose.description":
+    "Selecione a opção que melhor combina com seus planos depois de revisar os detalhes disponíveis.",
+  "howItWorks.steps.continue.title": "Continue com o provedor",
+  "howItWorks.steps.continue.description":
+    "Ao ser redirecionado, continue no site do provedor para revisar os detalhes finais e concluir as etapas da reserva.",
+  "howItWorks.providerWebsites.title": "Sites dos provedores",
+  "howItWorks.providerWebsites.description":
+    "Algumas reservas podem ser concluídas nos sites dos provedores depois que o Kurioticket redireciona você. Revise a página do provedor para conferir disponibilidade final, preços, termos, etapas de pagamento e detalhes da reserva antes de concluir a compra.",
+
   moreServiceInfoEyebrow: "Informações da plataforma",
   moreServiceInfoTitle: "Mais informações sobre o serviço",
   moreServiceInfoDescription:
