@@ -15,13 +15,13 @@ export const translations: TranslationDictionary = {
   countryAndCurrency: "Pays et devise",
   openCountryCurrencySelector:
     "Ouvrir le sélecteur de pays et de devise, sélection actuelle {{code}}, {{currency}}",
-  chooseCountryAndCurrency: "Choisir le pays et la devise",
+  chooseCountryAndCurrency: "Choisissez le pays et la devise",
   countryCurrencyDescription:
     "Sélectionnez le pays et la devise utilisés pour afficher les prix. Les suggestions d’aéroports utilisent votre position détectée.",
   closeCountryCurrencySelector: "Fermer le sélecteur de pays et de devise",
   searchCountryOrCurrency: "Rechercher un pays ou une devise",
   countryCurrencyAllCountriesAndCurrencies: "TOUS LES PAYS ET DEVISES",
-  countryCurrencyPopularCountryAndCurrency: "PAYS ET DEVISES POPULAIRES",
+  countryCurrencyPopularCountryAndCurrency: "PAYS ET DEVISE POPULAIRES",
   countryCurrencyOptionCountSingular: "{{count}} option",
   countryCurrencyOptionCountPlural: "{{count}} options",
   selectCountryCurrencyOption: "Sélectionner {{country}}, {{code}}, {{currency}}",
@@ -48,6 +48,7 @@ export const translations: TranslationDictionary = {
   "countryCurrency.country.CN": "Chine",
   "countryCurrency.country.IN": "Inde",
   "countryCurrency.country.BR": "Brésil",
+  "countryCurrency.country.PT": "Portugal",
   "countryCurrency.country.MX": "Mexique",
   "countryCurrency.country.SG": "Singapour",
   destinations: "Voyages",
