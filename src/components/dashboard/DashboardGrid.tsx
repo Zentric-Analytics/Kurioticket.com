@@ -201,6 +201,50 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
   );
 }
 
+function MobileAccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
+  const { t } = useLocale();
+  const RowIcon = row.icon;
+
+  return (
+    <Link
+      href={row.href}
+      className="focus-ring group/row flex min-h-12 w-full items-center gap-3 border-t border-slate-200 px-4 py-2 text-left transition duration-150 hover:bg-slate-50 focus-visible:relative focus-visible:z-10"
+    >
+      <RowIcon className="size-5 shrink-0 text-blue-600" strokeWidth={2} aria-hidden="true" />
+      <span className="min-w-0 flex-1 truncate text-sm font-medium leading-5 text-slate-800">
+        {t[row.labelKey]}
+      </span>
+      <ChevronRight className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5" strokeWidth={2} aria-hidden="true" />
+    </Link>
+  );
+}
+
+function MobileAccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) {
+  const { t } = useLocale();
+  const PanelIcon = panel.icon;
+  const title = t[panel.titleKey];
+
+  return (
+    <section
+      className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white"
+      aria-labelledby={`mobile-account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`}
+    >
+      <div className="flex items-center gap-3 px-4 pb-3 pt-4">
+        <PanelIcon className="size-5 shrink-0 text-blue-600" strokeWidth={2} aria-hidden="true" />
+        <h2 id={`mobile-account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`} className="min-w-0 text-base font-semibold leading-6 text-slate-900">
+          {title}
+        </h2>
+      </div>
+
+      <div>
+        {panel.rows.map((row) => (
+          <MobileAccountDashboardRow key={`${row.href}-${row.labelKey}`} row={row} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function AccountMenuPage() {
   const { t } = useLocale();
 
@@ -231,8 +275,14 @@ export function AccountMenuPage() {
         </div>
       </div>
 
-      <div className="bg-[#f3f7fc] px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-7 lg:px-8 lg:pb-11 lg:pt-8">
-        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1120px] gap-4 md:grid-cols-2 lg:gap-5">
+      <div className="bg-[#f3f7fc] px-4 pb-8 pt-5 sm:px-6 sm:pb-10 sm:pt-7 lg:px-8 lg:pb-11 lg:pt-8">
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto flex w-full max-w-[520px] flex-col gap-4 md:hidden">
+          {accountDashboardPanels.map((panel) => (
+            <MobileAccountDashboardPanel key={panel.titleKey} panel={panel} />
+          ))}
+        </nav>
+
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto hidden max-w-[1120px] gap-4 md:grid md:grid-cols-2 lg:gap-5">
           {accountDashboardPanels.map((panel) => (
             <AccountDashboardPanel key={panel.titleKey} panel={panel} />
           ))}
