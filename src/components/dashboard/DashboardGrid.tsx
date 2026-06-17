@@ -9,17 +9,14 @@ import {
   BriefcaseBusiness,
   ChevronRight,
   CircleHelp,
-  Globe2,
   Headphones,
   LifeBuoy,
   LockKeyhole,
   Mail,
   Plane,
-  Search,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
-  Sparkles,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -55,7 +52,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
     rows: [
       { labelKey: "accountDashboard.hub.myTrips", href: "/dashboard/trips", icon: BriefcaseBusiness },
       { labelKey: "accountDashboard.hub.savedTrips", href: "/dashboard/saved", icon: Bookmark },
-      { labelKey: "accountDashboard.hub.recentSearches", href: "/saved", icon: Search },
       { labelKey: "accountDashboard.hub.priceAlerts", href: "/dashboard/alerts", icon: Bell },
     ],
   },
@@ -63,7 +59,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
     titleKey: "accountDashboard.hub.preferences",
     icon: SlidersHorizontal,
     rows: [
-      { labelKey: "accountDashboard.hub.languageRegionCurrency", href: "/dashboard/preferences", icon: Globe2 },
       { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/preferences", icon: Mail },
       { labelKey: "accountDashboard.hub.travelPreferences", href: "/dashboard/preferences", icon: Settings },
     ],
@@ -74,7 +69,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
     rows: [
       { labelKey: "accountDashboard.hub.contactSupport", href: "/dashboard/support", icon: Headphones },
       { labelKey: "accountDashboard.hub.faq", href: "/faq", icon: CircleHelp },
-      { labelKey: "accountDashboard.hub.serviceGuarantee", href: "/support", icon: Sparkles },
     ],
   },
 ];
