@@ -41,8 +41,20 @@ export default function FlightsLayout({ children }: { children: ReactNode }) {
           line-height: 1.62rem;
         }
 
-        main.bg-slate-50 > section.page-shell.space-y-12 h2 {
+        main.bg-slate-50 > section.page-shell.space-y-12 > div > div.mb-5 > h2,
+        main.bg-slate-50 > section.page-shell.space-y-12 > section > div > h2 {
           font-weight: 700;
+          letter-spacing: -0.025em;
+          color: rgb(2 6 23);
+        }
+
+        main.bg-slate-50 > section.page-shell.space-y-12 > div > div.mb-5 > p,
+        main.bg-slate-50 > section.page-shell.space-y-12 > section > div > p {
+          margin-top: 0.5rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          line-height: 1.5rem;
+          color: rgb(71 85 105);
         }
 
         main.bg-slate-50 > section.border-y + section.page-shell {
@@ -58,6 +70,11 @@ export default function FlightsLayout({ children }: { children: ReactNode }) {
           main.bg-slate-50 > section.border-y article {
             padding-top: 0.55rem;
             padding-bottom: 0.55rem;
+          }
+
+          main.bg-slate-50 > section.page-shell.space-y-12 > div > div.mb-5 > p,
+          main.bg-slate-50 > section.page-shell.space-y-12 > section > div > p {
+            font-size: 1rem;
           }
 
           main.bg-slate-50 > section.border-y + section.page-shell {
