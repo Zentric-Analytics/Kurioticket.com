@@ -2065,6 +2065,17 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.us-phl-san.routeNote":
     "Rota com disponibilidade real de fornecedores para comparar opções antes de reservar.",
 
+  aboutPageEyebrow: "Sobre o Kurioticket",
+  aboutPageTitle: "Sobre nós",
+  aboutPageIntroPrimary:
+    "O Kurioticket é uma plataforma de pesquisa e comparação de viagens que ajuda viajantes a pesquisar, comparar e descobrir voos, hotéis, carros e ofertas de viagem.",
+  aboutPageIntroSecondary:
+    "Nosso objetivo é tornar o planejamento de viagens mais claro, reunindo opções disponíveis e informações de provedores em um só lugar, para que os viajantes possam revisar suas escolhas antes de continuar com o provedor que melhor se encaixa na viagem.",
+  aboutPagePlanningCardHeading:
+    "Uma ferramenta prática de planejamento de viagens",
+  aboutPagePlanningCardBody:
+    "O Kurioticket se concentra em ajudar viajantes a avaliar opções de viagem com contexto útil. Disponibilidade, preços, regras e etapas finais da reserva podem variar conforme o provedor, por isso os viajantes devem revisar cuidadosamente a página do provedor antes de tomar uma decisão.",
+
   "hotelResults.openFilters": "Abrir filtros",
   "hotelResults.selectDateAriaPrefix": "Selecionar",
   "hotelResults.searchingHotelPartners": "Buscando parceiros de hotéis...",
