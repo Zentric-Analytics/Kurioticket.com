@@ -2209,4 +2209,46 @@ export const translations: TranslationDictionary = {
   "carsFaq.5.answer":
     "Provedores de aluguel podem solicitar carteira de motorista válida, cartão de pagamento, documento de identidade e quaisquer documentos exigidos pelo país ou local de retirada.",
 
+  serviceGuaranteeEyebrow: "Compromisso de serviço do Kurioticket",
+  serviceGuaranteeTitle: "Garantia de serviço",
+  serviceGuaranteeDescription:
+    "Queremos que os viajantes entendam como o Kurioticket funciona e o que podem esperar ao usar nossa plataforma.",
+  serviceGuaranteeFaqHeading: "Perguntas frequentes",
+  serviceGuaranteeFaqDescription:
+    "Estas respostas explicam o papel do Kurioticket como plataforma de pesquisa e comparação de viagens.",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "O que o Kurioticket garante?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "O Kurioticket foi criado para ajudar os viajantes a comparar opções de viagem com clareza. Nosso objetivo é oferecer uma experiência de plataforma confiável, informações de pesquisa transparentes e caminhos claros para as páginas de reserva dos provedores.",
+  serviceGuaranteeFaqResultsDisplayedQuestion:
+    "Como os resultados de viagem são exibidos?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "Os resultados são exibidos com base nas informações disponíveis dos provedores de viagem, incluindo rotas, datas, preços e detalhes do provedor quando disponíveis.",
+  serviceGuaranteeFaqRedirectedQuestion:
+    "Por que sou redirecionado para outro provedor?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "Alguns resultados são concluídos no site de um provedor externo. Ao escolher uma dessas opções, o Kurioticket redireciona você para que o provedor possa cuidar da reserva, do pagamento e do atendimento específico da viagem.",
+  serviceGuaranteeFaqBookDirectlyQuestion:
+    "Eu reservo diretamente no Kurioticket?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "O Kurioticket é principalmente uma plataforma de pesquisa e comparação de viagens. Se um resultado redirecionar para um provedor, a reserva será concluída com esse provedor, e não no Kurioticket.",
+  serviceGuaranteeFaqPricesGuaranteedQuestion:
+    "Os preços são sempre garantidos?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "Não. Os preços podem mudar conforme disponibilidade do provedor, impostos, taxas, moeda e momento da pesquisa. Sempre revise o preço final na página do provedor antes de reservar.",
+  serviceGuaranteeFaqChooseProvidersQuestion:
+    "Como o Kurioticket escolhe os provedores?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "O Kurioticket trabalha com provedores de viagem e fontes de dados que podem fornecer resultados de pesquisa relevantes. A disponibilidade, os preços e as opções exibidas podem variar conforme rota, destino e cobertura do provedor.",
+  serviceGuaranteeFaqEncounterIssueQuestion:
+    "O que devo fazer se encontrar um problema?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "Se o problema estiver relacionado à pesquisa, acesso à conta, viagens salvas, alertas ou a um redirecionamento do Kurioticket, entre em contato com o suporte do Kurioticket. Se você já reservou com um provedor, entre em contato com esse provedor para alterações na reserva, reembolsos, cancelamentos ou documentos de viagem.",
+  serviceGuaranteeFaqContactSupportQuestion:
+    "Como posso entrar em contato com o suporte?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "Use a página de suporte ao cliente e inclua o e-mail da sua conta, o que você estava tentando fazer e qualquer detalhe de rota, hotel ou provedor que possa nos ajudar a analisar o problema.",
+  serviceGuaranteeHelpCardTitle:
+    "Precisa de ajuda com sua conta ou pesquisa?",
+  serviceGuaranteeSupportCta: "Contatar o suporte ao cliente",
+
 };
