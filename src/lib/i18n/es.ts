@@ -2403,6 +2403,7 @@ export const translations: TranslationDictionary = {
   departs: "Sale",
   updatingResults: "Actualizando resultados...",
   noFlightsMatchFilters: "Ningún vuelo coincide con estos filtros. Amplía tus filtros para ver más opciones en vivo.",
+  unableToSearchFlights: "No se pudieron buscar vuelos.",
   limitedProviderChecks: "Algunas comprobaciones de proveedores pueden estar limitadas para esta búsqueda. Revisa la disponibilidad final y los detalles de tarifa con el proveedor antes de reservar.",
   closeFilters: "Cerrar filtros",
   editFlightSearch: "Editar búsqueda de vuelos",

@@ -1437,7 +1437,12 @@ export function FlightResultsClient() {
           const data = await response.json();
 
           if (!response.ok) {
-            throw new Error(data.error || "Unable to search flights.");
+            throw new Error(
+              data.error ||
+                dictionary.unableToSearchFlights ||
+                enTranslations.unableToSearchFlights ||
+                "Unable to search flights.",
+            );
           }
 
           return data as { results: PublicFlightResult[]; warnings?: string[] };
@@ -1454,7 +1459,9 @@ export function FlightResultsClient() {
           setError(
             searchError instanceof Error
               ? searchError.message
-              : "Unable to search flights.",
+              : dictionary.unableToSearchFlights ||
+                enTranslations.unableToSearchFlights ||
+                "Unable to search flights.",
           );
         })
         .finally(() => {
@@ -1466,7 +1473,7 @@ export function FlightResultsClient() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [body]);
+  }, [body, dictionary.unableToSearchFlights]);
 
   useEffect(() => {
     if (!loading) return;

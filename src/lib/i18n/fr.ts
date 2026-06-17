@@ -1228,6 +1228,7 @@ export const translations: TranslationDictionary = {
   departs: "Départ",
   updatingResults: "Mise à jour des résultats...",
   noFlightsMatchFilters: "Aucun vol ne correspond à ces filtres. Élargissez vos filtres pour voir plus d’options en direct.",
+  unableToSearchFlights: "Impossible de rechercher des vols.",
   limitedProviderChecks: "Certaines vérifications des fournisseurs peuvent être limitées pour cette recherche. Vérifiez la disponibilité finale et les détails du tarif auprès du fournisseur avant de réserver.",
   editFlightSearch: "Modifier la recherche de vol",
   travelersAndCabin: "Voyageurs et cabine",
