@@ -3,6 +3,19 @@ import type { TranslationDictionary } from "./types";
 
 export const translations: TranslationDictionary = {
   ...en,
+  "accountDashboard.hub.title": "Mon compte",
+  "accountDashboard.hub.description": "Gérez vos voyages, éléments enregistrés, préférences et paramètres de compte au même endroit.",
+  "accountDashboard.hub.manageAccount": "Gérer le compte",
+  "accountDashboard.hub.travelActivity": "Activité de voyage",
+  "accountDashboard.hub.savedTrips": "Voyages enregistrés",
+  "accountDashboard.hub.recentSearches": "Recherches récentes",
+  "accountDashboard.hub.preferences": "Préférences",
+  "accountDashboard.hub.languageRegionCurrency": "Langue, région et devise",
+  "accountDashboard.hub.emailPreferences": "Préférences e-mail",
+  "accountDashboard.hub.travelPreferences": "Préférences de voyage",
+  "accountDashboard.hub.helpAndSupport": "Aide et support",
+  "accountDashboard.hub.faq": "FAQ",
+  "accountDashboard.hub.serviceGuarantee": "Garantie de service",
 
   mobileTravelHeading: "Voyage",
   mobileExploreHeading: "Explorer",
