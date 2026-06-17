@@ -3406,7 +3406,8 @@ export function SearchTabs({
                 )}
               >
                 <label className={hotelFieldLabelClassName}>
-                  {t.guests ||
+                  {t.hotelSearchGuestsLabel ||
+                    t.guests ||
                     "Guests"}
                 </label>
                 <button
