@@ -482,7 +482,7 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[34rem] flex-col justify-end pb-40 pt-16 sm:min-h-[33rem] sm:pb-36 sm:pt-20 lg:min-h-[35rem] lg:pb-40">
+          <div className="page-shell relative z-10 flex min-h-[34rem] flex-col justify-end pb-48 pt-16 sm:min-h-[33rem] sm:pb-36 sm:pt-20 lg:min-h-[35rem] lg:pb-40">
             <div className="max-w-2xl text-white">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
                 Premium stays, clearly compared
@@ -496,14 +496,14 @@ export default function HotelsSearchPage() {
             </div>
           </div>
 
-          <div className="page-shell absolute inset-x-0 bottom-[-118px] z-30 sm:bottom-[-70px] lg:bottom-[-72px]">
-            <div className="mx-auto max-w-6xl rounded-[1.65rem] border border-white/70 bg-white/96 p-2.5 shadow-[0_30px_76px_-34px_rgba(15,23,42,0.66)] ring-1 ring-slate-900/5 backdrop-blur-md sm:rounded-[1.9rem] sm:p-3 lg:p-3.5">
+          <div className="page-shell absolute inset-x-0 bottom-[-86px] z-30 sm:bottom-[-58px] lg:bottom-[-60px]">
+            <div className="mx-auto max-w-6xl rounded-[1.65rem] border border-white/75 bg-white/95 p-2.5 shadow-[0_30px_72px_-30px_rgba(15,23,42,0.62)] ring-1 ring-slate-950/[0.06] backdrop-blur-xl sm:rounded-[1.9rem] sm:p-3 lg:p-3.5">
               <HotelSearchBar introLabel={hotelSearchIntroLabel} />
             </div>
           </div>
         </section>
 
-        <div className="page-shell relative mx-auto mt-40 max-w-6xl space-y-11 sm:mt-36 md:mt-40 md:space-y-14 lg:mt-44">
+        <div className="page-shell relative mx-auto mt-36 max-w-6xl space-y-11 sm:mt-32 md:mt-36 md:space-y-14 lg:mt-40">
           <section
             className="space-y-4"
             aria-labelledby="hotel-destinations-heading"
