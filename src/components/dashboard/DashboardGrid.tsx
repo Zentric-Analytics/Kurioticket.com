@@ -3,16 +3,22 @@
 import { useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
+  Bell,
   Bookmark,
   BriefcaseBusiness,
   ChevronRight,
-  Grid2X2,
+  CircleHelp,
+  Globe2,
   Headphones,
   LifeBuoy,
   LockKeyhole,
   Mail,
+  Plane,
+  Search,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
+  Sparkles,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -21,13 +27,60 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 
-const navItems = [
-  { labelKey: "accountDashboard.nav.overview", href: "/dashboard", icon: Grid2X2, descriptionKey: "accountDashboard.overview.subtitle" },
-  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness, descriptionKey: "accountDashboard.trips.subtitle" },
-  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark, descriptionKey: "accountDashboard.saved.description" },
-  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings, descriptionKey: "accountDashboard.preferences.description" },
-  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck, descriptionKey: "accountDashboard.security.description" },
-  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy, descriptionKey: "accountDashboard.support.description" },
+type AccountDashboardRowItem = {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+type AccountDashboardPanelItem = {
+  title: string;
+  icon: LucideIcon;
+  minHeightClass: string;
+  rows: AccountDashboardRowItem[];
+};
+
+const accountDashboardPanels: AccountDashboardPanelItem[] = [
+  {
+    title: "Manage account",
+    icon: UserRound,
+    minHeightClass: "lg:min-h-[210px]",
+    rows: [
+      { label: "Personal details", href: "/dashboard", icon: UserRound },
+      { label: "Security settings", href: "/dashboard/security", icon: ShieldCheck },
+    ],
+  },
+  {
+    title: "Travel activity",
+    icon: Plane,
+    minHeightClass: "lg:min-h-[260px]",
+    rows: [
+      { label: "My trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
+      { label: "Saved trips", href: "/dashboard/saved", icon: Bookmark },
+      { label: "Recent searches", href: "/saved", icon: Search },
+      { label: "Price alerts", href: "/dashboard/alerts", icon: Bell },
+    ],
+  },
+  {
+    title: "Preferences",
+    icon: SlidersHorizontal,
+    minHeightClass: "lg:min-h-[235px]",
+    rows: [
+      { label: "Language, region & currency", href: "/dashboard/preferences", icon: Globe2 },
+      { label: "Email preferences", href: "/dashboard/preferences", icon: Mail },
+      { label: "Travel preferences", href: "/dashboard/preferences", icon: Settings },
+    ],
+  },
+  {
+    title: "Help and support",
+    icon: LifeBuoy,
+    minHeightClass: "lg:min-h-[235px]",
+    rows: [
+      { label: "Contact support", href: "/dashboard/support", icon: Headphones },
+      { label: "FAQ", href: "/faq", icon: CircleHelp },
+      { label: "Service guarantee", href: "/support", icon: Sparkles },
+    ],
+  },
 ];
 
 
@@ -110,55 +163,96 @@ export function AccountSectionHeader({ title, description, titleId }: { title: s
   );
 }
 
+function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
+  const RowIcon = row.icon;
+
+  return (
+    <Link
+      href={row.href}
+      className="focus-ring group/row flex min-h-[52px] items-center gap-3 bg-white px-4 py-3 text-left transition duration-200 hover:bg-violet-50/60 focus-visible:relative focus-visible:z-10 sm:min-h-[56px]"
+    >
+      <RowIcon className="size-5 shrink-0 text-blue-600 transition group-hover/row:text-violet-700" strokeWidth={2.15} aria-hidden="true" />
+      <span className="min-w-0 flex-1 text-sm font-semibold leading-5 text-slate-800 sm:text-[15px]">
+        {row.label}
+      </span>
+      <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5 group-hover/row:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
+    </Link>
+  );
+}
+
+function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) {
+  const PanelIcon = panel.icon;
+
+  return (
+    <section
+      className={cn(
+        "flex flex-col rounded-[1.25rem] border border-violet-100/70 bg-white p-5 shadow-[0_22px_60px_-48px_rgba(15,23,42,0.45)] sm:p-6",
+        panel.minHeightClass,
+      )}
+      aria-labelledby={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+    >
+      <div className="mb-4 flex items-center gap-3 sm:mb-[18px]">
+        <span className="inline-flex size-[42px] shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-50 to-violet-100 text-violet-700 ring-1 ring-violet-100">
+          <PanelIcon className="size-5" strokeWidth={2.25} aria-hidden="true" />
+        </span>
+        <h2 id={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="text-lg font-black tracking-[-0.025em] text-slate-950 sm:text-xl">
+          {panel.title}
+        </h2>
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-slate-200/80">
+        {panel.rows.map((row, index) => (
+          <div key={`${row.href}-${row.label}`} className={index === panel.rows.length - 1 ? undefined : "border-b border-slate-200/80"}>
+            <AccountDashboardRow row={row} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function AccountMenuPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto max-w-6xl overflow-x-hidden" aria-labelledby="account-title">
-      <div className="mb-5 px-1 sm:mb-7 lg:mb-8">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Kurioticket</p>
-        <h1 id="account-title" className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl">
-          {t["accountDashboard.hub.title"]}
-        </h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">
-          {t["accountDashboard.hub.description"]}
-        </p>
+    <section className="mx-auto max-w-[1240px] overflow-x-hidden" aria-labelledby="account-title">
+      <div className="mb-6 grid gap-6 rounded-[1.75rem] border border-violet-100/70 bg-gradient-to-br from-white via-white to-blue-50/70 p-5 shadow-[0_24px_70px_-56px_rgba(49,46,129,0.6)] sm:mb-7 sm:p-7 lg:mb-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-center lg:p-8">
+        <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+          <div
+            className="flex size-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-violet-600 to-indigo-800 text-2xl font-black text-white shadow-[0_22px_44px_-24px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-[72px] sm:text-3xl"
+            aria-hidden="true"
+          >
+            KT
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Kurioticket</p>
+            <h1 id="account-title" className="mt-2 text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:text-[44px] lg:leading-[1.02]">
+              {t["accountDashboard.hub.title"]}
+            </h1>
+            <p className="mt-3 max-w-[680px] text-base leading-7 text-slate-600">
+              {t["accountDashboard.hub.description"]}
+            </p>
+          </div>
+        </div>
+
+        <div className="relative hidden min-h-36 overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-600 via-violet-600 to-indigo-800 p-5 text-white shadow-[0_24px_60px_-42px_rgba(79,70,229,0.9)] lg:block" aria-hidden="true">
+          <div className="absolute -right-8 -top-8 size-28 rounded-full bg-white/15" />
+          <div className="absolute -bottom-10 left-8 size-32 rounded-full bg-blue-200/20" />
+          <Plane className="absolute right-8 top-8 size-9 rotate-12 text-white/90" strokeWidth={1.8} />
+          <div className="absolute bottom-5 left-5 right-5 flex items-end gap-2 text-white/45">
+            <span className="h-10 flex-1 rounded-t-xl bg-white/35" />
+            <span className="h-16 flex-1 rounded-t-xl bg-white/25" />
+            <span className="h-8 flex-1 rounded-t-xl bg-white/30" />
+            <span className="h-12 flex-1 rounded-t-xl bg-white/20" />
+          </div>
+        </div>
       </div>
 
-      <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group flex min-h-28 items-center gap-4 rounded-[1.35rem] border border-slate-200 bg-white p-4 text-left shadow-[0_18px_45px_-34px_rgba(15,23,42,0.45)] transition duration-200 hover:-translate-y-1 hover:border-violet-300 hover:bg-violet-50/50 hover:shadow-[0_24px_60px_-34px_rgba(79,70,229,0.42)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 sm:p-5"
-            >
-              <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-50 to-indigo-50 text-violet-700 ring-1 ring-violet-100 transition group-hover:scale-105 group-hover:bg-white group-hover:ring-violet-200">
-                <Icon className="size-5" strokeWidth={2.2} aria-hidden="true" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block break-words text-base font-bold leading-snug text-slate-900">{t[item.labelKey]}</span>
-                <span className="mt-1 line-clamp-2 block text-sm leading-5 text-slate-600">{t[item.descriptionKey]}</span>
-              </span>
-              <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
-            </Link>
-          );
-        })}
+      <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="grid gap-4 md:grid-cols-2 lg:gap-6">
+        {accountDashboardPanels.map((panel) => (
+          <AccountDashboardPanel key={panel.title} panel={panel} />
+        ))}
       </nav>
-
-      <aside className="mt-5 rounded-[1.5rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-sky-50 p-5 shadow-[0_22px_70px_-54px_rgba(49,46,129,0.6)] sm:mt-7 sm:p-6 lg:mt-8" aria-label={t["accountDashboard.hub.infoTitle"]}>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-black tracking-[-0.02em] text-slate-950">{t["accountDashboard.hub.infoTitle"]}</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{t["accountDashboard.hub.infoBody"]}</p>
-          </div>
-          <span className="inline-flex size-11 items-center justify-center rounded-full bg-white text-violet-700 shadow-sm ring-1 ring-violet-100" aria-hidden="true">
-            <Headphones className="size-5" strokeWidth={2.2} />
-          </span>
-        </div>
-      </aside>
     </section>
   );
 }
