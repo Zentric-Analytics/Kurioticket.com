@@ -209,7 +209,7 @@ export function AccountMenuPage() {
 
   return (
     <section className="overflow-x-hidden" aria-labelledby="account-title">
-      <div className="relative isolate flex h-[230px] w-full items-center overflow-hidden bg-slate-950 sm:h-[270px] lg:h-[320px]">
+      <div className="relative isolate flex h-[220px] w-full items-center overflow-hidden bg-slate-950 sm:h-[250px] lg:h-[280px]">
         <Image
           src="/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg"
           alt="Airplane parked at an airport terminal gate"
@@ -234,7 +234,7 @@ export function AccountMenuPage() {
         </div>
       </div>
 
-      <div className="bg-[#f3f7fc] px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-11">
+      <div className="bg-[#f3f7fc] px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-7 lg:px-8 lg:pb-11 lg:pt-8">
         <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1160px] gap-4 md:grid-cols-2 lg:gap-5">
           {accountDashboardPanels.map((panel) => (
             <AccountDashboardPanel key={panel.title} panel={panel} />
