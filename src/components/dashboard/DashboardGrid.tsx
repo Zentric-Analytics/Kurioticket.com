@@ -169,7 +169,7 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   return (
     <Link
       href={row.href}
-      className="focus-ring group/row flex min-h-[52px] items-center gap-3 bg-white px-4 py-3 text-left transition duration-200 hover:bg-blue-50 focus-visible:relative focus-visible:z-10 sm:min-h-[56px]"
+      className="focus-ring group/row flex min-h-[52px] items-center gap-3 bg-white/35 px-4 py-3 text-left transition duration-200 hover:bg-blue-50/70 focus-visible:relative focus-visible:z-10 sm:min-h-[56px]"
     >
       <RowIcon className="size-5 shrink-0 text-blue-700 transition group-hover/row:text-violet-700" strokeWidth={2.15} aria-hidden="true" />
       <span className="min-w-0 flex-1 text-sm font-semibold leading-5 text-slate-900 sm:text-[15px]">
@@ -186,7 +186,7 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
   return (
     <section
       className={cn(
-        "flex flex-col rounded-[1.35rem] border border-slate-200/90 bg-white p-5 shadow-[0_18px_45px_-32px_rgba(15,23,42,0.35)] sm:p-6",
+        "flex flex-col px-1 py-2 sm:px-2 sm:py-3",
         panel.minHeightClass,
       )}
       aria-labelledby={`account-panel-${panel.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
@@ -200,7 +200,7 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
         </h2>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200/90 bg-white">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white/30">
         {panel.rows.map((row, index) => (
           <div key={`${row.href}-${row.label}`} className={index === panel.rows.length - 1 ? undefined : "border-b border-slate-200/90"}>
             <AccountDashboardRow row={row} />
