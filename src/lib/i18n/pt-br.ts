@@ -2747,6 +2747,20 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.action.setUp": "Configurar",
   "accountDashboard.security.action.manage": "Gerenciar",
   "accountDashboard.security.action.deleteAccount": "Excluir conta",
+  "accountDashboard.support.eyebrow": "SUPORTE",
+  "accountDashboard.support.title": "Suporte",
+  "accountDashboard.support.description":
+    "Receba ajuda e entre em contato com o suporte ao cliente.",
+  "accountDashboard.support.comingSoon": "Em breve",
+  "accountDashboard.support.helpCenter.title": "Central de ajuda",
+  "accountDashboard.support.helpCenter.description":
+    "Consulte a área de suporte existente para obter ajuda sobre o Kurioticket e orientações de planejamento de viagem.",
+  "accountDashboard.support.contact.title": "Contatar suporte",
+  "accountDashboard.support.contact.description":
+    "As opções de contato estão sendo preparadas para solicitações de suporte da conta.",
+  "accountDashboard.support.privacyData.title": "Privacidade e dados",
+  "accountDashboard.support.privacyData.description":
+    "Revise as informações legais e de privacidade sobre dados da conta e políticas da plataforma.",
 
   "legal.refundBookingDisclaimer.title": "Aviso sobre reembolsos e provedores externos",
   "legal.refundBookingDisclaimer.summary": "Esclarece que compras, emissão de passagens, reembolsos, cancelamentos e pagamentos por inventário de viagem ocorrem fora do Kurioticket.",
