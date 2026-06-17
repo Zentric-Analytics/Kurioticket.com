@@ -2208,5 +2208,49 @@ export const translations: TranslationDictionary = {
   "carsFaq.5.question": "Quais documentos posso precisar na retirada?",
   "carsFaq.5.answer":
     "Provedores de aluguel podem solicitar carteira de motorista válida, cartão de pagamento, documento de identidade e quaisquer documentos exigidos pelo país ou local de retirada.",
+  supportEyebrow: "Central de ajuda do Kurioticket",
+  supportTitle: "Suporte ao cliente",
+  supportBeforeContactHeading: "Antes de entrar em contato",
+  supportBeforeContactDescription:
+    "Inclua o e-mail da sua conta Kurioticket, o que você estava tentando fazer, a rota ou o hotel, se for relevante, e qualquer página de provedor para a qual você foi redirecionado. Não envie números completos de cartão de pagamento nem números de documentos de viagem sensíveis.",
+  supportTicketHeading: "Criar um chamado de suporte",
+  supportFormEmailLabel: "E-mail",
+  supportFormSubjectLabel: "Assunto",
+  supportFormCategoryLabel: "Categoria",
+  supportCategorySearchHelp: "Ajuda com pesquisa",
+  supportCategoryPriceAlerts: "Alertas de preço",
+  supportCategoryPartnerRedirect: "Redirecionamento para provedor",
+  supportCategoryAccountHelp: "Ajuda com conta",
+  supportFormMessageLabel: "Como podemos ajudar?",
+  supportFormMessagePlaceholder:
+    "Compartilhe o contexto da rota, hotel, alerta ou conta.",
+  supportFormSubmit: "Enviar solicitação",
+  supportFormSending: "Enviando...",
+  supportFormSuccessPrefix: "Chamado",
+  supportFormSuccessSuffix: "aberto.",
+  supportFormErrorFallback: "Não foi possível abrir o chamado.",
+  supportFaqHeading: "Perguntas frequentes",
+  supportFaqAccountQuestion: "Ajuda com conta e login",
+  supportFaqAccountAnswer:
+    "O Kurioticket pode ajudar com acesso à conta, problemas de login, cadastro, acesso ao perfil e problemas da plataforma relacionados à conta.",
+  supportFaqSearchQuestion: "Ajuda com pesquisa e resultados",
+  supportFaqSearchAnswer:
+    "O Kurioticket pode ajudar quando a pesquisa de voos ou hotéis não funciona, os resultados não carregam, os filtros estão confusos ou os preços e provedores não aparecem como esperado.",
+  supportFaqSavedTripsQuestion: "Viagens salvas e alertas",
+  supportFaqSavedTripsAnswer:
+    "O Kurioticket pode ajudar com viagens salvas, pesquisas recentes, alertas de preço, problemas de notificação e ferramentas de viagem vinculadas à conta.",
+  supportFaqRedirectQuestion:
+    "Ajuda com reserva e redirecionamento para provedor",
+  supportFaqRedirectAnswer:
+    "O Kurioticket pode ajudar se o redirecionamento para um parceiro ou provedor falhar, abrir a página errada ou não preservar a viagem ou os detalhes da pesquisa selecionados.",
+  supportFaqAlreadyBookedQuestion: "Já reservou com um provedor?",
+  supportFaqAlreadyBookedAnswer:
+    "Se sua reserva foi concluída com uma companhia aérea, hotel, agência de viagens ou provedor externo, esse provedor é responsável por alterações na reserva, reembolsos, cancelamentos, check-in, embarque, recibos e documentos de viagem.",
+  supportFaqChangeBookingQuestion: "O Kurioticket pode alterar minha reserva?",
+  supportFaqChangeBookingAnswer:
+    "O Kurioticket só pode ajudar com reservas feitas diretamente pelo Kurioticket se, e quando, a reserva direta estiver disponível. Para reservas concluídas com provedores externos, entre em contato diretamente com esse provedor.",
+  supportFaqWhyRedirectedQuestion: "Por que fui enviado para outro provedor?",
+  supportFaqWhyRedirectedAnswer:
+    "O Kurioticket é uma plataforma de pesquisa e comparação de viagens, e alguns resultados redirecionam para provedores confiáveis onde você conclui a reserva, o pagamento e o suporte específico do provedor.",
 
 };
