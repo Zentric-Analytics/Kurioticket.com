@@ -1938,4 +1938,136 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.doubleBed": "Cama de casal",
   "hotelResults.filter.queenBed": "Cama queen-size",
   "hotelResults.filter.kingBed": "Cama king-size",
+  searchRentalCarsEveryPartTrip:
+    "Pesquise carros de aluguel para cada etapa da sua viagem",
+  exploreCarsByTripStyle: "Explore carros de aluguel por estilo de viagem",
+  carsTripStyleBody:
+    "Escolha um tipo de carro e abriremos os resultados com o contexto da pesquisa pronto.",
+  "carsTripStyle.economy.title": "Carros econômicos",
+  "carsTripStyle.economy.subtitle":
+    "Pesquisas acessíveis para trajetos urbanos e viagens solo",
+  "carsTripStyle.economy.cta": "Iniciar pesquisa de carro econômico",
+  "carsTripStyle.economy.ariaLabel":
+    "Iniciar pesquisa de carro econômico com retirada no centro da cidade",
+  "carsTripStyle.economy.imageAlt":
+    "Carros compactos urbanos circulando entre prédios no centro da cidade",
+  "carsTripStyle.suv.title": "SUVs",
+  "carsTripStyle.suv.subtitle":
+    "Espaço para viagens em família, bagagem e trajetos mais longos",
+  "carsTripStyle.suv.cta": "Abrir pesquisa de aluguel de SUV",
+  "carsTripStyle.suv.ariaLabel":
+    "Abrir pesquisa de aluguel de SUV com retirada no aeroporto",
+  "carsTripStyle.suv.imageAlt":
+    "SUV em uma estrada aberta perto de montanhas",
+  "carsTripStyle.luxury.title": "Carros de luxo",
+  "carsTripStyle.luxury.subtitle":
+    "Contexto de pesquisa premium para negócios ou viagens especiais",
+  "carsTripStyle.luxury.cta": "Planejar pesquisa de carro de luxo",
+  "carsTripStyle.luxury.ariaLabel":
+    "Planejar pesquisa de carro de luxo com retirada na área do hotel",
+  "carsTripStyle.luxury.imageAlt":
+    "Carro premium estacionado perto de um edifício moderno e elegante",
+  "carsTripStyle.van.title": "Vans",
+  "carsTripStyle.van.subtitle":
+    "Contexto de pesquisa para viagens em grupo e bagagem da família",
+  "carsTripStyle.van.cta": "Pesquisar vans para viagens em grupo",
+  "carsTripStyle.van.ariaLabel":
+    "Pesquisar vans para viagens em grupo com retirada no aeroporto",
+  "carsTripStyle.van.imageAlt":
+    "Van de passageiros viajando por uma estrada panorâmica iluminada",
+  "carsTrust.0.title": "Feito para viagens completas",
+  "carsTrust.0.description":
+    "Planeje voos, estadias e transporte terrestre em um único fluxo no Kurioticket.",
+  "carsTrust.1.title": "Detalhes da retirada primeiro",
+  "carsTrust.1.description":
+    "Informe local de retirada, datas, horários e idade do motorista para que sua pesquisa de aluguel comece com os detalhes corretos da viagem.",
+  "carsTrust.2.title": "Revisão clara do aluguel",
+  "carsTrust.2.description":
+    "Revise preço final, disponibilidade, taxas e regras do aluguel com o provedor antes de reservar.",
+  carsPickupPointsTitle: "Comece pelos pontos populares de retirada de carros",
+  carsPickupPointsBody:
+    "Escolha um tipo de retirada e abriremos a página de resultados de carros com os detalhes da pesquisa prontos.",
+  "carsPickup.Airport.title": "Retiradas no aeroporto",
+  "carsPickup.Airport.subtitle":
+    "Comece por grandes pontos de chegada em aeroportos",
+  "carsPickup.Airport.ariaLabel":
+    "Abrir resultados de carros para retirada no aeroporto",
+  "carsPickup.Airport.imageAlt":
+    "Avião estacionado em um portão de aeroporto ao pôr do sol",
+  "carsPickup.City center.title": "Retiradas no centro da cidade",
+  "carsPickup.City center.subtitle":
+    "Retire perto de hotéis no centro e distritos comerciais",
+  "carsPickup.City center.ariaLabel":
+    "Abrir resultados de carros para retirada no centro da cidade",
+  "carsPickup.City center.imageAlt":
+    "Carros circulando por uma rua urbana entre prédios altos",
+  "carsPickup.Train station.title": "Retiradas em estações de trem",
+  "carsPickup.Train station.subtitle":
+    "Continue sua viagem após chegadas de trem",
+  "carsPickup.Train station.ariaLabel":
+    "Abrir resultados de carros para retirada em estação de trem",
+  "carsPickup.Train station.imageAlt":
+    "Plataforma de trem com trilhos chegando a uma estação urbana",
+  "carsPickup.Hotel area.title": "Retiradas na área do hotel",
+  "carsPickup.Hotel area.subtitle":
+    "Planeje a retirada do carro perto de onde você está hospedado",
+  "carsPickup.Hotel area.ariaLabel":
+    "Abrir resultados de carros para retirada na área do hotel",
+  "carsPickup.Hotel area.imageAlt":
+    "Exterior de hotel com palmeiras e entrada para carros",
+  "carsSearch.pickupLocationLabel": "LOCAL DE RETIRADA",
+  "carsSearch.pickupLocationPlaceholder": "Aeroporto, cidade ou endereço",
+  "carsSearch.returnLocationPlaceholder":
+    "Cidade, aeroporto ou endereço de devolução",
+  "carsSearch.returnToSameLocation": "Devolver no mesmo local",
+  "carsSearch.differentReturnLocation": "Local de devolução diferente",
+  "carsSearch.rentalDatesLabel": "DATAS DO ALUGUEL",
+  "carsSearch.rentalDatePlaceholder": "Data de retirada — Data de devolução",
+  "carsSearch.pickupReturnTimeLabel": "HORÁRIO DE RETIRADA / DEVOLUÇÃO",
+  "carsSearch.pickupReturnTimeSummary":
+    "Retirada {pickupTime} — Devolução {returnTime}",
+  "carsSearch.driverAgeLabel": "IDADE DO MOTORISTA",
+  "carsSearch.driverAgeAnyAge": "Qualquer idade",
+  "carsSearch.clearPickupLocation": "Limpar local de retirada",
+  "carsSearch.clearReturnLocation": "Limpar local de devolução",
+  "carsSearch.chooseRentalDatesAria":
+    "Escolher datas de retirada e devolução do aluguel",
+  "carsSearch.rentalDatePickerAria": "Seletor de datas do aluguel",
+  "carsSearch.chooseRentalDates": "Escolha as datas do aluguel",
+  "carsSearch.previousMonth": "Mês anterior",
+  "carsSearch.previousMonthShort": "Ant.",
+  "carsSearch.nextMonth": "Próximo mês",
+  "carsSearch.nextMonthShort": "Próx.",
+  "carsSearch.selectDateAriaPrefix": "Selecionar",
+  "carsSearch.startsNewPickupDate": "inicia uma nova data de retirada",
+  "carsSearch.choosePickupReturnTimesAria":
+    "Escolher horários de retirada e devolução",
+  "carsSearch.pickupReturnTimeSelectorAria":
+    "Seletor de horário de retirada e devolução",
+  "carsSearch.pickupTimeLabel": "Horário de retirada",
+  "carsSearch.returnTimeLabel": "Horário de devolução",
+  carsSearchPreparing: "Preparando pesquisa de carros...",
+  "carsFaq.heading": "Perguntas frequentes sobre carros",
+  "carsFaq.0.question":
+    "Quais informações preciso para pesquisar um carro de aluguel?",
+  "carsFaq.0.answer":
+    "Informe o local de retirada, as datas de retirada e devolução, os horários de retirada e devolução, a idade do motorista e se você pretende devolver o carro em outro local.",
+  "carsFaq.1.question": "Posso devolver o carro em outro local?",
+  "carsFaq.1.answer":
+    "Sim. Selecione Local de devolução diferente no formulário de pesquisa e informe a cidade, aeroporto ou endereço onde pretende devolver o carro.",
+  "carsFaq.2.question":
+    "Por que a idade do motorista importa no aluguel de carros?",
+  "carsFaq.2.answer":
+    "Provedores de aluguel podem aplicar regras, taxas, disponibilidade de veículos ou requisitos de depósito diferentes conforme a idade do motorista e o local.",
+  "carsFaq.3.question":
+    "O que devo verificar antes de reservar um carro de aluguel?",
+  "carsFaq.3.answer":
+    "Revise o local de retirada e devolução, datas, horários, política de quilometragem, política de combustível, opções de seguro, termos de cancelamento, requisitos de depósito e documentos exigidos antes de reservar.",
+  "carsFaq.4.question": "Onde o preço final do aluguel é confirmado?",
+  "carsFaq.4.answer":
+    "O provedor confirma preço final, disponibilidade do veículo, impostos, taxas, requisitos de depósito e regras do aluguel antes da reserva.",
+  "carsFaq.5.question": "Quais documentos posso precisar na retirada?",
+  "carsFaq.5.answer":
+    "Provedores de aluguel podem solicitar carteira de motorista válida, cartão de pagamento, documento de identidade e quaisquer documentos exigidos pelo país ou local de retirada.",
+
 };
