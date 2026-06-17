@@ -783,9 +783,9 @@ export const translations: TranslationDictionary = {
   globalLanguage: "Global language",
   closeLanguageSelector: "Close language selector",
   preparing: "Preparing",
-  homeHeroTitle: "Find Cheap Flights Fast",
+  homeHeroTitle: "Compare travel options in one simple search",
   homeHeroSubtitle:
-    "Search hundreds of airlines and travel sites to find the best deals for your next trip.",
+    "Search trusted travel providers, compare prices clearly, and choose the option that fits your trip.",
   homeAssuranceBestPrice: "Best Prices Guaranteed",
   homeAssuranceCompare: "Easy Provider Comparison",
   homeAssuranceSecure: "Secure Payments",
