@@ -2,7 +2,7 @@
 
 These purchased premium homepage assets are stored locally for crop QA and homepage governance.
 
-Final desktop and mobile crop approval is pending staging QA.
+The homepage hero and six destination-card images are live on the US homepage. The six destination-card crops have been approved after staging QA; any future homepage premium additions still require desktop and mobile staging crop approval before launch.
 
 | File | Runtime path | Stock file ID | Vendor | License | Collection | Dimensions | Source page | Intended use | Purchase slot | Replacement target |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
