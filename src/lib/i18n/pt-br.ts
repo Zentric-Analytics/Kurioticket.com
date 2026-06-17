@@ -111,10 +111,11 @@ export const translations: TranslationDictionary = {
     "Falha no retorno do login com Google. Tente novamente ou use o login por e-mail.",
   loginErrorGoogleGeneric:
     "Não foi possível concluir o login com Google. Tente novamente ou use o login por e-mail.",
-  forgotPasswordTitle: "Redefinir sua senha",
+  forgotPasswordTitle: "Redefina sua senha",
   forgotPasswordSubtitle:
-    "Digite seu e-mail e enviaremos instruções para redefinir sua senha.",
+    "Insira seu e-mail e enviaremos instruções para redefinir sua senha.",
   forgotPasswordEmailLabel: "E-mail",
+  forgotPasswordEmailPlaceholder: "voce@exemplo.com",
   forgotPasswordInvalidEmail: "Insira um endereço de e-mail válido.",
   forgotPasswordUnableRequest:
     "Não foi possível solicitar uma redefinição de senha agora.",

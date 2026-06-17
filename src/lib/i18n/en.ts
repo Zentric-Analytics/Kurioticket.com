@@ -405,6 +405,7 @@ export const translations: TranslationDictionary = {
   forgotPasswordTitle: "Reset your password",
   forgotPasswordSubtitle: "Enter your email and we'll send instructions to reset your password.",
   forgotPasswordEmailLabel: "Email",
+  forgotPasswordEmailPlaceholder: "you@example.com",
   forgotPasswordInvalidEmail: "Enter a valid email address.",
   forgotPasswordUnableRequest: "Unable to request a password reset right now.",
   forgotPasswordSuccess: "If an account exists, we sent password reset instructions.",
