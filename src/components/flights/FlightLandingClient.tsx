@@ -401,7 +401,7 @@ export function FlightLandingClient() {
   return (
     <main className="flex-1 bg-slate-50 pb-12">
       <section className="relative isolate overflow-visible bg-slate-950 pb-0 sm:hidden">
-        <div className="relative min-h-[23.5rem] overflow-hidden">
+        <div className="relative min-h-[21.25rem] overflow-hidden">
           <Image
             src={heroImageUrl}
             alt={t("flightLandingHeroImageAlt")}
@@ -412,9 +412,9 @@ export function FlightLandingClient() {
           />
           <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/28 to-slate-950/10" />
           <div className="absolute inset-y-0 left-0 w-[92%] bg-gradient-to-r from-slate-950/76 via-slate-950/38 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-950/88 via-slate-950/34 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-950/88 via-slate-950/34 to-transparent" />
 
-          <div className="page-shell relative z-10 flex min-h-[23.5rem] items-start pt-8">
+          <div className="page-shell relative z-10 flex min-h-[21.25rem] items-start pt-8">
             <div className="max-w-[22rem] text-left text-white">
               <h1 className="text-[clamp(1.82rem,8vw,2.35rem)] font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
                 {useEnglishHeroWrap ? (
@@ -448,7 +448,7 @@ export function FlightLandingClient() {
           </div>
         </div>
 
-        <div className="page-shell relative z-20 -mt-28">
+        <div className="page-shell relative z-20 -mt-20">
           <div className="mx-auto max-w-6xl pb-2">
             <StandaloneFlightSearchForm localizeCalendarLabels />
           </div>
@@ -491,7 +491,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-8 sm:mt-32 lg:mt-36">
+      <section className="page-shell mt-24 sm:mt-32 lg:mt-36">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
