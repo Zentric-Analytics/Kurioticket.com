@@ -483,6 +483,8 @@ export const translations: TranslationDictionary = {
     "Alterações de viagem, cancelamentos, reembolsos e suporte de reserva geralmente são tratados pelo fornecedor onde a reserva foi concluída. Use os detalhes de confirmação desse fornecedor para solicitações de atendimento.",
   footerContactUs: "Contato",
   footerCustomerSupport: "Suporte ao cliente",
+  footerServiceGuarantee: "Garantia de serviço",
+  footerMoreServiceInfo: "Mais informações sobre o serviço",
   footerDiscover: "Descobrir",
   footerSavedRecent: "Salvos e recentes",
   footerTermsSettings: "Termos e configurações",
