@@ -219,6 +219,7 @@ export const translations: TranslationDictionary = {
   destination: "Destino",
   from: "De",
   to: "Para",
+  departureDate: "Datas da viagem",
   travelDates: "Datas da viagem",
   chooseTravelDates: "Escolha as datas da viagem",
   clearTravelDates: "Limpar datas da viagem",
