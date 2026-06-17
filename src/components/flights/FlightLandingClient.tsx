@@ -493,7 +493,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="mt-12 border-y border-slate-300/80 bg-gradient-to-b from-slate-100/80 via-indigo-50/70 to-violet-50/60 sm:mt-14">
+      <section className="mt-12 border-y border-slate-300/90 bg-gradient-to-b from-slate-100/80 via-indigo-50/70 to-violet-50/60 sm:mt-14">
         <div className="page-shell py-7 sm:py-8 lg:py-9">
           <div className="divide-y divide-slate-200/70 sm:grid sm:grid-cols-3 sm:gap-5 sm:divide-y-0 sm:[&>article+article]:border-l sm:[&>article+article]:border-slate-200/70 sm:[&>article+article]:pl-5">
             {[
@@ -539,7 +539,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-14 space-y-12 sm:mt-16 lg:mt-20">
+      <section className="page-shell mt-16 space-y-12 sm:mt-20 lg:mt-24">
         {routeInspirationCards.length > 0 ? (
           <div>
             <div className="mb-5 max-w-3xl">
