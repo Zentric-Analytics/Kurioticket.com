@@ -66,7 +66,7 @@ export function ForgotPasswordForm() {
             autoComplete="email"
             required
             disabled={loading}
-            placeholder="you@example.com"
+            placeholder={t.forgotPasswordEmailPlaceholder}
           />
         </Field>
 

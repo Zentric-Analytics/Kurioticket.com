@@ -325,6 +325,20 @@ export const translations: TranslationDictionary = {
     "Der Rückruf der Google-Anmeldung ist fehlgeschlagen. Bitte versuchen Sie es erneut oder verwenden Sie die E-Mail-Anmeldung.",
   loginErrorGoogleGeneric:
     "Die Google-Anmeldung konnte nicht abgeschlossen werden. Bitte versuchen Sie es erneut oder verwenden Sie die E-Mail-Anmeldung.",
+  forgotPasswordTitle: "Passwort zurücksetzen",
+  forgotPasswordSubtitle:
+    "Gib deine E-Mail-Adresse ein und wir senden dir Anweisungen zum Zurücksetzen deines Passworts.",
+  forgotPasswordEmailLabel: "E-Mail",
+  forgotPasswordEmailPlaceholder: "du@beispiel.de",
+  forgotPasswordInvalidEmail: "Gib eine gültige E-Mail-Adresse ein.",
+  forgotPasswordUnableRequest:
+    "Das Zurücksetzen des Passworts kann derzeit nicht angefordert werden.",
+  forgotPasswordSuccess:
+    "Wenn ein Konto existiert, haben wir Anweisungen zum Zurücksetzen des Passworts gesendet.",
+  forgotPasswordSending: "Wird gesendet...",
+  forgotPasswordSubmit: "Link zum Zurücksetzen senden",
+  forgotPasswordRemember: "Erinnerst du dich an dein Passwort?",
+  forgotPasswordLoginLink: "Anmelden",
   homeHeroTitle: "Günstige Flüge schnell finden",
   homeHeroSubtitle:
     "Durchsuche Hunderte Airlines und Reiseportale, um die besten Angebote für deine nächste Reise zu finden.",

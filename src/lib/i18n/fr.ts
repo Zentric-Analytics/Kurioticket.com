@@ -457,6 +457,20 @@ export const translations: TranslationDictionary = {
     "Le rappel de connexion Google a échoué. Veuillez réessayer ou utiliser la connexion par e-mail.",
   loginErrorGoogleGeneric:
     "La connexion avec Google n’a pas pu aboutir. Veuillez réessayer ou utiliser la connexion par e-mail.",
+  forgotPasswordTitle: "Réinitialisez votre mot de passe",
+  forgotPasswordSubtitle:
+    "Saisissez votre adresse e-mail et nous vous enverrons les instructions pour réinitialiser votre mot de passe.",
+  forgotPasswordEmailLabel: "E-mail",
+  forgotPasswordEmailPlaceholder: "vous@exemple.com",
+  forgotPasswordInvalidEmail: "Saisissez une adresse e-mail valide.",
+  forgotPasswordUnableRequest:
+    "Impossible de demander une réinitialisation du mot de passe pour le moment.",
+  forgotPasswordSuccess:
+    "Si un compte existe, nous avons envoyé les instructions de réinitialisation du mot de passe.",
+  forgotPasswordSending: "Envoi...",
+  forgotPasswordSubmit: "Envoyer le lien de réinitialisation",
+  forgotPasswordRemember: "Vous vous souvenez de votre mot de passe ?",
+  forgotPasswordLoginLink: "Se connecter",
   legalCenter: "Centre légal",
   "legalCenter.heroLabel": "Informations juridiques",
   "legalCenter.heroTitle": "Centre légal",

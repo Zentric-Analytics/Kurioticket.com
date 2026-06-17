@@ -412,6 +412,20 @@ export const translations: TranslationDictionary = {
     "Falló la devolución de llamada del inicio de sesión con Google. Inténtalo de nuevo o usa el inicio de sesión con correo electrónico.",
   loginErrorGoogleGeneric:
     "No se pudo completar el inicio de sesión con Google. Inténtalo de nuevo o usa el inicio de sesión con correo electrónico.",
+  forgotPasswordTitle: "Restablece tu contraseña",
+  forgotPasswordSubtitle:
+    "Ingresa tu correo electrónico y te enviaremos instrucciones para restablecer tu contraseña.",
+  forgotPasswordEmailLabel: "Correo electrónico",
+  forgotPasswordEmailPlaceholder: "tu@ejemplo.com",
+  forgotPasswordInvalidEmail: "Ingresa una dirección de correo electrónico válida.",
+  forgotPasswordUnableRequest:
+    "No se puede solicitar un restablecimiento de contraseña ahora.",
+  forgotPasswordSuccess:
+    "Si existe una cuenta, enviamos instrucciones para restablecer la contraseña.",
+  forgotPasswordSending: "Enviando...",
+  forgotPasswordSubmit: "Enviar enlace de restablecimiento",
+  forgotPasswordRemember: "¿Recordaste tu contraseña?",
+  forgotPasswordLoginLink: "Iniciar sesión",
   menu: "Menú",
   selectLanguage: "Selecciona tu idioma",
   suggestedLanguages: "Idiomas sugeridos",

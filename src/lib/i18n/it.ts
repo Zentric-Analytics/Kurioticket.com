@@ -464,6 +464,20 @@ export const translations: TranslationDictionary = {
   loginGoogle: "Continua con Google",
   loginSignupPrompt: "Nuovo su Kurioticket?",
   loginCreateAccount: "Crea un account",
+  forgotPasswordTitle: "Reimposta la password",
+  forgotPasswordSubtitle:
+    "Inserisci la tua e-mail e ti invieremo le istruzioni per reimpostare la password.",
+  forgotPasswordEmailLabel: "E-mail",
+  forgotPasswordEmailPlaceholder: "tu@esempio.com",
+  forgotPasswordInvalidEmail: "Inserisci un indirizzo e-mail valido.",
+  forgotPasswordUnableRequest:
+    "Non è possibile richiedere la reimpostazione della password in questo momento.",
+  forgotPasswordSuccess:
+    "Se esiste un account, abbiamo inviato le istruzioni per reimpostare la password.",
+  forgotPasswordSending: "Invio...",
+  forgotPasswordSubmit: "Invia link di reimpostazione",
+  forgotPasswordRemember: "Ricordi la password?",
+  forgotPasswordLoginLink: "Accedi",
 
   openLanguagePreferences:
     "Apri le preferenze lingua, lingua attuale {{language}}",
