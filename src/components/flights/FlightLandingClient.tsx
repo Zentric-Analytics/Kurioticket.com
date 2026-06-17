@@ -416,8 +416,8 @@ export function FlightLandingClient() {
         </div>
 
         <div className="page-shell relative z-10 flex min-h-[19.75rem] items-start pt-7">
-          <div className="max-w-[22rem] pr-2 text-left text-white">
-            <h1 className="text-[clamp(1.78rem,7.6vw,2.22rem)] font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
+          <div className="max-w-[21.5rem] pr-2 text-left text-white">
+            <h1 className="text-[clamp(1.64rem,6.9vw,2.02rem)] font-semibold leading-[1.08] tracking-[-0.026em] text-white text-balance drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
               {useEnglishHeroWrap ? (
                 <span>
                   <span className="block">{englishHeroTitleFirstLine}</span>
@@ -427,7 +427,7 @@ export function FlightLandingClient() {
                 heroTitle
               )}
             </h1>
-            <p className="mt-3 max-w-[19.5rem] text-[0.92rem] font-medium leading-6 text-white/91 drop-shadow-[0_2px_10px_rgba(2,6,23,0.68)]">
+            <p className="mt-2.5 max-w-[21rem] text-sm font-medium leading-[1.55] text-white/88 text-balance drop-shadow-[0_2px_10px_rgba(2,6,23,0.68)]">
               {useEnglishHeroWrap ? (
                 <span>
                   <span className="block">{englishHeroSubtitleFirstLine}</span>
