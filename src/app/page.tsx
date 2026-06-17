@@ -984,28 +984,28 @@ export default function Home() {
           </Link>
         </section>
 
-        <section className="page-shell pb-6 sm:pb-8">
-          <div className="w-full max-w-[820px]">
-            <div className="rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:p-3.5">
-              <div className="flex flex-row items-center gap-1.5 sm:gap-2.5 lg:gap-3.5">
-                <div className="flex shrink-0 items-center gap-1.5 sm:min-w-0 sm:basis-[34%] sm:gap-2.5 lg:basis-[34%] lg:max-w-[31ch]">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 sm:h-10 sm:w-10">
-                    <Mail className="size-5 sm:size-[22px]" />
-                  </span>
+        <section className="page-shell pb-8 pt-1 sm:pb-10 lg:pb-12">
+          <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-indigo-50/70 p-5 shadow-[0_24px_70px_rgba(15,23,42,0.08)] ring-1 ring-white/80 sm:p-7 lg:p-8">
+            <div className="grid items-center gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(27rem,1fr)] lg:gap-10">
+              <div className="flex items-start gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-indigo-700 shadow-sm ring-1 ring-indigo-100 sm:h-14 sm:w-14">
+                  <Mail className="size-6" />
+                </span>
 
-                  <div className="hidden min-w-0 max-w-[17ch] space-y-0 sm:block lg:max-w-[24ch]">
-                    <h2 className="truncate text-xs font-black leading-tight text-slate-950 sm:text-sm">
-                      {t("homeNewsletterTitle")}
-                    </h2>
+                <div className="max-w-2xl space-y-2">
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl lg:text-[2rem] lg:leading-tight">
+                    {t("homeNewsletterTitle")}
+                  </h2>
 
-                    <p className="hidden truncate text-xs font-semibold leading-5 text-slate-700 min-[420px]:block sm:text-sm">
-                      {t("homeNewsletterBody")}
-                    </p>
-                  </div>
+                  <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base sm:leading-7">
+                    {t("homeNewsletterBody")}
+                  </p>
                 </div>
+              </div>
 
+              <div className="space-y-3 lg:justify-self-end lg:self-center">
                 <form
-                  className="flex min-w-0 flex-1 flex-row items-center gap-1.5 sm:basis-auto sm:gap-2 lg:basis-[66%] lg:flex-nowrap lg:justify-end"
+                  className="flex flex-col gap-3 sm:flex-row lg:min-w-[31rem]"
                   onSubmit={handleNewsletterSubmit}
                   aria-busy={newsletterPending}
                 >
@@ -1020,7 +1020,7 @@ export default function Home() {
                       }
                     }}
                     placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-9 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:h-11 sm:min-w-[12rem] sm:px-3.5 sm:text-sm lg:min-w-[20rem] lg:max-w-[30rem]"
+                    className="focus-ring h-12 min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-950 shadow-sm shadow-slate-200/70 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:h-14 sm:min-w-[19rem] sm:px-5 sm:text-base"
                     aria-label={t("homeEmailAddress")}
                     disabled={newsletterPending}
                     required
@@ -1028,7 +1028,7 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    className="focus-ring h-9 w-auto shrink-0 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 text-xs font-extrabold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500 sm:h-11 sm:px-5 sm:text-sm"
+                    className="focus-ring h-12 shrink-0 whitespace-nowrap rounded-2xl bg-indigo-700 px-6 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:h-14 sm:px-7 sm:text-base"
                     aria-busy={newsletterPending}
                     disabled={newsletterPending}
                   >
@@ -1037,25 +1037,25 @@ export default function Home() {
                       : t("homeSubscribe")}
                   </button>
                 </form>
-              </div>
 
-              <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-600 sm:text-xs">
-                {t("homeNewsletterConsent")}
-              </p>
-
-              {newsletterMessage ? (
-                <p
-                  className={`mt-2 text-xs font-semibold sm:text-sm ${
-                    newsletterStatus === "error"
-                      ? "text-red-700"
-                      : "text-slate-700"
-                  }`}
-                  role="status"
-                  aria-live="polite"
-                >
-                  {newsletterMessage}
+                <p className="text-xs font-medium leading-5 text-slate-600 sm:text-[13px]">
+                  {t("homeNewsletterConsent")}
                 </p>
-              ) : null}
+
+                {newsletterMessage ? (
+                  <p
+                    className={`text-sm font-semibold ${
+                      newsletterStatus === "error"
+                        ? "text-red-700"
+                        : "text-slate-700"
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {newsletterMessage}
+                  </p>
+                ) : null}
+              </div>
             </div>
           </div>
         </section>
