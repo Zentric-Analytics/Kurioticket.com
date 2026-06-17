@@ -984,29 +984,29 @@ export default function Home() {
           </Link>
         </section>
 
-        <section className="page-shell pb-8 pt-1 sm:pb-10 lg:pb-12">
-          <div className="mx-auto max-w-[980px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.10)] ring-1 ring-slate-950/[0.03]">
-            <div className="h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-400" />
-            <div className="grid items-center gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,0.76fr)] lg:gap-6 lg:p-6">
-              <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100 sm:h-11 sm:w-11">
-                  <Mail className="size-5" />
+        <section className="page-shell pb-6 pt-0 sm:pb-8 lg:pb-9">
+          <div className="mx-auto max-w-[800px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.09)] ring-1 ring-slate-950/[0.03]">
+            <div className="h-0.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-400" />
+            <div className="space-y-3 p-3.5 sm:p-4 lg:p-5">
+              <div className="flex items-start gap-2.5 sm:gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100 sm:h-10 sm:w-10">
+                  <Mail className="size-4 sm:size-5" />
                 </span>
 
-                <div className="max-w-xl space-y-1.5">
-                  <h2 className="text-lg font-bold tracking-tight text-slate-950 sm:text-xl lg:text-[1.35rem] lg:leading-tight">
+                <div className="max-w-2xl space-y-1">
+                  <h2 className="text-base font-bold tracking-tight text-slate-950 sm:text-xl sm:leading-tight">
                     {t("homeNewsletterTitle")}
                   </h2>
 
-                  <p className="text-sm font-medium leading-6 text-slate-700 sm:text-[15px] sm:leading-6">
+                  <p className="text-xs font-medium leading-5 text-slate-700 sm:text-sm sm:leading-5">
                     {t("homeNewsletterBody")}
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-2.5 lg:max-w-[24rem] lg:justify-self-end lg:self-center">
+              <div className="space-y-2 sm:pl-[3.25rem]">
                 <form
-                  className="flex flex-col gap-2.5 sm:flex-row"
+                  className="flex flex-col gap-2 sm:max-w-[34rem] sm:flex-row"
                   onSubmit={handleNewsletterSubmit}
                   aria-busy={newsletterPending}
                 >
@@ -1021,7 +1021,7 @@ export default function Home() {
                       }
                     }}
                     placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 text-sm font-semibold text-slate-950 shadow-inner shadow-slate-200/50 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:min-w-[14rem] sm:px-4"
+                    className="focus-ring h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50/70 px-3 text-sm font-semibold text-slate-950 shadow-inner shadow-slate-200/50 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:min-w-[11rem] sm:px-3.5"
                     aria-label={t("homeEmailAddress")}
                     disabled={newsletterPending}
                     required
@@ -1029,7 +1029,7 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    className="focus-ring h-11 shrink-0 whitespace-nowrap rounded-xl bg-indigo-700 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:px-5"
+                    className="focus-ring h-10 shrink-0 whitespace-nowrap rounded-lg bg-indigo-700 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:px-4"
                     aria-busy={newsletterPending}
                     disabled={newsletterPending}
                   >
@@ -1039,13 +1039,13 @@ export default function Home() {
                   </button>
                 </form>
 
-                <p className="text-xs font-medium leading-5 text-slate-600 sm:text-[13px]">
+                <p className="text-xs font-medium leading-5 text-slate-600">
                   {t("homeNewsletterConsent")}
                 </p>
 
                 {newsletterMessage ? (
                   <p
-                    className={`text-sm font-semibold ${
+                    className={`text-xs font-semibold sm:text-sm ${
                       newsletterStatus === "error"
                         ? "text-red-700"
                         : "text-slate-700"
