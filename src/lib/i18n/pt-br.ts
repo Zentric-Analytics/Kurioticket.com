@@ -26,6 +26,146 @@ export const translations: TranslationDictionary = {
   deals: "Ofertas",
   login: "Entrar",
   signUp: "Criar conta",
+  signupPageTitle: "Crie sua conta",
+  signupFullNameLabel: "Nome completo",
+  signupEmailLabel: "E-mail",
+  signupPasswordLabel: "Senha",
+  signupAgreementBeforeTerms: "Ao criar uma conta, você concorda com os ",
+  signupTermsLink: "Termos",
+  signupAgreementBetweenLinks: ", a ",
+  signupPrivacyPolicyLink: "Política de Privacidade",
+  signupAgreementAfterPrivacy:
+    " e as divulgações sobre redirecionamento para parceiros.",
+  signupSubmit: "Criar conta",
+  signupCreatingAccount: "Criando conta...",
+  signupGoogle: "Continuar com o Google",
+  signupAlreadyHaveAccount: "Já tem uma conta?",
+  signupLoginLink: "Entrar",
+  signupErrorFullNameRequired: "Informe seu nome completo.",
+  signupErrorInvalidEmail: "Insira um endereço de e-mail válido.",
+  signupErrorPasswordRequirements: "A senha deve ter pelo menos 8 caracteres.",
+  signupErrorUnableCreate: "Não foi possível criar sua conta. Tente novamente.",
+  signupErrorRateLimited:
+    "Muitas tentativas de cadastro. Aguarde e tente novamente.",
+  signupErrorDuplicateEmail: "Já existe uma conta com este e-mail.",
+  signupErrorUnableSendVerification:
+    "Não foi possível enviar o código de verificação agora. Tente novamente.",
+  signupVerificationRequiredRedirecting:
+    "Verificação necessária. Redirecionando...",
+  signupAutomaticLoginFailed:
+    "Sua conta foi criada, mas o login automático falhou. Entre com sua nova senha.",
+  signupAccountCreatedRedirecting: "Conta criada. Redirecionando...",
+  loginPageTitle: "Entrar",
+  loginPageSubtitle:
+    "Salve pesquisas, gerencie alertas e acesse seu painel de viagens.",
+  loginEmailLabel: "E-mail",
+  loginPasswordLabel: "Senha",
+  loginForgotPassword: "Esqueceu a senha?",
+  loginSubmit: "Entrar",
+  loginCheckingDetails: "Verificando dados…",
+  loginGoogle: "Continuar com o Google",
+  loginSignupPrompt: "Novo no Kurioticket?",
+  loginCreateAccount: "Criar uma conta",
+  loginInvalidCredentials:
+    "Não foi possível entrar. Verifique seu e-mail e senha e tente novamente.",
+  loginRateLimited: "Muitas tentativas. Aguarde um momento e tente novamente.",
+  loginCodeSent: "Enviamos um código de verificação para seu e-mail.",
+  loginCodeFailed:
+    "Esse código não funcionou. Verifique o código e tente novamente.",
+  loginProcessing:
+    "Verificando seus dados e enviando um código de verificação…",
+  loginResendSuccess: "Enviamos um novo código se esta conta puder entrar.",
+  loginEnterCode: "Digite o código de login de 6 dígitos.",
+  loginVerifiedRedirecting: "Verificado. Redirecionando…",
+  loginStartOverError:
+    "Recomece para verificarmos seus dados antes de enviar um novo código.",
+  loginSendingNewCode: "Enviando um novo código de verificação…",
+  loginUnableSendNewCode:
+    "Não foi possível enviar um novo código agora. Tente novamente.",
+  loginUnableSendLoginCode:
+    "Não foi possível enviar o código de login agora. Tente novamente.",
+  loginCodeInstructions:
+    "Digite o código de 6 dígitos enviado para {{email}}. Os códigos expiram após 10 minutos.",
+  loginVerificationCodeLabel: "Código de verificação",
+  loginVerifying: "Verificando…",
+  loginVerifyLogin: "Verificar login",
+  loginSendingCode: "Enviando código…",
+  loginResendIn: "Reenviar em {{seconds}}s",
+  loginResendCode: "Reenviar código",
+  loginUseDifferentDetails: "Usar dados diferentes",
+  loginPasswordResetSuccess:
+    "Sua senha foi redefinida. Entre com sua nova senha.",
+  loginInactiveMessage:
+    "Você saiu após 30 minutos de inatividade. Entre novamente para continuar.",
+  loginErrorAccountUnavailable:
+    "Esta conta não está disponível. Entre em contato com o suporte.",
+  loginErrorOAuthCallback:
+    "O login com Google foi interrompido durante o retorno. Tente novamente.",
+  loginErrorOAuthAccountNotLinked:
+    "Este e-mail já está associado a outro método de login. Continue com o método original ou redefina sua senha.",
+  loginErrorAccessDenied:
+    "O acesso foi negado pelo Google. Permita o acesso e tente novamente.",
+  loginErrorConfiguration:
+    "O login com Google está temporariamente indisponível. Tente novamente em breve ou use o login por e-mail.",
+  loginErrorCallback:
+    "Falha no retorno do login com Google. Tente novamente ou use o login por e-mail.",
+  loginErrorGoogleGeneric:
+    "Não foi possível concluir o login com Google. Tente novamente ou use o login por e-mail.",
+  forgotPasswordTitle: "Redefinir sua senha",
+  forgotPasswordSubtitle:
+    "Digite seu e-mail e enviaremos instruções para redefinir sua senha.",
+  forgotPasswordEmailLabel: "E-mail",
+  forgotPasswordInvalidEmail: "Insira um endereço de e-mail válido.",
+  forgotPasswordUnableRequest:
+    "Não foi possível solicitar uma redefinição de senha agora.",
+  forgotPasswordSuccess:
+    "Se existir uma conta, enviamos instruções para redefinir a senha.",
+  forgotPasswordSending: "Enviando...",
+  forgotPasswordSubmit: "Enviar link de redefinição",
+  forgotPasswordRemember: "Lembrou sua senha?",
+  forgotPasswordLoginLink: "Entrar",
+  resetPasswordTitle: "Redefinir sua senha",
+  resetPasswordCreateTitle: "Criar uma nova senha",
+  resetPasswordSubtitle: "Digite sua nova senha abaixo.",
+  resetPasswordInvalidLink:
+    "Este link de redefinição é inválido ou expirou. Solicite um novo e-mail de redefinição de senha.",
+  resetPasswordRequestNew: "Solicitar um novo e-mail de redefinição",
+  resetPasswordNewPasswordLabel: "Nova senha",
+  resetPasswordConfirmPasswordLabel: "Confirmar nova senha",
+  resetPasswordValidationError:
+    "Insira uma senha válida e verifique se os dois campos de senha coincidem.",
+  resetPasswordUnable: "Não foi possível redefinir a senha agora.",
+  resetPasswordSuccessMessage:
+    "Senha redefinida com sucesso. Redirecionando para entrar...",
+  resetPasswordResetting: "Redefinindo...",
+  resetPasswordSubmit: "Redefinir senha",
+  resetPasswordRemember: "Lembrou sua senha?",
+  resetPasswordLoginLink: "Entrar",
+  verifyEmailTitle: "Verifique seu e-mail",
+  verifyEmailInstructions:
+    "Digite o código de 6 dígitos que enviamos para seu e-mail. Os códigos expiram após 10 minutos.",
+  verifyEmailCodeLabel: "Código de verificação",
+  verifyEmailInvalidCode: "O código de verificação é inválido ou expirou.",
+  verifyEmailSuccess:
+    "E-mail verificado. Agora você pode entrar e acessar seu painel.",
+  verifyEmailVerifying: "Verificando...",
+  verifyEmailSubmit: "Verificar e-mail",
+  verifyEmailSending: "Enviando...",
+  verifyEmailSendNewCode: "Enviar um novo código",
+  verifyEmailResendSuccess:
+    "Se este e-mail precisar de verificação, um novo código foi enviado.",
+  verifyEmailAlreadyVerified: "Já verificado?",
+  verifyEmailLoginLink: "Entrar",
+  verifyLoginTitle: "Verifique seu login",
+  verifyLoginInstructions:
+    "Digite o código de 6 dígitos que enviamos para seu e-mail. Os códigos expiram após 10 minutos.",
+  verifyLoginCodeLabel: "Código de login",
+  verifyLoginSubmit: "Verificar login",
+  verifyLoginNeedNewCode:
+    "Precisa de um novo código? Digite sua senha para podermos reenviar um com segurança.",
+  verifyLoginPasswordLabel: "Senha para reenvio",
+  verifyLoginNeedStartOver: "Precisa recomeçar?",
+  verifyLoginAgainLink: "Entrar novamente",
   destinations: "Destinos",
   explore: "Explorar",
   search: "Pesquisar",

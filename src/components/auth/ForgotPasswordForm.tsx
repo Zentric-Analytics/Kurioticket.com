@@ -6,11 +6,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { forgotPasswordSchema } from "@/lib/validation";
 
-const successMessage = "If an account exists, we sent password reset instructions.";
-
 export function ForgotPasswordForm() {
+  const { t } = useLocale();
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export function ForgotPasswordForm() {
 
     if (!parsed.success) {
       setLoading(false);
-      setError("Enter a valid email address.");
+      setError(t.forgotPasswordInvalidEmail);
       return;
     }
 
@@ -41,27 +41,25 @@ export function ForgotPasswordForm() {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(String(data.error || "Unable to request a password reset right now."));
+        setError(String(data.error || t.forgotPasswordUnableRequest));
         return;
       }
 
-      setMessage(successMessage);
+      setMessage(t.forgotPasswordSuccess);
     } catch {
       setLoading(false);
-      setError("Unable to request a password reset right now.");
+      setError(t.forgotPasswordUnableRequest);
     }
   }
 
   return (
     <Card className="mx-auto w-full max-w-md p-5">
-      <h1 className="text-2xl font-bold text-navy">Reset your password</h1>
+      <h1 className="text-2xl font-bold text-navy">{t.forgotPasswordTitle}</h1>
 
-      <p className="mt-2 text-sm text-muted">
-        Enter your email and we&apos;ll send instructions to reset your password.
-      </p>
+      <p className="mt-2 text-sm text-muted">{t.forgotPasswordSubtitle}</p>
 
       <form action={submit} className="mt-5 grid gap-4">
-        <Field label="Email">
+        <Field label={t.forgotPasswordEmailLabel}>
           <Input
             name="email"
             type="email"
@@ -75,16 +73,24 @@ export function ForgotPasswordForm() {
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
         {message ? (
-          <p className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark" aria-live="polite">
+          <p
+            className="rounded-md bg-teal/10 px-3 py-2 text-sm font-semibold text-teal-dark"
+            aria-live="polite"
+          >
             {message}
           </p>
         ) : null}
 
-        <Button disabled={loading}>{loading ? "Sending..." : "Send reset link"}</Button>
+        <Button disabled={loading}>
+          {loading ? t.forgotPasswordSending : t.forgotPasswordSubmit}
+        </Button>
       </form>
 
       <p className="mt-4 text-sm text-muted">
-        Remember your password? <Link className="font-semibold text-teal-dark" href="/auth/signin">Log in</Link>
+        {t.forgotPasswordRemember}{" "}
+        <Link className="font-semibold text-teal-dark" href="/auth/signin">
+          {t.forgotPasswordLoginLink}
+        </Link>
       </p>
     </Card>
   );

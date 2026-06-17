@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
@@ -13,14 +14,11 @@ type VerifyLoginFormProps = {
   callbackUrl?: string;
 };
 
-const rateLimitedMessage = "Too many attempts. Please wait a moment and try again.";
-const codeFailedMessage = "That code did not work. Check the code and try again.";
-const resendSuccessMessage = "We sent a new code if this account can sign in.";
-
 export function VerifyLoginForm({
   email,
   callbackUrl = "/",
 }: VerifyLoginFormProps) {
+  const { t } = useLocale();
   const [code, setCode] = useState("");
   const [resendPassword, setResendPassword] = useState("");
   const [error, setError] = useState("");
@@ -56,7 +54,7 @@ export function VerifyLoginForm({
     if (!email || !/^\d{6}$/.test(loginCode)) {
       verifyInFlightRef.current = false;
       setLoading(false);
-      setError("Enter the 6-digit login code.");
+      setError(t.loginEnterCode);
       return;
     }
 
@@ -72,13 +70,15 @@ export function VerifyLoginForm({
         verifyInFlightRef.current = false;
         setLoading(false);
         setError(
-          result?.error === "RateLimited" ? rateLimitedMessage : codeFailedMessage
+          result?.error === "RateLimited"
+            ? t.loginRateLimited
+            : t.loginCodeFailed,
         );
         return;
       }
 
       setResendPassword("");
-      setMessage("Verified. Redirecting…");
+      setMessage(t.loginVerifiedRedirecting);
 
       startTransition(() => {
         window.location.href = result.url || callbackUrl;
@@ -87,7 +87,7 @@ export function VerifyLoginForm({
       console.error("[verify-login]", error);
       verifyInFlightRef.current = false;
       setLoading(false);
-      setError(codeFailedMessage);
+      setError(t.loginCodeFailed);
     }
   }
 
@@ -95,14 +95,14 @@ export function VerifyLoginForm({
     if (resendInFlightRef.current || cooldownSeconds > 0) return;
 
     if (!email || !resendPassword) {
-      setError("Enter your password to request a new login code.");
+      setError(t.loginStartOverError);
       return;
     }
 
     resendInFlightRef.current = true;
     setResending(true);
     setError("");
-    setMessage("Sending a new verification code…");
+    setMessage(t.loginSendingNewCode);
 
     try {
       const response = await fetch("/api/auth/request-login-code", {
@@ -123,7 +123,11 @@ export function VerifyLoginForm({
 
       if (!response.ok) {
         setMessage("");
-        setError(response.status === 429 ? rateLimitedMessage : "Unable to send a new code right now. Please try again.");
+        setError(
+          response.status === 429
+            ? t.loginRateLimited
+            : t.loginUnableSendNewCode,
+        );
         if (nextCooldown > 0) {
           setCooldownSeconds(nextCooldown);
         }
@@ -131,11 +135,11 @@ export function VerifyLoginForm({
       }
 
       setCooldownSeconds(nextCooldown || 30);
-      setMessage(resendSuccessMessage);
+      setMessage(t.loginResendSuccess);
     } catch (error) {
       console.error("[verify-login:resend]", error);
       setMessage("");
-      setError("Unable to send a new code right now. Please try again.");
+      setError(t.loginUnableSendNewCode);
     } finally {
       resendInFlightRef.current = false;
       setResending(false);
@@ -144,17 +148,12 @@ export function VerifyLoginForm({
 
   return (
     <Card className="mx-auto w-full max-w-md p-5">
-      <h1 className="text-2xl font-bold text-navy">
-        Verify your login
-      </h1>
+      <h1 className="text-2xl font-bold text-navy">{t.verifyLoginTitle}</h1>
 
-      <p className="mt-2 text-sm text-muted">
-        Enter the 6-digit code we sent to your email.
-        Codes expire after 10 minutes.
-      </p>
+      <p className="mt-2 text-sm text-muted">{t.verifyLoginInstructions}</p>
 
       <form action={submit} className="mt-5 grid gap-4">
-        <Field label="Login code">
+        <Field label={t.verifyLoginCodeLabel}>
           <Input
             name="code"
             inputMode="numeric"
@@ -165,11 +164,7 @@ export function VerifyLoginForm({
             required
             value={code}
             onChange={(event) =>
-              setCode(
-                event.target.value
-                  .replace(/\D/g, "")
-                  .slice(0, 6)
-              )
+              setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
             }
             disabled={busy}
           />
@@ -191,17 +186,13 @@ export function VerifyLoginForm({
         ) : null}
 
         <Button disabled={busy || code.length !== 6}>
-          {busy
-            ? "Verifying…"
-            : "Verify login"}
+          {busy ? t.loginVerifying : t.verifyLoginSubmit}
         </Button>
       </form>
 
       <div className="mt-4 grid gap-3 rounded-md border border-teal/20 p-3">
-        <p className="text-sm text-muted">
-          Need a new code? Enter your password so we can safely resend one.
-        </p>
-        <Field label="Password for resend">
+        <p className="text-sm text-muted">{t.verifyLoginNeedNewCode}</p>
+        <Field label={t.verifyLoginPasswordLabel}>
           <Input
             type="password"
             autoComplete="current-password"
@@ -217,23 +208,30 @@ export function VerifyLoginForm({
           disabled={busy || resending || cooldownSeconds > 0}
         >
           {resending
-            ? "Sending code…"
+            ? t.loginSendingCode
             : cooldownSeconds > 0
-              ? `Resend in ${cooldownSeconds}s`
-              : "Resend code"}
+              ? formatTranslation(t.loginResendIn, { seconds: cooldownSeconds })
+              : t.loginResendCode}
         </Button>
       </div>
 
       <p className="mt-4 text-sm text-muted">
-        Need to start over?{" "}
-        <Link
-          className="font-semibold text-teal-dark"
-          href="/auth/signin"
-        >
-          Log in again
+        {t.verifyLoginNeedStartOver}{" "}
+        <Link className="font-semibold text-teal-dark" href="/auth/signin">
+          {t.verifyLoginAgainLink}
         </Link>
       </p>
     </Card>
+  );
+}
+
+function formatTranslation(
+  template: string,
+  params: Record<string, string | number>,
+) {
+  return Object.entries(params).reduce(
+    (text, [key, value]) => text.replaceAll(`{{${key}}}`, String(value)),
+    template,
   );
 }
 
@@ -246,7 +244,7 @@ function parseRetryAfter(value: string | null) {
 function parseCooldownSeconds(data: unknown, fallback: number) {
   if (!data || typeof data !== "object") return fallback;
   const cooldownSeconds = Number(
-    (data as Record<string, unknown>).cooldownSeconds || 0
+    (data as Record<string, unknown>).cooldownSeconds || 0,
   );
 
   if (!Number.isFinite(cooldownSeconds) || cooldownSeconds <= 0) {
