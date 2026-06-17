@@ -693,7 +693,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="page-shell absolute inset-x-0 bottom-[-220px] z-30 sm:hidden">
+          <div className="page-shell absolute inset-x-0 bottom-[-360px] z-30 sm:hidden">
             <SearchTabs
               t={t as unknown as Record<string, string>}
               compactHero
@@ -712,7 +712,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[39rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
+        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[48rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
           <div className="page-shell">
             <div className="flex items-center">
               <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
