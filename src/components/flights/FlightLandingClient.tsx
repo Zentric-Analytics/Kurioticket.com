@@ -539,7 +539,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-32 space-y-12 sm:mt-36 lg:mt-40">
+      <section className="page-shell mt-36 space-y-12 sm:mt-40 lg:mt-44">
         {routeInspirationCards.length > 0 ? (
           <div>
             <div className="mb-5 max-w-3xl">
@@ -571,13 +571,13 @@ export function FlightLandingClient() {
                         />
                       </div>
                       <div className="flex flex-1 flex-col p-5">
-                        <p className="text-[0.72rem] font-bold uppercase leading-4 tracking-[0.14em] text-indigo-700/85">
+                        <p className="text-[0.68rem] font-semibold uppercase leading-4 tracking-[0.16em] text-indigo-600/75">
                           {item.originCode} → {item.destinationCode}
                         </p>
-                        <h3 className="mt-3 text-lg font-bold leading-6 tracking-[-0.015em] text-slate-950">
+                        <h3 className="mt-3 text-lg font-bold leading-6 tracking-tight text-slate-950">
                           {routeText.destinationCity}
                         </h3>
-                        <p className="mt-2.5 line-clamp-2 text-sm font-medium leading-6 text-slate-600">
+                        <p className="mt-3 line-clamp-2 text-sm font-medium leading-6 text-slate-600">
                           {routeText.routeNote}
                         </p>
                       </div>
