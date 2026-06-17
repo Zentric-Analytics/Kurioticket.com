@@ -49,6 +49,14 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.history.tabs.active": "Ativas",
   "accountDashboard.trips.history.tabs.past": "Passadas",
   "accountDashboard.trips.history.tabs.cancelled": "Canceladas",
+  "accountDashboard.saved.eyebrow": "SALVOS",
+  "accountDashboard.saved.title": "Salvos",
+  "accountDashboard.saved.description":
+    "Veja suas viagens, rotas, estadias e pesquisas recentes salvas.",
+  "accountDashboard.saved.emptyTitle": "Nenhum item salvo encontrado.",
+  "accountDashboard.saved.emptyDescription":
+    "Explore a página inicial para encontrar inspiração de viagem!",
+  "accountDashboard.saved.explore": "Explorar",
   destinationsHeroBadge: "DESCOBERTA DE DESTINOS",
   destinationsHeroTitle: "Para onde você quer ir agora?",
   destinationsHeroSubtitle:
