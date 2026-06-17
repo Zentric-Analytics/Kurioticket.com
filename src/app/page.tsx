@@ -1180,12 +1180,12 @@ function DiscoverySuggestionCard({
         className={`min-w-0 flex-1 bg-white ${compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-2 px-3 pt-3"}`}
       >
         <p
-          className={`line-clamp-2 break-words text-slate-900 ${compact ? "pr-10 text-sm font-extrabold leading-5" : "pr-10 text-sm font-extrabold leading-5 md:text-[0.95rem]"}`}
+          className={`line-clamp-2 break-words text-slate-950 ${compact ? "pr-10 text-sm font-bold leading-[1.32]" : "pr-10 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
         >
           {title}
         </p>
         <p
-          className={`line-clamp-2 text-slate-700 ${compact ? "text-xs font-semibold leading-5" : "text-xs font-semibold leading-5 md:text-sm"}`}
+          className={`line-clamp-2 text-slate-600 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
         >
           {originCode} → {destinationCodeLabel} · {routeNote}
         </p>
@@ -1349,7 +1349,7 @@ function DiscoveryPricePill({
 
   if (!hasProviderPrice) {
     return (
-      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-extrabold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
+      <span className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1360,7 +1360,7 @@ function DiscoveryPricePill({
 
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
-      <span className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-extrabold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
+      <span className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1381,11 +1381,16 @@ function DiscoveryPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-300 bg-white px-4 py-2 text-base font-black leading-6 tracking-tight text-slate-950 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-lg sm:leading-7"
+      className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 leading-6 tracking-tight text-slate-950 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:leading-7"
       aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
-      {t("fromPrice").toLowerCase()} {displayPrice.formatted}
+      <span className="text-sm font-semibold text-slate-600 sm:text-base">
+        {t("fromPrice").toLowerCase()}
+      </span>
+      <span className="text-base font-bold text-slate-950 sm:text-lg">
+        {displayPrice.formatted}
+      </span>
     </span>
   );
 }
@@ -1548,11 +1553,16 @@ function DestinationPricePill({
 
   return (
     <span
-      className="inline-flex text-[17px] font-extrabold leading-6 tracking-tight text-slate-950 sm:text-lg"
+      className="inline-flex items-baseline gap-1.5 leading-6 tracking-tight text-slate-950"
       aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
-      {t("fromPrice").toLowerCase()} {displayPrice.formatted}
+      <span className="text-[15px] font-semibold text-slate-600 sm:text-base">
+        {t("fromPrice").toLowerCase()}
+      </span>
+      <span className="text-[17px] font-bold text-slate-950 sm:text-lg">
+        {displayPrice.formatted}
+      </span>
     </span>
   );
 }
