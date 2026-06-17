@@ -677,17 +677,17 @@ export default function Home() {
               className="object-cover object-[62%_center] sm:object-[60%_center] lg:object-[58%_48%]"
             />
           </div>
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950/72 via-slate-950/34 to-slate-950/4" />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/30 via-transparent to-slate-950/36" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/68 via-slate-950/28 to-transparent sm:w-[72%] lg:w-[62%]" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/22 via-transparent to-slate-950/30" />
 
           <div className="page-shell relative z-10 pb-0 pt-8 sm:pb-44 sm:pt-10 lg:pb-48 lg:pt-12">
             <div className="grid content-start gap-5 pb-0 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
-              <div className="max-w-[21rem] rounded-[1.75rem] border border-white/12 bg-slate-950/34 px-5 py-5 shadow-[0_24px_70px_-38px_rgba(2,6,23,0.9)] backdrop-blur-[2px] sm:max-w-2xl sm:px-7 sm:py-6 lg:max-w-3xl lg:px-8 lg:py-7">
-                <h1 className="max-w-3xl text-[1.82rem] font-semibold leading-[1.08] tracking-[-0.024em] text-white text-balance drop-shadow-[0_2px_12px_rgba(15,23,42,0.55)] sm:text-[2.15rem] lg:text-[2.65rem]">
+              <div className="max-w-[21rem] sm:max-w-2xl lg:max-w-3xl">
+                <h1 className="max-w-3xl text-[1.82rem] font-semibold leading-[1.08] tracking-[-0.024em] text-white text-balance drop-shadow-[0_3px_16px_rgba(2,6,23,0.7)] sm:text-[2.15rem] lg:text-[2.65rem]">
                   {t("homeHeroTitle")}
                 </h1>
 
-                <p className="mt-3 max-w-[18.5rem] text-sm font-medium leading-6 text-white/88 drop-shadow-[0_1px_8px_rgba(15,23,42,0.5)] sm:max-w-xl sm:text-base sm:leading-7 lg:text-[1.05rem]">
+                <p className="mt-3 max-w-[18.5rem] text-sm font-medium leading-6 text-white/90 drop-shadow-[0_2px_10px_rgba(2,6,23,0.68)] sm:max-w-xl sm:text-base sm:leading-7 lg:text-[1.05rem]">
                   {t("homeHeroSubtitle")}
                 </p>
               </div>
