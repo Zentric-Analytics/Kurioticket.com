@@ -2253,6 +2253,79 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedAnswer:
     "O Kurioticket é uma plataforma de pesquisa e comparação de viagens, e alguns resultados redirecionam para provedores confiáveis onde você conclui a reserva, o pagamento e o suporte específico do provedor.",
 
+  moreServiceInfoEyebrow: "Informações da plataforma",
+  moreServiceInfoTitle: "Mais informações sobre o serviço",
+  moreServiceInfoDescription:
+    "Saiba como o Kurioticket ajuda viajantes a pesquisar, comparar, salvar e organizar opções de viagem de vários provedores em um só lugar.",
+  moreServiceInfoContextTitle: "Planeje com contexto",
+  moreServiceInfoContextSubtitle:
+    "Dos resultados da pesquisa aos redirecionamentos para provedores",
+  moreServiceInfoContextCompare:
+    "Compare opções de vários provedores de viagem.",
+  moreServiceInfoContextSave:
+    "Salve viagens, alertas e preferências ao entrar na conta.",
+  moreServiceInfoContextContinue:
+    "Continue com os detalhes do provedor antes de reservar externamente.",
+  moreServiceInfoHowHeading: "Como o Kurioticket funciona",
+  moreServiceInfoHowDescription:
+    "Estes detalhes do serviço explicam o papel do Kurioticket antes, durante e depois de uma pesquisa de viagem.",
+  moreServiceInfoHowBadge: "NOÇÕES BÁSICAS DE PLANEJAMENTO DE VIAGEM",
+  moreServiceInfoStepSearchTitle: "Pesquise em vários provedores",
+  moreServiceInfoStepSearchSummary:
+    "Pesquise opções de viagem em diferentes provedores em um só lugar, em vez de abrir cada provedor separadamente.",
+  moreServiceInfoStepSearchDetails:
+    "O Kurioticket reúne informações disponíveis sobre voos, hotéis, rotas e resultados de viagem em uma única experiência de pesquisa, para que os viajantes possam revisar opções com mais eficiência.",
+  moreServiceInfoStepCompareTitle: "Compare opções de viagem",
+  moreServiceInfoStepCompareSummary:
+    "Compare preços, rotas, hotéis, horários e opções de viagem disponíveis antes de decidir o que combina com sua viagem.",
+  moreServiceInfoStepCompareDetails:
+    "Os resultados podem incluir detalhes do provedor, horários, informações do destino e outros dados da viagem que ajudam você a avaliar a opção antes de continuar para o provedor.",
+  moreServiceInfoStepSaveTitle: "Salve viagens e alertas",
+  moreServiceInfoStepSaveSummary:
+    "Crie uma conta para salvar viagens, acompanhar rotas e gerenciar alertas de viagem conectados ao seu planejamento.",
+  moreServiceInfoStepSaveDetails:
+    "Viagens salvas, pesquisas recentes e alertas facilitam voltar às opções que você está considerando e manter organizados os detalhes relacionados ao planejamento da viagem.",
+  moreServiceInfoStepRedirectsTitle:
+    "Redirecionamentos para provedores explicados",
+  moreServiceInfoStepRedirectsSummary:
+    "Ao selecionar uma oferta, você pode ser redirecionado para um provedor de viagem para concluir a reserva, o pagamento, a confirmação e o atendimento.",
+  moreServiceInfoStepRedirectsDetails:
+    "A página do provedor é onde preços finais, disponibilidade, regras, etapas de pagamento, recibos, alterações de reserva, cancelamentos e documentos de viagem são tratados para ofertas redirecionadas.",
+  moreServiceInfoStepAccountTitle: "Ferramentas de conta e viagem",
+  moreServiceInfoStepAccountSummary:
+    "Use as ferramentas da conta para organizar pesquisas salvas, viagens, alertas e preferências em um único espaço do Kurioticket.",
+  moreServiceInfoStepAccountDetails:
+    "Essas ferramentas ajudam no planejamento de viagens no Kurioticket, enquanto o gerenciamento de reservas específico do provedor permanece com o provedor quando sua reserva é concluída externamente.",
+  moreServiceInfoFaqHeading: "Perguntas frequentes",
+  moreServiceInfoFaqDescription:
+    "Respostas rápidas sobre pesquisa de viagens, redirecionamentos para provedores, viagens salvas e ferramentas da conta.",
+  moreServiceInfoFaqWhatQuestion: "O que é o Kurioticket?",
+  moreServiceInfoFaqWhatAnswer:
+    "O Kurioticket é uma plataforma de pesquisa e comparação de viagens para encontrar, comparar, salvar e organizar opções de viagem de vários provedores.",
+  moreServiceInfoFaqSearchQuestion: "Como funciona a pesquisa de viagens?",
+  moreServiceInfoFaqSearchAnswer:
+    "Você informa os detalhes da viagem, e o Kurioticket exibe opções de viagem disponíveis e informações de provedores que podem ajudar você a comparar escolhas.",
+  moreServiceInfoFaqRedirectQuestion:
+    "Por que sou redirecionado para outro provedor?",
+  moreServiceInfoFaqRedirectAnswer:
+    "Algumas ofertas são concluídas em sites de provedores externos. O provedor cuida das etapas finais da reserva, do pagamento, da confirmação e do atendimento.",
+  moreServiceInfoFaqPaymentsQuestion: "O Kurioticket processa pagamentos?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "Para ofertas redirecionadas a provedores, o Kurioticket não processa pagamentos. Revise e conclua o pagamento diretamente na página do provedor.",
+  moreServiceInfoFaqSaveQuestion: "Posso salvar viagens e alertas?",
+  moreServiceInfoFaqSaveAnswer:
+    "Sim. As ferramentas da conta podem ajudar você a salvar viagens, acompanhar rotas, gerenciar alertas e voltar às opções de viagem que está considerando.",
+  moreServiceInfoFaqAccountQuestion: "É necessário ter uma conta?",
+  moreServiceInfoFaqAccountAnswer:
+    "Você pode navegar pelas informações de pesquisa sem usar todas as ferramentas da conta, mas salvar viagens, alertas e preferências pode exigir login.",
+  moreServiceInfoFaqSupportQuestion: "Como entro em contato com o suporte?",
+  moreServiceInfoFaqSupportAnswer:
+    "Use a página de suporte ao cliente e inclua o e-mail da sua conta, o que você estava tentando fazer e qualquer detalhe de rota, hotel ou provedor.",
+  moreServiceInfoHelpTitle: "Precisa de ajuda?",
+  moreServiceInfoHelpDescription:
+    "Dúvidas sobre sua conta, viagens salvas, alertas ou redirecionamentos para provedores?",
+  moreServiceInfoSupportCta: "Contatar o suporte ao cliente",
+
   serviceGuaranteeEyebrow: "Compromisso de serviço do Kurioticket",
   serviceGuaranteeTitle: "Garantia de serviço",
   serviceGuaranteeDescription:
