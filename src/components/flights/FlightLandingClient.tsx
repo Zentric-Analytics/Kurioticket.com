@@ -395,45 +395,61 @@ export function FlightLandingClient() {
   const useEnglishHeroWrap =
     heroTitle === englishHeroTitle && heroSubtitle === englishHeroSubtitle;
 
-  const desktopHeroImageUrl =
+  const heroImageUrl =
     "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg";
 
   return (
-    <main className="flex-1 bg-slate-50 pb-12 pt-4 sm:pt-0">
-      <section className="page-shell sm:hidden">
-        <div>
-          <div className="w-full max-w-3xl text-left">
-            <h1 className="max-w-none text-[clamp(1.25rem,6.2vw,1.7rem)] font-semibold leading-[1.14] tracking-[-0.02em] text-slate-950">
-              {useEnglishHeroWrap ? (
-                <span>
-                  <span className="block whitespace-nowrap">
-                    {englishHeroTitleFirstLine}
-                  </span>
-                  <span className="block whitespace-nowrap">
-                    {englishHeroTitleSecondLine}
-                  </span>
-                </span>
-              ) : (
-                heroTitle
-              )}
-            </h1>
-            <p className="mt-2.5 max-w-none text-[0.94rem] font-medium leading-[1.55] text-slate-600">
-              {useEnglishHeroWrap ? (
-                <span>
-                  <span className="block whitespace-nowrap">
-                    {englishHeroSubtitleFirstLine}
-                  </span>
-                  <span className="block whitespace-nowrap">
-                    {englishHeroSubtitleSecondLine}
-                  </span>
-                </span>
-              ) : (
-                heroSubtitle
-              )}
-            </p>
-          </div>
+    <main className="flex-1 bg-slate-50 pb-12">
+      <section className="relative isolate overflow-visible bg-slate-950 pb-0 sm:hidden">
+        <div className="relative min-h-[23.5rem] overflow-hidden">
+          <Image
+            src={heroImageUrl}
+            alt={t("flightLandingHeroImageAlt")}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-[56%_42%]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/28 to-slate-950/10" />
+          <div className="absolute inset-y-0 left-0 w-[92%] bg-gradient-to-r from-slate-950/76 via-slate-950/38 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-slate-950/88 via-slate-950/34 to-transparent" />
 
-          <div className="mx-auto mt-4 max-w-6xl">
+          <div className="page-shell relative z-10 flex min-h-[23.5rem] items-start pt-8">
+            <div className="max-w-[22rem] text-left text-white">
+              <h1 className="text-[clamp(1.82rem,8vw,2.35rem)] font-semibold leading-[1.04] tracking-[-0.04em] text-white drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
+                {useEnglishHeroWrap ? (
+                  <span>
+                    <span className="block">
+                      {englishHeroTitleFirstLine}
+                    </span>
+                    <span className="block">
+                      {englishHeroTitleSecondLine}
+                    </span>
+                  </span>
+                ) : (
+                  heroTitle
+                )}
+              </h1>
+              <p className="mt-3 max-w-[20rem] text-[0.95rem] font-medium leading-6 text-white/91 drop-shadow-[0_2px_10px_rgba(2,6,23,0.68)]">
+                {useEnglishHeroWrap ? (
+                  <span>
+                    <span className="block">
+                      {englishHeroSubtitleFirstLine}
+                    </span>
+                    <span className="block">
+                      {englishHeroSubtitleSecondLine}
+                    </span>
+                  </span>
+                ) : (
+                  heroSubtitle
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="page-shell relative z-20 -mt-28">
+          <div className="mx-auto max-w-6xl pb-2">
             <StandaloneFlightSearchForm localizeCalendarLabels />
           </div>
         </div>
@@ -443,7 +459,7 @@ export function FlightLandingClient() {
         <div className="relative isolate min-h-[32rem] bg-slate-950 lg:min-h-[36rem]">
           <div className="absolute inset-0 overflow-hidden">
             <Image
-              src={desktopHeroImageUrl}
+              src={heroImageUrl}
               alt={t("flightLandingHeroImageAlt")}
               fill
               priority
@@ -475,7 +491,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-24 sm:mt-32 lg:mt-36">
+      <section className="page-shell mt-8 sm:mt-32 lg:mt-36">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">

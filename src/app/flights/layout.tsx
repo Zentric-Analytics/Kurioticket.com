@@ -96,32 +96,6 @@ export default function FlightsLayout({ children }: { children: ReactNode }) {
           margin-top: 3.5rem;
         }
 
-        @media (max-width: 639px) {
-          main.bg-slate-50 > section:first-child {
-            position: relative;
-            padding-top: 12.25rem;
-          }
-
-          main.bg-slate-50 > section:first-child::before {
-            content: "";
-            position: absolute;
-            inset: 0 0 auto;
-            height: 10.75rem;
-            border-radius: 1.65rem;
-            background-image:
-              linear-gradient(180deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.2)),
-              url("/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg");
-            background-position: 54% 45%;
-            background-size: cover;
-            box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
-          }
-
-          main.bg-slate-50 > section:first-child > div {
-            position: relative;
-            z-index: 1;
-          }
-        }
-
         @media (min-width: 640px) {
           main.bg-slate-50 > section.border-y .page-shell {
             padding-top: 2.35rem;
