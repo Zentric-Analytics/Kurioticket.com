@@ -41,6 +41,10 @@ export default function FlightsLayout({ children }: { children: ReactNode }) {
           line-height: 1.62rem;
         }
 
+        main.bg-slate-50 > section.page-shell.space-y-12 h2 {
+          font-weight: 700;
+        }
+
         main.bg-slate-50 > section.border-y + section.page-shell {
           margin-top: 3.5rem;
         }
