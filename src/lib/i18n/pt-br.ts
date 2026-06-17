@@ -77,6 +77,25 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.cta.flights": "Pesquisar voos",
   "accountDashboard.priceAlerts.cta.hotels": "Pesquisar hotéis",
   "accountDashboard.priceAlerts.cta.cars": "Pesquisar carros",
+  "accountDashboard.preferences.eyebrow": "PREFERÊNCIAS",
+  "accountDashboard.preferences.title": "Preferências",
+  "accountDashboard.preferences.description":
+    "Gerencie suas preferências e personalize sua experiência.",
+  "accountDashboard.preferences.comingSoon": "Em breve",
+  "accountDashboard.preferences.personalDetails.title": "Dados pessoais",
+  "accountDashboard.preferences.personalDetails.description":
+    "Revise os detalhes do perfil da sua conta quando os controles editáveis de perfil estiverem disponíveis.",
+  "accountDashboard.preferences.notifications.title":
+    "Preferências de notificação",
+  "accountDashboard.preferences.notifications.description":
+    "Gerencie preferências de e-mail e alertas conforme os controles de notificação forem adicionados.",
+  "accountDashboard.preferences.travel.title": "Preferências de viagem",
+  "accountDashboard.preferences.travel.description":
+    "Mantenha suas preferências padrão de planejamento fáceis de encontrar para futuras configurações da conta.",
+  "accountDashboard.preferences.securityPrivacy.title":
+    "Segurança e privacidade",
+  "accountDashboard.preferences.securityPrivacy.description":
+    "Revise as informações atuais de privacidade e políticas da plataforma.",
   destinationsHeroBadge: "DESCOBERTA DE DESTINOS",
   destinationsHeroTitle: "Para onde você quer ir agora?",
   destinationsHeroSubtitle:
