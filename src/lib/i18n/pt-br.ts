@@ -211,8 +211,57 @@ export const translations: TranslationDictionary = {
   explore: "Explorar",
   search: "Pesquisar",
   searchFlights: "Pesquisar voos",
+  flightLandingHeroTitle: "Encontre seu próximo voo acessível com facilidade.",
+  flightLandingHeroSubtitle:
+    "Pesquise rotas, compare datas e explore opções de voos para sua próxima viagem.",
+  flightLandingHeroImageAlt: "Asa de avião acima de nuvens claras",
+  flightLandingFeatureSearchReadyTitle: "Rotas prontas para pesquisa",
+  flightLandingFeatureSearchReadyBody:
+    "Insira detalhes reais da viagem antes que os resultados sejam solicitados aos provedores de voos.",
+  flightLandingFeatureCompareTitle: "Comparar no contexto",
+  flightLandingFeatureCompareBody:
+    "Use datas, número de viajantes, cabine, duração, escalas e detalhes da rota para avaliar as opções.",
+  flightLandingFeatureProviderTitle: "Revisão do provedor",
+  flightLandingFeatureProviderBody:
+    "Sempre confirme a disponibilidade final, o preço e as regras com o provedor antes de reservar.",
+  flightLandingStartThisSearch: "Iniciar esta pesquisa",
+  flightLandingRouteIdeasTitle: "Ideias de rotas para viagens flexíveis",
+  flightLandingRouteIdeasBody:
+    "Explore ideias de rotas e depois inicie uma pesquisa real com datas e viajantes antes de comparar voos disponíveis.",
+  flightLandingRouteConnector: "para",
+  flightLandingRouteAriaLabel: "Pesquisar voos de {{origin}} para {{destination}}",
+  discoverDestinationsFromRegion: "Descubra destinos a partir da sua região",
+  discoverDestinationsFromRegionBody:
+    "Explore rotas selecionadas e comece sua próxima viagem com confiança.",
+  cityOrAirport: "Cidade ou aeroporto",
+  beachVacations: "Férias na praia",
+  beachVacationsBody:
+    "Explore rotas de voos para litorais ensolarados, ilhas e destinos de praia com clima quente.",
+  flightBookingFaqs: "Perguntas frequentes sobre reserva de voos",
+  flightBookingFaqIntro:
+    "Revise detalhes comuns da pesquisa de voos antes de continuar com um provedor.",
+  flightFaqBestTimeQuestion: "Qual é o melhor momento para reservar um voo?",
+  flightFaqBestTimeAnswer:
+    "Os preços dos voos podem mudar conforme a rota, a temporada, a demanda e a disponibilidade. Em geral, vale comparar várias datas, verificar aeroportos próximos quando possível e revisar o itinerário completo antes de escolher uma tarifa.",
+  flightFaqBeforeBookingQuestion: "O que devo verificar antes de reservar?",
+  flightFaqBeforeBookingAnswer:
+    "Revise horários de partida e chegada, tempo total de viagem, escalas, regras de bagagem, opções de seleção de assentos, termos de cancelamento e política de alteração da passagem antes de concluir sua reserva com o provedor.",
+  flightFaqFlexibleFareQuestion: "O que é uma tarifa flexível?",
+  flightFaqFlexibleFareAnswer:
+    "Uma tarifa flexível pode permitir alterações ou cancelamentos com menos restrições do que uma tarifa básica, mas as regras exatas dependem da companhia aérea ou do provedor da reserva. Sempre revise as condições da tarifa antes da compra.",
+  flightFaqNonstopQuestion: "Voos diretos são sempre melhores?",
+  flightFaqNonstopAnswer:
+    "Nem sempre. Voos diretos podem economizar tempo, enquanto rotas com uma escala podem oferecer outros horários de partida, janelas de chegada ou opções de tarifa. Compare o tempo total de viagem, a duração da escala e a conveniência antes de decidir.",
+  flightFaqBaggageQuestion: "Como funcionam as regras de bagagem?",
+  flightFaqBaggageAnswer:
+    "A franquia de bagagem pode variar por companhia aérea, rota, cabine, tipo de tarifa e provedor. Verifique se bagagem de mão, bagagem despachada e item pessoal estão incluídos antes de reservar.",
+  flightFaqChangeCancelQuestion: "Posso alterar ou cancelar minha passagem?",
+  flightFaqChangeCancelAnswer:
+    "As opções de alteração e cancelamento dependem das regras da tarifa e das políticas do provedor. Algumas passagens podem ser não reembolsáveis ou incluir taxas, por isso revise os termos com atenção antes de reservar.",
+  flightFaqInternationalQuestion: "O que devo saber sobre voos internacionais?",
+  flightFaqInternationalAnswer:
+    "Para viagens internacionais, revise validade do passaporte, exigências de visto, regras de trânsito, políticas de bagagem e requisitos de chegada do destino antes de reservar.",
   searchHotels: "Pesquisar hotéis",
-  cityOrHotel: "Cidade ou hotel",
   chooseHotelDestination: "Escolha o destino do hotel",
   hotelSearchTravelDatesLabel: "DATAS DA VIAGEM",
   hotelSearchDatePlaceholder: "Entrada — Saída",

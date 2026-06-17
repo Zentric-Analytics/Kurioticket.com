@@ -75,6 +75,14 @@ const normalizeFlightsCalendarLocale = (locale: string | null | undefined) => {
     return "it-IT";
   }
 
+  if (
+    normalized === "pt" ||
+    normalized === "pt-br" ||
+    normalized.startsWith("pt-")
+  ) {
+    return "pt-BR";
+  }
+
   return "en-US";
 };
 
