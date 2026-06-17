@@ -467,21 +467,23 @@ export default function HotelsSearchPage() {
     <>
       <AppHeader />
       <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
-        <section className="relative isolate overflow-hidden bg-slate-950">
-          <Image
-            src={hotelsHeroImage}
-            alt={hotelsHeroImageAlt}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-[50%_44%] brightness-[1.06] saturate-[1.06] sm:object-[50%_46%]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/48 via-slate-950/16 to-transparent" />
-          <div className="absolute inset-y-0 left-0 w-[74%] bg-gradient-to-r from-slate-950/66 via-slate-950/28 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
+        <section className="relative isolate overflow-visible bg-slate-950">
+          <div className="absolute inset-0 overflow-hidden">
+            <Image
+              src={hotelsHeroImage}
+              alt={hotelsHeroImageAlt}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-[50%_44%] brightness-[1.06] saturate-[1.06] sm:object-[50%_46%]"
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950/48 via-slate-950/16 to-transparent" />
+            <div className="absolute inset-y-0 left-0 w-[74%] bg-gradient-to-r from-slate-950/66 via-slate-950/28 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
+          </div>
 
-          <div className="page-shell relative z-10 flex min-h-[34rem] flex-col justify-end pb-7 pt-16 sm:min-h-[33rem] sm:pb-9 sm:pt-20 lg:min-h-[35rem] lg:pb-10">
-            <div className="max-w-2xl pb-5 text-white sm:pb-7 lg:pb-8">
+          <div className="page-shell relative z-10 flex min-h-[34rem] flex-col justify-end pb-40 pt-16 sm:min-h-[33rem] sm:pb-36 sm:pt-20 lg:min-h-[35rem] lg:pb-40">
+            <div className="max-w-2xl text-white">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
                 Premium stays, clearly compared
               </p>
@@ -492,14 +494,16 @@ export default function HotelsSearchPage() {
                 Compare hotels in one place, from polished city arrivals to easy resort escapes.
               </p>
             </div>
+          </div>
 
-            <div className="rounded-2xl border border-white/16 bg-white/96 p-2 shadow-[0_24px_60px_-32px_rgba(15,23,42,0.62)] ring-1 ring-white/45 backdrop-blur-md sm:rounded-[1.5rem] sm:p-3">
+          <div className="page-shell absolute inset-x-0 bottom-[-118px] z-30 sm:bottom-[-70px] lg:bottom-[-72px]">
+            <div className="mx-auto max-w-6xl rounded-[1.65rem] border border-white/70 bg-white/96 p-2.5 shadow-[0_30px_76px_-34px_rgba(15,23,42,0.66)] ring-1 ring-slate-900/5 backdrop-blur-md sm:rounded-[1.9rem] sm:p-3 lg:p-3.5">
               <HotelSearchBar introLabel={hotelSearchIntroLabel} />
             </div>
           </div>
         </section>
 
-        <div className="page-shell relative mx-auto mt-10 max-w-6xl space-y-11 md:mt-12 md:space-y-14">
+        <div className="page-shell relative mx-auto mt-40 max-w-6xl space-y-11 sm:mt-36 md:mt-40 md:space-y-14 lg:mt-44">
           <section
             className="space-y-4"
             aria-labelledby="hotel-destinations-heading"
