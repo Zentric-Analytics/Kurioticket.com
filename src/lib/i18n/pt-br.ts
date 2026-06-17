@@ -39,6 +39,14 @@ export const translations: TranslationDictionary = {
   "accountMenu.priceAlerts.description": "Ver alertas salvos",
   "accountMenu.accountSettings.label": "Configurações da conta",
   "accountMenu.accountSettings.description": "Perfil e preferências",
+  "accountDashboard.saved.eyebrow": "SALVOS",
+  "accountDashboard.saved.title": "Salvos",
+  "accountDashboard.saved.description":
+    "Veja suas viagens, rotas, estadias e pesquisas recentes salvas.",
+  "accountDashboard.saved.emptyTitle": "Nenhum item salvo encontrado.",
+  "accountDashboard.saved.emptyDescription":
+    "Explore a página inicial para encontrar inspiração de viagem!",
+  "accountDashboard.saved.explore": "Explorar",
   myAccount: "Minha conta",
   destinationsHeroBadge: "DESCOBERTA DE DESTINOS",
   destinationsHeroTitle: "Para onde você quer ir agora?",
