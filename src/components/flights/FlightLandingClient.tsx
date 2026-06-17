@@ -446,7 +446,7 @@ export function FlightLandingClient() {
           participating in normal flow. The following section reserves the card's
           height so content begins cleanly after the overlap.
         */}
-        <div className="page-shell absolute inset-x-0 bottom-[-16.25rem] z-30">
+        <div className="page-shell absolute inset-x-0 bottom-[-20rem] z-30">
           <div className="mx-auto max-w-6xl">
             <StandaloneFlightSearchForm localizeCalendarLabels />
           </div>
@@ -489,7 +489,7 @@ export function FlightLandingClient() {
         </div>
       </section>
 
-      <section className="page-shell mt-0 pt-[22rem] sm:mt-32 sm:pt-0 lg:mt-36">
+      <section className="page-shell mt-0 pt-[25.75rem] sm:mt-32 sm:pt-0 lg:mt-36">
         <div>
           <div className="mb-5 max-w-3xl">
             <h2 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
