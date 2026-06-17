@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { AccountSectionHeader } from "@/components/dashboard/DashboardGrid";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
@@ -94,14 +95,7 @@ export function TripsManagementPage() {
   return (
     <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 lg:mt-0 lg:space-y-6 xl:max-w-[64rem]">
       <div className="flex min-w-0 flex-col gap-2 pb-0 sm:gap-4 lg:flex-row lg:items-start lg:justify-between lg:border-b lg:border-slate-200/80 lg:pb-5">
-        <div className="min-w-0">
-          <h1 id="trips-title" className="text-4xl font-black tracking-[-0.04em] text-slate-950 lg:text-4xl lg:font-bold lg:tracking-[-0.035em]">
-            {t("accountDashboard.trips.title")}
-          </h1>
-          <p className="mt-2 hidden max-w-2xl text-sm leading-6 text-slate-600 lg:block lg:text-base">
-            {t("accountDashboard.trips.subtitle")}
-          </p>
-        </div>
+        <AccountSectionHeader title={t("accountDashboard.trips.title")} description={t("accountDashboard.trips.subtitle")} titleId="trips-title" />
         <div className="relative flex w-fit shrink-0 justify-end">
           <button
             ref={lookupTriggerRef}

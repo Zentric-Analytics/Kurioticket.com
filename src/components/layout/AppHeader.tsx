@@ -77,7 +77,7 @@ type AppHeaderProps = {
 
 const signedInAccountMenuItems = [
   {
-    href: "/dashboard",
+    href: "/dashboard/account",
     labelKey: "accountMenu.myAccount.label",
     descriptionKey: "accountMenu.myAccount.description",
     icon: LayoutDashboard,

@@ -1,7 +1,7 @@
 import { getServerSession } from "next-auth";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
-import { AccountDashboardFrame, DashboardOverview } from "@/components/dashboard/DashboardGrid";
+import { DashboardOverview } from "@/components/dashboard/DashboardGrid";
 import { authOptions } from "@/lib/auth";
 
 export const metadata = {
@@ -32,9 +32,7 @@ export default async function DashboardPage() {
       <AppHeader />
       <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
         <div className="page-shell min-w-0">
-          <AccountDashboardFrame mobileOverviewTabs>
-            <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
-          </AccountDashboardFrame>
+          <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
         </div>
       </main>
       <Footer />

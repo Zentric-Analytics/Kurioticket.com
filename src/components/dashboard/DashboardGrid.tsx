@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, type ChangeEvent, type ReactNode } from "react";
+import { useState, type ChangeEvent } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   Bookmark,
   BriefcaseBusiness,
@@ -11,9 +10,7 @@ import {
   Headphones,
   LifeBuoy,
   LockKeyhole,
-  Luggage,
   Mail,
-  Plane,
   Settings,
   ShieldCheck,
   UserRound,
@@ -25,28 +22,14 @@ import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 
 const navItems = [
-  { labelKey: "accountDashboard.nav.overview", href: "/dashboard", icon: Grid2X2 },
-  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
-  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
-  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
-  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
+  { labelKey: "accountDashboard.nav.overview", href: "/dashboard", icon: Grid2X2, descriptionKey: "accountDashboard.overview.subtitle" },
+  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness, descriptionKey: "accountDashboard.trips.subtitle" },
+  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark, descriptionKey: "accountDashboard.saved.description" },
+  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings, descriptionKey: "accountDashboard.preferences.description" },
+  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck, descriptionKey: "accountDashboard.security.description" },
+  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy, descriptionKey: "accountDashboard.support.description" },
 ];
 
-const mobileAccountNavItems = [
-  { labelKey: "accountDashboard.personalDetails.title", href: "/dashboard", icon: UserRound },
-  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
-  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
-  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
-  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
-];
-
-type AccountDashboardFrameProps = {
-  children: ReactNode;
-  mobileOverviewTabs?: boolean;
-  mobileBackHref?: string;
-};
 
 type DashboardOverviewProps = {
   initials: string;
@@ -94,42 +77,6 @@ type SecuritySettingRowProps = {
   statusId?: string;
 };
 
-function isActiveDashboardRoute(pathname: string, href: string) {
-  if (href === "/dashboard") {
-    return pathname === href;
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function TravelIllustration({ compact = false, variant = "luggage" }: { compact?: boolean; variant?: "luggage" | "globe" }) {
-  return (
-    <div
-      className={cn(
-        "relative isolate flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100/70 text-violet-700",
-        compact ? "size-20" : "size-20 sm:size-28",
-      )}
-      aria-hidden="true"
-    >
-      <div className="absolute inset-3 rounded-full bg-white/35" />
-      <div className="absolute -left-4 top-7 h-6 w-14 rounded-full bg-white/60" />
-      <div className="absolute right-2 top-8 h-5 w-12 rounded-full bg-white/70" />
-      {variant === "globe" ? (
-        <>
-          <div className="absolute inset-4 rounded-full border border-violet-300/60" />
-          <div className="absolute h-20 w-20 rounded-full border-l border-violet-300/70 sm:h-24 sm:w-24" />
-          <div className="absolute h-14 w-24 rotate-12 rounded-[100%] border-t border-dashed border-violet-400/80 sm:w-28" />
-          <Plane className="absolute right-3 top-8 size-7 rotate-45 fill-violet-700 text-violet-700" />
-        </>
-      ) : (
-        <>
-          <div className="absolute bottom-7 h-3 w-20 rounded-full bg-violet-300/30 blur-sm" />
-          <Luggage className={cn("relative fill-violet-500/20 text-violet-700 drop-shadow-sm", compact ? "size-12" : "size-12 sm:size-16")} />
-        </>
-      )}
-    </div>
-  );
-}
 
 function SavedEmptyStateIllustration() {
   return (
@@ -142,141 +89,64 @@ function SavedEmptyStateIllustration() {
   );
 }
 
-export function AccountDashboardFrame({ children, mobileOverviewTabs = false, mobileBackHref }: AccountDashboardFrameProps) {
-  const pathname = usePathname();
+
+export function AccountSectionHeader({ title, description, titleId }: { title: string; description: string; titleId?: string }) {
   const { t } = useLocale();
-  const resolvedMobileBackHref = mobileBackHref;
 
   return (
-    <div
-      className={cn(
-        "grid min-w-0 items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15.75rem_minmax(0,1fr)]",
-        mobileOverviewTabs && "gap-3 sm:gap-4",
-      )}
-    >
-      <aside className="hidden min-w-0 lg:block" aria-label="Account navigation">
-        <div
-          className={cn(
-            "border border-violet-100/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)] backdrop-blur-[1px]",
-            mobileOverviewTabs
-              ? "-mx-4 border-x-0 bg-white px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:border-black/25 lg:bg-violet-50/35 lg:p-2.5 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)]"
-              : "rounded-[1.25rem] bg-violet-50/35 p-2 lg:p-2.5",
-          )}
-        >
-          <nav>
-            <div
-              className={cn(
-                "flex min-w-0 flex-wrap lg:flex-col lg:flex-nowrap lg:gap-1.5",
-                mobileOverviewTabs
-                  ? "max-w-full flex-nowrap gap-x-6 gap-y-0 overflow-x-auto overscroll-x-contain [scrollbar-width:none] lg:gap-1.5 lg:overflow-visible [&::-webkit-scrollbar]:hidden"
-                  : "gap-2",
-              )}
-            >
-              {navItems.map((item) => {
-                const active = isActiveDashboardRoute(pathname, item.href);
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "focus-ring flex items-center gap-2.5 text-[13px] font-semibold transition hover:bg-white/55 hover:text-violet-700 lg:rounded-xl lg:px-3.5 lg:py-2.5",
-                      mobileOverviewTabs && "relative shrink-0 whitespace-nowrap rounded-none px-0 py-3 text-sm sm:text-[13px] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent lg:rounded-xl lg:px-3.5 lg:py-2.5 lg:after:hidden",
-                      !mobileOverviewTabs && "rounded-xl px-3.5 py-2.5",
-                      active
-                        ? cn(
-                          "text-violet-700 lg:bg-white/65 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.10),0_10px_26px_-24px_rgba(79,70,229,0.55)]",
-                          mobileOverviewTabs && "after:bg-violet-700 lg:bg-white/65 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.10),0_10px_26px_-24px_rgba(79,70,229,0.55)]",
-                        )
-                        : "text-slate-800",
-                    )}
-                  >
-                    <Icon className={cn("size-4 shrink-0", mobileOverviewTabs && "hidden lg:block")} strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
-                    <span className="min-w-0 break-words leading-snug">{t[item.labelKey]}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
-
-          <div className="mt-5 hidden rounded-2xl border border-violet-100/60 bg-violet-50/45 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] lg:block lg:mt-14 xl:mt-16">
-            <div className="mx-auto mb-2 flex justify-center opacity-85">
-              <TravelIllustration compact />
-            </div>
-            <h2 className="text-[13px] font-semibold leading-snug text-slate-900">{t["accountDashboard.promo.title"]}</h2>
-            <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">{t["accountDashboard.promo.body"]}</p>
-            <Link
-              href="/flights"
-              className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200/80 bg-white/75 px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-white"
-            >
-              <Plane className="size-3.5" aria-hidden="true" />
-              {t["accountDashboard.promo.cta"]}
-            </Link>
-          </div>
-        </div>
-      </aside>
-      <div className="min-w-0 space-y-3.5 sm:space-y-4">
-        <MobileAccountBackLink href={resolvedMobileBackHref} />
-        {children}
-      </div>
+    <div className="px-1 pb-2 text-left sm:px-2 sm:pb-3">
+      <Link
+        href="/dashboard/account"
+        className="focus-ring mb-3 inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 pr-3 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+      >
+        <span className="text-xl leading-none" aria-hidden="true">‹</span>
+        <span>{t.myAccount}</span>
+      </Link>
+      <h1 id={titleId} className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
+        {title}
+      </h1>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{description}</p>
     </div>
   );
 }
 
-export function MobileAccountBackLink({ href = "/dashboard/account" }: { href?: string }) {
+export function AccountMenuPage() {
   const { t } = useLocale();
 
   return (
-    <Link
-      href={href}
-      aria-label={t["accountDashboard.mobile.backAriaLabel"]}
-      className="focus-ring inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 pr-3 text-sm font-black text-violet-700 transition hover:bg-violet-50 lg:hidden"
-    >
-      <span className="text-xl leading-none" aria-hidden="true">‹</span>
-      <span>{t.myAccount}</span>
-    </Link>
-  );
-}
-
-export function MobileAccountMenuPage() {
-  const { t } = useLocale();
-
-  return (
-    <section className="mx-auto max-w-2xl overflow-x-hidden lg:hidden" aria-labelledby="mobile-account-title">
-      <div className="mb-5 px-1">
+    <section className="mx-auto max-w-5xl overflow-x-hidden" aria-labelledby="account-title">
+      <div className="mb-5 px-1 sm:mb-8">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Kurioticket</p>
-        <h1 id="mobile-account-title" className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950">
+        <h1 id="account-title" className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl">
           {t.myAccount}
         </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+          {t["accountDashboard.mobile.manageAccount"]}
+        </p>
       </div>
 
-      <div className="overflow-hidden rounded-[1.35rem] border border-violet-100 bg-white shadow-[0_22px_58px_-48px_rgba(49,46,129,0.55)]">
-        <div className="border-b border-slate-100 bg-violet-50/55 px-5 py-4">
-          <h2 className="text-sm font-black text-slate-950">{t["accountDashboard.mobile.manageAccount"]}</h2>
-        </div>
+      <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {navItems.map((item) => {
+          const Icon = item.icon;
 
-        <nav aria-label={t["accountDashboard.mobile.manageAccount"]}>
-          {mobileAccountNavItems.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group flex min-h-14 w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-violet-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500"
-              >
-                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 transition group-hover:bg-white">
-                  <Icon className="size-4.5" strokeWidth={2.2} aria-hidden="true" />
-                </span>
-                <span className="min-w-0 flex-1 break-words text-base font-bold leading-snug text-slate-900">{t[item.labelKey]}</span>
-                <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group flex min-h-24 items-center gap-4 rounded-[1.35rem] border border-violet-100 bg-white p-4 text-left shadow-[0_22px_58px_-50px_rgba(49,46,129,0.55)] transition hover:-translate-y-0.5 hover:border-violet-200 hover:bg-violet-50/55 hover:shadow-[0_26px_64px_-48px_rgba(49,46,129,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+            >
+              <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 transition group-hover:bg-white">
+                <Icon className="size-5" strokeWidth={2.2} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block break-words text-base font-bold leading-snug text-slate-900">{t[item.labelKey]}</span>
+                <span className="mt-1 line-clamp-2 block text-sm leading-5 text-slate-600">{t[item.descriptionKey]}</span>
+              </span>
+              <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
+            </Link>
+          );
+        })}
+      </nav>
     </section>
   );
 }
@@ -663,8 +533,11 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
 }
 
 export function DashboardOverview({ initials, displayName, userEmail, userName }: DashboardOverviewProps) {
+  const { t } = useLocale();
+
   return (
     <div className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
+      <AccountSectionHeader title={t["accountDashboard.nav.overview"]} description={t["accountDashboard.overview.subtitle"]} />
       <AccountIdentityHeader initials={initials} displayName={displayName} userEmail={userEmail} />
       <PersonalDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
     </div>
@@ -677,14 +550,7 @@ export function SavedDashboardPage() {
 
   return (
     <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
-      <div className="px-1 text-left sm:px-2">
-        <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
-          {t["accountDashboard.saved.title"]}
-        </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base lg:mx-0">
-          {t["accountDashboard.saved.description"]}
-        </p>
-      </div>
+      <AccountSectionHeader title={t["accountDashboard.saved.title"]} description={t["accountDashboard.saved.description"]} titleId="saved-dashboard-title" />
       <div className="px-1 py-7 sm:px-2 sm:py-9 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-14 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
         <div className="mx-auto flex max-w-md flex-col items-center text-center">
           <SavedEmptyStateIllustration />
@@ -712,17 +578,7 @@ export function PreferencesDashboardPage() {
 
   return (
     <section aria-labelledby="preferences-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
-          {t["accountDashboard.preferences.eyebrow"]}
-        </p>
-        <h1 id="preferences-title" className="mt-2 text-3xl font-bold text-navy">
-          {t["accountDashboard.preferences.title"]}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          {t["accountDashboard.preferences.description"]}
-        </p>
-      </div>
+      <AccountSectionHeader title={t["accountDashboard.preferences.title"]} description={t["accountDashboard.preferences.description"]} titleId="preferences-title" />
       <div className="grid gap-3">
         <ListRow
           title={t["accountDashboard.preferences.personalDetails.title"]}
@@ -788,14 +644,7 @@ export function SecurityDashboardPage() {
 
   return (
     <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 lg:space-y-5 xl:max-w-[64rem]">
-      <div className="px-1 text-left sm:px-2">
-        <h1 id="security-title" className="text-2xl font-bold leading-tight tracking-tight text-slate-950 sm:text-3xl sm:font-bold sm:tracking-normal sm:text-navy">
-          {t["accountDashboard.security.title"]}
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:mt-3 sm:max-w-2xl sm:text-sm sm:leading-6 sm:text-muted">
-          {t["accountDashboard.security.description"]}
-        </p>
-      </div>
+      <AccountSectionHeader title={t["accountDashboard.security.title"]} description={t["accountDashboard.security.description"]} titleId="security-title" />
       <div className="divide-y divide-slate-200/90 border-y border-slate-200/90">
         <SecuritySettingRow
           title={t["accountDashboard.security.passkeys.title"]}
@@ -844,17 +693,7 @@ export function SupportDashboardPage() {
 
   return (
     <section aria-labelledby="support-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
-          {t["accountDashboard.support.eyebrow"]}
-        </p>
-        <h1 id="support-title" className="mt-2 text-3xl font-bold text-navy">
-          {t["accountDashboard.support.title"]}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          {t["accountDashboard.support.description"]}
-        </p>
-      </div>
+      <AccountSectionHeader title={t["accountDashboard.support.title"]} description={t["accountDashboard.support.description"]} titleId="support-title" />
       <div className="grid gap-3">
         <ListRow
           title={t["accountDashboard.support.helpCenter.title"]}
