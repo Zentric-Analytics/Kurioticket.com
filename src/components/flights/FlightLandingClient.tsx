@@ -377,7 +377,7 @@ export function FlightLandingClient() {
   const englishHeroTitle = enTranslations.flightLandingHeroTitle;
   const englishHeroSubtitle = enTranslations.flightLandingHeroSubtitle;
   const englishHeroTitleFirstLine = englishHeroTitle.replace(
-    " with ease.",
+    " flight with ease.",
     "",
   );
   const englishHeroTitleSecondLine = englishHeroTitle.replace(
@@ -415,9 +415,9 @@ export function FlightLandingClient() {
           <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/86 via-slate-950/30 to-transparent" />
         </div>
 
-        <div className="page-shell relative z-10 flex min-h-[19.75rem] items-start pt-7">
-          <div className="max-w-[21.5rem] pr-2 text-left text-white">
-            <h1 className="text-[clamp(1.64rem,6.9vw,2.02rem)] font-semibold leading-[1.08] tracking-[-0.026em] text-white text-balance drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
+        <div className="page-shell relative z-10 flex min-h-[19.75rem] items-start pt-11">
+          <div className="max-w-[22.5rem] pr-2 text-left text-white">
+            <h1 className="text-[clamp(1.56rem,6.45vw,1.88rem)] font-semibold leading-[1.09] tracking-[-0.026em] text-white text-balance drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
               {useEnglishHeroWrap ? (
                 <span>
                   <span className="block">{englishHeroTitleFirstLine}</span>
