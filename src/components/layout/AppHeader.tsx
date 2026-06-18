@@ -1050,7 +1050,22 @@ export function AppHeader({
           </div>
 
           <nav className="hidden md:block" aria-label="Primary">
-            <div className="flex min-h-[44px] items-center justify-start pt-1.5 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
+            <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
+              {showAccountBackLink ? (
+                <Link
+                  href={accountBackHref}
+                  onClick={(event) =>
+                    handleRouteLinkClick(event, accountBackHref)
+                  }
+                  className="absolute left-0 top-1/2 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                >
+                  <span className="text-lg leading-none" aria-hidden="true">
+                    ‹
+                  </span>
+                  <span>{accountBackLabel}</span>
+                </Link>
+              ) : null}
+
               <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
                 {desktopPrimaryNavItems.map((item) => {
                   const Icon = item.icon;
@@ -1085,7 +1100,24 @@ export function AppHeader({
           </nav>
 
           <nav className="md:hidden" aria-label="Primary">
-            <div className="pb-1 pt-3.5">
+            {showAccountBackLink ? (
+              <div className="pt-1">
+                <Link
+                  href={accountBackHref}
+                  onClick={(event) =>
+                    handleRouteLinkClick(event, accountBackHref)
+                  }
+                  className="inline-flex min-h-8 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                >
+                  <span className="text-lg leading-none" aria-hidden="true">
+                    ‹
+                  </span>
+                  <span>{accountBackLabel}</span>
+                </Link>
+              </div>
+            ) : null}
+
+            <div className="pb-1 pt-2.5">
               <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {visibleMobilePrimaryNavItems.map((item) => {
                   const Icon = item.icon;
@@ -1120,22 +1152,6 @@ export function AppHeader({
           </nav>
         </div>
 
-        {showAccountBackLink ? (
-          <div className="border-t border-white/10 bg-white text-slate-900 shadow-[0_1px_0_rgba(15,23,42,0.06)]">
-            <div className="page-shell flex min-h-11 items-center">
-              <Link
-                href={accountBackHref}
-                onClick={(event) => handleRouteLinkClick(event, accountBackHref)}
-                className="inline-flex min-h-10 items-center gap-1.5 rounded-md text-sm font-semibold text-blue-600 transition hover:text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-              >
-                <span className="text-xl leading-none" aria-hidden="true">
-                  ‹
-                </span>
-                <span>{accountBackLabel}</span>
-              </Link>
-            </div>
-          </div>
-        ) : null}
 
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
