@@ -2620,6 +2620,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.filter.parking": "Parking",
   "hotelResults.filter.pool": "Pool",
   "hotelResults.filter.airportShuttle": "Airport shuttle",
+  "hotelResults.filter.bedAndBreakfast": "Bed and breakfast",
   "hotelResults.filter.roomOnly": "Room only",
   "hotelResults.filter.halfBoard": "Half board",
   "hotelResults.filter.fullBoard": "Full board",

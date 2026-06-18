@@ -116,12 +116,36 @@ function getDistanceDisplay(distanceFromCenter?: string) {
   return distanceText;
 }
 
-function getMealPlanDisplay(hotel: PublicHotelResult, roomTypeText: string) {
+function translateKnownHotelLabel(value: string, t: (key: string) => string) {
+  const normalized = normalizeWhitespace(value).toLocaleLowerCase();
+
+  if (/^bed and breakfast$/.test(normalized)) {
+    return t("hotelResults.filter.bedAndBreakfast");
+  }
+
+  if (/^(room only|accommodation only)$/.test(normalized)) {
+    return t("hotelResults.filter.roomOnly");
+  }
+
+  if (/^double room$/.test(normalized)) {
+    return t("hotelResults.filter.doubleRoom");
+  }
+
+  return value;
+}
+
+function getMealPlanDisplay(
+  hotel: PublicHotelResult,
+  roomTypeText: string,
+  t: (key: string) => string,
+) {
   const mealText = [hotel.roomType, ...hotel.amenities]
     .map((value) => toSentenceCase(value || ""))
     .find((value) => value && isMealPlanText(value));
 
-  return mealText && toTitleCase(mealText) !== roomTypeText ? mealText : "";
+  if (!mealText || toTitleCase(mealText) === roomTypeText) return "";
+
+  return translateKnownHotelLabel(mealText, t);
 }
 
 function getAmenityDisplay(amenities: string[], mealPlanText: string) {
@@ -197,9 +221,12 @@ export function HotelCard({ hotel }: HotelCardProps) {
       : failedImageUrls.has(fallbackImageUrl)
         ? ""
         : fallbackImageUrl;
-  const roomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
+  const rawRoomTypeText = hotel.roomType ? toTitleCase(hotel.roomType) : "";
+  const roomTypeText = rawRoomTypeText
+    ? translateKnownHotelLabel(rawRoomTypeText, t)
+    : "";
   const distanceText = getDistanceDisplay(hotel.distanceFromCenter);
-  const mealPlanText = getMealPlanDisplay(hotel, roomTypeText);
+  const mealPlanText = getMealPlanDisplay(hotel, rawRoomTypeText, t);
   const cancellationDisplay = getCancellationDisplay(hotel.cancellationInfo, t);
   const amenityDisplay = getAmenityDisplay(hotel.amenities, mealPlanText);
 
