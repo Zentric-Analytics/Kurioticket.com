@@ -1,11 +1,11 @@
 import { getServerSession } from "next-auth";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
-import { AccountDashboardFrame, DashboardOverview } from "@/components/dashboard/DashboardGrid";
+import { DashboardOverview } from "@/components/dashboard/DashboardGrid";
 import { authOptions } from "@/lib/auth";
 
 export const metadata = {
-  title: "Dashboard",
+  title: "Personal details",
 };
 
 function getInitials(name?: string | null, email?: string | null) {
@@ -29,13 +29,9 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <AppHeader />
-      <main className="flex-1 bg-[radial-gradient(circle_at_top_right,rgba(124,58,237,0.12),transparent_30%),linear-gradient(180deg,#f7f3ff_0%,#ffffff_44%,#f3f6fb_100%)] pb-10 pt-0 sm:pt-5 lg:pt-5">
-        <div className="page-shell min-w-0">
-          <AccountDashboardFrame mobileOverviewTabs>
-            <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
-          </AccountDashboardFrame>
-        </div>
+      <AppHeader showAccountBackLink />
+      <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
+        <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
       </main>
       <Footer />
     </>

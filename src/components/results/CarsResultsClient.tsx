@@ -156,11 +156,19 @@ const getCarsResultsIntlLocale = (locale: string) => {
     return "fr-FR";
   }
 
+  if (normalizedLocale.startsWith("it")) {
+    return "it-IT";
+  }
+
+  if (normalizedLocale.startsWith("pt")) {
+    return "pt-BR";
+  }
+
   return "en-US";
 };
 
 const usesTwentyFourHourCarsResultsTime = (intlLocale: string) =>
-  ["de", "es", "fr"].some((localePrefix) =>
+  ["de", "es", "fr", "pt"].some((localePrefix) =>
     intlLocale.toLowerCase().startsWith(localePrefix),
   );
 

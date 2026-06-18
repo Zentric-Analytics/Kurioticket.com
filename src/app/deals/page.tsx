@@ -263,6 +263,17 @@ export default function DealsPage() {
       : formattedStart;
   }, [endDate, includesFlight, locale, startDate, t]);
 
+  const travelersFieldLabelKey = includesHotel
+    ? includesCar
+      ? "deals.travelersRoomsCarLabel"
+      : "deals.travelersRoomsLabel"
+    : includesCar
+      ? "deals.travelersCarsLabel"
+      : includesFlight
+        ? "deals.travelersCabinLabel"
+        : "deals.travelersDetailsLabel";
+  const travelersFieldLabel = t(travelersFieldLabelKey);
+
   const travelersSummary = useMemo(() => {
     const normalizedAdults = clampCount(adults, 1, 12);
     const normalizedChildren = clampCount(children, 0, 12 - normalizedAdults);
@@ -906,14 +917,14 @@ export default function DealsPage() {
                       className="relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                     >
                       <span className="mb-1 block text-xs font-semibold uppercase leading-4 [letter-spacing:0.025em] text-slate-600">
-                        {t("deals.travelersRoomsLabel")}
+                        {travelersFieldLabel}
                       </span>
                       <button
                         type="button"
                         onClick={handleToggleTravelers}
                         aria-expanded={travelersOpen}
                         aria-haspopup="dialog"
-                        aria-label={t("deals.travelersRoomsLabel")}
+                        aria-label={travelersFieldLabel}
                         className="flex h-8 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] text-slate-900 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
                       >
                         <span className="truncate">{travelersSummary}</span>

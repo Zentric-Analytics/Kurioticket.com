@@ -8,11 +8,15 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  type RefObject,
   type SetStateAction,
 } from "react";
 
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 
 import {
   ArrowRightLeft,
@@ -96,6 +100,27 @@ const normalizeHomepageCalendarLocale = (
     normalized.startsWith("de-")
   ) {
     return "de-DE";
+  }
+
+  if (
+    normalized === "it" ||
+    normalized.startsWith("it-")
+  ) {
+    return "it-IT";
+  }
+
+  if (
+    normalized === "nl" ||
+    normalized.startsWith("nl-")
+  ) {
+    return "nl-NL";
+  }
+
+  if (
+    normalized === "pt" ||
+    normalized.startsWith("pt-")
+  ) {
+    return "pt-BR";
   }
 
   return "en-US";
@@ -248,6 +273,117 @@ const desktopTravelersFieldClassName = "z-[2147483500]";
 const desktopTravelersPopoverClassName = "z-[2147483600]";
 const mobileDoneButtonClassName =
   "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
+
+type DesktopTopLayerPopoverProps = {
+  open: boolean;
+  launcherRef: RefObject<HTMLElement | null>;
+  align?: "left" | "center" | "right";
+  width: number;
+  maxViewportGutter?: number;
+  offset?: number;
+  className?: string;
+  children: ReactNode;
+};
+
+const subscribeToViewportChanges = (onStoreChange: () => void) => {
+  if (typeof window === "undefined") return () => {};
+
+  window.addEventListener("resize", onStoreChange);
+  window.addEventListener("scroll", onStoreChange, true);
+
+  return () => {
+    window.removeEventListener("resize", onStoreChange);
+    window.removeEventListener("scroll", onStoreChange, true);
+  };
+};
+
+const getDesktopPopoverServerSnapshot = () => "server";
+
+function DesktopTopLayerPopover({
+  open,
+  launcherRef,
+  align = "left",
+  width,
+  maxViewportGutter = 16,
+  offset = 12,
+  className,
+  children,
+}: DesktopTopLayerPopoverProps) {
+  const [anchorRect, setAnchorRect] = useState<{
+    bottom: number;
+    left: number;
+    right: number;
+    width: number;
+  } | null>(null);
+
+  const viewportSnapshot = useSyncExternalStore(
+    subscribeToViewportChanges,
+    () => (typeof window === "undefined"
+      ? getDesktopPopoverServerSnapshot()
+      : `${window.innerWidth}:${window.scrollX}:${window.scrollY}`),
+    getDesktopPopoverServerSnapshot
+  );
+
+  const updateAnchorRect = useCallback(() => {
+    const rect = launcherRef.current?.getBoundingClientRect();
+    setAnchorRect(rect
+      ? {
+          bottom: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+        }
+      : null);
+  }, [launcherRef]);
+
+  useEffect(() => {
+    if (!open) {
+      window.requestAnimationFrame(() => setAnchorRect(null));
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(updateAnchorRect);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [open, updateAnchorRect, viewportSnapshot]);
+
+  if (!open || typeof document === "undefined" || !anchorRect) return null;
+
+  const viewportWidth = window.innerWidth;
+  const maxWidth = Math.max(0, viewportWidth - maxViewportGutter * 2);
+  const panelWidth = Math.min(width, maxWidth);
+  const unclampedLeft =
+    align === "center"
+      ? anchorRect.left + anchorRect.width / 2 - panelWidth / 2
+      : align === "right"
+        ? anchorRect.right - panelWidth
+        : anchorRect.left;
+  const left = Math.min(
+    viewportWidth - maxViewportGutter - panelWidth,
+    Math.max(maxViewportGutter, unclampedLeft)
+  );
+
+  return createPortal(
+    <div
+      data-desktop-search-popover="true"
+      data-viewport-snapshot={viewportSnapshot}
+      style={{
+        left,
+        top: anchorRect.bottom + offset,
+        width: panelWidth,
+        maxWidth,
+      }}
+      className={cn(
+        "fixed hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-950/10 sm:block",
+        desktopPopoverPanelClassName,
+        className
+      )}
+    >
+      <div className="absolute inset-0 bg-white" aria-hidden="true" />
+      <div className="relative">{children}</div>
+    </div>,
+    document.body
+  );
+}
 
 
 export function SearchTabs({
@@ -745,16 +881,6 @@ export function SearchTabs({
   }, []);
 
   useEffect(() => {
-    const normalized = normalizeCabinClass(cabinClass);
-    if (cabinClass !== normalized) setCabinClass(normalized);
-  }, [cabinClass]);
-
-  useEffect(() => {
-    const normalized = normalizeCabinClass(draftCabinClass);
-    if (draftCabinClass !== normalized) setDraftCabinClass(normalized);
-  }, [draftCabinClass]);
-
-  useEffect(() => {
     if (!activeMobileAirportPicker) return;
 
     const inputRef = activeMobileAirportPicker === "origin"
@@ -952,7 +1078,8 @@ export function SearchTabs({
       const eventTarget = event.target as Node;
       if (
         eventTarget instanceof Element &&
-        eventTarget.closest("[data-flight-mobile-picker-shell]")
+        (eventTarget.closest("[data-flight-mobile-picker-shell]") ||
+          eventTarget.closest("[data-desktop-search-popover]"))
       ) {
         return;
       }
@@ -2056,7 +2183,7 @@ export function SearchTabs({
               {value.trim() ? (
                 <button
                   type="button"
-                  aria-label={title === (t.chooseOrigin || "Choose origin") ? "Clear origin" : "Clear destination"}
+                  aria-label={title === (t.chooseOrigin || "Choose origin") ? (t.clearOrigin || "Clear origin") : (t.clearDestination || "Clear destination")}
                   onClick={() => {
                     onClear();
                     focusInput();
@@ -2272,26 +2399,34 @@ export function SearchTabs({
   };
 
   const renderDesktopCalendarPopover = ({
+    launcherRef,
     mode,
     visibleMonth,
     setVisibleMonth,
     onClear,
     onDone,
   }: {
+    launcherRef: RefObject<HTMLElement | null>;
     mode: "flights" | "hotels";
     visibleMonth: Date;
     setVisibleMonth: Dispatch<SetStateAction<Date>>;
     onClear: () => void;
     onDone: () => void;
   }) => (
+    <DesktopTopLayerPopover
+      open
+      launcherRef={launcherRef}
+      align={mode === "flights" ? "center" : "left"}
+      width={mode === "flights" ? 760 : 660}
+      className={cn(
+        "p-4",
+        mode === "flights" && "lg:p-5"
+      )}
+    >
     <div
       role="dialog"
       aria-label={translate("chooseTravelDates") || "Choose travel dates"}
-      className={cn(
-        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,660px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
-        desktopPopoverPanelClassName,
-        mode === "flights" && "lg:left-1/2 lg:w-[min(760px,calc(100vw-3rem))] lg:-translate-x-1/2 lg:p-5"
-      )}
+      className="bg-white"
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
@@ -2346,17 +2481,18 @@ export function SearchTabs({
         </button>
       </div>
     </div>
+    </DesktopTopLayerPopover>
   );
 
   const passengerRows = [
-    { key: "adults", label: t.adultPlural || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
-    { key: "children", label: t.childPlural || "Children", subtitle: "Ages 2–17", count: draftChildCount, min: 0 },
-    { key: "infants", label: t.infantPlural || "Infants", subtitle: "Under 2", count: draftInfantCount, min: 0 },
+    { key: "adults", label: translate("adults") || "Adults", subtitle: "18+", count: draftAdultCount, min: 1 },
+    { key: "children", label: translate("children") || "Children", subtitle: translate("childAgeRange") || "Ages 2–17", count: draftChildCount, min: 0 },
+    { key: "infants", label: translate("infants") || "Infants", subtitle: translate("under2") || "Under 2", count: draftInfantCount, min: 0 },
   ];
   const cabinOptions = [
-    ["economy", t.economy || "Economy"],
-    ["business", t.business || "Business"],
-    ["first", t.first || "First"],
+    ["economy", translate("economy") || "Economy"],
+    ["business", translate("business") || "Business"],
+    ["first", translate("first") || "First"],
   ];
 
   const renderPassengerControlRows = (compact = false) => (
@@ -2464,7 +2600,7 @@ export function SearchTabs({
       {!compact ? (
         <div className="mb-3 flex items-center justify-between">
           <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-            {t.cabinClass || "Cabin class"}
+            {translate("cabinClass") || "Cabin class"}
           </p>
         </div>
       ) : null}
@@ -2496,7 +2632,7 @@ export function SearchTabs({
     <div className="space-y-4">
       <div>
         <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-          {t.passengers || "Passengers"}
+          {translate("passengers") || "Passengers"}
         </p>
         {renderPassengerControlRows()}
       </div>
@@ -2951,6 +3087,7 @@ export function SearchTabs({
                       {renderFlightDateCalendar()}
                     </FlightMobilePickerShell>
                     {renderDesktopCalendarPopover({
+                      launcherRef: flightDatesLauncherRef,
                       mode: "flights",
                       visibleMonth: visibleMonthDate,
                       setVisibleMonth: setVisibleMonthDate,
@@ -3008,7 +3145,7 @@ export function SearchTabs({
                   <>
                     <FlightMobilePickerShell
                       open={travelersMenuOpen}
-                      title={t.travelers}
+                      title={translate("passengers") || t.travelers || "Travelers"}
                       titleId="homepage-flight-travelers-title"
                       launcherRef={travelersLauncherRef}
                       footer={
@@ -3027,27 +3164,31 @@ export function SearchTabs({
                     >
                       {renderTravelersCabinPicker()}
                     </FlightMobilePickerShell>
+                    <DesktopTopLayerPopover
+                      open
+                      launcherRef={travelersLauncherRef}
+                      align="right"
+                      width={360}
+                      className={cn("p-4", desktopTravelersPopoverClassName)}
+                    >
                     <div
                       role="dialog"
                       aria-label="Travelers and cabin"
-                      className={cn(
-                        "absolute left-0 top-[calc(100%+12px)] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] sm:block",
-                        desktopTravelersPopoverClassName
-                      )}
+                      className="bg-white"
                     >
                       <div>
                         <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-                          {t.passengers || "Passengers"}
+                          {translate("passengers") || "Passengers"}
                         </p>
                         <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
-                          {t.travelers || "Travelers"}
+                          {translate("passengers") || t.travelers || "Travelers"}
                         </h3>
                       </div>
                       <div className="mt-3 space-y-4">
                         {renderPassengerControlRows(true)}
                         <div>
                           <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-                            {t.cabinClass || "Cabin class"}
+                            {translate("cabinClass") || "Cabin class"}
                           </p>
                           {renderCabinClassPicker(true)}
                         </div>
@@ -3056,6 +3197,7 @@ export function SearchTabs({
                         <button type="button" onClick={applyTravelersDraft} className="focus-ring rounded-lg bg-indigo-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-600">{t.done || "Done"}</button>
                       </div>
                     </div>
+                    </DesktopTopLayerPopover>
                   </>
                 ) : null}
               </div>
@@ -3248,6 +3390,7 @@ export function SearchTabs({
                   <>
                     <div ref={hotelDatesPanelRef}>
                       {renderDesktopCalendarPopover({
+                        launcherRef: hotelDatesMobileLauncherRef,
                         mode: "hotels",
                         visibleMonth: hotelVisibleMonthDate,
                         setVisibleMonth: setHotelVisibleMonthDate,
@@ -3270,7 +3413,8 @@ export function SearchTabs({
                 )}
               >
                 <label className={hotelFieldLabelClassName}>
-                  {t.guests ||
+                  {t.hotelSearchGuestsLabel ||
+                    t.guests ||
                     "Guests"}
                 </label>
                 <button
@@ -3285,7 +3429,7 @@ export function SearchTabs({
                     hotelGuestsRoomsOpen
                   }
                   aria-haspopup="dialog"
-                  aria-label="Choose guests and rooms"
+                  aria-label={translate("chooseGuestsAndRooms") || "Choose guests and rooms"}
                   className={cn(hotelFieldValueClassName, "justify-between")}
                 >
                   <span className="truncate">
@@ -3300,26 +3444,32 @@ export function SearchTabs({
                   />
                 </button>
                 {hotelGuestsRoomsOpen ? (
+                  <DesktopTopLayerPopover
+                    open
+                    launcherRef={hotelGuestsRoomsMobileLauncherRef}
+                    align="right"
+                    width={360}
+                    className="p-4"
+                  >
                   <div
-                    className={cn(
-                      "absolute left-0 top-[calc(100%+10px)] hidden w-[min(92vw,360px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block",
-                      desktopPopoverPanelClassName
-                    )}
+                    role="dialog"
+                    aria-label={translate("guestsAndRooms") || "Guests and rooms"}
+                    className="bg-white"
                   >
                     <div className="mb-3">
                       <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-                        Stay details
+                        {translate("hotelStayDetails") || "Stay details"}
                       </p>
                       <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
-                        Guests and rooms
+                        {translate("guestsAndRooms") || "Guests and rooms"}
                       </h3>
                     </div>
                     <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white">
                       {[
                         {
                           key: "adults",
-                          label: "Adults",
-                          helper: "Guests 18+",
+                          label: translate("adults") || "Adults",
+                          helper: translate("hotelAdultHelper") || "Guests 18+",
                           value: hotelAdultCount,
                           min: 1,
                           max: 12 - hotelChildCount,
@@ -3334,8 +3484,8 @@ export function SearchTabs({
                         },
                         {
                           key: "children",
-                          label: "Children",
-                          helper: "Ages 0–17",
+                          label: translate("children") || "Children",
+                          helper: translate("hotelChildrenHelper") || "Ages 0–17",
                           value: hotelChildCount,
                           min: 0,
                           max: 12 - hotelAdultCount,
@@ -3350,8 +3500,8 @@ export function SearchTabs({
                         },
                         {
                           key: "rooms",
-                          label: "Rooms",
-                          helper: "Up to 6 rooms",
+                          label: translate("rooms") || "Rooms",
+                          helper: translate("hotelRoomsHelper") || "Up to 6 rooms",
                           value: Number(rooms),
                           min: 1,
                           max: 6,
@@ -3419,17 +3569,21 @@ export function SearchTabs({
                         <div className="flex items-center justify-between gap-4">
                           <div className="min-w-0">
                             <p className="text-sm font-medium tracking-tight text-slate-900">
-                              Pet-friendly
+                              {translate("petFriendly") || "Pet-friendly"}
                             </p>
                             <p className="mt-0.5 text-xs font-medium leading-5 text-slate-600">
-                              Only show stays that allow pets
+                              {translate("onlyShowPetFriendlyStays") ||
+                                "Only show stays that allow pets"}
                             </p>
                           </div>
                           <button
                             type="button"
                             role="switch"
                             aria-checked={hotelPetFriendly}
-                            aria-label="Toggle pet-friendly stays"
+                            aria-label={
+                              translate("togglePetFriendlyStays") ||
+                              "Toggle pet-friendly stays"
+                            }
                             onClick={() =>
                               setHotelPetFriendly((prev) => !prev)
                             }
@@ -3453,6 +3607,7 @@ export function SearchTabs({
                       </div>
                     </div>
                   </div>
+                  </DesktopTopLayerPopover>
                 ) : null}
               </div>
               <div className={hotelSubmitWrapClassName}>
@@ -3518,7 +3673,7 @@ export function SearchTabs({
 
           <HotelMobilePickerShell
             open={hotelGuestsRoomsOpen}
-            title="Guests and rooms"
+            title={translate("guestsAndRooms") || "Guests and rooms"}
             titleId="homepage-hotel-mobile-guests-title"
             launcherRef={hotelGuestsRoomsMobileLauncherRef}
             onClose={() => setHotelGuestsRoomsOpen(false)}
@@ -3538,7 +3693,7 @@ export function SearchTabs({
               {[
                 {
                   key: "adults",
-                  label: "Adults",
+                  label: translate("adults") || "Adults",
                   value: hotelAdultCount,
                   min: 1,
                   max: 12 - hotelChildCount,
@@ -3548,7 +3703,7 @@ export function SearchTabs({
                 },
                 {
                   key: "children",
-                  label: "Children",
+                  label: translate("children") || "Children",
                   value: hotelChildCount,
                   min: 0,
                   max: 12 - hotelAdultCount,
@@ -3558,7 +3713,7 @@ export function SearchTabs({
                 },
                 {
                   key: "rooms",
-                  label: "Rooms",
+                  label: translate("rooms") || "Rooms",
                   value: Number(rooms),
                   min: 1,
                   max: 6,
@@ -3601,16 +3756,22 @@ export function SearchTabs({
               })}
               <div className="flex items-center justify-between gap-4 px-1 py-4">
                 <div>
-                  <p className="text-[15px] font-bold text-slate-950">Pet-friendly</p>
+                  <p className="text-[15px] font-bold text-slate-950">
+                    {translate("petFriendly") || "Pet-friendly"}
+                  </p>
                   <p className="text-sm leading-5 text-slate-600">
-                    Only show stays that allow pets
+                    {translate("onlyShowPetFriendlyStays") ||
+                      "Only show stays that allow pets"}
                   </p>
                 </div>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={hotelPetFriendly}
-                  aria-label="Toggle pet-friendly stays"
+                  aria-label={
+                    translate("togglePetFriendlyStays") ||
+                    "Toggle pet-friendly stays"
+                  }
                   onClick={() => setHotelPetFriendly((prev) => !prev)}
                   className={cn(
                     "focus-ring relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition-colors",

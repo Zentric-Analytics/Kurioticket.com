@@ -21,6 +21,9 @@ import { formatDisplayPrice } from "@/lib/currency/formatCurrency";
 import type { ExchangeRates } from "@/lib/currency/exchangeRates";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
+const FLIGHT_QUOTE_UNAVAILABLE_MESSAGE =
+  "This flight quote is no longer available. Please search again for current prices.";
+
 export function FlightDetailsClient({ id }: { id: string }) {
   const { selectedOption } = useRegion();
   const { locale, t } = useLocale();
@@ -92,6 +95,12 @@ export function FlightDetailsClient({ id }: { id: string }) {
     );
   }
 
+  const shouldLocalizeUnavailableMessage =
+    locale === "pt-br" && error === FLIGHT_QUOTE_UNAVAILABLE_MESSAGE;
+  const unavailableBodyMessage = shouldLocalizeUnavailableMessage
+    ? t.flightSearchAgainCurrentPrices
+    : error || t.flightSearchAgainCurrentPrices;
+
   if (error || !flight) {
     return (
       <main className="page-shell flex-1 py-10">
@@ -100,9 +109,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
             {t.flightQuoteUnavailable || "Flight quote unavailable"}
           </h1>
           <p className="mt-2 text-muted">
-            {error ||
-              t.flightSearchAgainCurrentPrices ||
-              "Please search again for current prices."}
+            {unavailableBodyMessage || "Please search again for current prices."}
           </p>
         </Card>
       </main>

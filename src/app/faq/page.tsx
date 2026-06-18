@@ -15,7 +15,7 @@ export default function FaqPage() {
 
   return (
     <>
-      <AppHeader />
+      <AppHeader showAccountBackLink />
       <main className="flex-1 bg-gradient-to-b from-[#f8f7ff] via-white to-white">
         <section className="page-shell py-10 sm:py-14 lg:py-16">
           <div className="max-w-3xl">

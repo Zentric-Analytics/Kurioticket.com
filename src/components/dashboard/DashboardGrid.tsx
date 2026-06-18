@@ -1,22 +1,22 @@
 "use client";
 
-import { useState, type ChangeEvent, type ReactNode } from "react";
+import { useState, type ChangeEvent } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   Bell,
   Bookmark,
   BriefcaseBusiness,
   ChevronRight,
-  Grid2X2,
+  CircleHelp,
   Headphones,
   LifeBuoy,
   LockKeyhole,
-  Luggage,
   Mail,
   Plane,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -25,31 +25,54 @@ import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
 import type { TranslationDictionary } from "@/lib/i18n/types";
 
-const navItems = [
-  { labelKey: "accountDashboard.nav.overview", href: "/dashboard", icon: Grid2X2 },
-  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
-  { labelKey: "accountDashboard.nav.priceAlerts", href: "/dashboard/alerts", icon: Bell },
-  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
-  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
-  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
-];
-
-const mobileAccountNavItems = [
-  { labelKey: "accountDashboard.personalDetails.title", href: "/dashboard", icon: UserRound },
-  { labelKey: "accountDashboard.nav.trips", href: "/dashboard/trips", icon: BriefcaseBusiness },
-  { labelKey: "accountDashboard.nav.saved", href: "/dashboard/saved", icon: Bookmark },
-  { labelKey: "accountDashboard.nav.priceAlerts", href: "/dashboard/alerts", icon: Bell },
-  { labelKey: "accountDashboard.nav.preference", href: "/dashboard/preferences", icon: Settings },
-  { labelKey: "accountDashboard.nav.security", href: "/dashboard/security", icon: ShieldCheck },
-  { labelKey: "accountDashboard.nav.support", href: "/dashboard/support", icon: LifeBuoy },
-];
-
-type AccountDashboardFrameProps = {
-  children: ReactNode;
-  mobileOverviewTabs?: boolean;
-  mobileBackHref?: string;
+type AccountDashboardRowItem = {
+  labelKey: string;
+  href: string;
+  icon: LucideIcon;
 };
+
+type AccountDashboardPanelItem = {
+  titleKey: string;
+  icon: LucideIcon;
+  rows: AccountDashboardRowItem[];
+};
+
+const accountDashboardPanels: AccountDashboardPanelItem[] = [
+  {
+    titleKey: "accountDashboard.hub.manageAccount",
+    icon: UserRound,
+    rows: [
+      { labelKey: "accountDashboard.hub.personalDetails", href: "/dashboard", icon: UserRound },
+      { labelKey: "accountDashboard.hub.securitySettings", href: "/dashboard/security", icon: ShieldCheck },
+    ],
+  },
+  {
+    titleKey: "accountDashboard.hub.travelActivity",
+    icon: Plane,
+    rows: [
+      { labelKey: "accountDashboard.hub.myTrips", href: "/dashboard/trips", icon: BriefcaseBusiness },
+      { labelKey: "accountDashboard.hub.savedTrips", href: "/dashboard/saved", icon: Bookmark },
+      { labelKey: "accountDashboard.hub.priceAlerts", href: "/dashboard/alerts", icon: Bell },
+    ],
+  },
+  {
+    titleKey: "accountDashboard.hub.preferences",
+    icon: SlidersHorizontal,
+    rows: [
+      { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/preferences", icon: Mail },
+      { labelKey: "accountDashboard.hub.travelPreferences", href: "/dashboard/preferences", icon: Settings },
+    ],
+  },
+  {
+    titleKey: "accountDashboard.hub.helpAndSupport",
+    icon: LifeBuoy,
+    rows: [
+      { labelKey: "accountDashboard.hub.contactSupport", href: "/dashboard/support", icon: Headphones },
+      { labelKey: "accountDashboard.hub.faq", href: "/faq", icon: CircleHelp },
+    ],
+  },
+];
+
 
 type DashboardOverviewProps = {
   initials: string;
@@ -88,263 +111,129 @@ type ListRowProps = {
   status?: string;
 };
 
-function isActiveDashboardRoute(pathname: string, href: string) {
-  if (href === "/dashboard") {
-    return pathname === href;
-  }
+type SecuritySettingRowProps = {
+  title: string;
+  body: string;
+  action: string;
+  danger?: boolean;
+  onAction: () => void;
+  statusId?: string;
+};
 
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function TravelIllustration({ compact = false, variant = "luggage" }: { compact?: boolean; variant?: "luggage" | "globe" }) {
-  return (
-    <div
-      className={cn(
-        "relative isolate flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-violet-100/70 text-violet-700",
-        compact ? "size-20" : "size-20 sm:size-28",
-      )}
-      aria-hidden="true"
-    >
-      <div className="absolute inset-3 rounded-full bg-white/35" />
-      <div className="absolute -left-4 top-7 h-6 w-14 rounded-full bg-white/60" />
-      <div className="absolute right-2 top-8 h-5 w-12 rounded-full bg-white/70" />
-      {variant === "globe" ? (
-        <>
-          <div className="absolute inset-4 rounded-full border border-violet-300/60" />
-          <div className="absolute h-20 w-20 rounded-full border-l border-violet-300/70 sm:h-24 sm:w-24" />
-          <div className="absolute h-14 w-24 rotate-12 rounded-[100%] border-t border-dashed border-violet-400/80 sm:w-28" />
-          <Plane className="absolute right-3 top-8 size-7 rotate-45 fill-violet-700 text-violet-700" />
-        </>
-      ) : (
-        <>
-          <div className="absolute bottom-7 h-3 w-20 rounded-full bg-violet-300/30 blur-sm" />
-          <Luggage className={cn("relative fill-violet-500/20 text-violet-700 drop-shadow-sm", compact ? "size-12" : "size-12 sm:size-16")} />
-        </>
-      )}
-    </div>
-  );
-}
 
 function SavedEmptyStateIllustration() {
   return (
-    <svg
-      className="mx-auto h-auto w-full max-w-[19rem] shrink-0 text-violet-700 drop-shadow-[0_28px_42px_rgba(79,70,229,0.14)] sm:max-w-[23rem] lg:mx-0 lg:max-w-[24rem]"
-      viewBox="0 0 420 360"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+    <div
+      className="mx-auto flex size-20 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 shadow-[0_18px_42px_-28px_rgba(79,70,229,0.85)] sm:size-24"
       aria-hidden="true"
     >
-      <circle cx="195" cy="138" r="112" fill="#ede9fe" />
-      <circle cx="195" cy="138" r="82" fill="#f5f3ff" />
-      <path d="M125 86c22 15 41 12 59 18 23 8 33 28 62 21 20-5 33-22 58-15" stroke="#ddd6fe" strokeWidth="11" strokeLinecap="round" />
-      <path d="M99 158c30-13 62-4 85 14 36 28 60 19 86 1 20-14 40-13 58 0" stroke="#ddd6fe" strokeWidth="11" strokeLinecap="round" />
-      <path d="M143 51c10 18 26 26 52 26M222 43c-8 24-3 46 15 66M103 117c28-7 45-32 45-57M268 60c-9 18-4 36 14 54" stroke="#c4b5fd" strokeWidth="5" strokeLinecap="round" opacity=".72" />
-      <path d="M261 96c23-18 49-27 76-29" stroke="#7c3aed" strokeWidth="3" strokeDasharray="9 8" strokeLinecap="round" />
-      <path d="M337 51l11 16 18-3 4 7-16 8 4 19-7 3-11-17-19 4-4-7 17-9-4-18 7-3Z" fill="#4f46e5" />
-      <circle cx="76" cy="170" r="7" fill="#c4b5fd" />
-      <circle cx="356" cy="162" r="4" fill="#c4b5fd" />
-      <circle cx="92" cy="201" r="3.5" fill="#ddd6fe" />
-      <ellipse cx="202" cy="329" rx="154" ry="10" fill="#ddd6fe" opacity=".95" />
-
-      <rect x="60" y="224" width="64" height="96" rx="8" fill="#8b5cf6" />
-      <path d="M77 224v-23c0-5 4-9 9-9h13c5 0 9 4 9 9v23" stroke="#6d28d9" strokeWidth="8" strokeLinecap="round" />
-      <path d="M79 242v58M96 242v58M113 242v58" stroke="#7c3aed" strokeWidth="5" strokeLinecap="round" opacity=".75" />
-      <circle cx="76" cy="324" r="6" fill="#312e81" />
-      <circle cx="112" cy="324" r="6" fill="#312e81" />
-
-      <path d="M204 314c-33-2-51-11-55-30-4-18 7-37 24-52l49 12 17 50c-6 14-17 21-35 20Z" fill="#312e81" />
-      <path d="M231 320h87c-13-38-39-61-77-69l-34 9c-5 26 3 46 24 60Z" fill="#312e81" />
-      <path d="M166 206c8-29 24-45 50-46 27 1 45 17 53 48l-24 73h-79v-75Z" fill="#5b36e6" />
-      <path d="M194 158c-2 12 2 22 13 28 11 0 19-5 24-15v-30l-31-7-6 24Z" fill="#ffd0b5" />
-      <path d="M216 166c5 0 12-4 16-10v16c-5 7-13 11-23 11-7-4-11-10-13-18 6 1 13 1 20 1Z" fill="#e9a384" opacity=".55" />
-      <path d="M175 139c-3-23 12-40 35-39 21 1 35 17 34 38-6 6-13 7-20 3-6-3-10-8-18-5-9 3-14 10-31 3Z" fill="#22146f" />
-      <circle cx="175" cy="133" r="18" fill="#22146f" />
-      <path d="M197 140c8-14 26-10 34 1v17c-2 12-10 20-22 22-15-3-23-12-24-28 2-8 6-12 12-12Z" fill="#ffd0b5" />
-      <circle cx="215" cy="153" r="2.8" fill="#111827" />
-      <path d="M229 153c4 3 4 8 0 12M210 169c8 5 16 4 23-3" stroke="#2e1065" strokeWidth="3" strokeLinecap="round" />
-      <path d="M240 224c17 10 33 8 48-6" stroke="#ffd0b5" strokeWidth="16" strokeLinecap="round" />
-      <path d="M289 218c8-9 12-19 12-29" stroke="#ffd0b5" strokeWidth="14" strokeLinecap="round" />
-      <path d="M159 218c-9 20-8 39 5 58" stroke="#ffd0b5" strokeWidth="16" strokeLinecap="round" />
-      <path d="M166 274c14 3 28-3 42-17" stroke="#ffd0b5" strokeWidth="14" strokeLinecap="round" />
-      <path d="M262 193c19-35 67-22 70 18 2 28-24 48-69 79-45-31-71-51-69-79 3-40 51-53 68-18Z" fill="#4f46e5" />
-      <path d="M278 211h28v55l-14-10-14 10v-55Z" fill="#fff" opacity=".92" />
-      <path d="M205 253c11-1 24-7 37-19" stroke="#ffd0b5" strokeWidth="14" strokeLinecap="round" />
-      <path d="M168 205c-10 14-15 29-15 45M263 203c11 16 16 31 14 47" stroke="#4421c8" strokeWidth="10" strokeLinecap="round" />
-
-      <path d="M334 317c-12-38 0-68 39-91-1 43-14 73-39 91Z" fill="#8b5cf6" opacity=".78" />
-      <path d="M349 316c4-32 22-55 53-70-4 41-21 65-53 70Z" fill="#7c3aed" opacity=".66" />
-      <rect x="328" y="306" width="49" height="24" rx="4" fill="#a78bfa" />
-    </svg>
-  );
-}
-
-export function AccountDashboardFrame({ children, mobileOverviewTabs = false, mobileBackHref }: AccountDashboardFrameProps) {
-  const pathname = usePathname();
-  const { t } = useLocale();
-  const resolvedMobileBackHref = mobileBackHref;
-
-  return (
-    <div
-      className={cn(
-        "grid min-w-0 items-start gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15.75rem_minmax(0,1fr)]",
-        mobileOverviewTabs && "gap-3 sm:gap-4",
-      )}
-    >
-      <aside className="hidden min-w-0 lg:block" aria-label="Account navigation">
-        <div
-          className={cn(
-            "border border-violet-100/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)] backdrop-blur-[1px]",
-            mobileOverviewTabs
-              ? "-mx-4 border-x-0 bg-white px-4 py-0 shadow-none lg:mx-0 lg:rounded-[1.25rem] lg:border-x lg:border-black/25 lg:bg-violet-50/35 lg:p-2.5 lg:shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_-52px_rgba(49,46,129,0.45)]"
-              : "rounded-[1.25rem] bg-violet-50/35 p-2 lg:p-2.5",
-          )}
-        >
-          <nav>
-            <div
-              className={cn(
-                "flex min-w-0 flex-wrap lg:flex-col lg:flex-nowrap lg:gap-1.5",
-                mobileOverviewTabs
-                  ? "max-w-full flex-nowrap gap-x-6 gap-y-0 overflow-x-auto overscroll-x-contain [scrollbar-width:none] lg:gap-1.5 lg:overflow-visible [&::-webkit-scrollbar]:hidden"
-                  : "gap-2",
-              )}
-            >
-              {navItems.map((item) => {
-                const active = isActiveDashboardRoute(pathname, item.href);
-                const Icon = item.icon;
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "focus-ring flex items-center gap-2.5 text-[13px] font-semibold transition hover:bg-white/55 hover:text-violet-700 lg:rounded-xl lg:px-3.5 lg:py-2.5",
-                      mobileOverviewTabs && "relative shrink-0 whitespace-nowrap rounded-none px-0 py-3 text-sm sm:text-[13px] after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-transparent lg:rounded-xl lg:px-3.5 lg:py-2.5 lg:after:hidden",
-                      !mobileOverviewTabs && "rounded-xl px-3.5 py-2.5",
-                      active
-                        ? cn(
-                          "text-violet-700 lg:bg-white/65 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.10),0_10px_26px_-24px_rgba(79,70,229,0.55)]",
-                          mobileOverviewTabs && "after:bg-violet-700 lg:bg-white/65 lg:shadow-[inset_0_0_0_1px_rgba(124,58,237,0.10),0_10px_26px_-24px_rgba(79,70,229,0.55)]",
-                        )
-                        : "text-slate-800",
-                    )}
-                  >
-                    <Icon className={cn("size-4 shrink-0", mobileOverviewTabs && "hidden lg:block")} strokeWidth={active ? 2.35 : 2.1} aria-hidden="true" />
-                    <span className="min-w-0 break-words leading-snug">{t[item.labelKey]}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
-
-          <div className="mt-5 hidden rounded-2xl border border-violet-100/60 bg-violet-50/45 p-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] lg:block lg:mt-14 xl:mt-16">
-            <div className="mx-auto mb-2 flex justify-center opacity-85">
-              <TravelIllustration compact />
-            </div>
-            <h2 className="text-[13px] font-semibold leading-snug text-slate-900">{t["accountDashboard.promo.title"]}</h2>
-            <p className="mx-auto mt-1 max-w-36 text-[11px] leading-4 text-slate-600">{t["accountDashboard.promo.body"]}</p>
-            <Link
-              href="/flights"
-              className="focus-ring mt-2.5 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg border border-violet-200/80 bg-white/75 px-3 text-[11px] font-semibold text-violet-700 transition hover:border-violet-400 hover:bg-white"
-            >
-              <Plane className="size-3.5" aria-hidden="true" />
-              {t["accountDashboard.promo.cta"]}
-            </Link>
-          </div>
-        </div>
-      </aside>
-      <div className="min-w-0 space-y-3.5 sm:space-y-4">
-        <MobileAccountBackLink href={resolvedMobileBackHref} />
-        {children}
-      </div>
+      <Bookmark className="size-9 stroke-[1.8] sm:size-11" />
     </div>
   );
 }
 
-export function MobileAccountBackLink({ href = "/dashboard/account" }: { href?: string }) {
+
+export function AccountSectionHeader({ title, description, titleId }: { title: string; description: string; titleId?: string }) {
+  return (
+    <div className="px-1 pb-2 text-left sm:px-2 sm:pb-3">
+      <h1 id={titleId} className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
+        {title}
+      </h1>
+      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{description}</p>
+    </div>
+  );
+}
+
+
+function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   const { t } = useLocale();
+  const RowIcon = row.icon;
 
   return (
     <Link
-      href={href}
-      aria-label={t["accountDashboard.mobile.backAriaLabel"]}
-      className="focus-ring inline-flex min-h-10 items-center gap-1.5 rounded-full px-1 pr-3 text-sm font-black text-violet-700 transition hover:bg-violet-50 lg:hidden"
+      href={row.href}
+      className="focus-ring group/row flex min-h-12 items-center gap-3 border-t border-slate-100 px-5 py-2 text-left transition duration-150 hover:bg-slate-50 focus-visible:relative focus-visible:z-10 sm:min-h-[52px]"
     >
-      <span className="text-xl leading-none" aria-hidden="true">‹</span>
-      <span>{t.myAccount}</span>
+      <RowIcon className="size-[18px] shrink-0 text-blue-600" strokeWidth={2} aria-hidden="true" />
+      <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-slate-800">
+        {t[row.labelKey]}
+      </span>
+      <ChevronRight className="size-[18px] shrink-0 text-slate-400 transition group-hover/row:translate-x-0.5" strokeWidth={2} aria-hidden="true" />
     </Link>
   );
 }
 
-export function MobileAccountMenuPage() {
+function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) {
+  const { t } = useLocale();
+  const PanelIcon = panel.icon;
+  const title = t[panel.titleKey];
+
+  return (
+    <section
+      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+      aria-labelledby={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`}
+    >
+      <div className="flex items-center gap-3 px-5 pb-3.5 pt-[18px]">
+        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100/80">
+          <PanelIcon className="size-5" strokeWidth={2} aria-hidden="true" />
+        </span>
+        <h2 id={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`} className="text-lg font-semibold leading-6 text-slate-900">
+          {title}
+        </h2>
+      </div>
+
+      <div>
+        {panel.rows.map((row) => (
+          <div key={`${row.href}-${row.labelKey}`}>
+            <AccountDashboardRow row={row} />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function AccountMenuPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto max-w-2xl overflow-x-hidden lg:hidden" aria-labelledby="mobile-account-title">
-      <div className="mb-5 px-1">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-violet-700">Kurioticket</p>
-        <h1 id="mobile-account-title" className="mt-2 text-3xl font-black tracking-[-0.04em] text-slate-950">
-          {t.myAccount}
-        </h1>
+    <section className="overflow-x-hidden" aria-labelledby="account-title">
+      <div className="relative isolate flex h-[220px] w-full items-center overflow-hidden bg-slate-950 sm:h-[250px] lg:h-[280px]">
+        <Image
+          src="/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg"
+          alt="Airplane parked at an airport terminal gate"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center lg:object-[center_right]"
+        />
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/45 to-slate-950/10"
+          aria-hidden="true"
+        />
+        <div className="page-shell relative z-10 min-w-0 py-8">
+          <div className="max-w-[520px]">
+            <h1 id="account-title" className="text-3xl font-black leading-[1.05] tracking-tight text-white sm:text-[44px] lg:text-5xl">
+              {t["accountDashboard.hub.title"]}
+            </h1>
+            <p className="mt-4 max-w-[520px] text-sm leading-6 text-white/90 sm:text-base sm:leading-7 lg:text-lg">
+              {t["accountDashboard.hub.description"]}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="overflow-hidden rounded-[1.35rem] border border-violet-100 bg-white shadow-[0_22px_58px_-48px_rgba(49,46,129,0.55)]">
-        <div className="border-b border-slate-100 bg-violet-50/55 px-5 py-4">
-          <h2 className="text-sm font-black text-slate-950">{t["accountDashboard.mobile.manageAccount"]}</h2>
-        </div>
-
-        <nav aria-label={t["accountDashboard.mobile.manageAccount"]}>
-          {mobileAccountNavItems.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group flex min-h-14 w-full items-center gap-3 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-violet-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-500"
-              >
-                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 transition group-hover:bg-white">
-                  <Icon className="size-4.5" strokeWidth={2.2} aria-hidden="true" />
-                </span>
-                <span className="min-w-0 flex-1 break-words text-base font-bold leading-snug text-slate-900">{t[item.labelKey]}</span>
-                <ChevronRight className="size-5 shrink-0 text-slate-400 transition group-hover:text-violet-700" strokeWidth={2.2} aria-hidden="true" />
-              </Link>
-            );
-          })}
+      <div className="bg-[#f3f7fc] px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-7 lg:px-8 lg:pb-11 lg:pt-8">
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1120px] gap-4 md:grid-cols-2 lg:gap-5">
+          {accountDashboardPanels.map((panel) => (
+            <AccountDashboardPanel key={panel.titleKey} panel={panel} />
+          ))}
         </nav>
       </div>
     </section>
   );
 }
 
-function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
-  const { t } = useLocale();
-
-  return (
-    <section
-      className="border-b border-slate-200/80 pb-4 sm:pb-5"
-      aria-labelledby="dashboard-title"
-    >
-      <div className="flex min-w-0 items-center gap-3 px-1 py-1 sm:gap-5 sm:px-2 sm:py-3">
-        <div
-          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
-          aria-hidden="true"
-        >
-          {initials}
-        </div>
-        <div className="min-w-0">
-          <h1 id="dashboard-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-            {t["accountDashboard.overview.welcome"].replace("{name}", displayName)} 👋
-          </h1>
-          {userEmail ? <p className="mt-1 break-all text-sm font-semibold text-slate-600 sm:mt-1.5 sm:break-words sm:text-sm">{userEmail}</p> : null}
-          <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
-            {t["accountDashboard.overview.subtitle"]}
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 const genderOptions = [
   { value: "Male", labelKey: "accountDashboard.personalDetails.gender.male" },
@@ -598,28 +487,17 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
   return (
     <section
-      className="min-w-0"
-      aria-labelledby="personal-details-title"
+      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+      aria-labelledby="dashboard-title"
     >
-      <div className="flex min-w-0 flex-col gap-2 px-1 pb-3 pt-1 sm:gap-4 sm:px-2 sm:pb-5 sm:pt-2 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <h2 id="personal-details-title" className="text-[22px] font-bold tracking-tight text-slate-950 sm:text-2xl">
-            {t["accountDashboard.personalDetails.title"]}
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-2 sm:text-sm sm:leading-6">
-            {t["accountDashboard.personalDetails.subtitle"]}
-          </p>
-        </div>
-      </div>
-
-      <div className="divide-y divide-slate-200 border-y border-slate-200/90">
+      <div>
         {personalDetailRows.map((row) => {
           const readOnlyValue = initialValues[row.key];
           const editValue = draft[row.key];
 
           return (
-            <div key={row.key} className="grid min-w-0 gap-1 px-1 py-2.5 sm:gap-1.5 sm:px-2 sm:py-4 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-5">
-              <div className="text-[15px] font-semibold text-slate-700 sm:text-sm">{row.label}</div>
+            <div key={row.key} className="grid min-w-0 gap-1 border-t border-slate-200 px-5 py-4 first:border-t-0 sm:min-h-16 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:px-6 sm:py-3">
+              <div className="text-sm font-medium leading-5 text-slate-700 sm:text-slate-800">{row.label}</div>
               {isEditing ? (
                 <div className="min-w-0 space-y-1.5">
                   <DetailInput row={row} value={editValue} onChange={updateDraft} />
@@ -633,33 +511,33 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         })}
       </div>
 
-      <div className="px-1 py-4 sm:px-2 sm:py-5">
+      <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
         {isEditing ? (
-          <div className="flex min-w-0 flex-col gap-3 sm:items-end">
-            <p className="text-sm leading-6 text-slate-500 sm:text-right">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:justify-end">
+          <div className="space-y-4">
+            <p className="text-sm leading-6 text-slate-500">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
+                className="focus-ring inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
               >
                 {t["accountDashboard.personalDetails.cancel"]}
               </button>
               <button
                 type="button"
                 disabled
-                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 text-sm font-semibold text-slate-500"
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
               >
                 {t["accountDashboard.personalDetails.saveChanges"]}
               </button>
             </div>
           </div>
         ) : (
-          <div className="flex justify-end">
+          <div className="flex justify-stretch sm:justify-end">
             <button
               type="button"
               onClick={handleEdit}
-              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-violet-700 px-5 text-[15px] font-semibold text-white shadow-[0_16px_34px_-22px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 sm:min-h-11 sm:w-auto sm:text-sm"
+              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
             >
               {t["accountDashboard.personalDetails.edit"]}
             </button>
@@ -699,9 +577,11 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
 }
 
 export function DashboardOverview({ initials, displayName, userEmail, userName }: DashboardOverviewProps) {
+  const { t } = useLocale();
+
   return (
-    <div className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <AccountIdentityHeader initials={initials} displayName={displayName} userEmail={userEmail} />
+    <div className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-6 lg:py-10">
+      <AccountSectionHeader title={t["accountDashboard.personalDetails.title"]} description={t["accountDashboard.personalDetails.subtitle"]} titleId="dashboard-title" />
       <PersonalDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
     </div>
   );
@@ -713,32 +593,23 @@ export function SavedDashboardPage() {
 
   return (
     <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
-      <div className="px-1 text-left sm:px-2">
-        <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl">
-          {t["accountDashboard.saved.title"]}
-        </h1>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base lg:mx-0">
-          {t["accountDashboard.saved.description"]}
-        </p>
-      </div>
+      <AccountSectionHeader title={t["accountDashboard.saved.title"]} description={t["accountDashboard.saved.description"]} titleId="saved-dashboard-title" />
       <div className="px-1 py-7 sm:px-2 sm:py-9 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-14 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
-        <div className="grid items-center gap-8 lg:grid-cols-[minmax(17rem,0.92fr)_minmax(0,1fr)] lg:gap-14">
+        <div className="mx-auto flex max-w-md flex-col items-center text-center">
           <SavedEmptyStateIllustration />
-          <div className="mx-auto max-w-md text-center lg:mx-0 lg:text-left">
-            <h2 className="text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem]">
-              {t["accountDashboard.saved.emptyTitle"]}
-            </h2>
-            <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600 lg:mx-0">
-              {t["accountDashboard.saved.emptyDescription"]}
-            </p>
-            <LinkButton
-              href="/"
-              size="lg"
-              className="mt-7 w-full rounded-xl bg-violet-700 px-8 text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] hover:bg-violet-800 sm:max-w-[19rem] lg:w-auto lg:min-w-36"
-            >
-              {t["accountDashboard.saved.explore"]}
-            </LinkButton>
-          </div>
+          <h2 className="mt-6 text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem] lg:font-bold">
+            {t["accountDashboard.saved.emptyTitle"]}
+          </h2>
+          <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600">
+            {t["accountDashboard.saved.emptyDescription"]}
+          </p>
+          <LinkButton
+            href="/"
+            size="lg"
+            className="mt-7 w-full rounded-xl bg-violet-700 px-8 text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] hover:bg-violet-800 sm:max-w-[19rem] lg:w-auto lg:min-w-36"
+          >
+            {t["accountDashboard.saved.explore"]}
+          </LinkButton>
         </div>
       </div>
     </section>
@@ -749,18 +620,8 @@ export function PreferencesDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="preferences-title" className="space-y-4">
-      <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
-          {t["accountDashboard.preferences.eyebrow"]}
-        </p>
-        <h1 id="preferences-title" className="mt-2 text-3xl font-bold text-navy">
-          {t["accountDashboard.preferences.title"]}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          {t["accountDashboard.preferences.description"]}
-        </p>
-      </div>
+    <section aria-labelledby="preferences-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
+      <AccountSectionHeader title={t["accountDashboard.preferences.title"]} description={t["accountDashboard.preferences.description"]} titleId="preferences-title" />
       <div className="grid gap-3">
         <ListRow
           title={t["accountDashboard.preferences.personalDetails.title"]}
@@ -791,48 +652,81 @@ export function PreferencesDashboardPage() {
   );
 }
 
+function SecuritySettingRow({ title, body, action, danger = false, onAction, statusId }: SecuritySettingRowProps) {
+  return (
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-1 py-3.5 sm:gap-6 sm:px-2 sm:py-6">
+      <div className="min-w-0">
+        <h2 className="text-[15px] font-semibold leading-5 text-slate-950 sm:text-[17px] sm:font-semibold sm:text-navy">{title}</h2>
+        <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-1.5 sm:max-w-2xl sm:text-sm sm:leading-6 sm:text-muted">{body}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onAction}
+        aria-describedby={statusId}
+        className={cn(
+          "focus-ring -my-2 -mr-2 inline-flex min-h-10 cursor-pointer items-center justify-center justify-self-end rounded-lg border-0 bg-transparent px-2 py-2 text-right text-sm font-medium leading-6 transition hover:underline sm:my-0 sm:mr-0 sm:min-h-10 sm:w-auto sm:rounded-xl sm:border sm:px-4 sm:py-0 sm:text-sm sm:font-semibold sm:no-underline",
+          danger
+            ? "text-red-600 sm:border-red-200 sm:bg-red-50 sm:text-red-700 sm:hover:border-red-300 sm:hover:bg-red-100"
+            : "text-violet-700 sm:border-violet-200 sm:bg-white sm:hover:border-violet-300 sm:hover:bg-violet-50",
+        )}
+      >
+        {action}
+      </button>
+    </div>
+  );
+}
+
 export function SecurityDashboardPage() {
   const { t } = useLocale();
+  const [actionMessage, setActionMessage] = useState("");
+  const securityActionStatusId = "security-action-status";
+
+  const handleUnavailableSecurityAction = () => {
+    setActionMessage("This security action is not available yet.");
+  };
 
   return (
-    <section aria-labelledby="security-title" className="space-y-4">
-      <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
-          {t["accountDashboard.security.eyebrow"]}
-        </p>
-        <h1 id="security-title" className="mt-2 text-3xl font-bold text-navy">
-          {t["accountDashboard.security.title"]}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          {t["accountDashboard.security.description"]}
-        </p>
-      </div>
-      <div className="grid gap-3">
-        <ListRow
-          title={t["accountDashboard.security.password.title"]}
-          body={t["accountDashboard.security.password.description"]}
-          icon={LockKeyhole}
-          status={t["accountDashboard.security.comingSoon"]}
+    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 lg:space-y-5 xl:max-w-[64rem]">
+      <AccountSectionHeader title={t["accountDashboard.security.title"]} description={t["accountDashboard.security.description"]} titleId="security-title" />
+      <div className="divide-y divide-slate-200/90 border-y border-slate-200/90">
+        <SecuritySettingRow
+          title={t["accountDashboard.security.passkeys.title"]}
+          body={t["accountDashboard.security.passkeys.description"]}
+          action={t["accountDashboard.security.action.setUp"]}
+          onAction={handleUnavailableSecurityAction}
+          statusId={securityActionStatusId}
         />
-        <ListRow
-          title={t["accountDashboard.security.twoStep.title"]}
-          body={t["accountDashboard.security.twoStep.description"]}
-          icon={ShieldCheck}
-          status={t["accountDashboard.security.comingSoon"]}
+        <SecuritySettingRow
+          title={t["accountDashboard.security.twoFactor.title"]}
+          body={t["accountDashboard.security.twoFactor.description"]}
+          action={t["accountDashboard.security.action.setUp"]}
+          onAction={handleUnavailableSecurityAction}
+          statusId={securityActionStatusId}
         />
-        <ListRow
+        <SecuritySettingRow
           title={t["accountDashboard.security.activeSessions.title"]}
           body={t["accountDashboard.security.activeSessions.description"]}
-          icon={UserRound}
-          status={t["accountDashboard.security.comingSoon"]}
+          action={t["accountDashboard.security.action.manage"]}
+          onAction={handleUnavailableSecurityAction}
+          statusId={securityActionStatusId}
         />
-        <ListRow
-          title={t["accountDashboard.security.privacy.title"]}
-          body={t["accountDashboard.security.privacy.description"]}
-          href="/legal"
-          icon={LockKeyhole}
+        <SecuritySettingRow
+          title={t["accountDashboard.security.deleteAccount.title"]}
+          body={t["accountDashboard.security.deleteAccount.description"]}
+          action={t["accountDashboard.security.action.deleteAccount"]}
+          onAction={handleUnavailableSecurityAction}
+          statusId={securityActionStatusId}
+          danger
         />
       </div>
+      <p
+        id={securityActionStatusId}
+        role="status"
+        aria-live="polite"
+        className="min-h-5 px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2"
+      >
+        {actionMessage}
+      </p>
     </section>
   );
 }
@@ -841,18 +735,8 @@ export function SupportDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section aria-labelledby="support-title" className="space-y-4">
-      <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
-          {t["accountDashboard.support.eyebrow"]}
-        </p>
-        <h1 id="support-title" className="mt-2 text-3xl font-bold text-navy">
-          {t["accountDashboard.support.title"]}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          {t["accountDashboard.support.description"]}
-        </p>
-      </div>
+    <section aria-labelledby="support-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
+      <AccountSectionHeader title={t["accountDashboard.support.title"]} description={t["accountDashboard.support.description"]} titleId="support-title" />
       <div className="grid gap-3">
         <ListRow
           title={t["accountDashboard.support.helpCenter.title"]}

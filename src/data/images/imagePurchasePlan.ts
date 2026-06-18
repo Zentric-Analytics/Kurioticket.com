@@ -1,5 +1,5 @@
 import { imageInventory } from "./imageInventory";
-import type { ImageUsage, InventoriedImage } from "./imageTypes";
+import type { ImageDimensions, ImageUsage, ImageVendor, InventoriedImage } from "./imageTypes";
 
 export type ImagePurchaseCategory = {
   id: string;
@@ -14,9 +14,9 @@ export type ImagePurchaseCategory = {
 };
 
 export type ImagePurchaseBatch = "A" | "B" | "C";
-export type ImagePurchaseApprovalStatus = "shopping-needed";
+export type ImagePurchaseApprovalStatus = "shopping-needed" | "purchased-pending-crops";
 export type ImagePurchaseSourceType = "premium-stock" | "owned" | "provider";
-export type ImagePurchaseVendor = "iStock" | "Adobe Stock" | "Shutterstock" | "Getty/iStock";
+export type ImagePurchaseVendor = ImageVendor;
 
 export type PremiumImagePurchaseEntry = {
   id: string;
@@ -41,24 +41,182 @@ export type PremiumImagePurchaseEntry = {
   licenseRequirement: string;
   launchCritical: boolean;
   approvalStatus: ImagePurchaseApprovalStatus;
+  purchasedAssetPath?: string;
+  sourcePage?: string;
+  vendor?: ImagePurchaseVendor;
+  license?: string;
+  collection?: string;
+  stockFileId?: string;
+  dimensions?: ImageDimensions;
+  cropApprovalNotes?: string;
   buyingBatch: ImagePurchaseBatch;
   notes: string;
+};
+
+export type PurchasedPremiumImageAsset = {
+  id: string;
+  title: string;
+  runtimePath: string;
+  vendor: ImagePurchaseVendor;
+  license: string;
+  collection: string;
+  stockFileId: string;
+  dimensions: ImageDimensions;
+  sourcePage: string;
+  intendedUse: string;
+  registrySlot?: string;
+  approvalStatus: Extract<ImagePurchaseApprovalStatus, "purchased-pending-crops">;
+  cropApprovalNotes: string;
 };
 
 const premiumCandidates = imageInventory.filter((image) => image.premiumReplacementRequired);
 const standardVendors: ImagePurchaseVendor[] = ["iStock", "Adobe Stock", "Shutterstock", "Getty/iStock"];
 const standardLicenseRequirement =
   "Commercial web and mobile-web license covering Kurioticket marketing, metasearch UI, paid acquisition landing pages, email crops, worldwide use, and retained receipt/license records.";
+const purchasedPendingCropApprovalNotes =
+  "Purchased full-size asset; final desktop and mobile crop approval pending staging crop QA.";
+const purchasedHomepageDestinationAssets: Record<
+  string,
+  Pick<
+    PremiumImagePurchaseEntry,
+    | "approvalStatus"
+    | "purchasedAssetPath"
+    | "sourcePage"
+    | "vendor"
+    | "license"
+    | "collection"
+    | "stockFileId"
+    | "dimensions"
+    | "cropApprovalNotes"
+  >
+> = {
+  "phase-3-007-home-destination-new-york": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-new-york-statue-liberty-skyline-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/the-statue-of-liberty-with-one-world-trade-center-background-landmarks-of-new-york-gm875655298-244448255",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "875655298",
+    dimensions: "5818 x 3884",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-011-home-destination-miami": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-miami-skyline-waterfront-001.jpg",
+    sourcePage: "https://www.istockphoto.com/photo/gm2226617855",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2226617855",
+    dimensions: "8192 x 5464",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-012-home-destination-las-vegas": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-las-vegas-strip-night-drone-001.jpg",
+    sourcePage: "https://www.istockphoto.com/photo/gm2210332790",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2210332790",
+    dimensions: "8192 x 4320",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-013-home-destination-los-angeles": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-los-angeles-palm-skyline-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/elysian-park-and-the-view-towards-los-angeles-downtown-usa-with-a-palm-tree-alley-in-gm2189888489-608312569",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2189888489",
+    dimensions: "8064 x 6048",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-008-home-destination-london": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-london-tower-bridge-thames-001.jpg",
+    sourcePage: "https://www.istockphoto.com/photo/gm2243786140",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2243786140",
+    dimensions: "5467 x 3645",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  "phase-3-009-home-destination-paris": {
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath:
+      "/images/premium/homepage/destinations/kurioticket-homepage-destination-paris-eiffel-tower-buildings-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/eiffel-tower-paris-with-facades-of-old-buildings-in-the-forefront-during-daylight-gm1372132465-441313089",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "1372132465",
+    dimensions: "8000 x 5336",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+};
 
-function purchaseEntry(entry: Omit<PremiumImagePurchaseEntry, "acceptableVendors" | "approvalStatus" | "preferredSourceType" | "licenseRequirement">): PremiumImagePurchaseEntry {
+type PurchaseEntryInput = Omit<
+  PremiumImagePurchaseEntry,
+  "acceptableVendors" | "approvalStatus" | "preferredSourceType" | "licenseRequirement"
+> &
+  Partial<Pick<PremiumImagePurchaseEntry, "approvalStatus">>;
+
+function purchaseEntry(entry: PurchaseEntryInput): PremiumImagePurchaseEntry {
   return {
     ...entry,
     preferredSourceType: "premium-stock",
     acceptableVendors: [...standardVendors],
     licenseRequirement: standardLicenseRequirement,
-    approvalStatus: "shopping-needed",
+    approvalStatus: entry.approvalStatus ?? "shopping-needed",
   };
 }
+
+export const phase4aPurchasedPremiumFlightAssets: PurchasedPremiumImageAsset[] = [
+  {
+    id: "phase-3-002-global-flight-search-hero",
+    title: "Global flights brand hero - airport departure confidence",
+    runtimePath: "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "1218436213",
+    dimensions: "2047 x 1365",
+    sourcePage:
+      "https://www.istockphoto.com/photo/modern-passenger-airplane-parked-to-terminal-building-gate-at-airside-apron-of-gm1218436213-356036421",
+    intendedUse: "Primary Flights hero / global flight search hero",
+    registrySlot: "phase-3-002-global-flight-search-hero",
+    approvalStatus: "purchased-pending-crops",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+  {
+    id: "premium-flight-support-aircraft-gangway-terminal-istock-1470585865",
+    title: "Secondary flight support image - aircraft at terminal gangway",
+    runtimePath: "/images/premium/flights/kurioticket-flight-support-aircraft-gangway-terminal-002.jpg",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "1470585865",
+    dimensions: "2047 x 1365",
+    sourcePage:
+      "https://www.istockphoto.com/photo/aircraft-is-attached-to-the-terminal-gangway-of-the-airport-building-preparation-for-gm1470585865-501392082",
+    intendedUse: "Secondary flight support image",
+    registrySlot: "premium-flight-support-aircraft-gangway-terminal-istock-1470585865",
+    approvalStatus: "purchased-pending-crops",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
+  },
+];
 
 const categoryDefinitions: Array<Omit<ImagePurchaseCategory, "pageSurfaces" | "candidateCount">> = [
   {
@@ -169,8 +327,19 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
     desktopCropRequirement: "Must support a 16:9 and 21:9 hero crop with overlay-safe space across the left half.",
     recommendedAspectRatios: ["21:9", "16:9", "4:5"],
     launchCritical: true,
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath: "/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/businesswoman-arriving-in-a-modern-city-with-rolling-luggage-gm2236043419-651355204?searchscope=image%2Cfilm",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2236043419",
+    dimensions: "2047 x 1380",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
     buyingBatch: "A",
-    notes: "Highest-impact replacement for the current free-approved homepage hero; no URL replacement happens until Phase 4.",
+    notes:
+      "Purchased iStock asset is stored locally for future homepage hero replacement; final desktop/mobile crop approval remains pending staging QA, and no live UI replacement happens in this PR.",
   }),
   purchaseEntry({
     id: "phase-3-002-global-flight-search-hero",
@@ -189,8 +358,19 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
     desktopCropRequirement: "Must remain calm behind search UI at 16:9 and 21:9.",
     recommendedAspectRatios: ["21:9", "16:9", "4:5"],
     launchCritical: true,
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath: "/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/modern-passenger-airplane-parked-to-terminal-building-gate-at-airside-apron-of-gm1218436213-356036421",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "1218436213",
+    dimensions: "2047 x 1365",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
     buyingBatch: "A",
-    notes: "Brand-level flight visual for homepage discovery and future route modules; avoid provider-real implications.",
+    notes:
+      "Purchased iStock asset is stored locally for Phase 4A governance; final desktop/mobile crop approval remains pending staging QA, and no URL replacement happens in this PR.",
   }),
   purchaseEntry({
     id: "phase-3-003-global-hotel-search-hero",
@@ -209,8 +389,19 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
     desktopCropRequirement: "Wide crop should preserve premium atmosphere with room for copy/search UI.",
     recommendedAspectRatios: ["16:9", "3:2", "4:5"],
     launchCritical: true,
+    approvalStatus: "purchased-pending-crops",
+    purchasedAssetPath: "/images/premium/hotels/kurioticket-hotels-hero-bellboy-guest-arrival-lobby-001.jpg",
+    sourcePage:
+      "https://www.istockphoto.com/photo/elegant-bellboy-greeting-hotel-visitor-gm2202326055-619930311?searchscope=image%2Cfilm",
+    vendor: "iStock",
+    license: "Standard",
+    collection: "Essentials",
+    stockFileId: "2202326055",
+    dimensions: "2048 x 1365",
+    cropApprovalNotes: purchasedPendingCropApprovalNotes,
     buyingBatch: "A",
-    notes: "Can inform the Phase 4 hotel fallback art direction but must remain generic.",
+    notes:
+      "Purchased iStock asset is stored locally and the live hotels landing hero replacement is happening in this phase; final desktop/mobile crop QA remains pending staging review.",
   }),
   purchaseEntry({
     id: "phase-3-004-global-destination-grid-hero",
@@ -291,8 +482,10 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
     ["phase-3-022-home-destination-cancun", "Cancun", "Mexico", "North America", "inventory-data-markethomecontent-ts-destinations-marketing-1552074284-5e88ef1aef18", "premium Cancun beach scene with turquoise water and no specific resort implication"],
     ["phase-3-023-home-destination-amsterdam", "Amsterdam", "Netherlands", "Europe", "inventory-data-markethomecontent-ts-destinations-marketing-1512470876302-972faa2aa9a4", "premium Amsterdam canal scene with bridge, bikes, or house fronts preserved"],
     ["phase-3-024-home-destination-barcelona", "Barcelona", "Spain", "Europe", "inventory-data-markethomecontent-ts-destinations-marketing-1583422409516-2895a77efded", "premium Barcelona city scene with Sagrada Familia or Eixample context"],
-  ].map(([id, destination, country, region, targetId, brief], index) =>
-    purchaseEntry({
+  ].map(([id, destination, country, region, targetId, brief], index) => {
+    const purchasedAsset = purchasedHomepageDestinationAssets[id];
+
+    return purchaseEntry({
       id,
       title: `Homepage destination card — ${destination}`,
       product: "destinations",
@@ -312,9 +505,12 @@ export const phase3FirstSixtyPurchaseList: PremiumImagePurchaseEntry[] = [
       recommendedAspectRatios: ["16:9", "3:2", "4:5", "1:1"],
       launchCritical: true,
       buyingBatch: index < 10 ? "A" : "B",
-      notes: "Purchase as a reusable premium destination-card asset; do not replace the current URL until Phase 4.",
-    }),
-  ),
+      notes: purchasedAsset
+        ? "Purchased iStock asset is stored locally for the live US homepage destination-card replacement; final desktop/mobile crop approval remains pending staging QA."
+        : "Purchase as a reusable premium destination-card asset; do not replace the current URL until Phase 4.",
+      ...purchasedAsset,
+    });
+  }),
   ...[
     ["phase-3-025-hotel-destination-tokyo", "Tokyo", "Japan", "Asia", "hotel-destination-tokyo-pexels", "premium Tokyo skyline or neighborhood arrival scene for hotel browsing"],
     ["phase-3-026-hotel-destination-rome", "Rome", "Italy", "Europe", "hotel-destination-rome-pexels", "premium Rome historic city scene with Colosseum or streetscape context"],

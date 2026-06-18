@@ -73,11 +73,14 @@ function SavedHeartIcon({
 
 type AppHeaderProps = {
   hideMobileSecondaryNavLinks?: boolean;
+  showAccountBackLink?: boolean;
+  accountBackHref?: string;
+  accountBackLabel?: string;
 };
 
 const signedInAccountMenuItems = [
   {
-    href: "/dashboard",
+    href: "/dashboard/account",
     labelKey: "accountMenu.myAccount.label",
     descriptionKey: "accountMenu.myAccount.description",
     icon: LayoutDashboard,
@@ -142,6 +145,9 @@ const mobileInfoLegalMenuItems = [
 
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
+  showAccountBackLink = false,
+  accountBackHref = "/dashboard/account",
+  accountBackLabel = "My Account",
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -647,7 +653,7 @@ export function AppHeader({
   return (
     <>
       <header className="relative z-50 border-b border-white/10 bg-[#4338CA] text-white shadow-[0_8px_24px_rgba(49,46,129,0.16)]">
-        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-3 md:pt-4">
+        <div className="page-shell flex flex-col gap-0.5 pb-1 pt-[5px] md:gap-0 md:pb-2.5 md:pt-3">
           <div className="flex min-h-[52px] items-center justify-between gap-3 md:min-h-[48px] md:gap-8">
             <Link
               href="/"
@@ -1044,7 +1050,22 @@ export function AppHeader({
           </div>
 
           <nav className="hidden md:block" aria-label="Primary">
-            <div className="flex min-h-[50px] items-center justify-start pt-2.5 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
+            <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
+              {showAccountBackLink ? (
+                <Link
+                  href={accountBackHref}
+                  onClick={(event) =>
+                    handleRouteLinkClick(event, accountBackHref)
+                  }
+                  className="absolute left-0 top-1/2 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                >
+                  <span className="text-lg leading-none" aria-hidden="true">
+                    ‹
+                  </span>
+                  <span>{accountBackLabel}</span>
+                </Link>
+              ) : null}
+
               <div className="flex min-w-0 items-center justify-start gap-3 whitespace-nowrap lg:gap-4">
                 {desktopPrimaryNavItems.map((item) => {
                   const Icon = item.icon;
@@ -1079,7 +1100,7 @@ export function AppHeader({
           </nav>
 
           <nav className="md:hidden" aria-label="Primary">
-            <div className="pb-1 pt-3.5">
+            <div className="pb-1 pt-2.5">
               <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {visibleMobilePrimaryNavItems.map((item) => {
                   const Icon = item.icon;
@@ -1111,8 +1132,26 @@ export function AppHeader({
                 })}
               </div>
             </div>
+
+            {showAccountBackLink ? (
+              <div className="pb-1 pt-0.5">
+                <Link
+                  href={accountBackHref}
+                  onClick={(event) =>
+                    handleRouteLinkClick(event, accountBackHref)
+                  }
+                  className="inline-flex min-h-7 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                >
+                  <span className="text-lg leading-none" aria-hidden="true">
+                    ‹
+                  </span>
+                  <span>{accountBackLabel}</span>
+                </Link>
+              </div>
+            ) : null}
           </nav>
         </div>
+
 
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
@@ -1123,7 +1162,7 @@ export function AppHeader({
                 <button
                   type="button"
                   className="absolute inset-0 h-full w-full cursor-default bg-slate-950/45"
-                  aria-label="Close mobile menu backdrop"
+                  aria-label={t.closeMobileMenu}
                   onClick={() => setMobileMenuOpen(false)}
                 />
 
@@ -1131,13 +1170,13 @@ export function AppHeader({
                   id="mobile-menu-drawer"
                   role="dialog"
                   aria-modal="true"
-                  aria-label="Mobile menu"
+                  aria-label={t.menu}
                   className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
                   <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
                     <div className="min-w-0">
                       <h2 className="truncate text-xl font-semibold tracking-[-0.02em] text-slate-950">
-                        Menu
+                        {t.menu}
                       </h2>
                     </div>
 
@@ -1145,7 +1184,7 @@ export function AppHeader({
                       type="button"
                       onClick={() => setMobileMenuOpen(false)}
                       className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                      aria-label="Close mobile menu"
+                      aria-label={t.closeMobileMenu}
                     >
                       <X size={18} aria-hidden="true" />
                     </button>

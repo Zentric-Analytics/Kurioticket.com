@@ -31,9 +31,9 @@ export const popularDestinationsByMarket: Record<
       originCode: "JFK",
       city: "New York",
       country: "United States",
-      imageAlt: "New York skyline and city streets",
+      imageAlt: "Statue of Liberty with One World Trade Center and Lower Manhattan skyline",
       image:
-        "https://images.pexels.com/photos/11182439/pexels-photo-11182439.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        "/images/premium/homepage/destinations/kurioticket-homepage-destination-new-york-statue-liberty-skyline-001.jpg",
     },
     {
       id: "us-miami",
@@ -41,9 +41,9 @@ export const popularDestinationsByMarket: Record<
       originCode: "BOS",
       city: "Miami",
       country: "United States",
-      imageAlt: "Miami Beach lifeguard tower and palms",
+      imageAlt: "Miami waterfront skyline with palm trees and downtown towers",
       image:
-        "https://images.unsplash.com/photo-1535498730771-e735b998cd64?auto=format&fit=crop&w=1600&q=90",
+        "/images/premium/homepage/destinations/kurioticket-homepage-destination-miami-skyline-waterfront-001.jpg",
     },
     {
       id: "us-las-vegas",
@@ -51,9 +51,9 @@ export const popularDestinationsByMarket: Record<
       originCode: "ORD",
       city: "Las Vegas",
       country: "United States",
-      imageAlt: "Las Vegas strip lights at night",
+      imageAlt: "Las Vegas Strip skyline at night from above",
       image:
-        "https://images.unsplash.com/photo-1581351721010-8cf859cb14a4?auto=format&fit=crop&w=1600&q=90",
+        "/images/premium/homepage/destinations/kurioticket-homepage-destination-las-vegas-strip-night-drone-001.jpg",
     },
     {
       id: "us-los-angeles",
@@ -61,9 +61,9 @@ export const popularDestinationsByMarket: Record<
       originCode: "JFK",
       city: "Los Angeles",
       country: "United States",
-      imageAlt: "Los Angeles skyline and palm trees",
+      imageAlt: "Los Angeles skyline viewed through palm trees at golden hour",
       image:
-        "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?auto=format&fit=crop&w=1600&q=90",
+        "/images/premium/homepage/destinations/kurioticket-homepage-destination-los-angeles-palm-skyline-001.jpg",
     },
     {
       id: "us-london",
@@ -71,9 +71,9 @@ export const popularDestinationsByMarket: Record<
       originCode: "JFK",
       city: "London",
       country: "United Kingdom",
-      imageAlt: "London skyline and historic landmarks",
+      imageAlt: "Tower Bridge over the River Thames in London",
       image:
-        "https://images.pexels.com/photos/33843218/pexels-photo-33843218.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        "/images/premium/homepage/destinations/kurioticket-homepage-destination-london-tower-bridge-thames-001.jpg",
     },
     {
       id: "us-paris",
@@ -81,9 +81,9 @@ export const popularDestinationsByMarket: Record<
       originCode: "JFK",
       city: "Paris",
       country: "France",
-      imageAlt: "Eiffel Tower above Paris streets",
+      imageAlt: "Eiffel Tower framed by Paris apartment buildings",
       image:
-        "https://images.pexels.com/photos/2082103/pexels-photo-2082103.jpeg?auto=compress&cs=tinysrgb&w=1600",
+        "/images/premium/homepage/destinations/kurioticket-homepage-destination-paris-eiffel-tower-buildings-001.jpg",
     },
   ],
   NG: [
@@ -868,7 +868,15 @@ popularDestinationsByMarket.NEUTRAL = popularDestinationsByMarket.GLOBAL;
 for (const [marketCode, destinations] of Object.entries(
   popularDestinationsByMarket,
 )) {
-  validateDestinationImages(`${marketCode} popular destinations`, destinations);
+  validateDestinationImages(
+    `${marketCode} popular destinations`,
+    destinations.map((destination) => ({
+      ...destination,
+      image: destination.image.startsWith("/")
+        ? `https://kurioticket.com${destination.image}`
+        : destination.image,
+    })),
+  );
 }
 
 export function getPopularDestinationsByRegion(

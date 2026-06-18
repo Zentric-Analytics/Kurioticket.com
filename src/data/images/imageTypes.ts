@@ -49,6 +49,8 @@ export type ImageProduct = (typeof imageProducts)[number];
 export type ImageUsage = (typeof imageUsages)[number];
 export type ImageSource = (typeof imageSources)[number];
 export type ImageStatus = (typeof imageStatuses)[number];
+export type ImageVendor = "iStock" | "Adobe Stock" | "Shutterstock" | "Getty/iStock";
+export type ImageDimensions = `${number} x ${number}`;
 
 export type ImageFocalPoint =
   | "center"
@@ -102,6 +104,10 @@ export type RegisteredImage = {
   creator?: string;
   license?: string;
   licenseNotes?: string;
+  vendor?: ImageVendor;
+  collection?: string;
+  stockFileId?: string;
+  dimensions?: ImageDimensions;
   pageSurfaces: string[];
   intendedSlot: string;
   cropNotes?: string;

@@ -20,6 +20,7 @@ const { getSourceIdentity, validateImageRegistry } = jiti("../src/data/images/im
 
 const commonImageHostPattern = /https:\/\/(?:images\.unsplash\.com|images\.pexels\.com|images\.kiwi\.com|photos\.hotelbeds\.com)\/[^\s"'`<>)]*/g;
 const localPublicImagePathPattern = /(?<![\w.-])\/images\/[\w./-]+\.(?:avif|gif|jpe?g|png|svg|webp)(?:\?[^\s"'`<>)]*)?/gi;
+const registeredLocalPublicImagePattern = /^\/images\/[\w./-]+\.(?:avif|gif|jpe?g|png|svg|webp)$/i;
 const textFileExtensions = new Set([
   ".css",
   ".js",
@@ -44,6 +45,10 @@ const ignoredRelativePrefixes = [
 ];
 
 const validation = validateImageRegistry(imageRegistry);
+const registeredLocalPublicImages = imageRegistry.filter((image) => isRegisteredLocalPublicImage(image.url));
+const missingRegisteredLocalPublicImages = registeredLocalPublicImages.filter(
+  (image) => !registeredLocalPublicImageExists(image.url),
+);
 const discovered = discoverImageReferences(repoRoot);
 const discoveredUrls = [...new Set(discovered.map((entry) => entry.url))].sort();
 const classifiedImages = [...imageRegistry.map(normalizeRegistryClassification), ...imageInventory];
@@ -70,6 +75,10 @@ const launchCriticalStatusCounts = countByStatus(launchCriticalBlocked);
 printReport();
 
 if (!validation.valid) {
+  process.exitCode = 1;
+}
+
+if (missingRegisteredLocalPublicImages.length > 0) {
   process.exitCode = 1;
 }
 
@@ -152,6 +161,22 @@ function isRegistered(url) {
   return registeredIdentities.has(safeIdentity(url));
 }
 
+function isRegisteredLocalPublicImage(value) {
+  return registeredLocalPublicImagePattern.test(value);
+}
+
+function registeredLocalPublicImageExists(value) {
+  try {
+    return statSync(registeredLocalPublicImageFilePath(value)).isFile();
+  } catch {
+    return false;
+  }
+}
+
+function registeredLocalPublicImageFilePath(value) {
+  return path.join(repoRoot, "public", value.replace(/^\//, ""));
+}
+
 function safeIdentity(url) {
   try {
     return getSourceIdentity(url);
@@ -224,6 +249,8 @@ function printReport() {
   console.log("========================");
   console.log(`Total discovered image URLs: ${discoveredUrls.length}`);
   console.log(`Total registered images: ${imageRegistry.length}`);
+  console.log(`Registered local public images: ${registeredLocalPublicImages.length}`);
+  console.log(`Missing registered local public images: ${missingRegisteredLocalPublicImages.length}`);
   console.log(`Total inventoried images: ${imageInventory.length}`);
   console.log(`Total registered/inventoried URLs: ${registeredUrls.size}`);
   console.log(`Unregistered URLs: ${unregisteredUrls.length}`);
@@ -246,6 +273,11 @@ function printReport() {
 
   printIssues("\nRegistry validation errors", validation.errors, (issue) => formatIssue(issue));
   printIssues("\nRegistry validation warnings", validation.warnings, (issue) => formatIssue(issue));
+  printIssues(
+    "\nMissing registered local public images",
+    missingRegisteredLocalPublicImages,
+    (image) => `- ${image.id}: ${image.url} -> ${toRepoRelative(registeredLocalPublicImageFilePath(image.url))}`,
+  );
   printIssues("\nUnregistered URLs", unregisteredUrls, (url) => `- ${url}`);
   printIssues("\nDuplicate discovered exact URLs", duplicateDiscoveredUrls, ([url, entries]) => `- ${url} (${entries.length} references)`);
   printIssues("\nDuplicate discovered source identities", duplicateDiscoveredIdentities, ([identity, entries]) => `- ${identity} (${entries.length} references)`);

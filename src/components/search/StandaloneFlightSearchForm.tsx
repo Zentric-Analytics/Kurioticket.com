@@ -9,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { useRouter } from "next/navigation";
 
@@ -66,6 +67,26 @@ const normalizeFlightsCalendarLocale = (locale: string | null | undefined) => {
     return "es-ES";
   }
 
+  if (normalized === "de" || normalized.startsWith("de-")) {
+    return "de-DE";
+  }
+
+  if (normalized === "it" || normalized.startsWith("it-")) {
+    return "it-IT";
+  }
+
+  if (normalized === "nl" || normalized.startsWith("nl-")) {
+    return "nl-NL";
+  }
+
+  if (
+    normalized === "pt" ||
+    normalized === "pt-br" ||
+    normalized.startsWith("pt-")
+  ) {
+    return "pt-BR";
+  }
+
   return "en-US";
 };
 
@@ -77,13 +98,14 @@ const formatFlightsWeekdays = (locale: string) =>
   );
 
 const searchFieldShellClassName =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 sm:min-h-[62px] sm:rounded-2xl sm:border-slate-300 sm:bg-white sm:px-4 sm:py-2.5 sm:shadow-[0_4px_14px_rgba(15,23,42,0.06)] sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:bg-white sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/25";
+  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-r sm:border-slate-200 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-300 sm:focus-within:border-indigo-500 sm:focus-within:bg-indigo-50/55 sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-indigo-300/80 lg:flex lg:flex-col lg:justify-center";
 const searchFieldLabelClassName =
-  "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-extrabold sm:tracking-[0.15em] sm:text-slate-600";
+  "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
 const searchFieldValueButtonClassName =
-  "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-7 sm:rounded-none sm:text-[15px] sm:font-extrabold sm:tracking-[-0.015em] sm:text-slate-950 sm:focus-visible:shadow-none";
+  "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
 const mobileDoneButtonClassName =
   "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
+const desktopPopoverSelector = "[data-standalone-flight-desktop-popover]";
 
 const normalizeSuggestionText = (value: string) =>
   value.normalize("NFKD").replace(/\p{M}/gu, "").trim().toLowerCase();
@@ -232,6 +254,7 @@ export function StandaloneFlightSearchForm({
   const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
 
+  const standaloneFormCardRef = useRef<HTMLElement>(null);
   const originWrapRef = useRef<HTMLDivElement>(null);
   const originInputRef = useRef<HTMLInputElement>(null);
   const originMobileLauncherRef = useRef<HTMLButtonElement>(null);
@@ -288,7 +311,6 @@ export function StandaloneFlightSearchForm({
   const [draftCabinClass, setDraftCabinClass] = useState<CabinClass>("economy");
   const [travelersOpen, setTravelersOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const originQuery = origin.trim();
   const destinationQuery = destination.trim();
   const visibleOriginSuggestions =
@@ -478,7 +500,8 @@ export function StandaloneFlightSearchForm({
       const eventTarget = event.target as Node;
       if (
         eventTarget instanceof Element &&
-        eventTarget.closest("[data-flight-mobile-picker-shell]")
+        (eventTarget.closest("[data-flight-mobile-picker-shell]") ||
+          eventTarget.closest(desktopPopoverSelector))
       )
         return;
 
@@ -508,8 +531,108 @@ export function StandaloneFlightSearchForm({
     };
   }, []);
 
+  useEffect(() => {
+    const hasOpenDesktopPopover =
+      originOpen || destinationOpen || datesOpen || travelersOpen;
+
+    if (!hasOpenDesktopPopover || typeof window === "undefined") return;
+
+    const desktopMediaQuery = window.matchMedia("(min-width: 640px)");
+    if (!desktopMediaQuery.matches) return;
+
+    const getActiveDesktopAnchor = () => {
+      if (originOpen) return originWrapRef.current;
+      if (destinationOpen) return destinationWrapRef.current;
+      if (datesOpen)
+        return datesMobileLauncherRef.current ?? dateWrapRef.current;
+      if (travelersOpen)
+        return travelersLauncherRef.current ?? travelersWrapRef.current;
+
+      return null;
+    };
+
+    const isMeaningfullyVisible = (element: HTMLElement | null) => {
+      if (!element) return false;
+
+      const rect = element.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const threshold = 24;
+      const visibleHeight =
+        Math.min(rect.bottom, viewportHeight - threshold) -
+        Math.max(rect.top, threshold);
+      const minimumVisibleHeight = Math.min(
+        32,
+        Math.max(1, rect.height * 0.25),
+      );
+
+      return (
+        rect.bottom > threshold &&
+        rect.top < viewportHeight - threshold &&
+        visibleHeight >= minimumVisibleHeight
+      );
+    };
+
+    const closeDesktopPopovers = () => {
+      setOriginOpen(false);
+      setDestinationOpen(false);
+      setDatesOpen(false);
+      setTravelersOpen(false);
+    };
+
+    const onPageScroll = (event: Event) => {
+      const eventTarget = event.target;
+
+      if (
+        eventTarget instanceof Element &&
+        eventTarget.closest(desktopPopoverSelector)
+      ) {
+        return;
+      }
+
+      const activeAnchor = getActiveDesktopAnchor();
+      const formCard = standaloneFormCardRef.current;
+
+      if (
+        isMeaningfullyVisible(activeAnchor) ||
+        isMeaningfullyVisible(formCard)
+      ) {
+        return;
+      }
+
+      closeDesktopPopovers();
+    };
+
+    window.addEventListener("scroll", onPageScroll, true);
+
+    return () => window.removeEventListener("scroll", onPageScroll, true);
+  }, [datesOpen, destinationOpen, originOpen, travelersOpen]);
+
+  const openOriginDesktopPopover = () => {
+    setDestinationOpen(false);
+    setDatesOpen(false);
+    setTravelersOpen(false);
+    setOriginOpen(true);
+  };
+
+  const openDestinationDesktopPopover = () => {
+    setOriginOpen(false);
+    setDatesOpen(false);
+    setTravelersOpen(false);
+    setDestinationOpen(true);
+  };
+
+  const openDatesDesktopPopover = () => {
+    setOriginOpen(false);
+    setDestinationOpen(false);
+    setTravelersOpen(false);
+    setDatesOpen(true);
+  };
+
   const openTravelers = () => {
     const normalizedCabinClass = normalizeCabinClass(cabinClass);
+    setOriginOpen(false);
+    setDestinationOpen(false);
+    setDatesOpen(false);
     setCabinClass(normalizedCabinClass);
     setDraftAdultCount(adultCount);
     setDraftChildCount(childCount);
@@ -617,6 +740,10 @@ export function StandaloneFlightSearchForm({
       field === "origin" ? setOriginHighlight : setDestinationHighlight;
     const open = field === "origin" ? originOpen : destinationOpen;
     const setOpen = field === "origin" ? setOriginOpen : setDestinationOpen;
+    const closeOther =
+      field === "origin"
+        ? () => setDestinationOpen(false)
+        : () => setOriginOpen(false);
 
     if (event.key === "Escape") {
       setOpen(false);
@@ -627,12 +754,18 @@ export function StandaloneFlightSearchForm({
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
+      closeOther();
+      setDatesOpen(false);
+      setTravelersOpen(false);
       setOpen(true);
       setActive((active + 1) % list.length);
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
+      closeOther();
+      setDatesOpen(false);
+      setTravelersOpen(false);
       setOpen(true);
       setActive((active - 1 + list.length) % list.length);
     }
@@ -883,17 +1016,26 @@ export function StandaloneFlightSearchForm({
     const query = field === "origin" ? originQuery : destinationQuery;
     const loading = field === "origin" ? originLoading : destinationLoading;
     const active = field === "origin" ? originHighlight : destinationHighlight;
+    const open = field === "origin" ? originOpen : destinationOpen;
+    const anchorRef = field === "origin" ? originWrapRef : destinationWrapRef;
 
-    if (query.length < 2) return null;
+    if (!open || query.length < 2) return null;
 
     return (
-      <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-[140] hidden overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_24px_60px_rgba(15,23,42,0.18)] ring-1 ring-slate-900/[0.04] sm:block">
+      <DesktopFlightPopover
+        open={open}
+        anchorRef={anchorRef}
+        desiredWidth={390}
+        align="start"
+        offset={4}
+        className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_14px_32px_rgba(15,23,42,0.14)] ring-1 ring-slate-950/[0.02]"
+      >
         {loading ? (
           <p className="px-4 py-5 text-center text-sm font-medium text-slate-500">
             {t("searchingAirportsAndCities")}
           </p>
         ) : suggestions.length ? (
-          <div className="grid gap-1">
+          <div className="max-h-[min(44vh,320px)] overflow-y-auto overscroll-contain py-1">
             {suggestions.map((option, index) => (
               <button
                 key={`${field}-${option.code}-${option.airport}`}
@@ -901,27 +1043,26 @@ export function StandaloneFlightSearchForm({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => selectAirport(field, option)}
                 className={cn(
-                  "focus-ring flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-indigo-50",
-                  active === index &&
-                    "bg-indigo-50 ring-1 ring-inset ring-indigo-100",
+                  "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-indigo-50/60",
+                  active === index && "bg-indigo-50 text-indigo-950",
                 )}
               >
                 <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-700"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 ring-1 ring-slate-200/70"
                   aria-hidden="true"
                 >
                   <Plane className="h-4 w-4" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[15px] font-extrabold leading-5 text-slate-950">
+                  <span className="block truncate text-sm font-medium leading-5 tracking-tight text-slate-900">
                     {option.city}
                   </span>
-                  <span className="mt-0.5 block truncate text-xs font-medium leading-5 text-slate-500">
+                  <span className="mt-0.5 block truncate text-xs font-normal leading-5 text-slate-500">
                     {option.airport}
                     {option.country ? ` · ${option.country}` : ""}
                   </span>
                 </span>
-                <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black tracking-[0.12em] text-slate-700">
+                <span className="shrink-0 pl-3 text-right text-sm font-medium tracking-[0.08em] text-slate-600">
                   {option.code}
                 </span>
               </button>
@@ -932,7 +1073,7 @@ export function StandaloneFlightSearchForm({
             {t("noMatchingAirportsOrCities")}
           </p>
         )}
-      </div>
+      </DesktopFlightPopover>
     );
   };
 
@@ -951,7 +1092,7 @@ export function StandaloneFlightSearchForm({
             className={cn(
               compact
                 ? "text-left text-[17px] font-bold tracking-tight text-slate-950"
-                : "mb-3 text-center text-[15px] font-extrabold tracking-tight text-slate-950",
+                : "mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900",
             )}
           >
             {monthYearFormatter.format(monthDate)}
@@ -961,7 +1102,7 @@ export function StandaloneFlightSearchForm({
               "grid grid-cols-7 text-center text-slate-500",
               compact
                 ? "text-[12px] font-semibold tracking-[0.08em]"
-                : "mb-2 text-[11px] font-bold uppercase tracking-[0.10em]",
+                : "mb-1.5 text-[10px] font-medium tracking-[0.09em]",
             )}
           >
             {weekdays.map((weekday) => (
@@ -1014,7 +1155,7 @@ export function StandaloneFlightSearchForm({
                     "focus-ring relative mx-auto flex items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed",
                     compact
                       ? "h-11 w-full max-w-11 text-[15px] font-semibold"
-                      : "h-9 w-9 text-sm font-semibold",
+                      : "h-10 w-10 text-sm font-medium",
                     isDisabledDate
                       ? "text-slate-300"
                       : "text-slate-800 hover:bg-indigo-50 hover:text-indigo-800",
@@ -1024,7 +1165,7 @@ export function StandaloneFlightSearchForm({
                     isInRange &&
                       "bg-indigo-50 text-indigo-900 hover:bg-indigo-100",
                     (isDeparture || isReturn) &&
-                      "bg-indigo-700 text-white shadow-sm ring-0 hover:bg-indigo-700 hover:text-white",
+                      "bg-indigo-600 text-white shadow-none ring-0 hover:bg-indigo-600 hover:text-white",
                   )}
                 >
                   {day.getDate()}
@@ -1056,7 +1197,7 @@ export function StandaloneFlightSearchForm({
     }
 
     return (
-      <div className="mx-auto w-full max-w-2xl rounded-3xl bg-white p-2 sm:p-3">
+      <div className="mx-auto w-full max-w-2xl">
         <div className="mb-3 flex items-center justify-between gap-3 px-1">
           <button
             type="button"
@@ -1088,22 +1229,22 @@ export function StandaloneFlightSearchForm({
     const passengerRows = [
       {
         key: "adults",
-        label: t("adultPlural") || "Adults",
+        label: t("adults") || "Adults",
         subtitle: "18+",
         count: draftAdultCount,
         min: 1,
       },
       {
         key: "children",
-        label: t("childPlural") || "Children",
-        subtitle: "Ages 2–17",
+        label: t("children") || "Children",
+        subtitle: t("childAgeRange") || "Ages 2–17",
         count: draftChildCount,
         min: 0,
       },
       {
         key: "infants",
-        label: t("infantPlural") || "Infants",
-        subtitle: "Under 2",
+        label: t("infants") || "Infants",
+        subtitle: t("under2") || "Under 2",
         count: draftInfantCount,
         min: 0,
       },
@@ -1117,20 +1258,25 @@ export function StandaloneFlightSearchForm({
     return (
       <div
         className={cn(
-          "mx-auto w-full max-w-xl",
-          compact ? "space-y-4" : "space-y-3",
+          "mx-auto w-full",
+          compact ? "max-w-xl space-y-4" : "space-y-3",
         )}
       >
         <div>
-          <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-            Passengers
+          <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
+            {t("passengers") || "Passengers"}
           </p>
+          {!compact ? (
+            <h2 className="mb-2 text-lg font-extrabold tracking-tight text-slate-950">
+              {t("passengers") || t("travelers") || "Travelers"}
+            </h2>
+          ) : null}
           <div
             className={cn(
-              "overflow-hidden border border-slate-200 bg-white",
+              "overflow-hidden",
               compact
-                ? "rounded-3xl shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
-                : "rounded-2xl shadow-sm",
+                ? "rounded-3xl border border-slate-200 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
+                : "rounded-none border-y border-slate-100 bg-transparent",
             )}
           >
             {passengerRows.map((row) => {
@@ -1146,7 +1292,7 @@ export function StandaloneFlightSearchForm({
                   key={row.key}
                   className={cn(
                     "flex items-center justify-between gap-4 border-b border-slate-100 last:border-b-0",
-                    compact ? "px-4 py-4" : "px-4 py-3",
+                    compact ? "px-4 py-4" : "px-0 py-2.5",
                   )}
                 >
                   <span className="min-w-0">
@@ -1176,7 +1322,12 @@ export function StandaloneFlightSearchForm({
                           );
                       }}
                       disabled={!canDecrement}
-                      className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                      className={cn(
+                        "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
+                        compact
+                          ? "h-9 w-9 shadow-sm sm:h-10 sm:w-10"
+                          : "h-7 w-7",
+                      )}
                     >
                       <Minus className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -1212,7 +1363,12 @@ export function StandaloneFlightSearchForm({
                         }
                       }}
                       disabled={!canIncrement}
-                      className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white text-slate-700 shadow-sm transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-50 disabled:text-slate-300 disabled:shadow-none"
+                      className={cn(
+                        "focus-ring inline-flex items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-300",
+                        compact
+                          ? "h-9 w-9 shadow-sm sm:h-10 sm:w-10"
+                          : "h-7 w-7",
+                      )}
                     >
                       <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
@@ -1225,10 +1381,9 @@ export function StandaloneFlightSearchForm({
 
         <div
           className={cn(
-            "border border-slate-200 bg-white p-4",
             compact
-              ? "rounded-3xl shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
-              : "rounded-2xl shadow-sm",
+              ? "rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_14px_38px_rgba(15,23,42,0.07)]"
+              : "pt-1",
           )}
         >
           <div className="mb-3 flex items-center justify-between">
@@ -1244,7 +1399,7 @@ export function StandaloneFlightSearchForm({
                 onClick={() => setDraftCabinClass(normalizeCabinClass(value))}
                 className={cn(
                   "focus-ring border px-2 text-center text-sm leading-4 transition-all",
-                  compact ? "min-h-11 rounded-2xl" : "min-h-10 rounded-xl",
+                  compact ? "min-h-11 rounded-2xl" : "min-h-9 rounded-xl",
                   draftCabinClass === value
                     ? "border-indigo-500 bg-indigo-700 font-extrabold text-white shadow-[0_10px_22px_rgba(67,56,202,0.22)]"
                     : "border-slate-200 bg-slate-50/80 font-bold text-slate-700 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-800",
@@ -1260,12 +1415,15 @@ export function StandaloneFlightSearchForm({
   };
 
   return (
-    <section className="relative z-30 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:rounded-[1.75rem] sm:border-white/80 sm:bg-white sm:p-3 sm:shadow-[0_22px_55px_rgba(15,23,42,0.16)] sm:ring-1 sm:ring-slate-900/[0.04] lg:p-4">
-      <form onSubmit={onSubmit} className="space-y-2 sm:space-y-3">
+    <section
+      ref={standaloneFormCardRef}
+      className="relative isolate z-[120] rounded-2xl border border-white/70 bg-white/92 p-3 shadow-[0_10px_26px_rgba(15,23,42,0.06)] ring-1 ring-slate-950/[0.05] backdrop-blur-xl sm:rounded-[1.5rem] sm:p-4 sm:shadow-[0_14px_34px_rgba(15,23,42,0.08)]"
+    >
+      <form onSubmit={onSubmit} className="relative space-y-3 sm:space-y-3">
         <div
           role="radiogroup"
           aria-label={t("tripType") || "Trip type"}
-          className="inline-flex items-center gap-3 rounded-lg bg-white/80 px-0.5 py-1 sm:gap-1 sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-slate-100/80 sm:p-1 sm:shadow-inner"
+          className="inline-flex items-center gap-3 rounded-lg px-0.5 py-1 sm:gap-1 sm:rounded-full sm:bg-transparent sm:p-0.5"
         >
           {[
             ["round-trip", t("roundTrip")],
@@ -1298,9 +1456,9 @@ export function StandaloneFlightSearchForm({
                 if (nextTripType === "one-way") setReturnDate("");
               }}
               className={cn(
-                "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold",
+                "focus-ring group inline-flex min-h-8 items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100/70 hover:text-slate-950 sm:min-h-9 sm:flex-none sm:justify-center sm:px-3.5 sm:py-2 sm:font-bold",
                 tripType === value &&
-                  "text-slate-950 sm:bg-white sm:text-indigo-700 sm:shadow-sm sm:ring-1 sm:ring-indigo-100",
+                  "bg-indigo-50 text-indigo-800 ring-1 ring-indigo-100 sm:bg-indigo-50/80 sm:text-indigo-800 sm:shadow-none",
               )}
             >
               <span
@@ -1324,8 +1482,8 @@ export function StandaloneFlightSearchForm({
           ))}
         </div>
 
-        <div className="grid grid-cols-1 gap-1 sm:gap-3 lg:grid-cols-[minmax(420px,3.6fr)_minmax(162px,1.22fr)_minmax(150px,1.08fr)_148px] lg:items-stretch lg:gap-2.5">
-          <div className="grid grid-cols-1 gap-1 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:rounded-2xl lg:border lg:border-slate-300 lg:bg-white lg:shadow-[0_4px_14px_rgba(15,23,42,0.06)] lg:transition-colors lg:hover:border-slate-400 lg:focus-within:border-indigo-500 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-indigo-500/25">
+        <div className="grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px] lg:items-stretch lg:gap-0">
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-r lg:border-slate-200 lg:bg-transparent">
             <AirportFieldControl
               ref={originWrapRef}
               inputRef={originInputRef}
@@ -1334,8 +1492,9 @@ export function StandaloneFlightSearchForm({
               placeholder={t("cityOrAirport")}
               open={originOpen || activeMobileAirportPicker === "origin"}
               onMobileOpen={() => setActiveMobileAirportPicker("origin")}
-              onDesktopFocus={() => setOriginOpen(true)}
+              onDesktopFocus={openOriginDesktopPopover}
               onChange={(nextValue) => {
+                openOriginDesktopPopover();
                 setOriginState((current) =>
                   markOriginManualInput(current, nextValue),
                 );
@@ -1349,14 +1508,18 @@ export function StandaloneFlightSearchForm({
               onKeyDown={(event) => onAirportKeyNav(event, "origin")}
               mobileLauncherRef={originMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("origin")}
-              className="lg:min-h-[62px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-transparent lg:focus-within:ring-0"
+              className={cn(
+                "lg:min-h-[58px] lg:rounded-l-2xl lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-indigo-50/60 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-indigo-300/80",
+                originOpen &&
+                  "sm:z-20 lg:bg-indigo-50/60 lg:ring-1 lg:ring-inset lg:ring-indigo-300/80",
+              )}
             />
 
-            <div className="relative z-10 -my-2 flex h-4 items-center justify-center lg:my-0 lg:h-auto lg:before:absolute lg:before:left-1/2 lg:before:top-3 lg:before:h-[calc(100%-1.5rem)] lg:before:w-px lg:before:-translate-x-1/2 lg:before:bg-slate-200">
+            <div className="relative z-10 -my-2 flex h-4 items-center justify-center lg:my-0 lg:h-auto lg:before:absolute lg:before:left-1/2 lg:before:top-3 lg:before:h-[calc(100%-1.5rem)] lg:before:w-px lg:before:-translate-x-1/2 lg:before:bg-slate-200/90">
               <button
                 type="button"
                 onClick={swapAirports}
-                className="focus-ring relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-9 lg:w-9 lg:border-slate-300 lg:text-indigo-700 lg:shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
+                className="focus-ring relative inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-600 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:h-8 lg:w-8 lg:border-slate-300 lg:text-indigo-700 lg:shadow-[0_4px_12px_rgba(15,23,42,0.12)]"
                 aria-label={
                   t("swapOriginDestination") || "Swap origin and destination"
                 }
@@ -1375,8 +1538,9 @@ export function StandaloneFlightSearchForm({
                 destinationOpen || activeMobileAirportPicker === "destination"
               }
               onMobileOpen={() => setActiveMobileAirportPicker("destination")}
-              onDesktopFocus={() => setDestinationOpen(true)}
+              onDesktopFocus={openDestinationDesktopPopover}
               onChange={(nextValue) => {
+                openDestinationDesktopPopover();
                 setDestination(nextValue);
                 setDestinationCode("");
                 setDestinationHighlight(0);
@@ -1389,11 +1553,18 @@ export function StandaloneFlightSearchForm({
               onKeyDown={(event) => onAirportKeyNav(event, "destination")}
               mobileLauncherRef={destinationMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("destination")}
-              className="lg:min-h-[62px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-transparent lg:focus-within:ring-0"
+              className={cn(
+                "lg:min-h-[58px] lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-indigo-50/60 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-indigo-300/80",
+                destinationOpen &&
+                  "sm:z-20 lg:bg-indigo-50/60 lg:ring-1 lg:ring-inset lg:ring-indigo-300/80",
+              )}
             />
           </div>
 
-          <div ref={dateWrapRef} className={searchFieldShellClassName}>
+          <div
+            ref={dateWrapRef}
+            className={cn(searchFieldShellClassName, datesOpen && "sm:z-20")}
+          >
             <label className={searchFieldLabelClassName}>
               {t("travelDates")}
             </label>
@@ -1403,7 +1574,13 @@ export function StandaloneFlightSearchForm({
               aria-label={t("chooseTravelDates")}
               aria-expanded={datesOpen}
               aria-haspopup="dialog"
-              onClick={() => setDatesOpen((prev) => !prev)}
+              onClick={() => {
+                if (datesOpen) {
+                  setDatesOpen(false);
+                  return;
+                }
+                openDatesDesktopPopover();
+              }}
               className={searchFieldValueButtonClassName}
             >
               <span>{dateSummary}</span>
@@ -1445,9 +1622,15 @@ export function StandaloneFlightSearchForm({
                 >
                   {renderDateCalendar(true)}
                 </FlightMobilePickerShell>
-                <div className="absolute right-0 top-[calc(100%+10px)] z-[150] hidden w-[min(92vw,690px)] rounded-3xl border border-slate-200 bg-white p-3 shadow-[0_28px_70px_rgba(15,23,42,0.20)] ring-1 ring-slate-900/[0.04] sm:block">
+                <DesktopFlightPopover
+                  open={datesOpen}
+                  anchorRef={datesMobileLauncherRef}
+                  desiredWidth={690}
+                  align="end"
+                  className="rounded-[1.35rem] border border-slate-200 bg-white p-4 shadow-[0_22px_54px_rgba(15,23,42,0.16)] ring-1 ring-slate-950/[0.03] xl:p-5"
+                >
                   {renderDateCalendar(false)}
-                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-slate-200 pt-3">
+                  <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
                     <button
                       type="button"
                       onClick={() => {
@@ -1466,12 +1649,18 @@ export function StandaloneFlightSearchForm({
                       {t("done")}
                     </button>
                   </div>
-                </div>
+                </DesktopFlightPopover>
               </>
             ) : null}
           </div>
 
-          <div ref={travelersWrapRef} className={searchFieldShellClassName}>
+          <div
+            ref={travelersWrapRef}
+            className={cn(
+              searchFieldShellClassName,
+              travelersOpen && "sm:z-20",
+            )}
+          >
             <label className={searchFieldLabelClassName}>
               {t("travelers")}
             </label>
@@ -1502,7 +1691,7 @@ export function StandaloneFlightSearchForm({
               <>
                 <FlightMobilePickerShell
                   open={travelersOpen}
-                  title={t("travelers")}
+                  title={t("passengers") || t("travelers") || "Travelers"}
                   titleId="standalone-flight-mobile-travelers-title"
                   launcherRef={travelersLauncherRef}
                   onClose={closeTravelers}
@@ -1521,9 +1710,15 @@ export function StandaloneFlightSearchForm({
                 >
                   {renderTravelersPicker()}
                 </FlightMobilePickerShell>
-                <div className="absolute right-0 top-[calc(100%+10px)] z-[150] hidden w-[min(92vw,380px)] rounded-3xl border border-slate-200 bg-white p-3 shadow-[0_28px_70px_rgba(15,23,42,0.20)] ring-1 ring-slate-900/[0.04] sm:block">
+                <DesktopFlightPopover
+                  open={travelersOpen}
+                  anchorRef={travelersLauncherRef}
+                  desiredWidth={360}
+                  align="end"
+                  className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_18px_44px_rgba(15,23,42,0.15)] ring-1 ring-slate-950/[0.03]"
+                >
                   {renderTravelersPicker(false)}
-                  <div className="mt-3 flex justify-end border-t border-slate-200 pt-3">
+                  <div className="mt-4 flex justify-end border-t border-slate-100 pt-3">
                     <button
                       type="button"
                       onClick={applyTravelersDraft}
@@ -1532,7 +1727,7 @@ export function StandaloneFlightSearchForm({
                       {t("done")}
                     </button>
                   </div>
-                </div>
+                </DesktopFlightPopover>
               </>
             ) : null}
           </div>
@@ -1541,7 +1736,7 @@ export function StandaloneFlightSearchForm({
             type="submit"
             disabled={isSearchDisabled}
             aria-busy={isSubmitting}
-            className="h-12 w-full whitespace-nowrap rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 sm:min-h-[62px] sm:rounded-2xl sm:px-5 sm:text-base sm:font-black sm:shadow-[0_14px_28px_rgba(67,56,202,0.28)] lg:h-full"
+            className="h-12 w-full whitespace-nowrap rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 sm:min-h-[58px] sm:rounded-none sm:rounded-r-2xl sm:border sm:border-l-0 sm:border-indigo-600/20 sm:px-5 sm:text-[15px] sm:font-bold sm:shadow-[0_10px_22px_rgba(67,56,202,0.22)] sm:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:h-full"
           >
             <Plane
               className="mr-2 hidden h-4 w-4 sm:inline"
@@ -1674,7 +1869,7 @@ const AirportFieldControl = React.forwardRef<
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           autoComplete="off"
-          className="h-7 w-full rounded-none border-0 bg-transparent pr-9 text-[15px] font-extrabold tracking-[-0.015em] text-slate-950 outline-none placeholder:font-semibold placeholder:text-slate-500"
+          className="h-7 w-full rounded-none border-0 bg-transparent pr-9 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
         />
         {value ? (
           <button
@@ -1691,6 +1886,109 @@ const AirportFieldControl = React.forwardRef<
     </div>
   );
 });
+
+type DesktopFlightPopoverProps = {
+  open: boolean;
+  anchorRef: React.RefObject<HTMLElement | null>;
+  desiredWidth: number;
+  align?: "start" | "end";
+  offset?: number;
+  maxHeight?: number | string;
+  className?: string;
+  contentClassName?: string;
+  children: React.ReactNode;
+};
+
+function DesktopFlightPopover({
+  open,
+  anchorRef,
+  desiredWidth,
+  align = "start",
+  offset = 10,
+  maxHeight,
+  className,
+  contentClassName,
+  children,
+}: DesktopFlightPopoverProps) {
+  const [position, setPosition] = useState<{
+    left: number;
+    top: number;
+    width: number;
+  } | null>(null);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const desktopMediaQuery = window.matchMedia("(min-width: 640px)");
+    const syncDesktopState = () => setIsDesktop(desktopMediaQuery.matches);
+
+    syncDesktopState();
+    desktopMediaQuery.addEventListener("change", syncDesktopState);
+
+    return () =>
+      desktopMediaQuery.removeEventListener("change", syncDesktopState);
+  }, []);
+
+  useEffect(() => {
+    if (!open || !isDesktop || typeof window === "undefined") {
+      return;
+    }
+
+    const updatePosition = () => {
+      const anchor = anchorRef.current;
+      if (!anchor) {
+        setPosition(null);
+        return;
+      }
+
+      const gutter = 16;
+      const anchorRect = anchor.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const width = Math.min(
+        desiredWidth,
+        Math.max(0, viewportWidth - gutter * 2),
+      );
+      const preferredLeft =
+        align === "end" ? anchorRect.right - width : anchorRect.left;
+      const left = Math.min(
+        Math.max(gutter, preferredLeft),
+        Math.max(gutter, viewportWidth - width - gutter),
+      );
+      const top = Math.max(gutter, anchorRect.bottom + offset);
+
+      setPosition({ left, top, width });
+    };
+
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
+  }, [align, anchorRef, desiredWidth, isDesktop, offset, open]);
+
+  if (!open || !isDesktop || !position || typeof document === "undefined")
+    return null;
+
+  return createPortal(
+    <div
+      data-standalone-flight-desktop-popover
+      className={cn("fixed z-[1000]", contentClassName)}
+      style={{
+        left: position.left,
+        top: position.top,
+        width: position.width,
+        maxHeight: typeof maxHeight === "number" ? `${maxHeight}px` : maxHeight,
+      }}
+    >
+      <div className={cn("bg-white", className)}>{children}</div>
+    </div>,
+    document.body,
+  );
+}
 
 function useAirportSuggestions({
   query,

@@ -15,9 +15,6 @@ import {
   Plane,
   Sparkles,
   Mail,
-  SearchCheck,
-  BadgeDollarSign,
-  ShieldCheck,
 } from "lucide-react";
 
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
@@ -47,10 +44,138 @@ import {
   writeSavedTripIds,
 } from "@/lib/saved-trips-local";
 
+
+function CompareOffersIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="64" height="64" rx="18" fill="url(#compareTile)" />
+      <rect x="13" y="18" width="24" height="17" rx="5" fill="white" />
+      <rect x="17" y="23" width="12" height="3" rx="1.5" fill="#4F46E5" />
+      <rect x="17" y="29" width="16" height="2" rx="1" fill="#C7D2FE" />
+      <rect x="29" y="25" width="23" height="18" rx="5" fill="#F8FAFC" />
+      <rect x="34" y="30" width="10" height="3" rx="1.5" fill="#0D9488" />
+      <rect x="34" y="36" width="13" height="2" rx="1" fill="#99F6E4" />
+      <circle cx="29" cy="34" r="11" fill="#EEF2FF" fillOpacity="0.78" />
+      <circle cx="29" cy="34" r="8" stroke="#312E81" strokeWidth="3" />
+      <path
+        d="M35 40L43 48"
+        stroke="#312E81"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M23.5 34.5L27 38L34.5 30"
+        stroke="#14B8A6"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <defs>
+        <linearGradient id="compareTile" x1="6" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#EEF2FF" />
+          <stop offset="1" stopColor="#ECFEFF" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function PricingContextIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="64" height="64" rx="18" fill="url(#pricingTile)" />
+      <path
+        d="M19 13H43C45.2091 13 47 14.7909 47 17V49L42.5 46.5L38 49L33.5 46.5L29 49L24.5 46.5L19 49V13Z"
+        fill="white"
+      />
+      <rect x="24" y="21" width="17" height="3" rx="1.5" fill="#7C3AED" />
+      <rect x="24" y="29" width="12" height="2.5" rx="1.25" fill="#DDD6FE" />
+      <rect x="24" y="36" width="15" height="2.5" rx="1.25" fill="#DDD6FE" />
+      <circle cx="43" cy="41" r="9" fill="#CCFBF1" />
+      <path
+        d="M39.5 41.5L42 44L47 38.5"
+        stroke="#0F766E"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="18" cy="20" r="5" fill="#FDE68A" />
+      <path d="M18 17.6V22.4" stroke="#A16207" strokeWidth="1.8" strokeLinecap="round" />
+      <defs>
+        <linearGradient id="pricingTile" x1="5" y1="5" x2="59" y2="59" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F5F3FF" />
+          <stop offset="1" stopColor="#EFF6FF" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
+function SecureHandoffIllustration() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-12 w-12"
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <rect width="64" height="64" rx="18" fill="url(#handoffTile)" />
+      <rect x="30" y="16" width="22" height="18" rx="5" fill="white" />
+      <rect x="34" y="21" width="11" height="3" rx="1.5" fill="#2563EB" />
+      <rect x="34" y="28" width="14" height="2" rx="1" fill="#BFDBFE" />
+      <path
+        d="M15 20L29 15L43 20V31C43 41.5 36 47.5 29 50C22 47.5 15 41.5 15 31V20Z"
+        fill="#EEF2FF"
+        stroke="#312E81"
+        strokeWidth="2.8"
+        strokeLinejoin="round"
+      />
+      <rect x="24" y="29" width="10" height="9" rx="2" fill="#14B8A6" />
+      <path
+        d="M26 29V26.5C26 24.8 27.3 23.5 29 23.5C30.7 23.5 32 24.8 32 26.5V29"
+        stroke="#0F766E"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M41 42H50M50 42L46 38M50 42L46 46"
+        stroke="#2563EB"
+        strokeWidth="2.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <defs>
+        <linearGradient id="handoffTile" x1="6" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#EFF6FF" />
+          <stop offset="1" stopColor="#F0FDFA" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 const heroImage =
-  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1800&q=85";
+  "/images/premium/homepage/kurioticket-homepage-hero-businesswoman-modern-city-luggage-001.jpg";
 
 const POPULAR_DESTINATION_VISIBLE_CARD_COUNT = 8;
+const HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT =
+  HOME_DISCOVERY_VISIBLE_CARD_COUNT + 2;
+
+const destinationImageFallback =
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=95";
 
 const HOME_POPULAR_DESTINATION_CITY_KEYS: Record<string, string> = {
   Accra: "homePopularDestinationCity.accra",
@@ -333,7 +458,7 @@ export default function Home() {
   const fallbackDiscoveryCards = useMemo<HomeDiscoveryFareCard[]>(
     () =>
       getHomeDiscoveryByRegion(regionCode)
-        .slice(0, HOME_DISCOVERY_VISIBLE_CARD_COUNT)
+        .slice(0, HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT)
         .map((item) => ({
           item: {
             id: item.id,
@@ -353,6 +478,10 @@ export default function Home() {
   const discoveryCards = discoveryFareCardState.cards.length
     ? discoveryFareCardState.cards
     : fallbackDiscoveryCards;
+  const desktopDiscoveryCards = useMemo(
+    () => discoveryCards.slice(0, HOME_DISCOVERY_VISIBLE_CARD_COUNT),
+    [discoveryCards],
+  );
   const mobileDiscoveryGroups = useMemo(() => {
     const groups = [];
 
@@ -489,7 +618,7 @@ export default function Home() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             regionCode,
-            limit: HOME_DISCOVERY_VISIBLE_CARD_COUNT,
+            limit: HOME_DISCOVERY_MOBILE_VISIBLE_CARD_COUNT,
             currency: "USD",
           }),
           signal: controller.signal,
@@ -537,7 +666,7 @@ export default function Home() {
       <AppHeader hideMobileSecondaryNavLinks />
 
       <main className="flex-1 bg-white">
-        <section className="relative overflow-visible bg-[#f8f7ff]">
+        <section className="relative min-h-[420px] overflow-visible bg-slate-950 sm:min-h-[550px] lg:min-h-[610px]">
           <div className="absolute inset-0">
             <Image
               src={heroImage}
@@ -545,39 +674,48 @@ export default function Home() {
               fill
               priority
               sizes="100vw"
-              className="object-cover object-center"
+              className="object-cover object-[62%_center] sm:object-[60%_center] lg:object-[58%_48%]"
             />
-
-            <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(255,255,255,0.97)_4%,rgba(255,255,255,0.93)_37%,rgba(255,255,255,0.62)_58%,rgba(255,255,255,0.12)_100%)]" />
-
-            <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#f8f7ff] via-[#f8f7ff]/75 to-transparent" />
           </div>
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/68 via-slate-950/28 to-transparent sm:w-[72%] lg:w-[62%]" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/22 via-transparent to-slate-950/30" />
 
-          <div className="page-shell relative pb-5 pt-8 sm:pb-6 sm:pt-10 lg:pt-12">
-            <div className="grid content-start gap-3 pb-3 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
-              <div className="space-y-2.5 pt-1">
-                <h1 className="max-w-3xl text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.022em] text-slate-900 sm:text-[2.15rem] lg:text-[2.65rem]">
+          <div className="page-shell relative z-10 pb-0 pt-8 sm:pb-44 sm:pt-10 lg:pb-48 lg:pt-12">
+            <div className="grid content-start gap-5 pb-0 sm:gap-4 sm:pb-4 lg:max-w-[1200px]">
+              <div className="max-w-[21rem] sm:max-w-2xl lg:max-w-3xl">
+                <h1 className="max-w-3xl text-[1.82rem] font-semibold leading-[1.08] tracking-[-0.024em] text-white text-balance drop-shadow-[0_3px_16px_rgba(2,6,23,0.7)] sm:text-[2.15rem] lg:text-[2.65rem]">
                   {t("homeHeroTitle")}
                 </h1>
 
-                <p className="max-w-xl text-sm font-semibold leading-6 text-slate-700 sm:text-base sm:leading-7">
+                <p className="mt-3 max-w-[18.5rem] text-sm font-medium leading-6 text-white/90 drop-shadow-[0_2px_10px_rgba(2,6,23,0.68)] sm:max-w-xl sm:text-base sm:leading-7 lg:text-[1.05rem]">
                   {t("homeHeroSubtitle")}
                 </p>
               </div>
+            </div>
+          </div>
 
-              <div className="relative z-10 mt-0.5 w-full max-w-[1280px]">
-                <SearchTabs
-                  t={t as unknown as Record<string, string>}
-                  compactHero
-                  locale={locale}
-                />
-              </div>
+          <div className="page-shell absolute inset-x-0 bottom-[-360px] z-30 sm:hidden">
+            <SearchTabs
+              t={t as unknown as Record<string, string>}
+              compactHero
+              locale={locale}
+            />
+          </div>
+
+          <div className="page-shell absolute inset-x-0 bottom-[-52px] z-30 hidden sm:block lg:bottom-[-56px]">
+            <div className="mx-auto max-w-[1280px]">
+              <SearchTabs
+                t={t as unknown as Record<string, string>}
+                compactHero
+                locale={locale}
+              />
             </div>
           </div>
         </section>
 
-        <section className="border-y border-slate-200/75 bg-[#fbfaf7] py-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:py-5 sm:shadow-none">
-          <div className="page-shell">
+        <section className="border-y border-slate-200/75 bg-[#fbfaf7] pb-7 pt-[25rem] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] sm:border-y-0 sm:bg-transparent sm:pb-5 sm:pt-24 sm:shadow-none lg:pt-28">
+          <div className="mx-auto h-px w-[calc(100%-2rem)] max-w-[1280px] bg-slate-200/80 sm:hidden" />
+          <div className="page-shell pt-5 sm:pt-0">
             <div className="flex items-center">
               <h2 className="text-xl font-bold tracking-normal text-slate-900 sm:text-2xl">
                 {t("homePopularDestinations")}
@@ -709,7 +847,7 @@ export default function Home() {
             </div>
 
             <div className="hidden grid-cols-3 gap-3 sm:grid md:grid-cols-4 lg:grid-cols-4">
-              {discoveryCards.map((card) => {
+              {desktopDiscoveryCards.map((card) => {
                 return (
                   <DiscoverySuggestionCard
                     key={card.item.id}
@@ -744,59 +882,61 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="page-shell bg-transparent py-4 sm:py-5">
-          <div className="space-y-3">
-            <div className="max-w-3xl space-y-1.5">
-              <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
-                {t("homeTrustTitle")}
-              </h2>
-              <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
-                {t("homeTrustSubtitle")}
-              </p>
-            </div>
+        <section className="mt-6 border-y border-slate-300/80 bg-gradient-to-b from-slate-50/90 via-indigo-50/35 to-slate-50/80 sm:mt-9">
+          <div className="page-shell py-9 sm:py-11">
+            <div className="space-y-4">
+              <div className="max-w-3xl space-y-1.5">
+                <h2 className="text-xl font-semibold tracking-[-0.02em] text-slate-900 sm:text-2xl">
+                  {t("homeTrustTitle")}
+                </h2>
+                <p className="text-sm font-medium leading-6 text-slate-700 sm:text-base">
+                  {t("homeTrustSubtitle")}
+                </p>
+              </div>
 
-            <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6">
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
-                  <SearchCheck size={20} strokeWidth={2} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">
-                    {t("homeTrustCompareTitle")}
-                  </h3>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                    {t("homeTrustCompareBody")}
-                  </p>
-                </div>
-              </article>
+              <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6">
+                <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
+                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-indigo-100/80">
+                    <CompareOffersIllustration />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold leading-6 text-slate-900">
+                      {t("homeTrustCompareTitle")}
+                    </h3>
+                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                      {t("homeTrustCompareBody")}
+                    </p>
+                  </div>
+                </article>
 
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-600 ring-1 ring-violet-100">
-                  <BadgeDollarSign size={20} strokeWidth={2} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">
-                    {t("homeTrustPricingTitle")}
-                  </h3>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                    {t("homeTrustPricingBody")}
-                  </p>
-                </div>
-              </article>
+                <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
+                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-violet-100/80">
+                    <PricingContextIllustration />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold leading-6 text-slate-900">
+                      {t("homeTrustPricingTitle")}
+                    </h3>
+                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                      {t("homeTrustPricingBody")}
+                    </p>
+                  </div>
+                </article>
 
-              <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100">
-                  <ShieldCheck size={20} strokeWidth={2} />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold leading-6 text-slate-900">
-                    {t("homeTrustHandoffTitle")}
-                  </h3>
-                  <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
-                    {t("homeTrustHandoffBody")}
-                  </p>
-                </div>
-              </article>
+                <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
+                  <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-blue-100/80">
+                    <SecureHandoffIllustration />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold leading-6 text-slate-900">
+                      {t("homeTrustHandoffTitle")}
+                    </h3>
+                    <p className="mt-1 text-sm font-medium leading-6 text-slate-700">
+                      {t("homeTrustHandoffBody")}
+                    </p>
+                  </div>
+                </article>
+              </div>
             </div>
           </div>
         </section>
@@ -845,28 +985,29 @@ export default function Home() {
           </Link>
         </section>
 
-        <section className="page-shell pb-6 sm:pb-8">
-          <div className="w-full max-w-[820px]">
-            <div className="rounded-lg border border-slate-200/80 bg-violet-50/70 p-3 sm:p-3.5">
-              <div className="flex flex-row items-center gap-1.5 sm:gap-2.5 lg:gap-3.5">
-                <div className="flex shrink-0 items-center gap-1.5 sm:min-w-0 sm:basis-[34%] sm:gap-2.5 lg:basis-[34%] lg:max-w-[31ch]">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 sm:h-10 sm:w-10">
-                    <Mail className="size-5 sm:size-[22px]" />
-                  </span>
+        <section className="page-shell pb-6 pt-0 sm:pb-8 lg:pb-9">
+          <div className="mx-auto max-w-[800px] overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_14px_38px_rgba(15,23,42,0.09)] ring-1 ring-slate-950/[0.03]">
+            <div className="h-0.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-400" />
+            <div className="space-y-3 p-3.5 sm:p-4 lg:p-5">
+              <div className="flex items-start gap-2.5 sm:gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100 sm:h-10 sm:w-10">
+                  <Mail className="size-4 sm:size-5" />
+                </span>
 
-                  <div className="hidden min-w-0 max-w-[17ch] space-y-0 sm:block lg:max-w-[24ch]">
-                    <h2 className="truncate text-xs font-black leading-tight text-slate-950 sm:text-sm">
-                      {t("homeNewsletterTitle")}
-                    </h2>
+                <div className="max-w-2xl space-y-1">
+                  <h2 className="text-base font-bold tracking-tight text-slate-950 sm:text-xl sm:leading-tight">
+                    {t("homeNewsletterTitle")}
+                  </h2>
 
-                    <p className="hidden truncate text-xs font-semibold leading-5 text-slate-700 min-[420px]:block sm:text-sm">
-                      {t("homeNewsletterBody")}
-                    </p>
-                  </div>
+                  <p className="text-xs font-medium leading-5 text-slate-700 sm:text-sm sm:leading-5">
+                    {t("homeNewsletterBody")}
+                  </p>
                 </div>
+              </div>
 
+              <div className="space-y-2 sm:pl-[3.25rem]">
                 <form
-                  className="flex min-w-0 flex-1 flex-row items-center gap-1.5 sm:basis-auto sm:gap-2 lg:basis-[66%] lg:flex-nowrap lg:justify-end"
+                  className="flex flex-col gap-2 sm:max-w-[34rem] sm:flex-row"
                   onSubmit={handleNewsletterSubmit}
                   aria-busy={newsletterPending}
                 >
@@ -881,7 +1022,7 @@ export default function Home() {
                       }
                     }}
                     placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-9 min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-semibold text-slate-950 shadow-sm placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:h-11 sm:min-w-[12rem] sm:px-3.5 sm:text-sm lg:min-w-[20rem] lg:max-w-[30rem]"
+                    className="focus-ring h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50/70 px-3 text-sm font-semibold text-slate-950 shadow-inner shadow-slate-200/50 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:min-w-[11rem] sm:px-3.5"
                     aria-label={t("homeEmailAddress")}
                     disabled={newsletterPending}
                     required
@@ -889,7 +1030,7 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    className="focus-ring h-9 w-auto shrink-0 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 text-xs font-extrabold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-500 sm:h-11 sm:px-5 sm:text-sm"
+                    className="focus-ring h-10 shrink-0 whitespace-nowrap rounded-lg bg-indigo-700 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:px-4"
                     aria-busy={newsletterPending}
                     disabled={newsletterPending}
                   >
@@ -898,25 +1039,25 @@ export default function Home() {
                       : t("homeSubscribe")}
                   </button>
                 </form>
-              </div>
 
-              <p className="mt-2 text-[11px] font-semibold leading-4 text-slate-600 sm:text-xs">
-                {t("homeNewsletterConsent")}
-              </p>
-
-              {newsletterMessage ? (
-                <p
-                  className={`mt-2 text-xs font-semibold sm:text-sm ${
-                    newsletterStatus === "error"
-                      ? "text-red-700"
-                      : "text-slate-700"
-                  }`}
-                  role="status"
-                  aria-live="polite"
-                >
-                  {newsletterMessage}
+                <p className="text-xs font-medium leading-5 text-slate-600">
+                  {t("homeNewsletterConsent")}
                 </p>
-              ) : null}
+
+                {newsletterMessage ? (
+                  <p
+                    className={`text-xs font-semibold sm:text-sm ${
+                      newsletterStatus === "error"
+                        ? "text-red-700"
+                        : "text-slate-700"
+                    }`}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    {newsletterMessage}
+                  </p>
+                ) : null}
+              </div>
             </div>
           </div>
         </section>
@@ -1013,7 +1154,7 @@ function DiscoverySuggestionCard({
   return (
     <Link
       href={href}
-      className={`group relative flex min-w-0 flex-col rounded-xl border border-slate-200 bg-white ${compact ? "p-2.5" : "p-3"} shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5`}
+      className="group relative flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 bg-transparent shadow-[0_16px_30px_-22px_rgba(15,23,42,0.52)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_24px_36px_-20px_rgba(15,23,42,0.6)] active:-translate-y-0.5"
     >
       <button
         type="button"
@@ -1022,13 +1163,13 @@ function DiscoverySuggestionCard({
           isSaved ? t("homeRemoveFromSavedRoutes") : t("homeSaveRoute")
         }
         aria-pressed={isSaved}
-        className={`focus-ring absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
+        className={`focus-ring absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
       >
         <Heart size={15} className={isSaved ? "fill-current" : ""} />
       </button>
 
       <div
-        className={`relative w-full shrink-0 overflow-hidden rounded-lg ${compact ? "h-[98px]" : "h-[136px] md:h-[128px] lg:h-[136px]"}`}
+        className={`relative w-full shrink-0 overflow-hidden ${compact ? "h-[148px]" : "h-[196px] md:h-[190px] lg:h-[198px]"}`}
       >
         <DiscoveryCardImage
           image={image}
@@ -1039,15 +1180,15 @@ function DiscoverySuggestionCard({
       </div>
 
       <div
-        className={`min-w-0 flex-1 ${compact ? "space-y-1.5 pt-2" : "space-y-2 pt-2.5"}`}
+        className={`min-w-0 flex-1 bg-white ${compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-2 px-3 pt-3"}`}
       >
         <p
-          className={`line-clamp-2 break-words text-slate-900 ${compact ? "text-sm font-extrabold leading-5 pr-10" : "text-sm font-bold leading-5 md:text-[0.95rem] pr-10"}`}
+          className={`line-clamp-2 break-words text-slate-950 ${compact ? "pr-10 text-sm font-bold leading-[1.32]" : "pr-10 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
         >
           {title}
         </p>
         <p
-          className={`line-clamp-2 text-slate-700 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
+          className={`line-clamp-2 text-slate-600 ${compact ? "text-xs font-medium leading-5" : "text-xs font-medium leading-5 md:text-sm"}`}
         >
           {originCode} → {destinationCodeLabel} · {routeNote}
         </p>
@@ -1058,14 +1199,13 @@ function DiscoverySuggestionCard({
           <p
             className={`font-semibold uppercase tracking-[0.08em] text-slate-500 ${compact ? "text-[11px]" : "text-[11px] md:text-xs"}`}
           >
-            {t("homeDiscoveryTripOneWay")} · {t("homeDiscoveryCabinEconomy")} ·{" "}
-            {t("homeDiscoveryTravelerCountOne")}
+            {t("oneWay")} · {t("economy")} · 1 {t("travelerSingular")}
           </p>
         </div>
       </div>
 
       <div
-        className={`mt-2.5 border-t border-slate-200/90 pt-2.5 ${compact ? "" : "md:mt-3 md:pt-3"}`}
+        className={`border-t border-slate-200/90 bg-white ${compact ? "px-2.5 pb-2.5 pt-2.5" : "px-3 pb-3 pt-3"}`}
       >
         <DiscoveryPricePill
           price={price}
@@ -1204,7 +1344,7 @@ function DiscoveryPricePill({
   if (isLoading) {
     return (
       <span
-        className="inline-flex h-7 w-28 animate-pulse rounded-full border border-slate-200 bg-slate-100/90"
+        className="inline-flex h-10 w-[9rem] animate-pulse rounded-full border border-slate-300 bg-white shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:h-11 sm:w-[10rem]"
         aria-label={t("homeCheckingProviderRoutePricing")}
       />
     );
@@ -1212,7 +1352,7 @@ function DiscoveryPricePill({
 
   if (!hasProviderPrice) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+      <span className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1223,7 +1363,7 @@ function DiscoveryPricePill({
 
   if (typeof amount !== "number" || !Number.isFinite(amount) || !currency) {
     return (
-      <span className="inline-flex rounded-full border border-slate-200 bg-slate-50/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-700">
+      <span className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold leading-5 tracking-tight text-slate-900 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:text-base sm:leading-6">
         {t("homeCompareOptions")}
       </span>
     );
@@ -1244,11 +1384,16 @@ function DiscoveryPricePill({
 
   return (
     <span
-      className="inline-flex rounded-full border border-slate-200 bg-white/90 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-800 shadow-sm"
+      className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-300 bg-white px-4 py-2 leading-6 tracking-tight text-slate-950 shadow-[0_10px_22px_-15px_rgba(15,23,42,0.85)] sm:leading-7"
       aria-label={`Provider-backed route price from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
-      {t("fromPrice").toLowerCase()} {displayPrice.formatted}
+      <span className="text-sm font-semibold text-slate-600 sm:text-base">
+        {t("fromPrice").toLowerCase()}
+      </span>
+      <span className="text-base font-bold text-slate-950 sm:text-lg">
+        {displayPrice.formatted}
+      </span>
     </span>
   );
 }
@@ -1287,17 +1432,24 @@ function DestinationCard({
     itemId: string,
   ) => void;
 }) {
+  const [imageSource, setImageSource] = useState(image);
+
   return (
     <article className="group min-w-[18.5rem] flex-[0_0_18.5rem] snap-start overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_14px_32px_-24px_rgba(15,23,42,0.65)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_45px_-26px_rgba(15,23,42,0.75)] sm:min-w-[22rem] sm:flex-[0_0_22rem]">
       <Link href={href} className="focus-ring block">
         <div className="relative h-72 sm:h-80">
           <Image
-            src={image}
+            src={imageSource}
             alt={imageAlt}
             fill
             quality={92}
             sizes="(min-width: 1280px) 22rem, (min-width: 640px) 22rem, 18.5rem"
             className="object-cover transition duration-500 group-hover:scale-105"
+            onError={() => {
+              if (imageSource !== destinationImageFallback) {
+                setImageSource(destinationImageFallback);
+              }
+            }}
           />
 
           <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-slate-950/55 via-slate-950/16 to-transparent" />
@@ -1404,11 +1556,16 @@ function DestinationPricePill({
 
   return (
     <span
-      className="inline-flex text-[17px] font-extrabold leading-6 tracking-tight text-slate-950 sm:text-lg"
+      className="inline-flex items-baseline gap-1.5 leading-6 tracking-tight text-slate-950"
       aria-label={`Provider-backed fare estimate from ${displayPrice.formatted}.${estimateCopy}`}
       title={displayPrice.title}
     >
-      {t("fromPrice").toLowerCase()} {displayPrice.formatted}
+      <span className="text-[15px] font-semibold text-slate-600 sm:text-base">
+        {t("fromPrice").toLowerCase()}
+      </span>
+      <span className="text-[17px] font-bold text-slate-950 sm:text-lg">
+        {displayPrice.formatted}
+      </span>
     </span>
   );
 }
