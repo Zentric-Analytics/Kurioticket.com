@@ -214,6 +214,7 @@ export const translations: TranslationDictionary = {
   to: "Naar",
   destination: "Bestemming",
   travelDates: "Reisdatums",
+  chooseTravelDates: "Kies reisdatums",
   passengers: "Passagiers",
   guests: "Gasten",
   rooms: "Kamers",

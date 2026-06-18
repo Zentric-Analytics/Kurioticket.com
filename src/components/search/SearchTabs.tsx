@@ -110,6 +110,13 @@ const normalizeHomepageCalendarLocale = (
   }
 
   if (
+    normalized === "nl" ||
+    normalized.startsWith("nl-")
+  ) {
+    return "nl-NL";
+  }
+
+  if (
     normalized === "pt" ||
     normalized.startsWith("pt-")
   ) {
