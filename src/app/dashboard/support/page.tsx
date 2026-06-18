@@ -9,7 +9,7 @@ export const metadata = {
 export default function SupportPage() {
   return (
     <>
-      <AppHeader />
+      <AppHeader showAccountBackLink />
       <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
         <div className="page-shell min-w-0">
           <SupportDashboardPage />
