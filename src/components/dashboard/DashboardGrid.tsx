@@ -488,46 +488,9 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
   return (
     <section
       className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
-      aria-labelledby="personal-details-title"
+      aria-labelledby="dashboard-title"
     >
-      <div className="flex min-w-0 flex-col gap-4 px-5 py-5 sm:px-6 md:flex-row md:items-start md:justify-between">
-        <div className="min-w-0">
-          <h2 id="personal-details-title" className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
-            {t["accountDashboard.personalDetails.title"]}
-          </h2>
-          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">
-            {t["accountDashboard.personalDetails.subtitle"]}
-          </p>
-        </div>
-        {isEditing ? (
-          <div className="flex shrink-0 flex-col gap-2 sm:flex-row md:justify-end">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="focus-ring inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              {t["accountDashboard.personalDetails.cancel"]}
-            </button>
-            <button
-              type="button"
-              disabled
-              className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
-            >
-              {t["accountDashboard.personalDetails.saveChanges"]}
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={handleEdit}
-            className="focus-ring inline-flex min-h-10 w-full shrink-0 items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
-          >
-            {t["accountDashboard.personalDetails.edit"]}
-          </button>
-        )}
-      </div>
-
-      <div className="border-t border-slate-200">
+      <div>
         {personalDetailRows.map((row) => {
           const readOnlyValue = initialValues[row.key];
           const editValue = draft[row.key];
@@ -548,11 +511,39 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         })}
       </div>
 
-      {isEditing ? (
-        <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
-          <p className="text-sm leading-6 text-slate-500">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
-        </div>
-      ) : null}
+      <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
+        {isEditing ? (
+          <div className="space-y-4">
+            <p className="text-sm leading-6 text-slate-500">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="focus-ring inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                {t["accountDashboard.personalDetails.cancel"]}
+              </button>
+              <button
+                type="button"
+                disabled
+                className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
+              >
+                {t["accountDashboard.personalDetails.saveChanges"]}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-stretch sm:justify-end">
+            <button
+              type="button"
+              onClick={handleEdit}
+              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+            >
+              {t["accountDashboard.personalDetails.edit"]}
+            </button>
+          </div>
+        )}
+      </div>
     </section>
   );
 }
