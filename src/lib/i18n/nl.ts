@@ -231,6 +231,7 @@ export const translations: TranslationDictionary = {
   origin: "Vertrekpunt",
   destination: "Bestemming",
   fromPlaceholder: "Vanaf?",
+  toPlaceholder: "Naar?",
   travelDates: "Reisdatums",
   chooseTravelDates: "Kies reisdatums",
   passengers: "Passagiers",
