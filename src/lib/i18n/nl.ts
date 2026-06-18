@@ -282,6 +282,25 @@ export const translations: TranslationDictionary = {
   faqQuestionManageChanges: "Waar beheer ik wijzigingen of annuleringen?",
   faqAnswerManageChanges:
     "Reiswijzigingen, annuleringen, terugbetalingen en boekingssupport worden meestal afgehandeld door de provider waar de boeking is voltooid. Gebruik de bevestigingsgegevens van die provider voor serviceverzoeken.",
+  "carsFaq.heading": "Veelgestelde vragen over auto’s",
+  "carsFaq.0.question": "Welke informatie heb ik nodig om een huurauto te zoeken?",
+  "carsFaq.0.answer":
+    "Vul je ophaallocatie, ophaal- en retourdatums, ophaal- en retourtijden, leeftijd van de bestuurder en of je de auto op een andere locatie wilt terugbrengen in.",
+  "carsFaq.1.question": "Kan ik de auto op een andere locatie terugbrengen?",
+  "carsFaq.1.answer":
+    "Ja. Selecteer Andere retourlocatie in het zoekformulier en vul de stad, luchthaven of het adres in waar je de auto wilt terugbrengen.",
+  "carsFaq.2.question": "Waarom is de leeftijd van de bestuurder belangrijk bij huurauto’s?",
+  "carsFaq.2.answer":
+    "Verhuurproviders kunnen verschillende regels, kosten, voertuigtoelating of borgvereisten toepassen op basis van de leeftijd en locatie van de bestuurder.",
+  "carsFaq.3.question": "Wat moet ik controleren voordat ik een huurauto boek?",
+  "carsFaq.3.answer":
+    "Controleer ophaal- en retourlocatie, datums, tijden, kilometerbeleid, brandstofbeleid, verzekeringsopties, annuleringsvoorwaarden, borgvereisten en vereiste documenten voordat je boekt.",
+  "carsFaq.4.question": "Waar wordt de definitieve huurprijs bevestigd?",
+  "carsFaq.4.answer":
+    "De definitieve prijs, beschikbaarheid van het voertuig, belastingen, kosten, borgvereisten en huurvoorwaarden worden vóór het boeken door de provider bevestigd.",
+  "carsFaq.5.question": "Welke documenten heb ik mogelijk nodig bij het ophalen?",
+  "carsFaq.5.answer":
+    "Verhuurproviders kunnen een geldig rijbewijs, betaalkaart, identiteitsbewijs en documenten vereisen die nodig zijn in het land of op de locatie van ophalen.",
   flightBookingFaqs: "Veelgestelde vragen over vluchtboekingen",
   flightBookingFaqIntro:
     "Bekijk veelvoorkomende details over vluchtzoekopdrachten voordat je verdergaat met een provider.",
