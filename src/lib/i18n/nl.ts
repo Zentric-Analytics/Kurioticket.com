@@ -158,6 +158,19 @@ export const translations: TranslationDictionary = {
   homePromoFlightsBody:
     "Ontdek tijdelijke tarieven en vergelijk opties direct.",
   homePromoFlightsCta: "Vluchtdeals bekijken",
+  flightLandingStartThisSearch: "Start deze zoekopdracht",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour":
+    "Skyline van Johannesburg tijdens het gouden uur",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza":
+    "Skyline van Caïro met de piramides van Gizeh",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
+    "Stadsbeeld van Addis Abeba in de Ethiopische hooglanden",
+  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
+    "Kustlijn en oude stad van Puerto Vallarta",
+  "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+    "Waikiki Beach in Honolulu met Diamond Head en helderblauw water",
+  "flightLandingImageAlt.San Diego bay skyline and marina":
+    "Skyline en jachthaven van de baai van San Diego",
   homePromoHotelsTitle: "Wereldwijde hotelbesparingen",
   homePromoHotelsBody:
     "Bekijk verblijven van boetiekhotels tot internationale ketens met transparante prijzen.",
