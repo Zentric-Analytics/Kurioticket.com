@@ -5,7 +5,7 @@ import { DashboardOverview } from "@/components/dashboard/DashboardGrid";
 import { authOptions } from "@/lib/auth";
 
 export const metadata = {
-  title: "Dashboard",
+  title: "Personal details",
 };
 
 function getInitials(name?: string | null, email?: string | null) {
@@ -30,10 +30,8 @@ export default async function DashboardPage() {
   return (
     <>
       <AppHeader showAccountBackLink />
-      <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
-        <div className="page-shell min-w-0">
-          <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
-        </div>
+      <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
+        <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
       </main>
       <Footer />
     </>
