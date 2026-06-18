@@ -798,7 +798,6 @@ export const translations: TranslationDictionary = {
   "deals.destination.rome.city": "Rome",
   "deals.destination.rome.country": "Italië",
 
-  filterBy: "Filteren op",
   "hotelResults.openFilters": "Filters openen",
   "hotelResults.selectDateAriaPrefix": "Selecteer",
   "hotelResults.foundPlacesToStay": "We hebben {{count}} verblijven voor je gevonden",
