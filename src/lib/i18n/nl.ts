@@ -75,7 +75,7 @@ export const translations: TranslationDictionary = {
   flights: "Vluchten",
   hotels: "Hotels",
   cars: "Auto’s",
-  deals: "Deals",
+  deals: "Aanbiedingen",
   search: "Zoeken",
   roundTrip: "Retour",
   oneWay: "Enkele reis",
