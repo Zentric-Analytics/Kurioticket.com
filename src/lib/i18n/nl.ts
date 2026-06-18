@@ -184,6 +184,21 @@ export const translations: TranslationDictionary = {
 
   login: "Inloggen",
   signUp: "Registreren",
+  signupPageTitle: "Maak je account aan",
+  signupFullNameLabel: "Volledige naam",
+  signupEmailLabel: "E-mail",
+  signupPasswordLabel: "Wachtwoord",
+  signupAgreementBeforeTerms:
+    "Door een account aan te maken, ga je akkoord met de ",
+  signupTermsLink: "Voorwaarden",
+  signupAgreementBetweenLinks: ", het ",
+  signupPrivacyPolicyLink: "Privacybeleid",
+  signupAgreementAfterPrivacy:
+    " en de partner-doorverwijzingsinformatie.",
+  signupSubmit: "Registreren",
+  signupGoogle: "Doorgaan met Google",
+  signupAlreadyHaveAccount: "Heb je al een account?",
+  signupLoginLink: "Inloggen",
   flights: "Vluchten",
   hotels: "Hotels",
   cars: "Auto’s",
