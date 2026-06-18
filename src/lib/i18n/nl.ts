@@ -280,6 +280,24 @@ export const translations: TranslationDictionary = {
   support: "Support",
   helpCenter: "Helpcentrum",
   comingSoon: "Binnenkort",
+  discoverDestinationsFromRegion: "Ontdek bestemmingen vanuit jouw regio",
+  discoverDestinationsFromRegionBody:
+    "Verken zorgvuldig geselecteerde routes en begin je volgende reis met vertrouwen.",
+  flightLandingFeatureSearchReadyTitle: "Zoekklare routes",
+  flightLandingFeatureSearchReadyBody:
+    "Vul echte reisgegevens in voordat resultaten bij vluchtproviders worden opgevraagd.",
+  flightLandingFeatureCompareTitle: "Vergelijk in context",
+  flightLandingFeatureCompareBody:
+    "Gebruik datums, reizigersaantallen, cabineklasse, duur, tussenstops en routedetails om opties te beoordelen.",
+  flightLandingFeatureProviderTitle: "Providercontrole",
+  flightLandingFeatureProviderBody:
+    "Bevestig altijd de definitieve beschikbaarheid, prijs en regels bij de provider voordat je boekt.",
+  flightLandingRouteIdeasTitle: "Route-ideeën voor flexibele reizen",
+  flightLandingRouteIdeasBody:
+    "Bekijk route-ideeën en start daarna een echte zoekopdracht met datums en reizigers voordat je beschikbare vluchten vergelijkt.",
+  beachVacations: "Strandvakanties",
+  beachVacationsBody:
+    "Verken vliegroutes naar zonnige kusten, eilandbestemmingen en warme strandlocaties.",
   privacyAndData: "Privacy en gegevens",
   securitySettings: "Beveiligingsinstellingen",
   personalDetails: "Persoonlijke gegevens",
