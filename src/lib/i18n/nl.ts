@@ -130,6 +130,21 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-mad.routeNote": "Europese stedentriproute voor musea, boulevards en late diners.",
   "homeDiscoveryRoute.ng-los-cpt.routeNote": "Schilderachtige Zuid-Afrikaanse route met stranden, bergen en wijngaarden.",
   "homeDiscoveryRoute.ng-abv-rob.routeNote": "West-Afrikaanse stedentrip met Atlantische stranden en lokale markten.",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "Wintertrip naar Cancun",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "Betrouwbare vrijetijdsroute met rechtstreekse opties in het hoogseizoen.",
+  "homeDiscoveryRoute.ca-yeg-pvr.title": "Strandtrip naar Puerto Vallarta",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "Winterzonroute met stranden aan de Stille Oceaan en charme van de oude stad.",
+  "homeDiscoveryRoute.ca-yyz-hnl.title": "Langeafstandstrip naar Honolulu",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "Premium vrijetijdsoptie voor stranden, surfen en eilandwandelingen.",
+  "homeDiscoveryRoute.ca-yyz-san.title": "Zon-en-surftrip naar San Diego",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "Betrouwbare grensoverschrijdende route voor stranden, parken en havenuitzichten.",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "Transpacifisch avontuur naar Sydney",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "Populaire langeafstandsroute voor havenbezienswaardigheden en buitenwijken aan het strand.",
   homeTrustTitle: "Waarom reizigers vergelijken op Kurioticket",
   homeTrustSubtitle:
     "Kurioticket helpt je providerdeals duidelijk te vergelijken en daarna de boeking op de site van de provider af te ronden.",
