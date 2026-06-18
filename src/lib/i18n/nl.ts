@@ -336,6 +336,13 @@ export const translations: TranslationDictionary = {
   flightLandingRouteIdeasTitle: "Route-ideeën voor flexibele reizen",
   flightLandingRouteIdeasBody:
     "Bekijk route-ideeën en start daarna een echte zoekopdracht met datums en reizigers voordat je beschikbare vluchten vergelijkt.",
+  flightLandingRouteConnector: "naar",
+  flightLandingRouteAriaLabel: "Vluchten zoeken van {{origin}} naar {{destination}}",
+  "flightLandingCity.Addis Ababa": "Addis Abeba",
+  "flightLandingCity.Cairo": "Caïro",
+  "flightLandingCity.Cape Town": "Kaapstad",
+  "flightLandingCity.London": "Londen",
+  "flightLandingCity.Paris": "Parijs",
   beachVacations: "Strandvakanties",
   beachVacationsBody:
     "Verken vliegroutes naar zonnige kusten, eilandbestemmingen en warme strandlocaties.",
