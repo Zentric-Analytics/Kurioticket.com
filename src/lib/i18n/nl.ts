@@ -800,6 +800,7 @@ export const translations: TranslationDictionary = {
 
   "hotelResults.openFilters": "Filters openen",
   "hotelResults.selectDateAriaPrefix": "Selecteer",
+  "hotelResults.liveSearchUnavailable": "Live hotelzoekopdracht is tijdelijk niet beschikbaar. Probeer het binnenkort opnieuw.",
   "hotelResults.foundPlacesToStay": "We hebben {{count}} verblijven voor je gevonden",
   "hotelResults.summaryAria": "Samenvatting van hotelresultaten",
   "hotelResults.cheapest": "Goedkoopste",
