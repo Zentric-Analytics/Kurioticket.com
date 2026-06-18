@@ -356,6 +356,12 @@ export const translations: TranslationDictionary = {
   childAgeRange: "Leeftijd 2–17",
   under2: "Jonger dan 2",
   editHotelSearch: "Hotelzoekopdracht bewerken",
+  hotelsHeroEyebrow: "PREMIUM VERBLIJVEN, HELDER VERGELEKEN",
+  hotelsHeroTitle: "Vind het verblijf waarmee je reis goed begint.",
+  hotelsHeroSubtitle:
+    "Vergelijk hotels op één plek, van stijlvolle citytrips tot ontspannen resortverblijven.",
+  hotelSearchDestinationLabel: "BESTEMMING",
+  hotelSearchDestinationPlaceholder: "Stad, buurt of bezienswaardigheid",
   searchCityAreaLandmark: "Zoek naar een stad, gebied of bezienswaardigheid.",
   cityOrHotel: "Stad of hotel",
   hotelSearchTravelDatesLabel: "Reisdatums",

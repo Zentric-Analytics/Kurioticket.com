@@ -485,13 +485,13 @@ export default function HotelsSearchPage() {
           <div className="page-shell relative z-10 flex min-h-[30rem] flex-col justify-end pb-36 pt-16 sm:min-h-[30rem] sm:pb-32 sm:pt-20 lg:min-h-[32rem] lg:pb-36">
             <div className="max-w-2xl text-white">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
-                Premium stays, clearly compared
+                {t("hotelsHeroEyebrow")}
               </p>
               <h1 className="mt-3 text-[2.35rem] font-semibold leading-[1.02] tracking-[-0.035em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] sm:text-[3rem] lg:text-[3.6rem]">
-                Find the stay that starts the trip right.
+                {t("hotelsHeroTitle")}
               </h1>
               <p className="mt-4 max-w-xl text-base font-semibold leading-7 text-white/90 drop-shadow-[0_2px_12px_rgba(15,23,42,0.62)] sm:text-lg">
-                Compare hotels in one place, from polished city arrivals to easy resort escapes.
+                {t("hotelsHeroSubtitle")}
               </p>
             </div>
           </div>

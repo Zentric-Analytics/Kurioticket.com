@@ -711,6 +711,10 @@ export const translations: TranslationDictionary = {
   cityOrHotel: "City or hotel",
   swapOriginDestination: "Swap origin and destination",
   chooseHotelDestination: "Choose hotel destination",
+  hotelsHeroEyebrow: "Premium stays, clearly compared",
+  hotelsHeroTitle: "Find the stay that starts the trip right.",
+  hotelsHeroSubtitle:
+    "Compare hotels in one place, from polished city arrivals to easy resort escapes.",
   hotelSearchIntroLabel: "Compare hotel options",
   hotelSearchDestinationLabel: "Destination",
   hotelSearchDestinationPlaceholder: "City, area, or landmark",
