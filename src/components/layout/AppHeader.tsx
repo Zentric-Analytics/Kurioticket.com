@@ -1100,23 +1100,6 @@ export function AppHeader({
           </nav>
 
           <nav className="md:hidden" aria-label="Primary">
-            {showAccountBackLink ? (
-              <div className="pt-1">
-                <Link
-                  href={accountBackHref}
-                  onClick={(event) =>
-                    handleRouteLinkClick(event, accountBackHref)
-                  }
-                  className="inline-flex min-h-8 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
-                >
-                  <span className="text-lg leading-none" aria-hidden="true">
-                    ‹
-                  </span>
-                  <span>{accountBackLabel}</span>
-                </Link>
-              </div>
-            ) : null}
-
             <div className="pb-1 pt-2.5">
               <div className="-mx-1 flex items-center gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {visibleMobilePrimaryNavItems.map((item) => {
@@ -1149,6 +1132,23 @@ export function AppHeader({
                 })}
               </div>
             </div>
+
+            {showAccountBackLink ? (
+              <div className="pb-1 pt-0.5">
+                <Link
+                  href={accountBackHref}
+                  onClick={(event) =>
+                    handleRouteLinkClick(event, accountBackHref)
+                  }
+                  className="inline-flex min-h-7 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                >
+                  <span className="text-lg leading-none" aria-hidden="true">
+                    ‹
+                  </span>
+                  <span>{accountBackLabel}</span>
+                </Link>
+              </div>
+            ) : null}
           </nav>
         </div>
 
