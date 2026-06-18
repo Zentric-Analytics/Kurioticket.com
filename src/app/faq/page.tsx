@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AccountBackLink } from "@/components/dashboard/DashboardGrid";
 import { FaqAccordion } from "@/components/faq/FaqAccordion";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
@@ -18,6 +19,7 @@ export default function FaqPage() {
       <AppHeader />
       <main className="flex-1 bg-gradient-to-b from-[#f8f7ff] via-white to-white">
         <section className="page-shell py-10 sm:py-14 lg:py-16">
+          <AccountBackLink className="mb-4" />
           <div className="max-w-3xl">
             <p className="text-sm font-bold uppercase tracking-[0.22em] text-indigo-700">
               {t("faqHelpCenter")}
