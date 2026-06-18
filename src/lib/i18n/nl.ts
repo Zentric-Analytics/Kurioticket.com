@@ -217,6 +217,30 @@ export const translations: TranslationDictionary = {
   faqQuestionManageChanges: "Waar beheer ik wijzigingen of annuleringen?",
   faqAnswerManageChanges:
     "Reiswijzigingen, annuleringen, terugbetalingen en boekingssupport worden meestal afgehandeld door de provider waar de boeking is voltooid. Gebruik de bevestigingsgegevens van die provider voor serviceverzoeken.",
+  flightBookingFaqs: "Veelgestelde vragen over vluchtboekingen",
+  flightBookingFaqIntro:
+    "Bekijk veelvoorkomende details over vluchtzoekopdrachten voordat je verdergaat met een provider.",
+  flightFaqBestTimeQuestion: "Wanneer is het beste moment om een vlucht te boeken?",
+  flightFaqBestTimeAnswer:
+    "Vluchtprijzen kunnen veranderen op basis van route, seizoen, vraag en beschikbaarheid. Het is meestal handig om meerdere datums te vergelijken, waar mogelijk nabijgelegen luchthavens te bekijken en de volledige reisroute te controleren voordat je een tarief kiest.",
+  flightFaqBeforeBookingQuestion: "Wat moet ik controleren voordat ik boek?",
+  flightFaqBeforeBookingAnswer:
+    "Controleer vertrek- en aankomsttijden, totale reistijd, tussenstops, bagageregels, stoelkeuze-opties, annuleringsvoorwaarden en wijzigingsbeleid voordat je je boeking bij de provider afrondt.",
+  flightFaqFlexibleFareQuestion: "Wat is een flexibel tarief?",
+  flightFaqFlexibleFareAnswer:
+    "Een flexibel tarief kan wijzigingen of annuleringen met minder beperkingen toestaan dan een basistarief, maar de exacte regels hangen af van de luchtvaartmaatschappij of boekingsprovider. Controleer altijd de tariefvoorwaarden voordat je koopt.",
+  flightFaqNonstopQuestion: "Zijn rechtstreekse vluchten altijd beter?",
+  flightFaqNonstopAnswer:
+    "Niet altijd. Rechtstreekse vluchten kunnen tijd besparen, terwijl routes met één overstap andere vertrektijden, aankomsttijden of tariefopties kunnen bieden. Vergelijk totale reistijd, overstapduur en gemak voordat je beslist.",
+  flightFaqBaggageQuestion: "Hoe werken bagageregels?",
+  flightFaqBaggageAnswer:
+    "Bagagetoeslag kan verschillen per luchtvaartmaatschappij, route, cabineklasse, tarieftype en provider. Controleer vóór het boeken of handbagage, ruimbagage en persoonlijke items zijn inbegrepen.",
+  flightFaqChangeCancelQuestion: "Kan ik mijn ticket wijzigen of annuleren?",
+  flightFaqChangeCancelAnswer:
+    "Wijzigings- en annuleringsmogelijkheden hangen af van de tariefregels en het beleid van de provider. Sommige tickets zijn mogelijk niet-restitueerbaar of bevatten kosten, dus controleer de voorwaarden zorgvuldig voordat je boekt.",
+  flightFaqInternationalQuestion: "Wat moet ik weten over internationale vluchten?",
+  flightFaqInternationalAnswer:
+    "Controleer voor internationale reizen de geldigheid van je paspoort, visumvereisten, transitregels, bagagebeleid en aankomstvereisten voor je bestemming voordat je boekt.",
   footerContactUs: "Contact",
   footerCustomerSupport: "Klantenservice",
   footerServiceGuarantee: "Servicegarantie",
