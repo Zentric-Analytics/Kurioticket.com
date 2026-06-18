@@ -133,25 +133,9 @@ function SavedEmptyStateIllustration() {
 }
 
 
-export function AccountBackLink({ className }: { className?: string }) {
-  return (
-    <Link
-      href="/dashboard/account"
-      className={cn(
-        "focus-ring inline-flex min-h-10 items-center gap-1.5 rounded-md text-sm font-semibold text-blue-600 transition hover:text-blue-700 hover:underline",
-        className,
-      )}
-    >
-      <span className="text-xl leading-none" aria-hidden="true">‹</span>
-      <span>My Account</span>
-    </Link>
-  );
-}
-
 export function AccountSectionHeader({ title, description, titleId }: { title: string; description: string; titleId?: string }) {
   return (
     <div className="px-1 pb-2 text-left sm:px-2 sm:pb-3">
-      <AccountBackLink className="mb-3" />
       <h1 id={titleId} className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
         {title}
       </h1>
@@ -159,6 +143,7 @@ export function AccountSectionHeader({ title, description, titleId }: { title: s
     </div>
   );
 }
+
 
 function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   const { t } = useLocale();

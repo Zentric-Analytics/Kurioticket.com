@@ -2,7 +2,6 @@
 
 import { Card } from "@/components/ui/Card";
 import { LinkButton } from "@/components/ui/Button";
-import { AccountBackLink } from "@/components/dashboard/DashboardGrid";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import type { AccountPriceAlert } from "@/services/priceTrackingService";
@@ -158,7 +157,6 @@ export function PriceAlertsContent({
 
   return (
     <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="price-alerts-title">
-      <AccountBackLink className="px-1 sm:px-2" />
       <div className="max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
           {t("accountDashboard.priceAlerts.eyebrow")}

@@ -73,6 +73,9 @@ function SavedHeartIcon({
 
 type AppHeaderProps = {
   hideMobileSecondaryNavLinks?: boolean;
+  showAccountBackLink?: boolean;
+  accountBackHref?: string;
+  accountBackLabel?: string;
 };
 
 const signedInAccountMenuItems = [
@@ -142,6 +145,9 @@ const mobileInfoLegalMenuItems = [
 
 export function AppHeader({
   hideMobileSecondaryNavLinks = false,
+  showAccountBackLink = false,
+  accountBackHref = "/dashboard/account",
+  accountBackLabel = "My Account",
 }: AppHeaderProps = {}) {
   const { data: session } = useSession();
 
@@ -1113,6 +1119,23 @@ export function AppHeader({
             </div>
           </nav>
         </div>
+
+        {showAccountBackLink ? (
+          <div className="border-t border-white/10 bg-white text-slate-900 shadow-[0_1px_0_rgba(15,23,42,0.06)]">
+            <div className="page-shell flex min-h-11 items-center">
+              <Link
+                href={accountBackHref}
+                onClick={(event) => handleRouteLinkClick(event, accountBackHref)}
+                className="inline-flex min-h-10 items-center gap-1.5 rounded-md text-sm font-semibold text-blue-600 transition hover:text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+              >
+                <span className="text-xl leading-none" aria-hidden="true">
+                  ‹
+                </span>
+                <span>{accountBackLabel}</span>
+              </Link>
+            </div>
+          </div>
+        ) : null}
 
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
