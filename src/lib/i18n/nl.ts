@@ -162,7 +162,6 @@ export const translations: TranslationDictionary = {
   flightLandingHeroTitle: "Vind eenvoudig je volgende betaalbare vlucht.",
   flightLandingHeroSubtitle:
     "Zoek routes, vergelijk datums en ontdek vluchtopties voor je volgende reis.",
-  cityOrAirport: "Stad of luchthaven",
   flightLandingStartThisSearch: "Start deze zoekopdracht",
   "flightLandingImageAlt.Johannesburg skyline at golden hour":
     "Skyline van Johannesburg tijdens het gouden uur",
