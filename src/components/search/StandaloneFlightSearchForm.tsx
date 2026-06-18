@@ -1229,21 +1229,21 @@ export function StandaloneFlightSearchForm({
     const passengerRows = [
       {
         key: "adults",
-        label: t("adultPlural") || "Adults",
+        label: t("adults") || "Adults",
         subtitle: "18+",
         count: draftAdultCount,
         min: 1,
       },
       {
         key: "children",
-        label: t("childPlural") || "Children",
+        label: t("children") || "Children",
         subtitle: t("childAgeRange") || "Ages 2–17",
         count: draftChildCount,
         min: 0,
       },
       {
         key: "infants",
-        label: t("infantPlural") || "Infants",
+        label: t("infants") || "Infants",
         subtitle: t("under2") || "Under 2",
         count: draftInfantCount,
         min: 0,
