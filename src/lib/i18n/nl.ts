@@ -417,6 +417,18 @@ export const translations: TranslationDictionary = {
   hotelTrustProviderTitle: "Ga verder met de provider",
   hotelTrustProviderBody:
     "Wanneer je een optie kiest, ga je verder met de provider om de definitieve prijs, beschikbaarheid, kosten en annuleringsregels te bevestigen.",
+
+  searchRentalCarsEveryPartTrip: "Zoek huurauto’s voor elk deel van je reis",
+  "carsSearch.pickupLocationLabel": "Ophaallocatie",
+  "carsSearch.pickupLocationPlaceholder": "Luchthaven, stad of adres",
+  "carsSearch.returnToSameLocation": "Terugbrengen naar dezelfde locatie",
+  "carsSearch.differentReturnLocation": "Andere retourlocatie",
+  "carsSearch.rentalDatesLabel": "Huurdatums",
+  "carsSearch.rentalDatePlaceholder": "Ophaaldatum — Retourdatum",
+  "carsSearch.pickupReturnTimeLabel": "Ophaal- / retourtijd",
+  "carsSearch.pickupReturnTimeSummary": "{pickupTime} ophalen — {returnTime} terugbrengen",
+  "carsSearch.driverAgeLabel": "Leeftijd bestuurder",
+  "carsSearch.driverAgeAnyAge": "Elke leeftijd",
   privacyAndData: "Privacy en gegevens",
   securitySettings: "Beveiligingsinstellingen",
   personalDetails: "Persoonlijke gegevens",
