@@ -21,6 +21,52 @@ export const translations: TranslationDictionary = {
   cityOrAirport: "Stad of luchthaven",
   searchHotels: "Hotels zoeken",
   searchCars: "Auto’s zoeken",
+
+  exploreCarsByTripStyle: "Ontdek huurauto’s per reistype",
+  carsTripStyleBody:
+    "Kies een autotype en we openen resultaten met de juiste zoekcontext.",
+  "carsTripStyle.economy.title": "Economy-auto’s",
+  "carsTripStyle.economy.subtitle":
+    "Betaalbare zoekopdrachten voor de stad en soloreizen",
+  "carsTripStyle.economy.cta":
+    "Start een zoekopdracht voor een economy-auto",
+  "carsTripStyle.suv.title": "SUV’s",
+  "carsTripStyle.suv.subtitle":
+    "Ruimte voor gezinsreizen, bagage en langere ritten",
+  "carsTripStyle.suv.cta": "Open een zoekopdracht voor een SUV-huurauto",
+  "carsTripStyle.luxury.title": "Luxe auto’s",
+  "carsTripStyle.luxury.subtitle":
+    "Premium zoekcontext voor zakelijke of speciale reizen",
+  "carsTripStyle.luxury.cta":
+    "Plan een zoekopdracht voor een luxe auto",
+  "carsTripStyle.van.title": "Busjes",
+  "carsTripStyle.van.subtitle":
+    "Zoekcontext voor groepsreizen en gezinsbagage",
+  "carsTripStyle.van.cta": "Zoek busjes voor groepsreizen",
+  "carsTrust.0.title": "Gemaakt voor complete reizen",
+  "carsTrust.0.description":
+    "Plan vluchten, verblijven en vervoer over land in één Kurioticket-flow.",
+  "carsTrust.1.title": "Ophaalgegevens eerst",
+  "carsTrust.1.description":
+    "Vul ophaallocatie, datums, tijden en leeftijd van de bestuurder in, zodat je huurautozoekopdracht begint met de juiste reisgegevens.",
+  "carsTrust.2.title": "Duidelijke huurcontrole",
+  "carsTrust.2.description":
+    "Controleer de definitieve prijs, beschikbaarheid, kosten en huurvoorwaarden bij de provider voordat je boekt.",
+  "carsPickup.Airport.title": "Ophalen op luchthavens",
+  "carsPickup.Airport.subtitle":
+    "Begin vanaf belangrijke aankomstpunten op luchthavens",
+  "carsPickup.City center.title": "Ophalen in het stadscentrum",
+  "carsPickup.City center.subtitle":
+    "Haal op in de buurt van hotels in het centrum en zakelijke wijken",
+  "carsPickup.Train station.title": "Ophalen bij treinstations",
+  "carsPickup.Train station.subtitle":
+    "Vervolg je reis na aankomst met de trein",
+  "carsPickup.Hotel area.title": "Ophalen bij hotelgebieden",
+  "carsPickup.Hotel area.subtitle":
+    "Plan het ophalen van een auto in de buurt van je verblijf",
+  carsPickupPointsTitle: "Begin met populaire ophaalpunten voor auto’s",
+  carsPickupPointsBody:
+    "Kies een ophaalstijl en we openen de autoresultatenpagina met de zoekgegevens klaar.",
   done: "Gereed",
   clear: "Wissen",
   next: "Volgende",
