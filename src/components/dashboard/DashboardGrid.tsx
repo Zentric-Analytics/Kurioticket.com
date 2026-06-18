@@ -234,34 +234,6 @@ export function AccountMenuPage() {
   );
 }
 
-function AccountIdentityHeader({ initials, displayName, userEmail }: DashboardOverviewProps) {
-  const { t } = useLocale();
-
-  return (
-    <section
-      className="border-b border-slate-200/80 pb-4 sm:pb-5"
-      aria-labelledby="dashboard-title"
-    >
-      <div className="flex min-w-0 items-center gap-3 px-1 py-1 sm:gap-5 sm:px-2 sm:py-3">
-        <div
-          className="flex size-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-violet-600 to-indigo-800 text-xl font-bold text-white shadow-[0_18px_38px_-22px_rgba(79,70,229,0.9)] ring-1 ring-white/80 sm:size-18 sm:text-3xl"
-          aria-hidden="true"
-        >
-          {initials}
-        </div>
-        <div className="min-w-0">
-          <h1 id="dashboard-title" className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
-            {t["accountDashboard.overview.welcome"].replace("{name}", displayName)} 👋
-          </h1>
-          {userEmail ? <p className="mt-1 break-all text-sm font-semibold text-slate-600 sm:mt-1.5 sm:break-words sm:text-sm">{userEmail}</p> : null}
-          <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-700 sm:mt-2 sm:text-sm sm:leading-6">
-            {t["accountDashboard.overview.subtitle"]}
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 const genderOptions = [
   { value: "Male", labelKey: "accountDashboard.personalDetails.gender.male" },
@@ -515,28 +487,54 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
 
   return (
     <section
-      className="min-w-0"
+      className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
       aria-labelledby="personal-details-title"
     >
-      <div className="flex min-w-0 flex-col gap-2 px-1 pb-3 pt-1 sm:gap-4 sm:px-2 sm:pb-5 sm:pt-2 md:flex-row md:items-center md:justify-between">
+      <div className="flex min-w-0 flex-col gap-4 px-5 py-5 sm:px-6 md:flex-row md:items-start md:justify-between">
         <div className="min-w-0">
-          <h2 id="personal-details-title" className="text-[22px] font-bold tracking-tight text-slate-950 sm:text-2xl">
+          <h2 id="personal-details-title" className="text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
             {t["accountDashboard.personalDetails.title"]}
           </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-2 sm:text-sm sm:leading-6">
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-slate-600">
             {t["accountDashboard.personalDetails.subtitle"]}
           </p>
         </div>
+        {isEditing ? (
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row md:justify-end">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="focus-ring inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              {t["accountDashboard.personalDetails.cancel"]}
+            </button>
+            <button
+              type="button"
+              disabled
+              className="inline-flex min-h-10 cursor-not-allowed items-center justify-center rounded-lg bg-slate-200 px-4 text-sm font-semibold text-slate-500"
+            >
+              {t["accountDashboard.personalDetails.saveChanges"]}
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleEdit}
+            className="focus-ring inline-flex min-h-10 w-full shrink-0 items-center justify-center rounded-lg border border-blue-700 bg-white px-4 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+          >
+            {t["accountDashboard.personalDetails.edit"]}
+          </button>
+        )}
       </div>
 
-      <div className="divide-y divide-slate-200 border-y border-slate-200/90">
+      <div className="border-t border-slate-200">
         {personalDetailRows.map((row) => {
           const readOnlyValue = initialValues[row.key];
           const editValue = draft[row.key];
 
           return (
-            <div key={row.key} className="grid min-w-0 gap-1 px-1 py-2.5 sm:gap-1.5 sm:px-2 sm:py-4 md:grid-cols-[180px_minmax(0,1fr)] md:items-start md:gap-5">
-              <div className="text-[15px] font-semibold text-slate-700 sm:text-sm">{row.label}</div>
+            <div key={row.key} className="grid min-w-0 gap-1 border-t border-slate-200 px-5 py-4 first:border-t-0 sm:min-h-16 sm:grid-cols-[190px_minmax(0,1fr)] sm:items-center sm:gap-6 sm:px-6 sm:py-3">
+              <div className="text-sm font-medium leading-5 text-slate-700 sm:text-slate-800">{row.label}</div>
               {isEditing ? (
                 <div className="min-w-0 space-y-1.5">
                   <DetailInput row={row} value={editValue} onChange={updateDraft} />
@@ -550,39 +548,11 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
         })}
       </div>
 
-      <div className="px-1 py-4 sm:px-2 sm:py-5">
-        {isEditing ? (
-          <div className="flex min-w-0 flex-col gap-3 sm:items-end">
-            <p className="text-sm leading-6 text-slate-500 sm:text-right">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-100"
-              >
-                {t["accountDashboard.personalDetails.cancel"]}
-              </button>
-              <button
-                type="button"
-                disabled
-                className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-xl bg-slate-200 px-4 text-sm font-semibold text-slate-500"
-              >
-                {t["accountDashboard.personalDetails.saveChanges"]}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleEdit}
-              className="focus-ring inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-violet-700 px-5 text-[15px] font-semibold text-white shadow-[0_16px_34px_-22px_rgba(79,70,229,0.9)] transition hover:bg-violet-800 sm:min-h-11 sm:w-auto sm:text-sm"
-            >
-              {t["accountDashboard.personalDetails.edit"]}
-            </button>
-          </div>
-        )}
-      </div>
+      {isEditing ? (
+        <div className="border-t border-slate-200 px-5 py-4 sm:px-6">
+          <p className="text-sm leading-6 text-slate-500">{t["accountDashboard.personalDetails.editingComingSoon"]}</p>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -619,9 +589,8 @@ export function DashboardOverview({ initials, displayName, userEmail, userName }
   const { t } = useLocale();
 
   return (
-    <div className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <AccountSectionHeader title={t["accountDashboard.nav.overview"]} description={t["accountDashboard.overview.subtitle"]} />
-      <AccountIdentityHeader initials={initials} displayName={displayName} userEmail={userEmail} />
+    <div className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 py-6 sm:px-6 sm:py-8 lg:px-6 lg:py-10">
+      <AccountSectionHeader title={t["accountDashboard.personalDetails.title"]} description={t["accountDashboard.personalDetails.subtitle"]} titleId="dashboard-title" />
       <PersonalDetailsSection initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
     </div>
   );
