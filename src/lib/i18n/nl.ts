@@ -254,9 +254,15 @@ export const translations: TranslationDictionary = {
   roomPlural: "kamers",
   guestsAndRooms: "Gasten en kamers",
   stayDetails: "Verblijfsdetails",
+  hotelStayDetails: "VERBLIJFSDETAILS",
   petFriendly: "Huisdiervriendelijk",
+  onlyShowPetFriendlyStays:
+    "Toon alleen verblijven waar huisdieren zijn toegestaan",
   onlyShowStaysThatAllowPets:
     "Alleen verblijven tonen waar huisdieren zijn toegestaan",
+  hotelAdultHelper: "Volwassenen 18+",
+  hotelChildrenHelper: "Leeftijd 0–17",
+  hotelRoomsHelper: "Maximaal 6 kamers",
   myAccount: "Mijn account",
   accountSettings: "Accountinstellingen",
   preferences: "Voorkeuren",
