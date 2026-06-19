@@ -42,6 +42,10 @@ export const translations: TranslationDictionary = {
 
   flights: "Voli",
   hotels: "Alberghi",
+  hotelsHeroEyebrow: "SOGGIORNI PREMIUM, CONFRONTATI CON CHIAREZZA",
+  hotelsHeroTitle: "Trova il soggiorno che fa iniziare bene il tuo viaggio.",
+  hotelsHeroSubtitle:
+    "Confronta hotel in un unico posto, dagli arrivi eleganti in città alle fughe rilassanti nei resort.",
   cars: "Auto",
   deals: "Offerte",
   destinations: "Destinazioni",
