@@ -13,7 +13,7 @@ import {
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   Bed,
@@ -164,12 +164,14 @@ export function AppHeader({
   const { locale, setLocale, t, locales } = useLocale();
 
   const pathname = usePathname();
+  const router = useRouter();
   const { start: startRouteProgress } = useRouteProgress();
 
   const languageRef = useRef<HTMLDivElement | null>(null);
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageMenuRef = useRef<HTMLElement | null>(null);
   const languageSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const languageReloadTimerRef = useRef<number | null>(null);
   const accountRef = useRef<HTMLDivElement | null>(null);
   const languageDialogId = useId();
   const languageTitleId = useId();
@@ -265,6 +267,14 @@ export function AppHeader({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [closeLanguageDialog, languageOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (languageReloadTimerRef.current) {
+        window.clearTimeout(languageReloadTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const closeMenuOnRouteChange = window.setTimeout(() => {
@@ -619,10 +629,22 @@ export function AppHeader({
       return;
     }
 
+    const isAlreadyActive = option.code === locale;
+
+    if (isAlreadyActive) {
+      closeLanguageDialog();
+      return;
+    }
+
     const didChangeLanguage = setLocale(option.code);
 
     if (didChangeLanguage) {
       closeLanguageDialog();
+
+      languageReloadTimerRef.current = window.setTimeout(() => {
+        router.refresh();
+        window.location.reload();
+      }, 220);
     }
   };
 

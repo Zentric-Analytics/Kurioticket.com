@@ -2,7 +2,6 @@ import { nanoid } from "nanoid";
 import type { FlightLeg, FlightSearchParams, Layover, NormalizedFlightResult } from "@/lib/types";
 import { minutesToDuration, sanitizeAirportCode } from "@/lib/utils";
 import { scoreFlight } from "@/services/travel/scoring";
-import { buildTravelpayoutsAffiliateUrl, getTravelpayoutsMarker } from "@/services/travel/providers/travelpayoutsProvider";
 
 const airlineNames: Record<string, string> = {
   AA: "American Airlines",
@@ -253,7 +252,7 @@ function buildFlight(input: {
   rawProviderReference?: unknown;
 }): NormalizedFlightResult {
   const scores = scoreFlight(input);
-  const partnerUrl = input.bookingUrl || buildMetasearchPartnerUrl(input);
+  const handoffUrl = getExactProviderHandoffUrl(input.bookingUrl);
 
   return {
     id: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-${input.providerId || nanoid(10)}`,
@@ -275,8 +274,12 @@ function buildFlight(input: {
     refundInfo: input.refundInfo,
     price: Number(input.price.toFixed(2)),
     currency: input.currency,
-    bookingUrl: partnerUrl,
-    partnerRedirectUrl: partnerUrl,
+    bookingUrl: handoffUrl || "",
+    partnerRedirectUrl: handoffUrl || "",
+    handoffType: handoffUrl ? "exact_provider_link" : "none",
+    handoffUrl: handoffUrl || undefined,
+    handoffProvider: handoffUrl ? input.provider : undefined,
+    handoffVerifiedAt: handoffUrl ? new Date().toISOString() : undefined,
     ...scores,
     recommendationReasons: buildReasons(input, scores),
     badges: [],
@@ -512,20 +515,25 @@ function buildDuffelRefundInfo(conditions?: {
   return parts.length ? parts.join(". ") : "Change and refund rules vary by fare and are reviewed externally.";
 }
 
-function buildMetasearchPartnerUrl(input: {
-  provider: NormalizedFlightResult["provider"];
-  originAirport: string;
-  destinationAirport: string;
-  departureTime: string;
-}) {
-  if (!getTravelpayoutsMarker()) return "";
+function getExactProviderHandoffUrl(value?: string) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol)) return "";
+    if (isGeneratedRouteSearchUrl(url)) return "";
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
 
-  return buildTravelpayoutsAffiliateUrl({
-    origin: input.originAirport,
-    destination: input.destinationAirport,
-    departureDate: input.departureTime.slice(0, 10),
-    subId: `${input.provider.toLowerCase().replace(/\s+/g, "-")}-metasearch`,
-  });
+function isGeneratedRouteSearchUrl(url: URL) {
+  const hostname = url.hostname.replace(/^www\./, "").toLowerCase();
+  if (hostname === "aviasales.com" && url.pathname.startsWith("/search")) return true;
+  return Boolean(
+    url.searchParams.get("sub_id")?.toLowerCase().includes("metasearch") ||
+      (url.searchParams.has("origin_iata") && url.searchParams.has("destination_iata")),
+  );
 }
 
 function formatDuffelCabin(value?: string) {

@@ -654,20 +654,20 @@ export function PreferencesDashboardPage() {
 
 function SecuritySettingRow({ title, body, action, danger = false, onAction, statusId }: SecuritySettingRowProps) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-1 py-3.5 sm:gap-6 sm:px-2 sm:py-6">
-      <div className="min-w-0">
-        <h2 className="text-[15px] font-semibold leading-5 text-slate-950 sm:text-[17px] sm:font-semibold sm:text-navy">{title}</h2>
-        <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-1.5 sm:max-w-2xl sm:text-sm sm:leading-6 sm:text-muted">{body}</p>
+    <div className="flex min-w-0 flex-col gap-4 px-5 py-5 sm:min-h-[5.25rem] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-4">
+      <div className="min-w-0 sm:pr-4">
+        <h2 className="text-base font-semibold leading-6 text-slate-900 sm:text-[15px]">{title}</h2>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
       </div>
       <button
         type="button"
         onClick={onAction}
         aria-describedby={statusId}
         className={cn(
-          "focus-ring -my-2 -mr-2 inline-flex min-h-10 cursor-pointer items-center justify-center justify-self-end rounded-lg border-0 bg-transparent px-2 py-2 text-right text-sm font-medium leading-6 transition hover:underline sm:my-0 sm:mr-0 sm:min-h-10 sm:w-auto sm:rounded-xl sm:border sm:px-4 sm:py-0 sm:text-sm sm:font-semibold sm:no-underline",
+          "focus-ring inline-flex min-h-10 w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-semibold leading-5 transition sm:self-center",
           danger
-            ? "text-red-600 sm:border-red-200 sm:bg-red-50 sm:text-red-700 sm:hover:border-red-300 sm:hover:bg-red-100"
-            : "text-violet-700 sm:border-violet-200 sm:bg-white sm:hover:border-violet-300 sm:hover:bg-violet-50",
+            ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
+            : "border-blue-200 text-blue-700 hover:border-blue-300 hover:bg-blue-50",
         )}
       >
         {action}
@@ -686,44 +686,49 @@ export function SecurityDashboardPage() {
   };
 
   return (
-    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 lg:space-y-5 xl:max-w-[64rem]">
+    <section aria-labelledby="security-title" className="mx-auto min-w-0 max-w-[60rem] space-y-5 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-6 lg:pt-10">
       <AccountSectionHeader title={t["accountDashboard.security.title"]} description={t["accountDashboard.security.description"]} titleId="security-title" />
-      <div className="divide-y divide-slate-200/90 border-y border-slate-200/90">
-        <SecuritySettingRow
-          title={t["accountDashboard.security.passkeys.title"]}
-          body={t["accountDashboard.security.passkeys.description"]}
-          action={t["accountDashboard.security.action.setUp"]}
-          onAction={handleUnavailableSecurityAction}
-          statusId={securityActionStatusId}
-        />
-        <SecuritySettingRow
-          title={t["accountDashboard.security.twoFactor.title"]}
-          body={t["accountDashboard.security.twoFactor.description"]}
-          action={t["accountDashboard.security.action.setUp"]}
-          onAction={handleUnavailableSecurityAction}
-          statusId={securityActionStatusId}
-        />
-        <SecuritySettingRow
-          title={t["accountDashboard.security.activeSessions.title"]}
-          body={t["accountDashboard.security.activeSessions.description"]}
-          action={t["accountDashboard.security.action.manage"]}
-          onAction={handleUnavailableSecurityAction}
-          statusId={securityActionStatusId}
-        />
-        <SecuritySettingRow
-          title={t["accountDashboard.security.deleteAccount.title"]}
-          body={t["accountDashboard.security.deleteAccount.description"]}
-          action={t["accountDashboard.security.action.deleteAccount"]}
-          onAction={handleUnavailableSecurityAction}
-          statusId={securityActionStatusId}
-          danger
-        />
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_18px_45px_-38px_rgba(15,23,42,0.55)]">
+        <div className="divide-y divide-slate-200">
+          <SecuritySettingRow
+            title={t["accountDashboard.security.passkeys.title"]}
+            body={t["accountDashboard.security.passkeys.description"]}
+            action={t["accountDashboard.security.action.setUp"]}
+            onAction={handleUnavailableSecurityAction}
+            statusId={securityActionStatusId}
+          />
+          <SecuritySettingRow
+            title={t["accountDashboard.security.twoFactor.title"]}
+            body={t["accountDashboard.security.twoFactor.description"]}
+            action={t["accountDashboard.security.action.setUp"]}
+            onAction={handleUnavailableSecurityAction}
+            statusId={securityActionStatusId}
+          />
+          <SecuritySettingRow
+            title={t["accountDashboard.security.activeSessions.title"]}
+            body={t["accountDashboard.security.activeSessions.description"]}
+            action={t["accountDashboard.security.action.manage"]}
+            onAction={handleUnavailableSecurityAction}
+            statusId={securityActionStatusId}
+          />
+          <SecuritySettingRow
+            title={t["accountDashboard.security.deleteAccount.title"]}
+            body={t["accountDashboard.security.deleteAccount.description"]}
+            action={t["accountDashboard.security.action.deleteAccount"]}
+            onAction={handleUnavailableSecurityAction}
+            statusId={securityActionStatusId}
+            danger
+          />
+        </div>
       </div>
       <p
         id={securityActionStatusId}
         role="status"
         aria-live="polite"
-        className="min-h-5 px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2"
+        className={cn(
+          "px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2",
+          actionMessage ? "" : "sr-only",
+        )}
       >
         {actionMessage}
       </p>

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
-import { AccountSectionHeader } from "@/components/dashboard/DashboardGrid";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
@@ -39,8 +38,7 @@ const desktopTripTabs: Array<{ id: TripStatusTab; labelKey: string }> = mobileTr
 export function TripsManagementPage() {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const [activeMobileTab, setActiveMobileTab] = useState<MobileTripTab>("active");
-  const [activeDesktopTab, setActiveDesktopTab] = useState<TripStatusTab>("active");
+  const [activeHistoryTab, setActiveHistoryTab] = useState<TripHistoryTab>("past");
   const [showLookup, setShowLookup] = useState(false);
   const [lookupMessage, setLookupMessage] = useState<string | null>(null);
   const lookupPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -89,14 +87,17 @@ export function TripsManagementPage() {
     setLookupMessage(t("accountDashboard.trips.lookup.unavailable"));
   }
 
-  const mobileEmptyState = mobileEmptyStates[activeMobileTab];
-  const desktopEmptyState = mobileEmptyStates[activeDesktopTab];
+  const historyEmptyState = mobileEmptyStates[activeHistoryTab];
 
   return (
-    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 lg:mt-0 lg:space-y-6 xl:max-w-[64rem]">
-      <div className="flex min-w-0 flex-col gap-2 pb-0 sm:gap-4 lg:flex-row lg:items-start lg:justify-between lg:border-b lg:border-slate-200/80 lg:pb-5">
-        <AccountSectionHeader title={t("accountDashboard.trips.title")} description={t("accountDashboard.trips.subtitle")} titleId="trips-title" />
-        <div className="relative flex w-fit shrink-0 justify-end">
+    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[72rem] space-y-10 bg-white pb-12 pt-3 sm:pt-6 lg:space-y-12 lg:pb-16">
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 id="trips-title" className="text-3xl font-black tracking-[-0.035em] text-slate-800 sm:text-4xl">
+            {t("accountDashboard.trips.title")}
+          </h1>
+        </div>
+        <div className="relative flex w-fit shrink-0 justify-end pt-1">
           <button
             ref={lookupTriggerRef}
             type="button"
@@ -146,33 +147,16 @@ export function TripsManagementPage() {
                 <form onSubmit={handleLookupSubmit} className="mt-5 grid gap-4">
                   <label className="grid gap-2 text-sm font-semibold text-slate-800">
                     {t("accountDashboard.trips.lookup.reservationCode")}
-                    <input
-                      type="text"
-                      name="reservationCode"
-                      autoComplete="off"
-                      className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium uppercase tracking-[0.08em] text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400"
-                    />
+                    <input type="text" name="reservationCode" autoComplete="off" className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium uppercase tracking-[0.08em] text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400" />
                   </label>
                   <label className="grid gap-2 text-sm font-semibold text-slate-800">
                     {t("accountDashboard.trips.lookup.emailAddress")}
-                    <input
-                      type="email"
-                      name="email"
-                      autoComplete="email"
-                      className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400"
-                    />
+                    <input type="email" name="email" autoComplete="email" className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400" />
                   </label>
-                  <button
-                    type="submit"
-                    className="focus-ring inline-flex h-12 items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-24px_rgba(79,70,229,0.9)] transition hover:bg-violet-800"
-                  >
+                  <button type="submit" className="focus-ring inline-flex h-12 items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-24px_rgba(79,70,229,0.9)] transition hover:bg-violet-800">
                     {t("accountDashboard.trips.lookup.submit")}
                   </button>
-                  {lookupMessage ? (
-                    <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900" role="status">
-                      {lookupMessage}
-                    </p>
-                  ) : null}
+                  {lookupMessage ? <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900" role="status">{lookupMessage}</p> : null}
                 </form>
               </section>
             </div>
@@ -180,10 +164,12 @@ export function TripsManagementPage() {
         </div>
       </div>
 
-      <section aria-labelledby="mobile-trips-panel-title" className="space-y-7 lg:hidden">
-        <div className="flex min-w-0 items-center gap-7 overflow-hidden" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
-          {mobileTripTabs.map((tab) => {
-            const isActive = activeMobileTab === tab.id;
+      <EmptyStateRow className="pt-3 sm:pt-8 lg:pt-12" illustration={<CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />} title={t("accountDashboard.trips.current.empty.title")} body={t("accountDashboard.trips.current.empty.body")} titleId="current-trips-panel-title" />
+
+      <section aria-labelledby="history-trips-panel-title" className="space-y-8 pt-1 sm:pt-5 lg:pt-8">
+        <div className="flex min-w-0 items-center gap-4" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
+          {desktopTripTabs.filter((tab) => tab.id !== "active").map((tab) => {
+            const isActive = activeHistoryTab === tab.id;
 
             return (
               <button
@@ -191,105 +177,44 @@ export function TripsManagementPage() {
                 type="button"
                 role="tab"
                 aria-selected={isActive}
-                aria-controls={`${tab.id}-mobile-trips-panel`}
-                id={`${tab.id}-mobile-trips-tab`}
-                onClick={() => setActiveMobileTab(tab.id)}
+                aria-controls={`${tab.id}-history-trips-panel`}
+                id={`${tab.id}-history-trips-tab`}
+                onClick={() => setActiveHistoryTab(tab.id as TripHistoryTab)}
                 className={cn(
-                  "focus-ring inline-flex min-h-10 shrink-0 items-center justify-center whitespace-nowrap border-b-2 px-0.5 text-sm font-bold transition",
-                  isActive
-                    ? "border-violet-700 text-violet-800"
-                    : "border-transparent text-slate-800 hover:border-violet-200 hover:text-slate-950",
+                  "focus-ring inline-flex h-10 shrink-0 items-center justify-center rounded-full border px-5 text-sm font-semibold transition",
+                  isActive ? "border-violet-300 bg-violet-50 text-violet-800" : "border-transparent bg-transparent text-slate-600 hover:border-violet-200 hover:text-slate-950",
                 )}
               >
-                <span>{t(tab.labelKey)}</span>
+                {t(tab.labelKey)}
               </button>
             );
           })}
         </div>
 
-        <div
-          id={`${activeMobileTab}-mobile-trips-panel`}
-          role="tabpanel"
-          aria-labelledby={`${activeMobileTab}-mobile-trips-tab`}
-          className="px-1 pb-10 pt-1"
-        >
-          <div className="flex min-w-0 flex-col items-center gap-5 text-center">
-            {mobileEmptyState.illustration === "current" ? (
-              <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
-            ) : (
-              <HistoryEmptyIllustration
-                variant={mobileEmptyState.illustration}
-                ariaLabel={t(mobileEmptyState.illustration === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")}
-              />
-            )}
-            <div className="max-w-lg">
-              <h2 id="mobile-trips-panel-title" className="text-2xl font-bold tracking-[-0.025em] text-slate-950">
-                {t(mobileEmptyState.titleKey)}
-              </h2>
-              <p className="mt-3 text-sm font-medium leading-6 text-slate-700">
-                {t(mobileEmptyState.bodyKey)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section aria-labelledby="desktop-trips-panel-title" className="hidden pt-2 lg:block">
-        <div className="border-b border-slate-200/80" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
-          <div className="flex min-w-0 gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {desktopTripTabs.map((tab) => {
-              const isActive = activeDesktopTab === tab.id;
-
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  aria-controls={`${tab.id}-desktop-trips-panel`}
-                  id={`${tab.id}-desktop-trips-tab`}
-                  onClick={() => setActiveDesktopTab(tab.id)}
-                  className={cn(
-                    "focus-ring relative -mb-px inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center whitespace-nowrap border-b-2 px-1 text-sm font-semibold transition",
-                    isActive
-                      ? "border-violet-800 text-violet-900"
-                      : "border-transparent text-slate-600 hover:border-violet-300 hover:text-slate-900",
-                  )}
-                >
-                  {t(tab.labelKey)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div
-          id={`${activeDesktopTab}-desktop-trips-panel`}
-          role="tabpanel"
-          aria-labelledby={`${activeDesktopTab}-desktop-trips-tab`}
-          className="flex min-h-[25rem] items-center justify-center px-1 pb-16 pt-12 xl:min-h-[28rem] xl:pb-20 xl:pt-14"
-        >
-          <div className="flex min-w-0 flex-col items-center gap-5 text-center">
-            {desktopEmptyState.illustration === "current" ? (
-              <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
-            ) : (
-              <HistoryEmptyIllustration
-                variant={desktopEmptyState.illustration}
-                ariaLabel={t(desktopEmptyState.illustration === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")}
-              />
-            )}
-            <div className="max-w-lg">
-              <h2 id="desktop-trips-panel-title" className="text-3xl font-bold tracking-[-0.025em] text-slate-950">
-                {t(desktopEmptyState.titleKey)}
-              </h2>
-              <p className="mt-3 text-base font-medium leading-6 text-slate-700">
-                {t(desktopEmptyState.bodyKey)}
-              </p>
-            </div>
-          </div>
+        <div id={`${activeHistoryTab}-history-trips-panel`} role="tabpanel" aria-labelledby={`${activeHistoryTab}-history-trips-tab`}>
+          <EmptyStateRow
+            illustration={<HistoryEmptyIllustration variant={activeHistoryTab} ariaLabel={t(activeHistoryTab === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")} />}
+            title={t(historyEmptyState.titleKey)}
+            body={t(historyEmptyState.bodyKey)}
+            titleId="history-trips-panel-title"
+          />
         </div>
       </section>
     </section>
+  );
+}
+
+function EmptyStateRow({ illustration, title, body, titleId, className }: { illustration: ReactNode; title: string; body: string; titleId: string; className?: string }) {
+  return (
+    <div className={cn("grid min-w-0 items-center gap-7 sm:grid-cols-[11rem_minmax(0,1fr)] lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-10", className)}>
+      <div className="flex justify-center sm:justify-start">{illustration}</div>
+      <div className="min-w-0 text-center sm:text-left">
+        <h2 id={titleId} className="text-2xl font-black tracking-[-0.025em] text-slate-800 sm:text-[1.65rem]">
+          {title}
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-600 sm:text-base">{body}</p>
+      </div>
+    </div>
   );
 }
 

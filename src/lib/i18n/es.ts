@@ -36,6 +36,10 @@ export const translations: TranslationDictionary = {
   onlyShowStaysThatAllowPets: "Mostrar solo estancias que acepten mascotas",
   flights: "Vuelos",
   hotels: "Hoteles",
+  hotelsHeroEyebrow: "ESTANCIAS PREMIUM, COMPARADAS CON CLARIDAD",
+  hotelsHeroTitle: "Encuentra la estancia que hace que tu viaje empiece bien.",
+  hotelsHeroSubtitle:
+    "Compara hoteles en un solo lugar, desde llegadas urbanas elegantes hasta escapadas relajadas a resorts.",
   cars: "Autos",
   deals: "Ofertas",
   saved: "Guardados",
