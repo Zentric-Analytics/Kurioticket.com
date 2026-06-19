@@ -54,6 +54,8 @@ export type FlightLeg = {
   segments: FlightSegment[];
 };
 
+export type FlightHandoffType = "exact_provider_link" | "none";
+
 export type NormalizedFlightResult = {
   id: string;
   provider: string;
@@ -76,6 +78,10 @@ export type NormalizedFlightResult = {
   currency: string;
   bookingUrl: string;
   partnerRedirectUrl: string;
+  handoffType: FlightHandoffType;
+  handoffUrl?: string;
+  handoffProvider?: string;
+  handoffVerifiedAt?: string;
   valueScore: number;
   riskScore: number;
   comfortScore: number;
