@@ -1,197 +1,72 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
+import { ArrowRightLeft, CalendarClock, CircleX, MapPin, Plane, Route, Ticket, BriefcaseBusiness } from "lucide-react";
 import { AccountSectionHeader } from "@/components/dashboard/DashboardGrid";
-import { useLocale } from "@/components/layout/LocaleProvider";
-import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
-type TripHistoryTab = "past" | "cancelled";
-type TripStatusTab = "upcoming" | TripHistoryTab;
+type TripTabId = "active" | "past" | "cancelled";
 
-const tripTabs: Array<{ id: TripStatusTab; labelKey: string }> = [
-  { id: "upcoming", labelKey: "accountDashboard.trips.history.tabs.upcoming" },
-  { id: "past", labelKey: "accountDashboard.trips.history.tabs.past" },
-  { id: "cancelled", labelKey: "accountDashboard.trips.history.tabs.cancelled" },
+type TripTab = {
+  id: TripTabId;
+  label: string;
+  headline: string;
+  text: string;
+  visualLabel: string;
+};
+
+const tripTabs: TripTab[] = [
+  {
+    id: "active",
+    label: "Active",
+    headline: "Where to next?",
+    text: "You haven’t started any trips yet. When you make a booking, it will appear here.",
+    visualLabel: "Suitcase, boarding pass, and plane route illustration",
+  },
+  {
+    id: "past",
+    label: "Past",
+    headline: "Revisit your favourite places",
+    text: "Here you will see all your past trips and get inspired for your next ones.",
+    visualLabel: "Postcard timeline and location pins illustration",
+  },
+  {
+    id: "cancelled",
+    label: "Cancelled",
+    headline: "Sometimes plans change",
+    text: "Here you will see all the trips you have cancelled. Maybe next time!",
+    visualLabel: "Changed route and cancelled marker illustration",
+  },
 ];
 
-type TripEmptyStateConfig = {
-  titleKey: string;
-  bodyKey: string;
-  illustration: "current" | TripHistoryTab;
-  primaryCta?: { labelKey: string; href: string };
-  secondaryCta?: { labelKey: string; href: string };
-  subtleCta?: { labelKey: string; href: string };
-};
-
-const emptyStates: Record<TripStatusTab, TripEmptyStateConfig> = {
-  upcoming: {
-    titleKey: "accountDashboard.trips.current.empty.title",
-    bodyKey: "accountDashboard.trips.current.empty.body",
-    illustration: "current",
-    primaryCta: { labelKey: "accountDashboard.trips.current.empty.searchFlights", href: "/flights" },
-    secondaryCta: { labelKey: "accountDashboard.trips.current.empty.exploreHotels", href: "/hotels" },
-  },
-  past: {
-    titleKey: "accountDashboard.trips.history.empty.past.title",
-    bodyKey: "accountDashboard.trips.history.empty.past.body",
-    illustration: "past",
-    primaryCta: { labelKey: "accountDashboard.trips.history.empty.past.cta", href: "/" },
-  },
-  cancelled: {
-    titleKey: "accountDashboard.trips.history.empty.cancelled.title",
-    bodyKey: "accountDashboard.trips.history.empty.cancelled.body",
-    illustration: "cancelled",
-    subtleCta: { labelKey: "accountDashboard.trips.history.empty.cancelled.cta", href: "/dashboard/support" },
-  },
-};
-
 export function TripsManagementPage() {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const [activeTab, setActiveTab] = useState<TripStatusTab>("upcoming");
-  const [showLookup, setShowLookup] = useState(false);
-  const [lookupMessage, setLookupMessage] = useState<string | null>(null);
-  const lookupPopoverRef = useRef<HTMLDivElement | null>(null);
-  const lookupTriggerRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    if (!showLookup) {
-      return;
-    }
-
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target;
-
-      if (!(target instanceof Node)) {
-        return;
-      }
-
-      if (lookupPopoverRef.current?.contains(target) || lookupTriggerRef.current?.contains(target)) {
-        return;
-      }
-
-      setShowLookup(false);
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setShowLookup(false);
-      }
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [showLookup]);
-
-  function closeLookup() {
-    setShowLookup(false);
-  }
-
-  function handleLookupSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLookupMessage(t("accountDashboard.trips.lookup.unavailable"));
-  }
-
-  const activeEmptyState = emptyStates[activeTab];
+  const [activeTab, setActiveTab] = useState<TripTabId>("active");
+  const activeTripTab = tripTabs.find((tab) => tab.id === activeTab) ?? tripTabs[0];
 
   return (
-    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 lg:mt-0 lg:space-y-6 xl:max-w-[64rem]">
-      <div className="flex min-w-0 flex-col gap-2 pb-0 sm:gap-4 lg:flex-row lg:items-start lg:justify-between lg:border-b lg:border-slate-200/80 lg:pb-5">
-        <AccountSectionHeader title={t("accountDashboard.trips.title")} description={t("accountDashboard.trips.subtitle")} titleId="trips-title" />
-        <div className="relative flex w-fit shrink-0 justify-end">
-          <button
-            ref={lookupTriggerRef}
-            type="button"
-            onClick={() => {
-              setShowLookup(true);
-              setLookupMessage(null);
-            }}
-            aria-expanded={showLookup}
-            aria-controls="reservation-lookup"
-            className="focus-ring inline-flex w-fit items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline lg:cursor-pointer"
-          >
-            {t("accountDashboard.trips.findReservation")}
-          </button>
-
-          {showLookup ? (
-            <div
-              className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/20 px-3 pb-3 pt-16 sm:absolute sm:inset-auto sm:right-0 sm:top-[calc(100%+0.75rem)] sm:block sm:w-[min(24rem,calc(100vw-3rem))] sm:bg-transparent sm:p-0"
-              role="presentation"
-            >
-              <section
-                id="reservation-lookup"
-                ref={lookupPopoverRef}
-                aria-labelledby="reservation-lookup-title"
-                aria-modal="true"
-                role="dialog"
-                className="max-h-[calc(100vh-4.75rem)] w-full max-w-sm overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-34px_rgba(15,23,42,0.55)] sm:max-h-none sm:max-w-none sm:p-6"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="min-w-0 flex-1">
-                    <h2 id="reservation-lookup-title" className="text-xl font-bold tracking-[-0.02em] text-slate-950">
-                      {t("accountDashboard.trips.lookup.title")}
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-slate-700">
-                      {t("accountDashboard.trips.lookup.body")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={closeLookup}
-                    aria-label={t("accountDashboard.trips.lookup.closeAriaLabel")}
-                    className="focus-ring inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-xl leading-none text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    ×
-                  </button>
-                </div>
-
-                <form onSubmit={handleLookupSubmit} className="mt-5 grid gap-4">
-                  <label className="grid gap-2 text-sm font-semibold text-slate-800">
-                    {t("accountDashboard.trips.lookup.reservationCode")}
-                    <input
-                      type="text"
-                      name="reservationCode"
-                      autoComplete="off"
-                      className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium uppercase tracking-[0.08em] text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400"
-                    />
-                  </label>
-                  <label className="grid gap-2 text-sm font-semibold text-slate-800">
-                    {t("accountDashboard.trips.lookup.emailAddress")}
-                    <input
-                      type="email"
-                      name="email"
-                      autoComplete="email"
-                      className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400"
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    className="focus-ring inline-flex h-12 items-center justify-center rounded-xl bg-violet-700 px-5 text-sm font-semibold text-white shadow-[0_16px_34px_-24px_rgba(79,70,229,0.9)] transition hover:bg-violet-800"
-                  >
-                    {t("accountDashboard.trips.lookup.submit")}
-                  </button>
-                  {lookupMessage ? (
-                    <p className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900" role="status">
-                      {lookupMessage}
-                    </p>
-                  ) : null}
-                </form>
-              </section>
-            </div>
-          ) : null}
-        </div>
+    <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[64rem] space-y-5 lg:space-y-7">
+      <div className="flex min-w-0 flex-col gap-4 border-b border-slate-200/80 pb-5 sm:gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <AccountSectionHeader
+          title="Bookings & Trips"
+          description="View and manage your active, past, and cancelled trips."
+          titleId="trips-title"
+        />
+        <Link
+          href="/dashboard/support"
+          className="focus-ring inline-flex w-fit shrink-0 items-center justify-center rounded-full px-1 py-1 text-sm font-semibold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline"
+        >
+          Can’t find a booking?
+        </Link>
       </div>
 
-      <section aria-labelledby="trips-panel-title" className="space-y-5">
-        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-slate-50/80 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
-          <div className="grid min-w-max grid-cols-3 gap-1 sm:min-w-0">
+      <div className="space-y-5 sm:space-y-6">
+        <div
+          role="tablist"
+          aria-label="Trip status filters"
+          className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          <div className="inline-flex min-w-full items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-[0_18px_42px_-34px_rgba(49,46,129,0.45)] sm:min-w-0">
             {tripTabs.map((tab) => {
               const isActive = activeTab === tab.id;
 
@@ -200,143 +75,132 @@ export function TripsManagementPage() {
                   key={tab.id}
                   type="button"
                   role="tab"
+                  id={`${tab.id}-trips-tab`}
                   aria-selected={isActive}
                   aria-controls={`${tab.id}-trips-panel`}
-                  id={`${tab.id}-trips-tab`}
+                  tabIndex={isActive ? 0 : -1}
                   onClick={() => setActiveTab(tab.id)}
                   className={cn(
-                    "focus-ring inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-5 text-sm font-bold transition sm:px-6",
+                    "focus-ring inline-flex min-h-11 flex-1 items-center justify-center whitespace-nowrap rounded-full px-5 text-sm font-bold transition sm:min-w-28 sm:flex-none",
                     isActive
-                      ? "bg-violet-700 text-white shadow-[0_14px_30px_-20px_rgba(79,70,229,0.95)]"
-                      : "text-slate-700 hover:bg-white hover:text-slate-950",
+                      ? "border border-violet-700 bg-violet-700 text-white shadow-[0_16px_32px_-22px_rgba(79,70,229,0.9)]"
+                      : "border border-transparent text-slate-700 hover:bg-violet-50 hover:text-violet-900",
                   )}
                 >
-                  {t(tab.labelKey)}
+                  {tab.label}
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div
-          id={`${activeTab}-trips-panel`}
+        <section
+          id={`${activeTripTab.id}-trips-panel`}
           role="tabpanel"
-          aria-labelledby={`${activeTab}-trips-tab`}
-          className="rounded-[1.65rem] border border-slate-200/90 bg-white px-5 py-8 shadow-[0_24px_70px_-58px_rgba(49,46,129,0.75)] sm:px-8 sm:py-10 lg:px-10 lg:py-14"
+          aria-labelledby={`${activeTripTab.id}-trips-tab`}
+          className="overflow-hidden rounded-[2rem] border border-slate-200/90 bg-white shadow-[0_30px_90px_-65px_rgba(49,46,129,0.9)]"
         >
-          <TripEmptyState state={activeEmptyState} titleId="trips-panel-title" t={t} />
-        </div>
-      </section>
+          <div className="grid gap-8 px-5 py-9 sm:px-8 sm:py-11 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-10 lg:px-12 lg:py-14">
+            <TripVisual tab={activeTripTab} />
+            <div className="mx-auto max-w-lg text-center lg:mx-0 lg:text-left">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-violet-800">{activeTripTab.label} trips</p>
+              <h2 className="mt-3 text-2xl font-black tracking-[-0.03em] text-slate-950 sm:text-3xl lg:text-4xl">
+                {activeTripTab.headline}
+              </h2>
+              <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-6 text-slate-600 sm:text-base sm:leading-7 lg:mx-0">
+                {activeTripTab.text}
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
     </section>
   );
 }
 
+function TripVisual({ tab }: { tab: TripTab }) {
+  if (tab.id === "past") {
+    return <PastTripsVisual tab={tab} />;
+  }
 
-function TripEmptyState({ state, titleId, t }: { state: TripEmptyStateConfig; titleId: string; t: (key: string) => string }) {
+  if (tab.id === "cancelled") {
+    return <CancelledTripsVisual tab={tab} />;
+  }
+
+  return <ActiveTripsVisual tab={tab} />;
+}
+
+function VisualShell({ tab, children }: { tab: TripTab; children: ReactNode }) {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
-      <div className="flex h-32 w-32 items-center justify-center rounded-[2rem] border border-violet-100 bg-violet-50/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] sm:h-36 sm:w-36">
-        {state.illustration === "current" ? (
-          <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
-        ) : (
-          <HistoryEmptyIllustration
-            variant={state.illustration}
-            ariaLabel={t(state.illustration === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")}
-          />
-        )}
-      </div>
-
-      <div className="mt-6 max-w-xl sm:mt-7">
-        <h2 id={titleId} className="text-2xl font-black tracking-[-0.025em] text-slate-950 sm:text-[1.75rem] lg:text-3xl lg:font-bold">
-          {t(state.titleKey)}
-        </h2>
-        <p className="mx-auto mt-3 max-w-lg text-sm font-medium leading-6 text-slate-600 sm:text-base sm:leading-7">
-          {t(state.bodyKey)}
-        </p>
-      </div>
-
-      {state.primaryCta || state.secondaryCta || state.subtleCta ? (
-        <div className="mt-7 flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row sm:items-center">
-          {state.primaryCta ? (
-            <Link
-              href={state.primaryCta.href}
-              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-xl bg-violet-700 px-6 text-sm font-bold text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] transition hover:bg-violet-800"
-            >
-              {t(state.primaryCta.labelKey)}
-            </Link>
-          ) : null}
-          {state.secondaryCta ? (
-            <Link
-              href={state.secondaryCta.href}
-              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-900 transition hover:border-violet-200 hover:bg-violet-50/60 hover:text-violet-900"
-            >
-              {t(state.secondaryCta.labelKey)}
-            </Link>
-          ) : null}
-          {state.subtleCta ? (
-            <Link
-              href={state.subtleCta.href}
-              className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-bold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline"
-            >
-              {t(state.subtleCta.labelKey)}
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
+    <div
+      role="img"
+      aria-label={tab.visualLabel}
+      className="relative mx-auto flex min-h-64 w-full max-w-sm items-center justify-center rounded-[2rem] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-slate-50 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:min-h-72 lg:mx-0"
+    >
+      <div className="absolute left-6 top-6 h-14 w-14 rounded-full bg-violet-100/80" />
+      <div className="absolute bottom-7 right-8 h-20 w-20 rounded-full border border-violet-200/80" />
+      {children}
     </div>
   );
 }
 
-function HistoryEmptyIllustration({ variant, ariaLabel }: { variant: TripHistoryTab; ariaLabel: string }) {
-  if (variant === "cancelled") {
-    return (
-      <svg
-        className="h-24 w-24 shrink-0 text-violet-800"
-        viewBox="0 0 120 120"
-        fill="none"
-        role="img"
-        aria-label={ariaLabel}
-      >
-        <circle cx="60" cy="60" r="44" fill="#F1EDFF" />
-        <path d="M29 42l18-8 26 10 18-7v41l-18 7-26-10-18 8V42Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="3" />
-        <path d="M47 34v41M73 44v41" stroke="#A78BFA" strokeLinecap="round" strokeWidth="2.5" />
-        <path d="M38 60c9-7 17-8 27-3s17 4 25-4" stroke="#C4B5FD" strokeLinecap="round" strokeWidth="3" />
-        <circle cx="76" cy="68" r="15" fill="#F5F3FF" stroke="#6D28D9" strokeWidth="3" />
-        <path d="M70 62l12 12M82 62L70 74" stroke="#6D28D9" strokeLinecap="round" strokeWidth="3" />
-      </svg>
-    );
-  }
-
+function ActiveTripsVisual({ tab }: { tab: TripTab }) {
   return (
-    <svg
-      className="h-24 w-24 shrink-0 text-violet-800"
-      viewBox="0 0 120 120"
-      fill="none"
-      role="img"
-      aria-label={ariaLabel}
-    >
-      <circle cx="60" cy="60" r="44" fill="#F1EDFF" />
-      <path d="M34 32h36l15 15v41H34V32Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="3" />
-      <path d="M70 33v15h15" stroke="currentColor" strokeLinejoin="round" strokeWidth="3" />
-      <path d="M45 59h27M45 70h21" stroke="#A78BFA" strokeLinecap="round" strokeWidth="3" />
-      <path d="M45 48h12" stroke="#6D28D9" strokeLinecap="round" strokeWidth="3" />
-      <path d="M42 88c7 5 29 5 36 0" stroke="#C4B5FD" strokeLinecap="round" strokeWidth="3" />
-      <path d="M82 74a13 13 0 1 1-4-9" stroke="#6D28D9" strokeLinecap="round" strokeWidth="3" />
-      <path d="M82 61v11h-11" stroke="#6D28D9" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
-    </svg>
+    <VisualShell tab={tab}>
+      <div className="relative h-52 w-64">
+        <Route className="absolute left-5 top-7 h-36 w-52 text-violet-300" strokeWidth={1.8} />
+        <Plane className="absolute right-6 top-8 h-8 w-8 rotate-12 text-violet-800" />
+        <div className="absolute bottom-8 left-8 h-28 w-24 rounded-3xl border-2 border-violet-800 bg-white shadow-[0_18px_42px_-28px_rgba(49,46,129,0.8)]">
+          <div className="mx-auto mt-4 h-5 w-10 rounded-full border-2 border-violet-700" />
+          <div className="absolute bottom-0 left-0 right-0 h-16 rounded-b-[1.35rem] bg-violet-100" />
+          <BriefcaseBusiness className="absolute bottom-5 left-1/2 h-10 w-10 -translate-x-1/2 text-violet-800" />
+        </div>
+        <div className="absolute bottom-11 right-9 rotate-6 rounded-2xl border border-violet-200 bg-white p-4 shadow-[0_18px_42px_-30px_rgba(49,46,129,0.75)]">
+          <Ticket className="h-12 w-12 text-violet-700" />
+          <div className="mt-3 h-2 w-20 rounded-full bg-violet-100" />
+          <div className="mt-2 h-2 w-14 rounded-full bg-slate-200" />
+        </div>
+      </div>
+    </VisualShell>
   );
 }
 
-function CurrentTripsIllustration({ ariaLabel }: { ariaLabel: string }) {
+function PastTripsVisual({ tab }: { tab: TripTab }) {
   return (
-    <svg className="h-28 w-28 text-violet-800 sm:h-32 sm:w-32" viewBox="0 0 160 160" fill="none" role="img" aria-label={ariaLabel}>
-      <circle cx="80" cy="80" r="58" fill="#ECE7FF" />
-      <path d="M43 104c14 11 60 11 74 0" stroke="#8B5CF6" strokeLinecap="round" strokeWidth="4" />
-      <path d="M50 96l20-52 26 20 22-11-18 59-28-21-22 5Z" fill="white" stroke="currentColor" strokeLinejoin="round" strokeWidth="4" />
-      <path d="M70 44l2 47M96 64l4 48" stroke="#8B5CF6" strokeLinecap="round" strokeWidth="3" />
-      <path d="M43 55c11-9 22-13 36-13" stroke="#8B5CF6" strokeDasharray="1 8" strokeLinecap="round" strokeWidth="3" />
-      <path d="M113 42l9 4-9 4 3-4-3-4Z" fill="#6D28D9" />
-      <circle cx="104" cy="96" r="7" fill="#6D28D9" />
-    </svg>
+    <VisualShell tab={tab}>
+      <div className="relative h-52 w-64">
+        <div className="absolute left-9 top-8 h-36 w-44 -rotate-6 rounded-3xl border border-violet-200 bg-white p-4 shadow-[0_18px_42px_-30px_rgba(49,46,129,0.75)]">
+          <div className="h-16 rounded-2xl bg-violet-100" />
+          <div className="mt-4 flex items-center gap-2">
+            <CalendarClock className="h-5 w-5 text-violet-700" />
+            <div className="h-2 flex-1 rounded-full bg-slate-200" />
+          </div>
+          <div className="mt-3 h-2 w-24 rounded-full bg-violet-200" />
+        </div>
+        <div className="absolute bottom-9 right-8 rounded-2xl border border-violet-200 bg-white p-4 shadow-[0_18px_42px_-30px_rgba(49,46,129,0.65)]">
+          <MapPin className="h-9 w-9 text-violet-800" />
+        </div>
+        <div className="absolute left-16 top-[3.25rem] h-3 w-3 rounded-full bg-violet-700" />
+        <div className="absolute left-28 top-28 h-3 w-3 rounded-full bg-violet-500" />
+        <div className="absolute right-[4.25rem] top-20 h-3 w-3 rounded-full bg-violet-700" />
+      </div>
+    </VisualShell>
+  );
+}
+
+function CancelledTripsVisual({ tab }: { tab: TripTab }) {
+  return (
+    <VisualShell tab={tab}>
+      <div className="relative h-52 w-64">
+        <div className="absolute left-8 top-9 h-36 w-48 rounded-3xl border border-violet-200 bg-white p-5 shadow-[0_18px_42px_-30px_rgba(49,46,129,0.75)]">
+          <Route className="h-24 w-36 text-violet-300" strokeWidth={1.8} />
+          <ArrowRightLeft className="absolute left-20 top-16 h-9 w-9 text-violet-800" />
+          <MapPin className="absolute bottom-5 left-6 h-7 w-7 text-violet-700" />
+        </div>
+        <div className="absolute bottom-9 right-8 rounded-full border border-violet-200 bg-white p-4 shadow-[0_18px_42px_-30px_rgba(49,46,129,0.65)]">
+          <CircleX className="h-11 w-11 text-violet-800" />
+        </div>
+      </div>
+    </VisualShell>
   );
 }
