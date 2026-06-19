@@ -10,10 +10,8 @@ export default function SecurityPage() {
   return (
     <>
       <AppHeader showAccountBackLink />
-      <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
-        <div className="page-shell min-w-0">
-          <SecurityDashboardPage />
-        </div>
+      <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
+        <SecurityDashboardPage />
       </main>
       <Footer />
     </>
