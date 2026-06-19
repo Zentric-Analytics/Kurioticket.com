@@ -1022,7 +1022,7 @@ export default function Home() {
                       }
                     }}
                     placeholder={t("homeNewsletterPlaceholder")}
-                    className="focus-ring h-10 min-w-0 flex-1 rounded-lg border border-slate-200 bg-slate-50/70 px-3 text-sm font-semibold text-slate-950 shadow-inner shadow-slate-200/50 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:min-w-[11rem] sm:px-3.5"
+                    className="focus-ring h-12 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50/70 px-4 text-base font-semibold text-slate-950 shadow-inner shadow-slate-200/50 placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 sm:h-10 sm:min-w-[11rem] sm:rounded-lg sm:px-3.5 sm:text-sm"
                     aria-label={t("homeEmailAddress")}
                     disabled={newsletterPending}
                     required
@@ -1030,7 +1030,7 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    className="focus-ring h-10 shrink-0 whitespace-nowrap rounded-lg bg-indigo-700 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:px-4"
+                    className="focus-ring h-12 shrink-0 whitespace-nowrap rounded-xl bg-indigo-700 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition hover:bg-indigo-800 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:shadow-none sm:h-10 sm:rounded-lg sm:px-4"
                     aria-busy={newsletterPending}
                     disabled={newsletterPending}
                   >
