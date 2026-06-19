@@ -1,56 +1,46 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import Link from "next/link";
 import { AccountSectionHeader } from "@/components/dashboard/DashboardGrid";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
 import { cn } from "@/lib/utils";
 
 type TripHistoryTab = "past" | "cancelled";
-type TripStatusTab = "upcoming" | TripHistoryTab;
+type TripStatusTab = "active" | TripHistoryTab;
+type MobileTripTab = TripStatusTab;
 
-const tripTabs: Array<{ id: TripStatusTab; labelKey: string }> = [
-  { id: "upcoming", labelKey: "accountDashboard.trips.history.tabs.upcoming" },
+const mobileTripTabs: Array<{ id: MobileTripTab; labelKey: string }> = [
+  { id: "active", labelKey: "accountDashboard.trips.history.tabs.active" },
   { id: "past", labelKey: "accountDashboard.trips.history.tabs.past" },
   { id: "cancelled", labelKey: "accountDashboard.trips.history.tabs.cancelled" },
 ];
 
-type TripEmptyStateConfig = {
-  titleKey: string;
-  bodyKey: string;
-  illustration: "current" | TripHistoryTab;
-  primaryCta?: { labelKey: string; href: string };
-  secondaryCta?: { labelKey: string; href: string };
-  subtleCta?: { labelKey: string; href: string };
-};
-
-const emptyStates: Record<TripStatusTab, TripEmptyStateConfig> = {
-  upcoming: {
+const mobileEmptyStates: Record<MobileTripTab, { titleKey: string; bodyKey: string; illustration: "current" | TripHistoryTab }> = {
+  active: {
     titleKey: "accountDashboard.trips.current.empty.title",
     bodyKey: "accountDashboard.trips.current.empty.body",
     illustration: "current",
-    primaryCta: { labelKey: "accountDashboard.trips.current.empty.searchFlights", href: "/flights" },
-    secondaryCta: { labelKey: "accountDashboard.trips.current.empty.exploreHotels", href: "/hotels" },
   },
   past: {
     titleKey: "accountDashboard.trips.history.empty.past.title",
     bodyKey: "accountDashboard.trips.history.empty.past.body",
     illustration: "past",
-    primaryCta: { labelKey: "accountDashboard.trips.history.empty.past.cta", href: "/" },
   },
   cancelled: {
     titleKey: "accountDashboard.trips.history.empty.cancelled.title",
     bodyKey: "accountDashboard.trips.history.empty.cancelled.body",
     illustration: "cancelled",
-    subtleCta: { labelKey: "accountDashboard.trips.history.empty.cancelled.cta", href: "/dashboard/support" },
   },
 };
+
+const desktopTripTabs: Array<{ id: TripStatusTab; labelKey: string }> = mobileTripTabs;
 
 export function TripsManagementPage() {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-  const [activeTab, setActiveTab] = useState<TripStatusTab>("upcoming");
+  const [activeMobileTab, setActiveMobileTab] = useState<MobileTripTab>("active");
+  const [activeDesktopTab, setActiveDesktopTab] = useState<TripStatusTab>("active");
   const [showLookup, setShowLookup] = useState(false);
   const [lookupMessage, setLookupMessage] = useState<string | null>(null);
   const lookupPopoverRef = useRef<HTMLDivElement | null>(null);
@@ -99,7 +89,8 @@ export function TripsManagementPage() {
     setLookupMessage(t("accountDashboard.trips.lookup.unavailable"));
   }
 
-  const activeEmptyState = emptyStates[activeTab];
+  const mobileEmptyState = mobileEmptyStates[activeMobileTab];
+  const desktopEmptyState = mobileEmptyStates[activeDesktopTab];
 
   return (
     <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[62rem] space-y-5 lg:mt-0 lg:space-y-6 xl:max-w-[64rem]">
@@ -189,11 +180,65 @@ export function TripsManagementPage() {
         </div>
       </div>
 
-      <section aria-labelledby="trips-panel-title" className="space-y-5">
-        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-slate-50/80 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
-          <div className="grid min-w-max grid-cols-3 gap-1 sm:min-w-0">
-            {tripTabs.map((tab) => {
-              const isActive = activeTab === tab.id;
+      <section aria-labelledby="mobile-trips-panel-title" className="space-y-7 lg:hidden">
+        <div className="flex min-w-0 items-center gap-7 overflow-hidden" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
+          {mobileTripTabs.map((tab) => {
+            const isActive = activeMobileTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`${tab.id}-mobile-trips-panel`}
+                id={`${tab.id}-mobile-trips-tab`}
+                onClick={() => setActiveMobileTab(tab.id)}
+                className={cn(
+                  "focus-ring inline-flex min-h-10 shrink-0 items-center justify-center whitespace-nowrap border-b-2 px-0.5 text-sm font-bold transition",
+                  isActive
+                    ? "border-violet-700 text-violet-800"
+                    : "border-transparent text-slate-800 hover:border-violet-200 hover:text-slate-950",
+                )}
+              >
+                <span>{t(tab.labelKey)}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div
+          id={`${activeMobileTab}-mobile-trips-panel`}
+          role="tabpanel"
+          aria-labelledby={`${activeMobileTab}-mobile-trips-tab`}
+          className="px-1 pb-10 pt-1"
+        >
+          <div className="flex min-w-0 flex-col items-center gap-5 text-center">
+            {mobileEmptyState.illustration === "current" ? (
+              <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
+            ) : (
+              <HistoryEmptyIllustration
+                variant={mobileEmptyState.illustration}
+                ariaLabel={t(mobileEmptyState.illustration === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")}
+              />
+            )}
+            <div className="max-w-lg">
+              <h2 id="mobile-trips-panel-title" className="text-2xl font-bold tracking-[-0.025em] text-slate-950">
+                {t(mobileEmptyState.titleKey)}
+              </h2>
+              <p className="mt-3 text-sm font-medium leading-6 text-slate-700">
+                {t(mobileEmptyState.bodyKey)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="desktop-trips-panel-title" className="hidden pt-2 lg:block">
+        <div className="border-b border-slate-200/80" role="tablist" aria-label={t("accountDashboard.trips.history.filtersAriaLabel")}>
+          <div className="flex min-w-0 gap-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {desktopTripTabs.map((tab) => {
+              const isActive = activeDesktopTab === tab.id;
 
               return (
                 <button
@@ -201,14 +246,14 @@ export function TripsManagementPage() {
                   type="button"
                   role="tab"
                   aria-selected={isActive}
-                  aria-controls={`${tab.id}-trips-panel`}
-                  id={`${tab.id}-trips-tab`}
-                  onClick={() => setActiveTab(tab.id)}
+                  aria-controls={`${tab.id}-desktop-trips-panel`}
+                  id={`${tab.id}-desktop-trips-tab`}
+                  onClick={() => setActiveDesktopTab(tab.id)}
                   className={cn(
-                    "focus-ring inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-5 text-sm font-bold transition sm:px-6",
+                    "focus-ring relative -mb-px inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center whitespace-nowrap border-b-2 px-1 text-sm font-semibold transition",
                     isActive
-                      ? "bg-violet-700 text-white shadow-[0_14px_30px_-20px_rgba(79,70,229,0.95)]"
-                      : "text-slate-700 hover:bg-white hover:text-slate-950",
+                      ? "border-violet-800 text-violet-900"
+                      : "border-transparent text-slate-600 hover:border-violet-300 hover:text-slate-900",
                   )}
                 >
                   {t(tab.labelKey)}
@@ -219,71 +264,32 @@ export function TripsManagementPage() {
         </div>
 
         <div
-          id={`${activeTab}-trips-panel`}
+          id={`${activeDesktopTab}-desktop-trips-panel`}
           role="tabpanel"
-          aria-labelledby={`${activeTab}-trips-tab`}
-          className="rounded-[1.65rem] border border-slate-200/90 bg-white px-5 py-8 shadow-[0_24px_70px_-58px_rgba(49,46,129,0.75)] sm:px-8 sm:py-10 lg:px-10 lg:py-14"
+          aria-labelledby={`${activeDesktopTab}-desktop-trips-tab`}
+          className="flex min-h-[25rem] items-center justify-center px-1 pb-16 pt-12 xl:min-h-[28rem] xl:pb-20 xl:pt-14"
         >
-          <TripEmptyState state={activeEmptyState} titleId="trips-panel-title" t={t} />
+          <div className="flex min-w-0 flex-col items-center gap-5 text-center">
+            {desktopEmptyState.illustration === "current" ? (
+              <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
+            ) : (
+              <HistoryEmptyIllustration
+                variant={desktopEmptyState.illustration}
+                ariaLabel={t(desktopEmptyState.illustration === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")}
+              />
+            )}
+            <div className="max-w-lg">
+              <h2 id="desktop-trips-panel-title" className="text-3xl font-bold tracking-[-0.025em] text-slate-950">
+                {t(desktopEmptyState.titleKey)}
+              </h2>
+              <p className="mt-3 text-base font-medium leading-6 text-slate-700">
+                {t(desktopEmptyState.bodyKey)}
+              </p>
+            </div>
+          </div>
         </div>
       </section>
     </section>
-  );
-}
-
-
-function TripEmptyState({ state, titleId, t }: { state: TripEmptyStateConfig; titleId: string; t: (key: string) => string }) {
-  return (
-    <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
-      <div className="flex h-32 w-32 items-center justify-center rounded-[2rem] border border-violet-100 bg-violet-50/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] sm:h-36 sm:w-36">
-        {state.illustration === "current" ? (
-          <CurrentTripsIllustration ariaLabel={t("accountDashboard.trips.illustration.currentAriaLabel")} />
-        ) : (
-          <HistoryEmptyIllustration
-            variant={state.illustration}
-            ariaLabel={t(state.illustration === "cancelled" ? "accountDashboard.trips.illustration.cancelledAriaLabel" : "accountDashboard.trips.illustration.historyAriaLabel")}
-          />
-        )}
-      </div>
-
-      <div className="mt-6 max-w-xl sm:mt-7">
-        <h2 id={titleId} className="text-2xl font-black tracking-[-0.025em] text-slate-950 sm:text-[1.75rem] lg:text-3xl lg:font-bold">
-          {t(state.titleKey)}
-        </h2>
-        <p className="mx-auto mt-3 max-w-lg text-sm font-medium leading-6 text-slate-600 sm:text-base sm:leading-7">
-          {t(state.bodyKey)}
-        </p>
-      </div>
-
-      {state.primaryCta || state.secondaryCta || state.subtleCta ? (
-        <div className="mt-7 flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row sm:items-center">
-          {state.primaryCta ? (
-            <Link
-              href={state.primaryCta.href}
-              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-xl bg-violet-700 px-6 text-sm font-bold text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] transition hover:bg-violet-800"
-            >
-              {t(state.primaryCta.labelKey)}
-            </Link>
-          ) : null}
-          {state.secondaryCta ? (
-            <Link
-              href={state.secondaryCta.href}
-              className="focus-ring inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-200 bg-white px-6 text-sm font-bold text-slate-900 transition hover:border-violet-200 hover:bg-violet-50/60 hover:text-violet-900"
-            >
-              {t(state.secondaryCta.labelKey)}
-            </Link>
-          ) : null}
-          {state.subtleCta ? (
-            <Link
-              href={state.subtleCta.href}
-              className="focus-ring inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-bold text-violet-800 underline-offset-4 transition hover:text-violet-950 hover:underline"
-            >
-              {t(state.subtleCta.labelKey)}
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
   );
 }
 
