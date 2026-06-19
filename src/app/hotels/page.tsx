@@ -467,7 +467,7 @@ export default function HotelsSearchPage() {
     <>
       <AppHeader />
       <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
-        <section className="relative isolate overflow-visible bg-slate-950">
+        <section className="relative isolate overflow-hidden bg-slate-950">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={hotelsHeroImage}
@@ -482,7 +482,7 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[44rem] flex-col justify-start pb-10 pt-14 sm:min-h-[42rem] sm:pb-12 sm:pt-16 lg:min-h-[43rem] lg:pb-14 lg:pt-[4.5rem]">
+          <div className="page-shell relative z-10 flex min-h-[46rem] flex-col justify-between gap-12 pb-10 pt-14 sm:min-h-[44rem] sm:gap-14 sm:pb-12 sm:pt-16 lg:min-h-[45rem] lg:gap-16 lg:pb-16 lg:pt-[4.5rem]">
             <div className="max-w-2xl text-white">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
                 {t("hotelsHeroEyebrow")}
@@ -495,7 +495,7 @@ export default function HotelsSearchPage() {
               </p>
             </div>
 
-            <div className="mt-10 w-full max-w-6xl sm:mt-auto">
+            <div className="w-full max-w-6xl self-center">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
                 className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!shadow-[0_32px_78px_-30px_rgba(15,23,42,0.66)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3.5 lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-4 lg:[&>form>div>div]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_132px] lg:[&>form>div>div>*]:!min-h-[62px] lg:[&>form>div>div>div:last-child>button]:!min-h-[62px]"
