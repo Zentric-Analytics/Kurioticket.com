@@ -200,8 +200,8 @@ export function AccountMenuPage() {
     <section className="overflow-x-hidden" aria-labelledby="account-title">
       <div className="relative isolate flex h-[220px] w-full items-center overflow-hidden bg-slate-950 sm:h-[250px] lg:h-[280px]">
         <Image
-          src="/images/premium/dashboard/kurioticket-account-dashboard-airport-terminal-traveler-001.svg"
-          alt="Traveler with luggage looking out over airport gates"
+          src="/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg"
+          alt="Airplane parked at an airport terminal gate"
           fill
           priority
           sizes="100vw"
