@@ -482,7 +482,7 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[42rem] flex-col justify-center py-14 sm:min-h-[38rem] sm:py-16 lg:min-h-[40rem] lg:py-18">
+          <div className="page-shell relative z-10 flex min-h-[44rem] flex-col justify-start pb-24 pt-14 sm:min-h-[39rem] sm:pb-28 sm:pt-16 lg:min-h-[40rem] lg:pb-32 lg:pt-[4.5rem]">
             <div className="max-w-2xl text-white">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
                 {t("hotelsHeroEyebrow")}
@@ -495,16 +495,16 @@ export default function HotelsSearchPage() {
               </p>
             </div>
 
-            <div className="mt-8 max-w-6xl sm:mt-10 lg:mt-12">
+            <div className="mt-10 w-full max-w-6xl sm:mt-auto sm:pt-12 lg:pt-14">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
-                className="[&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-2.5 [&>form>div]:!shadow-[0_30px_72px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3 lg:[&>form>div]:!p-3.5"
+                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!shadow-[0_32px_78px_-30px_rgba(15,23,42,0.66)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3.5 lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-4 lg:[&>form>div>div]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_132px] lg:[&>form>div>div>*]:!min-h-[62px] lg:[&>form>div>div>div:last-child>button]:!min-h-[62px]"
               />
             </div>
           </div>
         </section>
 
-        <div className="page-shell relative mx-auto mt-10 max-w-6xl space-y-11 sm:mt-12 md:mt-14 md:space-y-14 lg:mt-16">
+        <div className="page-shell relative mx-auto mt-14 max-w-6xl space-y-11 sm:mt-16 md:mt-[4.5rem] md:space-y-14 lg:mt-20">
           <section
             className="space-y-4"
             aria-labelledby="hotel-destinations-heading"
