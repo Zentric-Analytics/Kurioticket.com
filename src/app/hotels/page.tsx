@@ -482,7 +482,7 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[44rem] flex-col justify-start pb-24 pt-14 sm:min-h-[39rem] sm:pb-28 sm:pt-16 lg:min-h-[40rem] lg:pb-32 lg:pt-[4.5rem]">
+          <div className="page-shell relative z-10 flex min-h-[44rem] flex-col justify-start pb-24 pt-14 sm:min-h-[39rem] sm:pb-44 sm:pt-16 lg:min-h-[40rem] lg:pb-48 lg:pt-[4.5rem]">
             <div className="max-w-2xl text-white">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
                 {t("hotelsHeroEyebrow")}
@@ -495,16 +495,25 @@ export default function HotelsSearchPage() {
               </p>
             </div>
 
-            <div className="mt-10 w-full max-w-6xl sm:mt-auto sm:pt-12 lg:pt-14">
+            <div className="mt-10 w-full max-w-6xl sm:hidden">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
-                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!shadow-[0_32px_78px_-30px_rgba(15,23,42,0.66)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3.5 lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-4 lg:[&>form>div>div]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_132px] lg:[&>form>div>div>*]:!min-h-[62px] lg:[&>form>div>div>div:last-child>button]:!min-h-[62px]"
+                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-3 [&>form>div]:!shadow-[0_32px_78px_-30px_rgba(15,23,42,0.66)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06]"
+              />
+            </div>
+          </div>
+
+          <div className="page-shell absolute inset-x-0 bottom-[-5.5rem] z-30 hidden sm:block lg:bottom-[-6rem]">
+            <div className="mx-auto max-w-6xl">
+              <HotelSearchBar
+                introLabel={hotelSearchIntroLabel}
+                className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-3.5 [&>form>div]:!shadow-[0_32px_78px_-30px_rgba(15,23,42,0.66)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-4 lg:[&>form>div>div]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_132px] lg:[&>form>div>div>*]:!min-h-[62px] lg:[&>form>div>div>div:last-child>button]:!min-h-[62px]"
               />
             </div>
           </div>
         </section>
 
-        <div className="page-shell relative mx-auto mt-20 max-w-6xl space-y-11 sm:mt-24 md:mt-28 md:space-y-14 lg:mt-32">
+        <div className="page-shell relative mx-auto mt-20 max-w-6xl space-y-11 sm:mt-36 md:mt-40 md:space-y-14 lg:mt-44">
           <section
             className="space-y-4"
             aria-labelledby="hotel-destinations-heading"
