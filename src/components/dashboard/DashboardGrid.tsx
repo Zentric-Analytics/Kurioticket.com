@@ -725,7 +725,10 @@ export function SecurityDashboardPage() {
         id={securityActionStatusId}
         role="status"
         aria-live="polite"
-        className="min-h-5 px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2"
+        className={cn(
+          "px-1 text-sm font-medium leading-5 text-slate-600 sm:px-2",
+          actionMessage ? "" : "sr-only",
+        )}
       >
         {actionMessage}
       </p>

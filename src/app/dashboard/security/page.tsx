@@ -10,7 +10,7 @@ export default function SecurityPage() {
   return (
     <>
       <AppHeader showAccountBackLink />
-      <main className="bg-[#f3f7fc] pb-10 pt-0 sm:pb-14 lg:pb-16">
+      <main className="bg-[#f3f7fc] pb-10 pt-0 sm:pb-14">
         <SecurityDashboardPage />
       </main>
       <Footer />
