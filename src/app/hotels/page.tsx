@@ -482,7 +482,7 @@ export default function HotelsSearchPage() {
             <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-t from-slate-950/58 via-slate-950/18 to-transparent" />
           </div>
 
-          <div className="page-shell relative z-10 flex min-h-[30rem] flex-col justify-end pb-36 pt-16 sm:min-h-[30rem] sm:pb-32 sm:pt-20 lg:min-h-[32rem] lg:pb-36">
+          <div className="page-shell relative z-10 flex min-h-[42rem] flex-col justify-center py-14 sm:min-h-[38rem] sm:py-16 lg:min-h-[40rem] lg:py-18">
             <div className="max-w-2xl text-white">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/75">
                 {t("hotelsHeroEyebrow")}
@@ -494,10 +494,8 @@ export default function HotelsSearchPage() {
                 {t("hotelsHeroSubtitle")}
               </p>
             </div>
-          </div>
 
-          <div className="page-shell absolute inset-x-0 bottom-[-22rem] z-30 sm:bottom-[-76px] lg:bottom-[-80px]">
-            <div className="mx-auto max-w-6xl">
+            <div className="mt-8 max-w-6xl sm:mt-10 lg:mt-12">
               <HotelSearchBar
                 introLabel={hotelSearchIntroLabel}
                 className="[&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-2.5 [&>form>div]:!shadow-[0_30px_72px_-30px_rgba(15,23,42,0.62)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] sm:[&>form>div]:!p-3 lg:[&>form>div]:!p-3.5"
@@ -506,7 +504,7 @@ export default function HotelsSearchPage() {
           </div>
         </section>
 
-        <div className="page-shell relative mx-auto mt-[26rem] max-w-6xl space-y-11 sm:mt-56 md:mt-60 md:space-y-14 lg:mt-56">
+        <div className="page-shell relative mx-auto mt-10 max-w-6xl space-y-11 sm:mt-12 md:mt-14 md:space-y-14 lg:mt-16">
           <section
             className="space-y-4"
             aria-labelledby="hotel-destinations-heading"
