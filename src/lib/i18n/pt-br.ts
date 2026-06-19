@@ -49,6 +49,10 @@ export const translations: TranslationDictionary = {
   preparing: "Não disponível",
   flights: "Voos",
   hotels: "Hotéis",
+  hotelsHeroEyebrow: "ESTADIAS PREMIUM, COMPARADAS COM CLAREZA",
+  hotelsHeroTitle: "Encontre a estadia que faz a viagem começar bem.",
+  hotelsHeroSubtitle:
+    "Compare hotéis em um só lugar, de chegadas urbanas sofisticadas a escapadas relaxantes em resorts.",
   cars: "Carros",
   deals: "Ofertas",
   logout: "Sair",

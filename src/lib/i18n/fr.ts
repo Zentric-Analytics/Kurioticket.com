@@ -43,6 +43,10 @@ export const translations: TranslationDictionary = {
   mobileInfoLegalHeading: "Infos et mentions légales",
   flights: "Vols",
   hotels: "Hôtels",
+  hotelsHeroEyebrow: "SÉJOURS PREMIUM, COMPARÉS CLAIREMENT",
+  hotelsHeroTitle: "Trouvez le séjour qui fait bien commencer votre voyage.",
+  hotelsHeroSubtitle:
+    "Comparez les hôtels au même endroit, des arrivées urbaines soignées aux escapades faciles en resort.",
   cars: "Voitures",
   deals: "Offres",
   saved: "Enregistrés",

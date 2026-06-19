@@ -532,6 +532,10 @@ export const translations: TranslationDictionary = {
 
   flights: "Flüge",
   hotels: "Unterkünfte",
+  hotelsHeroEyebrow: "PREMIUM-AUFENTHALTE, KLAR VERGLICHEN",
+  hotelsHeroTitle: "Finden Sie den Aufenthalt, mit dem Ihre Reise richtig beginnt.",
+  hotelsHeroSubtitle:
+    "Vergleichen Sie Hotels an einem Ort, von stilvollen Städtereisen bis zu entspannten Resortaufenthalten.",
   cars: "Mietwagen",
   search: "Suchen",
   deals: "Angebote",
