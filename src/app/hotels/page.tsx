@@ -505,7 +505,7 @@ export default function HotelsSearchPage() {
 
         </section>
 
-        <div className="page-shell relative z-20 mx-auto -mt-16 mb-12 hidden max-w-6xl sm:block md:mb-14 lg:-mt-20 lg:mb-16">
+        <div className="page-shell relative z-20 mx-auto -mt-32 mb-16 hidden max-w-6xl sm:block md:-mt-36 md:mb-20 lg:-mt-40 lg:mb-24">
           <HotelSearchBar
             introLabel={hotelSearchIntroLabel}
             className="!max-w-6xl [&>p]:hidden [&>form]:!mt-0 [&>form>div]:!rounded-[1.75rem] [&>form>div]:!border-white/75 [&>form>div]:!bg-white/95 [&>form>div]:!p-3.5 [&>form>div]:!shadow-[0_32px_78px_-30px_rgba(15,23,42,0.66)] [&>form>div]:!ring-1 [&>form>div]:!ring-slate-950/[0.06] lg:[&>form>div]:!rounded-[2rem] lg:[&>form>div]:!p-4 lg:[&>form>div>div]:!grid-cols-[minmax(0,2.1fr)_minmax(0,1.45fr)_minmax(0,1.18fr)_132px] lg:[&>form>div>div>*]:!min-h-[62px] lg:[&>form>div>div>div:last-child>button]:!min-h-[62px]"
