@@ -68,14 +68,14 @@ function PreferenceSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}>
-      <div className="max-w-2xl">
+    <section className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-none sm:p-6" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}>
+      <div>
         <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`} className="text-lg font-semibold leading-7 text-slate-950">
           {title}
         </h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
       </div>
-      <div className="mt-5 grid max-w-[34rem] gap-4 sm:gap-5">{children}</div>
+      <div className="mt-5 grid w-full gap-4 sm:max-w-lg sm:gap-5">{children}</div>
     </section>
   );
 }
@@ -85,15 +85,15 @@ export default function PreferencesPage() {
     <>
       <AppHeader showAccountBackLink />
       <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
-        <div className="mx-auto min-w-0 max-w-[60rem] space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-6 lg:py-10">
-          <header className="px-1 pb-2 text-left sm:px-2 sm:pb-3">
+        <div className="mx-auto min-w-0 max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          <header className="pb-2 text-left sm:pb-3">
             <h1 className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">Booking preferences</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
               Set your default travel preferences for faster and more relevant bookings.
             </p>
           </header>
 
-          <form className="space-y-6" action="#">
+          <form className="w-full space-y-6" action="#">
             {textFieldSections.map((section) => (
               <PreferenceSection key={section.title} title={section.title} description={section.description}>
                 {section.fields.map((field) => (
