@@ -622,22 +622,24 @@ export function SavedDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto min-w-0 max-w-[68rem] px-1 pb-12 pt-2 sm:px-2 sm:pt-0" aria-labelledby="saved-dashboard-title">
-      <AccountSectionHeader
-        title={t["accountDashboard.saved.title"]}
-        description={t["accountDashboard.saved.description"]}
-        titleId="saved-dashboard-title"
-      />
+    <section className="mx-auto min-w-0 max-w-[72rem] bg-white pb-12 pt-3 sm:pt-6" aria-labelledby="saved-dashboard-title">
+      <div className="flex min-w-0 items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-800 sm:text-4xl">
+            {t["accountDashboard.saved.title"]}
+          </h1>
+        </div>
+      </div>
 
-      <div className="flex min-h-[30rem] items-start justify-center px-3 pb-10 pt-12 sm:min-h-[34rem] sm:pt-16 lg:pt-20">
+      <div className="flex min-h-[30rem] items-start justify-center px-3 pb-10 pt-10 sm:min-h-[34rem] sm:pt-12 lg:pt-14">
         <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
           <h2 className="text-2xl font-black tracking-[-0.035em] text-navy sm:text-3xl lg:font-bold">
             {t["accountDashboard.saved.emptyTitle"]}
           </h2>
-          <div className="mt-8 w-full sm:mt-10">
+          <div className="mt-5 w-full sm:mt-6">
             <SavedEmptyStateIllustration />
           </div>
-          <p className="mx-auto mt-7 max-w-lg text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
+          <p className="mx-auto mt-4 max-w-lg text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
             {t["accountDashboard.saved.emptyDescription"]}
           </p>
           <LinkButton
