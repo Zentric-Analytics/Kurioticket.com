@@ -599,21 +599,26 @@ export function SavedDashboardPage() {
   const { t } = useLocale();
 
   return (
-    <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
-      <AccountSectionHeader title={t["accountDashboard.saved.title"]} description={t["accountDashboard.saved.description"]} titleId="saved-dashboard-title" />
-      <div className="px-1 py-8 sm:px-2 sm:py-10 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-16 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
-        <div className="mx-auto flex max-w-xl flex-col items-center text-center">
-          <h2 className="text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem] lg:font-bold">
+    <section className="mx-auto min-w-0 max-w-[68rem] px-1 pb-12 pt-2 sm:px-2 sm:pt-0" aria-labelledby="saved-dashboard-title">
+      <h1 id="saved-dashboard-title" className="text-[1.35rem] font-medium leading-8 tracking-[-0.025em] text-slate-700 sm:text-2xl">
+        {t["accountDashboard.saved.title"]}
+      </h1>
+
+      <div className="flex min-h-[30rem] items-start justify-center px-3 pb-10 pt-14 sm:min-h-[34rem] sm:pt-20 lg:pt-24">
+        <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
+          <h2 className="text-xl font-medium tracking-[-0.02em] text-slate-600 sm:text-2xl">
             {t["accountDashboard.saved.emptyTitle"]}
           </h2>
-          <SavedEmptyStateIllustration />
-          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">
+          <div className="mt-8 w-full sm:mt-10">
+            <SavedEmptyStateIllustration />
+          </div>
+          <p className="mx-auto mt-7 max-w-lg text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
             {t["accountDashboard.saved.emptyDescription"]}
           </p>
           <LinkButton
-            href="/dashboard"
+            href="/dashboard/account"
             size="lg"
-            className="mt-5 w-full rounded-lg bg-blue-600 px-8 text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] hover:bg-blue-700 sm:max-w-[8rem]"
+            className="mt-4 w-full rounded-lg bg-blue-600 px-8 text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] hover:bg-blue-700 sm:max-w-[8rem]"
           >
             {t["accountDashboard.saved.explore"]}
           </LinkButton>
