@@ -213,9 +213,9 @@ export const translations: TranslationDictionary = {
   "accountDashboard.saved.title": "Saved trips list",
   "accountDashboard.saved.description":
     "Your saved trips will appear here for easy reference when you are ready to compare routes, fares, and stays.",
-  "accountDashboard.saved.emptyTitle": "Nothing here...yet.",
+  "accountDashboard.saved.emptyTitle": "Nothing here yet",
   "accountDashboard.saved.emptyDescription":
-    "Just click on the heart icon on any trip, route, or stay and you'll save it here for easy reference later.",
+    "Save trips you love and find them here anytime. Just tap the heart icon on any trip, route, or stay to save it for easy reference later.",
   "accountDashboard.saved.explore": "Back",
   "accountDashboard.saved.openSavedTrips": "Open saved trips",
   "accountDashboard.saved.searchFlights": "Search flights",
