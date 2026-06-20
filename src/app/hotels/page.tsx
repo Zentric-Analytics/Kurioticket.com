@@ -466,8 +466,8 @@ export default function HotelsSearchPage() {
   return (
     <>
       <AppHeader />
-      <main className="relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
-        <section className="relative isolate overflow-visible bg-slate-950">
+      <main className="relative isolate flex-1 overflow-x-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16">
+        <section className="relative z-20 isolate overflow-visible bg-slate-950">
           <div className="absolute inset-0 overflow-hidden">
             <Image
               src={hotelsHeroImage}
@@ -505,7 +505,7 @@ export default function HotelsSearchPage() {
 
         </section>
 
-        <div className="page-shell relative mx-auto mt-16 max-w-6xl space-y-11 sm:mt-20 md:space-y-14 lg:mt-24">
+        <div className="page-shell relative z-0 mx-auto mt-16 max-w-6xl space-y-11 sm:mt-20 md:space-y-14 lg:mt-24">
           <section
             className="mt-10 space-y-4 sm:mt-12 lg:mt-14"
             aria-labelledby="hotel-destinations-heading"
