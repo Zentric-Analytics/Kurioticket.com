@@ -14,6 +14,7 @@ import {
   LockKeyhole,
   Mail,
   Plane,
+  Search,
   Settings,
   ShieldCheck,
   SlidersHorizontal,
@@ -59,7 +60,7 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
     titleKey: "accountDashboard.hub.preferences",
     icon: SlidersHorizontal,
     rows: [
-      { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/preferences", icon: Mail },
+      { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/settings", icon: Mail },
       { labelKey: "accountDashboard.hub.travelPreferences", href: "/dashboard/preferences", icon: Settings },
     ],
   },
@@ -655,38 +656,116 @@ export function SavedDashboardPage() {
   );
 }
 
-export function PreferencesDashboardPage() {
-  const { t } = useLocale();
+const preferenceSections = [
+  {
+    title: "Airports",
+    description: "Search for flights more easily by saving your home airport and other airports you travel through often.",
+    fields: [
+      {
+        label: "Home airport",
+        helper: "Your default departure airport",
+        placeholder: "Search airports",
+        selected: ["Lagos (LOS)"],
+      },
+      {
+        label: "Secondary airports",
+        helper: "Add nearby airports you are happy to compare",
+        placeholder: "Search for alternative airports",
+      },
+    ],
+  },
+  {
+    title: "Airlines",
+    description: "Get better search results by adding your airline preferences.",
+    fields: [
+      {
+        label: "Preferred",
+        helper: "These will show up higher in the results",
+        placeholder: "Search airlines",
+      },
+      {
+        label: "Avoid",
+        helper: "These will show up lower in the results",
+        placeholder: "Search airlines",
+      },
+    ],
+  },
+  {
+    title: "Hotel chains",
+    description: "Get better search results by adding your hotel chain preferences.",
+    fields: [
+      {
+        label: "Preferred",
+        helper: "These will show up higher in the results",
+        placeholder: "Search hotel chains",
+      },
+      {
+        label: "Avoid",
+        helper: "These will show up lower in the results",
+        placeholder: "Search hotel chains",
+      },
+    ],
+  },
+];
 
+function PreferenceInput({
+  label,
+  helper,
+  placeholder,
+  selected = [],
+}: {
+  label: string;
+  helper: string;
+  placeholder: string;
+  selected?: string[];
+}) {
   return (
-    <section aria-labelledby="preferences-title" className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]">
-      <AccountSectionHeader title={t["accountDashboard.preferences.title"]} description={t["accountDashboard.preferences.description"]} titleId="preferences-title" />
-      <div className="grid gap-3">
-        <ListRow
-          title={t["accountDashboard.preferences.personalDetails.title"]}
-          body={t["accountDashboard.preferences.personalDetails.description"]}
-          icon={UserRound}
-          status={t["accountDashboard.preferences.comingSoon"]}
-        />
-        <ListRow
-          title={t["accountDashboard.preferences.notifications.title"]}
-          body={t["accountDashboard.preferences.notifications.description"]}
-          icon={Mail}
-          status={t["accountDashboard.preferences.comingSoon"]}
-        />
-        <ListRow
-          title={t["accountDashboard.preferences.travel.title"]}
-          body={t["accountDashboard.preferences.travel.description"]}
-          icon={Settings}
-          status={t["accountDashboard.preferences.comingSoon"]}
-        />
-        <ListRow
-          title={t["accountDashboard.preferences.securityPrivacy.title"]}
-          body={t["accountDashboard.preferences.securityPrivacy.description"]}
-          href="/legal"
-          icon={ShieldCheck}
-        />
+    <div className="space-y-2">
+      <div>
+        <label className="text-[15px] font-semibold leading-5 text-slate-700">{label}</label>
+        <p className="text-xs leading-5 text-slate-500">{helper}</p>
       </div>
+      <div className="flex min-h-10 w-full max-w-[30rem] items-center gap-2 rounded-md border border-slate-300 bg-white px-3 transition focus-within:border-slate-500 focus-within:ring-2 focus-within:ring-slate-100">
+        {selected.map((item) => (
+          <span key={item} className="inline-flex items-center gap-2 rounded-md bg-slate-600 px-3 py-1.5 text-sm font-semibold text-white">
+            {item}
+            <span aria-hidden="true" className="text-white/80">×</span>
+          </span>
+        ))}
+        <input
+          type="text"
+          placeholder={placeholder}
+          className="min-w-0 flex-1 border-0 bg-transparent py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+        />
+        {selected.length === 0 ? <Search className="size-4 shrink-0 text-slate-500" aria-hidden="true" /> : null}
+      </div>
+    </div>
+  );
+}
+
+export function PreferencesDashboardPage() {
+  return (
+    <section aria-labelledby="preferences-title" className="mx-auto min-w-0 max-w-[62rem] space-y-8 px-4 pt-6 sm:px-6 sm:pt-8 lg:px-6 lg:pt-10">
+      <h1 id="preferences-title" className="sr-only">Booking preferences</h1>
+      {preferenceSections.map((section) => (
+        <section
+          key={section.title}
+          aria-labelledby={`preference-${section.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+          className="rounded-xl border border-slate-200 bg-white px-6 py-7 sm:px-8 sm:py-8"
+        >
+          <div className="max-w-2xl">
+            <h2 id={`preference-${section.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`} className="text-xl font-semibold tracking-[-0.01em] text-slate-800">
+              {section.title}
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-500">{section.description}</p>
+          </div>
+          <div className="mt-5 grid gap-6">
+            {section.fields.map((field) => (
+              <PreferenceInput key={`${section.title}-${field.label}`} {...field} />
+            ))}
+          </div>
+        </section>
+      ))}
     </section>
   );
 }
