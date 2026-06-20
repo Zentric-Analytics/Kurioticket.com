@@ -992,6 +992,46 @@ export const translations: TranslationDictionary = {
   cookiePolicy: "Cookiebeleid",
   legalCenter: "Juridisch centrum",
   serviceGuarantee: "Servicegarantie",
+  serviceGuaranteeEyebrow: "Servicebelofte van Kurioticket",
+  serviceGuaranteeTitle: "Servicegarantie",
+  serviceGuaranteeDescription:
+    "We willen dat reizigers begrijpen hoe Kurioticket werkt en wat ze kunnen verwachten wanneer ze ons platform gebruiken.",
+  serviceGuaranteeFaqHeading: "Veelgestelde vragen",
+  serviceGuaranteeFaqDescription:
+    "Deze antwoorden leggen de rol van Kurioticket uit als reiszoek- en vergelijkingsplatform.",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "Wat garandeert Kurioticket?",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "Kurioticket is ontworpen om reizigers te helpen reisopties duidelijk te vergelijken. We streven naar een betrouwbare platformervaring, transparante zoekinformatie en duidelijke routes naar boekingspagina’s van providers.",
+  serviceGuaranteeFaqResultsDisplayedQuestion:
+    "Hoe worden reisresultaten weergegeven?",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "Resultaten worden weergegeven op basis van informatie die beschikbaar is bij reisproviders, waaronder routes, datums, prijzen en providergegevens wanneer die beschikbaar zijn.",
+  serviceGuaranteeFaqRedirectedQuestion:
+    "Waarom word ik doorgestuurd naar een andere provider?",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "Sommige resultaten worden afgerond op een externe providersite. Wanneer je een van die opties kiest, verwijst Kurioticket je door zodat de provider de boeking, betaling en reisspecifieke service kan afhandelen.",
+  serviceGuaranteeFaqBookDirectlyQuestion:
+    "Boek ik rechtstreeks op Kurioticket?",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket is in de eerste plaats een reiszoek- en vergelijkingsplatform. Als een resultaat je doorverwijst naar een provider, wordt de boeking bij die provider afgerond en niet op Kurioticket.",
+  serviceGuaranteeFaqPricesGuaranteedQuestion:
+    "Zijn prijzen altijd gegarandeerd?",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "Nee. Prijzen kunnen veranderen op basis van beschikbaarheid bij de provider, belastingen, kosten, valuta en timing. Controleer altijd de definitieve prijs op de providerpagina voordat je boekt.",
+  serviceGuaranteeFaqChooseProvidersQuestion:
+    "Hoe kiest Kurioticket providers?",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "Kurioticket werkt met reisproviders en databronnen die relevante zoekresultaten kunnen leveren. Beschikbaarheid, prijzen en getoonde opties kunnen verschillen per route, bestemming en providerdekking.",
+  serviceGuaranteeFaqEncounterIssueQuestion:
+    "Wat moet ik doen als ik een probleem tegenkom?",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "Als het probleem te maken heeft met zoeken, accounttoegang, opgeslagen reizen, alerts of een doorverwijzing vanaf Kurioticket, neem dan contact op met de support van Kurioticket. Als je al bij een provider hebt geboekt, neem dan contact op met die provider voor boekingswijzigingen, terugbetalingen, annuleringen of reisdocumenten.",
+  serviceGuaranteeFaqContactSupportQuestion:
+    "Hoe kan ik contact opnemen met support?",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "Gebruik de klantenservicepagina en vermeld het e-mailadres van je account, wat je probeerde te doen en eventuele route-, hotel- of providergegevens die ons kunnen helpen het probleem te beoordelen.",
+  serviceGuaranteeHelpCardTitle: "Hulp nodig met je account of zoekopdracht?",
+  serviceGuaranteeSupportCta: "Neem contact op met de klantenservice",
   supportEyebrow: "Kurioticket-helpdesk",
   supportTitle: "Klantenservice",
   supportBeforeContactHeading: "Voordat je contact met ons opneemt",
