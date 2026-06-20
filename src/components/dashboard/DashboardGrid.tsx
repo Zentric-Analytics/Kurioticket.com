@@ -9,7 +9,6 @@ import {
   BriefcaseBusiness,
   ChevronRight,
   CircleHelp,
-  Heart,
   Headphones,
   LifeBuoy,
   LockKeyhole,
@@ -124,18 +123,85 @@ type SecuritySettingRowProps = {
 
 function SavedEmptyStateIllustration() {
   return (
-    <div className="relative mx-auto h-44 w-full max-w-[22rem] overflow-hidden" aria-hidden="true">
-      <div className="absolute left-1/2 top-4 h-32 w-32 -translate-x-1/2 rounded-full bg-amber-300" />
-      <div className="absolute bottom-9 left-8 h-24 w-28 -skew-x-12 border border-slate-200 bg-slate-50" />
-      <div className="absolute bottom-9 right-10 h-28 w-32 skew-x-12 border border-slate-200 bg-slate-50" />
-      <div className="absolute bottom-8 left-1/2 h-px w-[18rem] -translate-x-1/2 bg-slate-200" />
-      <div className="absolute left-[6.2rem] top-12 flex size-12 items-center justify-center rounded-full border-2 border-slate-400 bg-white text-rose-500 shadow-sm">
-        <Heart className="size-5 fill-current" />
-      </div>
-      <div className="absolute bottom-11 left-1/2 h-16 w-20 -translate-x-1/2 rounded-t-[2rem] border-2 border-slate-400 bg-white" />
-      <div className="absolute bottom-8 left-[11.5rem] h-20 w-3 rounded-full bg-emerald-300 ring-2 ring-emerald-500" />
-      <div className="absolute bottom-8 right-16 h-14 w-3 rounded-full bg-emerald-300 ring-2 ring-emerald-500" />
-    </div>
+    <svg
+      className="mx-auto h-56 w-full max-w-[25rem] overflow-visible sm:h-60"
+      viewBox="0 0 400 240"
+      fill="none"
+      role="img"
+      aria-label="Saved trip map with a boarding pass, suitcase, pin, heart, and route"
+    >
+      <defs>
+        <linearGradient id="saved-trip-map" x1="76" y1="47" x2="319" y2="205" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#EEF4FF" />
+          <stop offset="0.54" stopColor="#F3E8FF" />
+          <stop offset="1" stopColor="#E0F2FE" />
+        </linearGradient>
+        <linearGradient id="saved-trip-suitcase" x1="139" y1="119" x2="238" y2="213" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#2563EB" />
+          <stop offset="1" stopColor="#4F46E5" />
+        </linearGradient>
+        <linearGradient id="saved-trip-pin" x1="276" y1="53" x2="276" y2="126" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#7C3AED" />
+          <stop offset="1" stopColor="#2563EB" />
+        </linearGradient>
+        <filter id="saved-trip-shadow" x="36" y="26" width="328" height="208" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse">
+          <feDropShadow dx="0" dy="18" floodColor="#0F172A" floodOpacity="0.14" stdDeviation="18" />
+        </filter>
+      </defs>
+
+      <g filter="url(#saved-trip-shadow)">
+        <path
+          d="M73 78.5C73 65.5 83.5 55 96.5 55H303.5C316.5 55 327 65.5 327 78.5V179C327 192.3 316.2 203 303 203H96.8C83.7 203 73 192.3 73 179.2V78.5Z"
+          fill="url(#saved-trip-map)"
+        />
+        <path d="M119 55L101 203" stroke="#BFDBFE" strokeLinecap="round" strokeWidth="3" />
+        <path d="M222 55L202 203" stroke="#DDD6FE" strokeLinecap="round" strokeWidth="3" />
+        <path d="M327 105L73 135" stroke="#C7D2FE" strokeLinecap="round" strokeWidth="3" />
+        <path d="M319 171L88 96" stroke="#DBEAFE" strokeLinecap="round" strokeWidth="3" />
+        <path d="M74 78.5C74 66.1 84.1 56 96.5 56H303.5C315.9 56 326 66.1 326 78.5V179C326 191.7 315.7 202 303 202H96.8C84.2 202 74 191.8 74 179.2V78.5Z" stroke="#C7D2FE" strokeWidth="2" />
+      </g>
+
+      <path
+        d="M113 149C146 111 182 111 208 133C235 155 263 154 297 113"
+        stroke="#2563EB"
+        strokeDasharray="7 9"
+        strokeLinecap="round"
+        strokeWidth="4"
+      />
+      <path d="M109 151L119 145L118 157L109 151Z" fill="#2563EB" />
+      <path d="M299 111L291 122L286 110L299 111Z" fill="#2563EB" />
+
+      <g>
+        <path
+          d="M249 81C249 66.1 261.1 54 276 54C290.9 54 303 66.1 303 81C303 101.5 276 126 276 126C276 126 249 101.5 249 81Z"
+          fill="url(#saved-trip-pin)"
+        />
+        <circle cx="276" cy="81" r="10" fill="white" />
+        <path d="M271.4 79.5C271.4 75.7 276 74 278.3 77C280.6 74 285.2 75.7 285.2 79.5C285.2 84 278.3 87.7 278.3 87.7C278.3 87.7 271.4 84 271.4 79.5Z" fill="#F97316" />
+      </g>
+
+      <g>
+        <rect x="104" y="84" width="91" height="54" rx="12" fill="white" stroke="#93C5FD" strokeWidth="2" />
+        <path d="M116 102H169" stroke="#1E3A8A" strokeLinecap="round" strokeWidth="5" />
+        <path d="M116 118H151" stroke="#60A5FA" strokeLinecap="round" strokeWidth="4" />
+        <path d="M178 84V138" stroke="#DBEAFE" strokeDasharray="5 5" strokeWidth="2" />
+        <path d="M116 95L128 95" stroke="#A78BFA" strokeLinecap="round" strokeWidth="4" />
+      </g>
+
+      <g>
+        <path d="M154 132H235C243.3 132 250 138.7 250 147V196H139V147C139 138.7 145.7 132 154 132Z" fill="url(#saved-trip-suitcase)" />
+        <path d="M173 132V122C173 116.5 177.5 112 183 112H206C211.5 112 216 116.5 216 122V132" stroke="#1E3A8A" strokeLinecap="round" strokeWidth="7" />
+        <path d="M139 164H250" stroke="#93C5FD" strokeOpacity="0.65" strokeWidth="4" />
+        <path d="M167 142V190" stroke="#1E40AF" strokeLinecap="round" strokeOpacity="0.5" strokeWidth="4" />
+        <path d="M222 142V190" stroke="#1E40AF" strokeLinecap="round" strokeOpacity="0.5" strokeWidth="4" />
+        <circle cx="166" cy="202" r="7" fill="#0F172A" />
+        <circle cx="223" cy="202" r="7" fill="#0F172A" />
+      </g>
+
+      <circle cx="95" cy="162" r="14" fill="#E0F2FE" stroke="#38BDF8" strokeWidth="3" />
+      <path d="M90 161L95 166L103 156" stroke="#1E3A8A" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" />
+      <path d="M315 151L332 144L325 160L323 154L315 151Z" fill="#7C3AED" />
+    </svg>
   );
 }
 
@@ -606,19 +672,19 @@ export function SavedDashboardPage() {
 
       <div className="flex min-h-[30rem] items-start justify-center px-3 pb-10 pt-14 sm:min-h-[34rem] sm:pt-20 lg:pt-24">
         <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
-          <h2 className="text-xl font-medium tracking-[-0.02em] text-slate-600 sm:text-2xl">
+          <h2 className="text-2xl font-extrabold tracking-[-0.035em] text-slate-950 sm:text-3xl">
             {t["accountDashboard.saved.emptyTitle"]}
           </h2>
-          <div className="mt-8 w-full sm:mt-10">
+          <div className="mt-7 w-full sm:mt-8">
             <SavedEmptyStateIllustration />
           </div>
-          <p className="mx-auto mt-7 max-w-lg text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
+          <p className="mx-auto mt-7 max-w-xl text-sm font-medium leading-6 text-slate-700 sm:text-base sm:leading-7">
             {t["accountDashboard.saved.emptyDescription"]}
           </p>
           <LinkButton
             href="/dashboard/account"
             size="lg"
-            className="mt-4 w-full rounded-lg bg-blue-600 px-8 text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] hover:bg-blue-700 sm:max-w-[8rem]"
+            className="mt-5 w-full rounded-lg px-8 shadow-[0_18px_36px_-24px_rgba(15,23,42,0.9)] sm:max-w-[8rem]"
           >
             {t["accountDashboard.saved.explore"]}
           </LinkButton>
