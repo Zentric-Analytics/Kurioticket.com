@@ -992,5 +992,44 @@ export const translations: TranslationDictionary = {
   cookiePolicy: "Cookiebeleid",
   legalCenter: "Juridisch centrum",
   serviceGuarantee: "Servicegarantie",
+  supportEyebrow: "Kurioticket-helpdesk",
+  supportTitle: "Klantenservice",
+  supportBeforeContactHeading: "Voordat je contact met ons opneemt",
+  supportBeforeContactDescription:
+    "Vermeld het e-mailadres van je Kurioticket-account, wat je probeerde te doen, de route of het hotel als dat relevant is, en de providerpagina waarnaar je bent doorgestuurd. Stuur geen volledige betaalkaartnummers of gevoelige reisdocumentnummers.",
+  supportTicketHeading: "Maak een supportticket aan",
+  supportFormEmailLabel: "E-mail",
+  supportFormSubjectLabel: "Onderwerp",
+  supportFormCategoryLabel: "Categorie",
+  supportCategorySearchHelp: "Hulp bij zoeken",
+  supportCategoryPriceAlerts: "Prijsalerts",
+  supportCategoryPartnerRedirect: "Partner-doorverwijzing",
+  supportCategoryAccountHelp: "Accounthulp",
+  supportFormMessageLabel: "Waarmee kunnen we helpen?",
+  supportFormMessagePlaceholder:
+    "Deel de route, het hotel, de alert of de accountcontext.",
+  supportFormSubmit: "Verzoek verzenden",
+  supportFaqHeading: "Veelgestelde vragen",
+  supportFaqAccountQuestion: "Hulp bij account en inloggen",
+  supportFaqAccountAnswer:
+    "Kurioticket kan helpen met accounttoegang, inlogproblemen, registratieproblemen, profieltoegang en platformproblemen rond je account.",
+  supportFaqSearchQuestion: "Hulp bij zoeken en resultaten",
+  supportFaqSearchAnswer:
+    "Kurioticket kan helpen wanneer zoeken naar vluchten of hotels niet werkt, resultaten niet laden, filters verwarrend zijn of prijzen en providers niet worden weergegeven zoals verwacht.",
+  supportFaqSavedTripsQuestion: "Opgeslagen reizen en alerts",
+  supportFaqSavedTripsAnswer:
+    "Kurioticket kan helpen met opgeslagen reizen, recente zoekopdrachten, prijsalerts, meldingsproblemen en reisfuncties die aan je account zijn gekoppeld.",
+  supportFaqRedirectQuestion: "Hulp bij boeking of provider-doorverwijzing",
+  supportFaqRedirectAnswer:
+    "Kurioticket kan helpen als een doorverwijzing naar een partner of provider mislukt, de verkeerde pagina opent of de geselecteerde reis- of zoekgegevens niet behoudt.",
+  supportFaqAlreadyBookedQuestion: "Al geboekt bij een provider?",
+  supportFaqAlreadyBookedAnswer:
+    "Als je boeking is afgerond bij een luchtvaartmaatschappij, hotel, reisbureau of externe provider, is die provider verantwoordelijk voor boekingswijzigingen, terugbetalingen, annuleringen, inchecken, boarding, betalingsbewijzen en reisdocumenten.",
+  supportFaqChangeBookingQuestion: "Kan Kurioticket mijn boeking wijzigen?",
+  supportFaqChangeBookingAnswer:
+    "Kurioticket kan alleen helpen met boekingen die rechtstreeks via Kurioticket zijn gemaakt, als en wanneer direct boeken wordt ondersteund. Neem voor boekingen die bij externe providers zijn afgerond rechtstreeks contact op met die provider.",
+  supportFaqWhyRedirectedQuestion: "Waarom ben ik naar een andere provider gestuurd?",
+  supportFaqWhyRedirectedAnswer:
+    "Kurioticket is een reiszoek- en vergelijkingsplatform. Sommige resultaten verwijzen je door naar betrouwbare providers waar je de boeking, betaling en providerspecifieke ondersteuning afrondt.",
   contactSupport: "Support contacteren",
 };
