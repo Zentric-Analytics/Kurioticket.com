@@ -130,6 +130,7 @@ const getSavedTripsDateLocale = (locale: string) => {
   if (normalizedLocale.startsWith("fr")) return "fr-FR";
   if (normalizedLocale.startsWith("es")) return "es-ES";
   if (normalizedLocale.startsWith("it")) return "it-IT";
+  if (normalizedLocale.startsWith("nl")) return "nl-NL";
   if (normalizedLocale === "pt-br" || normalizedLocale.startsWith("pt")) {
     return "pt-BR";
   }
@@ -145,14 +146,25 @@ const parseDateValue = (value?: string) => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const formatDutchShortMonth = (formattedDate: string, locale: string) => {
+  if (!locale.toLowerCase().startsWith("nl")) return formattedDate;
+
+  return formattedDate.replace(/\b([a-z]{3})(?=\s|$)/i, (month) =>
+    month.endsWith(".") ? month : `${month}.`,
+  );
+};
+
 const formatRecentDate = (
   value: string | undefined,
   formatter: Intl.DateTimeFormat,
   fallback: string,
+  locale: string,
 ) => {
   if (!value) return fallback;
   const parsed = parseDateValue(value);
-  return parsed ? formatter.format(parsed) : value;
+  return parsed
+    ? formatDutchShortMonth(formatter.format(parsed), locale)
+    : value;
 };
 
 const isFlightParams = (
@@ -455,12 +467,14 @@ export function SavedTripsAndRecentSearches() {
         entry.params.departureDate,
         shortDateFormatter,
         entry.params.departureDate,
+        locale,
       );
       const inbound = entry.params.returnDate
         ? formatRecentDate(
             entry.params.returnDate,
             shortDateFormatter,
             entry.params.returnDate,
+            locale,
           )
         : t("savedTripsRecentOneWay");
 
@@ -472,11 +486,13 @@ export function SavedTripsAndRecentSearches() {
         entry.params.checkIn,
         shortDateFormatter,
         entry.params.checkIn,
+        locale,
       );
       const checkOut = formatRecentDate(
         entry.params.checkOut,
         shortDateFormatter,
         entry.params.checkOut,
+        locale,
       );
 
       return `${checkIn} – ${checkOut} · ${formatGuestCount(entry.params.guests)} · ${formatRoomCount(entry.params.rooms)}`;
@@ -488,7 +504,7 @@ export function SavedTripsAndRecentSearches() {
   const formatSearchedLabel = (value?: string) =>
     t("savedTripsSearchedDate").replace(
       "{{date}}",
-      formatRecentDate(value, searchedDateFormatter, ""),
+      formatRecentDate(value, searchedDateFormatter, "", locale),
     );
 
   return (
