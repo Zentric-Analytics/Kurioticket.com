@@ -73,7 +73,7 @@ export default function PreferencesPage() {
           </div>
         </header>
 
-        <div className="mx-auto min-w-0 max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div className="mx-auto -mt-6 min-w-0 max-w-6xl space-y-6 px-4 pb-6 pt-0 sm:-mt-8 sm:px-6 sm:pb-8 lg:px-8">
           <form className="w-full space-y-6" action="#">
             {textFieldSections.map((section) => (
               <PreferenceSection key={section.title} title={section.title} description={section.description}>
