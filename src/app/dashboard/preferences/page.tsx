@@ -32,29 +32,6 @@ const textFieldSections = [
   },
 ];
 
-const flightOptionFields = [
-  {
-    id: "preferred-cabin-class",
-    label: "Preferred cabin class",
-    options: ["Economy", "Premium Economy", "Business", "First"],
-  },
-  {
-    id: "preferred-trip-type",
-    label: "Preferred trip type",
-    options: ["One way", "Round trip", "Multi-city"],
-  },
-  {
-    id: "seat-preference",
-    label: "Seat preference",
-    options: ["No preference", "Window", "Aisle", "Extra legroom"],
-  },
-  {
-    id: "baggage-preference",
-    label: "Baggage preference",
-    options: ["No preference", "Carry-on only", "Checked bag"],
-  },
-];
-
 const fieldClassName =
   "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100";
 
@@ -106,23 +83,6 @@ export default function PreferencesPage() {
                 ))}
               </PreferenceSection>
             ))}
-
-            <PreferenceSection title="Flight options" description="Set your common booking defaults.">
-              {flightOptionFields.map((field) => (
-                <div key={field.id} className="min-w-0 space-y-2">
-                  <label htmlFor={field.id} className="block text-sm font-semibold leading-5 text-slate-800">
-                    {field.label}
-                  </label>
-                  <select id={field.id} name={field.id} className={fieldClassName} defaultValue={field.options[0]}>
-                    {field.options.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ))}
-            </PreferenceSection>
 
             <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end">
               <button
