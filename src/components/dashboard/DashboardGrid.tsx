@@ -629,7 +629,7 @@ export function SavedDashboardPage() {
         </div>
       </div>
 
-      <div className="flex min-h-[30rem] items-start justify-center px-3 pb-10 pt-10 sm:min-h-[34rem] sm:pt-12 lg:pt-14">
+      <div className="flex min-h-[34rem] items-start justify-center px-3 pb-10 pt-12 sm:min-h-[38rem] sm:pt-16 lg:min-h-[40rem] lg:pt-20">
         <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
           <h2 className="text-2xl font-black tracking-[-0.035em] text-navy sm:text-3xl lg:font-bold">
             {t["accountDashboard.saved.emptyTitle"]}
@@ -643,7 +643,7 @@ export function SavedDashboardPage() {
           <LinkButton
             href="/dashboard/account"
             size="lg"
-            className="mt-4 w-full rounded-lg bg-blue-600 px-8 text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] hover:bg-blue-700 sm:max-w-[8rem]"
+            className="mt-4 w-auto min-w-[8rem] rounded-lg bg-blue-600 px-8 text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] hover:bg-blue-700"
           >
             {t["accountDashboard.saved.explore"]}
           </LinkButton>
