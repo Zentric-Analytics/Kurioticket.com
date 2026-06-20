@@ -208,6 +208,7 @@ export const translations: TranslationDictionary = {
   cars: "Auto’s",
   deals: "Aanbiedingen",
   search: "Zoeken",
+  tripType: "Reistype",
   roundTrip: "Retour",
   oneWay: "Enkele reis",
   leavingFrom: "Vertrek vanaf",
