@@ -1360,7 +1360,8 @@ export const translations: TranslationDictionary = {
   aboutPageEyebrow: "Over Kurioticket",
   aboutPageTitle: "Over ons",
   aboutPageIntroPrimary:
-    "Kurioticket is een reiszoek- en vergelijkingsplatform dat reizigers helpt vluchten, hotels, auto’s en reisaanbiedingen te zoeken, vergelijken en ontdekken.",
+    "Kurioticket is een reiszoek- en vergelijkingsplatform dat reizigers helpt " +
+    "vluchten, hotels, auto’s en reisaanbiedingen te zoeken, vergelijken en ontdekken.",
   aboutPageIntroSecondary:
     "Ons doel is om reisplanning duidelijker te maken door beschikbare opties en providerinformatie op één eenvoudige plek samen te brengen, zodat reizigers keuzes kunnen bekijken voordat ze doorgaan met de provider die bij hun reis past.",
   aboutPagePlanningCardHeading: "Een praktische tool voor reisplanning",
