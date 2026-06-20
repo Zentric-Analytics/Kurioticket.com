@@ -641,6 +641,7 @@ export const translations: TranslationDictionary = {
   rooms: "Zimmer",
   cabin: "Kabine",
   economy: "Touristenklasse",
+  premium: "Premium",
   roundTrip: "Hin- und Rückflug",
   oneWay: "Einfache Strecke",
   fromPlaceholder: "Von?",

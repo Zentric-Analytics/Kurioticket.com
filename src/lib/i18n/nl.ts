@@ -582,6 +582,7 @@ export const translations: TranslationDictionary = {
   infants: "Baby’s",
   cabinClass: "Cabineklasse",
   economy: "Economy",
+  premium: "Premium",
   premiumEconomy: "Premium economy",
   business: "Business",
   first: "Eerste klas",
