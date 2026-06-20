@@ -210,13 +210,13 @@ export const translations: TranslationDictionary = {
   "accountDashboard.overview.subtitle":
     "View and update your personal details and account information.",
   "accountDashboard.saved.eyebrow": "SAVED",
-  "accountDashboard.saved.title": "Saved",
+  "accountDashboard.saved.title": "Saved trips list",
   "accountDashboard.saved.description":
-    "View your saved trips, routes, stays, and recent searches.",
-  "accountDashboard.saved.emptyTitle": "No saved items found.",
+    "Your saved trips will appear here for easy reference when you are ready to compare routes, fares, and stays.",
+  "accountDashboard.saved.emptyTitle": "Nothing here...yet.",
   "accountDashboard.saved.emptyDescription":
-    "Explore the homepage to find some travel inspiration!",
-  "accountDashboard.saved.explore": "Explore",
+    "Just click on the heart icon on any trip, route, or stay and you'll save it here for easy reference later.",
+  "accountDashboard.saved.explore": "Back",
   "accountDashboard.saved.openSavedTrips": "Open saved trips",
   "accountDashboard.saved.searchFlights": "Search flights",
   "accountDashboard.saved.searchHotels": "Search hotels",

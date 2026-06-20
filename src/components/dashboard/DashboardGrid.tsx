@@ -9,6 +9,7 @@ import {
   BriefcaseBusiness,
   ChevronRight,
   CircleHelp,
+  Heart,
   Headphones,
   LifeBuoy,
   LockKeyhole,
@@ -123,11 +124,17 @@ type SecuritySettingRowProps = {
 
 function SavedEmptyStateIllustration() {
   return (
-    <div
-      className="mx-auto flex size-20 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700 shadow-[0_18px_42px_-28px_rgba(79,70,229,0.85)] sm:size-24"
-      aria-hidden="true"
-    >
-      <Bookmark className="size-9 stroke-[1.8] sm:size-11" />
+    <div className="relative mx-auto h-44 w-full max-w-[22rem] overflow-hidden" aria-hidden="true">
+      <div className="absolute left-1/2 top-4 h-32 w-32 -translate-x-1/2 rounded-full bg-amber-300" />
+      <div className="absolute bottom-9 left-8 h-24 w-28 -skew-x-12 border border-slate-200 bg-slate-50" />
+      <div className="absolute bottom-9 right-10 h-28 w-32 skew-x-12 border border-slate-200 bg-slate-50" />
+      <div className="absolute bottom-8 left-1/2 h-px w-[18rem] -translate-x-1/2 bg-slate-200" />
+      <div className="absolute left-[6.2rem] top-12 flex size-12 items-center justify-center rounded-full border-2 border-slate-400 bg-white text-rose-500 shadow-sm">
+        <Heart className="size-5 fill-current" />
+      </div>
+      <div className="absolute bottom-11 left-1/2 h-16 w-20 -translate-x-1/2 rounded-t-[2rem] border-2 border-slate-400 bg-white" />
+      <div className="absolute bottom-8 left-[11.5rem] h-20 w-3 rounded-full bg-emerald-300 ring-2 ring-emerald-500" />
+      <div className="absolute bottom-8 right-16 h-14 w-3 rounded-full bg-emerald-300 ring-2 ring-emerald-500" />
     </div>
   );
 }
@@ -594,19 +601,19 @@ export function SavedDashboardPage() {
   return (
     <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="saved-dashboard-title">
       <AccountSectionHeader title={t["accountDashboard.saved.title"]} description={t["accountDashboard.saved.description"]} titleId="saved-dashboard-title" />
-      <div className="px-1 py-7 sm:px-2 sm:py-9 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-14 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
-        <div className="mx-auto flex max-w-md flex-col items-center text-center">
-          <SavedEmptyStateIllustration />
-          <h2 className="mt-6 text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem] lg:font-bold">
+      <div className="px-1 py-8 sm:px-2 sm:py-10 lg:overflow-hidden lg:rounded-[1.65rem] lg:border lg:border-slate-200/90 lg:bg-white lg:px-8 lg:py-16 lg:shadow-[0_24px_70px_-58px_rgba(49,46,129,0.7)] xl:px-10">
+        <div className="mx-auto flex max-w-xl flex-col items-center text-center">
+          <h2 className="text-2xl font-black tracking-[-0.025em] text-slate-950 lg:text-[1.65rem] lg:font-bold">
             {t["accountDashboard.saved.emptyTitle"]}
           </h2>
-          <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600">
+          <SavedEmptyStateIllustration />
+          <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">
             {t["accountDashboard.saved.emptyDescription"]}
           </p>
           <LinkButton
-            href="/"
+            href="/dashboard"
             size="lg"
-            className="mt-7 w-full rounded-xl bg-violet-700 px-8 text-white shadow-[0_18px_36px_-24px_rgba(79,70,229,0.95)] hover:bg-violet-800 sm:max-w-[19rem] lg:w-auto lg:min-w-36"
+            className="mt-5 w-full rounded-lg bg-blue-600 px-8 text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] hover:bg-blue-700 sm:max-w-[8rem]"
           >
             {t["accountDashboard.saved.explore"]}
           </LinkButton>
