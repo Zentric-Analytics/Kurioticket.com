@@ -9,7 +9,6 @@ import {
   BriefcaseBusiness,
   ChevronRight,
   CircleHelp,
-  Heart,
   Headphones,
   LifeBuoy,
   LockKeyhole,
@@ -124,17 +123,41 @@ type SecuritySettingRowProps = {
 
 function SavedEmptyStateIllustration() {
   return (
-    <div className="relative mx-auto h-44 w-full max-w-[22rem] overflow-hidden" aria-hidden="true">
-      <div className="absolute left-1/2 top-4 h-32 w-32 -translate-x-1/2 rounded-full bg-amber-300" />
-      <div className="absolute bottom-9 left-8 h-24 w-28 -skew-x-12 border border-slate-200 bg-slate-50" />
-      <div className="absolute bottom-9 right-10 h-28 w-32 skew-x-12 border border-slate-200 bg-slate-50" />
-      <div className="absolute bottom-8 left-1/2 h-px w-[18rem] -translate-x-1/2 bg-slate-200" />
-      <div className="absolute left-[6.2rem] top-12 flex size-12 items-center justify-center rounded-full border-2 border-slate-400 bg-white text-rose-500 shadow-sm">
-        <Heart className="size-5 fill-current" />
-      </div>
-      <div className="absolute bottom-11 left-1/2 h-16 w-20 -translate-x-1/2 rounded-t-[2rem] border-2 border-slate-400 bg-white" />
-      <div className="absolute bottom-8 left-[11.5rem] h-20 w-3 rounded-full bg-emerald-300 ring-2 ring-emerald-500" />
-      <div className="absolute bottom-8 right-16 h-14 w-3 rounded-full bg-emerald-300 ring-2 ring-emerald-500" />
+    <div className="relative mx-auto h-52 w-full max-w-[24rem] overflow-hidden" aria-hidden="true">
+      <div className="absolute left-1/2 top-5 h-36 w-36 -translate-x-1/2 rounded-full bg-teal/10" />
+      <div className="absolute bottom-4 left-1/2 h-8 w-[19rem] -translate-x-1/2 rounded-[100%] bg-navy/5 blur-sm" />
+      <svg
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 384 208"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M72 66c34-24 64-29 90-15 26 13 31 42 59 49 25 6 43-12 72-7"
+          stroke="currentColor"
+          className="text-blue/30"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray="8 12"
+        />
+        <path d="M48 80l118-34 8 96-118 34-8-96Z" className="fill-white" />
+        <path d="M166 46l78 28 8 96-78-28-8-96Z" className="fill-surface-muted" />
+        <path d="M244 74l92-28 8 96-92 28-8-96Z" className="fill-white" />
+        <path d="M48 80l118-34 78 28 92-28 8 96-92 28-78-28-118 34-8-96Z" stroke="currentColor" className="text-navy/20" strokeWidth="3" strokeLinejoin="round" />
+        <path d="M132 57l9 97M213 63l9 96M278 64l8 96" stroke="currentColor" className="text-navy/10" strokeWidth="3" />
+        <path d="M108 116c18-21 49-27 74-13 21 11 29 33 50 39 16 4 31-2 46-15" stroke="currentColor" className="text-teal" strokeWidth="5" strokeLinecap="round" strokeDasharray="1 11" />
+        <g className="drop-shadow-sm">
+          <path d="M117 54c-18 0-33 14-33 32 0 26 33 59 33 59s33-33 33-59c0-18-15-32-33-32Z" className="fill-teal" />
+          <path d="M117 99c7-5 18-14 18-24 0-7-5-12-12-12-3 0-5 1-6 3-2-2-4-3-7-3-7 0-12 5-12 12 0 10 12 19 19 24Z" className="fill-white" />
+        </g>
+        <g className="drop-shadow-sm">
+          <rect x="237" y="34" width="54" height="68" rx="16" className="fill-navy" />
+          <path d="M252 34h24v37l-12-7-12 7V34Z" className="fill-blue" />
+          <path d="M254 81h21" stroke="white" strokeWidth="4" strokeLinecap="round" opacity=".75" />
+        </g>
+        <path d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z" className="fill-blue" />
+        <path d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z" stroke="white" strokeWidth="3" strokeLinejoin="round" />
+      </svg>
     </div>
   );
 }
@@ -600,13 +623,15 @@ export function SavedDashboardPage() {
 
   return (
     <section className="mx-auto min-w-0 max-w-[68rem] px-1 pb-12 pt-2 sm:px-2 sm:pt-0" aria-labelledby="saved-dashboard-title">
-      <h1 id="saved-dashboard-title" className="text-[1.35rem] font-medium leading-8 tracking-[-0.025em] text-slate-700 sm:text-2xl">
-        {t["accountDashboard.saved.title"]}
-      </h1>
+      <AccountSectionHeader
+        title={t["accountDashboard.saved.title"]}
+        description={t["accountDashboard.saved.description"]}
+        titleId="saved-dashboard-title"
+      />
 
-      <div className="flex min-h-[30rem] items-start justify-center px-3 pb-10 pt-14 sm:min-h-[34rem] sm:pt-20 lg:pt-24">
+      <div className="flex min-h-[30rem] items-start justify-center px-3 pb-10 pt-12 sm:min-h-[34rem] sm:pt-16 lg:pt-20">
         <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
-          <h2 className="text-xl font-medium tracking-[-0.02em] text-slate-600 sm:text-2xl">
+          <h2 className="text-2xl font-black tracking-[-0.035em] text-navy sm:text-3xl lg:font-bold">
             {t["accountDashboard.saved.emptyTitle"]}
           </h2>
           <div className="mt-8 w-full sm:mt-10">
