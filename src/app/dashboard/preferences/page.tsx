@@ -2,15 +2,144 @@ import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 
 export const metadata = {
-  title: "Preferences",
+  title: "Booking preferences",
 };
+
+const textFieldSections = [
+  {
+    title: "Airports",
+    description: "Choose the airports you prefer to fly from.",
+    fields: [
+      { id: "home-airport", label: "Home airport", placeholder: "Search airport" },
+      { id: "secondary-airports", label: "Secondary airports", placeholder: "Add alternative airports" },
+    ],
+  },
+  {
+    title: "Airlines",
+    description: "Choose airlines you prefer or want to avoid.",
+    fields: [
+      { id: "preferred-airlines", label: "Preferred airlines", placeholder: "Search airlines" },
+      { id: "avoid-airlines", label: "Avoid airlines", placeholder: "Search airlines" },
+    ],
+  },
+  {
+    title: "Stays",
+    description: "Set accommodation preferences for hotel bookings.",
+    fields: [
+      { id: "preferred-hotel-chains", label: "Preferred hotel chains", placeholder: "Search hotel chains" },
+      { id: "avoid-hotel-chains", label: "Avoid hotel chains", placeholder: "Search hotel chains" },
+    ],
+  },
+];
+
+const flightOptionFields = [
+  {
+    id: "preferred-cabin-class",
+    label: "Preferred cabin class",
+    options: ["Economy", "Premium Economy", "Business", "First"],
+  },
+  {
+    id: "preferred-trip-type",
+    label: "Preferred trip type",
+    options: ["One way", "Round trip", "Multi-city"],
+  },
+  {
+    id: "seat-preference",
+    label: "Seat preference",
+    options: ["No preference", "Window", "Aisle", "Extra legroom"],
+  },
+  {
+    id: "baggage-preference",
+    label: "Baggage preference",
+    options: ["No preference", "Carry-on only", "Checked bag"],
+  },
+];
+
+const fieldClassName =
+  "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100";
+
+function PreferenceSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}>
+      <div className="max-w-2xl">
+        <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`} className="text-lg font-semibold leading-7 text-slate-950">
+          {title}
+        </h2>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+      </div>
+      <div className="mt-5 grid max-w-[34rem] gap-4 sm:gap-5">{children}</div>
+    </section>
+  );
+}
 
 export default function PreferencesPage() {
   return (
     <>
       <AppHeader showAccountBackLink />
-      <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
-        <div className="page-shell min-w-0" />
+      <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
+        <div className="mx-auto min-w-0 max-w-[60rem] space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-6 lg:py-10">
+          <header className="px-1 pb-2 text-left sm:px-2 sm:pb-3">
+            <h1 className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">Booking preferences</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+              Set your default travel preferences for faster and more relevant bookings.
+            </p>
+          </header>
+
+          <form className="space-y-6" action="#">
+            {textFieldSections.map((section) => (
+              <PreferenceSection key={section.title} title={section.title} description={section.description}>
+                {section.fields.map((field) => (
+                  <div key={field.id} className="min-w-0 space-y-2">
+                    <label htmlFor={field.id} className="block text-sm font-semibold leading-5 text-slate-800">
+                      {field.label}
+                    </label>
+                    <input id={field.id} name={field.id} type="search" placeholder={field.placeholder} className={fieldClassName} />
+                  </div>
+                ))}
+              </PreferenceSection>
+            ))}
+
+            <PreferenceSection title="Flight options" description="Set your common booking defaults.">
+              {flightOptionFields.map((field) => (
+                <div key={field.id} className="min-w-0 space-y-2">
+                  <label htmlFor={field.id} className="block text-sm font-semibold leading-5 text-slate-800">
+                    {field.label}
+                  </label>
+                  <select id={field.id} name={field.id} className={fieldClassName} defaultValue={field.options[0]}>
+                    {field.options.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ))}
+            </PreferenceSection>
+
+            <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 sm:w-auto"
+              >
+                Save preferences
+              </button>
+            </div>
+          </form>
+        </div>
       </main>
       <Footer />
     </>
