@@ -5,6 +5,81 @@ export const metadata = {
   title: "Customization preferences",
 };
 
+const selectSections = [
+  {
+    title: "Language and region",
+    description: "Set your default language, currency, and region.",
+    fields: [
+      {
+        id: "preferred-language",
+        label: "Preferred language",
+        options: ["English", "Spanish", "French", "German", "Portuguese"],
+      },
+      {
+        id: "currency",
+        label: "Currency",
+        options: ["US Dollar (USD)", "Euro (EUR)", "British Pound (GBP)", "Canadian Dollar (CAD)", "Australian Dollar (AUD)"],
+      },
+      {
+        id: "region",
+        label: "Region",
+        options: ["United States", "Canada", "United Kingdom", "Europe", "Australia"],
+      },
+    ],
+  },
+];
+
+const toggleSections = [
+  {
+    title: "Personalization",
+    description: "Control how Kurioticket personalizes your recommendations.",
+    fields: [
+      { id: "personalize-searches", label: "Use my searches to personalize recommendations" },
+      { id: "personalized-travel-deals", label: "Show personalized travel deals" },
+      { id: "remember-recent-searches", label: "Remember my recent searches" },
+    ],
+  },
+  {
+    title: "Communication style",
+    description: "Choose how you want Kurioticket to communicate with you.",
+    fields: [
+      { id: "email-updates", label: "Email updates" },
+      { id: "price-alert-emails", label: "Price alert emails" },
+      { id: "travel-inspiration-emails", label: "Travel inspiration emails" },
+    ],
+  },
+];
+
+const fieldClassName =
+  "w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100";
+
+function PreferenceSection({
+  title,
+  description,
+  children,
+  blendWithFormArea = false,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+  blendWithFormArea?: boolean;
+}) {
+  return (
+    <section
+      className={`w-full rounded-2xl border border-slate-400 p-5 sm:p-6 ${blendWithFormArea ? "bg-[#f3f7fc]" : ""}`}
+      aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}
+    >
+      <div>
+        <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`} className="text-lg font-semibold leading-7 text-slate-950">
+          {title}
+        </h2>
+        <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+      </div>
+      <div className="mt-5 grid w-full gap-4 sm:max-w-lg sm:gap-5">{children}</div>
+    </section>
+  );
+}
+
 export default function CustomizationPreferencesPage() {
   return (
     <>
@@ -20,6 +95,62 @@ export default function CustomizationPreferencesPage() {
             </p>
           </div>
         </header>
+
+        <div className="mx-auto -mt-6 min-w-0 max-w-6xl space-y-6 px-4 pb-6 pt-0 sm:-mt-8 sm:px-6 sm:pb-8 lg:px-8">
+          <form className="w-full space-y-6" action="#">
+            {selectSections.map((section) => (
+              <PreferenceSection key={section.title} title={section.title} description={section.description} blendWithFormArea>
+                {section.fields.map((field) => (
+                  <div key={field.id} className="min-w-0 space-y-2">
+                    <label htmlFor={field.id} className="block text-sm font-semibold leading-5 text-slate-800">
+                      {field.label}
+                    </label>
+                    <select id={field.id} name={field.id} defaultValue="" className={fieldClassName}>
+                      <option value="" disabled>
+                        Select {field.label.toLowerCase()}
+                      </option>
+                      {field.options.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </PreferenceSection>
+            ))}
+
+            {toggleSections.map((section) => (
+              <PreferenceSection key={section.title} title={section.title} description={section.description}>
+                {section.fields.map((field) => (
+                  <label
+                    key={field.id}
+                    htmlFor={field.id}
+                    className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold leading-5 text-slate-800 transition hover:border-slate-300"
+                  >
+                    <span>{field.label}</span>
+                    <input id={field.id} name={field.id} type="checkbox" className="h-5 w-5 rounded border-slate-300 text-blue-700 focus:ring-violet-500" />
+                  </label>
+                ))}
+              </PreferenceSection>
+            ))}
+
+            <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:w-auto"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="focus-ring inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-blue-700 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-800 sm:w-auto"
+              >
+                Save preferences
+              </button>
+            </div>
+          </form>
+        </div>
       </main>
       <Footer />
     </>
