@@ -5,5 +5,5 @@ export const metadata = {
 };
 
 export default function SupportPage() {
-  return <SupportContent showAccountBackLink dashboardFlow />;
+  return <SupportContent showAccountBackLink dashboardFlow showFaq={false} />;
 }
