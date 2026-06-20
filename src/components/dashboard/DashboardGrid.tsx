@@ -59,8 +59,8 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
     titleKey: "accountDashboard.hub.preferences",
     icon: SlidersHorizontal,
     rows: [
-      { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/preferences", icon: Mail },
-      { labelKey: "accountDashboard.hub.travelPreferences", href: "/dashboard/preferences", icon: Settings },
+      { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/preferences/customization", icon: Mail },
+      { labelKey: "accountDashboard.hub.travelPreferences", href: "/dashboard/preferences/booking", icon: Settings },
     ],
   },
   {
