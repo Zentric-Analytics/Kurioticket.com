@@ -390,7 +390,8 @@ export const translations: TranslationDictionary = {
     "Filter op overstappen, budgetten, reisklasse en tijden zodat de opties passen bij hoe je reist.",
   flightDetailsLoading: "Vluchtgegevens laden...",
   flightQuoteUnavailable: "Vluchtprijs niet beschikbaar",
-  flightSearchAgainCurrentPrices: "Zoek opnieuw voor actuele prijzen.",
+  flightSearchAgainCurrentPrices:
+    "Deze vluchtprijs is niet langer beschikbaar. Zoek opnieuw voor actuele prijzen.",
   flightDetailsProviderDisclaimer:
     "Definitieve prijs, beschikbaarheid, boeking en tariefregels worden bevestigd door de provider.",
   selectedFlights: "Geselecteerde vluchten",
