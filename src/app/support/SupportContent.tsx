@@ -53,11 +53,25 @@ export function SupportContent({
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
+  const beforeContactDescription = dashboardFlow
+    ? "Include your Kurioticket account email, what you need help with, and any booking or route details that can help us understand the issue."
+    : t("supportBeforeContactDescription");
+
   const content = (
     <>
       <section className="max-w-3xl">
-        <p className="text-sm font-semibold text-teal-dark">{t("supportEyebrow")}</p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl">
+        {dashboardFlow ? null : (
+          <p className="text-sm font-semibold text-teal-dark">
+            {t("supportEyebrow")}
+          </p>
+        )}
+        <h1
+          className={
+            dashboardFlow
+              ? "text-3xl font-black tracking-[-0.035em] text-slate-800 sm:text-4xl"
+              : "mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl"
+          }
+        >
           {t("supportTitle")}
         </h1>
       </section>
@@ -68,21 +82,32 @@ export function SupportContent({
             <HelpCircle size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-navy">{t("supportBeforeContactHeading")}</h2>
+            <h2 className="text-xl font-bold text-navy">
+              {t("supportBeforeContactHeading")}
+            </h2>
             <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
-              {t("supportBeforeContactDescription")}
+              {beforeContactDescription}
             </p>
           </div>
         </div>
       </section>
 
-      <section aria-label={t("supportTicketHeading")} className="mx-auto mt-8 w-full max-w-2xl">
+      <section
+        aria-label={t("supportTicketHeading")}
+        className="mx-auto mt-8 w-full max-w-2xl"
+      >
         <SupportForm />
       </section>
 
       {showFaq ? (
-        <section aria-labelledby="support-faq-heading" className="mt-10 max-w-3xl">
-          <h2 id="support-faq-heading" className="text-xl font-bold tracking-tight text-navy sm:text-2xl">
+        <section
+          aria-labelledby="support-faq-heading"
+          className="mt-10 max-w-3xl"
+        >
+          <h2
+            id="support-faq-heading"
+            className="text-xl font-bold tracking-tight text-navy sm:text-2xl"
+          >
             {t("supportFaqHeading")}
           </h2>
 
@@ -91,7 +116,10 @@ export function SupportContent({
               const question = t(item.question);
 
               return (
-                <details key={item.question} className="group border-b border-border py-4">
+                <details
+                  key={item.question}
+                  className="group border-b border-border py-4"
+                >
                   <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-navy marker:hidden sm:text-base">
                     <span>{question}</span>
                     <span
@@ -101,7 +129,9 @@ export function SupportContent({
                       +
                     </span>
                   </summary>
-                  <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{t(item.answer)}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
+                    {t(item.answer)}
+                  </p>
                 </details>
               );
             })}
@@ -121,7 +151,11 @@ export function SupportContent({
             : "page-shell flex-1 pb-10 pt-8 sm:pt-10 lg:pt-12"
         }
       >
-        {dashboardFlow ? <div className="page-shell min-w-0 pt-8 sm:pt-10 lg:pt-12">{content}</div> : content}
+        {dashboardFlow ? (
+          <div className="page-shell min-w-0 pt-3 sm:pt-6">{content}</div>
+        ) : (
+          content
+        )}
       </main>
       <Footer />
     </>
