@@ -480,6 +480,8 @@ export const translations: TranslationDictionary = {
   noFlightsMatchFilters:
     "Geen vluchten gevonden. Probeer je filters of zoekgegevens aan te passen.",
   unableToSearchFlights: "We konden geen vluchten laden voor deze zoekopdracht.",
+  "Exact provider handoff is temporarily unavailable for these fares. Please try another search.":
+    "Exacte provideroverdracht is tijdelijk niet beschikbaar voor deze tarieven. Probeer een andere zoekopdracht.",
   limitedProviderChecks:
     "Sommige providercontroles kunnen beperkt zijn voor deze zoekopdracht. Controleer definitieve beschikbaarheid en tariefdetails bij de provider voordat je boekt.",
   closeFilters: "Filters sluiten",

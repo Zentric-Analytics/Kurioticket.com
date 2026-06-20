@@ -1466,7 +1466,7 @@ export function FlightResultsClient() {
 
           setError(
             searchError instanceof Error
-              ? searchError.message
+              ? t(searchError.message) || searchError.message
               : dictionary.unableToSearchFlights ||
                 enTranslations.unableToSearchFlights ||
                 "Unable to search flights.",
@@ -1481,7 +1481,7 @@ export function FlightResultsClient() {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [body, dictionary.unableToSearchFlights]);
+  }, [body, dictionary.unableToSearchFlights, t]);
 
   useEffect(() => {
     if (!loading) return;
