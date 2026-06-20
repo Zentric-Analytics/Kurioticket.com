@@ -8,7 +8,6 @@ import {
   Bookmark,
   BriefcaseBusiness,
   ChevronRight,
-  CircleHelp,
   Headphones,
   LifeBuoy,
   LockKeyhole,
@@ -68,7 +67,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
     icon: LifeBuoy,
     rows: [
       { labelKey: "accountDashboard.hub.contactSupport", href: "/dashboard/support", icon: Headphones },
-      { labelKey: "accountDashboard.hub.faq", href: "/faq", icon: CircleHelp },
     ],
   },
 ];
