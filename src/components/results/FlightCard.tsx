@@ -64,9 +64,6 @@ export function FlightCard({
   const providerHandoffCopy = displayPrice.isConvertedEstimate
     ? t("flightCardProviderHandoffConverted")
     : t("flightCardProviderHandoff");
-  const hasProviderHandoff = flight.handoffType === "exact_provider_link" && Boolean(flight.handoffUrl);
-
-  if (!hasProviderHandoff) return null;
 
   return (
     <Card
