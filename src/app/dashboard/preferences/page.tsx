@@ -60,9 +60,11 @@ function PreferenceSection({
 export default function PreferencesPage() {
   return (
     <>
-      <AppHeader showAccountBackLink />
+      <div className="[&>header]:!border-b-0 [&>header]:!shadow-none">
+        <AppHeader showAccountBackLink />
+      </div>
       <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
-        <header className="-mt-px bg-[#4338CA] text-left shadow-sm">
+        <header className="bg-[#4338CA] text-left">
           <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
             <h1 className="text-3xl font-black tracking-[-0.035em] text-white sm:text-4xl lg:font-bold">Booking preferences</h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50 sm:text-base">
