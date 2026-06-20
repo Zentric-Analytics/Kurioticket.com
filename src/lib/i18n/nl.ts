@@ -17,6 +17,7 @@ export const translations: TranslationDictionary = {
   viewFlight: "Vlucht bekijken",
   estimatedPrice: "Geschatte prijs",
   finalPrice: "Eindprijs",
+  fromPrice: "Vanaf",
   searchFlights: "Vluchten zoeken",
   cityOrAirport: "Stad of luchthaven",
   searchHotels: "Hotels zoeken",
