@@ -625,7 +625,7 @@ export function SavedDashboardPage() {
     <section className="mx-auto min-w-0 max-w-[72rem] bg-white pb-12 pt-3 sm:pt-6" aria-labelledby="saved-dashboard-title">
       <div className="flex min-w-0 items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-slate-800 sm:text-4xl">
+          <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-navy sm:text-4xl lg:font-bold">
             {t["accountDashboard.saved.title"]}
           </h1>
         </div>
