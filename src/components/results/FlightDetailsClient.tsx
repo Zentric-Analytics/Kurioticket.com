@@ -96,7 +96,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
   }
 
   const shouldLocalizeUnavailableMessage =
-    locale === "pt-br" && error === FLIGHT_QUOTE_UNAVAILABLE_MESSAGE;
+    ["nl", "pt-br"].includes(locale) &&
+    error === FLIGHT_QUOTE_UNAVAILABLE_MESSAGE;
   const unavailableBodyMessage = shouldLocalizeUnavailableMessage
     ? t.flightSearchAgainCurrentPrices
     : error || t.flightSearchAgainCurrentPrices;
