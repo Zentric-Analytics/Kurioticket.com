@@ -121,7 +121,7 @@ type SecuritySettingRowProps = {
 
 function SavedEmptyStateIllustration() {
   return (
-    <div className="relative mx-auto h-52 w-full max-w-[24rem] overflow-hidden" aria-hidden="true">
+    <div className="relative mx-auto h-48 w-full max-w-[24rem] overflow-hidden sm:h-52" aria-hidden="true">
       <div className="absolute left-1/2 top-5 h-36 w-36 -translate-x-1/2 rounded-full bg-teal/10" />
       <div className="absolute bottom-4 left-1/2 h-8 w-[19rem] -translate-x-1/2 rounded-[100%] bg-navy/5 blur-sm" />
       <svg
@@ -629,21 +629,21 @@ export function SavedDashboardPage() {
         </div>
       </div>
 
-      <div className="flex min-h-[34rem] items-start justify-center px-3 pb-10 pt-12 sm:min-h-[38rem] sm:pt-16 lg:min-h-[40rem] lg:pt-20">
+      <div className="flex min-h-[34rem] items-start justify-center px-3 pb-10 pt-16 sm:min-h-[38rem] sm:pt-16 lg:min-h-[40rem] lg:pt-20">
         <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
           <h2 className="text-2xl font-black tracking-[-0.035em] text-navy sm:text-3xl lg:font-bold">
             {t["accountDashboard.saved.emptyTitle"]}
           </h2>
-          <div className="mt-5 w-full sm:mt-6">
+          <div className="mt-2 w-full sm:mt-6">
             <SavedEmptyStateIllustration />
           </div>
-          <p className="mx-auto mt-4 max-w-lg text-xs leading-5 text-slate-500 sm:text-sm sm:leading-6">
+          <p className="mx-auto mt-3 max-w-lg text-xs leading-5 text-slate-500 sm:mt-4 sm:text-sm sm:leading-6">
             {t["accountDashboard.saved.emptyDescription"]}
           </p>
           <LinkButton
             href="/dashboard/account"
             size="lg"
-            className="mt-4 w-auto min-w-[8rem] rounded-lg bg-blue-600 px-8 text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] hover:bg-blue-700"
+            className="mt-6 w-auto min-w-[8rem] rounded-lg bg-blue-600 px-8 text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] hover:bg-blue-700 sm:mt-4"
           >
             {t["accountDashboard.saved.explore"]}
           </LinkButton>
