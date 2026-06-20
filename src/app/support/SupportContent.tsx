@@ -42,9 +42,14 @@ const supportFaqKeys = [
 type SupportContentProps = {
   showAccountBackLink?: boolean;
   dashboardFlow?: boolean;
+  showFaq?: boolean;
 };
 
-export function SupportContent({ showAccountBackLink = false, dashboardFlow = false }: SupportContentProps) {
+export function SupportContent({
+  showAccountBackLink = false,
+  dashboardFlow = false,
+  showFaq = true,
+}: SupportContentProps) {
   const { t: dictionary } = useLocale();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
@@ -75,32 +80,34 @@ export function SupportContent({ showAccountBackLink = false, dashboardFlow = fa
         <SupportForm />
       </section>
 
-      <section aria-labelledby="support-faq-heading" className="mt-10 max-w-3xl">
-        <h2 id="support-faq-heading" className="text-xl font-bold tracking-tight text-navy sm:text-2xl">
-          {t("supportFaqHeading")}
-        </h2>
+      {showFaq ? (
+        <section aria-labelledby="support-faq-heading" className="mt-10 max-w-3xl">
+          <h2 id="support-faq-heading" className="text-xl font-bold tracking-tight text-navy sm:text-2xl">
+            {t("supportFaqHeading")}
+          </h2>
 
-        <div className="mt-5 grid gap-x-8 gap-y-1">
-          {supportFaqKeys.map((item) => {
-            const question = t(item.question);
+          <div className="mt-5 grid gap-x-8 gap-y-1">
+            {supportFaqKeys.map((item) => {
+              const question = t(item.question);
 
-            return (
-              <details key={item.question} className="group border-b border-border py-4">
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-navy marker:hidden sm:text-base">
-                  <span>{question}</span>
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 text-base leading-none text-muted transition-transform duration-200 group-open:rotate-45"
-                  >
-                    +
-                  </span>
-                </summary>
-                <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{t(item.answer)}</p>
-              </details>
-            );
-          })}
-        </div>
-      </section>
+              return (
+                <details key={item.question} className="group border-b border-border py-4">
+                  <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-sm font-semibold leading-6 text-navy marker:hidden sm:text-base">
+                    <span>{question}</span>
+                    <span
+                      aria-hidden="true"
+                      className="mt-0.5 text-base leading-none text-muted transition-transform duration-200 group-open:rotate-45"
+                    >
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-2 text-sm leading-6 text-muted sm:text-base">{t(item.answer)}</p>
+                </details>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
     </>
   );
 
