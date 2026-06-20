@@ -1367,5 +1367,25 @@ export const translations: TranslationDictionary = {
   aboutPagePlanningCardHeading: "Een praktische tool voor reisplanning",
   aboutPagePlanningCardBody:
     "Kurioticket richt zich op het helpen van reizigers om reisopties te beoordelen met nuttige context. Beschikbaarheid, prijzen, regels en definitieve boekingsstappen kunnen per provider verschillen, dus reizigers moeten de providerpagina zorgvuldig bekijken voordat ze een beslissing nemen.",
+  howItWorksEyebrow: "Hoe Kurioticket werkt",
+  howItWorksTitle: "Hoe Kurioticket werkt",
+  howItWorksIntro:
+    "Kurioticket helpt reizigers van zoeken naar vergelijken te gaan en daarna door te gaan naar de provider wanneer een aanbieding is geselecteerd.",
+  howItWorksFlowHeading: "Basisproces",
+  "howItWorks.steps.search.title": "Zoek reisopties",
+  "howItWorks.steps.search.description":
+    "Voer je reisgegevens in om beschikbare vluchten, hotels, auto’s of reisaanbiedingen te zoeken.",
+  "howItWorks.steps.compare.title": "Vergelijk beschikbare resultaten",
+  "howItWorks.steps.compare.description":
+    "Bekijk beschikbare opties, prijzen, schema’s, providergegevens en andere reisinformatie wanneer die wordt getoond.",
+  "howItWorks.steps.choose.title": "Kies een aanbieding",
+  "howItWorks.steps.choose.description":
+    "Selecteer de optie die het beste bij je plannen past nadat je de beschikbare details hebt bekeken.",
+  "howItWorks.steps.continue.title": "Ga verder met de provider",
+  "howItWorks.steps.continue.description":
+    "Wanneer je wordt doorgestuurd, ga je verder op de website van de provider om de definitieve details te bekijken en eventuele boekingsstappen te voltooien.",
+  "howItWorks.providerWebsites.title": "Providerwebsites",
+  "howItWorks.providerWebsites.description":
+    "Sommige boekingen kunnen worden afgerond op providerwebsites nadat Kurioticket je heeft doorgestuurd. Bekijk de providerpagina voor definitieve beschikbaarheid, prijzen, voorwaarden, betaalstappen en boekingsdetails voordat je een aankoop afrondt.",
   contactSupport: "Support contacteren",
 };
