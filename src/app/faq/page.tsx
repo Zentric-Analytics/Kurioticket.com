@@ -37,7 +37,7 @@ export default function FaqPage() {
           <div className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-5 text-sm font-medium leading-6 text-slate-700 sm:p-6 sm:text-base">
             {t("faqNeedMoreHelpPrefix")} {" "}
             <Link
-              href="/support"
+              href="/dashboard/support"
               className="font-bold text-indigo-700 underline-offset-4 hover:text-indigo-900 hover:underline"
             >
               {t("faqSupportPage")}
