@@ -68,7 +68,7 @@ function PreferenceSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="w-full rounded-xl border border-slate-200 bg-white p-4 shadow-none sm:p-6" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}>
+    <section className="w-full border-b border-slate-200 pb-6 last:border-b-0" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}>
       <div>
         <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`} className="text-lg font-semibold leading-7 text-slate-950">
           {title}
