@@ -127,7 +127,9 @@ export function FlightDetailsClient({ id }: { id: string }) {
 
   const heroDetails = buildHeroDetails(flight, t);
   const routeHeading = buildRouteHeading(flight, t);
-  const hasProviderLink = hasExactProviderHandoff(flight);
+  const hasProviderLink = Boolean(
+    flight.partnerRedirectUrl || flight.bookingUrl,
+  );
   const providerDisclaimer =
     t.flightDetailsProviderDisclaimer ||
     "Final price, availability, booking, and fare rules are confirmed by the provider.";
@@ -264,13 +266,8 @@ export function FlightDetailsClient({ id }: { id: string }) {
                             onClick={continueToProvider}
                             disabled={!hasProviderLink}
                           >
-                            {hasProviderLink ? t.continueToProvider : "Fare unavailable"} <ArrowRight size={16} />
+                            {t.continueToProvider} <ArrowRight size={16} />
                           </Button>
-                          {!hasProviderLink ? (
-                            <p className="text-xs leading-5 text-muted">
-                              This fare can’t be continued to the provider anymore. Please search again for current live fares.
-                            </p>
-                          ) : null}
                         </div>
                       </aside>
                     </div>
@@ -405,7 +402,6 @@ type ProviderComparisonOffer = {
   currency?: string;
   bookingUrl?: string;
   partnerRedirectUrl?: string;
-  handoffUrl?: string;
   useSelectedFlightRedirect?: boolean;
 };
 
@@ -483,8 +479,9 @@ function ProviderComparisonPanel({
                 (detail): detail is string =>
                   Boolean(detail) && detail !== labels.confirmedByProvider,
               );
-              const providerUrl = offer.handoffUrl || offer.partnerRedirectUrl || offer.bookingUrl;
-              const canBook = offer.useSelectedFlightRedirect || Boolean(offer.handoffUrl);
+              const providerUrl = offer.partnerRedirectUrl || offer.bookingUrl;
+              const canBook =
+                offer.useSelectedFlightRedirect || Boolean(providerUrl);
               const showProviderByline =
                 offer.providerName &&
                 normalizeAirlineName(offer.providerName) !==
@@ -608,8 +605,9 @@ function normalizeSelectedProviderComparisonOffer(
     currency: flight.currency,
     bookingUrl: flight.bookingUrl,
     partnerRedirectUrl: flight.partnerRedirectUrl,
-    handoffUrl: flight.handoffUrl,
-    useSelectedFlightRedirect: hasExactProviderHandoff(flight),
+    useSelectedFlightRedirect: Boolean(
+      flight.partnerRedirectUrl || flight.bookingUrl,
+    ),
   };
 }
 
@@ -1941,23 +1939,4 @@ function formatLegDirection(
   if (direction === "outbound") return labels.outbound;
   if (direction === "return") return labels.return;
   return legCount > 1 ? `${labels.leg} ${index + 1}` : labels.itinerary;
-}
-
-function hasExactProviderHandoff(flight: PublicFlightResult) {
-  if (flight.handoffType !== "exact_provider_link" || !flight.handoffUrl) return false;
-  try {
-    const url = new URL(flight.handoffUrl);
-    return ["http:", "https:"].includes(url.protocol) && !isGeneratedRouteSearchUrl(url);
-  } catch {
-    return false;
-  }
-}
-
-function isGeneratedRouteSearchUrl(url: URL) {
-  const hostname = url.hostname.replace(/^www\./, "").toLowerCase();
-  if (hostname === "aviasales.com" && url.pathname.startsWith("/search")) return true;
-  return Boolean(
-    url.searchParams.get("sub_id")?.toLowerCase().includes("metasearch") ||
-      (url.searchParams.has("origin_iata") && url.searchParams.has("destination_iata")),
-  );
 }

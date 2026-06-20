@@ -11,15 +11,14 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
 
   const merged = providers.flatMap((provider) => provider.results);
   const deduped = assignBadges(sortFlights(dedupeFlights(merged), search.sort || "cheapest"));
-  const handoffReady = deduped.filter(hasExactProviderHandoff);
   const providerWarnings = providers
     .filter((provider) => provider.status === "failed")
     .map((provider) => `${provider.provider} provider failed internally.`);
 
-  if (handoffReady.length > 0) {
-    rememberFlights(handoffReady);
+  if (deduped.length > 0) {
+    rememberFlights(deduped);
     return {
-      results: handoffReady,
+      results: deduped,
       providerStatuses: providers,
       warnings: [],
       servedFromFallback: false,
@@ -34,13 +33,11 @@ export async function searchFlights(search: FlightSearchParams): Promise<Aggrega
       warnings: providerWarnings,
       servedFromFallback: false,
       latencyMs: Date.now() - startedAt,
-      unavailableMessage: deduped.length > 0
-        ? "Exact provider handoff is temporarily unavailable for these fares. Please try another search."
-        : "Live flight results are temporarily unavailable. Please try again shortly.",
+      unavailableMessage: "Live flight results are temporarily unavailable. Please try again shortly.",
     };
   }
 
-  const fallback = assignBadges(sortFlights(fallbackFlights(search), search.sort || "cheapest")).filter(hasExactProviderHandoff);
+  const fallback = assignBadges(sortFlights(fallbackFlights(search), search.sort || "cheapest"));
   rememberFlights(fallback);
 
   return {
@@ -132,23 +129,4 @@ function minBy<T>(items: T[], getter: (item: T) => number) {
 
 function maxBy<T>(items: T[], getter: (item: T) => number) {
   return items.reduce<T | null>((best, item) => (!best || getter(item) > getter(best) ? item : best), null);
-}
-
-export function hasExactProviderHandoff(result: NormalizedFlightResult) {
-  if (result.handoffType !== "exact_provider_link" || !result.handoffUrl) return false;
-  try {
-    const url = new URL(result.handoffUrl);
-    return ["http:", "https:"].includes(url.protocol) && !isGeneratedRouteSearchUrl(url);
-  } catch {
-    return false;
-  }
-}
-
-function isGeneratedRouteSearchUrl(url: URL) {
-  const hostname = url.hostname.replace(/^www\./, "").toLowerCase();
-  if (hostname === "aviasales.com" && url.pathname.startsWith("/search")) return true;
-  return Boolean(
-    url.searchParams.get("sub_id")?.toLowerCase().includes("metasearch") ||
-      (url.searchParams.has("origin_iata") && url.searchParams.has("destination_iata")),
-  );
 }
