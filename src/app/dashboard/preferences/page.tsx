@@ -39,13 +39,18 @@ function PreferenceSection({
   title,
   description,
   children,
+  blendWithFormArea = false,
 }: {
   title: string;
   description: string;
   children: React.ReactNode;
+  blendWithFormArea?: boolean;
 }) {
   return (
-    <section className="w-full rounded-2xl border border-slate-400 p-5 sm:p-6" aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}>
+    <section
+      className={`w-full rounded-2xl border border-slate-400 p-5 sm:p-6 ${blendWithFormArea ? "bg-[#f3f7fc]" : ""}`}
+      aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}
+    >
       <div>
         <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`} className="text-lg font-semibold leading-7 text-slate-950">
           {title}
@@ -76,7 +81,12 @@ export default function PreferencesPage() {
         <div className="mx-auto -mt-6 min-w-0 max-w-6xl space-y-6 px-4 pb-6 pt-0 sm:-mt-8 sm:px-6 sm:pb-8 lg:px-8">
           <form className="w-full space-y-6" action="#">
             {textFieldSections.map((section) => (
-              <PreferenceSection key={section.title} title={section.title} description={section.description}>
+              <PreferenceSection
+                key={section.title}
+                title={section.title}
+                description={section.description}
+                blendWithFormArea={section.title === "Airports"}
+              >
                 {section.fields.map((field) => (
                   <div key={field.id} className="min-w-0 space-y-2">
                     <label htmlFor={field.id} className="block text-sm font-semibold leading-5 text-slate-800">
