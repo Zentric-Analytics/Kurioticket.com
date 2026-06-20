@@ -992,6 +992,75 @@ export const translations: TranslationDictionary = {
   cookiePolicy: "Cookiebeleid",
   legalCenter: "Juridisch centrum",
   serviceGuarantee: "Servicegarantie",
+  moreServiceInfoEyebrow: "Platforminformatie",
+  moreServiceInfoTitle: "Meer service-informatie",
+  moreServiceInfoDescription:
+    "Lees hoe Kurioticket reizigers helpt om reisopties van meerdere providers op één plek te zoeken, vergelijken, bewaren en organiseren.",
+  moreServiceInfoContextTitle: "Plan met context",
+  moreServiceInfoContextSubtitle: "Van zoekresultaten tot provider-doorverwijzingen",
+  moreServiceInfoContextCompare: "Vergelijk opties van meerdere reisproviders.",
+  moreServiceInfoContextSave:
+    "Sla reizen, alerts en voorkeuren op wanneer je bent ingelogd.",
+  moreServiceInfoContextContinue:
+    "Ga verder met providergegevens voordat je extern boekt.",
+  moreServiceInfoHowHeading: "Hoe Kurioticket werkt",
+  moreServiceInfoHowDescription:
+    "Deze servicedetails leggen de rol van Kurioticket uit vóór, tijdens en na een reiszoekopdracht.",
+  moreServiceInfoHowBadge: "BASISPRINCIPES VOOR REISPLANNING",
+  moreServiceInfoStepSearchTitle: "Zoek bij meerdere providers",
+  moreServiceInfoStepSearchSummary:
+    "Zoek reisopties bij verschillende providers vanaf één plek in plaats van elke provider apart te openen.",
+  moreServiceInfoStepSearchDetails:
+    "Kurioticket brengt beschikbare vlucht-, hotel-, route- en reisresultaatinformatie samen in één zoekervaring, zodat reizigers opties efficiënter kunnen bekijken.",
+  moreServiceInfoStepCompareTitle: "Vergelijk reisopties",
+  moreServiceInfoStepCompareSummary:
+    "Vergelijk prijzen, routes, hotels, schema’s en beschikbare reisopties voordat je beslist wat bij je reis past.",
+  moreServiceInfoStepCompareDetails:
+    "Resultaten kunnen providergegevens, tijden, bestemmingsinformatie en andere reisgegevens bevatten die je helpen de optie te beoordelen voordat je doorgaat naar de provider.",
+  moreServiceInfoStepSaveTitle: "Sla reizen en alerts op",
+  moreServiceInfoStepSaveSummary:
+    "Maak een account aan om reizen op te slaan, routes te volgen en reisalerts te beheren die bij je reisplanning horen.",
+  moreServiceInfoStepSaveDetails:
+    "Opgeslagen reizen, recente zoekopdrachten en alerts maken het makkelijker om terug te keren naar opties die je overweegt en gerelateerde reisplanningsdetails georganiseerd te houden.",
+  moreServiceInfoStepRedirectsTitle: "Provider-doorverwijzingen uitgelegd",
+  moreServiceInfoStepRedirectsSummary:
+    "Wanneer je een aanbieding selecteert, kun je worden doorgestuurd naar een reisprovider om de boeking, betaling, bevestiging en afhandeling te voltooien.",
+  moreServiceInfoStepRedirectsDetails:
+    "Op de providerpagina worden definitieve prijzen, beschikbaarheid, regels, betaalstappen, betalingsbewijzen, boekingswijzigingen, annuleringen en reisdocumenten afgehandeld voor doorgestuurde aanbiedingen.",
+  moreServiceInfoStepAccountTitle: "Account- en reistools",
+  moreServiceInfoStepAccountSummary:
+    "Gebruik accounttools om opgeslagen zoekopdrachten, reizen, alerts en voorkeuren te organiseren in één Kurioticket-werkruimte.",
+  moreServiceInfoStepAccountDetails:
+    "Deze tools ondersteunen reisplanning op Kurioticket, terwijl providerspecifiek boekingsbeheer bij de provider blijft wanneer je boeking extern wordt afgerond.",
+  moreServiceInfoFaqHeading: "Veelgestelde vragen",
+  moreServiceInfoFaqDescription:
+    "Korte antwoorden over reiszoeken, provider-doorverwijzingen, opgeslagen reizen en accounttools.",
+  moreServiceInfoFaqWhatQuestion: "Wat is Kurioticket?",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket is een reiszoek- en vergelijkingsplatform voor het vinden, vergelijken, opslaan en organiseren van reisopties van meerdere providers.",
+  moreServiceInfoFaqSearchQuestion: "Hoe werkt reiszoeken?",
+  moreServiceInfoFaqSearchAnswer:
+    "Je voert reisgegevens in en Kurioticket toont beschikbare reisopties en providerinformatie die je kunnen helpen keuzes te vergelijken.",
+  moreServiceInfoFaqRedirectQuestion:
+    "Waarom word ik doorgestuurd naar een andere provider?",
+  moreServiceInfoFaqRedirectAnswer:
+    "Sommige aanbiedingen worden afgerond op externe providersites. De provider verwerkt de definitieve boekingsstappen, betaling, bevestiging en afhandeling.",
+  moreServiceInfoFaqPaymentsQuestion: "Verwerkt Kurioticket betalingen?",
+  moreServiceInfoFaqPaymentsAnswer:
+    "Voor doorgestuurde provideraanbiedingen verwerkt Kurioticket geen betalingen. Controleer en voltooi de betaling rechtstreeks op de providerpagina.",
+  moreServiceInfoFaqSaveQuestion: "Kan ik reizen en alerts opslaan?",
+  moreServiceInfoFaqSaveAnswer:
+    "Ja. Accounttools kunnen je helpen reizen op te slaan, routes te volgen, alerts te beheren en terug te keren naar reisopties die je overweegt.",
+  moreServiceInfoFaqAccountQuestion: "Is een account verplicht?",
+  moreServiceInfoFaqAccountAnswer:
+    "Je kunt zoekinformatie bekijken zonder alle accounttools, maar voor het opslaan van reizen, alerts en voorkeuren moet je mogelijk inloggen.",
+  moreServiceInfoFaqSupportQuestion: "Hoe neem ik contact op met support?",
+  moreServiceInfoFaqSupportAnswer:
+    "Gebruik de klantenservicepagina en vermeld het e-mailadres van je account, wat je probeerde te doen en eventuele route-, hotel- of providergegevens.",
+  moreServiceInfoHelpTitle: "Hulp nodig?",
+  moreServiceInfoHelpDescription:
+    "Vragen over je account, opgeslagen reizen, alerts of provider-doorverwijzingen?",
+  moreServiceInfoSupportCta: "Neem contact op met de klantenservice",
   serviceGuaranteeEyebrow: "Servicebelofte van Kurioticket",
   serviceGuaranteeTitle: "Servicegarantie",
   serviceGuaranteeDescription:
