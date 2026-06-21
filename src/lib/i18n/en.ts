@@ -591,6 +591,7 @@ export const translations: TranslationDictionary = {
   "legal.dataDeletionPolicy.summary": "How users may request account deletion and what data may need to be retained.",
   "legal.dataDeletionPolicy.lastUpdatedDate": "May 11, 2026",
   "legal.dataDeletionPolicy.lastUpdated": "Last updated: May 11, 2026",
+  "legal.dataDeletionPolicy.tableOfContents": "TABLE OF CONTENTS",
   "legal.dataDeletionPolicy.sections.request.title": "Deletion Requests",
   "legal.dataDeletionPolicy.sections.request.paragraph1": "You may request account deletion from account settings or support. We will process deletion requests consistent with applicable law, identity verification needs, fraud prevention, legal obligations, and security requirements.",
   "legal.dataDeletionPolicy.sections.retention.title": "Retained Records",
