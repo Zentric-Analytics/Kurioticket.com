@@ -1520,6 +1520,25 @@ export const translations: TranslationDictionary = {
   "howItWorks.providerWebsites.description":
     "Sommige boekingen kunnen worden afgerond op providerwebsites nadat Kurioticket je heeft doorgestuurd. Bekijk de providerpagina voor definitieve beschikbaarheid, prijzen, voorwaarden, betaalstappen en boekingsdetails voordat je een aankoop afrondt.",
   contactSupport: "Support contacteren",
+  "accountDashboard.priceAlerts.eyebrow": "ACCOUNTTOOLS",
+  "accountDashboard.priceAlerts.title": "Prijsalerts",
+  "accountDashboard.priceAlerts.description":
+    "Bekijk providergebaseerde alertgegevens die in je Kurioticket-account zijn opgeslagen.",
+  "accountDashboard.priceAlerts.empty.title": "Nog geen prijsalerts.",
+  "accountDashboard.priceAlerts.empty.body":
+    "Sla zoekopdrachten of routes op om reizen die je belangrijk vindt te volgen.",
+  "accountDashboard.priceAlerts.guidance.flight.title": "Begin met een vlucht",
+  "accountDashboard.priceAlerts.guidance.flight.body":
+    "Vergelijk providergebaseerde vluchtopties voordat je reizen of routes opslaat.",
+  "accountDashboard.priceAlerts.guidance.stays.title": "Bekijk verblijven",
+  "accountDashboard.priceAlerts.guidance.stays.body":
+    "Zoek hotels met actuele providergegevens voordat je iets aan je plannen toevoegt.",
+  "accountDashboard.priceAlerts.guidance.organized.title": "Houd je planning overzichtelijk",
+  "accountDashboard.priceAlerts.guidance.organized.body":
+    "Je account toont opgeslagen reisgegevens zonder verzonnen activiteit of statische prijzen.",
+  "accountDashboard.priceAlerts.cta.flights": "Vluchten zoeken",
+  "accountDashboard.priceAlerts.cta.hotels": "Hotels zoeken",
+  "accountDashboard.priceAlerts.cta.cars": "Auto’s zoeken",
   "accountDashboard.hub.title": "Mijn account",
   "accountDashboard.hub.description":
     "Beheer je reizen, opgeslagen items, voorkeuren en accountinstellingen op één plek.",
