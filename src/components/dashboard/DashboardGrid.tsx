@@ -237,7 +237,7 @@ export function AccountMenuPage() {
       </header>
 
       <div className="bg-[#f3f7fc] px-4 pb-8 pt-0 sm:px-6 sm:pb-10 lg:px-8 lg:pb-11">
-        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto -mt-2 grid max-w-[1120px] gap-4 sm:-mt-4 md:grid-cols-2 lg:gap-5">
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto -mt-6 grid max-w-[1120px] gap-4 sm:-mt-8 md:grid-cols-2 lg:gap-5">
           {accountDashboardPanels.map((panel) => (
             <AccountDashboardPanel key={panel.titleKey} panel={panel} />
           ))}
