@@ -475,7 +475,7 @@ export const translations: TranslationDictionary = {
   loginVerifying: "Vérification…",
   loginVerifyLogin: "Vérifier la connexion",
   loginSendingCode: "Envoi du code…",
-  loginResendIn: "Renvoyer dans {{seconds}} s",
+  loginResendIn: "Renvoyer dans {{seconds}}s",
   loginResendCode: "Renvoyer le code",
   loginUseDifferentDetails: "Utiliser d’autres informations",
   loginPasswordResetSuccess:

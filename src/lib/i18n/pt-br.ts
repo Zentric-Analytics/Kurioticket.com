@@ -374,7 +374,7 @@ export const translations: TranslationDictionary = {
   loginInvalidCredentials:
     "Não foi possível entrar. Verifique seu e-mail e senha e tente novamente.",
   loginRateLimited: "Muitas tentativas. Aguarde um momento e tente novamente.",
-  loginCodeSent: "Enviamos um código de verificação para seu e-mail.",
+  loginCodeSent: "Enviamos um código de verificação para o seu e-mail.",
   loginCodeFailed:
     "Esse código não funcionou. Verifique o código e tente novamente.",
   loginProcessing:
@@ -397,7 +397,7 @@ export const translations: TranslationDictionary = {
   loginSendingCode: "Enviando código…",
   loginResendIn: "Reenviar em {{seconds}}s",
   loginResendCode: "Reenviar código",
-  loginUseDifferentDetails: "Usar dados diferentes",
+  loginUseDifferentDetails: "Usar outros dados",
   loginPasswordResetSuccess:
     "Sua senha foi redefinida. Entre com sua nova senha.",
   loginInactiveMessage:
