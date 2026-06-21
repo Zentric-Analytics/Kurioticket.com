@@ -1520,6 +1520,12 @@ export const translations: TranslationDictionary = {
   "howItWorks.providerWebsites.description":
     "Sommige boekingen kunnen worden afgerond op providerwebsites nadat Kurioticket je heeft doorgestuurd. Bekijk de providerpagina voor definitieve beschikbaarheid, prijzen, voorwaarden, betaalstappen en boekingsdetails voordat je een aankoop afrondt.",
   contactSupport: "Support contacteren",
+  "accountDashboard.saved.eyebrow": "OPGESLAGEN",
+  "accountDashboard.saved.title": "Lijst met opgeslagen reizen",
+  "accountDashboard.saved.emptyTitle": "Nog niets hier... voorlopig.",
+  "accountDashboard.saved.emptyDescription":
+    "Klik gewoon op het harticoon bij een reis, route of verblijf en je slaat het hier op zodat je het later makkelijk kunt terugvinden.",
+  "accountDashboard.saved.explore": "Terug",
   "accountDashboard.nav.priceAlerts": "Prijsalerts",
   "accountDashboard.trips.title": "Mijn reizen",
   "accountDashboard.trips.findReservation": "Reservering zoeken",
