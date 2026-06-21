@@ -9,8 +9,10 @@ export const metadata = {
 export default function AccountPage() {
   return (
     <>
-      <AppHeader />
-      <main className="flex-1 bg-slate-50 pb-16 lg:pb-20">
+      <div className="[&>header]:!border-b-0 [&>header]:!shadow-none">
+        <AppHeader />
+      </div>
+      <main className="flex-1 bg-[#f3f7fc] pb-16 lg:pb-20">
         <AccountMenuPage />
       </main>
       <Footer />

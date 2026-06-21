@@ -2,7 +2,6 @@
 
 import { useState, type ChangeEvent } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import {
   Bell,
   Bookmark,
@@ -226,33 +225,19 @@ export function AccountMenuPage() {
 
   return (
     <section className="overflow-x-hidden" aria-labelledby="account-title">
-      <div className="relative isolate flex h-[220px] w-full items-center overflow-hidden bg-slate-950 sm:h-[250px] lg:h-[280px]">
-        <Image
-          src="/images/premium/flights/kurioticket-flight-hero-airplane-terminal-sunset-001.jpg"
-          alt="Airplane parked at an airport terminal gate"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center lg:object-[center_right]"
-        />
-        <div
-          className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/45 to-slate-950/10"
-          aria-hidden="true"
-        />
-        <div className="page-shell relative z-10 min-w-0 py-8">
-          <div className="max-w-[520px]">
-            <h1 id="account-title" className="text-3xl font-black leading-[1.05] tracking-tight text-white sm:text-[44px] lg:text-5xl">
+      <header className="bg-[#4338CA] text-left">
+        <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+          <div className="max-w-2xl">
+            <h1 id="account-title" className="text-3xl font-black tracking-[-0.035em] text-white sm:text-4xl lg:font-bold">
               {t["accountDashboard.hub.title"]}
             </h1>
-            <p className="mt-4 max-w-[520px] text-sm leading-6 text-white/90 sm:text-base sm:leading-7 lg:text-lg">
-              {t["accountDashboard.hub.description"]}
-            </p>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50 sm:text-base">{t["accountDashboard.hub.description"]}</p>
           </div>
         </div>
-      </div>
+      </header>
 
-      <div className="bg-[#f3f7fc] px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-7 lg:px-8 lg:pb-11 lg:pt-8">
-        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1120px] gap-4 md:grid-cols-2 lg:gap-5">
+      <div className="bg-[#f3f7fc] px-4 pb-8 pt-0 sm:px-6 sm:pb-10 lg:px-8 lg:pb-11">
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto -mt-6 grid max-w-[1120px] gap-4 sm:-mt-8 md:grid-cols-2 lg:gap-5">
           {accountDashboardPanels.map((panel) => (
             <AccountDashboardPanel key={panel.titleKey} panel={panel} />
           ))}
