@@ -829,6 +829,17 @@ export const translations: TranslationDictionary = {
   "accountMenu.priceAlerts.description": "Bekijk opgeslagen alerts",
   "accountMenu.accountSettings.label": "Accountinstellingen",
   "accountMenu.accountSettings.description": "Profiel en voorkeuren",
+  "accountSettings.eyebrow": "MIJN ACCOUNT",
+  "accountSettings.title": "Accountinstellingen",
+  "accountSettings.description":
+    "Beheer accountgegevens en voorkeuren vanuit je Kurioticket-account.",
+  "accountSettings.notifications.title": "Meldingsvoorkeuren",
+  "accountSettings.notifications.description":
+    "Bekijk e-mailgegevens van je account en bewaar voorkeursgegevens op één plek.",
+  "accountSettings.privacy.title": "Privacy-instellingen",
+  "accountSettings.privacy.description":
+    "Bekijk privacyinformatie, richtlijnen voor accountgegevens en platformbeleid.",
+  "accountSettings.privacy.legalCenterCta": "Juridisch centrum bekijken",
   accountSettings: "Accountinstellingen",
   preferences: "Voorkeuren",
   support: "Support",
