@@ -1541,6 +1541,17 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.cta.flights": "Vluchten zoeken",
   "accountDashboard.priceAlerts.cta.hotels": "Hotels zoeken",
   "accountDashboard.priceAlerts.cta.cars": "Auto’s zoeken",
+  "accountDashboard.priceAlerts.error.title":
+    "We konden je alerts niet laden. Probeer het opnieuw.",
+  "accountDashboard.priceAlerts.error.body":
+    "Je accountgegevens blijven beschermd. Vernieuw de pagina of keer terug naar je dashboard.",
+  "accountDashboard.priceAlerts.error.cta": "Terug naar dashboard",
+  "accountDashboard.priceAlerts.alertType.flight": "Vlucht",
+  "accountDashboard.priceAlerts.alertType.hotel": "Hotel",
+  "accountDashboard.priceAlerts.alert.targetPrice": "Richtprijs",
+  "accountDashboard.priceAlerts.alert.noTargetPrice": "Geen richtprijs opgeslagen",
+  "accountDashboard.priceAlerts.alert.created": "Aangemaakt",
+  "accountDashboard.priceAlerts.alert.updated": "Bijgewerkt",
   "accountDashboard.preferences.customization.title": "Personalisatievoorkeuren",
   "accountDashboard.preferences.customization.description": "Kies hoe Kurioticket je ervaring personaliseert.",
   "accountDashboard.preferences.customization.languageRegion.title": "Taal en regio",
