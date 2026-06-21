@@ -1608,6 +1608,25 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.booking.avoidHotelChains": "Hotelketens vermijden",
   "accountDashboard.preferences.cancel": "Annuleren",
   "accountDashboard.preferences.savePreferences": "Voorkeuren opslaan",
+  "accountDashboard.security.eyebrow": "BEVEILIGING",
+  "accountDashboard.security.title": "Beveiligingsinstellingen",
+  "accountDashboard.security.description":
+    "Werk je wachtwoord bij en beheer je accountbeveiliging.",
+  "accountDashboard.security.passkeys.title": "Passkeys",
+  "accountDashboard.security.passkeys.description":
+    "Log veilig in zonder een wachtwoord te hoeven onthouden.",
+  "accountDashboard.security.twoFactor.title": "Twee-factor-authenticatie",
+  "accountDashboard.security.twoFactor.description":
+    "Voeg een extra beveiligingslaag toe aan je account.",
+  "accountDashboard.security.activeSessions.title": "Actieve sessies",
+  "accountDashboard.security.activeSessions.description":
+    "Bekijk waar je account is ingelogd en meld je af op andere apparaten.",
+  "accountDashboard.security.deleteAccount.title": "Account verwijderen",
+  "accountDashboard.security.deleteAccount.description":
+    "Verwijder je Kurioticket-account permanent.",
+  "accountDashboard.security.action.setUp": "Instellen",
+  "accountDashboard.security.action.manage": "Beheren",
+  "accountDashboard.security.action.deleteAccount": "Account verwijderen",
   "accountDashboard.hub.title": "Mijn account",
   "accountDashboard.hub.description":
     "Beheer je reizen, opgeslagen items, voorkeuren en accountinstellingen op één plek.",
