@@ -1592,7 +1592,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.savedTrips": "Opgeslagen reizen",
   "accountDashboard.hub.priceAlerts": "Prijsalerts",
   "accountDashboard.hub.preferences": "Voorkeuren",
-  "accountDashboard.hub.emailPreferences": "Aanpassingsvoorkeuren",
+  "accountDashboard.hub.emailPreferences": "Personalisatievoorkeuren",
   "accountDashboard.hub.travelPreferences": "Boekingsvoorkeuren",
   "accountDashboard.hub.helpAndSupport": "Hulp en support",
   "accountDashboard.hub.contactSupport": "Contact opnemen met support",
