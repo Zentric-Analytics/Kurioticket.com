@@ -309,7 +309,7 @@ export const translations: TranslationDictionary = {
     "Ungültige E-Mail-Adresse oder ungültiges Passwort.",
   loginRateLimited:
     "Zu viele Anmeldeversuche. Bitte warten Sie einen Moment und versuchen Sie es erneut.",
-  loginCodeSent: "Wir haben einen Bestätigungscode an Ihre E-Mail gesendet.",
+  loginCodeSent: "Wir haben einen Verifizierungscode an deine E-Mail-Adresse gesendet.",
   loginCodeFailed:
     "Dieser Code hat nicht funktioniert. Prüfen Sie den Code und versuchen Sie es erneut.",
   loginProcessing:
@@ -326,12 +326,12 @@ export const translations: TranslationDictionary = {
   loginUnableSendLoginCode:
     "Der Anmeldecode kann derzeit nicht gesendet werden. Bitte versuchen Sie es erneut.",
   loginCodeInstructions:
-    "Geben Sie den 6-stelligen Code ein, der an {{email}} gesendet wurde. Codes laufen nach 10 Minuten ab.",
-  loginVerificationCodeLabel: "Bestätigungscode",
+    "Gib den 6-stelligen Code ein, der an {{email}} gesendet wurde. Codes laufen nach 10 Minuten ab.",
+  loginVerificationCodeLabel: "Verifizierungscode",
   loginVerifying: "Bestätigung läuft …",
-  loginVerifyLogin: "Anmeldung bestätigen",
+  loginVerifyLogin: "Anmeldung verifizieren",
   loginSendingCode: "Code wird gesendet …",
-  loginResendIn: "Erneut senden in {{seconds}} s",
+  loginResendIn: "Erneut senden in {{seconds}}s",
   loginResendCode: "Code erneut senden",
   loginUseDifferentDetails: "Andere Angaben verwenden",
   loginPasswordResetSuccess:

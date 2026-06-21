@@ -411,7 +411,7 @@ export const translations: TranslationDictionary = {
   loginInvalidCredentials:
     "No pudimos iniciar sesión. Revisa tu correo electrónico y contraseña e inténtalo de nuevo.",
   loginRateLimited: "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
-  loginCodeSent: "Enviamos un código de verificación a tu correo electrónico.",
+  loginCodeSent: "Hemos enviado un código de verificación a tu correo electrónico.",
   loginCodeFailed: "Ese código no funcionó. Revisa el código e inténtalo de nuevo.",
   loginProcessing: "Comprobando tus datos y enviando un código de verificación…",
   loginResendSuccess: "Enviamos un código nuevo si esta cuenta puede iniciar sesión.",
@@ -424,12 +424,12 @@ export const translations: TranslationDictionary = {
   loginUnableSendLoginCode:
     "No se puede enviar el código de inicio de sesión ahora. Inténtalo de nuevo.",
   loginCodeInstructions:
-    "Ingresa el código de 6 dígitos enviado a {{email}}. Los códigos caducan después de 10 minutos.",
+    "Introduce el código de 6 dígitos enviado a {{email}}. Los códigos caducan después de 10 minutos.",
   loginVerificationCodeLabel: "Código de verificación",
   loginVerifying: "Verificando…",
   loginVerifyLogin: "Verificar inicio de sesión",
   loginSendingCode: "Enviando código…",
-  loginResendIn: "Reenviar en {{seconds}} s",
+  loginResendIn: "Reenviar en {{seconds}}s",
   loginResendCode: "Reenviar código",
   loginUseDifferentDetails: "Usar otros datos",
   loginPasswordResetSuccess:
