@@ -227,15 +227,14 @@ export function AccountMenuPage({ initials, displayName, userEmail }: Pick<Dashb
     <section className="overflow-x-hidden" aria-labelledby="account-title">
       <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
         <div className="mx-auto max-w-[1120px] space-y-5">
-          <header className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm sm:p-6" aria-label={t["accountDashboard.hub.title"]}>
+          <header className="rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-sm sm:p-6" aria-label={t["accountDashboard.hub.title"]}>
             <div className="flex min-w-0 items-center gap-4 sm:gap-5">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-blue-50 text-lg font-bold uppercase tracking-[-0.02em] text-blue-700 ring-1 ring-blue-100 sm:size-16 sm:text-xl">
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-700 text-lg font-bold uppercase tracking-[-0.02em] text-white shadow-sm ring-1 ring-blue-200/70 sm:size-16 sm:text-xl">
                 {initials}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-dark">{t["accountDashboard.hub.title"]}</p>
-                <h1 id="account-title" className="mt-1 truncate text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
-                  Welcome back, {displayName}
+                <h1 id="account-title" className="truncate text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+                  Welcome back, {displayName} 👋
                 </h1>
                 {userEmail ? <p className="mt-1 truncate text-sm leading-5 text-slate-600">{userEmail}</p> : null}
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{t["accountDashboard.hub.description"]}</p>
