@@ -3,7 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PriceAlertsContent } from "./PriceAlertsContent";
 
 export const metadata = {
-  title: "Price alerts",
+  title: "Kurioticket",
 };
 
 export default function AlertsPage() {
