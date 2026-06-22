@@ -1,34 +1,44 @@
 "use client";
 
 import Link from "next/link";
+import { useLocale } from "@/components/layout/LocaleProvider";
 import { useEffect, useRef, useState } from "react";
 import { Bell, ChevronDown, LineChart, Mail, Search, Settings2 } from "lucide-react";
 
-const tabs = ["Active (0)", "Expired (0)", "All (0)"];
-const sortOptions = ["Newest", "Oldest", "Route A-Z"];
+const tabs = [
+  { id: "active", labelKey: "accountDashboard.priceAlerts.tabs.active", count: 0 },
+  { id: "expired", labelKey: "accountDashboard.priceAlerts.tabs.expired", count: 0 },
+  { id: "all", labelKey: "accountDashboard.priceAlerts.tabs.all", count: 0 },
+] as const;
+
+const sortOptions = [
+  { id: "newest", labelKey: "accountDashboard.priceAlerts.sort.newest" },
+  { id: "oldest", labelKey: "accountDashboard.priceAlerts.sort.oldest" },
+  { id: "routeAz", labelKey: "accountDashboard.priceAlerts.sort.routeAz" },
+] as const;
 
 const infoItems = [
   {
-    title: "Real-time monitoring",
-    text: "We monitor tracked routes when alerts are active.",
+    titleKey: "accountDashboard.priceAlerts.features.monitoring.title",
+    textKey: "accountDashboard.priceAlerts.features.monitoring.body",
     icon: Bell,
   },
   {
-    title: "Email notifications",
-    text: "Get notified when fares change.",
+    titleKey: "accountDashboard.priceAlerts.features.email.title",
+    textKey: "accountDashboard.priceAlerts.features.email.body",
     icon: Mail,
   },
   {
-    title: "Price trends",
-    text: "See how tracked fares move over time.",
+    titleKey: "accountDashboard.priceAlerts.features.trends.title",
+    textKey: "accountDashboard.priceAlerts.features.trends.body",
     icon: LineChart,
   },
   {
-    title: "Easy management",
-    text: "Pause or remove alerts anytime.",
+    titleKey: "accountDashboard.priceAlerts.features.management.title",
+    textKey: "accountDashboard.priceAlerts.features.management.body",
     icon: Settings2,
   },
-];
+] as const;
 
 function EmptyStateIllustration() {
   return (
@@ -56,8 +66,9 @@ function EmptyStateIllustration() {
 }
 
 export function PriceAlertsContent() {
-  const [selectedTab, setSelectedTab] = useState(tabs[0]);
-  const [selectedSort, setSelectedSort] = useState(sortOptions[0]);
+  const { t } = useLocale();
+  const [selectedTab, setSelectedTab] = useState<(typeof tabs)[number]["id"]>(tabs[0].id);
+  const [selectedSort, setSelectedSort] = useState<(typeof sortOptions)[number]["id"]>(sortOptions[0].id);
   const [isSortOpen, setIsSortOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -80,30 +91,30 @@ export function PriceAlertsContent() {
       <div className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8">
         <header className="px-1 pb-5 text-left sm:px-2 sm:pb-6">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
-            Price alerts
+            {t["accountDashboard.priceAlerts.title"]}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-            Track prices and get notified when fares change.
+            {t["accountDashboard.priceAlerts.description"]}
           </p>
         </header>
         <div ref={sortDropdownRef} className="relative flex items-center gap-3 border-b border-slate-200 pb-4 sm:justify-between">
-          <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto pb-1 sm:justify-between sm:overflow-visible sm:pb-0" aria-label="Price alert filters">
+          <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto pb-1 sm:justify-between sm:overflow-visible sm:pb-0" aria-label={t["accountDashboard.priceAlerts.filtersAriaLabel"]}>
             <div className="flex shrink-0 gap-2">
               {tabs.map((tab) => {
-                const isSelected = selectedTab === tab;
+                const isSelected = selectedTab === tab.id;
 
                 return (
                   <button
-                    key={tab}
+                    key={tab.id}
                     type="button"
                     className={`focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
                       isSelected ? "bg-violet-100 text-indigo-700" : "text-slate-600 hover:bg-white hover:text-indigo-700"
                     }`}
                     aria-pressed={isSelected}
-                    onClick={() => setSelectedTab(tab)}
+                    onClick={() => setSelectedTab(tab.id)}
                   >
                     {isSelected && <Bell className="h-4 w-4" aria-hidden="true" />}
-                    {tab}
+                    {`${t[tab.labelKey]} (${tab.count})`}
                   </button>
                 );
               })}
@@ -116,28 +127,28 @@ export function PriceAlertsContent() {
               aria-haspopup="listbox"
               onClick={() => setIsSortOpen((current) => !current)}
             >
-              <span>Sort by: {selectedSort}</span>
+              <span>{t["accountDashboard.priceAlerts.sort.label"]}: {t[sortOptions.find((option) => option.id === selectedSort)?.labelKey ?? sortOptions[0].labelKey]}</span>
               <ChevronDown className={`h-4 w-4 transition ${isSortOpen ? "rotate-180" : ""}`} aria-hidden="true" />
             </button>
           </div>
 
           {isSortOpen && (
-            <div className="absolute right-0 top-full z-10 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg" role="listbox" aria-label="Sort price alerts">
+            <div className="absolute right-0 top-full z-10 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg" role="listbox" aria-label={t["accountDashboard.priceAlerts.sort.ariaLabel"]}>
               {sortOptions.map((option) => (
                 <button
-                  key={option}
+                  key={option.id}
                   type="button"
                   className={`block w-full px-4 py-3 text-left text-sm font-semibold transition hover:bg-violet-50 hover:text-indigo-700 ${
-                    selectedSort === option ? "bg-violet-50 text-indigo-700" : "text-slate-700"
+                    selectedSort === option.id ? "bg-violet-50 text-indigo-700" : "text-slate-700"
                   }`}
                   role="option"
-                  aria-selected={selectedSort === option}
+                  aria-selected={selectedSort === option.id}
                   onClick={() => {
-                    setSelectedSort(option);
+                    setSelectedSort(option.id);
                     setIsSortOpen(false);
                   }}
                 >
-                  {option}
+                  {t[option.labelKey]}
                 </button>
               ))}
             </div>
@@ -148,33 +159,33 @@ export function PriceAlertsContent() {
           <section className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm sm:px-8 sm:py-16 lg:min-h-[34rem] lg:py-20" aria-labelledby="empty-alerts-title">
             <EmptyStateIllustration />
             <h2 id="empty-alerts-title" className="mt-6 text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
-              No price alerts yet.
+              {t["accountDashboard.priceAlerts.empty.title"]}
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600 sm:text-base">
-              Create an alert from a flight search to track fare changes and get notified.
+              {t["accountDashboard.priceAlerts.empty.body"]}
             </p>
             <Link
               href="/flights"
               className="focus-ring mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#3730A3] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-[#312E81]"
             >
               <Search className="h-5 w-5" aria-hidden="true" />
-              Search flights
+              {t["accountDashboard.priceAlerts.cta.flights"]}
             </Link>
           </section>
 
-          <aside className="hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:block" aria-label="Price alerts features">
+          <aside className="hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:block" aria-label={t["accountDashboard.priceAlerts.featuresAriaLabel"]}>
             <div className="space-y-7">
               {infoItems.map((item) => {
                 const Icon = item.icon;
 
                 return (
-                  <div key={item.title} className="flex gap-4">
+                  <div key={item.titleKey} className="flex gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700">
                       <Icon className="h-6 w-6" aria-hidden="true" />
                     </div>
                     <div>
-                      <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
+                      <h3 className="text-base font-semibold text-slate-900">{t[item.titleKey]}</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{t[item.textKey]}</p>
                     </div>
                   </div>
                 );
