@@ -3173,7 +3173,7 @@ export function SearchTabs({
                     >
                     <div
                       role="dialog"
-                      aria-label="Travelers and cabin"
+                      aria-label={translate("travelersCabinDialogLabel")}
                       className="bg-white"
                     >
                       <div>
