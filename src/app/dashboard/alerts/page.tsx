@@ -1,38 +1,18 @@
-import { getServerSession } from "next-auth";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { PriceAlertsContent } from "./PriceAlertsContent";
-import { authOptions } from "@/lib/auth";
-import {
-  type AccountPriceAlert,
-  listUserPriceAlerts,
-} from "@/services/priceTrackingService";
 
 export const metadata = {
-  title: "Price Alerts",
+  title: "Price alerts",
 };
 
-export default async function AlertsPage() {
-  const session = await getServerSession(authOptions);
-  let alerts: AccountPriceAlert[] = [];
-  let loadError = false;
-
-  if (session?.user?.id) {
-    try {
-      alerts = await listUserPriceAlerts(session.user.id);
-    } catch {
-      loadError = true;
-    }
-  }
-
+export default function AlertsPage() {
   return (
     <>
-      <AppHeader showAccountBackLink />
-      <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
-        <div className="page-shell min-w-0">
-          <PriceAlertsContent alerts={alerts} loadError={loadError} />
-        </div>
-      </main>
+      <div className="[&>header]:!border-b-0 [&>header]:!shadow-none">
+        <AppHeader showAccountBackLink />
+      </div>
+      <PriceAlertsContent />
       <Footer />
     </>
   );
