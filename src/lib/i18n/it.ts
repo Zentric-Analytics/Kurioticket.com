@@ -1193,6 +1193,7 @@ export const translations: TranslationDictionary = {
   "legal.dataDeletionPolicy.lastUpdatedDate": "11 maggio 2026",
   "legal.dataDeletionPolicy.lastUpdated":
     "Ultimo aggiornamento: 11 maggio 2026",
+  "legal.dataDeletionPolicy.tableOfContents": "INDICE",
   "legal.dataDeletionPolicy.sections.request.title":
     "Richieste di eliminazione",
   "legal.dataDeletionPolicy.sections.request.paragraph1":
