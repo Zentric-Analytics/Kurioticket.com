@@ -248,6 +248,59 @@ export const translations: TranslationDictionary = {
   signupAgreementAfterPrivacy:
     " en de partner-doorverwijzingsinformatie.",
   signupSubmit: "Registreren",
+  signupCreatingAccount: "Account aanmaken...",
+  signupErrorFullNameRequired: "Voer je volledige naam in.",
+  signupErrorInvalidEmail: "Voer een geldig e-mailadres in.",
+  signupErrorPasswordRequirements: "Wachtwoord moet minimaal 8 tekens bevatten.",
+  signupErrorUnableCreate:
+    "We konden je account niet aanmaken. Probeer het opnieuw.",
+  signupErrorRateLimited: "Te veel registratiepogingen. Wacht even en probeer het opnieuw.",
+  signupErrorDuplicateEmail: "Er bestaat al een account met dit e-mailadres.",
+  signupErrorUnableSendVerification:
+    "Kan de verificatiecode nu niet verzenden. Probeer het opnieuw.",
+  signupVerificationRequiredRedirecting: "Verificatie vereist. Doorsturen...",
+  signupAutomaticLoginFailed:
+    "Je account is aangemaakt, maar automatisch inloggen is mislukt. Meld je aan met je nieuwe wachtwoord.",
+  signupAccountCreatedRedirecting: "Account aangemaakt. Doorsturen...",
+  loginInvalidCredentials:
+    "We konden je niet inloggen. Controleer je e-mailadres en wachtwoord en probeer het opnieuw.",
+  loginRateLimited: "Te veel pogingen. Wacht even en probeer het opnieuw.",
+  loginPasswordResetSuccess:
+    "Je wachtwoord is opnieuw ingesteld. Meld je aan met je nieuwe wachtwoord.",
+  loginInactiveMessage:
+    "Je bent na 30 minuten inactiviteit uitgelogd. Log opnieuw in om verder te gaan.",
+  loginErrorAccountUnavailable: "Dit account is niet beschikbaar. Neem contact op met support.",
+  loginErrorOAuthCallback:
+    "Inloggen met Google werd onderbroken tijdens de callback. Probeer het opnieuw.",
+  loginErrorOAuthAccountNotLinked:
+    "Dit e-mailadres is al gekoppeld aan een andere inlogmethode. Ga verder met je oorspronkelijke methode of stel je wachtwoord opnieuw in.",
+  loginErrorAccessDenied: "Google heeft de toegang geweigerd. Sta toegang toe en probeer het opnieuw.",
+  loginErrorConfiguration:
+    "Inloggen met Google is tijdelijk niet beschikbaar. Probeer het binnenkort opnieuw of gebruik inloggen met e-mail.",
+  loginErrorCallback:
+    "De callback voor inloggen met Google is mislukt. Probeer het opnieuw of gebruik inloggen met e-mail.",
+  loginErrorGoogleGeneric:
+    "Inloggen met Google kon niet worden voltooid. Probeer het opnieuw of gebruik inloggen met e-mail.",
+  resetPasswordCreateTitle: "Maak een nieuw wachtwoord aan",
+  resetPasswordSubtitle: "Voer hieronder je nieuwe wachtwoord in.",
+  resetPasswordRequestNew: "Vraag een nieuwe reset-e-mail aan",
+  resetPasswordNewPasswordLabel: "Nieuw wachtwoord",
+  resetPasswordConfirmPasswordLabel: "Bevestig nieuw wachtwoord",
+  resetPasswordValidationError:
+    "Voer een geldig wachtwoord in en zorg dat beide wachtwoordvelden overeenkomen.",
+  resetPasswordUnable: "Kan het wachtwoord nu niet opnieuw instellen.",
+  resetPasswordSuccessMessage: "Wachtwoord opnieuw ingesteld. Doorsturen naar inloggen...",
+  resetPasswordResetting: "Opnieuw instellen...",
+  resetPasswordRemember: "Weet je je wachtwoord nog?",
+  resetPasswordLoginLink: "Inloggen",
+  verifyLoginTitle: "Verifieer je login",
+  verifyLoginInstructions: "Voer de 6-cijferige code in die we naar je e-mail hebben gestuurd. Codes verlopen na 10 minuten.",
+  verifyLoginCodeLabel: "Inlogcode",
+  verifyLoginSubmit: "Login verifiëren",
+  verifyLoginNeedNewCode: "Nieuwe code nodig? Voer je wachtwoord in zodat we er veilig een opnieuw kunnen verzenden.",
+  verifyLoginPasswordLabel: "Wachtwoord voor opnieuw verzenden",
+  verifyLoginNeedStartOver: "Opnieuw beginnen?",
+  verifyLoginAgainLink: "Opnieuw inloggen",
   signupGoogle: "Doorgaan met Google",
   signupAlreadyHaveAccount: "Heb je al een account?",
   signupLoginLink: "Inloggen",
