@@ -86,32 +86,32 @@ export function PriceAlertsContent() {
             Track prices and get notified when fares change.
           </p>
         </header>
-        <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0" aria-label="Price alert filters">
-            {tabs.map((tab) => {
-              const isSelected = selectedTab === tab;
+        <div ref={sortDropdownRef} className="relative flex items-center gap-3 border-b border-slate-200 pb-4 sm:justify-between">
+          <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto pb-1 sm:justify-between sm:overflow-visible sm:pb-0" aria-label="Price alert filters">
+            <div className="flex shrink-0 gap-2">
+              {tabs.map((tab) => {
+                const isSelected = selectedTab === tab;
 
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  className={`focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
-                    isSelected ? "bg-violet-100 text-indigo-700" : "text-slate-600 hover:bg-white hover:text-indigo-700"
-                  }`}
-                  aria-pressed={isSelected}
-                  onClick={() => setSelectedTab(tab)}
-                >
-                  {isSelected && <Bell className="h-4 w-4" aria-hidden="true" />}
-                  {tab}
-                </button>
-              );
-            })}
-          </div>
+                return (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={`focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
+                      isSelected ? "bg-violet-100 text-indigo-700" : "text-slate-600 hover:bg-white hover:text-indigo-700"
+                    }`}
+                    aria-pressed={isSelected}
+                    onClick={() => setSelectedTab(tab)}
+                  >
+                    {isSelected && <Bell className="h-4 w-4" aria-hidden="true" />}
+                    {tab}
+                  </button>
+                );
+              })}
+            </div>
 
-          <div ref={sortDropdownRef} className="relative w-full sm:w-auto">
             <button
               type="button"
-              className="focus-ring inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 sm:w-auto"
+              className="focus-ring inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 sm:min-h-12 sm:gap-3 sm:rounded-xl sm:px-4"
               aria-expanded={isSortOpen}
               aria-haspopup="listbox"
               onClick={() => setIsSortOpen((current) => !current)}
@@ -119,28 +119,29 @@ export function PriceAlertsContent() {
               <span>Sort by: {selectedSort}</span>
               <ChevronDown className={`h-4 w-4 transition ${isSortOpen ? "rotate-180" : ""}`} aria-hidden="true" />
             </button>
-            {isSortOpen && (
-              <div className="absolute right-0 z-10 mt-2 w-full min-w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg sm:w-44" role="listbox" aria-label="Sort price alerts">
-                {sortOptions.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    className={`block w-full px-4 py-3 text-left text-sm font-semibold transition hover:bg-violet-50 hover:text-indigo-700 ${
-                      selectedSort === option ? "bg-violet-50 text-indigo-700" : "text-slate-700"
-                    }`}
-                    role="option"
-                    aria-selected={selectedSort === option}
-                    onClick={() => {
-                      setSelectedSort(option);
-                      setIsSortOpen(false);
-                    }}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
+
+          {isSortOpen && (
+            <div className="absolute right-0 top-full z-10 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg" role="listbox" aria-label="Sort price alerts">
+              {sortOptions.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  className={`block w-full px-4 py-3 text-left text-sm font-semibold transition hover:bg-violet-50 hover:text-indigo-700 ${
+                    selectedSort === option ? "bg-violet-50 text-indigo-700" : "text-slate-700"
+                  }`}
+                  role="option"
+                  aria-selected={selectedSort === option}
+                  onClick={() => {
+                    setSelectedSort(option);
+                    setIsSortOpen(false);
+                  }}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
