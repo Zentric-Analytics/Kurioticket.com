@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { Bell, ChevronDown, LineChart, Mail, Search, Settings2 } from "lucide-react";
 
 const tabs = ["Active (0)", "Expired (0)", "All (0)"];
+const sortOptions = ["Newest", "Oldest", "Route A-Z"];
 
 const infoItems = [
   {
@@ -52,6 +56,25 @@ function EmptyStateIllustration() {
 }
 
 export function PriceAlertsContent() {
+  const [selectedTab, setSelectedTab] = useState(tabs[0]);
+  const [selectedSort, setSelectedSort] = useState(sortOptions[0]);
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      if (!sortDropdownRef.current?.contains(event.target as Node)) {
+        setIsSortOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, []);
+
   return (
     <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
       <div className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8">
@@ -65,28 +88,59 @@ export function PriceAlertsContent() {
         </header>
         <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0" aria-label="Price alert filters">
-            {tabs.map((tab, index) => (
-              <button
-                key={tab}
-                type="button"
-                className={`focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
-                  index === 0 ? "bg-violet-100 text-indigo-700" : "text-slate-600 hover:bg-white hover:text-indigo-700"
-                }`}
-                aria-pressed={index === 0}
-              >
-                {index === 0 && <Bell className="h-4 w-4" aria-hidden="true" />}
-                {tab}
-              </button>
-            ))}
+            {tabs.map((tab) => {
+              const isSelected = selectedTab === tab;
+
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  className={`focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
+                    isSelected ? "bg-violet-100 text-indigo-700" : "text-slate-600 hover:bg-white hover:text-indigo-700"
+                  }`}
+                  aria-pressed={isSelected}
+                  onClick={() => setSelectedTab(tab)}
+                >
+                  {isSelected && <Bell className="h-4 w-4" aria-hidden="true" />}
+                  {tab}
+                </button>
+              );
+            })}
           </div>
 
-          <button
-            type="button"
-            className="focus-ring inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 sm:w-auto"
-          >
-            <span>Sort by: Newest</span>
-            <ChevronDown className="h-4 w-4" aria-hidden="true" />
-          </button>
+          <div ref={sortDropdownRef} className="relative w-full sm:w-auto">
+            <button
+              type="button"
+              className="focus-ring inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 sm:w-auto"
+              aria-expanded={isSortOpen}
+              aria-haspopup="listbox"
+              onClick={() => setIsSortOpen((current) => !current)}
+            >
+              <span>Sort by: {selectedSort}</span>
+              <ChevronDown className={`h-4 w-4 transition ${isSortOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+            </button>
+            {isSortOpen && (
+              <div className="absolute right-0 z-10 mt-2 w-full min-w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg sm:w-44" role="listbox" aria-label="Sort price alerts">
+                {sortOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={`block w-full px-4 py-3 text-left text-sm font-semibold transition hover:bg-violet-50 hover:text-indigo-700 ${
+                      selectedSort === option ? "bg-violet-50 text-indigo-700" : "text-slate-700"
+                    }`}
+                    role="option"
+                    aria-selected={selectedSort === option}
+                    onClick={() => {
+                      setSelectedSort(option);
+                      setIsSortOpen(false);
+                    }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
