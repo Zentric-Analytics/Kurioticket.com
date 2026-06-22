@@ -11,19 +11,37 @@ const selectSections = [
         id: "preferred-language",
         labelKey: "accountDashboard.preferences.customization.preferredLanguage",
         placeholderKey: "accountDashboard.preferences.customization.selectPreferredLanguage",
-        options: ["English", "Spanish", "French", "German", "Portuguese"],
+        options: [
+          { value: "English", labelKey: "accountDashboard.preferences.customization.language.english" },
+          { value: "Spanish", labelKey: "accountDashboard.preferences.customization.language.spanish" },
+          { value: "French", labelKey: "accountDashboard.preferences.customization.language.french" },
+          { value: "German", labelKey: "accountDashboard.preferences.customization.language.german" },
+          { value: "Portuguese", labelKey: "accountDashboard.preferences.customization.language.portuguese" },
+        ],
       },
       {
         id: "currency",
         labelKey: "accountDashboard.preferences.customization.currency",
         placeholderKey: "accountDashboard.preferences.customization.selectCurrency",
-        options: ["US Dollar (USD)", "Euro (EUR)", "British Pound (GBP)", "Canadian Dollar (CAD)", "Australian Dollar (AUD)"],
+        options: [
+          { value: "USD", labelKey: "accountDashboard.preferences.customization.currency.usd" },
+          { value: "EUR", labelKey: "accountDashboard.preferences.customization.currency.eur" },
+          { value: "GBP", labelKey: "accountDashboard.preferences.customization.currency.gbp" },
+          { value: "CAD", labelKey: "accountDashboard.preferences.customization.currency.cad" },
+          { value: "AUD", labelKey: "accountDashboard.preferences.customization.currency.aud" },
+        ],
       },
       {
         id: "region",
         labelKey: "accountDashboard.preferences.customization.region",
         placeholderKey: "accountDashboard.preferences.customization.selectRegion",
-        options: ["United States", "Canada", "United Kingdom", "Europe", "Australia"],
+        options: [
+          { value: "United States", labelKey: "accountDashboard.preferences.customization.region.unitedStates" },
+          { value: "Canada", labelKey: "accountDashboard.preferences.customization.region.canada" },
+          { value: "United Kingdom", labelKey: "accountDashboard.preferences.customization.region.unitedKingdom" },
+          { value: "Europe", labelKey: "accountDashboard.preferences.customization.region.europe" },
+          { value: "Australia", labelKey: "accountDashboard.preferences.customization.region.australia" },
+        ],
       },
     ],
   },
@@ -110,8 +128,8 @@ export function CustomizationPreferencesContent() {
                       {t[field.placeholderKey]}
                     </option>
                     {field.options.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
+                      <option key={option.value} value={option.value}>
+                        {t[option.labelKey]}
                       </option>
                     ))}
                   </select>
