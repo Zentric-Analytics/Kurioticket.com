@@ -225,19 +225,19 @@ export function AccountMenuPage() {
 
   return (
     <section className="overflow-x-hidden" aria-labelledby="account-title">
-      <header className="bg-[#4338CA] text-left">
-        <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+      <header className="text-left">
+        <div className="mx-auto min-w-0 max-w-6xl px-4 pb-5 pt-8 sm:px-6 sm:pb-6 sm:pt-10 lg:px-8 lg:pt-12">
           <div className="max-w-2xl">
-            <h1 id="account-title" className="text-3xl font-black tracking-[-0.035em] text-white sm:text-4xl lg:font-bold">
+            <h1 id="account-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
               {t["accountDashboard.hub.title"]}
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50 sm:text-base">{t["accountDashboard.hub.description"]}</p>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{t["accountDashboard.hub.description"]}</p>
           </div>
         </div>
       </header>
 
-      <div className="bg-[#f3f7fc] px-4 pb-8 pt-0 sm:px-6 sm:pb-10 lg:px-8 lg:pb-11">
-        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto -mt-6 grid max-w-[1120px] gap-4 sm:-mt-8 md:grid-cols-2 lg:gap-5">
+      <div className="px-4 pb-8 pt-0 sm:px-6 sm:pb-10 lg:px-8 lg:pb-11">
+        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1120px] gap-4 md:grid-cols-2 lg:gap-5">
           {accountDashboardPanels.map((panel) => (
             <AccountDashboardPanel key={panel.titleKey} panel={panel} />
           ))}
