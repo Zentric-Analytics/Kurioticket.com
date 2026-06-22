@@ -163,7 +163,7 @@ function SavedEmptyStateIllustration() {
 export function AccountSectionHeader({ title, description, titleId }: { title: string; description: string; titleId?: string }) {
   return (
     <div className="px-1 pb-2 text-left sm:px-2 sm:pb-3">
-      <h1 id={titleId} className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
+      <h1 id={titleId} className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
         {title}
       </h1>
       <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{description}</p>
@@ -326,8 +326,8 @@ function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: D
 function DetailValue({ value, fallback, helper }: { value: string; fallback: string; helper?: string }) {
   return (
     <div className="min-w-0 space-y-0.5 text-left">
-      <p className={cn("break-words text-[15px] font-semibold leading-5 text-slate-900 sm:text-sm sm:leading-6", !value && "text-slate-500")}>{value || fallback}</p>
-      {helper ? <p className="max-w-lg text-[13px] leading-5 text-slate-500 sm:text-sm sm:leading-6">{helper}</p> : null}
+      <p className={cn("break-words text-sm font-medium leading-6 text-slate-700", !value && "text-slate-500")}>{value || fallback}</p>
+      {helper ? <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p> : null}
     </div>
   );
 }
@@ -569,10 +569,10 @@ function ListRow({ title, body, href, icon: Icon, status }: ListRowProps) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h3 className="min-w-0 break-words font-semibold text-navy">{title}</h3>
+          <h3 className="min-w-0 break-words text-base font-semibold text-slate-900">{title}</h3>
           {status ? <span className="break-words rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted">{status}</span> : null}
         </div>
-        <p className="mt-1 break-words text-sm leading-6 text-muted">{body}</p>
+        <p className="mt-1 break-words text-sm leading-6 text-slate-600">{body}</p>
       </div>
       {href ? <ChevronRight className="mt-2 size-4 shrink-0 text-teal-dark" aria-hidden="true" /> : null}
     </div>
@@ -608,7 +608,7 @@ export function SavedDashboardPage() {
     <section className="mx-auto min-w-0 max-w-[72rem] bg-white pb-12 pt-3 sm:pt-6" aria-labelledby="saved-dashboard-title">
       <div className="flex min-w-0 items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 id="saved-dashboard-title" className="text-3xl font-black tracking-[-0.035em] text-navy sm:text-4xl lg:font-bold">
+          <h1 id="saved-dashboard-title" className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
             {t["accountDashboard.saved.title"]}
           </h1>
         </div>
@@ -616,13 +616,13 @@ export function SavedDashboardPage() {
 
       <div className="flex min-h-[34rem] items-start justify-center px-3 pb-10 pt-16 sm:min-h-[38rem] sm:pt-16 lg:min-h-[40rem] lg:pt-20">
         <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
-          <h2 className="text-2xl font-black tracking-[-0.035em] text-navy sm:text-3xl lg:font-bold">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
             {t["accountDashboard.saved.emptyTitle"]}
           </h2>
           <div className="mt-2 w-full sm:mt-6">
             <SavedEmptyStateIllustration />
           </div>
-          <p className="mx-auto mt-3 max-w-lg text-xs leading-5 text-slate-500 sm:mt-4 sm:text-sm sm:leading-6">
+          <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-600 sm:mt-4">
             {t["accountDashboard.saved.emptyDescription"]}
           </p>
           <LinkButton
@@ -678,7 +678,7 @@ function SecuritySettingRow({ title, body, action, danger = false, onAction, sta
   return (
     <div className="flex min-w-0 flex-col gap-4 px-5 py-5 sm:min-h-[5.25rem] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-4">
       <div className="min-w-0 sm:pr-4">
-        <h2 className="text-base font-semibold leading-6 text-slate-900 sm:text-[15px]">{title}</h2>
+        <h2 className="text-base font-semibold leading-6 text-slate-900">{title}</h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
       </div>
       <button

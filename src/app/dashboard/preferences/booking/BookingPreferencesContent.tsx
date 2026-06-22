@@ -73,7 +73,7 @@ function PreferenceSection({
       aria-labelledby={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`}
     >
       <div>
-        <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`} className="text-lg font-semibold leading-7 text-slate-950">
+        <h2 id={`${title.toLowerCase().replace(/\s+/g, "-")}-preferences`} className="text-lg font-semibold leading-7 text-slate-900">
           {title}
         </h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
@@ -90,7 +90,7 @@ export function BookingPreferencesContent() {
     <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
       <header className="bg-[#4338CA] text-left">
         <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-          <h1 className="text-3xl font-black tracking-[-0.035em] text-white sm:text-4xl lg:font-bold">
+          <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-[2rem]">
             {t["accountDashboard.preferences.booking.title"]}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50 sm:text-base">
@@ -110,7 +110,7 @@ export function BookingPreferencesContent() {
             >
               {section.fields.map((field) => (
                 <div key={field.id} className="min-w-0 space-y-2">
-                  <label htmlFor={field.id} className="block text-sm font-semibold leading-5 text-slate-800">
+                  <label htmlFor={field.id} className="block text-sm font-medium leading-5 text-slate-700">
                     {t[field.labelKey]}
                   </label>
                   <input id={field.id} name={field.id} type="search" placeholder={t[field.placeholderKey]} className={fieldClassName} />

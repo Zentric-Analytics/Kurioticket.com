@@ -68,7 +68,7 @@ export function SupportContent({
         <h1
           className={
             dashboardFlow
-              ? "text-3xl font-black tracking-[-0.035em] text-slate-800 sm:text-4xl"
+              ? "text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
               : "mt-2 text-3xl font-bold tracking-tight text-navy sm:text-4xl"
           }
         >
@@ -82,10 +82,10 @@ export function SupportContent({
             <HelpCircle size={22} />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-navy">
+            <h2 className={dashboardFlow ? "text-lg font-semibold text-slate-900" : "text-xl font-bold text-navy"}>
               {t("supportBeforeContactHeading")}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-muted sm:text-base">
+            <p className={dashboardFlow ? "mt-2 text-sm leading-6 text-slate-600 sm:text-base sm:leading-7" : "mt-2 text-sm leading-6 text-muted sm:text-base"}>
               {beforeContactDescription}
             </p>
           </div>

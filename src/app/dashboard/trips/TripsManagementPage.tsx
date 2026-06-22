@@ -93,7 +93,7 @@ export function TripsManagementPage() {
     <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[72rem] space-y-10 bg-white pb-12 pt-3 sm:pt-6 lg:space-y-12 lg:pb-16">
       <div className="flex min-w-0 items-start justify-between gap-4">
         <div className="min-w-0">
-          <h1 id="trips-title" className="text-3xl font-black tracking-[-0.035em] text-slate-800 sm:text-4xl">
+          <h1 id="trips-title" className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
             {t("accountDashboard.trips.title")}
           </h1>
         </div>
@@ -127,7 +127,7 @@ export function TripsManagementPage() {
               >
                 <div className="flex items-start gap-4">
                   <div className="min-w-0 flex-1">
-                    <h2 id="reservation-lookup-title" className="text-xl font-bold tracking-[-0.02em] text-slate-950">
+                    <h2 id="reservation-lookup-title" className="text-lg font-semibold tracking-tight text-slate-950">
                       {t("accountDashboard.trips.lookup.title")}
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-slate-700">
@@ -145,11 +145,11 @@ export function TripsManagementPage() {
                 </div>
 
                 <form onSubmit={handleLookupSubmit} className="mt-5 grid gap-4">
-                  <label className="grid gap-2 text-sm font-semibold text-slate-800">
+                  <label className="grid gap-2 text-sm font-medium text-slate-700">
                     {t("accountDashboard.trips.lookup.reservationCode")}
                     <input type="text" name="reservationCode" autoComplete="off" className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium uppercase tracking-[0.08em] text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400" />
                   </label>
-                  <label className="grid gap-2 text-sm font-semibold text-slate-800">
+                  <label className="grid gap-2 text-sm font-medium text-slate-700">
                     {t("accountDashboard.trips.lookup.emailAddress")}
                     <input type="email" name="email" autoComplete="email" className="focus-ring h-12 min-w-0 rounded-xl border border-slate-300 bg-white px-4 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-500 hover:border-slate-400" />
                   </label>
@@ -209,10 +209,10 @@ function EmptyStateRow({ illustration, title, body, titleId, className }: { illu
     <div className={cn("grid min-w-0 items-center gap-7 sm:grid-cols-[11rem_minmax(0,1fr)] lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-10", className)}>
       <div className="flex justify-center sm:justify-start">{illustration}</div>
       <div className="min-w-0 text-center sm:text-left">
-        <h2 id={titleId} className="text-2xl font-black tracking-[-0.025em] text-slate-800 sm:text-[1.65rem]">
+        <h2 id={titleId} className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
           {title}
         </h2>
-        <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-slate-600 sm:text-base">{body}</p>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">{body}</p>
       </div>
     </div>
   );
