@@ -19,12 +19,28 @@ function getInitials(name?: string | null, email?: string | null) {
   return label.slice(0, 2).toUpperCase();
 }
 
+function getSafeDisplayName(name?: string | null, email?: string | null) {
+  const firstName = name?.trim().split(/\s+/).filter(Boolean)[0];
+
+  if (firstName) {
+    return firstName;
+  }
+
+  const emailUsername = email?.trim().split("@")[0];
+  const shortUsername = emailUsername?.split(/[._+-]+/).find((part) => part.length >= 2) || emailUsername;
+
+  if (!shortUsername) {
+    return "traveler";
+  }
+
+  return shortUsername.length > 14 ? shortUsername.slice(0, 14) : shortUsername;
+}
+
 export default async function AccountPage() {
   const session = await getServerSession(authOptions);
   const userName = session?.user?.name?.trim();
   const userEmail = session?.user?.email?.trim();
-  const firstName = userName?.split(/\s+/).filter(Boolean)[0];
-  const displayName = firstName || userEmail?.split("@")[0] || "traveler";
+  const displayName = getSafeDisplayName(userName, userEmail);
   const initials = getInitials(userName, userEmail);
   return (
     <>
