@@ -220,28 +220,35 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
   );
 }
 
-export function AccountMenuPage() {
+export function AccountMenuPage({ initials, displayName, userEmail }: Pick<DashboardOverviewProps, "initials" | "displayName" | "userEmail">) {
   const { t } = useLocale();
 
   return (
     <section className="overflow-x-hidden" aria-labelledby="account-title">
-      <header className="text-left">
-        <div className="mx-auto min-w-0 max-w-6xl px-4 pb-5 pt-8 sm:px-6 sm:pb-6 sm:pt-10 lg:px-8 lg:pt-12">
-          <div className="max-w-2xl">
-            <h1 id="account-title" className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
-              {t["accountDashboard.hub.title"]}
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{t["accountDashboard.hub.description"]}</p>
-          </div>
-        </div>
-      </header>
+      <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
+        <div className="mx-auto max-w-[1120px] space-y-5">
+          <header className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm sm:p-6" aria-label={t["accountDashboard.hub.title"]}>
+            <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-blue-50 text-lg font-bold uppercase tracking-[-0.02em] text-blue-700 ring-1 ring-blue-100 sm:size-16 sm:text-xl">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-dark">{t["accountDashboard.hub.title"]}</p>
+                <h1 id="account-title" className="mt-1 truncate text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+                  Welcome back, {displayName}
+                </h1>
+                {userEmail ? <p className="mt-1 truncate text-sm leading-5 text-slate-600">{userEmail}</p> : null}
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{t["accountDashboard.hub.description"]}</p>
+              </div>
+            </div>
+          </header>
 
-      <div className="px-4 pb-8 pt-0 sm:px-6 sm:pb-10 lg:px-8 lg:pb-11">
-        <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="mx-auto grid max-w-[1120px] gap-4 md:grid-cols-2 lg:gap-5">
-          {accountDashboardPanels.map((panel) => (
-            <AccountDashboardPanel key={panel.titleKey} panel={panel} />
-          ))}
-        </nav>
+          <nav aria-label={t["accountDashboard.mobile.manageAccount"]} className="grid gap-4 md:grid-cols-2 lg:gap-5">
+            {accountDashboardPanels.map((panel) => (
+              <AccountDashboardPanel key={panel.titleKey} panel={panel} />
+            ))}
+          </nav>
+        </div>
       </div>
     </section>
   );
