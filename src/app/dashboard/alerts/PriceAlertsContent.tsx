@@ -53,19 +53,16 @@ function EmptyStateIllustration() {
 
 export function PriceAlertsContent() {
   return (
-    <main className="flex-1 bg-[#f3f7fc] pb-12 pt-0">
-      <header className="bg-[#4338CA] text-left">
-        <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-          <h1 className="text-3xl font-black tracking-[-0.035em] text-white sm:text-4xl lg:font-bold">
+    <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
+      <div className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8">
+        <header className="px-1 pb-5 text-left sm:px-2 sm:pb-6">
+          <h1 className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
             Price alerts
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50 sm:text-base">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
             Track prices and get notified when fares change.
           </p>
-        </div>
-      </header>
-
-      <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        </header>
         <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0" aria-label="Price alert filters">
             {tabs.map((tab, index) => (
@@ -92,7 +89,7 @@ export function PriceAlertsContent() {
           </button>
         </div>
 
-        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <section className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm sm:px-8 sm:py-16 lg:min-h-[34rem] lg:py-20" aria-labelledby="empty-alerts-title">
             <EmptyStateIllustration />
             <h2 id="empty-alerts-title" className="mt-6 text-2xl font-black tracking-[-0.025em] text-slate-950 sm:text-3xl">
