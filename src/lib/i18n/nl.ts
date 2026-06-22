@@ -1707,6 +1707,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.customization.language.french": "Frans",
   "accountDashboard.preferences.customization.language.german": "Duits",
   "accountDashboard.preferences.customization.language.portuguese": "Portugees",
+  "accountDashboard.preferences.customization.language.dutch": "Nederlands",
   "accountDashboard.preferences.customization.currency.usd": "Amerikaanse dollar (USD)",
   "accountDashboard.preferences.customization.currency.eur": "Euro (EUR)",
   "accountDashboard.preferences.customization.currency.gbp": "Britse pond (GBP)",

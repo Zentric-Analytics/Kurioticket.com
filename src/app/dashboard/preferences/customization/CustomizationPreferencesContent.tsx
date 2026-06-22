@@ -17,6 +17,7 @@ const selectSections = [
           { value: "French", labelKey: "accountDashboard.preferences.customization.language.french" },
           { value: "German", labelKey: "accountDashboard.preferences.customization.language.german" },
           { value: "Portuguese", labelKey: "accountDashboard.preferences.customization.language.portuguese" },
+          { value: "Dutch", labelKey: "accountDashboard.preferences.customization.language.dutch" },
         ],
       },
       {
