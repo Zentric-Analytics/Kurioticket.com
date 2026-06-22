@@ -1707,12 +1707,12 @@ export const translations: TranslationDictionary = {
   "accountDashboard.trips.history.empty.past.body":
     "Je voltooide reizen verschijnen hier nadat je hebt gereisd.",
   "accountDashboard.priceAlerts.eyebrow": "Accounttools",
-  "accountDashboard.priceAlerts.title": "Prijsalerts",
+  "accountDashboard.priceAlerts.title": "Prijsmeldingen",
   "accountDashboard.priceAlerts.description":
-    "Bekijk providergebaseerde alertgegevens die in je Kurioticket-account zijn opgeslagen.",
-  "accountDashboard.priceAlerts.empty.title": "Nog geen prijsalerts.",
+    "Volg prijzen en ontvang een melding wanneer tarieven veranderen.",
+  "accountDashboard.priceAlerts.empty.title": "Nog geen prijsmeldingen.",
   "accountDashboard.priceAlerts.empty.body":
-    "Sla zoekopdrachten of routes op om reizen die je belangrijk vindt te volgen.",
+    "Maak een melding vanuit een vluchtzoekopdracht om tariefwijzigingen te volgen en meldingen te ontvangen.",
   "accountDashboard.priceAlerts.guidance.flight.title": "Begin met een vlucht",
   "accountDashboard.priceAlerts.guidance.flight.body":
     "Vergelijk providergebaseerde vluchtopties voordat je reizen of routes opslaat.",
@@ -1726,6 +1726,24 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.cta.flights": "Vluchten zoeken",
   "accountDashboard.priceAlerts.cta.hotels": "Hotels zoeken",
   "accountDashboard.priceAlerts.cta.cars": "Auto’s zoeken",
+  "accountDashboard.priceAlerts.filtersAriaLabel": "Filters voor prijsmeldingen",
+  "accountDashboard.priceAlerts.featuresAriaLabel": "Functies voor prijsmeldingen",
+  "accountDashboard.priceAlerts.tabs.active": "Actief",
+  "accountDashboard.priceAlerts.tabs.expired": "Verlopen",
+  "accountDashboard.priceAlerts.tabs.all": "Alles",
+  "accountDashboard.priceAlerts.sort.label": "Sorteren op",
+  "accountDashboard.priceAlerts.sort.ariaLabel": "Prijsmeldingen sorteren",
+  "accountDashboard.priceAlerts.sort.newest": "Nieuwste",
+  "accountDashboard.priceAlerts.sort.oldest": "Oudste",
+  "accountDashboard.priceAlerts.sort.routeAz": "Route A-Z",
+  "accountDashboard.priceAlerts.features.monitoring.title": "Realtime volgen",
+  "accountDashboard.priceAlerts.features.monitoring.body": "We volgen resultaten van providers wanneer meldingen actief zijn.",
+  "accountDashboard.priceAlerts.features.email.title": "E-mailmeldingen",
+  "accountDashboard.priceAlerts.features.email.body": "Ontvang een melding wanneer tarieven veranderen.",
+  "accountDashboard.priceAlerts.features.trends.title": "Prijstrends",
+  "accountDashboard.priceAlerts.features.trends.body": "Bekijk hoe gevolgde tarieven in de loop van de tijd veranderen.",
+  "accountDashboard.priceAlerts.features.management.title": "Eenvoudig beheer",
+  "accountDashboard.priceAlerts.features.management.body": "Pauzeer of verwijder meldingen op elk moment.",
   "accountDashboard.priceAlerts.error.title":
     "We konden je alerts niet laden. Probeer het opnieuw.",
   "accountDashboard.priceAlerts.error.body":
