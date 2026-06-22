@@ -1,207 +1,136 @@
-"use client";
+import Link from "next/link";
+import { Bell, ChevronDown, LineChart, Mail, Search, Settings2 } from "lucide-react";
 
-import { Card } from "@/components/ui/Card";
-import { LinkButton } from "@/components/ui/Button";
-import { useLocale } from "@/components/layout/LocaleProvider";
-import { translations as enTranslations } from "@/lib/i18n/en";
-import type { AccountPriceAlert } from "@/services/priceTrackingService";
+const tabs = ["Active (0)", "Expired (0)", "All (0)"];
 
-function formatAlertType(
-  type: AccountPriceAlert["type"],
-  t: (key: string) => string,
-) {
-  return type === "FLIGHT"
-    ? t("accountDashboard.priceAlerts.alertType.flight")
-    : t("accountDashboard.priceAlerts.alertType.hotel");
-}
+const infoItems = [
+  {
+    title: "Real-time monitoring",
+    text: "We monitor tracked routes when alerts are active.",
+    icon: Bell,
+  },
+  {
+    title: "Email notifications",
+    text: "Get notified when fares change.",
+    icon: Mail,
+  },
+  {
+    title: "Price trends",
+    text: "See how tracked fares move over time.",
+    icon: LineChart,
+  },
+  {
+    title: "Easy management",
+    text: "Pause or remove alerts anytime.",
+    icon: Settings2,
+  },
+];
 
-function formatAlertRoute(alert: AccountPriceAlert) {
-  if (alert.origin) {
-    return `${alert.origin} → ${alert.destination}`;
-  }
-
-  return alert.destination;
-}
-
-function formatCurrencyAmount(amount: string | null, currency: string | null) {
-  if (!amount || !currency) {
-    return null;
-  }
-
-  const numericAmount = Number(amount);
-
-  if (!Number.isFinite(numericAmount)) {
-    return `${currency} ${amount}`;
-  }
-
-  try {
-    return new Intl.NumberFormat("en", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(numericAmount);
-  } catch {
-    return `${currency} ${amount}`;
-  }
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
-}
-
-function EmptyAlertsState({ t }: { t: (key: string) => string }) {
+function EmptyStateIllustration() {
   return (
-    <Card className="overflow-hidden p-0">
-      <div className="border-b border-border bg-surface-muted/70 px-5 py-5 sm:px-6">
-        <h2 className="text-xl font-bold text-navy">
-          {t("accountDashboard.priceAlerts.empty.title")}
-        </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-          {t("accountDashboard.priceAlerts.empty.body")}
-        </p>
-      </div>
-      <div className="grid gap-4 px-5 py-5 sm:px-6 md:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-white p-4">
-          <h3 className="font-semibold text-navy">
-            {t("accountDashboard.priceAlerts.guidance.flight.title")}
-          </h3>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            {t("accountDashboard.priceAlerts.guidance.flight.body")}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-border bg-white p-4">
-          <h3 className="font-semibold text-navy">
-            {t("accountDashboard.priceAlerts.guidance.stays.title")}
-          </h3>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            {t("accountDashboard.priceAlerts.guidance.stays.body")}
-          </p>
-        </div>
-        <div className="rounded-2xl border border-border bg-white p-4">
-          <h3 className="font-semibold text-navy">
-            {t("accountDashboard.priceAlerts.guidance.organized.title")}
-          </h3>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            {t("accountDashboard.priceAlerts.guidance.organized.body")}
-          </p>
-        </div>
-      </div>
-    </Card>
+    <div className="relative mx-auto flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48" aria-hidden="true">
+      <div className="absolute inset-4 rounded-full bg-gradient-to-br from-violet-100 via-indigo-50 to-sky-100" />
+      <div className="absolute bottom-9 h-3 w-28 rounded-full bg-indigo-200/50 blur-[1px]" />
+      <svg className="relative h-28 w-28 drop-shadow-sm" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M60 102c8.3 0 15-6.7 15-15H45c0 8.3 6.7 15 15 15Z" fill="#7C3AED" opacity="0.88" />
+        <path d="M26 84h68c3.6 0 5.5-4.3 3.1-7C91.4 70.7 88 62.6 88 54v-8c0-12.7-8.1-23.5-19.5-27.5A8.8 8.8 0 0 0 60 8a8.8 8.8 0 0 0-8.5 10.5C40.1 22.5 32 33.3 32 46v8c0 8.6-3.4 16.7-9.1 23-2.4 2.7-.5 7 3.1 7Z" fill="url(#bellGradient)" />
+        <path d="M33 83h54" stroke="#312E81" strokeOpacity="0.18" strokeWidth="4" strokeLinecap="round" />
+        <defs>
+          <linearGradient id="bellGradient" x1="31" x2="92" y1="18" y2="86" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#8B5CF6" />
+            <stop offset="1" stopColor="#3730A3" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <span className="absolute right-8 top-8 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-lg font-black text-white shadow-lg shadow-indigo-950/20">
+        !
+      </span>
+      <span className="absolute left-7 top-7 h-8 w-1.5 -rotate-45 rounded-full bg-violet-300" />
+      <span className="absolute left-14 top-4 h-8 w-1.5 -rotate-12 rounded-full bg-violet-300" />
+    </div>
   );
 }
 
-function AlertCard({
-  alert,
-  t,
-}: {
-  alert: AccountPriceAlert;
-  t: (key: string) => string;
-}) {
-  const targetPrice = formatCurrencyAmount(alert.targetPrice, alert.currency);
-
+export function PriceAlertsContent() {
   return (
-    <Card className="p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-teal-dark">
-            {formatAlertType(alert.type, t)}
+    <main className="flex-1 bg-[#f3f7fc] pb-12 pt-0">
+      <header className="bg-[#4338CA] text-left">
+        <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+          <h1 className="text-3xl font-black tracking-[-0.035em] text-white sm:text-4xl lg:font-bold">
+            Price alerts
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-50 sm:text-base">
+            Track prices and get notified when fares change.
           </p>
-          <h2 className="mt-2 text-xl font-bold text-navy">
-            {formatAlertRoute(alert)}
-          </h2>
         </div>
-        <span className="rounded-full bg-surface-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-          {alert.status.toLowerCase()}
-        </span>
+      </header>
+
+      <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-4 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0" aria-label="Price alert filters">
+            {tabs.map((tab, index) => (
+              <button
+                key={tab}
+                type="button"
+                className={`focus-ring inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-semibold transition ${
+                  index === 0 ? "bg-violet-100 text-indigo-700" : "text-slate-600 hover:bg-white hover:text-indigo-700"
+                }`}
+                aria-pressed={index === 0}
+              >
+                {index === 0 && <Bell className="h-4 w-4" aria-hidden="true" />}
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="focus-ring inline-flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-indigo-200 hover:text-indigo-700 sm:w-auto"
+          >
+            <span>Sort by: Newest</span>
+            <ChevronDown className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <section className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm sm:px-8 sm:py-16 lg:min-h-[34rem] lg:py-20" aria-labelledby="empty-alerts-title">
+            <EmptyStateIllustration />
+            <h2 id="empty-alerts-title" className="mt-6 text-2xl font-black tracking-[-0.025em] text-slate-950 sm:text-3xl">
+              No price alerts yet.
+            </h2>
+            <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600 sm:text-base">
+              Create an alert from a flight search to track fare changes and get notified.
+            </p>
+            <Link
+              href="/flights"
+              className="focus-ring mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#3730A3] px-6 text-sm font-bold text-white shadow-sm transition hover:bg-[#312E81]"
+            >
+              <Search className="h-5 w-5" aria-hidden="true" />
+              Search flights
+            </Link>
+          </section>
+
+          <aside className="hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:block" aria-label="Price alerts features">
+            <div className="space-y-7">
+              {infoItems.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div key={item.title} className="flex gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700">
+                      <Icon className="h-6 w-6" aria-hidden="true" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-950">{item.title}</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
+        </div>
       </div>
-      <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-3">
-        <div>
-          <dt className="font-semibold text-navy">
-            {t("accountDashboard.priceAlerts.alert.targetPrice")}
-          </dt>
-          <dd className="mt-1 text-muted">
-            {targetPrice ??
-              t("accountDashboard.priceAlerts.alert.noTargetPrice")}
-          </dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-navy">
-            {t("accountDashboard.priceAlerts.alert.created")}
-          </dt>
-          <dd className="mt-1 text-muted">{formatDate(alert.createdAt)}</dd>
-        </div>
-        <div>
-          <dt className="font-semibold text-navy">
-            {t("accountDashboard.priceAlerts.alert.updated")}
-          </dt>
-          <dd className="mt-1 text-muted">{formatDate(alert.updatedAt)}</dd>
-        </div>
-      </dl>
-    </Card>
-  );
-}
-
-export function PriceAlertsContent({
-  alerts,
-  loadError,
-}: {
-  alerts: AccountPriceAlert[];
-  loadError: boolean;
-}) {
-  const { t: dictionary } = useLocale();
-  const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
-
-  return (
-    <section className="mx-auto min-w-0 max-w-[62rem] space-y-4 xl:max-w-[64rem]" aria-labelledby="price-alerts-title">
-      <div className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-dark">
-          {t("accountDashboard.priceAlerts.eyebrow")}
-        </p>
-        <h1 id="price-alerts-title" className="mt-2 text-3xl font-bold text-navy">
-          {t("accountDashboard.priceAlerts.title")}
-        </h1>
-        <p className="mt-3 text-sm leading-6 text-muted">
-          {t("accountDashboard.priceAlerts.description")}
-        </p>
-      </div>
-
-      {loadError ? (
-        <Card className="p-5">
-          <h2 className="font-bold text-navy">
-            {t("accountDashboard.priceAlerts.error.title")}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-muted">
-            {t("accountDashboard.priceAlerts.error.body")}
-          </p>
-          <LinkButton href="/dashboard" variant="secondary" className="mt-4">
-            {t("accountDashboard.priceAlerts.error.cta")}
-          </LinkButton>
-        </Card>
-      ) : alerts.length > 0 ? (
-        <div className="grid gap-4">
-          {alerts.map((alert) => (
-            <AlertCard key={alert.id} alert={alert} t={t} />
-          ))}
-        </div>
-      ) : (
-        <EmptyAlertsState t={t} />
-      )}
-
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <LinkButton href="/flights">
-          {t("accountDashboard.priceAlerts.cta.flights")}
-        </LinkButton>
-        <LinkButton href="/hotels" variant="secondary">
-          {t("accountDashboard.priceAlerts.cta.hotels")}
-        </LinkButton>
-        <LinkButton href="/cars" variant="secondary">
-          {t("accountDashboard.priceAlerts.cta.cars")}
-        </LinkButton>
-      </div>
-    </section>
+    </main>
   );
 }
