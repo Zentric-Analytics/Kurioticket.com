@@ -79,7 +79,7 @@ export function PriceAlertsContent() {
     <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
       <div className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8">
         <header className="px-1 pb-5 text-left sm:px-2 sm:pb-6">
-          <h1 className="text-3xl font-black tracking-[-0.035em] text-slate-950 sm:text-4xl lg:font-bold">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
             Price alerts
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
@@ -147,7 +147,7 @@ export function PriceAlertsContent() {
         <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <section className="rounded-2xl border border-slate-200 bg-white px-5 py-12 text-center shadow-sm sm:px-8 sm:py-16 lg:min-h-[34rem] lg:py-20" aria-labelledby="empty-alerts-title">
             <EmptyStateIllustration />
-            <h2 id="empty-alerts-title" className="mt-6 text-2xl font-black tracking-[-0.025em] text-slate-950 sm:text-3xl">
+            <h2 id="empty-alerts-title" className="mt-6 text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
               No price alerts yet.
             </h2>
             <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600 sm:text-base">
@@ -173,7 +173,7 @@ export function PriceAlertsContent() {
                       <Icon className="h-6 w-6" aria-hidden="true" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-slate-950">{item.title}</h3>
+                      <h3 className="text-base font-semibold text-slate-900">{item.title}</h3>
                       <p className="mt-2 text-sm leading-6 text-slate-600">{item.text}</p>
                     </div>
                   </div>
