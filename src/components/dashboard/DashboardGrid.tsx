@@ -227,17 +227,20 @@ export function AccountMenuPage({ initials, displayName, userEmail }: Pick<Dashb
     <section className="overflow-x-hidden" aria-labelledby="account-title">
       <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
         <div className="mx-auto max-w-[1120px] space-y-5">
-          <header className="rounded-2xl border border-slate-200/80 bg-white p-5 text-left shadow-sm sm:p-6" aria-label={t["accountDashboard.hub.title"]}>
-            <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+          <header className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-left shadow-sm sm:p-6" aria-label={t["accountDashboard.hub.title"]}>
+            <div className="flex min-w-0 items-center gap-3.5 sm:gap-5">
               <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-700 text-lg font-bold uppercase tracking-[-0.02em] text-white shadow-sm ring-1 ring-blue-200/70 sm:size-16 sm:text-xl">
                 {initials}
               </div>
-              <div className="min-w-0">
-                <h1 id="account-title" className="truncate text-2xl font-bold tracking-[-0.035em] text-slate-950 sm:text-3xl">
+              <div className="min-w-0 flex-1">
+                <h1 id="account-title" className="text-xl font-bold leading-7 tracking-[-0.03em] text-slate-950 [overflow-wrap:anywhere] sm:truncate sm:text-3xl sm:leading-tight sm:tracking-[-0.035em]">
                   Welcome back, {displayName} 👋
                 </h1>
-                {userEmail ? <p className="mt-1 truncate text-sm leading-5 text-slate-600">{userEmail}</p> : null}
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">{t["accountDashboard.hub.description"]}</p>
+                {userEmail ? <p className="mt-0.5 truncate text-sm leading-5 text-slate-500 sm:mt-1 sm:text-sm sm:text-slate-600">{userEmail}</p> : null}
+                <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-2 sm:text-base sm:leading-6">
+                  <span className="sm:hidden">Manage your trips, saved items, and preferences.</span>
+                  <span className="hidden sm:inline">{t["accountDashboard.hub.description"]}</span>
+                </p>
               </div>
             </div>
           </header>
