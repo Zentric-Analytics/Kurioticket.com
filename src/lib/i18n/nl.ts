@@ -1821,7 +1821,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.title": "Beveiligingsinstellingen",
   "accountDashboard.security.description":
     "Werk je wachtwoord bij en beheer je accountbeveiliging.",
-  "accountDashboard.security.passkeys.title": "Passkeys",
+  "accountDashboard.security.passkeys.title": "Toegangssleutels",
   "accountDashboard.security.passkeys.description":
     "Log veilig in zonder een wachtwoord te hoeven onthouden.",
   "accountDashboard.security.twoFactor.title": "Twee-factor-authenticatie",
@@ -1873,7 +1873,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.nav.saved": "Opgeslagen",
   "accountDashboard.nav.preference": "Voorkeuren",
   "accountDashboard.nav.security": "Beveiliging",
-  "accountDashboard.nav.support": "Support",
+  "accountDashboard.nav.support": "Ondersteuning",
   "accountDashboard.trips.subtitle":
     "Bekijk je aankomende, eerdere en geannuleerde reizen.",
   "accountDashboard.trips.lookup.title": "Voer boekingsgegevens in",
@@ -1922,8 +1922,8 @@ export const translations: TranslationDictionary = {
   "accountDashboard.preferences.securityPrivacy.title": "Beveiliging en privacy",
   "accountDashboard.preferences.securityPrivacy.description":
     "Bekijk actuele privacy- en platformbeleidsinformatie.",
-  "accountDashboard.support.eyebrow": "SUPPORT",
-  "accountDashboard.support.title": "Support",
+  "accountDashboard.support.eyebrow": "ONDERSTEUNING",
+  "accountDashboard.support.title": "Ondersteuning",
   "accountDashboard.support.description": "Krijg hulp en neem contact op met de klantenservice.",
   "accountDashboard.support.comingSoon": "Binnenkort beschikbaar",
   "accountDashboard.support.helpCenter.title": "Helpcentrum",
@@ -1939,7 +1939,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.mobile.manageAccount": "Account beheren",
   "accountDashboard.hub.recentSearches": "Recente zoekopdrachten",
   "accountDashboard.hub.languageRegionCurrency": "Taal, regio en valuta",
-  "accountDashboard.hub.faq": "FAQ",
+  "accountDashboard.hub.faq": "Veelgestelde vragen",
   "accountDashboard.hub.serviceGuarantee": "Servicegarantie",
   "accountDashboard.hub.infoTitle": "Alles op één plek",
   "accountDashboard.hub.infoBody":
@@ -1961,13 +1961,13 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.month.january": "Januari",
   "accountDashboard.personalDetails.month.february": "Februari",
   "accountDashboard.personalDetails.month.march": "Maart",
-  "accountDashboard.personalDetails.month.april": "April",
+  "accountDashboard.personalDetails.month.april": "april",
   "accountDashboard.personalDetails.month.may": "Mei",
   "accountDashboard.personalDetails.month.june": "Juni",
   "accountDashboard.personalDetails.month.july": "Juli",
   "accountDashboard.personalDetails.month.august": "Augustus",
-  "accountDashboard.personalDetails.month.september": "September",
+  "accountDashboard.personalDetails.month.september": "september",
   "accountDashboard.personalDetails.month.october": "Oktober",
-  "accountDashboard.personalDetails.month.november": "November",
-  "accountDashboard.personalDetails.month.december": "December",
+  "accountDashboard.personalDetails.month.november": "november",
+  "accountDashboard.personalDetails.month.december": "december",
 };
