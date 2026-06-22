@@ -9,9 +9,7 @@ export const metadata = {
 export default function AlertsPage() {
   return (
     <>
-      <div className="[&>header]:!border-b-0 [&>header]:!shadow-none">
-        <AppHeader showAccountBackLink />
-      </div>
+      <AppHeader showAccountBackLink />
       <PriceAlertsContent />
       <Footer />
     </>
