@@ -418,6 +418,11 @@ export function SearchTabs({
       t[key] || localeTranslations[key] || enTranslations[key] || "",
     [localeTranslations, t]
   );
+  const translateHotelTravelDateText = useCallback(
+    (key: string) =>
+      localeTranslations[key] || t[key] || enTranslations[key] || "",
+    [localeTranslations, t]
+  );
 
   const calendarLocale = useMemo(
     () => normalizeHomepageCalendarLocale(locale ?? activeLocale),
@@ -1843,8 +1848,8 @@ export function SearchTabs({
 
       if (!checkInSummary) {
         return (
-          t.hotelSearchDatePlaceholder ||
-          enTranslations.hotelSearchDatePlaceholder
+          translateHotelTravelDateText("hotelSearchDatePlaceholder") ||
+          "Check-in — Check-out"
         );
       }
 
@@ -1854,7 +1859,7 @@ export function SearchTabs({
 
       return checkInSummary;
     },
-    [checkIn, checkOut, formatShortDate, t.hotelSearchDatePlaceholder]
+    [checkIn, checkOut, formatShortDate, translateHotelTravelDateText]
   );
 
   const checkInParsed =
@@ -2378,7 +2383,11 @@ export function SearchTabs({
               <button
                 key={`${mode}-${iso}`}
                 type="button"
-                aria-label={`${translate("selectDateAriaPrefix")} ${accessibleDateFormatter.format(day)}`}
+                aria-label={`${
+                  isFlightMode
+                    ? translate("selectDateAriaPrefix")
+                    : translateHotelTravelDateText("selectDateAriaPrefix")
+                } ${accessibleDateFormatter.format(day)}`}
                 aria-pressed={isStart || isEnd}
                 onClick={() => {
                   if (isDisabledDate) return;
@@ -2436,7 +2445,9 @@ export function SearchTabs({
     >
     <div
       role="dialog"
-      aria-label={translate("chooseTravelDates") || "Choose travel dates"}
+      aria-label={mode === "hotels"
+        ? (translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates")
+        : (translate("chooseTravelDates") || "Choose travel dates")}
       className="bg-white"
     >
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -2444,28 +2455,38 @@ export function SearchTabs({
           <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
             {mode === "flights"
               ? (translate("travelDates") || "Travel dates")
-              : (translate("hotelSearchTravelDatesLabel") || "Travel dates")}
+              : (translateHotelTravelDateText("hotelSearchTravelDatesLabel") || "Travel dates")}
           </p>
           <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
-            {translate("chooseTravelDates") || "Choose travel dates"}
+            {mode === "hotels"
+              ? (translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates")
+              : (translate("chooseTravelDates") || "Choose travel dates")}
           </h3>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
-            aria-label={translate("previousMonth") || "Previous month"}
+            aria-label={mode === "hotels"
+              ? (translateHotelTravelDateText("previousMonth") || "Previous month")
+              : (translate("previousMonth") || "Previous month")}
             onClick={() => setVisibleMonth((prev) => addMonths(prev, -1))}
             className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
-            {translate("previousMonthShort") || "Prev"}
+            {mode === "hotels"
+              ? (translateHotelTravelDateText("previousMonthShort") || "Prev")
+              : (translate("previousMonthShort") || "Prev")}
           </button>
           <button
             type="button"
-            aria-label={translate("nextMonth") || "Next month"}
+            aria-label={mode === "hotels"
+              ? (translateHotelTravelDateText("nextMonth") || "Next month")
+              : (translate("nextMonth") || "Next month")}
             onClick={() => setVisibleMonth((prev) => addMonths(prev, 1))}
             className="focus-ring rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800"
           >
-            {translate("nextMonthShort") || "Next"}
+            {mode === "hotels"
+              ? (translateHotelTravelDateText("nextMonthShort") || "Next")
+              : (translate("nextMonthShort") || "Next")}
           </button>
         </div>
       </div>
@@ -2481,7 +2502,9 @@ export function SearchTabs({
           onClick={onClear}
           className="focus-ring rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
         >
-          {translate("clear") || "Clear"}
+          {mode === "hotels"
+            ? (translateHotelTravelDateText("clear") || "Clear")
+            : (translate("clear") || "Clear")}
         </button>
         <button
           type="button"
@@ -3371,8 +3394,8 @@ export function SearchTabs({
                 )}
               >
                 <label className={hotelFieldLabelClassName}>
-                  {t.hotelSearchTravelDatesLabel ||
-                    t.travelDates || "Travel dates"}
+                  {translateHotelTravelDateText("hotelSearchTravelDatesLabel") ||
+                    translateHotelTravelDateText("travelDates") || "Travel dates"}
                 </label>
                 <button
                   ref={hotelDatesMobileLauncherRef}
@@ -3386,7 +3409,7 @@ export function SearchTabs({
                     hotelDatesOpen
                   }
                   aria-haspopup="dialog"
-                  aria-label={translate("chooseTravelDates") || "Choose travel dates"}
+                  aria-label={translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates"}
                   className={cn(hotelFieldValueClassName, "items-center")}
                 >
                   <Calendar
@@ -3652,7 +3675,7 @@ export function SearchTabs({
 
           <HotelMobilePickerShell
             open={hotelDatesOpen}
-            title={translate("chooseTravelDates") || "Choose travel dates"}
+            title={translateHotelTravelDateText("chooseTravelDates") || "Choose travel dates"}
             titleId="homepage-hotel-mobile-dates-title"
             launcherRef={hotelDatesMobileLauncherRef}
             onClose={() => setHotelDatesOpen(false)}
@@ -3667,7 +3690,7 @@ export function SearchTabs({
                   }}
                   className="focus-ring rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
                 >
-                  {translate("clear") || "Clear"}
+                  {translateHotelTravelDateText("clear") || "Clear"}
                 </button>
                 <button
                   type="button"
