@@ -195,6 +195,50 @@ const genericTravelFallback =
   ) ??
   allDiscoveryItems.find((item) => Boolean(item.image));
 
+function SavedEmptyStateIllustration() {
+  return (
+    <div
+      className="relative mx-auto h-48 w-full max-w-[24rem] overflow-hidden sm:h-52"
+      aria-hidden="true"
+    >
+      <div className="absolute left-1/2 top-5 h-36 w-36 -translate-x-1/2 rounded-full bg-teal/10" />
+      <div className="absolute bottom-4 left-1/2 h-8 w-[19rem] -translate-x-1/2 rounded-[100%] bg-navy/5 blur-sm" />
+      <svg
+        className="absolute inset-0 h-full w-full"
+        viewBox="0 0 384 208"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M72 66c34-24 64-29 90-15 26 13 31 42 59 49 25 6 43-12 72-7"
+          stroke="currentColor"
+          className="text-blue/30"
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray="8 12"
+        />
+        <path d="M48 80l118-34 8 96-118 34-8-96Z" className="fill-white" />
+        <path d="M166 46l78 28 8 96-78-28-8-96Z" className="fill-surface-muted" />
+        <path d="M244 74l92-28 8 96-92 28-8-96Z" className="fill-white" />
+        <path d="M48 80l118-34 78 28 92-28 8 96-92 28-78-28-118 34-8-96Z" stroke="currentColor" className="text-navy/20" strokeWidth="3" strokeLinejoin="round" />
+        <path d="M132 57l9 97M213 63l9 96M278 64l8 96" stroke="currentColor" className="text-navy/10" strokeWidth="3" />
+        <path d="M108 116c18-21 49-27 74-13 21 11 29 33 50 39 16 4 31-2 46-15" stroke="currentColor" className="text-teal" strokeWidth="5" strokeLinecap="round" strokeDasharray="1 11" />
+        <g className="drop-shadow-sm">
+          <path d="M117 54c-18 0-33 14-33 32 0 26 33 59 33 59s33-33 33-59c0-18-15-32-33-32Z" className="fill-teal" />
+          <path d="M117 99c7-5 18-14 18-24 0-7-5-12-12-12-3 0-5 1-6 3-2-2-4-3-7-3-7 0-12 5-12 12 0 10 12 19 19 24Z" className="fill-white" />
+        </g>
+        <g className="drop-shadow-sm">
+          <rect x="237" y="34" width="54" height="68" rx="16" className="fill-navy" />
+          <path d="M252 34h24v37l-12-7-12 7V34Z" className="fill-blue" />
+          <path d="M254 81h21" stroke="white" strokeWidth="4" strokeLinecap="round" opacity=".75" />
+        </g>
+        <path d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z" className="fill-blue" />
+        <path d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z" stroke="white" strokeWidth="3" strokeLinejoin="round" />
+      </svg>
+    </div>
+  );
+}
+
 const findFlightDiscoveryImage = (entry: RecentSearchEntry) => {
   const params = entry.params as { origin?: string; destination?: string };
   const origin = params.origin?.trim().toUpperCase() ?? "";
@@ -509,15 +553,15 @@ export function SavedTripsAndRecentSearches() {
     );
 
   return (
-    <div className="page-shell">
-      <div className="space-y-8 pb-2 md:space-y-10">
-        <section className="space-y-4 md:space-y-5">
+    <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
+      <div className="mx-auto min-w-0 max-w-[72rem] space-y-5">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-left shadow-sm sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
+              <h1 id="saved-dashboard-title" className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
                 {t("savedTripsPageTitle")} ❤️
-              </h2>
-              <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
                 {t("savedTripsPageSubtitle")}
               </p>
             </div>
@@ -535,26 +579,28 @@ export function SavedTripsAndRecentSearches() {
           </div>
 
           {savedTrips.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center shadow-[0_18px_45px_-36px_rgba(15,23,42,0.65)] md:p-12">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.45)]">
-                <Heart className="h-7 w-7 fill-rose-500 text-rose-500" />
+            <div className="flex min-h-[34rem] items-start justify-center px-3 pb-10 pt-16 sm:min-h-[38rem] sm:pt-16 lg:min-h-[40rem] lg:pt-20">
+              <div className="mx-auto flex w-full max-w-xl flex-col items-center text-center">
+                <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
+                  {t("savedTripsEmptyTitle")}
+                </h2>
+                <div className="mt-2 w-full sm:mt-6">
+                  <SavedEmptyStateIllustration />
+                </div>
+                <p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-600 sm:mt-4">
+                  {t("savedTripsEmptyDescription")}
+                </p>
+                <Link
+                  href="/destinations"
+                  className="mt-6 inline-flex min-h-11 w-auto min-w-[8rem] items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-8 py-2 text-sm font-semibold text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] transition hover:bg-blue-700 sm:mt-4"
+                >
+                  {t("savedTripsExploreDestinations")}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
-              <h3 className="mt-5 text-lg font-semibold tracking-tight text-slate-900">
-                {t("savedTripsEmptyTitle")}
-              </h3>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
-                {t("savedTripsEmptyDescription")}
-              </p>
-              <Link
-                href="/destinations"
-                className="mt-5 inline-flex min-h-11 items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-              >
-                {t("savedTripsExploreDestinations")}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
           ) : (
-            <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 pt-2 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
               {savedTrips.map((trip) => {
                 const fare = savedTripFares[trip.id];
                 const hasProviderFare = hasFreshProviderFare(fare, trip);
@@ -563,7 +609,7 @@ export function SavedTripsAndRecentSearches() {
                 return (
                   <article
                     key={trip.id}
-                    className="group relative overflow-hidden rounded-3xl border border-slate-200/85 bg-white shadow-[0_26px_55px_-40px_rgba(15,23,42,0.7)] transition duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_28px_64px_-34px_rgba(15,23,42,0.72)]"
+                    className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
                   >
                     <button
                       type="button"
@@ -651,7 +697,7 @@ export function SavedTripsAndRecentSearches() {
           )}
         </section>
 
-        <section className="space-y-4 md:space-y-5">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-left shadow-sm sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold tracking-tight text-slate-900">
@@ -675,7 +721,7 @@ export function SavedTripsAndRecentSearches() {
           </div>
 
           {recentSearches.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center shadow-[0_18px_45px_-36px_rgba(15,23,42,0.65)] md:p-12">
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center md:p-12">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.45)]">
                 <Search className="h-7 w-7 text-slate-400" />
               </div>
@@ -700,7 +746,7 @@ export function SavedTripsAndRecentSearches() {
                 return (
                   <article
                     key={entry.id}
-                    className="group relative overflow-hidden rounded-3xl border border-slate-200/85 bg-white shadow-[0_18px_38px_-30px_rgba(15,23,42,0.62)] transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_24px_45px_-30px_rgba(15,23,42,0.68)]"
+                    className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
                   >
                     <button
                       type="button"
