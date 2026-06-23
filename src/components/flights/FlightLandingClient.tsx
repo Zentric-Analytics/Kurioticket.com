@@ -55,10 +55,7 @@ function SearchReadyIllustration() {
         strokeWidth="2.5"
         strokeLinecap="round"
       />
-      <path
-        d="M22 37L27.5 32L32.5 37L27.5 42L22 37Z"
-        fill="#DBEAFE"
-      />
+      <path d="M22 37L27.5 32L32.5 37L27.5 42L22 37Z" fill="#DBEAFE" />
       <circle cx="43" cy="40" r="10" fill="#EEF2FF" fillOpacity="0.92" />
       <circle cx="43" cy="40" r="7" stroke="#312E81" strokeWidth="2.8" />
       <path
@@ -131,8 +128,22 @@ function CompareFlightsIllustration() {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="18" cy="43" r="4" fill="#DBEAFE" stroke="#2563EB" strokeWidth="2" />
-      <circle cx="46" cy="24" r="4" fill="#CCFBF1" stroke="#0D9488" strokeWidth="2" />
+      <circle
+        cx="18"
+        cy="43"
+        r="4"
+        fill="#DBEAFE"
+        stroke="#2563EB"
+        strokeWidth="2"
+      />
+      <circle
+        cx="46"
+        cy="24"
+        r="4"
+        fill="#CCFBF1"
+        stroke="#0D9488"
+        strokeWidth="2"
+      />
       <defs>
         <linearGradient
           id="flightCompareTile"
@@ -278,10 +289,18 @@ function getDiscoveryTranslation(
   return t(`${keyPrefix}.${value}`) || value;
 }
 
-function getRouteText(item: HomeDiscoveryItem, t: (key: string) => string) {
+function getRouteText(
+  item: HomeDiscoveryItem,
+  t: (key: string) => string,
+  isArabic = false,
+) {
   return {
-    title: t(`homeDiscoveryRoute.${item.id}.title`) || item.title,
-    routeNote: t(`homeDiscoveryRoute.${item.id}.routeNote`) || item.routeNote,
+    title: isArabic
+      ? `رحلة من ${item.originCity} إلى ${item.destinationCity}`
+      : t(`homeDiscoveryRoute.${item.id}.title`) || item.title,
+    routeNote: isArabic
+      ? "مسار جاهز للبحث يتيح مقارنة التواريخ وخيارات الرحلات قبل المتابعة مع المزوّد."
+      : t(`homeDiscoveryRoute.${item.id}.routeNote`) || item.routeNote,
     originCity: getDiscoveryTranslation(
       "flightLandingCity",
       item.originCity,
@@ -304,12 +323,14 @@ function RouteCard({
   item,
   priority = false,
   t,
+  isArabic = false,
 }: {
   item: HomeDiscoveryItem;
   priority?: boolean;
   t: (key: string) => string;
+  isArabic?: boolean;
 }) {
-  const routeText = getRouteText(item, t);
+  const routeText = getRouteText(item, t, isArabic);
   const routeConnector = t("flightLandingRouteConnector");
 
   return (
@@ -355,7 +376,7 @@ function RouteCard({
 }
 
 export function FlightLandingClient() {
-  const { t: dictionary } = useLocale();
+  const { locale, t: dictionary } = useLocale();
   const { selectedOption } = useRegion();
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
@@ -501,7 +522,13 @@ export function FlightLandingClient() {
           </div>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {discoveryCards.map((item, index) => (
-              <RouteCard key={item.id} item={item} priority={index < 2} t={t} />
+              <RouteCard
+                key={item.id}
+                item={item}
+                priority={index < 2}
+                t={t}
+                isArabic={locale === "ar"}
+              />
             ))}
           </div>
         </div>
@@ -566,7 +593,7 @@ export function FlightLandingClient() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {routeInspirationCards.map((item) => {
-                const routeText = getRouteText(item, t);
+                const routeText = getRouteText(item, t, locale === "ar");
 
                 return (
                   <Link
@@ -615,7 +642,12 @@ export function FlightLandingClient() {
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {beachVacationCards.map((item) => (
-                <RouteCard key={item.id} item={item} t={t} />
+                <RouteCard
+                  key={item.id}
+                  item={item}
+                  t={t}
+                  isArabic={locale === "ar"}
+                />
               ))}
             </div>
           </div>
