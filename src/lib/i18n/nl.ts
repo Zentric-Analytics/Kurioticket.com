@@ -1046,6 +1046,7 @@ export const translations: TranslationDictionary = {
   searchRentalCarsEveryPartTrip: "Zoek huurauto’s voor elk deel van je reis",
   "carsSearch.pickupLocationLabel": "Ophaallocatie",
   "carsSearch.pickupLocationPlaceholder": "Luchthaven, stad of adres",
+  "carsSearch.returnLocationPlaceholder": "Retourstad, luchthaven of adres",
   "carsSearch.returnToSameLocation": "Terugbrengen naar dezelfde locatie",
   "carsSearch.differentReturnLocation": "Andere retourlocatie",
   "carsSearch.rentalDatesLabel": "Huurdatums",
