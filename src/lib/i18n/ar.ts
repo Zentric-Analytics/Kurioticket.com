@@ -75,6 +75,15 @@ export const translations: TranslationDictionary = {
   "guides.title": "أدلة تخطيط السفر",
   "guides.description": "استكشف أدلة المسارات والمطارات والوجهات والفنادق وتخطيط السفر لدعم قرارات رحلة واثقة.",
   "guides.articleEyebrow": "مقال تخطيط السفر",
+  aboutPageEyebrow: "عن Kurioticket",
+  aboutPageTitle: "من نحن",
+  aboutPageIntroPrimary:
+    "Kurioticket منصة للبحث والمقارنة في السفر تساعد المسافرين على البحث والمقارنة واكتشاف الرحلات الجوية والفنادق والسيارات وعروض السفر.",
+  aboutPageIntroSecondary:
+    "هدفنا هو جعل تخطيط السفر أوضح من خلال جمع الخيارات المتاحة ومعلومات المزوّدين في مكان واحد بسيط، حتى يتمكن المسافرون من مراجعة الخيارات قبل المتابعة مع المزوّد الأنسب لرحلتهم.",
+  aboutPagePlanningCardHeading: "أداة عملية لتخطيط السفر",
+  aboutPagePlanningCardBody:
+    "يركز Kurioticket على مساعدة المسافرين في تقييم خيارات السفر ضمن سياق مفيد. قد يختلف التوفر والأسعار والقواعد وخطوات الحجز النهائية حسب المزوّد، لذلك يجب على المسافرين مراجعة صفحة المزوّد بعناية قبل اتخاذ القرار.",
 
   searchRentalCarsEveryPartTrip: "ابحث عن سيارات للإيجار لكل جزء من رحلتك",
   exploreCarsByTripStyle: "استكشف سيارات الإيجار حسب نمط الرحلة",
