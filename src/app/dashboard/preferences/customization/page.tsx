@@ -10,7 +10,7 @@ export default function CustomizationPreferencesPage() {
   return (
     <>
       <div className="[&>header]:!border-b-0 [&>header]:!shadow-none">
-        <AppHeader />
+        <AppHeader showAccountBackLink />
       </div>
       <CustomizationPreferencesContent />
       <Footer />

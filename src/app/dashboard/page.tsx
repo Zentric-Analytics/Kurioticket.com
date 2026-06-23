@@ -29,7 +29,7 @@ export default async function DashboardPage() {
 
   return (
     <>
-      <AppHeader />
+      <AppHeader showAccountBackLink />
       <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
         <DashboardOverview initials={initials} displayName={displayName} userEmail={userEmail} userName={userName} />
       </main>
