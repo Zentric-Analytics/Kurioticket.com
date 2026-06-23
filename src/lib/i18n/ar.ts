@@ -85,9 +85,18 @@ export const translations: TranslationDictionary = {
   websiteLanguageTitle: "اختر لغة الموقع",
   websiteLanguageDescription: "اختر اللغة التي تريد استخدامها في واجهة Kurioticket.",
   currentLanguage: "اللغة الحالية: {{language}}",
+  languagePreparingNotice:
+    "يتم تجهيز المزيد من اللغات. الخيارات غير المتاحة لا تترجم الموقع بعد.",
   languageSearchLabel: "البحث عن لغة",
   languageSearchPlaceholder: "ابحث عن English، Español، Français، Deutsch...",
+  languageOptionsLabel: "خيارات اللغة",
+  selectLanguageOption: "اختر {{language}}",
+  languagePreparingAria: "تتم تجهيز ترجمات {{language}}",
+  languageUnavailableMessage:
+    "{{language}} غير متاحة بعد. يتم توسيع دعم الترجمة.",
   globalLanguage: "اللغة العامة",
+  closeLanguageSelector: "إغلاق محدد اللغة",
+  preparing: "قيد التجهيز",
   loginPageTitle: "تسجيل الدخول",
   loginPageSubtitle: "ادخل إلى حسابك لمتابعة التخطيط ومراجعة رحلاتك المحفوظة.",
   loginEmailLabel: "البريد الإلكتروني",
