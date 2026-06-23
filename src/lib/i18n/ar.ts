@@ -320,6 +320,39 @@ export const translations: TranslationDictionary = {
   faqAnswerLiveCached: "يستخدم Kurioticket مزيجًا من بيانات المزودين والبيانات المخزنة مؤقتًا لتحسين السرعة. يتم تأكيد السعر النهائي والتوافر دائمًا لدى المزود.",
   faqQuestionManageChanges: "أين أدير التغييرات أو الإلغاءات؟",
   faqAnswerManageChanges: "تتم إدارة التغييرات والإلغاءات مع المزود الذي أكملت الحجز لديه. راجع رسالة التأكيد أو صفحة دعم المزود للحصول على الخيارات.",
+  serviceGuaranteeEyebrow: "التزام خدمة Kurioticket",
+  serviceGuaranteeTitle: "ضمان الخدمة",
+  serviceGuaranteeDescription:
+    "نريد أن يفهم المسافرون كيف تعمل Kurioticket وما يمكنهم توقعه عند استخدام منصتنا.",
+  serviceGuaranteeFaqHeading: "الأسئلة الشائعة",
+  serviceGuaranteeFaqDescription:
+    "توضح هذه الإجابات دور Kurioticket كمنصة للبحث عن السفر ومقارنة الخيارات.",
+  serviceGuaranteeFaqWhatGuaranteeQuestion: "ماذا تضمن Kurioticket؟",
+  serviceGuaranteeFaqWhatGuaranteeAnswer:
+    "تم تصميم Kurioticket لمساعدة المسافرين على مقارنة خيارات السفر بوضوح. نهدف إلى توفير تجربة منصة موثوقة ومعلومات بحث شفافة ومسارات واضحة إلى صفحات الحجز لدى المزوّدين.",
+  serviceGuaranteeFaqResultsDisplayedQuestion: "كيف يتم عرض نتائج السفر؟",
+  serviceGuaranteeFaqResultsDisplayedAnswer:
+    "تُعرض النتائج باستخدام المعلومات المتاحة من مزوّدي السفر، بما في ذلك المسارات والتواريخ والأسعار وتفاصيل المزوّد عند توفرها.",
+  serviceGuaranteeFaqRedirectedQuestion: "لماذا تتم إعادة توجيهي إلى مزوّد آخر؟",
+  serviceGuaranteeFaqRedirectedAnswer:
+    "تكتمل بعض النتائج على موقع مزوّد خارجي. عند اختيار أحد هذه الخيارات، تعيد Kurioticket توجيهك حتى يتمكن المزوّد من التعامل مع الحجز والدفع والخدمة الخاصة بالرحلة.",
+  serviceGuaranteeFaqBookDirectlyQuestion: "هل أحجز مباشرة على Kurioticket؟",
+  serviceGuaranteeFaqBookDirectlyAnswer:
+    "Kurioticket هي في الأساس منصة للبحث عن السفر ومقارنة الخيارات. إذا أعادت نتيجة ما توجيهك إلى مزوّد، فسيتم إكمال الحجز مع ذلك المزوّد وليس على Kurioticket.",
+  serviceGuaranteeFaqPricesGuaranteedQuestion: "هل الأسعار مضمونة دائمًا؟",
+  serviceGuaranteeFaqPricesGuaranteedAnswer:
+    "لا. يمكن أن تتغير الأسعار بناءً على التوفر لدى المزوّد والضرائب والرسوم والعملة والتوقيت. راجع دائمًا السعر النهائي على صفحة المزوّد قبل الحجز.",
+  serviceGuaranteeFaqChooseProvidersQuestion: "كيف تختار Kurioticket المزوّدين؟",
+  serviceGuaranteeFaqChooseProvidersAnswer:
+    "تعمل Kurioticket مع مزوّدي السفر ومصادر البيانات التي يمكنها توفير نتائج بحث ذات صلة. قد يختلف التوفر والأسعار والخيارات المعروضة حسب المسار والوجهة وتغطية المزوّد.",
+  serviceGuaranteeFaqEncounterIssueQuestion: "ماذا أفعل إذا واجهت مشكلة؟",
+  serviceGuaranteeFaqEncounterIssueAnswer:
+    "إذا كانت المشكلة مرتبطة بالبحث أو الوصول إلى الحساب أو الرحلات المحفوظة أو التنبيهات أو إعادة التوجيه من Kurioticket، فتواصل مع دعم Kurioticket. إذا كنت قد حجزت بالفعل مع مزوّد، فتواصل مع ذلك المزوّد بشأن تغييرات الحجز أو المبالغ المستردة أو الإلغاءات أو وثائق السفر.",
+  serviceGuaranteeFaqContactSupportQuestion: "كيف يمكنني التواصل مع الدعم؟",
+  serviceGuaranteeFaqContactSupportAnswer:
+    "استخدم صفحة دعم العملاء واذكر البريد الإلكتروني لحسابك وما كنت تحاول القيام به وأي تفاصيل عن المسار أو الفندق أو المزوّد قد تساعدنا في مراجعة المشكلة.",
+  serviceGuaranteeHelpCardTitle: "هل تحتاج إلى مساعدة في حسابك أو البحث؟",
+  serviceGuaranteeSupportCta: "تواصل مع دعم العملاء",
   supportFaqAccountQuestion: "المساعدة في الحساب وتسجيل الدخول",
   supportFaqAccountAnswer: "يمكن لـ Kurioticket المساعدة في الوصول إلى الحساب ومشكلات تسجيل الدخول والتسجيل والوصول إلى الملف الشخصي والمشكلات المتعلقة بالحساب على المنصة.",
   supportFaqSearchQuestion: "المساعدة في البحث والنتائج",
