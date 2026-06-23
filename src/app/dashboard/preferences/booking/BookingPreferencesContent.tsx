@@ -1,5 +1,6 @@
 "use client";
 
+import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { useLocale } from "@/components/layout/LocaleProvider";
 
 const textFieldSections = [
@@ -90,6 +91,7 @@ export function BookingPreferencesContent() {
     <main className="flex-1 bg-[#f3f7fc] pb-10 pt-0">
       <header className="bg-[#4338CA] text-left">
         <div className="mx-auto min-w-0 max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
+          <AccountBackLink />
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-[2rem]">
             {t["accountDashboard.preferences.booking.title"]}
           </h1>

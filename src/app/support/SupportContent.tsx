@@ -2,6 +2,7 @@
 
 import { HelpCircle } from "lucide-react";
 
+import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { Footer } from "@/components/layout/Footer";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -40,13 +41,11 @@ const supportFaqKeys = [
 ];
 
 type SupportContentProps = {
-  showAccountBackLink?: boolean;
   dashboardFlow?: boolean;
   showFaq?: boolean;
 };
 
 export function SupportContent({
-  showAccountBackLink = false,
   dashboardFlow = false,
   showFaq = true,
 }: SupportContentProps) {
@@ -60,6 +59,7 @@ export function SupportContent({
   const content = (
     <>
       <section className="max-w-3xl">
+        {dashboardFlow ? <AccountBackLink /> : null}
         {dashboardFlow ? null : (
           <p className="text-sm font-semibold text-teal-dark">
             {t("supportEyebrow")}
@@ -143,7 +143,7 @@ export function SupportContent({
 
   return (
     <>
-      <AppHeader showAccountBackLink={showAccountBackLink} />
+      <AppHeader />
       <main
         className={
           dashboardFlow
