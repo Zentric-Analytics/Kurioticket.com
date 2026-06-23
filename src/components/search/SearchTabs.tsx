@@ -1205,7 +1205,7 @@ export function SearchTabs({
     .startsWith("ar");
   const hotelGuestsRoomsSummary = isArabicLocale
     ? `${Number(guests) === 1 ? `${translate("guestSingular")} واحد` : `${guests} ${translate("guestPlural")}`}، ${Number(rooms) === 1 ? `${translate("roomSingular")} واحدة` : `${rooms} ${translate("roomPlural")}`}`
-    : `${guests} ${Number(guests) === 1 ? t.guestSingular || "guest" : t.guestPlural || "guests"}, ${rooms} ${Number(rooms) === 1 ? t.roomSingular || "room" : t.roomPlural || "rooms"}`;
+    : `${guests} ${Number(guests) === 1 ? translate("guestSingular") || "guest" : translate("guestPlural") || "guests"}, ${rooms} ${Number(rooms) === 1 ? translate("roomSingular") || "room" : translate("roomPlural") || "rooms"}`;
 
   const formatShortDate = useCallback((
     isoDate: string
@@ -3447,8 +3447,8 @@ export function SearchTabs({
                 )}
               >
                 <label className={hotelFieldLabelClassName}>
-                  {t.hotelSearchGuestsLabel ||
-                    t.guests ||
+                  {translate("hotelSearchGuestsLabel") ||
+                    translate("guests") ||
                     "Guests"}
                 </label>
                 <button

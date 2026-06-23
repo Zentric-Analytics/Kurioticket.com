@@ -1608,6 +1608,7 @@ export const translations: TranslationDictionary = {
   onlyShowPetFriendlyStays:
     "Afficher uniquement les séjours qui acceptent les animaux",
   hotelAdultHelper: "Voyageurs 18+",
+  hotelChildrenHelper: "Âges 0–17",
   hotelRoomsHelper: "Jusqu’à 6 chambres",
   togglePetFriendlyStays: "Basculer les séjours acceptant les animaux",
   exploreHotelStaysByDestination:
