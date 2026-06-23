@@ -2814,6 +2814,7 @@ export function FlightResultsClient() {
                         infantCount,
                         cabinClassInput,
                         t,
+                        locale,
                       )}
                     </span>
                     <ChevronDown
@@ -4688,26 +4689,46 @@ function pluralize(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+function pluralizeArabicTraveler(
+  count: number,
+  singular: string,
+  plural: string,
+) {
+  if (count === 1) return `${singular} واحد`;
+
+  return `${count} ${plural}`;
+}
+
 function buildTravelerCabinSummary(
   adults: number,
   children: number,
   infants: number,
   cabinClass: string,
   t: (key: string) => string,
+  locale?: string,
 ) {
-  const parts = [pluralize(adults, t("adultSingular"), t("adultPlural"))];
+  const isArabic = locale === "ar";
+  const formatTravelerCount = isArabic ? pluralizeArabicTraveler : pluralize;
+  const joiner = isArabic ? "، " : ", ";
+  const parts = [
+    formatTravelerCount(adults, t("adultSingular"), t("adultPlural")),
+  ];
 
   if (children > 0) {
-    parts.push(pluralize(children, t("childSingular"), t("childPlural")));
+    parts.push(
+      formatTravelerCount(children, t("childSingular"), t("childPlural")),
+    );
   }
 
   if (infants > 0) {
-    parts.push(pluralize(infants, t("infantSingular"), t("infantPlural")));
+    parts.push(
+      formatTravelerCount(infants, t("infantSingular"), t("infantPlural")),
+    );
   }
 
   parts.push(cabinClassLabel(cabinClass, t));
 
-  return parts.join(", ");
+  return parts.join(joiner);
 }
 
 function DatePickerPopover({
@@ -5045,7 +5066,7 @@ function TravelerCabinPopover({
 
             <CounterRow
               label={t("childPlural")}
-              description="0–17"
+              description={t("childAgeRange")}
               value={childCount}
               min={0}
               max={9}
