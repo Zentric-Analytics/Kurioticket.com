@@ -11,10 +11,8 @@ import {
   LifeBuoy,
   LockKeyhole,
   Mail,
-  Plane,
   Settings,
   ShieldCheck,
-  SlidersHorizontal,
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -31,14 +29,12 @@ type AccountDashboardRowItem = {
 
 type AccountDashboardPanelItem = {
   titleKey: string;
-  icon: LucideIcon;
   rows: AccountDashboardRowItem[];
 };
 
 const accountDashboardPanels: AccountDashboardPanelItem[] = [
   {
     titleKey: "accountDashboard.hub.manageAccount",
-    icon: UserRound,
     rows: [
       { labelKey: "accountDashboard.hub.personalDetails", href: "/dashboard", icon: UserRound },
       { labelKey: "accountDashboard.hub.securitySettings", href: "/dashboard/security", icon: ShieldCheck },
@@ -46,7 +42,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
   },
   {
     titleKey: "accountDashboard.hub.travelActivity",
-    icon: Plane,
     rows: [
       { labelKey: "accountDashboard.hub.myTrips", href: "/dashboard/trips", icon: BriefcaseBusiness },
       { labelKey: "accountDashboard.hub.savedTrips", href: "/dashboard/saved", icon: Bookmark },
@@ -55,7 +50,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
   },
   {
     titleKey: "accountDashboard.hub.preferences",
-    icon: SlidersHorizontal,
     rows: [
       { labelKey: "accountDashboard.hub.emailPreferences", href: "/dashboard/preferences/customization", icon: Mail },
       { labelKey: "accountDashboard.hub.travelPreferences", href: "/dashboard/preferences/booking", icon: Settings },
@@ -63,7 +57,6 @@ const accountDashboardPanels: AccountDashboardPanelItem[] = [
   },
   {
     titleKey: "accountDashboard.hub.helpAndSupport",
-    icon: LifeBuoy,
     rows: [
       { labelKey: "accountDashboard.hub.contactSupport", href: "/dashboard/support", icon: Headphones },
     ],
@@ -196,7 +189,6 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
 
 function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) {
   const { t } = useLocale();
-  const PanelIcon = panel.icon;
   const title = t[panel.titleKey];
 
   return (
@@ -204,10 +196,7 @@ function AccountDashboardPanel({ panel }: { panel: AccountDashboardPanelItem }) 
       className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
       aria-labelledby={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`}
     >
-      <div className="flex items-center gap-3 px-5 pb-3.5 pt-[18px]">
-        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600 ring-1 ring-blue-100/80">
-          <PanelIcon className="size-5" strokeWidth={2} aria-hidden="true" />
-        </span>
+      <div className="px-5 pb-3.5 pt-[18px]">
         <h2 id={`account-panel-${panel.titleKey.replace(/[^a-z0-9]+/g, "-")}`} className="text-lg font-semibold leading-6 text-slate-900">
           {title}
         </h2>
