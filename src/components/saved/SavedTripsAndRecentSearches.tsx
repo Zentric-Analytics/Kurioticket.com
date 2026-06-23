@@ -2,14 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  ExternalLink,
-  Heart,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+import { ArrowRight, ExternalLink, Heart, Trash2, X } from "lucide-react";
 
 import { PriceText } from "@/components/currency/PriceText";
 import { useLocale } from "@/components/layout/LocaleProvider";
@@ -218,22 +211,70 @@ function SavedEmptyStateIllustration() {
           strokeDasharray="8 12"
         />
         <path d="M48 80l118-34 8 96-118 34-8-96Z" className="fill-white" />
-        <path d="M166 46l78 28 8 96-78-28-8-96Z" className="fill-surface-muted" />
+        <path
+          d="M166 46l78 28 8 96-78-28-8-96Z"
+          className="fill-surface-muted"
+        />
         <path d="M244 74l92-28 8 96-92 28-8-96Z" className="fill-white" />
-        <path d="M48 80l118-34 78 28 92-28 8 96-92 28-78-28-118 34-8-96Z" stroke="currentColor" className="text-navy/20" strokeWidth="3" strokeLinejoin="round" />
-        <path d="M132 57l9 97M213 63l9 96M278 64l8 96" stroke="currentColor" className="text-navy/10" strokeWidth="3" />
-        <path d="M108 116c18-21 49-27 74-13 21 11 29 33 50 39 16 4 31-2 46-15" stroke="currentColor" className="text-teal" strokeWidth="5" strokeLinecap="round" strokeDasharray="1 11" />
+        <path
+          d="M48 80l118-34 78 28 92-28 8 96-92 28-78-28-118 34-8-96Z"
+          stroke="currentColor"
+          className="text-navy/20"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M132 57l9 97M213 63l9 96M278 64l8 96"
+          stroke="currentColor"
+          className="text-navy/10"
+          strokeWidth="3"
+        />
+        <path
+          d="M108 116c18-21 49-27 74-13 21 11 29 33 50 39 16 4 31-2 46-15"
+          stroke="currentColor"
+          className="text-teal"
+          strokeWidth="5"
+          strokeLinecap="round"
+          strokeDasharray="1 11"
+        />
         <g className="drop-shadow-sm">
-          <path d="M117 54c-18 0-33 14-33 32 0 26 33 59 33 59s33-33 33-59c0-18-15-32-33-32Z" className="fill-teal" />
-          <path d="M117 99c7-5 18-14 18-24 0-7-5-12-12-12-3 0-5 1-6 3-2-2-4-3-7-3-7 0-12 5-12 12 0 10 12 19 19 24Z" className="fill-white" />
+          <path
+            d="M117 54c-18 0-33 14-33 32 0 26 33 59 33 59s33-33 33-59c0-18-15-32-33-32Z"
+            className="fill-teal"
+          />
+          <path
+            d="M117 99c7-5 18-14 18-24 0-7-5-12-12-12-3 0-5 1-6 3-2-2-4-3-7-3-7 0-12 5-12 12 0 10 12 19 19 24Z"
+            className="fill-white"
+          />
         </g>
         <g className="drop-shadow-sm">
-          <rect x="237" y="34" width="54" height="68" rx="16" className="fill-navy" />
+          <rect
+            x="237"
+            y="34"
+            width="54"
+            height="68"
+            rx="16"
+            className="fill-navy"
+          />
           <path d="M252 34h24v37l-12-7-12 7V34Z" className="fill-blue" />
-          <path d="M254 81h21" stroke="white" strokeWidth="4" strokeLinecap="round" opacity=".75" />
+          <path
+            d="M254 81h21"
+            stroke="white"
+            strokeWidth="4"
+            strokeLinecap="round"
+            opacity=".75"
+          />
         </g>
-        <path d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z" className="fill-blue" />
-        <path d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z" stroke="white" strokeWidth="3" strokeLinejoin="round" />
+        <path
+          d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z"
+          className="fill-blue"
+        />
+        <path
+          d="M290 108l35 10-22 9-6 21-13-31-24-9 30 0Z"
+          stroke="white"
+          strokeWidth="3"
+          strokeLinejoin="round"
+        />
       </svg>
     </div>
   );
@@ -558,7 +599,10 @@ export function SavedTripsAndRecentSearches() {
         <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-left shadow-sm sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 id="saved-dashboard-title" className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
+              <h1
+                id="saved-dashboard-title"
+                className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]"
+              >
                 {t("savedTripsPageTitle")} ❤️
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
@@ -591,7 +635,7 @@ export function SavedTripsAndRecentSearches() {
                   {t("savedTripsEmptyDescription")}
                 </p>
                 <Link
-                  href="/destinations"
+                  href="/"
                   className="mt-6 inline-flex min-h-11 w-auto min-w-[8rem] items-center justify-center gap-1.5 rounded-lg bg-blue-600 px-8 py-2 text-sm font-semibold text-white shadow-[0_18px_36px_-24px_rgba(37,99,235,0.9)] transition hover:bg-blue-700 sm:mt-4"
                 >
                   {t("savedTripsExploreDestinations")}
@@ -697,18 +741,18 @@ export function SavedTripsAndRecentSearches() {
           )}
         </section>
 
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-left shadow-sm sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-                {t("savedTripsRecentSearchesTitle")} 🕘
-              </h2>
-              <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
-                {t("savedTripsRecentSearchesSubtitle")}
-              </p>
-            </div>
+        {recentSearches.length > 0 ? (
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-left shadow-sm sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-semibold tracking-tight text-slate-900">
+                  {t("savedTripsRecentSearchesTitle")} 🕘
+                </h2>
+                <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
+                  {t("savedTripsRecentSearchesSubtitle")}
+                </p>
+              </div>
 
-            {recentSearches.length > 0 ? (
               <button
                 type="button"
                 onClick={handleClearRecent}
@@ -717,29 +761,8 @@ export function SavedTripsAndRecentSearches() {
                 <Trash2 className="h-4 w-4" />
                 {t("savedTripsClearAllRecent")}
               </button>
-            ) : null}
-          </div>
-
-          {recentSearches.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center md:p-12">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.45)]">
-                <Search className="h-7 w-7 text-slate-400" />
-              </div>
-              <h3 className="mt-5 text-lg font-semibold tracking-tight text-slate-900">
-                {t("savedTripsNoRecentTitle")}
-              </h3>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
-                {t("savedTripsNoRecentDescription")}
-              </p>
-              <Link
-                href="/"
-                className="mt-5 inline-flex min-h-11 items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
-              >
-                {t("savedTripsSearchNewTrips")}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
-          ) : (
+
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {recentSearches.map((entry) => {
                 const visual = resolveRecentSearchImage(entry);
@@ -804,8 +827,8 @@ export function SavedTripsAndRecentSearches() {
                 );
               })}
             </div>
-          )}
-        </section>
+          </section>
+        ) : null}
       </div>
     </div>
   );
