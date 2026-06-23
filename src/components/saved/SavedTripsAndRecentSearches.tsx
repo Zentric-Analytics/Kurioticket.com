@@ -514,10 +514,10 @@ export function SavedTripsAndRecentSearches() {
         <section className="space-y-4 md:space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
                 {t("savedTripsPageTitle")} ❤️
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
                 {t("savedTripsPageSubtitle")}
               </p>
             </div>
@@ -535,11 +535,11 @@ export function SavedTripsAndRecentSearches() {
           </div>
 
           {savedTrips.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-rose-200 bg-[linear-gradient(155deg,rgba(255,241,242,0.9),rgba(255,255,255,1))] p-8 text-center md:p-12">
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center shadow-[0_18px_45px_-36px_rgba(15,23,42,0.65)] md:p-12">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.45)]">
                 <Heart className="h-7 w-7 fill-rose-500 text-rose-500" />
               </div>
-              <h3 className="mt-5 text-lg font-black tracking-tight text-slate-900">
+              <h3 className="mt-5 text-lg font-semibold tracking-tight text-slate-900">
                 {t("savedTripsEmptyTitle")}
               </h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
@@ -583,13 +583,13 @@ export function SavedTripsAndRecentSearches() {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="flex h-48 w-full items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-bold uppercase tracking-[0.14em] text-slate-600">
+                      <div className="flex h-48 w-full items-center justify-center bg-gradient-to-br from-violet-100 via-fuchsia-50 to-cyan-50 text-sm font-semibold uppercase tracking-[0.14em] text-slate-600">
                         {t("savedTripFallbackTitle")}
                       </div>
                     )}
 
                     <div className="space-y-3 p-5">
-                      <h3 className="pr-12 text-lg font-black leading-tight tracking-tight text-slate-900">
+                      <h3 className="pr-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
                         {trip.title}
                       </h3>
                       <p className="line-clamp-2 text-[11px] font-semibold uppercase tracking-[0.11em] text-slate-600">
@@ -600,7 +600,7 @@ export function SavedTripsAndRecentSearches() {
                       </p>
 
                       <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                        <span className="rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-violet-700">
+                        <span className="rounded-full border border-violet-100 bg-violet-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-violet-700">
                           {trip.unresolved
                             ? t("savedTripsSavedBadge")
                             : t("savedTripsTrendingBadge")}
@@ -620,7 +620,7 @@ export function SavedTripsAndRecentSearches() {
                                 ? t("savedTripsProviderFare")
                                 : t("savedTripsCurrentOptions")}
                             </p>
-                            <p className="text-base font-black leading-tight text-slate-950">
+                            <p className="text-base font-semibold leading-tight text-slate-950">
                               {hasProviderFare ? (
                                 <PriceText
                                   amountUsd={fare.price}
@@ -654,10 +654,10 @@ export function SavedTripsAndRecentSearches() {
         <section className="space-y-4 md:space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-black tracking-tight text-slate-950 sm:text-2xl">
+              <h2 className="text-xl font-semibold tracking-tight text-slate-900">
                 {t("savedTripsRecentSearchesTitle")} 🕘
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm font-normal leading-6 text-slate-600">
                 {t("savedTripsRecentSearchesSubtitle")}
               </p>
             </div>
@@ -675,11 +675,11 @@ export function SavedTripsAndRecentSearches() {
           </div>
 
           {recentSearches.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-[linear-gradient(155deg,rgba(241,245,249,0.8),rgba(255,255,255,1))] p-8 text-center md:p-12">
+            <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center shadow-[0_18px_45px_-36px_rgba(15,23,42,0.65)] md:p-12">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_-20px_rgba(15,23,42,0.45)]">
                 <Search className="h-7 w-7 text-slate-400" />
               </div>
-              <h3 className="mt-5 text-lg font-black tracking-tight text-slate-900">
+              <h3 className="mt-5 text-lg font-semibold tracking-tight text-slate-900">
                 {t("savedTripsNoRecentTitle")}
               </h3>
               <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
@@ -719,7 +719,7 @@ export function SavedTripsAndRecentSearches() {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-bold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
+                      <div className="flex h-36 w-full items-center justify-center bg-gradient-to-br from-slate-100 via-indigo-50 to-cyan-100 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600 sm:h-40">
                         {entry.type === "flight"
                           ? t("savedTripsFlightSearchFallback")
                           : t("savedTripsHotelSearchFallback")}
@@ -733,14 +733,14 @@ export function SavedTripsAndRecentSearches() {
                           : t("savedTripsTypeHotel")}
                       </span>
 
-                      <h3 className="pr-12 text-lg font-black leading-tight tracking-tight text-slate-900">
+                      <h3 className="pr-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
                         {entry.label}
                       </h3>
                       <p className="line-clamp-2 text-sm leading-5 text-slate-600">
                         {formatRecentSearchSubtitle(entry)}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 pt-0.5">
-                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-600">
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-600">
                           {formatSearchedLabel(entry.createdAt)}
                         </span>
                       </div>
