@@ -879,6 +879,8 @@ export const translations: TranslationDictionary = {
   infants: "Bebés",
   petFriendly: "Acepta mascotas",
   onlyShowPetFriendlyStays: "Mostrar solo estadías que aceptan mascotas",
+  hotelAdultHelper: "Huéspedes 18+",
+  hotelRoomsHelper: "Hasta 6 habitaciones",
   togglePetFriendlyStays: "Activar estadías que aceptan mascotas",
   hotelErrorEnterDestination: "Ingresa un destino.",
   hotelErrorSelectCheckIn: "Selecciona una fecha de entrada.",
