@@ -328,6 +328,8 @@ export const translations: TranslationDictionary = {
   homeNewsletterBody: "احصل على تحديثات أسبوعية منتقاة للرحلات والفنادق.",
   homeNewsletterPlaceholder: "أدخل بريدك الإلكتروني",
   homeSubscribe: "اشترك",
+  homeNewsletterConsent:
+    "بالاشتراك، فإنك توافق على تلقي تحديثات Kurioticket. يمكنك إلغاء الاشتراك في أي وقت.",
   homeNewsletterThanks: "شكرًا! سنبقيك على اطلاع بعروض السفر.",
   homeHeroImageAlt: "منتجع استوائي فاخر بجانب مياه هادئة",
   homeNextDestinations: "الوجهات التالية",
