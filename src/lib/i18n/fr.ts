@@ -27,6 +27,8 @@ export const translations: TranslationDictionary = {
   "hotelGuide.contentSystemBody": "Les éditeurs peuvent ajouter des informations pratiques locales, des notes de transfert depuis l’aéroport et des recommandations de quartiers en phase 2.",
   "guides.title": "Guides de planification de voyage",
   "guides.description": "Explorez des guides d’itinéraires, d’aéroports, de destinations, d’hôtels et de planification de voyage conçus pour faciliter des décisions de voyage confiantes.",
+  "guides.articleEyebrow": "Article de planification de voyage",
+  "guides.articleBody": "Utilisez ce guide pour organiser les détails de votre voyage, comparer les éléments à prendre en compte et poursuivre avec les outils de recherche de vols et d’hôtels de Kurioticket.",
   "guides.cardPlaceholder": "Structure de page éditoriale prête pour le contenu SEO et les données de voyage internes.",
   "travelersCabinDialogLabel": "Voyageurs et cabine",
   viewDetails: "Voir les détails",

@@ -27,6 +27,8 @@ export const translations: TranslationDictionary = {
   "hotelGuide.contentSystemBody": "Editores podem adicionar conveniências locais, notas de traslado do aeroporto e recomendações de áreas na fase 2.",
   "guides.title": "Guias de planejamento de viagem",
   "guides.description": "Explore guias de rotas, aeroportos, destinos, hotéis e planejamento de viagem criados para apoiar decisões de viagem confiantes.",
+  "guides.articleEyebrow": "Artigo de planejamento de viagem",
+  "guides.articleBody": "Use este guia para organizar os detalhes do planejamento da viagem, comparar considerações de viagem e continuar nas ferramentas de busca de voos e hotéis da Kurioticket.",
   "guides.cardPlaceholder": "Estrutura de página editorial pronta para conteúdo de SEO e dados internos de viagem.",
   "travelersCabinDialogLabel": "Viajantes e cabine",
   viewDetails: "Ver detalhes",

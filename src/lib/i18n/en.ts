@@ -29,6 +29,8 @@ export const translations: TranslationDictionary = {
   "hotelGuide.contentSystemBody": "Editors can add local convenience, airport transfer notes, and area recommendations in Phase 2.",
   "guides.title": "Travel Planning Guides",
   "guides.description": "Explore route, airport, destination, hotel, and travel planning guides designed to support confident trip decisions.",
+  "guides.articleEyebrow": "Travel planning article",
+  "guides.articleBody": "Use this guide to organize trip planning details, compare travel considerations, and continue into Kurioticket flight and hotel search tools.",
   "guides.cardPlaceholder": "Editorial page shell ready for SEO content and internal travel data.",
   "travelersCabinDialogLabel": "Travelers and cabin",
   saved: "Saved",

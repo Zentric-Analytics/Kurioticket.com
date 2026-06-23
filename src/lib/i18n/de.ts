@@ -27,6 +27,8 @@ export const translations: TranslationDictionary = {
   "hotelGuide.contentSystemBody": "Redakteure können in Phase 2 lokale Komfortinformationen, Hinweise zum Flughafentransfer und Gebietsempfehlungen hinzufügen.",
   "guides.title": "Reiseplanungsleitfäden",
   "guides.description": "Entdecke Routen-, Flughafen-, Destinations-, Hotel- und Reiseplanungsleitfäden, die sichere Reiseentscheidungen unterstützen.",
+  "guides.articleEyebrow": "Artikel zur Reiseplanung",
+  "guides.articleBody": "Nutze diesen Leitfaden, um Details deiner Reiseplanung zu organisieren, Reiseaspekte zu vergleichen und mit den Flug- und Hotelsuchtools von Kurioticket fortzufahren.",
   "guides.cardPlaceholder": "Redaktionelle Seitenschale bereit für SEO-Inhalte und interne Reisedaten.",
   "travelersCabinDialogLabel": "Reisende und Kabine",
   viewDetails: "Details anzeigen",
