@@ -1018,6 +1018,26 @@ export const translations: TranslationDictionary = {
     "استخدم صفحة دعم العملاء وأدرج البريد الإلكتروني لحسابك، وما كنت تحاول القيام به، وأي تفاصيل عن المسار أو الفندق أو المزوّد قد تساعدنا على مراجعة المشكلة.",
   serviceGuaranteeHelpCardTitle: "هل تحتاج إلى مساعدة في حسابك أو البحث؟",
   serviceGuaranteeSupportCta: "تواصل مع دعم العملاء",
+  howItWorksEyebrow: "كيف يعمل Kurioticket",
+  howItWorksTitle: "كيف يعمل Kurioticket",
+  howItWorksIntro:
+    "يساعد Kurioticket المسافرين على الانتقال من البحث إلى المقارنة، ثم إلى المزوّد عند اختيار عرض.",
+  howItWorksFlowHeading: "الخطوات الأساسية",
+  "howItWorks.steps.search.title": "ابحث عن خيارات السفر",
+  "howItWorks.steps.search.description":
+    "أدخل تفاصيل رحلتك للبحث عن الرحلات الجوية والفنادق والسيارات أو عروض السفر المتاحة.",
+  "howItWorks.steps.compare.title": "قارن النتائج المتاحة",
+  "howItWorks.steps.compare.description":
+    "راجع الخيارات المتاحة والأسعار والجداول وتفاصيل المزوّد ومعلومات السفر الأخرى عند عرضها.",
+  "howItWorks.steps.choose.title": "اختر عرضًا",
+  "howItWorks.steps.choose.description":
+    "اختر الخيار الأنسب لخططك بعد مراجعة التفاصيل المتاحة.",
+  "howItWorks.steps.continue.title": "تابع مع المزوّد",
+  "howItWorks.steps.continue.description":
+    "عند إعادة توجيهك، تابع على موقع المزوّد لمراجعة التفاصيل النهائية وإكمال أي خطوات للحجز.",
+  "howItWorks.providerWebsites.title": "مواقع المزوّدين",
+  "howItWorks.providerWebsites.description":
+    "قد تُستكمل بعض الحجوزات على مواقع المزوّدين بعد أن يعيدك Kurioticket إليها. راجع صفحة المزوّد للتأكد من التوافر النهائي والأسعار والشروط وخطوات الدفع وتفاصيل الحجز قبل إتمام الشراء.",
   footerDiscover: "اكتشف",
   footerSavedRecent: "المحفوظات والحديثة",
   footerTermsSettings: "الشروط والإعدادات",
