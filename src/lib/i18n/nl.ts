@@ -511,6 +511,11 @@ export const translations: TranslationDictionary = {
   faqHeading: "Veelgestelde vragen",
   faqIntro:
     "Ontdek hoe Kurioticket je helpt vluchten, hotels en reisopties te vergelijken voordat je boekt bij vertrouwde providers.",
+  faqHelpCenter: "Helpcentrum",
+  faqGeneralQuestions: "Algemene vragen",
+  faqNeedMoreHelpPrefix: "Meer hulp nodig? Bezoek de",
+  faqSupportPage: "supportpagina",
+  faqNeedMoreHelpSuffix: "voor service- en contactopties.",
   faqViewAll: "Alle FAQ’s bekijken",
   faqQuestionFindOptions: "Hoe vindt Kurioticket vlucht- en hotelopties?",
   faqAnswerFindOptions:
