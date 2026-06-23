@@ -356,6 +356,72 @@ export const translations: TranslationDictionary = {
   footerCustomerSupport: "دعم العملاء",
   footerServiceGuarantee: "ضمان الخدمة",
   footerMoreServiceInfo: "مزيد من معلومات الخدمة",
+  moreServiceInfoEyebrow: "معلومات المنصة",
+  moreServiceInfoTitle: "مزيد من معلومات الخدمة",
+  moreServiceInfoDescription:
+    "تعرّف على كيفية مساعدة Kurioticket للمسافرين في البحث والمقارنة والحفظ وتنظيم خيارات السفر من عدة مزوّدين في مكان واحد.",
+  moreServiceInfoContextTitle: "خطّط مع السياق",
+  moreServiceInfoContextSubtitle: "من نتائج البحث إلى إعادة التوجيه إلى المزوّدين",
+  moreServiceInfoContextCompare: "قارن الخيارات من عدة مزوّدين للسفر",
+  moreServiceInfoContextSave: "احفظ الرحلات والتنبيهات والتفضيلات عند تسجيل الدخول",
+  moreServiceInfoContextContinue: "تابع مع تفاصيل المزوّد قبل الحجز خارجيًا",
+  moreServiceInfoHowHeading: "كيف تعمل Kurioticket",
+  moreServiceInfoHowDescription:
+    "توضح تفاصيل الخدمة هذه دور Kurioticket قبل البحث عن السفر وأثناءه وبعده.",
+  moreServiceInfoHowBadge: "أساسيات تخطيط السفر",
+  moreServiceInfoStepSearchTitle: "البحث عبر عدة مزوّدين",
+  moreServiceInfoStepSearchSummary:
+    "ابحث عن خيارات السفر عبر مزوّدين مختلفين من مكان واحد بدلًا من فتح كل مزوّد على حدة.",
+  moreServiceInfoStepSearchDetails:
+    "تجمع Kurioticket معلومات نتائج الرحلات والفنادق والمسارات والسفر المتاحة في تجربة بحث واحدة حتى يتمكن المسافرون من مراجعة الخيارات بكفاءة أكبر.",
+  moreServiceInfoStepCompareTitle: "مقارنة خيارات السفر",
+  moreServiceInfoStepCompareSummary:
+    "قارن الأسعار والمسارات والفنادق والجداول وخيارات السفر المتاحة قبل تحديد ما يناسب رحلتك.",
+  moreServiceInfoStepCompareDetails:
+    "قد تتضمن النتائج تفاصيل المزوّد والتوقيت ومعلومات الوجهة وبيانات رحلة أخرى تساعدك على تقييم الخيار قبل المتابعة إلى المزوّد.",
+  moreServiceInfoStepSaveTitle: "حفظ الرحلات والتنبيهات",
+  moreServiceInfoStepSaveSummary:
+    "أنشئ حسابًا لحفظ الرحلات وتتبع المسارات وإدارة تنبيهات السفر المرتبطة بتخطيط رحلتك.",
+  moreServiceInfoStepSaveDetails:
+    "تسهّل الرحلات المحفوظة وعمليات البحث الأخيرة والتنبيهات العودة إلى الخيارات التي تدرسها والحفاظ على تنظيم تفاصيل تخطيط السفر ذات الصلة.",
+  moreServiceInfoStepRedirectsTitle: "شرح إعادة التوجيه إلى المزوّدين",
+  moreServiceInfoStepRedirectsSummary:
+    "عند اختيار عرض، قد تتم إعادة توجيهك إلى مزوّد سفر لإكمال الحجز والدفع والتأكيد والتنفيذ.",
+  moreServiceInfoStepRedirectsDetails:
+    "صفحة المزوّد هي المكان الذي تُدار فيه الأسعار النهائية والتوفر والقواعد وخطوات الدفع والإيصالات وتغييرات الحجز والإلغاءات ووثائق السفر للعروض المعاد توجيهها.",
+  moreServiceInfoStepAccountTitle: "أدوات الحساب والسفر",
+  moreServiceInfoStepAccountSummary:
+    "استخدم أدوات الحساب لتنظيم عمليات البحث المحفوظة والرحلات والتنبيهات والتفضيلات في مساحة عمل واحدة على Kurioticket.",
+  moreServiceInfoStepAccountDetails:
+    "تدعم هذه الأدوات تخطيط السفر على Kurioticket، بينما تبقى إدارة الحجوزات الخاصة بالمزوّد لدى المزوّد عندما يكتمل حجزك خارجيًا.",
+  moreServiceInfoFaqHeading: "الأسئلة الشائعة",
+  moreServiceInfoFaqDescription:
+    "إجابات قصيرة حول البحث عن السفر وإعادة التوجيه إلى المزوّدين والرحلات المحفوظة وأدوات الحساب.",
+  moreServiceInfoFaqWhatQuestion: "ما هي Kurioticket؟",
+  moreServiceInfoFaqWhatAnswer:
+    "Kurioticket منصة للبحث والمقارنة في السفر للعثور على خيارات السفر من عدة مزوّدين ومقارنتها وحفظها وتنظيمها.",
+  moreServiceInfoFaqSearchQuestion: "كيف يعمل البحث عن السفر؟",
+  moreServiceInfoFaqSearchAnswer:
+    "تُدخل تفاصيل الرحلة، وتعرض Kurioticket خيارات السفر المتاحة ومعلومات المزوّدين التي قد تساعدك على مقارنة الاختيارات.",
+  moreServiceInfoFaqRedirectQuestion: "لماذا تتم إعادة توجيهي إلى مزوّد آخر؟",
+  moreServiceInfoFaqRedirectAnswer:
+    "تُستكمل بعض العروض على مواقع مزوّدين خارجية. يتولى المزوّد خطوات الحجز النهائية والدفع والتأكيد والتنفيذ.",
+  moreServiceInfoFaqPaymentsQuestion: "هل تعالج Kurioticket المدفوعات؟",
+  moreServiceInfoFaqPaymentsAnswer:
+    "بالنسبة إلى عروض المزوّدين المعاد توجيهها، لا تعالج Kurioticket الدفع. راجع الدفع وأكمله مباشرة على صفحة المزوّد.",
+  moreServiceInfoFaqSaveQuestion: "هل يمكنني حفظ الرحلات والتنبيهات؟",
+  moreServiceInfoFaqSaveAnswer:
+    "نعم. يمكن أن تساعدك أدوات الحساب على حفظ الرحلات وتتبع المسارات وإدارة التنبيهات والعودة إلى خيارات السفر التي تدرسها.",
+  moreServiceInfoFaqAccountQuestion: "هل يلزم إنشاء حساب؟",
+  moreServiceInfoFaqAccountAnswer:
+    "يمكنك تصفح معلومات البحث من دون كل أدوات الحساب، لكن حفظ الرحلات والتنبيهات والتفضيلات قد يتطلب تسجيل الدخول.",
+  moreServiceInfoFaqSupportQuestion: "كيف أتواصل مع الدعم؟",
+  moreServiceInfoFaqSupportAnswer:
+    "استخدم صفحة دعم العملاء وأدرج البريد الإلكتروني لحسابك، وما كنت تحاول القيام به، وأي تفاصيل عن المسار أو الفندق أو المزوّد.",
+  moreServiceInfoHelpTitle: "هل تحتاج إلى مساعدة؟",
+  moreServiceInfoHelpDescription:
+    "أسئلة حول حسابك أو رحلاتك المحفوظة أو التنبيهات أو إعادة التوجيه إلى المزوّدين",
+  moreServiceInfoSupportCta: "تواصل مع دعم العملاء",
   footerDiscover: "اكتشف",
   footerSavedRecent: "المحفوظات والحديثة",
   footerTermsSettings: "الشروط والإعدادات",
