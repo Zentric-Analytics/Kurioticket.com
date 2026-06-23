@@ -592,6 +592,7 @@ export const translations: TranslationDictionary = {
   leg: "Traject",
   nonstop: "Rechtstreeks",
   stopSingular: "stop",
+  stopDual: "2 stops",
   stopPlural: "stops",
   displayEstimateFinalProviderMayDiffer:
     "Weergaveschatting; definitieve providerprijs kan afwijken.",

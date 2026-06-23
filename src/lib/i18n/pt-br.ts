@@ -860,6 +860,7 @@ export const translations: TranslationDictionary = {
   itinerary: "Itinerário",
   leg: "Trecho",
   stopSingular: "escala",
+  stopDual: "2 escalas",
   stopPlural: "escalas",
   providerNormalizedItineraryPrefix:
     "Os detalhes de ida e volta são exibidos a partir dos dados de itinerário normalizados pelo provedor.",

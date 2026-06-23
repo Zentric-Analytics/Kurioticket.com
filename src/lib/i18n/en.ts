@@ -2244,6 +2244,7 @@ export const translations: TranslationDictionary = {
   leg: "Leg",
   nonstop: "Nonstop",
   stopSingular: "stop",
+  stopDual: "2 stops",
   stopPlural: "stops",
   homeNewsletterInvalidEmail: "Enter a valid email address.",
   homeNewsletterUnableSubscribe: "Unable to subscribe right now.",
