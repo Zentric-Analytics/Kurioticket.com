@@ -94,6 +94,10 @@ const buildMonthCells = (monthDate: Date): MonthCell[] => {
 const normalizeHotelCalendarLocale = (locale: string | null | undefined) => {
   const normalized = locale?.trim().replace("_", "-").toLowerCase() ?? "";
 
+  if (normalized === "ar" || normalized.startsWith("ar-")) {
+    return "ar";
+  }
+
   if (normalized === "fr" || normalized.startsWith("fr-")) {
     return "fr-FR";
   }
