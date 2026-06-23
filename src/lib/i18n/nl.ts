@@ -27,6 +27,8 @@ export const translations: TranslationDictionary = {
   "hotelGuide.contentSystemBody": "Redacteuren kunnen in fase 2 lokale gemakken, luchthaventransfernotities en gebiedsaanbevelingen toevoegen.",
   "guides.title": "Reisplanningsgidsen",
   "guides.description": "Ontdek route-, luchthaven-, bestemmings-, hotel- en reisplanningsgidsen die helpen bij zelfverzekerde reisbeslissingen.",
+  "guides.articleEyebrow": "Reisplanningsartikel",
+  "guides.articleBody": "Gebruik deze gids om je reisplanning te ordenen, reisoverwegingen te vergelijken en verder te gaan met de vlucht- en hotelzoektools van Kurioticket.",
   "guides.cardPlaceholder": "Redactionele paginaschil klaar voor SEO-content en interne reisdata.",
   "travelersCabinDialogLabel": "Reizigers en cabine",
   viewDetails: "Details bekijken",
