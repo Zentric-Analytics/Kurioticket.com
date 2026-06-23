@@ -168,6 +168,10 @@ const getCarsResultsIntlLocale = (locale: string) => {
     return "pt-BR";
   }
 
+  if (normalizedLocale.startsWith("ar")) {
+    return "ar-u-nu-latn";
+  }
+
   return "en-US";
 };
 
@@ -175,6 +179,9 @@ const usesTwentyFourHourCarsResultsTime = (intlLocale: string) =>
   ["de", "es", "fr", "nl", "pt"].some((localePrefix) =>
     intlLocale.toLowerCase().startsWith(localePrefix),
   );
+
+const usesLocalizedCarsResultsTime = (intlLocale: string) =>
+  intlLocale.toLowerCase().startsWith("ar");
 
 const curatedLocationTranslationKeys: Record<string, string> = {
   Airport: "carsResults.location.airport",
@@ -288,6 +295,13 @@ const formatTimeLabel = (time: string, intlLocale: string) => {
 
   if (usesTwentyFourHourCarsResultsTime(intlLocale)) {
     return `${String(hourValue).padStart(2, "0")}:${String(minuteValue).padStart(2, "0")}`;
+  }
+
+  if (usesLocalizedCarsResultsTime(intlLocale)) {
+    return new Intl.DateTimeFormat(intlLocale, {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(2024, 0, 1, hourValue, minuteValue));
   }
 
   const period = hourValue >= 12 ? "PM" : "AM";
