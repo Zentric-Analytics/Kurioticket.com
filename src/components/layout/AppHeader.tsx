@@ -1410,14 +1410,17 @@ export function AppHeader({
                           </span>
                         </span>
 
-                        <span className="min-w-0 flex-1 no-underline">
-                          <span className="block truncate text-lg font-semibold text-slate-950 no-underline decoration-transparent">
+                        <div
+                          className="min-w-0 flex-1 no-underline [text-decoration:none] [&_*]:no-underline [&_*]:[text-decoration:none]"
+                          style={{ textDecoration: "none" }}
+                        >
+                          <div className="block truncate text-lg font-semibold text-slate-950">
                             {session?.user?.name || accountDisplayName}
-                          </span>
-                          <span className="mt-0.5 block truncate text-sm font-medium text-slate-500 no-underline decoration-transparent">
+                          </div>
+                          <div className="mt-0.5 block truncate text-sm font-medium text-slate-500">
                             {session?.user?.email || t["accountMenu.fallbackAccount"]}
-                          </span>
-                        </span>
+                          </div>
+                        </div>
 
                         <button
                           type="button"
