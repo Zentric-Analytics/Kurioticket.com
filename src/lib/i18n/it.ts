@@ -1322,6 +1322,7 @@ export const translations: TranslationDictionary = {
   nextMonth: "Mese successivo",
   previousMonthShort: "Precedente",
   nextMonthShort: "Successivo",
+  selectDateAriaPrefix: "Seleziona data",
   travelers: "Viaggiatori",
   guests: "Ospiti",
   rooms: "Camere",

@@ -892,6 +892,7 @@ export const translations: TranslationDictionary = {
   nextMonth: "Próximo mês",
   previousMonthShort: "Anterior",
   nextMonthShort: "Próximo",
+  selectDateAriaPrefix: "Selecionar data",
   previousShort: "Anterior",
   nextShort: "Próximo",
   weekdayMon: "seg.",
