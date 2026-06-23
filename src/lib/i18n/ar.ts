@@ -46,6 +46,7 @@ export const translations: TranslationDictionary = {
   searchLanguage: "ابحث عن لغة أو رمز",
   search: "بحث",
   clear: "مسح",
+  departureDate: "تواريخ السفر",
   travelDates: "تواريخ السفر",
   chooseTravelDates: "اختر تواريخ السفر",
   clearTravelDates: "مسح تواريخ السفر",
