@@ -1238,6 +1238,7 @@ export const translations: TranslationDictionary = {
   guestsAndRooms: "Gäste und Zimmer",
   adults: "Erwachsene",
   children: "Kinder",
+  infants: "Kleinkinder",
   petFriendly: "Haustierfreundlich",
   onlyShowPetFriendlyStays:
     "Nur Aufenthalte anzeigen, die Haustiere erlauben",
@@ -2044,6 +2045,7 @@ export const translations: TranslationDictionary = {
   travelersAndCabin: "Reisende und Kabine",
   travelersAndCabinClass: "Reisende und Kabinenklasse",
   infantsOnLap: "Kleinkinder auf dem Schoß",
+  childAgeRange: "Alter 2–17",
   under2: "Unter 2",
   selectDepartureDate: "Abflugdatum auswählen",
   selectReturnDate: "Rückflugdatum auswählen",

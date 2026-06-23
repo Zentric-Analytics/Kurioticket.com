@@ -915,6 +915,7 @@ export const translations: TranslationDictionary = {
   guestsAndRooms: "Hóspedes e quartos",
   adults: "Adultos",
   children: "Crianças",
+  infants: "Bebês",
   petFriendly: "Aceita animais de estimação",
   onlyShowPetFriendlyStays:
     "Mostrar apenas estadias que aceitam animais de estimação",
