@@ -1242,6 +1242,8 @@ export const translations: TranslationDictionary = {
   petFriendly: "Haustierfreundlich",
   onlyShowPetFriendlyStays:
     "Nur Aufenthalte anzeigen, die Haustiere erlauben",
+  hotelAdultHelper: "Gäste 18+",
+  hotelRoomsHelper: "Bis zu 6 Zimmer",
   togglePetFriendlyStays: "Haustierfreundliche Aufenthalte umschalten",
   chooseTravelDates: "Reisedaten auswählen",
   clearDestination: "Reiseziel löschen",

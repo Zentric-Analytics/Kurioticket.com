@@ -1193,7 +1193,14 @@ export function SearchTabs({
 
 
   const guests = String(hotelAdultCount + hotelChildCount);
-  const hotelGuestsRoomsSummary = `${guests} ${Number(guests) === 1 ? t.guestSingular || "guest" : t.guestPlural || "guests"}, ${rooms} ${Number(rooms) === 1 ? t.roomSingular || "room" : t.roomPlural || "rooms"}`;
+  const isArabicLocale = (locale ?? activeLocale)
+    ?.trim()
+    .replace("_", "-")
+    .toLowerCase()
+    .startsWith("ar");
+  const hotelGuestsRoomsSummary = isArabicLocale
+    ? `${Number(guests) === 1 ? `${translate("guestSingular")} واحد` : `${guests} ${translate("guestPlural")}`}، ${Number(rooms) === 1 ? `${translate("roomSingular")} واحدة` : `${rooms} ${translate("roomPlural")}`}`
+    : `${guests} ${Number(guests) === 1 ? t.guestSingular || "guest" : t.guestPlural || "guests"}, ${rooms} ${Number(rooms) === 1 ? t.roomSingular || "room" : t.roomPlural || "rooms"}`;
 
   const formatShortDate = useCallback((
     isoDate: string
@@ -3462,7 +3469,7 @@ export function SearchTabs({
                   >
                     <div className="mb-3">
                       <p className="text-[10px] font-medium uppercase tracking-[0.11em] text-slate-600">
-                        {translate("hotelStayDetails") || "Stay details"}
+                        {translate("stayDetails") || "Stay details"}
                       </p>
                       <h3 className="mt-1 text-[15px] font-medium tracking-tight text-slate-950">
                         {translate("guestsAndRooms") || "Guests and rooms"}
