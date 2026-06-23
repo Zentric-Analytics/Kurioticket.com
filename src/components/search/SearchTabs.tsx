@@ -123,6 +123,10 @@ const normalizeHomepageCalendarLocale = (
     return "pt-BR";
   }
 
+  if (normalized === "ar" || normalized.startsWith("ar-")) {
+    return "ar";
+  }
+
   return "en-US";
 };
 
