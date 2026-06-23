@@ -1218,7 +1218,7 @@ export function AppHeader({
                         id="mobile-menu-preferences-heading"
                         className="px-1 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500"
                       >
-                        Preferences
+                        {t.mobilePreferencesHeading || "Preferences"}
                       </p>
 
                       <div className="mt-2 flex flex-col items-start gap-2">

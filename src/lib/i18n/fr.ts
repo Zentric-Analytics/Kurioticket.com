@@ -31,6 +31,7 @@ export const translations: TranslationDictionary = {
   "guides.articleBody": "Utilisez ce guide pour organiser les détails de votre voyage, comparer les éléments à prendre en compte et poursuivre avec les outils de recherche de vols et d’hôtels de Kurioticket.",
   "guides.cardPlaceholder": "Structure de page éditoriale prête pour le contenu SEO et les données de voyage internes.",
   "travelersCabinDialogLabel": "Voyageurs et cabine",
+  mobilePreferencesHeading: "Préférences",
   viewDetails: "Voir les détails",
   tryAgain: "Réessayer",
   edit: "Modifier",

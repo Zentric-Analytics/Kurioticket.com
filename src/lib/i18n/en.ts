@@ -33,6 +33,10 @@ export const translations: TranslationDictionary = {
   "guides.articleBody": "Use this guide to organize trip planning details, compare travel considerations, and continue into Kurioticket flight and hotel search tools.",
   "guides.cardPlaceholder": "Editorial page shell ready for SEO content and internal travel data.",
   "travelersCabinDialogLabel": "Travelers and cabin",
+  mobileInfoLegalHeading: "Info & legal",
+  mobileExploreHeading: "Explore",
+  mobileTravelHeading: "Travel",
+  mobilePreferencesHeading: "Preferences",
   saved: "Saved",
   countryAndCurrency: "Country and currency",
   openCountryCurrencySelector:
