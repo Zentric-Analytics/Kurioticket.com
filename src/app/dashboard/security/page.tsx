@@ -9,7 +9,7 @@ export const metadata = {
 export default function SecurityPage() {
   return (
     <>
-      <AppHeader showAccountBackLink />
+      <AppHeader />
       <main className="bg-[#f3f7fc] pb-10 pt-0 sm:pb-14">
         <SecurityDashboardPage />
       </main>
