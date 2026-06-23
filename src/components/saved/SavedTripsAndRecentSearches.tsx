@@ -127,6 +127,7 @@ const getSavedTripsDateLocale = (locale: string) => {
   const normalizedLocale = locale.toLowerCase();
 
   if (normalizedLocale.startsWith("de")) return "de-DE";
+  if (normalizedLocale.startsWith("ar")) return "ar";
   if (normalizedLocale.startsWith("fr")) return "fr-FR";
   if (normalizedLocale.startsWith("es")) return "es-ES";
   if (normalizedLocale.startsWith("it")) return "it-IT";
