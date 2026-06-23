@@ -1613,6 +1613,7 @@ export const translations: TranslationDictionary = {
   return: "Ritorno",
   nonstop: "Diretto",
   stopSingular: "scalo",
+  stopDual: "2 scali",
   stopPlural: "scali",
   itinerary: "Itinerario",
   leg: "Tratta",

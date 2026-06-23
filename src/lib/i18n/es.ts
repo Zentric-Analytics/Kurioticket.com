@@ -2257,6 +2257,7 @@ export const translations: TranslationDictionary = {
   leg: "Tramo",
   nonstop: "Directo",
   stopSingular: "escala",
+  stopDual: "2 escalas",
   stopPlural: "escalas",
   homeNewsletterInvalidEmail: "Introduce una dirección de correo válida.",
   homeNewsletterUnableSubscribe:

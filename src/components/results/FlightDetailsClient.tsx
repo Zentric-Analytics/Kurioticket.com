@@ -161,6 +161,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     nonstopLabel={t.nonstop || "Nonstop"}
                     stopSingularLabel={t.stopSingular || "stop"}
                     stopPluralLabel={t.stopPlural || "stops"}
+                    stopDualLabel={t.stopDual}
                     layoverInLabel={t.layoverIn || "Layover in"}
                     connectionLabels={buildConnectionLabels(t)}
                     locale={locale}
@@ -297,6 +298,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     nonstop: t.nonstop || "Nonstop",
                     stopSingular: t.stopSingular || "stop",
                     stopPlural: t.stopPlural || "stops",
+                    stopDual: t.stopDual,
                     providedBy: t.providedBy || "Provided by",
                     ...buildLocalizedDisplayLabels(t),
                   }}
@@ -325,6 +327,7 @@ function SelectedFlightSummary({
   nonstopLabel,
   stopSingularLabel,
   stopPluralLabel,
+  stopDualLabel,
   layoverInLabel,
   connectionLabels,
   locale,
@@ -343,6 +346,7 @@ function SelectedFlightSummary({
   nonstopLabel: string;
   stopSingularLabel: string;
   stopPluralLabel: string;
+  stopDualLabel?: string;
   layoverInLabel: string;
   connectionLabels: ConnectionLabels;
   locale: string;
@@ -379,6 +383,7 @@ function SelectedFlightSummary({
               nonstopLabel={nonstopLabel}
               stopSingularLabel={stopSingularLabel}
               stopPluralLabel={stopPluralLabel}
+              stopDualLabel={stopDualLabel}
               layoverInLabel={layoverInLabel}
               connectionLabels={connectionLabels}
               locale={locale}
@@ -428,6 +433,7 @@ function ProviderComparisonPanel({
     nonstop: string;
     stopSingular: string;
     stopPlural: string;
+    stopDual?: string;
     providedBy: string;
   } & LocalizedDisplayLabels;
 }) {
@@ -1354,6 +1360,7 @@ function CompactLegSection({
   nonstopLabel,
   stopSingularLabel,
   stopPluralLabel,
+  stopDualLabel,
   layoverInLabel,
   connectionLabels,
   locale,
@@ -1371,6 +1378,7 @@ function CompactLegSection({
   nonstopLabel: string;
   stopSingularLabel: string;
   stopPluralLabel: string;
+  stopDualLabel?: string;
   layoverInLabel: string;
   connectionLabels: ConnectionLabels;
   locale: string;
@@ -1468,6 +1476,7 @@ function CompactLegSection({
               nonstop: nonstopLabel,
               stopSingular: stopSingularLabel,
               stopPlural: stopPluralLabel,
+              stopDual: stopDualLabel,
             })}
             locale={locale}
           />
@@ -1920,9 +1929,15 @@ function isProviderReviewCopy(value: string) {
 
 function formatStops(
   stops: number,
-  labels = { nonstop: "Nonstop", stopSingular: "stop", stopPlural: "stops" },
+  labels: {
+    nonstop: string;
+    stopSingular: string;
+    stopPlural: string;
+    stopDual?: string;
+  } = { nonstop: "Nonstop", stopSingular: "stop", stopPlural: "stops" },
 ) {
   if (stops === 0) return labels.nonstop;
+  if (stops === 2 && labels.stopDual) return labels.stopDual;
   return `${stops} ${stops > 1 ? labels.stopPlural : labels.stopSingular}`;
 }
 

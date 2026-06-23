@@ -2091,6 +2091,7 @@ export const translations: TranslationDictionary = {
   itinerary: "Reiseverlauf",
   leg: "Abschnitt",
   stopSingular: "Stopp",
+  stopDual: "2 Stopps",
   stopPlural: "Stopps",
   notRefundableBeforeDeparture: "Vor Abflug nicht erstattungsfähig",
   refundableBeforeDepartureWithPenalty:
