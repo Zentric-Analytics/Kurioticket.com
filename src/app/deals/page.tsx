@@ -209,6 +209,14 @@ const clampCount = (value: number, minimum: number, maximum: number) => {
   return Math.max(minimum, Math.min(maximum, value));
 };
 
+const formatDealsCountLabel = (count: number, label: string, locale: string) => {
+  if (locale.toLowerCase().startsWith("ar") && count === 1) {
+    return `${label} واحد`;
+  }
+
+  return `${count} ${label}`;
+};
+
 export default function DealsPage() {
   const { locale, t: dictionary } = useLocale();
   const router = useRouter();
@@ -291,20 +299,32 @@ export default function DealsPage() {
       const normalizedRooms = clampCount(rooms, 1, 6);
       const roomLabel =
         normalizedRooms === 1 ? t("deals.roomSingular") : t("deals.roomPlural");
-      return `${travelerCount} ${travelerLabel}, ${normalizedRooms} ${roomLabel}`;
+      return `${formatDealsCountLabel(
+        travelerCount,
+        travelerLabel,
+        locale,
+      )}, ${formatDealsCountLabel(normalizedRooms, roomLabel, locale)}`;
     }
 
     if (includesHotel) {
       const normalizedRooms = clampCount(rooms, 1, 6);
       const roomLabel =
         normalizedRooms === 1 ? t("deals.roomSingular") : t("deals.roomPlural");
-      return `${travelerCount} ${travelerLabel}, ${normalizedRooms} ${roomLabel}`;
+      return `${formatDealsCountLabel(
+        travelerCount,
+        travelerLabel,
+        locale,
+      )}, ${formatDealsCountLabel(normalizedRooms, roomLabel, locale)}`;
     }
 
     return includesFlight
-      ? `${travelerCount} ${travelerLabel}, ${cabinLabel}`
-      : `${travelerCount} ${travelerLabel}`;
-  }, [adults, cabinClass, children, includesFlight, includesHotel, rooms, t]);
+      ? `${formatDealsCountLabel(
+          travelerCount,
+          travelerLabel,
+          locale,
+        )}, ${cabinLabel}`
+      : formatDealsCountLabel(travelerCount, travelerLabel, locale);
+  }, [adults, cabinClass, children, includesFlight, includesHotel, locale, rooms, t]);
 
   const hasActiveDealsSearch =
     packageMode !== "hotel-flight" ||
