@@ -34,6 +34,7 @@ export const translations: TranslationDictionary = {
   searchCountryOrCurrency: "ابحث عن دولة أو عملة",
   destinations: "الوجهات",
   destination: "الوجهة",
+  cityOrHotel: "مدينة أو فندق",
   support: "الدعم",
   dashboard: "لوحة التحكم",
   login: "تسجيل الدخول",
