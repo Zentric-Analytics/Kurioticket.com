@@ -107,7 +107,7 @@ export const supportedLocales: SupportedLocale[] = [
     label: "Arabic",
     nativeLabel: "العربية",
     direction: "rtl",
-    status: preparing,
+    status: "available",
     countryCode: "SA",
     fallbackText: "AR",
     rtl: true,
