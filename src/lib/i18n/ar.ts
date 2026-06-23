@@ -124,6 +124,7 @@ export const translations: TranslationDictionary = {
   onlyShowPetFriendlyStays:
     "اعرض فقط أماكن الإقامة التي تسمح بالحيوانات الأليفة",
   hotelAdultHelper: "الضيوف 18+",
+  hotelChildrenHelper: "من عمر 0 إلى 17",
   hotelRoomsHelper: "حتى 6 غرف",
   guestSingular: "ضيف",
   guestPlural: "ضيوف",

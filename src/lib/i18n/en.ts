@@ -874,6 +874,7 @@ export const translations: TranslationDictionary = {
   petFriendly: "Pet-friendly",
   onlyShowPetFriendlyStays: "Only show stays that allow pets",
   hotelAdultHelper: "Guests 18+",
+  hotelChildrenHelper: "Ages 0–17",
   hotelRoomsHelper: "Up to 6 rooms",
   togglePetFriendlyStays: "Toggle pet-friendly stays",
   hotelErrorEnterDestination: "Please enter a destination.",
