@@ -2790,6 +2790,7 @@ export const translations: TranslationDictionary = {
   searchRentalCars: "Buscar autos de alquiler",
   "accountDashboard.hub.title": "Mi cuenta",
   "accountDashboard.hub.description": "Gestiona tus viajes, elementos guardados, preferencias y configuración de la cuenta en un solo lugar.",
+  "accountDashboard.hub.mobileDescription": "Gestiona tus viajes, elementos guardados y preferencias.",
   "accountDashboard.hub.manageAccount": "Gestionar cuenta",
   "accountDashboard.hub.personalDetails": "Datos personales",
   "accountDashboard.hub.securitySettings": "Configuración de seguridad",

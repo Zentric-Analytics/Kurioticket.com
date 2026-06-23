@@ -2253,6 +2253,7 @@ export const translations: TranslationDictionary = {
     "Alcune prenotazioni possono essere completate sui siti web dei fornitori dopo il reindirizzamento da Kurioticket. Controlla la pagina del fornitore per disponibilità finale, prezzi, termini, passaggi di pagamento e dettagli della prenotazione prima di completare un acquisto.",
   "accountDashboard.hub.title": "Il mio account",
   "accountDashboard.hub.description": "Gestisci viaggi, elementi salvati, preferenze e impostazioni dell’account in un unico posto.",
+  "accountDashboard.hub.mobileDescription": "Gestisci viaggi, elementi salvati e preferenze.",
   "accountDashboard.hub.manageAccount": "Gestisci account",
   "accountDashboard.hub.personalDetails": "Dati personali",
   "accountDashboard.hub.securitySettings": "Impostazioni di sicurezza",
