@@ -15,6 +15,7 @@ import { translations as frTranslations } from "@/lib/i18n/fr";
 import { translations as itTranslations } from "@/lib/i18n/it";
 import { translations as ptBrTranslations } from "@/lib/i18n/pt-br";
 import { translations as nlTranslations } from "@/lib/i18n/nl";
+import { translations as arTranslations } from "@/lib/i18n/ar";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
 
 type StorageLike = { getItem: (k: string) => string | null; setItem: (k: string, v: string) => void };
@@ -41,7 +42,7 @@ test("search filters by native label and canonical locale", () => {
   assert.ok(filtered.some((o) => o.code === "pt-br"));
 });
 
-test("selected available Spanish, French, German, Italian, Dutch, and Portuguese locales persist and update document language", () => {
+test("selected available Spanish, French, German, Italian, Dutch, Portuguese, and Arabic locales persist and update document language", () => {
   const store = new Map<string, string>();
   const windowMock: WindowLike = {
     localStorage: {
@@ -87,6 +88,16 @@ test("selected available Spanish, French, German, Italian, Dutch, and Portuguese
   assert.equal(getLanguageFromStorage(), "pt-br");
   assert.equal(documentMock.documentElement.lang, "pt-BR");
   assert.equal(documentMock.documentElement.dir, "ltr");
+
+  setLanguageInStorage("ar");
+  assert.equal(getLanguageFromStorage(), "ar");
+  assert.equal(documentMock.documentElement.lang, "ar");
+  assert.equal(documentMock.documentElement.dir, "rtl");
+
+  setLanguageInStorage("ar-AE");
+  assert.equal(getLanguageFromStorage(), "ar");
+  assert.equal(documentMock.documentElement.lang, "ar");
+  assert.equal(documentMock.documentElement.dir, "rtl");
 });
 
 test("preparing locales are not persisted as selected", () => {
@@ -100,20 +111,20 @@ test("preparing locales are not persisted as selected", () => {
   };
   Object.defineProperty(globalThis, "window", { value: windowMock, configurable: true });
 
-  setLanguageInStorage("ar");
+  setLanguageInStorage("zh-CN");
   assert.equal(getLanguageFromStorage(), "en-us");
 
   setLanguageInStorage("es-ES");
-  setLanguageInStorage("ar");
+  setLanguageInStorage("zh-CN");
   assert.equal(getLanguageFromStorage(), "en-us");
 });
 
-test("document language remains english for unavailable rtl locales", () => {
+test("document language switches to rtl for Arabic", () => {
   const documentMock: DocumentLike = { documentElement: { lang: "", dir: "ltr" } };
   Object.defineProperty(globalThis, "document", { value: documentMock, configurable: true });
-  applyLanguageToDocument("ar");
-  assert.equal(documentMock.documentElement.lang, "en-US");
-  assert.equal(documentMock.documentElement.dir, "ltr");
+  applyLanguageToDocument("ar-SA");
+  assert.equal(documentMock.documentElement.lang, "ar");
+  assert.equal(documentMock.documentElement.dir, "rtl");
 });
 
 test("unknown locales fallback to english", () => {
@@ -129,14 +140,19 @@ test("German, Italian, Dutch, and Portuguese shorthand locales normalize to avai
   assert.equal(normalizeLanguage("pt"), "pt-br");
   assert.equal(normalizeLanguage("pt-BR"), "pt-br");
   assert.equal(normalizeLanguage("pt-br"), "pt-br");
+  assert.equal(normalizeLanguage("ar"), "ar");
+  assert.equal(normalizeLanguage("ar-SA"), "ar");
+  assert.equal(normalizeLanguage("ar-AE"), "ar");
+  assert.equal(normalizeLanguage("ar-EG"), "ar");
 });
 
-test("available locale options keep Dutch and Portuguese available and other preparing locales unavailable", () => {
+test("available locale options keep Dutch, Portuguese, and Arabic available and other preparing locales unavailable", () => {
   assert.ok(availableLocaleOptions.some((option) => option.code === "pt-br"));
   assert.ok(availableLocaleOptions.some((option) => option.code === "nl"));
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "pt-br"));
   assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "nl"));
-  assert.ok(languageOptions.some((option) => option.code === "ar" && option.status === "preparing"));
+  assert.ok(availableLocaleOptions.some((option) => option.code === "ar" && option.direction === "rtl"));
+  assert.ok(languageOptions.filter((option) => option.status !== "available").every((option) => option.code !== "ar"));
 });
 
 test("Dutch and Portuguese dictionaries resolve through getTranslations", () => {
@@ -149,7 +165,7 @@ test("Dutch and Portuguese dictionaries resolve through getTranslations", () => 
   assert.equal(ptBrTranslations.websiteLanguageTitle, "Escolha o idioma do site");
 });
 
-test("Spanish, French, German, Italian, Dutch, and Portuguese dictionary shapes match English dictionary shape", () => {
+test("Spanish, French, German, Italian, Dutch, Portuguese, and Arabic dictionary shapes match English dictionary shape", () => {
   const englishKeys = Object.keys(enTranslations).sort();
   assert.deepEqual(
     englishKeys.filter((key) => !(key in esTranslations)),
@@ -175,6 +191,10 @@ test("Spanish, French, German, Italian, Dutch, and Portuguese dictionary shapes 
     englishKeys.filter((key) => !(key in nlTranslations)),
     []
   );
+  assert.deepEqual(
+    englishKeys.filter((key) => !(key in arTranslations)),
+    []
+  );
   assert.equal(esTranslations.flights, "Vuelos");
   assert.equal(esTranslations.search, "Buscar");
   assert.equal(deTranslations.flights, "Flüge");
@@ -184,6 +204,9 @@ test("Spanish, French, German, Italian, Dutch, and Portuguese dictionary shapes 
   assert.equal(getTranslations("it-IT").flights, itTranslations.flights);
   assert.equal(getTranslations("pt-BR").websiteLanguageTitle, "Escolha o idioma do site");
   assert.equal(getTranslations("nl").viewDetails, "Details bekijken");
+  assert.equal(getTranslations("ar").flights, "رحلات الطيران");
+  assert.equal(getTranslations("ar-SA").currentLanguage, "اللغة الحالية: {{language}}");
+  assert.equal(getTranslations("ar-AE").loginResendIn, "إعادة الإرسال خلال {{seconds}} ث");
 });
 
 
