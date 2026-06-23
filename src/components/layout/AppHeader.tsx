@@ -1440,9 +1440,9 @@ export function AppHeader({
                                   setMobileAccountOpen(false),
                                 )
                               }
-                              className="group inline-flex min-h-11 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-1.5 text-base font-bold text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                             >
-                              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition-colors group-hover:bg-indigo-50 group-hover:text-indigo-700">
+                              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition-colors group-hover:border-indigo-100 group-hover:bg-indigo-50 group-hover:text-indigo-700">
                                 <Icon size={18} aria-hidden="true" />
                               </span>
                               <span className="min-w-0 flex-1">
@@ -1452,7 +1452,7 @@ export function AppHeader({
                               </span>
                               <ChevronRight
                                 size={18}
-                                className="shrink-0 text-slate-400 transition-colors group-hover:text-indigo-700"
+                                className="ml-auto shrink-0 text-slate-400 transition-colors group-hover:text-indigo-700"
                                 aria-hidden="true"
                               />
                             </Link>
@@ -1466,9 +1466,9 @@ export function AppHeader({
                           onClick={handleSignOut}
                           disabled={isSigningOut}
                           aria-busy={isSigningOut}
-                          className="group inline-flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-1.5 text-left text-base font-bold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                          className="group inline-flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-left text-base font-semibold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                         >
-                          <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-700 transition-colors group-hover:bg-white">
+                          <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-700 transition-colors group-hover:bg-white">
                             <LogOut size={18} aria-hidden="true" />
                           </span>
                           {isSigningOut ? t.signingOut : t.logout}
