@@ -272,6 +272,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.action.setUp": "Configurer",
   "accountDashboard.security.action.manage": "Gérer",
   "accountDashboard.security.action.deleteAccount": "Supprimer le compte",
+  "accountDashboard.security.action.unavailable": "Cette action de sécurité n’est pas encore disponible.",
   "accountDashboard.trips.title": "Mes voyages",
   "accountDashboard.trips.subtitle": "Consultez et gérez vos voyages au même endroit.",
   "accountDashboard.trips.findReservation": "Trouver une réservation",

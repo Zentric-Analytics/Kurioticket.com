@@ -1854,6 +1854,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.action.setUp": "Instellen",
   "accountDashboard.security.action.manage": "Beheren",
   "accountDashboard.security.action.deleteAccount": "Account verwijderen",
+  "accountDashboard.security.action.unavailable": "Deze beveiligingsactie is nog niet beschikbaar.",
   "accountDashboard.hub.title": "Mijn account",
   "accountDashboard.hub.description":
     "Beheer je reizen, opgeslagen items, voorkeuren en accountinstellingen op één plek.",

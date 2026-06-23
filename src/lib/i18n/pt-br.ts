@@ -3008,6 +3008,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.security.action.setUp": "Configurar",
   "accountDashboard.security.action.manage": "Gerenciar",
   "accountDashboard.security.action.deleteAccount": "Excluir conta",
+  "accountDashboard.security.action.unavailable": "Esta ação de segurança ainda não está disponível.",
   "accountDashboard.support.eyebrow": "SUPORTE",
   "accountDashboard.support.title": "Suporte",
   "accountDashboard.support.description":

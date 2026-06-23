@@ -713,7 +713,7 @@ export function SecurityDashboardPage() {
   const securityActionStatusId = "security-action-status";
 
   const handleUnavailableSecurityAction = () => {
-    setActionMessage("This security action is not available yet.");
+    setActionMessage(t["accountDashboard.security.action.unavailable"]);
   };
 
   return (
