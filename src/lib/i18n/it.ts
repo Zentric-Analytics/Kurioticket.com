@@ -947,6 +947,11 @@ export const translations: TranslationDictionary = {
   homeNewsletterUnableSubscribe:
     "Non è stato possibile completare l’iscrizione.",
   homeNewsletterTryAgain: "Riprova tra poco.",
+  faqHelpCenter: "Centro assistenza",
+  faqGeneralQuestions: "Domande generali",
+  faqNeedMoreHelpPrefix: "Hai bisogno di altro aiuto? Visita la",
+  faqSupportPage: "pagina di supporto",
+  faqNeedMoreHelpSuffix: "per opzioni di servizio e contatto.",
   faqViewAll: "Vedi tutte le domande frequenti",
   homeSubscribing: "Iscrizione in corso...",
   homeRemoveFromSavedRoutes: "Rimuovi dalle tratte salvate",

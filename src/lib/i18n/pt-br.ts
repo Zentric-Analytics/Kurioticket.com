@@ -1268,6 +1268,9 @@ export const translations: TranslationDictionary = {
   faqHeading: "Perguntas frequentes",
   faqIntro:
     "Saiba como o Kurioticket ajuda você a comparar voos, hotéis e opções de viagem antes de reservar com fornecedores confiáveis.",
+  faqNeedMoreHelpPrefix: "Precisa de mais ajuda? Visite a",
+  faqSupportPage: "página de suporte",
+  faqNeedMoreHelpSuffix: "para opções de serviço e contato.",
   faqViewAll: "Ver todas as perguntas frequentes",
   faqHelpCenter: "Central de ajuda",
   faqGeneralQuestions: "Perguntas gerais",

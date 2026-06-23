@@ -11,81 +11,81 @@ export function Footer() {
 
   const footerSections = [
     {
-      heading: t.footerContactUs || "Contact Us",
+      heading: t.footerContactUs,
       links: [
         {
-          label: t.footerCustomerSupport || "Customer support",
+          label: t.footerCustomerSupport,
           href: "/support",
         },
         {
-          label: t.footerServiceGuarantee || "Service Guarantee",
+          label: t.footerServiceGuarantee,
           href: "/service-guarantee",
         },
         {
-          label: t.footerMoreServiceInfo || "More Service Info",
+          label: t.footerMoreServiceInfo,
           href: "/more-service-info",
         },
       ],
     },
     {
-      heading: t.footerDiscover || "Discover",
+      heading: t.footerDiscover,
       links: [
         {
-          label: t.flights || "Flights",
+          label: t.flights,
           href: "/flights",
         },
         {
-          label: t.hotels || "Hotels",
+          label: t.hotels,
           href: "/hotels/results",
         },
         {
-          label: t.cars || "Cars",
+          label: t.cars,
           href: "/cars",
         },
         {
-          label: t.deals || "Deals",
+          label: t.deals,
           href: "/deals",
         },
         {
-          label: t.destinations || "Destinations",
+          label: t.destinations,
           href: "/destinations",
         },
         {
-          label: t.footerSavedRecent || "Saved & recent",
+          label: t.footerSavedRecent,
           href: "/saved",
         },
       ],
     },
     {
-      heading: t.footerTermsSettings || "Terms & Settings",
+      heading: t.footerTermsSettings,
       links: [
         {
-          label: t.footerPrivacyPolicy || "Privacy Policy",
+          label: t.footerPrivacyPolicy,
           href: "/legal/privacy-policy",
         },
         {
-          label: t.footerTermsOfService || "Terms of Service",
+          label: t.footerTermsOfService,
           href: "/legal/terms-of-service",
         },
         {
-          label: t.footerCookiePolicy || "Cookie Policy",
+          label: t.footerCookiePolicy,
           href: "/legal/cookie-policy",
         },
         {
-          label: t.legalCenter || "Legal Center",
+          label: t.legalCenter,
           href: "/legal-center",
         },
       ],
     },
     {
-      heading: t.footerAboutKurioticket || "About Kurioticket",
+      heading: t.footerAboutKurioticket,
       links: [
         {
-          label: t.footerAboutUs || "About Us",
+          label: t.footerAboutUs,
           href: "/about",
         },
         {
-          label: t.footerHowItWorks || "How Kurioticket Works",
+          label: t.footerHowItWorks,
           href: "/how-it-works",
         },
       ],
@@ -172,36 +172,35 @@ export function Footer() {
               />
 
               <p className="mt-1 text-xs text-slate-500">
-                {t.footerConfidenceTagline ||
-                  "Search flights, hotels, and travel deals with confidence."}
+                {t.footerConfidenceTagline}
               </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-4 text-xs">
               <p>
                 © {currentYear} Kurioticket LLC.{" "}
-                {t.footerAllRightsReserved || "All rights reserved."}
+                {t.footerAllRightsReserved}
               </p>
 
               <Link
                 href="/legal/privacy-policy"
                 className="transition-colors hover:text-indigo-600"
               >
-                {t.footerPrivacy || "Privacy"}
+                {t.footerPrivacy}
               </Link>
 
               <Link
                 href="/legal/terms-of-service"
                 className="transition-colors hover:text-indigo-600"
               >
-                {t.footerTerms || "Terms"}
+                {t.footerTerms}
               </Link>
 
               <Link
                 href="/legal/cookie-policy"
                 className="transition-colors hover:text-indigo-600"
               >
-                {t.footerCookies || "Cookies"}
+                {t.footerCookies}
               </Link>
             </div>
           </div>

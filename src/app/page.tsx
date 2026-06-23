@@ -677,7 +677,7 @@ export default function Home() {
               className="object-cover object-[62%_center] sm:object-[60%_center] lg:object-[58%_48%]"
             />
           </div>
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/68 via-slate-950/28 to-transparent sm:w-[72%] lg:w-[62%]" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-[88%] bg-gradient-to-r from-slate-950/68 via-slate-950/28 to-transparent rtl:left-auto rtl:right-0 rtl:bg-gradient-to-l sm:w-[72%] lg:w-[62%]" />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/22 via-transparent to-slate-950/30" />
 
           <div className="page-shell relative z-10 pb-0 pt-8 sm:pb-44 sm:pt-10 lg:pb-48 lg:pt-12">
@@ -894,7 +894,7 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6">
+              <div className="mt-4 divide-y divide-slate-200/70 md:grid md:grid-cols-3 md:gap-6 md:divide-y-0 md:[&>article+article]:border-l md:[&>article+article]:border-slate-200/70 md:[&>article+article]:pl-6 md:rtl:[&>article+article]:border-l-0 md:rtl:[&>article+article]:border-r md:rtl:[&>article+article]:pl-0 md:rtl:[&>article+article]:pr-6">
                 <article className="flex items-start gap-3.5 py-3.5 first:pt-1 last:pb-1 md:px-2 md:py-2">
                   <div className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-indigo-100/80">
                     <CompareOffersIllustration />
@@ -1005,7 +1005,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="space-y-2 sm:pl-[3.25rem]">
+              <div className="space-y-2 sm:pl-[3.25rem] sm:rtl:pl-0 sm:rtl:pr-[3.25rem]">
                 <form
                   className="flex flex-col gap-2 sm:max-w-[34rem] sm:flex-row"
                   onSubmit={handleNewsletterSubmit}
@@ -1163,7 +1163,7 @@ function DiscoverySuggestionCard({
           isSaved ? t("homeRemoveFromSavedRoutes") : t("homeSaveRoute")
         }
         aria-pressed={isSaved}
-        className={`focus-ring absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
+        className={`focus-ring absolute right-3 top-3 rtl:left-3 rtl:right-auto z-10 flex h-8 w-8 items-center justify-center rounded-full border shadow-sm backdrop-blur-sm transition ${isSaved ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100" : "border-white/80 bg-white/90 text-slate-500 hover:border-slate-200 hover:text-slate-800"}`}
       >
         <Heart size={15} className={isSaved ? "fill-current" : ""} />
       </button>
@@ -1183,7 +1183,7 @@ function DiscoverySuggestionCard({
         className={`min-w-0 flex-1 bg-white ${compact ? "space-y-1.5 px-2.5 pt-2.5" : "space-y-2 px-3 pt-3"}`}
       >
         <p
-          className={`line-clamp-2 break-words text-slate-950 ${compact ? "pr-10 text-sm font-bold leading-[1.32]" : "pr-10 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
+          className={`line-clamp-2 break-words text-slate-950 ${compact ? "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.32]" : "pr-10 rtl:pl-10 rtl:pr-0 text-sm font-bold leading-[1.35] md:text-[0.95rem]"}`}
         >
           {title}
         </p>
@@ -1456,7 +1456,7 @@ function DestinationCard({
 
           <button
             type="button"
-            className={`focus-ring absolute right-3 top-3 z-0 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition duration-200 ${
+            className={`focus-ring absolute right-3 top-3 rtl:left-3 rtl:right-auto z-0 flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur transition duration-200 ${
               isSaved
                 ? "border-rose-200/90 bg-rose-500/90 text-white shadow-sm shadow-rose-900/20 hover:bg-rose-500"
                 : "border-white/30 bg-white/20 text-white hover:bg-white/30"
@@ -1468,7 +1468,7 @@ function DestinationCard({
             <Heart size={17} className={isSaved ? "fill-current" : ""} />
           </button>
 
-          <div className="absolute bottom-4 left-4 z-10 pr-4 text-white [text-shadow:0_2px_12px_rgba(15,23,42,0.55)]">
+          <div className="absolute bottom-4 left-4 z-10 pr-4 rtl:left-auto rtl:right-4 rtl:pl-4 rtl:pr-0 text-white [text-shadow:0_2px_12px_rgba(15,23,42,0.55)]">
             <h3 className="text-xl font-black tracking-tight sm:text-2xl">
               {city}
             </h3>

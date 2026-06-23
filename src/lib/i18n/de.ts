@@ -1796,6 +1796,11 @@ export const translations: TranslationDictionary = {
   faqHeading: "Häufige Fragen",
   faqIntro:
     "Erfahren Sie, wie Kurioticket Ihnen hilft, Flüge, Hotels und Reiseoptionen vor der Buchung bei vertrauenswürdigen Anbietern zu vergleichen.",
+  faqHelpCenter: "Hilfecenter",
+  faqGeneralQuestions: "Allgemeine Fragen",
+  faqNeedMoreHelpPrefix: "Benötigen Sie weitere Hilfe? Besuchen Sie die",
+  faqSupportPage: "Support-Seite",
+  faqNeedMoreHelpSuffix: "für Service- und Kontaktoptionen.",
   faqViewAll: "Alle FAQs ansehen",
   faqQuestionFindOptions:
     "Wie findet Kurioticket Flug- und Hoteloptionen?",
