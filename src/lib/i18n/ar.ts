@@ -195,6 +195,7 @@ export const translations: TranslationDictionary = {
   roundTrip: "ذهاب وعودة",
   oneWay: "اتجاه واحد",
   homeCompareOptions: "قارن الخيارات",
+  homeExploreFares: "استعرض الأسعار",
   homeTrustTitle: "لماذا يقارن المسافرون على Kurioticket",
   homeTrustSubtitle: "يساعدك Kurioticket على مقارنة عروض المزودين بوضوح، ثم إتمام الحجز على موقع المزود.",
   homeTrustCompareTitle: "قارن عروض المزودين",
