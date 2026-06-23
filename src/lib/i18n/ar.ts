@@ -565,6 +565,8 @@ export const translations: TranslationDictionary = {
   nextMonth: "الشهر التالي",
   previousMonthShort: "السابق",
   nextMonthShort: "التالي",
+  previousShort: "السابق",
+  nextShort: "التالي",
   selectDateAriaPrefix: "اختر التاريخ",
   weekdayMon: "الاثنين",
   weekdayTue: "الثلاثاء",
