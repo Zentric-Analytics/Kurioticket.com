@@ -3065,6 +3065,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.overview.subtitle": "Acompanhe viagens, alertas e ferramentas da conta em um só lugar.",
   "accountDashboard.hub.title": "Minha conta",
   "accountDashboard.hub.description": "Gerencie suas viagens, itens salvos, preferências e configurações da conta em um só lugar.",
+  "accountDashboard.hub.mobileDescription": "Gerencie suas viagens, itens salvos e preferências.",
   "accountDashboard.hub.manageAccount": "Gerenciar conta",
   "accountDashboard.hub.personalDetails": "Dados pessoais",
   "accountDashboard.hub.securitySettings": "Configurações de segurança",

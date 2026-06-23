@@ -412,6 +412,7 @@ export const translations: TranslationDictionary = {
   "accountDashboard.mobile.manageAccount": "Manage account",
   "accountDashboard.hub.title": "My Account",
   "accountDashboard.hub.description": "Manage your trips, saved items, preferences, and account settings in one place.",
+  "accountDashboard.hub.mobileDescription": "Manage your trips, saved items, and preferences.",
   "accountDashboard.hub.manageAccount": "Manage account",
   "accountDashboard.hub.personalDetails": "Personal details",
   "accountDashboard.hub.securitySettings": "Security settings",

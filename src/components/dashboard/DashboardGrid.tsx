@@ -117,6 +117,10 @@ type SecuritySettingRowProps = {
   statusId?: string;
 };
 
+function formatAccountWelcome(template: string, name: string) {
+  return template.replace("{name}", name);
+}
+
 
 function SavedEmptyStateIllustration() {
   return (
@@ -234,11 +238,11 @@ export function AccountMenuPage({ initials, displayName, userEmail }: Pick<Dashb
               </div>
               <div className="min-w-0 flex-1">
                 <h1 id="account-title" className="text-xl font-bold leading-7 tracking-[-0.03em] text-slate-950 [overflow-wrap:anywhere] sm:truncate sm:text-3xl sm:leading-tight sm:tracking-[-0.035em]">
-                  Welcome back, {displayName} 👋
+                  {formatAccountWelcome(t["accountDashboard.overview.welcome"], displayName)} 👋
                 </h1>
                 {userEmail ? <p className="mt-0.5 truncate text-sm leading-5 text-slate-500 sm:mt-1 sm:text-sm sm:text-slate-600">{userEmail}</p> : null}
                 <p className="mt-1.5 max-w-2xl text-sm leading-5 text-slate-600 sm:mt-2 sm:text-base sm:leading-6">
-                  <span className="sm:hidden">Manage your trips, saved items, and preferences.</span>
+                  <span className="sm:hidden">{t["accountDashboard.hub.mobileDescription"]}</span>
                   <span className="hidden sm:inline">{t["accountDashboard.hub.description"]}</span>
                 </p>
               </div>

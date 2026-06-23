@@ -2221,6 +2221,8 @@ export const translations: TranslationDictionary = {
     "Kurioticket est une plateforme de recherche et de comparaison de voyages, et certains résultats redirigent vers des fournisseurs de confiance auprès desquels vous finalisez la réservation, le paiement et l’assistance spécifique au fournisseur.",
   "accountDashboard.hub.title": "Mon compte",
   "accountDashboard.hub.description": "Gérez vos voyages, éléments enregistrés, préférences et paramètres de compte au même endroit.",
+  "accountDashboard.hub.mobileDescription": "Gérez vos voyages, éléments enregistrés et préférences.",
+  "accountDashboard.mobile.manageAccount": "Gérer le compte",
   "accountDashboard.hub.manageAccount": "Gérer le compte",
   "accountDashboard.hub.personalDetails": "Informations personnelles",
   "accountDashboard.hub.securitySettings": "Paramètres de sécurité",
