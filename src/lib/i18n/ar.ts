@@ -123,6 +123,55 @@ export const translations: TranslationDictionary = {
   "carsPickup.Train station.imageAlt": "رصيف قطار ومسارات تؤدي إلى محطة في المدينة",
   "carsPickup.Hotel area.ariaLabel": "افتح نتائج السيارات لاستلام منطقة الفندق",
   "carsPickup.Hotel area.imageAlt": "واجهة فندق مع أشجار نخيل وممر للسيارات",
+
+  flightLandingHeroTitle: "اعثر على رحلتك القادمة بسعر مناسب وبسهولة",
+  flightLandingHeroSubtitle:
+    "ابحث عن المسارات، وقارن التواريخ، واستكشف خيارات الرحلات لرحلتك القادمة",
+  flightLandingHeroImageAlt: "جناح طائرة فوق سحب مضيئة",
+  flightLandingFeatureSearchReadyTitle: "مسارات جاهزة للبحث",
+  flightLandingFeatureSearchReadyBody:
+    "أدخل تفاصيل الرحلة الفعلية قبل طلب النتائج من مزوّدي الرحلات.",
+  flightLandingFeatureCompareTitle: "قارن ضمن السياق",
+  flightLandingFeatureCompareBody:
+    "استخدم التواريخ وعدد المسافرين والمقصورة والمدة والتوقفات وتفاصيل المسار لتقييم الخيارات.",
+  flightLandingFeatureProviderTitle: "مراجعة المزوّد",
+  flightLandingFeatureProviderBody:
+    "تحقق دائمًا من التوافر النهائي والسعر والقواعد مع المزوّد قبل الحجز.",
+  flightLandingStartThisSearch: "ابدأ هذا البحث",
+  flightLandingRouteIdeasTitle: "أفكار مسارات لرحلات مرنة",
+  flightLandingRouteIdeasBody:
+    "تصفح أفكار المسارات، ثم ابدأ بحثًا فعليًا بالتواريخ والمسافرين قبل مقارنة الرحلات المتاحة.",
+  flightLandingRouteConnector: "إلى",
+  flightLandingRouteAriaLabel: "ابحث عن رحلات من {{origin}} إلى {{destination}}",
+  discoverDestinationsFromRegion: "اكتشف وجهات من منطقتك",
+  discoverDestinationsFromRegionBody:
+    "استكشف مسارات مختارة وابدأ رحلتك القادمة بثقة",
+  beachVacations: "عطلات شاطئية",
+  beachVacationsBody:
+    "استكشف مسارات رحلات إلى سواحل مشمسة وجزر هادئة ووجهات شاطئية دافئة.",
+  flightBookingFaqs: "الأسئلة الشائعة حول حجز الرحلات",
+  flightBookingFaqIntro: "راجع تفاصيل شائعة حول البحث عن الرحلات قبل المتابعة مع مزوّد.",
+  flightFaqBestTimeQuestion: "ما أفضل وقت لحجز رحلة؟",
+  flightFaqBestTimeAnswer:
+    "قد تتغير أسعار الرحلات حسب المسار والموسم والطلب والتوافر. من المفيد عادةً مقارنة عدة تواريخ، والتحقق من المطارات القريبة عندما يكون ذلك ممكنًا، ومراجعة خط الرحلة الكامل قبل اختيار الأجرة.",
+  flightFaqBeforeBookingQuestion: "ما الذي يجب التحقق منه قبل الحجز؟",
+  flightFaqBeforeBookingAnswer:
+    "راجع أوقات المغادرة والوصول، ومدة السفر الإجمالية، والتوقفات، وقواعد الأمتعة، وخيارات اختيار المقاعد، وشروط الإلغاء، وسياسة تغيير التذكرة قبل إتمام الحجز مع المزوّد.",
+  flightFaqFlexibleFareQuestion: "ما هي الأجرة المرنة؟",
+  flightFaqFlexibleFareAnswer:
+    "قد تسمح الأجرة المرنة بالتغييرات أو الإلغاءات بقيود أقل من الأجرة الأساسية، لكن القواعد الدقيقة تعتمد على شركة الطيران أو مزوّد الحجز. راجع دائمًا شروط الأجرة قبل الشراء.",
+  flightFaqNonstopQuestion: "هل الرحلات المباشرة أفضل دائمًا؟",
+  flightFaqNonstopAnswer:
+    "ليس دائمًا. يمكن أن توفر الرحلات المباشرة الوقت، بينما قد تقدم الرحلات ذات التوقف الواحد أوقات مغادرة أو نوافذ وصول أو خيارات أسعار مختلفة. قارن مدة السفر الإجمالية وطول التوقف والراحة قبل القرار.",
+  flightFaqBaggageQuestion: "كيف تعمل قواعد الأمتعة؟",
+  flightFaqBaggageAnswer:
+    "قد يختلف السماح بالأمتعة حسب شركة الطيران والمسار ودرجة المقصورة ونوع الأجرة والمزوّد. تحقق مما إذا كانت حقيبة اليد والأمتعة المسجلة والأغراض الشخصية مشمولة قبل الحجز.",
+  flightFaqChangeCancelQuestion: "هل يمكنني تغيير تذكرتي أو إلغاؤها؟",
+  flightFaqChangeCancelAnswer:
+    "تعتمد خيارات التغيير والإلغاء على قواعد الأجرة وسياسات المزوّد. قد تكون بعض التذاكر غير قابلة للاسترداد أو تتضمن رسومًا، لذلك راجع الشروط بعناية قبل الحجز.",
+  flightFaqInternationalQuestion: "ما الذي يجب معرفته عن الرحلات الدولية؟",
+  flightFaqInternationalAnswer:
+    "للسفر الدولي، راجع صلاحية جواز السفر، ومتطلبات التأشيرة، وقواعد العبور، وسياسات الأمتعة، ومتطلبات الوصول إلى وجهتك قبل الحجز.",
   hotelsHeroSubtitle:
     "قارن الفنادق في مكان واحد، من إقامات المدينة الأنيقة إلى المنتجعات الهادئة.",
   exploreHotelStaysByDestination: "استكشف الإقامات الفندقية حسب الوجهة",
