@@ -1395,24 +1395,26 @@ export function AppHeader({
                 >
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
                     <section aria-label="Account">
-                      <div className="flex items-center gap-3.5 border-b border-slate-100 pb-5">
-                        <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-base font-black text-white shadow-sm ring-4 ring-indigo-50">
-                          {session?.user?.image ? (
-                            <RawImage
-                              src={session.user.image}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            accountInitials
-                          )}
+                      <div className="flex items-center gap-3 px-2.5 pb-5">
+                        <span className="relative inline-flex h-10 w-10 shrink-0 items-center overflow-visible">
+                          <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-indigo-600 text-base font-semibold text-white shadow-sm ring-4 ring-indigo-50">
+                            {session?.user?.image ? (
+                              <RawImage
+                                src={session.user.image}
+                                alt=""
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              accountInitials
+                            )}
+                          </span>
                         </span>
 
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-lg font-black tracking-[-0.02em] text-slate-950">
+                        <span className="min-w-0 flex-1 no-underline">
+                          <span className="block truncate text-lg font-semibold text-slate-950 no-underline decoration-transparent">
                             {session?.user?.name || accountDisplayName}
                           </span>
-                          <span className="mt-0.5 block truncate text-sm font-semibold text-slate-500">
+                          <span className="mt-0.5 block truncate text-sm font-medium text-slate-500 no-underline decoration-transparent">
                             {session?.user?.email || t["accountMenu.fallbackAccount"]}
                           </span>
                         </span>
@@ -1426,6 +1428,8 @@ export function AppHeader({
                           <X size={18} aria-hidden="true" />
                         </button>
                       </div>
+
+                      <div className="border-t border-slate-100" />
 
                       <div className="grid gap-1 py-4">
                         {translatedMobileSignedInAccountMenuItems.map((item) => {
