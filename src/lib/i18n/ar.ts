@@ -620,6 +620,7 @@ export const translations: TranslationDictionary = {
   loginGoogle: "المتابعة باستخدام Google",
   loginSignupPrompt: "هل أنت جديد في Kurioticket؟",
   loginCreateAccount: "إنشاء حساب",
+  signUp: "إنشاء حساب",
   loginVerificationCodeLabel: "رمز التحقق",
   loginVerifyLogin: "تأكيد تسجيل الدخول",
   loginResendIn: "إعادة الإرسال خلال {{seconds}} ث",
