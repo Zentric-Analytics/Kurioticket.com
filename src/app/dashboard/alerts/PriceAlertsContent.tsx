@@ -1,6 +1,5 @@
 "use client";
 
-import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import Link from "next/link";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useEffect, useRef, useState } from "react";
@@ -91,7 +90,6 @@ export function PriceAlertsContent() {
     <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
       <div className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8">
         <header className="px-1 pb-5 text-left sm:px-2 sm:pb-6">
-          <AccountBackLink />
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
             {t["accountDashboard.priceAlerts.title"]}
           </h1>

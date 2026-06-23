@@ -16,7 +16,6 @@ import {
   UserRound,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { LinkButton } from "@/components/ui/Button";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { cn } from "@/lib/utils";
@@ -161,7 +160,6 @@ function SavedEmptyStateIllustration() {
 export function AccountSectionHeader({ title, description, titleId }: { title: string; description: string; titleId?: string }) {
   return (
     <div className="px-1 pb-2 text-left sm:px-2 sm:pb-3">
-      <AccountBackLink />
       <h1 id={titleId} className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
         {title}
       </h1>

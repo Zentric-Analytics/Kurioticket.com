@@ -1,6 +1,5 @@
 "use client";
 
-import { AccountBackLink } from "@/components/dashboard/AccountBackLink";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { translations as enTranslations } from "@/lib/i18n/en";
@@ -94,7 +93,6 @@ export function TripsManagementPage() {
     <section aria-labelledby="trips-title" className="mx-auto min-w-0 max-w-[72rem] space-y-10 bg-white pb-12 pt-3 sm:pt-6 lg:space-y-12 lg:pb-16">
       <div className="flex min-w-0 items-start justify-between gap-4">
         <div className="min-w-0">
-          <AccountBackLink />
           <h1 id="trips-title" className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
             {t("accountDashboard.trips.title")}
           </h1>
