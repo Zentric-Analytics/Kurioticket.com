@@ -128,6 +128,10 @@ const normalizeFlightResultsCalendarLocale = (
     return "pt-PT";
   }
 
+  if (normalized === "ar" || normalized.startsWith("ar-")) {
+    return "ar";
+  }
+
   return "en-US";
 };
 
