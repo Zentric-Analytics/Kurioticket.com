@@ -844,6 +844,7 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-rob.title": "رحلة إقليمية ساحلية إلى مونروفيا",
   "homeDiscoveryRoute.ng-abv-rob.routeNote": "استراحة مدينة في غرب إفريقيا مع شواطئ أطلسية وأسواق محلية.",
   origin: "من",
+  tripType: "نوع الرحلة",
   roundTrip: "ذهاب وعودة",
   oneWay: "اتجاه واحد",
   homeCompareOptions: "قارن الخيارات",
