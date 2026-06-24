@@ -1308,7 +1308,7 @@ function HotelFilters({
     <div className="bg-white">
       <div className="flex items-center justify-between gap-2 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-3 py-3">
         <div>
-          <h2 className="text-base font-bold text-white">{t("filterBy")}</h2>
+          <h2 className="text-base font-bold text-white">{t("hotelResults.filterBy")}</h2>
         </div>
         <SlidersHorizontal className="text-white/90" size={18} />
       </div>
