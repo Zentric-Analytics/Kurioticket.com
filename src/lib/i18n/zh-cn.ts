@@ -287,6 +287,26 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedQuestion: "为什么我会被跳转到其他供应商？",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket 是一个旅行搜索和比较平台，部分结果会跳转到可信赖的供应商，由你在那里完成预订、付款并获取供应商专属支持。",
+  howItWorksEyebrow: "Kurioticket 如何运作",
+  howItWorksTitle: "Kurioticket 如何运作",
+  howItWorksIntro:
+    "Kurioticket 帮助旅客从搜索进入比较，并在选择优惠后前往服务提供商。",
+  howItWorksFlowHeading: "基本流程",
+  "howItWorks.steps.search.title": "搜索旅行选项",
+  "howItWorks.steps.search.description":
+    "输入你的行程详情，查找可用的航班、酒店、租车或旅行优惠。",
+  "howItWorks.steps.compare.title": "比较可用结果",
+  "howItWorks.steps.compare.description":
+    "查看可用选项、价格、时刻安排、服务提供商详情以及显示的其他旅行信息。",
+  "howItWorks.steps.choose.title": "选择一个优惠",
+  "howItWorks.steps.choose.description":
+    "查看可用详情后，选择最符合你计划的选项。",
+  "howItWorks.steps.continue.title": "继续前往服务提供商",
+  "howItWorks.steps.continue.description":
+    "跳转后，请在服务提供商网站上查看最终详情并完成任何预订步骤。",
+  "howItWorks.providerWebsites.title": "服务提供商网站",
+  "howItWorks.providerWebsites.description":
+    "部分预订可能会在 Kurioticket 将你跳转到服务提供商网站后完成。完成购买前，请在服务提供商页面查看最终可订情况、价格、条款、付款步骤和预订详情。",
   signupPageTitle: "创建你的账户",
   signupFullNameLabel: "全名",
   signupEmailLabel: "电子邮箱",
