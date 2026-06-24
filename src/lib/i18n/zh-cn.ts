@@ -23,6 +23,8 @@ export const translations: TranslationDictionary = {
   mobileTravelHeading: "旅行",
   mobilePreferencesHeading: "偏好设置",
   saved: "已保存",
+  login: "登录",
+  signUp: "注册",
   countryAndCurrency: "国家/地区和货币",
   openCountryCurrencySelector:
     "打开国家/地区和货币选择器，当前选择 {{code}}，{{currency}}",
