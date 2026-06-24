@@ -18,6 +18,14 @@ function getTranslation(
   return t[key] || englishTranslations[key] || fallback;
 }
 
+function getLocaleTranslation(
+  t: TranslationDictionary,
+  key: string,
+  fallback: string,
+) {
+  return t[key] || fallback;
+}
+
 const legalDocumentTranslationNamespaces: Record<string, string> = {
   "terms-of-service": "legal.terms",
   "acceptable-use-policy": "legal.acceptableUsePolicy",
@@ -71,18 +79,32 @@ function getLegalDocumentTranslation(
   };
 }
 
+function formatLegalDate(value: string, locale: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 export function LegalViewer({ document }: { document: LegalDocument }) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const localizedDocument = getLegalDocumentTranslation(document, t);
   const legalDocumentTranslationNamespace =
     getLegalDocumentTranslationNamespace(document);
-  const lastUpdatedText = legalDocumentTranslationNamespace
-    ? getTranslation(
-        t,
-        `${legalDocumentTranslationNamespace}.lastUpdated`,
-        `${englishTranslations["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`,
-      )
-    : `${t["legal.lastUpdated"]}: ${localizedDocument.lastUpdated}`;
+  const formattedLastUpdated = formatLegalDate(document.lastUpdated, locale);
+  const lastUpdatedLabel = getTranslation(
+    t,
+    "legal.lastUpdated",
+    englishTranslations["legal.lastUpdated"],
+  );
+  const lastUpdatedText = `${lastUpdatedLabel}: ${formattedLastUpdated}`;
   const developerNote = legalDocumentTranslationNamespace
     ? getTranslation(
         t,
@@ -90,13 +112,18 @@ export function LegalViewer({ document }: { document: LegalDocument }) {
         legalDeveloperNote,
       )
     : legalDeveloperNote;
+  const sharedTableOfContentsLabel = getTranslation(
+    t,
+    "legal.tableOfContents",
+    englishTranslations["legal.tableOfContents"],
+  );
   const tableOfContentsLabel = legalDocumentTranslationNamespace
-    ? getTranslation(
+    ? getLocaleTranslation(
         t,
         `${legalDocumentTranslationNamespace}.tableOfContents`,
-        t["legal.tableOfContents"],
+        sharedTableOfContentsLabel,
       )
-    : t["legal.tableOfContents"];
+    : sharedTableOfContentsLabel;
 
   return (
     <main className="page-shell flex-1 pt-24 pb-8 sm:pt-28 lg:pt-28">
