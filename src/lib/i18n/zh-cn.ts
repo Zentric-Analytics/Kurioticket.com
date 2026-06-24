@@ -13,6 +13,22 @@ export const translations: TranslationDictionary = {
   globalLanguage: "全球语言",
   closeLanguageSelector: "关闭语言选择器",
 
+
+  "accountDashboard.overview.welcome": "欢迎回来，{name}",
+  "accountDashboard.hub.description": "在一个地方管理你的行程、已保存项目、偏好设置和账户设置。",
+  "accountDashboard.hub.manageAccount": "管理账户",
+  "accountDashboard.hub.personalDetails": "个人资料",
+  "accountDashboard.hub.securitySettings": "安全设置",
+  "accountDashboard.hub.travelActivity": "旅行活动",
+  "accountDashboard.hub.myTrips": "我的行程",
+  "accountDashboard.hub.savedTrips": "已保存的行程",
+  "accountDashboard.hub.priceAlerts": "价格提醒",
+  "accountDashboard.hub.preferences": "偏好设置",
+  "accountDashboard.hub.emailPreferences": "个性化偏好",
+  "accountDashboard.hub.travelPreferences": "预订偏好",
+  "accountDashboard.hub.helpAndSupport": "帮助与支持",
+  "accountDashboard.hub.contactSupport": "联系支持",
+
   forgotPasswordTitle: "重置密码",
   forgotPasswordSubtitle: "输入你的电子邮箱，我们会发送重置密码的说明。",
   forgotPasswordEmailLabel: "电子邮箱",
