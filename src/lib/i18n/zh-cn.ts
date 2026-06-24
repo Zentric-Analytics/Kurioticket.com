@@ -873,6 +873,74 @@ export const translations: TranslationDictionary = {
   "homePopularDestinationCountry.spain": "西班牙",
   "homePopularDestinationCountry.mexico": "墨西哥",
   "homePopularDestinationCountry.unitedArabEmirates": "阿拉伯联合酋长国",
+  cityOrAirport: "城市或机场",
+  flightLandingHeroTitle: "轻松查找下一趟实惠航班。",
+  flightLandingHeroSubtitle:
+    "搜索路线、比较日期，并探索下一段旅程的航班选项。",
+  flightLandingHeroImageAlt: "明亮云层上方的飞机机翼",
+  flightLandingFeatureSearchReadyTitle: "可直接搜索的路线",
+  flightLandingFeatureSearchReadyBody:
+    "在向航班服务提供商请求结果前，先输入真实行程详情。",
+  flightLandingFeatureCompareTitle: "结合背景信息比较",
+  flightLandingFeatureCompareBody:
+    "结合日期、旅客人数、舱位、时长、经停和路线详情评估选项。",
+  flightLandingFeatureProviderTitle: "服务提供商确认",
+  flightLandingFeatureProviderBody:
+    "预订前，请务必向服务提供商确认最终可订情况、价格和规则。",
+  flightLandingStartThisSearch: "开始此搜索",
+  flightLandingRouteIdeasTitle: "灵活旅行的路线灵感",
+  flightLandingRouteIdeasBody:
+    "浏览路线灵感，然后输入日期和旅客信息开始真实搜索，再比较可用航班。",
+  flightLandingRouteConnector: "到",
+  flightLandingRouteAriaLabel: "搜索从 {{origin}} 到 {{destination}} 的航班",
+  discoverDestinationsFromRegion: "发现你所在地区出发的目的地",
+  discoverDestinationsFromRegionBody:
+    "探索精选路线，自信开启下一段旅程。",
+  beachVacations: "海滩度假",
+  beachVacationsBody:
+    "探索前往阳光海岸、海岛假期和温暖海滩目的地的航班路线。",
+  flightBookingFaqs: "航班预订常见问题",
+  flightBookingFaqIntro:
+    "在继续前往服务提供商之前，查看常见航班搜索详情。",
+  flightFaqBestTimeQuestion: "什么时候预订航班最好？",
+  flightFaqBestTimeAnswer:
+    "航班价格会随路线、季节、需求和可订情况而变化。通常建议比较多个日期，条件允许时查看附近机场，并在选择票价前核对完整行程。",
+  flightFaqBeforeBookingQuestion: "预订前应检查什么？",
+  flightFaqBeforeBookingAnswer:
+    "在通过服务提供商完成预订前，请核对出发和到达时间、总行程时长、经停、行李规则、选座选项、取消条款和改签政策。",
+  flightFaqFlexibleFareQuestion: "什么是灵活票价？",
+  flightFaqFlexibleFareAnswer:
+    "灵活票价相比基础票价可能允许更少限制的更改或取消，但具体规则取决于航空公司或预订服务提供商。购买前请务必查看票价条件。",
+  flightFaqNonstopQuestion: "直飞航班总是更好吗？",
+  flightFaqNonstopAnswer:
+    "不一定。直飞航班可以节省时间，而一站中转路线可能提供不同的出发时间、到达时段或票价选项。决定前请比较总旅行时间、中转时长和便利性。",
+  flightFaqBaggageQuestion: "行李规则如何适用？",
+  flightFaqBaggageAnswer:
+    "行李额度会因航空公司、路线、舱位、票价类型和服务提供商而异。预订前请确认随身行李、托运行李和个人物品是否包含在内。",
+  flightFaqChangeCancelQuestion: "我可以更改或取消机票吗？",
+  flightFaqChangeCancelAnswer:
+    "更改和取消选项取决于票价规则和服务提供商政策。有些机票可能不可退款或会收取费用，因此预订前请仔细查看条款。",
+  flightFaqInternationalQuestion: "国际航班需要了解什么？",
+  flightFaqInternationalAnswer:
+    "国际旅行前，请在预订前核对护照有效期、签证要求、中转规则、行李政策和目的地入境要求。",
+  "flightLandingCity.Cancun": "坎昆",
+  "flightLandingCity.Halifax": "哈利法克斯",
+  "flightLandingCity.Honolulu": "檀香山",
+  "flightLandingCity.Puerto Vallarta": "巴亚尔塔港",
+  "flightLandingCity.San Diego": "圣迭戈",
+  "flightLandingCity.Sydney": "悉尼",
+  "flightLandingImageAlt.Johannesburg skyline at golden hour":
+    "金色时刻的约翰内斯堡天际线",
+  "flightLandingImageAlt.Cairo skyline with the Pyramids of Giza":
+    "开罗天际线与吉萨金字塔",
+  "flightLandingImageAlt.Addis Ababa cityscape in the Ethiopian highlands":
+    "埃塞俄比亚高原上的亚的斯亚贝巴城市景观",
+  "flightLandingImageAlt.Puerto Vallarta coastline and old town":
+    "巴亚尔塔港海岸线和老城",
+  "flightLandingImageAlt.Honolulu Waikiki beach with Diamond Head and bright blue water":
+    "檀香山威基基海滩、钻石头山和明亮蓝色海水",
+  "flightLandingImageAlt.San Diego bay skyline and marina":
+    "圣迭戈湾天际线和码头",
   "homeDiscoveryRoute.us-jfk-mia.title": "迈阿密海滩周末",
   "homeDiscoveryRoute.us-jfk-mia.routeNote":
     "高频直飞路线，适合温暖天气短途度假。",
@@ -957,4 +1025,22 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.ng-abv-rob.title": "蒙罗维亚区域海滨之旅",
   "homeDiscoveryRoute.ng-abv-rob.routeNote":
     "西非城市短假，拥有大西洋海滩和本地市场。",
+  "homeDiscoveryRoute.ca-yyz-cun.title": "坎昆冬日度假",
+  "homeDiscoveryRoute.ca-yyz-cun.routeNote":
+    "旺季有直飞选择的可靠休闲路线。",
+  "homeDiscoveryRoute.ca-yeg-pvr.title": "巴亚尔塔港海滩假期",
+  "homeDiscoveryRoute.ca-yeg-pvr.routeNote":
+    "冬日阳光路线，串联太平洋海滩和老城魅力。",
+  "homeDiscoveryRoute.ca-yyz-hnl.title": "檀香山长途海岛假期",
+  "homeDiscoveryRoute.ca-yyz-hnl.routeNote":
+    "适合海滩、冲浪和海岛徒步的高品质休闲选择。",
+  "homeDiscoveryRoute.ca-yyc-yhz.title": "哈利法克斯港湾周末",
+  "homeDiscoveryRoute.ca-yyc-yhz.routeNote":
+    "横跨加拿大的海鲜、滨水步道和历史探索之旅。",
+  "homeDiscoveryRoute.ca-yyz-san.title": "圣迭戈阳光冲浪之旅",
+  "homeDiscoveryRoute.ca-yyz-san.routeNote":
+    "适合海滩、公园和港湾景观的可靠跨境路线。",
+  "homeDiscoveryRoute.ca-yvr-syd.title": "悉尼跨太平洋探险",
+  "homeDiscoveryRoute.ca-yvr-syd.routeNote":
+    "长途热门路线，适合港湾地标和海滨城区。",
 };

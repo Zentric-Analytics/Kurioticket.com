@@ -383,6 +383,7 @@ export function StandaloneFlightSearchForm({
         : t("economy");
   const travelerCount = adultCount + childCount + infantCount;
   const travelerSummary = useMemo(() => {
+    const listSeparator = locale === "zh-cn" ? "，" : ", ";
     const parts: string[] = [];
     if (adultCount > 0)
       parts.push(
@@ -397,8 +398,8 @@ export function StandaloneFlightSearchForm({
         `${infantCount} ${infantCount === 1 ? t("infantSingular") : t("infantPlural")}`,
       );
 
-    return `${parts.length ? parts.join(", ") : `${travelerCount} ${travelerCount === 1 ? t("travelerSingular") : t("travelerPlural")}`}, ${cabinClassLabel}`;
-  }, [adultCount, cabinClassLabel, childCount, infantCount, travelerCount, t]);
+    return `${parts.length ? parts.join(listSeparator) : `${travelerCount} ${travelerCount === 1 ? t("travelerSingular") : t("travelerPlural")}`}${listSeparator}${cabinClassLabel}`;
+  }, [adultCount, cabinClassLabel, childCount, infantCount, locale, travelerCount, t]);
 
   const buildPlacesUrl = useCallback(
     (query: string, context: AirportField, requestDefault = false) => {
