@@ -127,6 +127,16 @@ const normalizeHomepageCalendarLocale = (
     return "ar";
   }
 
+  if (
+    normalized === "zh" ||
+    normalized === "zh-cn" ||
+    normalized.startsWith("zh-cn-") ||
+    normalized === "zh-hans" ||
+    normalized.startsWith("zh-hans-")
+  ) {
+    return "zh-CN";
+  }
+
   return "en-US";
 };
 
