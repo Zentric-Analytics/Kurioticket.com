@@ -336,9 +336,9 @@ export function HotelCard({ hotel }: HotelCardProps) {
                 </p>
               ) : null}
             </div>
-            <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-right">
-              <div className="text-left min-[380px]:text-right lg:text-right">
-                <div className="text-xl font-bold tracking-[-0.01em] text-slate-950">
+            <div className="mt-auto flex flex-col gap-3 min-[380px]:flex-row min-[380px]:items-end min-[380px]:justify-between md:mt-0 lg:w-40 lg:flex-col lg:items-end lg:justify-start lg:text-end">
+              <div className="text-start min-[380px]:text-end lg:text-end">
+                <div className="text-xl font-bold tracking-[-0.01em] text-slate-950" dir="ltr">
                   {formatCurrency(hotel.totalPrice, hotel.currency)}
                 </div>
                 <div className="text-xs font-medium leading-4 text-slate-500">
@@ -351,7 +351,7 @@ export function HotelCard({ hotel }: HotelCardProps) {
                   )}
                 </div>
               </div>
-              <div className="min-[380px]:text-right">
+              <div className="min-[380px]:text-end">
                 <Button
                   variant="accent"
                   size="sm"

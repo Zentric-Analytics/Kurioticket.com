@@ -114,7 +114,7 @@ export function TripsManagementPage() {
 
           {showLookup ? (
             <div
-              className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/20 px-3 pb-3 pt-16 sm:absolute sm:inset-auto sm:right-0 sm:top-[calc(100%+0.75rem)] sm:block sm:w-[min(24rem,calc(100vw-3rem))] sm:bg-transparent sm:p-0"
+              className="fixed inset-0 z-40 flex items-end justify-center bg-slate-950/20 px-3 pb-3 pt-16 sm:absolute sm:inset-auto sm:end-0 sm:top-[calc(100%+0.75rem)] sm:block sm:w-[min(24rem,calc(100vw-3rem))] sm:bg-transparent sm:p-0"
               role="presentation"
             >
               <section
@@ -208,7 +208,7 @@ function EmptyStateRow({ illustration, title, body, titleId, className }: { illu
   return (
     <div className={cn("grid min-w-0 items-center gap-7 sm:grid-cols-[11rem_minmax(0,1fr)] lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-10", className)}>
       <div className="flex justify-center sm:justify-start">{illustration}</div>
-      <div className="min-w-0 text-center sm:text-left">
+      <div className="min-w-0 text-center sm:text-start">
         <h2 id={titleId} className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.6rem]">
           {title}
         </h2>

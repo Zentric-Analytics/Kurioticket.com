@@ -240,7 +240,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                         </div>
                       </div>
 
-                      <aside className="flex items-center justify-center border-t border-slate-200/80 bg-white px-3 py-3 sm:px-3 sm:py-3 md:border-l md:border-t-0 lg:px-3.5 lg:py-4">
+                      <aside className="flex items-center justify-center border-t border-slate-200/80 bg-white px-3 py-3 sm:px-3 sm:py-3 md:border-s md:border-t-0 lg:px-3.5 lg:py-4">
                         <div className="mx-auto flex w-full max-w-[20rem] flex-col items-stretch gap-2 text-center sm:max-w-[320px] md:max-w-[15rem] lg:max-w-[15.5rem]">
                           <div className="w-full rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-center shadow-sm sm:px-3 sm:py-2">
                             <p className="text-[10px] font-semibold uppercase leading-3 tracking-wide text-slate-500">
@@ -359,7 +359,7 @@ function SelectedFlightSummary({
       <h1 className="mt-2 text-balance text-2xl font-medium leading-snug text-slate-800 sm:text-2xl">
         {routeHeading}
       </h1>
-      <div className="mt-5 relative border-l border-slate-200 pl-4 sm:pl-5">
+      <div className="mt-5 relative border-s border-slate-200 ps-4 sm:ps-5">
         {itineraryLegs.map((leg, legIndex) => (
           <div
             key={`${leg.direction}-${leg.originAirport}-${leg.destinationAirport}-${legIndex}`}
@@ -1458,7 +1458,7 @@ function CompactLegSection({
                 ) : null}
               </p>
             </div>
-            <p className="min-w-0 truncate whitespace-nowrap text-right text-xs font-semibold tracking-wide text-slate-600">
+            <p className="min-w-0 truncate whitespace-nowrap text-end text-xs font-semibold tracking-wide text-slate-600">
               {leg.originAirport} → {leg.destinationAirport}
             </p>
           </div>
@@ -1611,7 +1611,7 @@ function CompactFlightRow({
         ) : null}
       </div>
 
-      <div className="min-w-0 text-right">
+      <div className="min-w-0 text-end">
         <div className="whitespace-nowrap text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
           {formatFlightTime(arrivalTime, locale)}
         </div>

@@ -258,7 +258,7 @@ function CarsSearchPage() {
     <>
       <AppHeader />
       <main className="page-shell relative isolate flex-1 overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#f6f7fb_48%,#f8fafc_100%)] pb-16 pt-8 sm:pt-10 lg:pt-12">
-        <div className="pointer-events-none absolute left-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
+        <div className="pointer-events-none absolute start-1/2 top-10 -z-10 h-64 w-[min(50rem,88vw)] -translate-x-1/2 rounded-full bg-white/55 blur-3xl" />
         <div className="pointer-events-none absolute -right-28 bottom-28 -z-10 h-80 w-80 rounded-full bg-slate-200/14 blur-3xl" />
 
         <div className="relative mx-auto max-w-6xl space-y-8 md:space-y-10">
@@ -571,7 +571,7 @@ function CarsSearchBar({
             <SearchCell
               label={t("carsSearch.pickupLocationLabel")}
               error={errors.pickupLocation || errors.dropoffLocation}
-              className="lg:border-r lg:border-r-slate-200/80"
+              className="lg:border-e lg:border-e-slate-200/80"
             >
               <div className="grid gap-2">
                 <div className="relative">
@@ -585,7 +585,7 @@ function CarsSearchBar({
                       updateValue("pickupLocation", event.target.value)
                     }
                     placeholder={t("carsSearch.pickupLocationPlaceholder")}
-                    className="h-7 w-full border-none bg-transparent py-0 pl-0 pr-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8"
+                    className="h-7 w-full border-none bg-transparent py-0 ps-0 pe-9 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8"
                     autoComplete="off"
                   />
 
@@ -597,7 +597,7 @@ function CarsSearchBar({
                         updateValue("pickupLocation", "");
                         pickupLocationRef.current?.focus();
                       }}
-                      className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                      className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
                     >
                       <X className="h-4 w-4" aria-hidden="true" />
                     </button>
@@ -616,7 +616,7 @@ function CarsSearchBar({
                         updateValue("dropoffLocation", event.target.value)
                       }
                       placeholder={t("carsSearch.returnLocationPlaceholder")}
-                      className="h-7 w-full border-t border-slate-100 bg-transparent py-0 pl-0 pr-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8 lg:pt-2"
+                      className="h-7 w-full border-t border-slate-100 bg-transparent py-0 ps-0 pe-9 pt-1.5 text-[16px] font-semibold text-slate-950 placeholder:text-slate-400 focus:outline-none md:text-sm lg:h-8 lg:pt-2"
                       autoComplete="off"
                     />
 
@@ -628,7 +628,7 @@ function CarsSearchBar({
                           updateValue("dropoffLocation", "");
                           dropoffLocationRef.current?.focus();
                         }}
-                        className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
+                        className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 lg:h-8 lg:w-8"
                       >
                         <X className="h-4 w-4" aria-hidden="true" />
                       </button>
@@ -645,7 +645,7 @@ function CarsSearchBar({
             <SearchCell
               label={t("carsSearch.rentalDatesLabel")}
               error={dateError}
-              className="relative lg:border-r lg:border-r-slate-200/80"
+              className="relative lg:border-e lg:border-e-slate-200/80"
             >
               <RentalDatesField
                 dropoffDate={values.dropoffDate}
@@ -669,7 +669,7 @@ function CarsSearchBar({
             <SearchCell
               label={t("carsSearch.pickupReturnTimeLabel")}
               error={timeError}
-              className="relative lg:border-r lg:border-r-slate-200/80"
+              className="relative lg:border-e lg:border-e-slate-200/80"
             >
               <TimeRangeField
                 isOpen={timesOpen}
@@ -868,7 +868,7 @@ function RentalDatesField({
         aria-expanded={isOpen}
         aria-haspopup="dialog"
         aria-label={t("carsSearch.chooseRentalDatesAria")}
-        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
+        className="focus-ring flex h-7 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
       >
         <Calendar
           className="h-4 w-4 shrink-0 text-slate-500"
@@ -885,7 +885,7 @@ function RentalDatesField({
         <div
           role="dialog"
           aria-label={t("carsSearch.rentalDatePickerAria")}
-          className="absolute left-0 right-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:right-auto sm:w-[min(92vw,620px)] sm:p-4"
+          className="absolute start-0 end-0 top-[calc(100%+10px)] z-[200] w-full rounded-2xl border border-slate-200 bg-white p-3.5 shadow-[0_20px_45px_rgba(15,23,42,0.16)] sm:end-auto sm:w-[min(92vw,620px)] sm:p-4"
         >
           <p className="mb-3 text-base font-semibold text-slate-900">
             {t("carsSearch.chooseRentalDates")}
@@ -1045,7 +1045,7 @@ function TimeRangeField({
         aria-expanded={isOpen}
         aria-haspopup="menu"
         aria-label={t("carsSearch.choosePickupReturnTimesAria")}
-        className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-left text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
+        className="focus-ring flex h-7 w-full items-center justify-between gap-2 rounded-md border-0 bg-transparent px-0 text-start text-[16px] font-semibold text-slate-950 outline-none transition-colors md:text-sm lg:h-8"
       >
         <span className="truncate">{timeSummary}</span>
         <ChevronDown
@@ -1058,7 +1058,7 @@ function TimeRangeField({
         <div
           role="menu"
           aria-label={t("carsSearch.pickupReturnTimeSelectorAria")}
-          className="absolute left-0 right-0 top-[calc(100%+8px)] z-[180] w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:right-auto sm:w-[min(92vw,320px)]"
+          className="absolute start-0 end-0 top-[calc(100%+8px)] z-[180] w-full rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_14px_32px_rgba(15,23,42,0.14)] sm:end-auto sm:w-[min(92vw,320px)]"
         >
           <div className="grid gap-3">
             <label className="block">

@@ -743,7 +743,7 @@ export function AppHeader({
                       <div
                         role="menu"
                         aria-label={t.openAccountMenu}
-                        className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
+                        className="absolute end-0 top-[calc(100%+0.5rem)] z-50 w-80 overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl ring-1 ring-slate-950/5"
                       >
                         <div className="border-b border-slate-100 bg-slate-50/80 px-4 py-3">
                           <p className="truncate text-sm font-black text-slate-950">
@@ -770,7 +770,7 @@ export function AppHeader({
                                     setAccountOpen(false),
                                   )
                                 }
-                                className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                className="group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start transition-colors hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                               >
                                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700 group-hover:bg-white">
                                   <Icon size={17} aria-hidden="true" />
@@ -793,7 +793,7 @@ export function AppHeader({
                             onClick={handleSignOut}
                             disabled={isSigningOut}
                             aria-busy={isSigningOut}
-                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-start text-sm font-bold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                           >
                             <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                               <LogOut size={17} aria-hidden="true" />
@@ -1008,7 +1008,7 @@ export function AppHeader({
                                     )
                               }
                               onClick={() => handleLanguageSelect(option)}
-                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                              className={`flex min-h-[4.25rem] cursor-pointer items-start justify-between gap-3 rounded-none border px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                                 active
                                   ? "border-violet-500 bg-violet-50 ring-2 ring-violet-100"
                                   : available
@@ -1059,14 +1059,14 @@ export function AppHeader({
           </div>
 
           <nav className="hidden md:block" aria-label="Primary">
-            <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:pl-[8.5rem] lg:pl-[9.75rem] xl:pl-[10.5rem]">
+            <div className="relative flex min-h-[44px] items-center justify-start pt-1.5 md:ps-[8.5rem] lg:ps-[9.75rem] xl:ps-[10.5rem]">
               {showAccountBackLink ? (
                 <Link
                   href={accountBackHref}
                   onClick={(event) =>
                     handleRouteLinkClick(event, accountBackHref)
                   }
-                  className="absolute left-0 top-1/2 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
+                  className="absolute start-0 top-1/2 inline-flex -translate-y-1/2 items-center gap-1.5 rounded-md text-sm font-semibold text-white/90 transition hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
                 >
                   <span className="text-lg leading-none" aria-hidden="true">
                     ‹
@@ -1180,7 +1180,7 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.menu}
-                  className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                  className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
                   <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
                     <div className="min-w-0">
@@ -1391,7 +1391,7 @@ export function AppHeader({
                   role="dialog"
                   aria-modal="true"
                   aria-label={t.openAccountMenu}
-                  className="fixed inset-y-0 right-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
+                  className="fixed inset-y-0 end-0 z-[80] flex h-[100dvh] max-h-[100dvh] w-full max-w-md flex-col overflow-hidden bg-white text-slate-900 shadow-2xl"
                 >
                   <nav className="page-shell min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] [-webkit-overflow-scrolling:touch]">
                     <section aria-label="Account">
@@ -1473,7 +1473,7 @@ export function AppHeader({
                           onClick={handleSignOut}
                           disabled={isSigningOut}
                           aria-busy={isSigningOut}
-                          className="group inline-flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-left text-base font-semibold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
+                          className="group inline-flex min-h-14 w-full cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-start text-base font-semibold text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:bg-transparent"
                         >
                           <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-rose-100 bg-rose-50 text-rose-700 transition-colors group-hover:bg-white">
                             <LogOut size={18} aria-hidden="true" />

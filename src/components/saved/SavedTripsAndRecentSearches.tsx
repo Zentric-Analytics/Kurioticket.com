@@ -194,8 +194,8 @@ function SavedEmptyStateIllustration() {
       className="relative mx-auto h-48 w-full max-w-[24rem] overflow-hidden sm:h-52"
       aria-hidden="true"
     >
-      <div className="absolute left-1/2 top-5 h-36 w-36 -translate-x-1/2 rounded-full bg-teal/10" />
-      <div className="absolute bottom-4 left-1/2 h-8 w-[19rem] -translate-x-1/2 rounded-[100%] bg-navy/5 blur-sm" />
+      <div className="absolute start-1/2 top-5 h-36 w-36 -translate-x-1/2 rounded-full bg-teal/10" />
+      <div className="absolute bottom-4 start-1/2 h-8 w-[19rem] -translate-x-1/2 rounded-[100%] bg-navy/5 blur-sm" />
       <svg
         className="absolute inset-0 h-full w-full"
         viewBox="0 0 384 208"
@@ -596,7 +596,7 @@ export function SavedTripsAndRecentSearches() {
   return (
     <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
       <div className="mx-auto min-w-0 max-w-[72rem] space-y-5">
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-left shadow-sm sm:p-6">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-start shadow-sm sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1
@@ -660,7 +660,7 @@ export function SavedTripsAndRecentSearches() {
                       onClick={() => handleUnsaveTrip(trip.id)}
                       aria-label={t("savedTripsRemoveSavedTrip")}
                       aria-pressed
-                      className="focus-ring absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-900/20 transition hover:bg-rose-500"
+                      className="focus-ring absolute end-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-900/20 transition hover:bg-rose-500"
                     >
                       <Heart className="h-6 w-6 fill-current" />
                     </button>
@@ -679,7 +679,7 @@ export function SavedTripsAndRecentSearches() {
                     )}
 
                     <div className="space-y-3 p-5">
-                      <h3 className="pr-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
+                      <h3 className="pe-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
                         {trip.title}
                       </h3>
                       <p className="line-clamp-2 text-[11px] font-semibold uppercase tracking-[0.11em] text-slate-600">
@@ -742,7 +742,7 @@ export function SavedTripsAndRecentSearches() {
         </section>
 
         {recentSearches.length > 0 ? (
-          <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-left shadow-sm sm:p-6">
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-start shadow-sm sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold tracking-tight text-slate-900">
@@ -775,7 +775,7 @@ export function SavedTripsAndRecentSearches() {
                       type="button"
                       aria-label={t("savedTripsRemoveRecentSearch")}
                       onClick={() => handleRemoveRecent(entry.id)}
-                      className="focus-ring absolute right-3 top-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
+                      className="focus-ring absolute end-3 top-3 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200/90 bg-white/95 text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -802,7 +802,7 @@ export function SavedTripsAndRecentSearches() {
                           : t("savedTripsTypeHotel")}
                       </span>
 
-                      <h3 className="pr-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
+                      <h3 className="pe-12 text-lg font-semibold leading-tight tracking-tight text-slate-900">
                         {entry.label}
                       </h3>
                       <p className="line-clamp-2 text-sm leading-5 text-slate-600">

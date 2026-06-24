@@ -951,7 +951,7 @@ export function HotelResultsClient() {
 
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
+          "fixed bottom-0 start-0 end-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
@@ -1034,7 +1034,7 @@ function HotelSummaryRow({
             key={item.label}
             type="button"
             className={cn(
-              "min-w-[152px] snap-start rounded-2xl border bg-white p-2.5 text-left shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_34px_-24px_rgba(30,27,75,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:p-3.5",
+              "min-w-[152px] snap-start rounded-2xl border bg-white p-2.5 text-start shadow-[0_14px_30px_-22px_rgba(30,27,75,0.45)] transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-[0_18px_34px_-24px_rgba(30,27,75,0.55)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/45 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f6f8fb] sm:min-w-0 sm:p-3.5",
               isActive
                 ? "border-indigo-400 bg-indigo-50/50 shadow-[0_18px_38px_-24px_rgba(79,70,229,0.7)] ring-1 ring-indigo-200"
                 : "border-indigo-100/80",

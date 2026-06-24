@@ -43,7 +43,7 @@ export function FaqAccordion({
         >
           <summary
             className={cn(
-              "focus-ring flex cursor-pointer list-none items-start justify-between gap-4 text-left font-bold text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden",
+              "focus-ring flex cursor-pointer list-none items-start justify-between gap-4 text-start font-bold text-slate-900 marker:hidden [&::-webkit-details-marker]:hidden",
               compact
                 ? "px-4 py-3.5 text-sm leading-6 sm:px-5"
                 : "px-4 py-4 text-sm leading-6 sm:px-5 sm:py-5 sm:text-base",

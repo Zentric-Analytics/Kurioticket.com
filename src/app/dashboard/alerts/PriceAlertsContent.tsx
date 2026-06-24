@@ -56,11 +56,11 @@ function EmptyStateIllustration() {
           </linearGradient>
         </defs>
       </svg>
-      <span className="absolute right-8 top-8 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-lg font-black text-white shadow-lg shadow-indigo-950/20">
+      <span className="absolute end-8 top-8 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-lg font-black text-white shadow-lg shadow-indigo-950/20">
         !
       </span>
-      <span className="absolute left-7 top-7 h-8 w-1.5 -rotate-45 rounded-full bg-violet-300" />
-      <span className="absolute left-14 top-4 h-8 w-1.5 -rotate-12 rounded-full bg-violet-300" />
+      <span className="absolute start-7 top-7 h-8 w-1.5 -rotate-45 rounded-full bg-violet-300" />
+      <span className="absolute start-14 top-4 h-8 w-1.5 -rotate-12 rounded-full bg-violet-300" />
     </div>
   );
 }
@@ -89,7 +89,7 @@ export function PriceAlertsContent() {
   return (
     <main className="flex-1 bg-white pb-10 pt-0 sm:pt-5 lg:pt-5">
       <div className="mx-auto min-w-0 max-w-6xl px-4 pt-3 pb-8 sm:px-6 sm:pt-6 lg:px-8">
-        <header className="px-1 pb-5 text-left sm:px-2 sm:pb-6">
+        <header className="px-1 pb-5 text-start sm:px-2 sm:pb-6">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
             {t["accountDashboard.priceAlerts.title"]}
           </h1>
@@ -133,12 +133,12 @@ export function PriceAlertsContent() {
           </div>
 
           {isSortOpen && (
-            <div className="absolute right-0 top-full z-10 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg" role="listbox" aria-label={t["accountDashboard.priceAlerts.sort.ariaLabel"]}>
+            <div className="absolute end-0 top-full z-10 mt-2 w-44 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg" role="listbox" aria-label={t["accountDashboard.priceAlerts.sort.ariaLabel"]}>
               {sortOptions.map((option) => (
                 <button
                   key={option.id}
                   type="button"
-                  className={`block w-full px-4 py-3 text-left text-sm font-semibold transition hover:bg-violet-50 hover:text-indigo-700 ${
+                  className={`block w-full px-4 py-3 text-start text-sm font-semibold transition hover:bg-violet-50 hover:text-indigo-700 ${
                     selectedSort === option.id ? "bg-violet-50 text-indigo-700" : "text-slate-700"
                   }`}
                   role="option"

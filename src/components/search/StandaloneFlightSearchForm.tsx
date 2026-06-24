@@ -102,11 +102,11 @@ const formatFlightsWeekdays = (locale: string) =>
   );
 
 const searchFieldShellClassName =
-  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-r sm:border-slate-200 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-300 sm:focus-within:border-indigo-500 sm:focus-within:bg-indigo-50/55 sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-indigo-300/80 lg:flex lg:flex-col lg:justify-center";
+  "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 sm:min-h-[58px] sm:rounded-none sm:border-0 sm:border-e sm:border-slate-200 sm:bg-transparent sm:px-4 sm:py-2 sm:shadow-none sm:hover:border-slate-300 sm:focus-within:border-indigo-500 sm:focus-within:bg-indigo-50/55 sm:focus-within:ring-1 sm:focus-within:ring-inset sm:focus-within:ring-indigo-300/80 lg:flex lg:flex-col lg:justify-center";
 const searchFieldLabelClassName =
   "mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600 sm:text-[10px] sm:font-semibold sm:tracking-[0.10em] sm:text-slate-700";
 const searchFieldValueButtonClassName =
-  "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
+  "focus-ring flex h-8 w-full items-center justify-between gap-2 rounded-md text-start text-[16px] font-medium text-slate-900 outline-none transition-colors sm:h-auto sm:min-h-7 sm:rounded-none sm:text-[15px] sm:font-medium sm:tracking-[-0.01em] sm:text-slate-950 sm:focus-visible:shadow-none";
 const mobileDoneButtonClassName =
   "focus-ring min-h-11 rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-6 text-sm font-bold text-white shadow-md shadow-indigo-700/20 transition-colors hover:from-indigo-600 hover:to-violet-500 active:from-indigo-800 active:to-violet-700";
 const desktopPopoverSelector = "[data-standalone-flight-desktop-popover]";
@@ -946,7 +946,7 @@ export function StandaloneFlightSearchForm({
                 onChange={(event) => onChange(event.target.value)}
                 placeholder={airportPickerLabels.searchAirportsOrCities}
                 autoComplete="off"
-                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
               />
               {value.trim() ? (
                 <button
@@ -956,7 +956,7 @@ export function StandaloneFlightSearchForm({
                     onClear();
                     focusInput();
                   }}
-                  className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                  className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -979,7 +979,7 @@ export function StandaloneFlightSearchForm({
                   key={`${option.code}-${option.airport}-${inputId}`}
                   type="button"
                   onClick={() => onSelect(option)}
-                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
+                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
                 >
                   <span
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500"
@@ -996,7 +996,7 @@ export function StandaloneFlightSearchForm({
                       {option.country ? ` · ${option.country}` : ""}
                     </span>
                   </span>
-                  <span className="shrink-0 pl-2 text-right text-sm font-extrabold tracking-[0.12em] text-slate-700">
+                  <span className="shrink-0 ps-2 text-end text-sm font-extrabold tracking-[0.12em] text-slate-700">
                     {option.code}
                   </span>
                 </button>
@@ -1047,7 +1047,7 @@ export function StandaloneFlightSearchForm({
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => selectAirport(field, option)}
                 className={cn(
-                  "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-indigo-50/60",
+                  "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-start transition-colors last:border-b-0 hover:bg-indigo-50/60",
                   active === index && "bg-indigo-50 text-indigo-950",
                 )}
               >
@@ -1066,7 +1066,7 @@ export function StandaloneFlightSearchForm({
                     {option.country ? ` · ${option.country}` : ""}
                   </span>
                 </span>
-                <span className="shrink-0 pl-3 text-right text-sm font-medium tracking-[0.08em] text-slate-600">
+                <span className="shrink-0 ps-3 text-end text-sm font-medium tracking-[0.08em] text-slate-600">
                   {option.code}
                 </span>
               </button>
@@ -1095,7 +1095,7 @@ export function StandaloneFlightSearchForm({
           <h3
             className={cn(
               compact
-                ? "text-left text-[17px] font-bold tracking-tight text-slate-950"
+                ? "text-start text-[17px] font-bold tracking-tight text-slate-950"
                 : "mb-2.5 text-center text-sm font-medium tracking-tight text-slate-900",
             )}
           >
@@ -1487,7 +1487,7 @@ export function StandaloneFlightSearchForm({
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:overflow-hidden sm:rounded-2xl sm:ring-1 sm:ring-slate-200 lg:grid-cols-[minmax(0,3.35fr)_minmax(172px,1.2fr)_minmax(164px,1.05fr)_136px] lg:items-stretch lg:gap-0">
-          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-r lg:border-slate-200 lg:bg-transparent">
+          <div className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] lg:items-stretch lg:gap-0 lg:border-e lg:border-slate-200 lg:bg-transparent">
             <AirportFieldControl
               ref={originWrapRef}
               inputRef={originInputRef}
@@ -1513,7 +1513,7 @@ export function StandaloneFlightSearchForm({
               mobileLauncherRef={originMobileLauncherRef}
               desktopSuggestions={renderAirportSuggestions("origin")}
               className={cn(
-                "lg:min-h-[58px] lg:rounded-l-2xl lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-indigo-50/60 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-indigo-300/80",
+                "lg:min-h-[58px] lg:rounded-s-2xl lg:border-0 lg:bg-transparent lg:shadow-none lg:focus-within:border-0 lg:focus-within:bg-indigo-50/60 lg:focus-within:ring-1 lg:focus-within:ring-inset lg:focus-within:ring-indigo-300/80",
                 originOpen &&
                   "sm:z-20 lg:bg-indigo-50/60 lg:ring-1 lg:ring-inset lg:ring-indigo-300/80",
               )}
@@ -1740,7 +1740,7 @@ export function StandaloneFlightSearchForm({
             type="submit"
             disabled={isSearchDisabled}
             aria-busy={isSubmitting}
-            className="h-12 w-full whitespace-nowrap rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 sm:min-h-[58px] sm:rounded-none sm:rounded-r-2xl sm:border sm:border-l-0 sm:border-indigo-600/20 sm:px-5 sm:text-[15px] sm:font-bold sm:shadow-[0_10px_22px_rgba(67,56,202,0.22)] sm:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:h-full"
+            className="h-12 w-full whitespace-nowrap rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 sm:min-h-[58px] sm:rounded-none sm:rounded-e-2xl sm:border sm:border-s-0 sm:border-indigo-600/20 sm:px-5 sm:text-[15px] sm:font-bold sm:shadow-[0_10px_22px_rgba(67,56,202,0.22)] sm:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:h-full"
           >
             <Plane
               className="mr-2 hidden h-4 w-4 sm:inline"
@@ -1873,14 +1873,14 @@ const AirportFieldControl = React.forwardRef<
           onKeyDown={onKeyDown}
           placeholder={placeholder}
           autoComplete="off"
-          className="h-7 w-full rounded-none border-0 bg-transparent pr-9 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
+          className="h-7 w-full rounded-none border-0 bg-transparent pe-9 text-[15px] font-semibold tracking-[-0.01em] text-slate-950 outline-none placeholder:font-medium placeholder:text-slate-500"
         />
         {value ? (
           <button
             type="button"
             aria-label={`Clear ${label.toLowerCase()}`}
             onClick={onClear}
-            className="focus-ring absolute right-0 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
+            className="focus-ring absolute end-0 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-indigo-50 hover:text-indigo-700"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

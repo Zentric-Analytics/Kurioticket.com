@@ -86,7 +86,7 @@ export function FlightCard({
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
                 {t("flightOption")}
               </p>
-              <p className="min-w-0 truncate text-right text-xs font-semibold text-slate-700">
+              <p className="min-w-0 truncate text-end text-xs font-semibold text-slate-700" dir="auto">
                 {flight.airlineName}
                 {flight.flightNumber ? ` · ${flight.flightNumber}` : ""}
               </p>
@@ -112,6 +112,7 @@ export function FlightCard({
                 className="text-lg font-semibold leading-tight tracking-[-0.025em] text-slate-950 sm:text-xl"
                 aria-label={priceAriaLabel}
                 title={priceTitle}
+                dir="ltr"
               >
                 {displayPrice.formatted}
               </div>
@@ -120,7 +121,7 @@ export function FlightCard({
               </p>
               {displayPrice.isConvertedEstimate ? (
                 <div className="mt-1.5 space-y-0.5 text-xs font-medium leading-4 text-slate-600 lg:text-center">
-                  <p>{t("providerPrice")}: {providerPrice}</p>
+                  <p><span>{t("providerPrice")}:</span> <span dir="ltr">{providerPrice}</span></p>
                 </div>
               ) : null}
             </div>
@@ -173,17 +174,17 @@ function FlightLegRow({
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-700">
               {formatLegTitle(leg, t)}
             </p>
-            <p className="truncate text-xs font-medium text-slate-600">
+            <p className="truncate text-xs font-medium text-slate-600" dir="ltr">
               {leg.originAirport} → {leg.destinationAirport}
             </p>
           </div>
 
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
             <div className="min-w-0">
-              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
+              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]" dir="ltr">
                 {formatTime(leg.departureTime)}
               </div>
-              <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
+              <div className="mt-0.5 truncate text-xs font-medium text-slate-600" dir="ltr">
                 {leg.originAirport}
               </div>
             </div>
@@ -194,7 +195,7 @@ function FlightLegRow({
                 <PlaneTakeoff className="mx-1.5 h-3 w-3" />
                 <span className="h-px flex-1 bg-slate-200" />
               </div>
-              <div className="mt-0.5 text-xs font-semibold leading-4 text-slate-800">
+              <div className="mt-0.5 text-xs font-semibold leading-4 text-slate-800" dir="auto">
                 {leg.duration}
               </div>
               <div className="text-[11px] font-medium leading-4 text-slate-600">
@@ -202,11 +203,11 @@ function FlightLegRow({
               </div>
             </div>
 
-            <div className="min-w-0 text-right">
-              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]">
+            <div className="min-w-0 text-end">
+              <div className="text-base font-semibold leading-5 tracking-[-0.02em] text-slate-950 sm:text-[17px]" dir="ltr">
                 {formatTime(leg.arrivalTime)}
               </div>
-              <div className="mt-0.5 truncate text-xs font-medium text-slate-600">
+              <div className="mt-0.5 truncate text-xs font-medium text-slate-600" dir="ltr">
                 {leg.destinationAirport}
               </div>
             </div>
