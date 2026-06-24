@@ -743,6 +743,7 @@ export const translations: TranslationDictionary = {
   "legal.refundBookingDisclaimer.summary": "يوضح أن عمليات الشراء وإصدار التذاكر والمبالغ المستردة والإلغاءات والدفع لمخزون السفر تتم خارج Kurioticket",
   "legal.refundBookingDisclaimer.lastUpdatedDate": "May 11, 2026",
   "legal.refundBookingDisclaimer.lastUpdated": "آخر تحديث: May 11, 2026",
+  "legal.refundBookingDisclaimer.tableOfContents": "جدول المحتويات",
   "legal.refundBookingDisclaimer.sections.no-ticketing.title": "لا إصدار مباشر للتذاكر",
   "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph1": "لا تبيع Kurioticket تذاكر الطيران أو حجوزات الفنادق. نعيد توجيه المستخدمين إلى شركات طيران أو فنادق أو شركاء بالعمولة أو مزوّدي سفر خارجيين لمتابعة خطوات المقارنة والشراء.",
   "legal.refundBookingDisclaimer.sections.no-ticketing.paragraph2": "يكون عقد الشراء الخاص بك مع المزوّد الخارجي الذي يقبل دفعتك، وليس مع Kurioticket.",
