@@ -377,7 +377,7 @@ export const translations: TranslationDictionary = {
   loginUnableSendLoginCode:
     "Der Anmeldecode kann derzeit nicht gesendet werden. Bitte versuchen Sie es erneut.",
   loginCodeInstructions:
-    "Gib den 6-stelligen Code ein, der an {{email}} gesendet wurde. Codes laufen nach 10 Minuten ab.",
+    "Gib den 6-stelligen Code ein, der an {{email}} gesendet wurde. Codes laufen nach {{minutes}} Minuten ab.",
   loginVerificationCodeLabel: "Verifizierungscode",
   loginVerifying: "Bestätigung läuft …",
   loginVerifyLogin: "Anmeldung verifizieren",

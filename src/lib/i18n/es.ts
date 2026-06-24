@@ -555,7 +555,7 @@ export const translations: TranslationDictionary = {
   loginUnableSendLoginCode:
     "No se puede enviar el código de inicio de sesión ahora. Inténtalo de nuevo.",
   loginCodeInstructions:
-    "Introduce el código de 6 dígitos enviado a {{email}}. Los códigos caducan después de 10 minutos.",
+    "Introduce el código de 6 dígitos enviado a {{email}}. Los códigos caducan después de {{minutes}} minutos.",
   loginVerificationCodeLabel: "Código de verificación",
   loginVerifying: "Verificando…",
   loginVerifyLogin: "Verificar inicio de sesión",

@@ -533,7 +533,7 @@ export const translations: TranslationDictionary = {
   loginUnableSendNewCode: "Unable to send a new code right now. Please try again.",
   loginUnableSendLoginCode: "Unable to send login code right now. Please try again.",
   loginCodeInstructions:
-    "Enter the 6-digit code sent to {{email}}. Codes expire after 10 minutes.",
+    "Enter the 6-digit code sent to {{email}}. Codes expire after {{minutes}} minutes.",
   loginVerificationCodeLabel: "Verification code",
   loginVerifying: "Verifying…",
   loginVerifyLogin: "Verify login",
