@@ -1019,6 +1019,7 @@ export const translations: TranslationDictionary = {
   savedTripsCabinBusiness: "أعمال",
   savedTripsCabinFirst: "أولى",
   economy: "الاقتصادية",
+  premiumEconomy: "الاقتصادية المميزة",
   business: "الأعمال",
   first: "الأولى",
   adultSingular: "بالغ",
