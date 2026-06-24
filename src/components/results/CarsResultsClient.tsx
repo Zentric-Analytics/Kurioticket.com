@@ -168,6 +168,14 @@ const getCarsResultsIntlLocale = (locale: string) => {
     return "pt-BR";
   }
 
+  if (
+    normalizedLocale === "zh" ||
+    normalizedLocale.startsWith("zh-cn") ||
+    normalizedLocale.startsWith("zh-hans")
+  ) {
+    return "zh-CN";
+  }
+
   if (normalizedLocale.startsWith("ar")) {
     return "ar-u-nu-latn";
   }
