@@ -1,4 +1,4 @@
-import { AppHeader } from "@/components/layout/AppHeader";
+import { AccountPreferencesHeader } from "../AccountPreferencesHeader";
 import { Footer } from "@/components/layout/Footer";
 import { CustomizationPreferencesContent } from "./CustomizationPreferencesContent";
 
@@ -10,7 +10,7 @@ export default function CustomizationPreferencesPage() {
   return (
     <>
       <div className="[&>header]:!border-b-0 [&>header]:!shadow-none">
-        <AppHeader showAccountBackLink />
+        <AccountPreferencesHeader />
       </div>
       <CustomizationPreferencesContent />
       <Footer />
