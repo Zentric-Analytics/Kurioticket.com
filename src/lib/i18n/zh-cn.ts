@@ -46,6 +46,25 @@ export const translations: TranslationDictionary = {
   "accountDashboard.personalDetails.addAddress": "添加你的地址",
   "accountDashboard.personalDetails.edit": "编辑",
 
+  "accountDashboard.security.title": "安全设置",
+  "accountDashboard.security.description":
+    "更新你的密码并管理账户安全。",
+  "accountDashboard.security.passkeys.title": "通行密钥",
+  "accountDashboard.security.passkeys.description":
+    "无需记住密码，即可安全登录。",
+  "accountDashboard.security.twoFactor.title": "双重身份验证",
+  "accountDashboard.security.twoFactor.description":
+    "为你的账户增加一层额外安全保护。",
+  "accountDashboard.security.activeSessions.title": "活跃会话",
+  "accountDashboard.security.activeSessions.description":
+    "查看你的账户在哪些设备上登录，并从其他设备退出。",
+  "accountDashboard.security.deleteAccount.title": "删除账户",
+  "accountDashboard.security.deleteAccount.description":
+    "永久删除你的 Kurioticket 账户。",
+  "accountDashboard.security.action.setUp": "设置",
+  "accountDashboard.security.action.manage": "管理",
+  "accountDashboard.security.action.deleteAccount": "删除账户",
+
   forgotPasswordTitle: "重置密码",
   forgotPasswordSubtitle: "输入你的电子邮箱，我们会发送重置密码的说明。",
   forgotPasswordEmailLabel: "电子邮箱",
