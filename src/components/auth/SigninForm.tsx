@@ -315,7 +315,7 @@ export function SigninForm({
             <p className="mt-1 text-teal-dark/80">
               {formatTranslation(t, {
                 key: "loginCodeInstructions",
-                params: { email: emailForCode },
+                params: { email: emailForCode, minutes: 10 },
               })}
             </p>
           </div>

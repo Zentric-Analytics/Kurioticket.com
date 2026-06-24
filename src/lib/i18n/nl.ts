@@ -184,7 +184,7 @@ export const translations: TranslationDictionary = {
   loginUnableSendNewCode: "Kan nu geen nieuwe code verzenden. Probeer het opnieuw.",
   loginUnableSendLoginCode: "Kan de inlogcode nu niet verzenden. Probeer het opnieuw.",
   loginCodeInstructions:
-    "Voer de 6-cijferige code in die naar {{email}} is gestuurd. Codes verlopen na 10 minuten.",
+    "Voer de 6-cijferige code in die naar {{email}} is gestuurd. Codes verlopen na {{minutes}} minuten.",
   loginVerificationCodeLabel: "Verificatiecode",
   loginVerifying: "Verifiëren…",
   loginVerifyLogin: "Inloggen verifiëren",

@@ -85,6 +85,11 @@ export const translations: TranslationDictionary = {
   aboutPagePlanningCardBody:
     "يركز Kurioticket على مساعدة المسافرين في تقييم خيارات السفر ضمن سياق مفيد. قد يختلف التوفر والأسعار والقواعد وخطوات الحجز النهائية حسب المزوّد، لذلك يجب على المسافرين مراجعة صفحة المزوّد بعناية قبل اتخاذ القرار.",
 
+  loginCodeSent: "أرسلنا رمز تحقق إلى بريدك الإلكتروني.",
+  loginCodeInstructions:
+    "أدخل الرمز المكون من 6 أرقام المرسل إلى {{email}}. تنتهي صلاحية الرموز بعد {{minutes}} دقائق.",
+  loginUseDifferentDetails: "استخدام تفاصيل مختلفة",
+
   searchRentalCarsEveryPartTrip: "ابحث عن سيارات للإيجار لكل جزء من رحلتك",
   exploreCarsByTripStyle: "استكشف سيارات الإيجار حسب نمط الرحلة",
   carsTripStyleBody: "اختر نوع السيارة وسنفتح النتائج مع تفاصيل البحث جاهزة.",
