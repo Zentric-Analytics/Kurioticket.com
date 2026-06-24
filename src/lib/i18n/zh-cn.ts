@@ -307,6 +307,15 @@ export const translations: TranslationDictionary = {
   "howItWorks.providerWebsites.title": "服务提供商网站",
   "howItWorks.providerWebsites.description":
     "部分预订可能会在 Kurioticket 将你跳转到服务提供商网站后完成。完成购买前，请在服务提供商页面查看最终可订情况、价格、条款、付款步骤和预订详情。",
+  aboutPageEyebrow: "关于 Kurioticket",
+  aboutPageTitle: "关于我们",
+  aboutPageIntroPrimary:
+    "Kurioticket 是一个旅行搜索和比较平台，帮助旅客搜索、比较并发现航班、酒店、租车和旅行优惠。",
+  aboutPageIntroSecondary:
+    "我们的目标是把可用选项和服务提供商信息汇集到一个简单的地方，让旅行规划更清晰，方便旅客在继续前往适合其行程的服务提供商之前查看选择。",
+  aboutPagePlanningCardHeading: "实用的旅行规划工具",
+  aboutPagePlanningCardBody:
+    "Kurioticket 专注于通过有用的背景信息帮助旅客评估旅行选项。可订状态、价格、规则和最终预订步骤可能因服务提供商而异，因此旅客在做出决定前应仔细查看服务提供商页面。",
   signupPageTitle: "创建你的账户",
   signupFullNameLabel: "全名",
   signupEmailLabel: "电子邮箱",
