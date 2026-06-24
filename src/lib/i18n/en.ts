@@ -2732,6 +2732,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.starSingular": "{{count}} star",
   "hotelResults.starPlural": "{{count}} stars",
   "hotelResults.activeHotelFilters": "Active hotel filters",
+  "hotelResults.filterBy": "Filter by",
   "hotelResults.removeFilter": "Remove {{label}} filter",
   "hotelResults.budgetPrice": "Budget / Price",
   "hotelResults.totalUpTo": "Total up to",
