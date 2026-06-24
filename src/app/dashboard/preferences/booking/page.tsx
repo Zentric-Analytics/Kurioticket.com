@@ -1,4 +1,4 @@
-import { AppHeader } from "@/components/layout/AppHeader";
+import { AccountPreferencesHeader } from "../AccountPreferencesHeader";
 import { Footer } from "@/components/layout/Footer";
 import { BookingPreferencesContent } from "./BookingPreferencesContent";
 
@@ -10,7 +10,7 @@ export default function PreferencesPage() {
   return (
     <>
       <div className="[&>header]:!border-b-0 [&>header]:!shadow-none">
-        <AppHeader showAccountBackLink />
+        <AccountPreferencesHeader />
       </div>
       <BookingPreferencesContent />
       <Footer />
