@@ -1031,6 +1031,7 @@ export const translations: TranslationDictionary = {
   "legal.dataDeletionPolicy.summary":
     "Wie Nutzer die Löschung ihres Kontos beantragen können und welche Daten möglicherweise aufbewahrt werden müssen.",
   "legal.dataDeletionPolicy.lastUpdatedDate": "11. Mai 2026",
+  "legal.dataDeletionPolicy.tableOfContents": "INHALTSVERZEICHNIS",
   "legal.dataDeletionPolicy.lastUpdated":
     "Zuletzt aktualisiert: 11. Mai 2026",
   "legal.dataDeletionPolicy.sections.request.title": "Löschanfragen",
@@ -1047,6 +1048,7 @@ export const translations: TranslationDictionary = {
   "legal.refundBookingDisclaimer.summary":
     "Stellt klar, dass Käufe, Ticketausstellung, Erstattungen, Stornierungen und Zahlungen für Reiseangebote außerhalb von Kurioticket erfolgen.",
   "legal.refundBookingDisclaimer.lastUpdatedDate": "11. Mai 2026",
+  "legal.refundBookingDisclaimer.tableOfContents": "INHALTSVERZEICHNIS",
   "legal.refundBookingDisclaimer.lastUpdated":
     "Zuletzt aktualisiert: 11. Mai 2026",
   "legal.refundBookingDisclaimer.sections.no-ticketing.title":
@@ -1068,6 +1070,7 @@ export const translations: TranslationDictionary = {
   "legal.priceAvailabilityDisclaimer.summary":
     "Erklärt, warum Reisepreise, Tarifregeln, Zimmerpreise und Verfügbarkeiten sich ändern können.",
   "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "11. Mai 2026",
+  "legal.priceAvailabilityDisclaimer.tableOfContents": "INHALTSVERZEICHNIS",
   "legal.priceAvailabilityDisclaimer.lastUpdated":
     "Zuletzt aktualisiert: 11. Mai 2026",
   "legal.priceAvailabilityDisclaimer.sections.change.title":
@@ -1086,6 +1089,7 @@ export const translations: TranslationDictionary = {
   "legal.partnerRedirectDisclaimer.summary":
     "Was passiert, wenn Kurioticket Nutzer zu Fluggesellschaften, Hotels, Affiliate-Partnern oder Reiseanbietern weiterleitet.",
   "legal.partnerRedirectDisclaimer.lastUpdatedDate": "11. Mai 2026",
+  "legal.partnerRedirectDisclaimer.tableOfContents": "INHALTSVERZEICHNIS",
   "legal.partnerRedirectDisclaimer.lastUpdated":
     "Zuletzt aktualisiert: 11. Mai 2026",
   "legal.partnerRedirectDisclaimer.sections.redirect.title":
