@@ -690,7 +690,7 @@ export const translations: TranslationDictionary = {
   "legal.index.heroTitle": "المركز القانوني",
   "legal.index.developerNote": "هذه المسودات القانونية هي نصوص مؤقتة للشركة الناشئة ويجب مراجعتها من قبل مستشار قانوني مؤهل قبل الإطلاق العام على نطاق واسع.",
   "legal.index.lastUpdated": "آخر تحديث",
-  "legal.index.lastUpdatedDate": "May 11, 2026",
+  "legal.index.lastUpdatedDate": "11 مايو 2026",
   "legal.index.documents.termsOfService.title": "شروط الخدمة",
   "legal.index.documents.termsOfService.summary": "قواعد استخدام بحث Kurioticket والحسابات ولوحات التحكم وأدوات السفر المحفوظة وعمليات إعادة التوجيه إلى الشركاء",
   "legal.index.documents.privacyPolicy.title": "سياسة الخصوصية",
