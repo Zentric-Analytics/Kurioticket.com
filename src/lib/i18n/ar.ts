@@ -764,6 +764,7 @@ export const translations: TranslationDictionary = {
   "legal.partnerRedirectDisclaimer.summary": "ما يحدث عندما تعيد Kurioticket توجيه المستخدمين إلى شركات الطيران أو الفنادق أو الشركاء بالعمولة أو مزوّدي السفر",
   "legal.partnerRedirectDisclaimer.lastUpdatedDate": "May 11, 2026",
   "legal.partnerRedirectDisclaimer.lastUpdated": "آخر تحديث: May 11, 2026",
+  "legal.partnerRedirectDisclaimer.tableOfContents": "جدول المحتويات",
   "legal.partnerRedirectDisclaimer.sections.redirect.title": "عمليات إعادة توجيه آمنة",
   "legal.partnerRedirectDisclaimer.sections.redirect.paragraph1": "عندما تتابع إلى مزوّد خارجي، تعيد Kurioticket توجيهك إلى شركة طيران أو فندق أو شريك بالعمولة أو مزوّد سفر. قد نسجل بيانات وصفية لإعادة التوجيه مثل المزوّد والمسار والسعر والطابع الزمني ونوع المستخدم وصفحة المصدر لأغراض التحليلات والدعم ومنع الإساءة وتتبع الشراكة بالعمولة.",
   "legal.partnerRedirectDisclaimer.sections.redirect.paragraph2": "لا تقوم Kurioticket بملء مواقع شركات الطيران تلقائيًا أو استخراج بيانات مواقع شركات الطيران أو إكمال عمليات الشراء لدى الشركاء نيابةً عنك.",
