@@ -95,6 +95,8 @@ export const translations: TranslationDictionary = {
   business: "商务舱",
   first: "头等舱",
   cabinClass: "舱位等级",
+  childAgeRange: "2–17岁",
+  under2: "2岁以下",
   petFriendly: "可携带宠物",
   onlyShowPetFriendlyStays: "仅显示允许携带宠物的住宿",
   hotelAdultHelper: "18 岁以上住客",
