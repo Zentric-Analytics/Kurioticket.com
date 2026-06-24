@@ -163,6 +163,7 @@ export function FlightDetailsClient({ id }: { id: string }) {
                     stopPluralLabel={t.stopPlural || "stops"}
                     stopDualLabel={t.stopDual}
                     layoverInLabel={t.layoverIn || "Layover in"}
+                    layoverConnectorLabel={t.layoverConnector}
                     connectionLabels={buildConnectionLabels(t)}
                     locale={locale}
                   />
@@ -329,6 +330,7 @@ function SelectedFlightSummary({
   stopPluralLabel,
   stopDualLabel,
   layoverInLabel,
+  layoverConnectorLabel,
   connectionLabels,
   locale,
 }: {
@@ -348,6 +350,7 @@ function SelectedFlightSummary({
   stopPluralLabel: string;
   stopDualLabel?: string;
   layoverInLabel: string;
+  layoverConnectorLabel?: string;
   connectionLabels: ConnectionLabels;
   locale: string;
 }) {
@@ -385,6 +388,7 @@ function SelectedFlightSummary({
               stopPluralLabel={stopPluralLabel}
               stopDualLabel={stopDualLabel}
               layoverInLabel={layoverInLabel}
+              layoverConnectorLabel={layoverConnectorLabel}
               connectionLabels={connectionLabels}
               locale={locale}
             />
@@ -1362,6 +1366,7 @@ function CompactLegSection({
   stopPluralLabel,
   stopDualLabel,
   layoverInLabel,
+  layoverConnectorLabel,
   connectionLabels,
   locale,
 }: {
@@ -1380,6 +1385,7 @@ function CompactLegSection({
   stopPluralLabel: string;
   stopDualLabel?: string;
   layoverInLabel: string;
+  layoverConnectorLabel?: string;
   connectionLabels: ConnectionLabels;
   locale: string;
 }) {
@@ -1513,6 +1519,7 @@ function CompactLegSection({
                       <LayoverSeparator
                         layover={leg.layovers[segmentIndex]}
                         layoverInLabel={layoverInLabel}
+                        layoverConnectorLabel={layoverConnectorLabel}
                         connectionLabels={connectionLabels}
                       />
                     ) : null}
@@ -1626,17 +1633,20 @@ function CompactFlightRow({
 function LayoverSeparator({
   layover,
   layoverInLabel,
+  layoverConnectorLabel,
   connectionLabels,
 }: {
   layover: FlightLeg["layovers"][number];
   layoverInLabel: string;
+  layoverConnectorLabel?: string;
   connectionLabels: ConnectionLabels;
 }) {
   const connectionLabel = getConnectionLabel(layover.quality, connectionLabels);
 
   return (
     <div className="py-2 text-xs font-medium leading-4 text-slate-500">
-      {layoverInLabel} {layover.airport} · {layover.duration}
+      {layoverInLabel} {layover.airport}
+      {layoverConnectorLabel ? ` ${layoverConnectorLabel}` : ""} · {layover.duration}
       {connectionLabel ? ` · ${connectionLabel}` : ""}
     </div>
   );
@@ -1705,6 +1715,8 @@ type LocalizedDisplayLabels = {
   carryOnPluralIncluded: string;
   checkedBagSingularIncluded: string;
   checkedBagPluralIncluded: string;
+  includedBaggagePrefix?: string;
+  baggageListSeparator?: string;
 };
 
 function buildConnectionLabels(t: Record<string, string>): ConnectionLabels {
@@ -1738,6 +1750,8 @@ function buildLocalizedDisplayLabels(
       t.checkedBagSingularIncluded || "checked bag included",
     checkedBagPluralIncluded:
       t.checkedBagPluralIncluded || "checked bags included",
+    includedBaggagePrefix: t.includedBaggagePrefix,
+    baggageListSeparator: t.baggageListSeparator,
   };
 }
 
@@ -1809,7 +1823,10 @@ function localizeIncludedBaggageValue(
     return part;
   });
 
-  return translatedParts.join(", ");
+  const joinedParts = translatedParts.join(labels.baggageListSeparator || ", ");
+  return labels.includedBaggagePrefix
+    ? `${labels.includedBaggagePrefix}${joinedParts}`
+    : joinedParts;
 }
 
 function formatSeatSelectionValue(
@@ -1849,7 +1866,7 @@ function formatFareRulesValue(
 function localizeFareRulesValue(value: string, t: Record<string, string>) {
   return value
     .replace(
-      /Not refundable before departure/gi,
+      /Not refundable before departure\.?/gi,
       t.notRefundableBeforeDeparture || "Not refundable before departure",
     )
     .replace(
