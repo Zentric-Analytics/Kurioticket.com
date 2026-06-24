@@ -735,6 +735,7 @@ export const translations: TranslationDictionary = {
   "legal.dataDeletionPolicy.summary": "كيف يمكن للمستخدمين طلب حذف الحساب وما البيانات التي قد يلزم الاحتفاظ بها",
   "legal.dataDeletionPolicy.lastUpdatedDate": "May 11, 2026",
   "legal.dataDeletionPolicy.lastUpdated": "آخر تحديث: May 11, 2026",
+  "legal.dataDeletionPolicy.tableOfContents": "جدول المحتويات",
   "legal.dataDeletionPolicy.sections.request.title": "طلبات الحذف",
   "legal.dataDeletionPolicy.sections.request.paragraph1": "يمكنك طلب حذف الحساب من إعدادات الحساب أو من الدعم. سنعالج طلبات الحذف بما يتوافق مع القانون المعمول به واحتياجات التحقق من الهوية ومنع الاحتيال والالتزامات القانونية ومتطلبات الأمان.",
   "legal.dataDeletionPolicy.sections.retention.title": "السجلات المحتفظ بها",
