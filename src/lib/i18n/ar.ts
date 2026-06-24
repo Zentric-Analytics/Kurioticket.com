@@ -724,7 +724,6 @@ export const translations: TranslationDictionary = {
   flightLeg: "مقطع الرحلة",
   layover: "توقف انتظار",
   moreCount: "{{count}} إضافية",
-  "Live flight results are temporarily unavailable. Please try again shortly.": "نتائج الرحلات المباشرة غير متاحة مؤقتًا. يرجى المحاولة مرة أخرى قريبًا.",
   "hotelResults.liveSearchUnavailable": "البحث المباشر عن الفنادق غير متاح مؤقتًا. يرجى المحاولة مرة أخرى قريبًا.",
   "hotelResults.budgetPrice": "الميزانية / السعر",
   "hotelResults.totalUpTo": "الإجمالي حتى",
