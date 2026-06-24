@@ -54,7 +54,7 @@ export function SupportContent({
   const t = (key: string) => dictionary[key] ?? enTranslations[key] ?? "";
 
   const beforeContactDescription = dashboardFlow
-    ? "Include your Kurioticket account email, what you need help with, and any booking or route details that can help us understand the issue."
+    ? t("supportBeforeContactDashboardDescription")
     : t("supportBeforeContactDescription");
 
   const content = (
