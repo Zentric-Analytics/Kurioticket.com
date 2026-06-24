@@ -116,10 +116,10 @@ export const supportedLocales: SupportedLocale[] = [
   {
     code: "zh-cn",
     locale: "zh-CN",
-    label: "Chinese (Simplified)",
+    label: "Simplified Chinese",
     nativeLabel: "中文",
     direction: "ltr",
-    status: preparing,
+    status: "available",
     countryCode: "CN",
     fallbackText: "CN",
     translationStatus: "partial",
