@@ -271,4 +271,52 @@ export const translations: TranslationDictionary = {
   "homeDiscoveryRoute.us-lax-yvr.title": "温哥华山海城市之旅",
   "homeDiscoveryRoute.us-lax-yvr.routeNote":
     "便捷跨境路线，适合港湾景色、海鲜和附近高山步道。",
+  "homeDiscoveryRoute.ng-los-lhr.title": "伦敦商务与周末组合",
+  "homeDiscoveryRoute.ng-los-lhr.routeNote":
+    "高频长途航线，适合商务出行和顺带休闲安排。",
+  "homeDiscoveryRoute.ng-los-dxb.title": "迪拜购物中转",
+  "homeDiscoveryRoute.ng-los-dxb.routeNote":
+    "适合购物短假、家庭出行和继续转机的热门选择。",
+  "homeDiscoveryRoute.ng-abv-acc.title": "阿克拉区域短途行程",
+  "homeDiscoveryRoute.ng-abv-acc.routeNote":
+    "短途区域航线，提供高效的城市间通达。",
+  "homeDiscoveryRoute.ng-los-nbo.title": "内罗毕野生动物之旅门户",
+  "homeDiscoveryRoute.ng-los-nbo.routeNote":
+    "通往东非商务枢纽和野生动物延伸行程的便捷入口。",
+  "homeDiscoveryRoute.ng-abv-jnb.title": "约翰内斯堡城市短假",
+  "homeDiscoveryRoute.ng-abv-jnb.routeNote":
+    "南向连接能力强，适合会议出行和城市短假。",
+  "homeDiscoveryRoute.ng-los-ist.title": "伊斯坦布尔中转航线",
+  "homeDiscoveryRoute.ng-los-ist.routeNote":
+    "连接欧洲的优质枢纽，也适合充满活力的城市停留。",
+  "homeDiscoveryRoute.ng-abv-cdg.title": "巴黎风尚之旅",
+  "homeDiscoveryRoute.ng-abv-cdg.routeNote":
+    "经典欧洲航线，适合时尚、博物馆和美食体验。",
+  "homeDiscoveryRoute.ng-los-doh.title": "多哈优质中转",
+  "homeDiscoveryRoute.ng-los-doh.routeNote":
+    "注重舒适度的航线安排，便于顺畅衔接全球后续行程。",
+  "homeDiscoveryRoute.ng-los-kig.title": "基加利清洁城市周末游",
+  "homeDiscoveryRoute.ng-los-kig.routeNote":
+    "正在崛起的区域枢纽，拥有绿色山丘和便捷的城市交通。",
+  "homeDiscoveryRoute.ng-abv-cai.title": "开罗文化遗产停留",
+  "homeDiscoveryRoute.ng-abv-cai.routeNote":
+    "通往尼罗河历史游和热闹老城市场的门户。",
+  "homeDiscoveryRoute.ng-los-add.title": "亚的斯亚贝巴东非连接",
+  "homeDiscoveryRoute.ng-los-add.routeNote":
+    "重要中转点，餐饮和文化体验正在不断丰富。",
+  "homeDiscoveryRoute.ng-abv-fco.title": "罗马地标之旅",
+  "homeDiscoveryRoute.ng-abv-fco.routeNote":
+    "欧洲经典目的地，适合古迹、广场和悠闲夜晚。",
+  "homeDiscoveryRoute.ng-los-nrt.title": "东京长途都市活力之旅",
+  "homeDiscoveryRoute.ng-los-nrt.routeNote":
+    "亚洲主要门户，拥有霓虹街区和高效铁路交通。",
+  "homeDiscoveryRoute.ng-abv-mad.title": "马德里小吃与艺术之旅",
+  "homeDiscoveryRoute.ng-abv-mad.routeNote":
+    "欧洲城市短假航线，适合博物馆、林荫大道和深夜晚餐。",
+  "homeDiscoveryRoute.ng-los-cpt.title": "开普敦海岸探险",
+  "homeDiscoveryRoute.ng-los-cpt.routeNote":
+    "风景优美的南非航线，串联海滩、群山和葡萄园。",
+  "homeDiscoveryRoute.ng-abv-rob.title": "蒙罗维亚区域海滨之旅",
+  "homeDiscoveryRoute.ng-abv-rob.routeNote":
+    "西非城市短假，拥有大西洋海滩和本地市场。",
 };
