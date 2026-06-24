@@ -393,6 +393,13 @@ export const translations: TranslationDictionary = {
   loginForgotPassword: "忘记密码？",
   loginSubmit: "登录",
   loginGoogle: "使用 Google 继续",
+  loginCodeSent: "我们已向你的邮箱发送验证码。",
+  loginCodeInstructions:
+    "请输入发送至 {{email}} 的 6 位验证码。验证码将在 {{minutes}} 分钟后过期。",
+  loginVerificationCodeLabel: "验证码",
+  loginVerifyLogin: "验证并登录",
+  loginResendIn: "{{seconds}} 秒后可重新发送",
+  loginUseDifferentDetails: "使用其他登录信息",
   loginSignupPrompt: "第一次使用 Kurioticket？",
   loginCreateAccount: "创建账户",
   fromPrice: "起价",
