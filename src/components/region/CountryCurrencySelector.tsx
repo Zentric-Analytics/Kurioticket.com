@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 
 import { useLocale } from "@/components/layout/LocaleProvider";
 import { useRegion } from "@/components/region/RegionProvider";
+import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
 
 const formatTranslation = (
   template: string,
@@ -125,7 +126,7 @@ export function CountryCurrencySelector({
     selectedOption,
     options,
   } = useRegion();
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
 
   const [open, setOpen] = useState(false);
   const [dialogEntered, setDialogEntered] = useState(false);
@@ -461,12 +462,16 @@ export function CountryCurrencySelector({
     }
 
     return options.filter((option) => {
+      const localizedCountryName = getCountryDisplayNameForLocale(
+        option.code,
+        locale,
+        t[`countryCurrency.country.${option.code}`] ?? option.country,
+      );
+
       return (
         option.code.toLowerCase().includes(normalizedQuery) ||
         option.country.toLowerCase().includes(normalizedQuery) ||
-        (t[`countryCurrency.country.${option.code}`] ?? "")
-          .toLowerCase()
-          .includes(normalizedQuery) ||
+        localizedCountryName.toLowerCase().includes(normalizedQuery) ||
         option.currency.toLowerCase().includes(normalizedQuery)
       );
     });
@@ -474,8 +479,9 @@ export function CountryCurrencySelector({
     countryCurrencyQuery,
     options,
     popularCountryCurrencies,
-    t,
+    locale,
     showAllCountryCurrencies,
+    t,
   ]);
 
   const hasSearchQuery = countryCurrencyQuery.trim().length > 0;
@@ -500,8 +506,12 @@ export function CountryCurrencySelector({
   );
   const getCountryDisplayName = useCallback(
     (option: (typeof options)[number]) =>
-      t[`countryCurrency.country.${option.code}`] ?? option.country,
-    [t],
+      getCountryDisplayNameForLocale(
+        option.code,
+        locale,
+        t[`countryCurrency.country.${option.code}`] ?? option.country,
+      ),
+    [locale, t],
   );
 
   const handleCountryCurrencySelect = (option: (typeof options)[number]) => {

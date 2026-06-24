@@ -18,6 +18,8 @@ import { translations as nlTranslations } from "@/lib/i18n/nl";
 import { translations as arTranslations } from "@/lib/i18n/ar";
 import { translations as zhCnTranslations } from "@/lib/i18n/zh-cn";
 import { availableLocaleOptions, getTranslations } from "@/lib/i18n";
+import { getCountryDisplayNameForLocale } from "@/lib/region/countryDisplayNames";
+import { supportedRegions } from "@/lib/region/supportedRegions";
 
 type StorageLike = { getItem: (k: string) => string | null; setItem: (k: string, v: string) => void };
 type WindowLike = { localStorage: StorageLike; dispatchEvent: (event: Event) => boolean };
@@ -328,4 +330,47 @@ test("active locale dictionaries do not keep audited cross-language UI fallbacks
     flights: "Voos",
     search: "Pesquisar",
   });
+});
+
+
+test("country and currency selector country names resolve for every active locale", () => {
+  const activeLocales = ["en-us", "ar", "nl", "es-es", "fr", "de-de", "it-it", "pt-br", "zh-cn"];
+
+  assert.equal(supportedRegions.length, 250);
+
+  for (const locale of activeLocales) {
+    for (const option of supportedRegions) {
+      const displayName = getCountryDisplayNameForLocale(option.code, locale, option.country);
+      assert.ok(displayName.trim(), `${locale} ${option.code} should resolve a display name`);
+    }
+  }
+});
+
+test("country and currency selector uses localized display names without changing codes", () => {
+  const examples = new Map([
+    ["AF", { currency: "AFN", zh: "阿富汗", ar: "أفغانستان", nl: "Afghanistan", es: "Afganistán", fr: "Afghanistan", de: "Afghanistan", it: "Afghanistan", pt: "Afeganistão" }],
+    ["AL", { currency: "ALL", zh: "阿尔巴尼亚", ar: "ألبانيا", nl: "Albanië", es: "Albania", fr: "Albanie", de: "Albanien", it: "Albania", pt: "Albânia" }],
+    ["DZ", { currency: "DZD", zh: "阿尔及利亚", ar: "الجزائر", nl: "Algerije", es: "Argelia", fr: "Algérie", de: "Algerien", it: "Algeria", pt: "Argélia" }],
+    ["AS", { currency: "USD", zh: "美属萨摩亚", ar: "ساموا الأمريكية", nl: "Amerikaans-Samoa", es: "Samoa Americana", fr: "Samoa américaines", de: "Amerikanisch-Samoa", it: "Samoa Americane", pt: "Samoa Americana" }],
+    ["AD", { currency: "EUR", zh: "安道尔", ar: "أندورا", nl: "Andorra", es: "Andorra", fr: "Andorre", de: "Andorra", it: "Andorra", pt: "Andorra" }],
+    ["AO", { currency: "AOA", zh: "安哥拉", ar: "أنغولا", nl: "Angola", es: "Angola", fr: "Angola", de: "Angola", it: "Angola", pt: "Angola" }],
+    ["AI", { currency: "XCD", zh: "安圭拉", ar: "أنغويلا", nl: "Anguilla", es: "Anguila", fr: "Anguilla", de: "Anguilla", it: "Anguilla", pt: "Anguila" }],
+    ["AQ", { currency: "USD", zh: "南极洲", ar: "أنتاركتيكا", nl: "Antarctica", es: "Antártida", fr: "Antarctique", de: "Antarktis", it: "Antartide", pt: "Antártida" }],
+    ["EU", { currency: "EUR", zh: "欧盟", ar: "الاتحاد الأوروبي", nl: "Europese Unie", es: "Unión Europea", fr: "Union européenne", de: "Europäische Union", it: "Unione europea", pt: "União Europeia" }],
+  ]);
+
+  for (const [code, expected] of examples) {
+    const option = supportedRegions.find((region) => region.code === code);
+    assert.ok(option, `${code} option exists`);
+    assert.equal(option.code, code);
+    assert.equal(option.currency, expected.currency);
+    assert.equal(getCountryDisplayNameForLocale(code, "zh-cn", option.country), expected.zh);
+    assert.equal(getCountryDisplayNameForLocale(code, "ar", option.country), expected.ar);
+    assert.equal(getCountryDisplayNameForLocale(code, "nl", option.country), expected.nl);
+    assert.equal(getCountryDisplayNameForLocale(code, "es-es", option.country), expected.es);
+    assert.equal(getCountryDisplayNameForLocale(code, "fr", option.country), expected.fr);
+    assert.equal(getCountryDisplayNameForLocale(code, "de-de", option.country), expected.de);
+    assert.equal(getCountryDisplayNameForLocale(code, "it-it", option.country), expected.it);
+    assert.equal(getCountryDisplayNameForLocale(code, "pt-br", option.country), expected.pt);
+  }
 });
