@@ -397,7 +397,7 @@ export const translations: TranslationDictionary = {
   "legal.privacy.sections.choices.paragraph2": "我们仅保留对产品运营、安全、支持、分析、合规或合法业务需求有用的数据。",
   "legal.privacy.developerNote": "这些法律草案为初创阶段占位内容，在大规模公开发布前应由合格的法律顾问审阅。",
   "legal.cookiePolicy.title": "Cookie 使用政策",
-  "legal.cookiePolicy.summary": "Kurioticket 如何将 Cookie 和类似技术用于身份验证、安全、偏好设置、分析和性能。",
+  "legal.cookiePolicy.summary": "Kurioticket 如何将 Cookie（小型数据文件）和类似技术用于身份验证、安全、偏好设置、分析和性能。",
   "legal.cookiePolicy.lastUpdatedDate": "2026年5月11日",
   "legal.cookiePolicy.lastUpdated": "最后更新：2026年5月11日",
   "legal.cookiePolicy.tableOfContents": "目录",
