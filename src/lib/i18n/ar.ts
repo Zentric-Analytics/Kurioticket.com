@@ -730,6 +730,17 @@ export const translations: TranslationDictionary = {
   "accountMenu.savedTrips.label": "الرحلات المحفوظة",
   "accountMenu.priceAlerts.label": "تنبيهات الأسعار",
   "accountMenu.accountSettings.label": "إعدادات الحساب",
+  "accountSettings.eyebrow": "حسابي",
+  "accountSettings.title": "إعدادات الحساب",
+  "accountSettings.description":
+    "أدر تفاصيل الحساب والتفضيلات من حسابك في Kurioticket",
+  "accountSettings.notifications.title": "تفضيلات الإشعارات",
+  "accountSettings.notifications.description":
+    "راجع معلومات البريد الإلكتروني للحساب واحتفظ بتفاصيل التفضيلات في مكان واحد",
+  "accountSettings.privacy.title": "عناصر التحكم في الخصوصية",
+  "accountSettings.privacy.description":
+    "راجع معلومات الخصوصية وإرشادات بيانات الحساب وسياسات المنصة",
+  "accountSettings.privacy.legalCenterCta": "مراجعة المركز القانوني",
   account: "الحساب",
   signIn: "تسجيل الدخول",
   websiteLanguageTitle: "اختر لغة الموقع",
