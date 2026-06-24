@@ -48,6 +48,8 @@ export const translations: TranslationDictionary = {
   "accountDashboard.priceAlerts.tabs.all": "الكل",
   "accountDashboard.priceAlerts.sort.label": "ترتيب حسب",
   "accountDashboard.priceAlerts.sort.newest": "الأحدث",
+  "accountDashboard.priceAlerts.sort.oldest": "الأقدم",
+  "accountDashboard.priceAlerts.sort.routeAz": "المسار أ-ي",
   "accountDashboard.priceAlerts.features.monitoring.title": "مراقبة في الوقت الفعلي",
   "accountDashboard.priceAlerts.features.monitoring.body": "نراقب النتائج المدعومة من المزوّد عند تفعيل التنبيهات.",
   "accountDashboard.priceAlerts.features.email.title": "إشعارات البريد الإلكتروني",
