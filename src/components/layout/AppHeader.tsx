@@ -348,6 +348,12 @@ export function AppHeader({
     );
   }, [session?.user?.email, session?.user?.name, t.account]);
 
+  const getLanguageDescriptionLabel = useCallback(
+    (option: (typeof locales)[number]) =>
+      option.localizedLabels?.[locale] ?? option.label,
+    [locale],
+  );
+
   const filteredLanguages = useMemo(() => {
     const query = languageQuery.trim().toLowerCase();
 
@@ -356,14 +362,17 @@ export function AppHeader({
     }
 
     return locales.filter((option) => {
+      const descriptionLabel = getLanguageDescriptionLabel(option);
+
       return (
         option.label.toLowerCase().includes(query) ||
         option.nativeLabel.toLowerCase().includes(query) ||
+        descriptionLabel.toLowerCase().includes(query) ||
         option.locale.toLowerCase().includes(query) ||
         option.code.toLowerCase().includes(query)
       );
     });
-  }, [languageQuery, locales]);
+  }, [getLanguageDescriptionLabel, languageQuery, locales]);
 
   const translatedSignedInAccountMenuItems = useMemo(
     () =>
@@ -1030,7 +1039,8 @@ export function AppHeader({
                                     {option.nativeLabel}
                                   </span>
                                   <span className="mt-0.5 block truncate text-xs font-semibold text-slate-500">
-                                    {option.label} · {option.locale}
+                                    {getLanguageDescriptionLabel(option)} ·{" "}
+                                    {option.locale}
                                   </span>
                                   {!available ? (
                                     <span className="mt-1 inline-flex rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-bold text-slate-500">
@@ -1160,7 +1170,6 @@ export function AppHeader({
             ) : null}
           </nav>
         </div>
-
 
         {mobileMenuOpen && typeof document !== "undefined"
           ? createPortal(
@@ -1360,7 +1369,9 @@ export function AppHeader({
                               <span className="inline-flex w-6 shrink-0 items-center justify-center text-slate-500 transition-colors group-hover:text-indigo-700">
                                 <Icon size={19} aria-hidden="true" />
                               </span>
-                              <span className="truncate">{t[item.labelKey] || item.labelKey}</span>
+                              <span className="truncate">
+                                {t[item.labelKey] || item.labelKey}
+                              </span>
                             </Link>
                           );
                         })}
@@ -1418,7 +1429,8 @@ export function AppHeader({
                             {session?.user?.name || accountDisplayName}
                           </div>
                           <div className="mt-0.5 block truncate text-sm font-medium text-slate-500">
-                            {session?.user?.email || t["accountMenu.fallbackAccount"]}
+                            {session?.user?.email ||
+                              t["accountMenu.fallbackAccount"]}
                           </div>
                         </div>
 
@@ -1435,36 +1447,38 @@ export function AppHeader({
                       <div className="border-t border-slate-100" />
 
                       <div className="grid gap-1 py-4">
-                        {translatedMobileSignedInAccountMenuItems.map((item) => {
-                          const Icon = item.icon;
+                        {translatedMobileSignedInAccountMenuItems.map(
+                          (item) => {
+                            const Icon = item.icon;
 
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              onClick={(event) =>
-                                handleRouteLinkClick(event, item.href, () =>
-                                  setMobileAccountOpen(false),
-                                )
-                              }
-                              className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                            >
-                              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition-colors group-hover:border-indigo-100 group-hover:bg-indigo-50 group-hover:text-indigo-700">
-                                <Icon size={18} aria-hidden="true" />
-                              </span>
-                              <span className="min-w-0 flex-1">
-                                <span className="block whitespace-normal break-words">
-                                  {item.label}
+                            return (
+                              <Link
+                                key={item.href}
+                                href={item.href}
+                                onClick={(event) =>
+                                  handleRouteLinkClick(event, item.href, () =>
+                                    setMobileAccountOpen(false),
+                                  )
+                                }
+                                className="group inline-flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl px-2.5 py-2 text-base font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                              >
+                                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-700 transition-colors group-hover:border-indigo-100 group-hover:bg-indigo-50 group-hover:text-indigo-700">
+                                  <Icon size={18} aria-hidden="true" />
                                 </span>
-                              </span>
-                              <ChevronRight
-                                size={18}
-                                className="ml-auto shrink-0 text-slate-400 transition-colors group-hover:text-indigo-700"
-                                aria-hidden="true"
-                              />
-                            </Link>
-                          );
-                        })}
+                                <span className="min-w-0 flex-1">
+                                  <span className="block whitespace-normal break-words">
+                                    {item.label}
+                                  </span>
+                                </span>
+                                <ChevronRight
+                                  size={18}
+                                  className="ml-auto shrink-0 text-slate-400 transition-colors group-hover:text-indigo-700"
+                                  aria-hidden="true"
+                                />
+                              </Link>
+                            );
+                          },
+                        )}
                       </div>
 
                       <div className="border-t border-slate-100 pt-3">

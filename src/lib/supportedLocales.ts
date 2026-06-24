@@ -13,6 +13,8 @@ export type SupportedLocale = {
   label: string;
   /** Native display label shown in the selector. */
   nativeLabel: string;
+  /** Localized descriptive labels keyed by the active app language. */
+  localizedLabels?: Partial<Record<string, string>>;
   direction: SupportedLocaleDirection;
   status: SupportedLocaleStatus;
   countryCode: string;
@@ -29,6 +31,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "en-US",
     label: "English (United States)",
     nativeLabel: "English (United States)",
+    localizedLabels: { "zh-cn": "英语（美国）" },
     direction: "ltr",
     status: "available",
     countryCode: "US",
@@ -40,6 +43,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "es-ES",
     label: "Spanish",
     nativeLabel: "Español",
+    localizedLabels: { "zh-cn": "西班牙语" },
     direction: "ltr",
     status: "available",
     countryCode: "ES",
@@ -51,6 +55,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "fr",
     label: "French",
     nativeLabel: "Français",
+    localizedLabels: { "zh-cn": "法语" },
     direction: "ltr",
     status: "available",
     countryCode: "FR",
@@ -62,6 +67,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "de-DE",
     label: "German",
     nativeLabel: "Deutsch",
+    localizedLabels: { "zh-cn": "德语" },
     direction: "ltr",
     status: "available",
     countryCode: "DE",
@@ -73,6 +79,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "it-IT",
     label: "Italian",
     nativeLabel: "Italiano",
+    localizedLabels: { "zh-cn": "意大利语" },
     direction: "ltr",
     status: "available",
     countryCode: "IT",
@@ -84,6 +91,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "pt-BR",
     label: "Português (Brasil)",
     nativeLabel: "Português",
+    localizedLabels: { "zh-cn": "葡萄牙语（巴西）" },
     direction: "ltr",
     status: "available",
     countryCode: "BR",
@@ -95,6 +103,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "nl-NL",
     label: "Dutch",
     nativeLabel: "Nederlands",
+    localizedLabels: { "zh-cn": "荷兰语" },
     direction: "ltr",
     status: "available",
     countryCode: "NL",
@@ -106,6 +115,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "ar",
     label: "Arabic",
     nativeLabel: "العربية",
+    localizedLabels: { "zh-cn": "阿拉伯语" },
     direction: "rtl",
     status: "available",
     countryCode: "SA",
@@ -118,6 +128,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "zh-CN",
     label: "Simplified Chinese",
     nativeLabel: "中文",
+    localizedLabels: { "zh-cn": "简体中文" },
     direction: "ltr",
     status: "available",
     countryCode: "CN",
@@ -129,6 +140,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "ja-JP",
     label: "Japanese",
     nativeLabel: "日本語",
+    localizedLabels: { "zh-cn": "日语" },
     direction: "ltr",
     status: preparing,
     countryCode: "JP",
@@ -140,6 +152,7 @@ export const supportedLocales: SupportedLocale[] = [
     locale: "ko-KR",
     label: "Korean",
     nativeLabel: "한국어",
+    localizedLabels: { "zh-cn": "韩语" },
     direction: "ltr",
     status: preparing,
     countryCode: "KR",
