@@ -1370,6 +1370,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.comparingTotalStayPrices": "Confronto dei prezzi totali del soggiorno...",
   "hotelResults.checkingArrivalConvenience": "Verifica della comodità di arrivo...",
   "hotelResults.findingLowStressStays": "Ricerca di soggiorni senza stress...",
+  "Live flight results are temporarily unavailable. Please try again shortly.": "I risultati dei voli in tempo reale sono temporaneamente non disponibili. Riprova a breve.",
   "hotelResults.liveSearchUnavailable":
     "La ricerca hotel in tempo reale è temporaneamente non disponibile. Riprova tra poco.",
   "hotelResults.searchUnavailableDetailed": "La ricerca hotel è temporaneamente non disponibile per questa richiesta. Mostriamo opzioni di soggiorno solo quando prezzo, disponibilità, commissioni e regole possono essere verificati con il partner. Riprova più tardi o avvia una nuova ricerca.",

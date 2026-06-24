@@ -1515,6 +1515,7 @@ export const translations: TranslationDictionary = {
   "hotelResults.comparingTotalStayPrices": "Comparaison des prix totaux du séjour...",
   "hotelResults.checkingArrivalConvenience": "Vérification de la commodité d’arrivée...",
   "hotelResults.findingLowStressStays": "Recherche de séjours sans stress...",
+  "Live flight results are temporarily unavailable. Please try again shortly.": "Les résultats de vols en direct sont temporairement indisponibles. Veuillez réessayer sous peu.",
   "hotelResults.liveSearchUnavailable": "La recherche d’hôtels en direct est temporairement indisponible. Veuillez réessayer sous peu.",
   "hotelResults.searchUnavailableDetailed": "La recherche d’hôtels en direct est temporairement indisponible. Veuillez réessayer dans quelques instants.",
   "hotelResults.unableToSearchHotels": "Impossible de rechercher des hôtels.",

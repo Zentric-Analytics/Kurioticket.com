@@ -1203,6 +1203,7 @@ export const translations: TranslationDictionary = {
 
   "hotelResults.openFilters": "Filters openen",
   "hotelResults.selectDateAriaPrefix": "Selecteer",
+  "Live flight results are temporarily unavailable. Please try again shortly.": "Live vluchtresultaten zijn tijdelijk niet beschikbaar. Probeer het binnenkort opnieuw.",
   "hotelResults.liveSearchUnavailable": "Live hotelzoekopdracht is tijdelijk niet beschikbaar. Probeer het binnenkort opnieuw.",
   "hotelResults.foundPlacesToStay": "We hebben {{count}} verblijven voor je gevonden",
   "hotelResults.summaryAria": "Samenvatting van hotelresultaten",
