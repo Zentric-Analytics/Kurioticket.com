@@ -312,7 +312,7 @@ export const translations: TranslationDictionary = {
   footerTermsSettings: "条款与设置",
   footerPrivacyPolicy: "隐私政策",
   footerTermsOfService: "服务条款",
-  footerCookiePolicy: "Cookie 政策",
+  footerCookiePolicy: "Cookie 使用政策",
   legalCenter: "法律中心",
   footerAboutKurioticket: "关于 Kurioticket",
   footerAboutUs: "关于我们",
