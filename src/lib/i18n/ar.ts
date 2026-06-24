@@ -713,6 +713,7 @@ export const translations: TranslationDictionary = {
   "legal.acceptableUsePolicy.summary": "قواعد السلوك للاستخدام الآمن والعادل والقانوني لأنظمة Kurioticket",
   "legal.acceptableUsePolicy.lastUpdatedDate": "May 11, 2026",
   "legal.acceptableUsePolicy.lastUpdated": "آخر تحديث: May 11, 2026",
+  "legal.acceptableUsePolicy.tableOfContents": "جدول المحتويات",
   "legal.acceptableUsePolicy.sections.prohibited.title": "السلوك المحظور",
   "legal.acceptableUsePolicy.sections.prohibited.paragraph1": "لا يجوز لك استخراج بيانات Kurioticket أو استخراج بيانات مواقع شركات الطيران عبر Kurioticket أو مهاجمة واجهات برمجة تطبيقات المزوّدين أو أتمتة عمليات بحث مسيئة أو إنشاء حسابات احتيالية أو اختبار بطاقات مسروقة أو إرسال رسائل مزعجة إلى الدعم أو تعطيل موثوقية المنصة.",
   "legal.acceptableUsePolicy.sections.prohibited.paragraph2": "لا يجوز لك استخدام Kurioticket لتسهيل نشاط سفر غير قانوني أو مضايقة أو احتيال أو إساءة أو وصول غير مصرح به.",
