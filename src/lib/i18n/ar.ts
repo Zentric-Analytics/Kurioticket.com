@@ -707,6 +707,7 @@ export const translations: TranslationDictionary = {
   updatingResults: "جارٍ تحديث النتائج...",
   noFlightsMatchFilters: "لا توجد رحلات تطابق هذه الفلاتر. وسّع نطاق الفلاتر لرؤية المزيد من الخيارات المباشرة.",
   unableToSearchFlights: "تعذّر البحث عن الرحلات.",
+  "Live flight results are temporarily unavailable. Please try again shortly.": "نتائج الرحلات المباشرة غير متاحة مؤقتًا. يرجى المحاولة مرة أخرى قريبًا.",
   limitedProviderChecks: "قد تكون بعض عمليات التحقق من المزوّد محدودة لهذا البحث. راجع التوافر النهائي وتفاصيل السعر مع المزوّد قبل الحجز.",
   closeFilters: "إغلاق الفلاتر",
   flightOption: "خيار رحلة",
