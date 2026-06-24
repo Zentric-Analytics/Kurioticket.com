@@ -604,6 +604,17 @@ export const translations: TranslationDictionary = {
   "accountMenu.savedTrips.label": "已保存的行程",
   "accountMenu.priceAlerts.label": "价格提醒",
   "accountMenu.accountSettings.label": "账户设置",
+  "accountSettings.eyebrow": "我的账户",
+  "accountSettings.title": "账户设置",
+  "accountSettings.description":
+    "从你的 Kurioticket 账户管理账户详情和偏好设置。",
+  "accountSettings.notifications.title": "通知偏好",
+  "accountSettings.notifications.description":
+    "查看账户邮箱信息，并在一个地方管理偏好详情。",
+  "accountSettings.privacy.title": "隐私控制",
+  "accountSettings.privacy.description":
+    "查看隐私信息、账户数据指引和平台政策。",
+  "accountSettings.privacy.legalCenterCta": "查看法律中心",
   clear: "清除",
   clearAll: "全部清除",
   done: "完成",
