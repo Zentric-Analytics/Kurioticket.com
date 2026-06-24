@@ -723,6 +723,7 @@ export const translations: TranslationDictionary = {
   "legal.affiliateDisclosure.summary": "كيف قد تحصل Kurioticket على عمولات عندما ينقر المستخدمون أو يحجزون عبر شركاء موثوقين",
   "legal.affiliateDisclosure.lastUpdatedDate": "May 11, 2026",
   "legal.affiliateDisclosure.lastUpdated": "آخر تحديث: May 11, 2026",
+  "legal.affiliateDisclosure.tableOfContents": "جدول المحتويات",
   "legal.affiliateDisclosure.sections.model.title": "نموذج الشراكة بالعمولة",
   "legal.affiliateDisclosure.sections.model.paragraph1": "تقدم Kurioticket بحثًا مجانيًا عن الرحلات والفنادق دون رسوم خدمة. قد نحصل على عمولات شراكة بالعمولة عندما ينقر المستخدمون أو يحجزون أو يشترون عبر روابط شركات الطيران أو الفنادق أو شركاء السفر.",
   "legal.affiliateDisclosure.sections.model.paragraph2": "قد تتلقى Kurioticket تعويضًا من الشركاء عندما ينقر المستخدمون أو يحجزون عبر روابط المزوّدين. يساعد ذلك في تشغيل الخدمة وتحسينها.",
