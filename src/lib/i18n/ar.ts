@@ -16,6 +16,24 @@ export const translations: TranslationDictionary = {
   "accountDashboard.hub.manageAccount": "إدارة الحساب",
   "accountDashboard.hub.personalDetails": "التفاصيل الشخصية",
   "accountDashboard.hub.securitySettings": "إعدادات الأمان",
+  "accountDashboard.security.title": "إعدادات الأمان",
+  "accountDashboard.security.description":
+    "حدّث كلمة المرور وأدر أمان الحساب.",
+  "accountDashboard.security.passkeys.title": "مفاتيح المرور",
+  "accountDashboard.security.passkeys.description":
+    "استخدم مفاتيح المرور لتسجيل دخول أسرع وأكثر أمانًا.",
+  "accountDashboard.security.twoFactor.title": "المصادقة الثنائية",
+  "accountDashboard.security.twoFactor.description":
+    "أضف طبقة أمان إضافية إلى حسابك.",
+  "accountDashboard.security.activeSessions.title": "الجلسات النشطة",
+  "accountDashboard.security.activeSessions.description":
+    "راجع الأجهزة المسجلة الدخول حاليًا.",
+  "accountDashboard.security.deleteAccount.title": "حذف الحساب",
+  "accountDashboard.security.deleteAccount.description":
+    "احذف حسابك وبياناتك نهائيًا.",
+  "accountDashboard.security.action.setUp": "إعداد",
+  "accountDashboard.security.action.manage": "إدارة",
+  "accountDashboard.security.action.deleteAccount": "حذف",
   "accountDashboard.hub.travelActivity": "نشاط السفر",
   "accountDashboard.hub.myTrips": "رحلاتي",
   "accountDashboard.hub.savedTrips": "الرحلات المحفوظة",
