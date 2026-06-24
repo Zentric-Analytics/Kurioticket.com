@@ -82,6 +82,7 @@ export function normalizeLanguage(value?: string | null): LanguageCode {
   if (normalized === "it") return "it-it";
   if (normalized === "pt") return "pt-br";
   if (normalized === "zh") return "zh-cn";
+  if (normalized === "ja-jp") return "ja";
   if (["ar-sa", "ar-ae", "ar-eg"].includes(normalized)) return "ar";
 
   return getDefaultLanguage();
