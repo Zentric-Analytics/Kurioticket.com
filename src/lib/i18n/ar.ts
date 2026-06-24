@@ -537,6 +537,7 @@ export const translations: TranslationDictionary = {
   "destinations.country.oman": "عُمان",
   "destinations.country.saudiArabia": "المملكة العربية السعودية",
   destination: "الوجهة",
+  cityOrAirport: "مدينة أو مطار",
   cityOrHotel: "مدينة أو فندق",
   support: "الدعم",
   dashboard: "لوحة التحكم",
