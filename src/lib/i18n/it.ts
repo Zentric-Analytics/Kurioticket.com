@@ -1236,6 +1236,7 @@ export const translations: TranslationDictionary = {
   "legal.refundBookingDisclaimer.summary":
     "Chiarisce che acquisti, emissione dei biglietti, rimborsi, cancellazioni e pagamenti per inventario di viaggio avvengono al di fuori di Kurioticket.",
   "legal.refundBookingDisclaimer.lastUpdatedDate": "11 maggio 2026",
+  "legal.refundBookingDisclaimer.tableOfContents": "SOMMARIO",
   "legal.refundBookingDisclaimer.lastUpdated":
     "Ultimo aggiornamento: 11 maggio 2026",
   "legal.refundBookingDisclaimer.sections.no-ticketing.title":
@@ -1256,6 +1257,7 @@ export const translations: TranslationDictionary = {
   "legal.priceAvailabilityDisclaimer.summary":
     "Spiega perché prezzi di viaggio, regole tariffarie, tariffe delle camere e disponibilità possono cambiare.",
   "legal.priceAvailabilityDisclaimer.lastUpdatedDate": "11 maggio 2026",
+  "legal.priceAvailabilityDisclaimer.tableOfContents": "SOMMARIO",
   "legal.priceAvailabilityDisclaimer.lastUpdated":
     "Ultimo aggiornamento: 11 maggio 2026",
   "legal.priceAvailabilityDisclaimer.sections.change.title":
@@ -1275,6 +1277,7 @@ export const translations: TranslationDictionary = {
   "legal.partnerRedirectDisclaimer.summary":
     "Cosa accade quando Kurioticket reindirizza gli utenti a compagnie aeree, hotel, partner affiliati o fornitori di viaggio.",
   "legal.partnerRedirectDisclaimer.lastUpdatedDate": "11 maggio 2026",
+  "legal.partnerRedirectDisclaimer.tableOfContents": "SOMMARIO",
   "legal.partnerRedirectDisclaimer.lastUpdated":
     "Ultimo aggiornamento: 11 maggio 2026",
   "legal.partnerRedirectDisclaimer.sections.redirect.title":
