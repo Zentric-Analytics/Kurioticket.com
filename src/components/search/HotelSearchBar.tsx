@@ -352,8 +352,13 @@ export function HotelSearchBar({
     );
     const roomLabel = t(normalizedRooms === 1 ? "roomSingular" : "roomPlural");
 
-    return `${normalizedGuests} ${guestLabel}, ${normalizedRooms} ${roomLabel}`;
-  }, [rooms, t, totalHotelGuests]);
+    const separator =
+      locale?.trim().replace("_", "-").toLowerCase() === "zh-cn" ? "，" : ", ";
+
+    return `${normalizedGuests} ${guestLabel}${separator}${normalizedRooms} ${
+      roomLabel
+    }`;
+  }, [locale, rooms, t, totalHotelGuests]);
 
   const hotelSearchIntroLabel = introLabel ?? t("hotelSearchIntroLabel");
 
