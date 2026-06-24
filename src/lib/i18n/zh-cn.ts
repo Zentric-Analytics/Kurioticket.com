@@ -186,6 +186,56 @@ export const translations: TranslationDictionary = {
   faqIntro:
     "了解 Kurioticket 如何帮助你在向可信赖的服务商预订前比较航班、酒店和旅行选择。",
   faqViewAll: "查看所有常见问题",
+  faqHelpCenter: "帮助中心",
+  faqGeneralQuestions: "一般问题",
+  faqNeedMoreHelpPrefix: "需要更多帮助？请访问",
+  faqSupportPage: "支持页面",
+  faqNeedMoreHelpSuffix: "获取服务和联系方式。",
+  faqQuestionFindOptions: "Kurioticket 如何查找航班和酒店选项？",
+  faqAnswerFindOptions:
+    "Kurioticket 会搜索旅行供应商的实时优惠，并将选项集中到一个地方，方便你在选择前比较价格、路线、住宿和详细信息。",
+  faqQuestionSellDirectly: "Kurioticket 会直接销售机票或酒店房间吗？",
+  faqAnswerSellDirectly:
+    "Kurioticket 帮助你比较旅行选项。选择某个优惠后，你会被跳转到所选供应商的网站，以便查看详细信息并在该供应商的网站上完成预订。",
+  faqQuestionPriceChanges: "为什么点击优惠后价格可能会变化？",
+  faqAnswerPriceChanges:
+    "价格和可订状态可能会实时变化，因为航空公司、酒店和旅行供应商会频繁更新库存。预订前请务必在供应商的结账页面核对最终价格。",
+  faqQuestionCompareProviders: "我可以比较同一行程的多个供应商吗？",
+  faqAnswerCompareProviders:
+    "可以。Kurioticket 旨在帮助你并排比较选项，以便评估价格、时间、路线详情、酒店详情和整体价值。",
+  faqQuestionSecureBooking: "如何安全完成预订？",
+  faqAnswerSecureBooking:
+    "预订和付款会在供应商的结账流程中完成。确认前，你应始终查看供应商的条款、取消政策和最终价格。",
+  faqQuestionPreferences: "我可以设置货币和语言偏好吗？",
+  faqAnswerPreferences:
+    "可以。Kurioticket 允许你设置显示国家/地区和货币偏好，也可以从语言选择器中选择任何可用的网站语言。",
+  faqQuestionLiveCached: "搜索结果是实时的还是缓存的？",
+  faqAnswerLiveCached:
+    "Kurioticket 使用可随可订状态和价格变化而刷新的供应商搜索结果。这有助于展示当前选项，但最终可订状态由供应商确认。",
+  faqQuestionManageChanges: "我在哪里管理变更或取消？",
+  faqAnswerManageChanges:
+    "行程变更、取消、退款和预订支持通常由完成预订的供应商处理。请使用该供应商提供的确认信息提交服务请求。",
+  supportFaqAccountQuestion: "账户和登录帮助",
+  supportFaqAccountAnswer:
+    "Kurioticket 可以协助处理账户访问、登录问题、注册问题、个人资料访问以及与账户相关的平台问题。",
+  supportFaqSearchQuestion: "搜索和结果帮助",
+  supportFaqSearchAnswer:
+    "当航班或酒店搜索无法正常工作、结果无法加载、筛选条件令人困惑，或价格和供应商未按预期显示时，Kurioticket 可以提供帮助。",
+  supportFaqSavedTripsQuestion: "已保存行程和提醒",
+  supportFaqSavedTripsAnswer:
+    "Kurioticket 可以协助处理已保存行程、近期搜索、价格提醒、通知问题以及与账户关联的旅行工具。",
+  supportFaqRedirectQuestion: "预订和供应商跳转帮助",
+  supportFaqRedirectAnswer:
+    "如果跳转到合作伙伴或供应商时失败、打开了错误页面，或未保留所选行程或搜索详情，Kurioticket 可以提供帮助。",
+  supportFaqAlreadyBookedQuestion: "已经通过供应商预订了吗？",
+  supportFaqAlreadyBookedAnswer:
+    "如果你的预订是通过航空公司、酒店、旅行社或外部供应商完成的，该供应商负责预订变更、退款、取消、值机、登机、收据和旅行文件。",
+  supportFaqChangeBookingQuestion: "Kurioticket 可以更改我的预订吗？",
+  supportFaqChangeBookingAnswer:
+    "Kurioticket 只能在支持直接预订时，协助处理直接通过 Kurioticket 完成的预订。对于通过外部供应商完成的预订，请直接联系该供应商。",
+  supportFaqWhyRedirectedQuestion: "为什么我会被跳转到其他供应商？",
+  supportFaqWhyRedirectedAnswer:
+    "Kurioticket 是一个旅行搜索和比较平台，部分结果会跳转到可信赖的供应商，由你在那里完成预订、付款并获取供应商专属支持。",
   footerAbout:
     "免费搜索航班和酒店，比较可信赖合作伙伴的价格，更从容地做出旅行决定。",
   footerMeta: "Kurioticket 是一个旅行元搜索平台。",
