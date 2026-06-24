@@ -432,12 +432,12 @@ export function FlightLandingClient() {
             className="object-cover object-[56%_42%]"
           />
           <div className="absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/28 to-slate-950/10" />
-          <div className="absolute inset-y-0 left-0 w-[92%] bg-gradient-to-r from-slate-950/76 via-slate-950/38 to-transparent" />
+          <div className="absolute inset-y-0 start-0 w-[92%] bg-gradient-to-r from-slate-950/76 via-slate-950/38 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-t from-slate-950/86 via-slate-950/30 to-transparent" />
         </div>
 
         <div className="page-shell relative z-10 flex min-h-[19.75rem] items-start pt-11">
-          <div className="max-w-[22.5rem] pr-2 text-left text-white">
+          <div className="max-w-[22.5rem] pe-2 text-start text-white">
             <h1 className="text-[clamp(1.56rem,6.45vw,1.88rem)] font-semibold leading-[1.09] tracking-[-0.026em] text-white text-balance drop-shadow-[0_3px_16px_rgba(2,6,23,0.72)]">
               {useEnglishHeroWrap ? (
                 <span>
@@ -486,13 +486,13 @@ export function FlightLandingClient() {
               className="object-cover object-[55%_46%]"
             />
             <div className="absolute inset-0 bg-gradient-to-br from-slate-950/68 via-slate-950/24 to-slate-950/8" />
-            <div className="absolute inset-y-0 left-0 w-[76%] bg-gradient-to-r from-slate-950/74 via-slate-950/34 to-transparent" />
+            <div className="absolute inset-y-0 start-0 w-[76%] bg-gradient-to-r from-slate-950/74 via-slate-950/34 to-transparent" />
             <div className="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-slate-950/48 via-slate-950/14 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-slate-950/76 via-slate-950/26 to-transparent" />
           </div>
 
           <div className="page-shell relative z-10 flex min-h-[32rem] flex-col items-start pb-36 pt-8 lg:min-h-[36rem] lg:pb-40 lg:pt-12">
-            <div className="max-w-3xl pt-0 text-left text-white lg:pt-2">
+            <div className="max-w-3xl pt-0 text-start text-white lg:pt-2">
               <h1 className="text-[2.65rem] font-semibold leading-[1.02] tracking-[-0.045em] text-white drop-shadow-[0_3px_18px_rgba(15,23,42,0.62)] lg:text-[3.55rem]">
                 {heroTitle}
               </h1>
@@ -536,7 +536,7 @@ export function FlightLandingClient() {
 
       <section className="mt-14 border-y border-slate-200/90 bg-white sm:mt-16">
         <div className="page-shell py-7 sm:py-8 lg:py-9">
-          <div className="divide-y divide-slate-200/70 sm:grid sm:grid-cols-3 sm:gap-5 sm:divide-y-0 sm:[&>article+article]:border-l sm:[&>article+article]:border-slate-200/70 sm:[&>article+article]:pl-5">
+          <div className="divide-y divide-slate-200/70 sm:grid sm:grid-cols-3 sm:gap-5 sm:divide-y-0 sm:[&>article+article]:border-s sm:[&>article+article]:border-slate-200/70 sm:[&>article+article]:pl-5">
             {[
               {
                 title: t("flightLandingFeatureSearchReadyTitle"),

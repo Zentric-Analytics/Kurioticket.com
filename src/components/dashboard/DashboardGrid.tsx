@@ -118,8 +118,8 @@ function formatAccountWelcome(template: string, name: string) {
 function SavedEmptyStateIllustration() {
   return (
     <div className="relative mx-auto h-48 w-full max-w-[24rem] overflow-hidden sm:h-52" aria-hidden="true">
-      <div className="absolute left-1/2 top-5 h-36 w-36 -translate-x-1/2 rounded-full bg-teal/10" />
-      <div className="absolute bottom-4 left-1/2 h-8 w-[19rem] -translate-x-1/2 rounded-[100%] bg-navy/5 blur-sm" />
+      <div className="absolute start-1/2 top-5 h-36 w-36 -translate-x-1/2 rounded-full bg-teal/10" />
+      <div className="absolute bottom-4 start-1/2 h-8 w-[19rem] -translate-x-1/2 rounded-[100%] bg-navy/5 blur-sm" />
       <svg
         className="absolute inset-0 h-full w-full"
         viewBox="0 0 384 208"
@@ -159,7 +159,7 @@ function SavedEmptyStateIllustration() {
 
 export function AccountSectionHeader({ title, description, titleId }: { title: string; description: string; titleId?: string }) {
   return (
-    <div className="px-1 pb-2 text-left sm:px-2 sm:pb-3">
+    <div className="px-1 pb-2 text-start sm:px-2 sm:pb-3">
       <h1 id={titleId} className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
         {title}
       </h1>
@@ -176,7 +176,7 @@ function AccountDashboardRow({ row }: { row: AccountDashboardRowItem }) {
   return (
     <Link
       href={row.href}
-      className="focus-ring group/row flex min-h-12 items-center gap-3 border-t border-slate-100 px-5 py-2 text-left transition duration-150 hover:bg-slate-50 focus-visible:relative focus-visible:z-10 sm:min-h-[52px]"
+      className="focus-ring group/row flex min-h-12 items-center gap-3 border-t border-slate-100 px-5 py-2 text-start transition duration-150 hover:bg-slate-50 focus-visible:relative focus-visible:z-10 sm:min-h-[52px]"
     >
       <RowIcon className="size-[18px] shrink-0 text-blue-600" strokeWidth={2} aria-hidden="true" />
       <span className="min-w-0 flex-1 text-sm font-medium leading-5 text-slate-800">
@@ -220,7 +220,7 @@ export function AccountMenuPage({ initials, displayName, userEmail }: Pick<Dashb
     <section className="overflow-x-hidden" aria-labelledby="account-title">
       <div className="px-4 pb-8 pt-8 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 lg:pb-11 lg:pt-12">
         <div className="mx-auto max-w-[1120px] space-y-5">
-          <header className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-left shadow-sm sm:p-6" aria-label={t["accountDashboard.hub.title"]}>
+          <header className="rounded-2xl border border-slate-200/80 bg-white p-[18px] text-start shadow-sm sm:p-6" aria-label={t["accountDashboard.hub.title"]}>
             <div className="flex min-w-0 items-center gap-3.5 sm:gap-5">
               <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-purple-700 text-lg font-bold uppercase tracking-[-0.02em] text-white shadow-sm ring-1 ring-blue-200/70 sm:size-16 sm:text-xl">
                 {initials}
@@ -327,7 +327,7 @@ function getPersonalDetailsInitialValues({ displayName, userEmail, userName }: D
 
 function DetailValue({ value, fallback, helper }: { value: string; fallback: string; helper?: string }) {
   return (
-    <div className="min-w-0 space-y-0.5 text-left">
+    <div className="min-w-0 space-y-0.5 text-start">
       <p className={cn("break-words text-sm font-medium leading-6 text-slate-700", !value && "text-slate-500")}>{value || fallback}</p>
       {helper ? <p className="max-w-lg text-sm leading-6 text-slate-500">{helper}</p> : null}
     </div>
@@ -679,7 +679,7 @@ export function PreferencesDashboardPage() {
 function SecuritySettingRow({ title, body, action, danger = false, onAction, statusId }: SecuritySettingRowProps) {
   return (
     <div className="flex min-w-0 flex-col gap-4 px-5 py-5 sm:min-h-[5.25rem] sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-4">
-      <div className="min-w-0 sm:pr-4">
+      <div className="min-w-0 sm:pe-4">
         <h2 className="text-base font-semibold leading-6 text-slate-900">{title}</h2>
         <p className="mt-1 text-sm leading-6 text-slate-600">{body}</p>
       </div>
@@ -690,7 +690,7 @@ function SecuritySettingRow({ title, body, action, danger = false, onAction, sta
         className={cn(
           "focus-ring inline-flex min-h-10 w-fit shrink-0 cursor-pointer items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-semibold leading-5 transition sm:self-center",
           danger
-            ? "border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50"
+            ? "border-eed-200 text-red-600 hover:border-eed-300 hover:bg-red-50"
             : "border-blue-200 text-blue-700 hover:border-blue-300 hover:bg-blue-50",
         )}
       >

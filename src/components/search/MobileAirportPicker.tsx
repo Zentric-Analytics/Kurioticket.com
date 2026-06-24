@@ -110,7 +110,7 @@ export function MobileAirportPicker({
               onChange={(event) => onChange(event.target.value)}
               placeholder={labels.searchAirportsOrCities}
               autoComplete="off"
-              className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 pl-4 pr-14 text-base font-semibold text-slate-900 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/15"
+              className="focus-ring h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 py-3 ps-4 pe-14 text-base font-semibold text-slate-900 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-500/15"
             />
             {value.trim() ? (
               <button
@@ -120,7 +120,7 @@ export function MobileAirportPicker({
                   onClear();
                   window.requestAnimationFrame(() => inputRef.current?.focus());
                 }}
-                className="focus-ring absolute right-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-white hover:text-slate-900"
+                className="focus-ring absolute end-3 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-white hover:text-slate-900"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -144,7 +144,7 @@ export function MobileAirportPicker({
                 type="button"
                 onClick={() => onSelect(option)}
                 className={cn(
-                  "focus-ring block min-h-[72px] w-full rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3.5 text-left transition-colors",
+                  "focus-ring block min-h-[72px] w-full rounded-2xl border border-slate-200/70 bg-white/70 px-4 py-3.5 text-start transition-colors",
                   "hover:border-slate-300 hover:bg-white focus-visible:border-indigo-300 focus-visible:bg-white",
                 )}
               >

@@ -716,7 +716,7 @@ export function SearchTabs({
       : "gap-1.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.4fr)_minmax(0,1.15fr)_112px]"
   );
   const joinedFieldClassName = cn(
-    "transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
+    "transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0",
     compactHero ? "min-h-[50px] px-3 py-1 lg:min-h-[56px] lg:px-4 lg:py-2" : "min-h-[54px] px-3 py-1.5"
   );
   const flightJoinedFieldClassName = cn(
@@ -732,11 +732,11 @@ export function SearchTabs({
     compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const flightFieldValueClassName = cn(
-    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block sm:focus-visible:shadow-none md:text-sm lg:placeholder:text-slate-500",
+    "focus-ring hidden h-full w-full min-w-0 rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-[16px] font-medium text-slate-900 outline-none transition-colors placeholder:text-slate-400 sm:block sm:focus-visible:shadow-none md:text-sm lg:placeholder:text-slate-500",
     compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const flightFieldButtonClassName = cn(
-    "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pr-8 text-left text-[16px] font-medium text-slate-900 outline-none transition-colors sm:focus-visible:shadow-none md:text-sm",
+    "focus-ring flex h-8 w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 pe-8 text-start text-[16px] font-medium text-slate-900 outline-none transition-colors sm:focus-visible:shadow-none md:text-sm",
     compactHero && "lg:text-[15px] lg:font-medium lg:tracking-[-0.01em] lg:text-slate-900"
   );
   const hotelFieldLabelClassName = cn(
@@ -744,25 +744,25 @@ export function SearchTabs({
     compactHero && "lg:text-[10px] lg:font-semibold lg:tracking-[0.10em] lg:text-slate-600"
   );
   const hotelFieldValueClassName = cn(
-    "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-left font-medium leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
+    "focus-ring flex w-full items-center gap-2 rounded-md border-0 bg-transparent px-0 text-start font-medium leading-6 text-slate-950 outline-none transition-colors placeholder:text-slate-400",
     compactHero ? "min-h-9 text-[17px] sm:text-[16px] lg:text-[15px] lg:tracking-[-0.01em] lg:text-slate-900 lg:placeholder:text-slate-500" : "min-h-8 text-[16px] sm:text-[15px]"
   );
   const flightRouteGroupClassName = compactHero
-    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-indigo-500 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-indigo-500/25"
-    : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", flightJoinedFieldClassName);
+    ? "grid grid-cols-1 gap-1 rounded-xl bg-transparent transition-colors sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:items-stretch sm:border sm:border-slate-300 sm:bg-white sm:px-3.5 sm:py-1.5 sm:hover:border-slate-400 sm:focus-within:border-indigo-500 sm:focus-within:ring-2 sm:focus-within:ring-indigo-500/40 lg:grid-cols-[minmax(0,1fr)_40px_minmax(0,1fr)] lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:px-4 lg:py-2 lg:hover:border-slate-200 lg:focus-within:border-indigo-500 lg:focus-within:bg-white lg:focus-within:ring-2 lg:focus-within:ring-indigo-500/25"
+    : cn("grid grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", flightJoinedFieldClassName);
   const flightRouteFieldClassName = (side: "origin" | "destination") =>
     compactHero
       ? cn(
           "relative min-h-[54px] rounded-xl border border-slate-300 bg-white px-3.5 py-1.5 transition-colors sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 lg:flex lg:flex-col lg:justify-center lg:rounded-lg",
-          side === "origin" ? "sm:pr-3" : "sm:pl-3"
+          side === "origin" ? "sm:pe-3" : "sm:ps-3"
         )
-      : cn("relative px-0 py-0 transition-colors lg:rounded-lg", side === "origin" ? "pr-3" : "pl-3");
+      : cn("relative px-0 py-0 transition-colors lg:rounded-lg", side === "origin" ? "pe-3" : "ps-3");
   const submitWrapClassName = cn(
     "sm:col-span-2 lg:col-span-1 lg:self-stretch",
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const submitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
+    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
     compactHero ? "h-12 lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
   const hotelSubmitWrapClassName = cn(
@@ -770,7 +770,7 @@ export function SearchTabs({
     compactHero ? "lg:min-h-[58px]" : "lg:min-h-[58px]"
   );
   const hotelSubmitButtonClassName = cn(
-    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
+    "w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-4 text-sm font-bold text-white shadow-md shadow-indigo-700/20 enabled:hover:from-indigo-600 enabled:hover:to-violet-500 enabled:active:from-indigo-800 enabled:active:to-violet-700 disabled:from-indigo-700 disabled:to-violet-600 disabled:opacity-100 disabled:shadow-md disabled:shadow-indigo-700/20 lg:h-full lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-indigo-600/20 lg:text-[15px] lg:shadow-[0_10px_22px_rgba(67,56,202,0.22)] lg:disabled:shadow-[0_10px_22px_rgba(67,56,202,0.22)]",
     compactHero ? "h-[54px] lg:min-h-[58px]" : "h-12 lg:min-h-[58px]"
   );
 
@@ -1923,7 +1923,7 @@ export function SearchTabs({
               )}
               className="space-y-2.5"
             >
-              <h3 className="text-left text-[17px] font-bold tracking-tight text-slate-950">
+              <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
                 {formatCalendarHeading(
                   monthYearFormatter,
                   monthDate,
@@ -2020,7 +2020,7 @@ export function SearchTabs({
               )}
               className="space-y-2.5"
             >
-              <h3 className="text-left text-[17px] font-bold tracking-tight text-slate-950">
+              <h3 className="text-start text-[17px] font-bold tracking-tight text-slate-950">
                 {formatCalendarHeading(
                   monthYearFormatter,
                   monthDate,
@@ -2199,7 +2199,7 @@ export function SearchTabs({
                 onChange={(event) => onChange(event.target.value)}
                 placeholder={translate("cityAirportOrCode")}
                 autoComplete="off"
-                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+                className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
               />
               {value.trim() ? (
                 <button
@@ -2209,7 +2209,7 @@ export function SearchTabs({
                     onClear();
                     focusInput();
                   }}
-                  className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                  className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
                 >
                   <X className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -2232,7 +2232,7 @@ export function SearchTabs({
                   key={`${option.code}-${option.airport}-${inputId}`}
                   type="button"
                   onClick={() => onSelect(option)}
-                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-left transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
+                  className="focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-3.5 text-start transition-colors last:border-b-0 hover:bg-slate-50 focus-visible:bg-slate-50"
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500" aria-hidden="true">
                     <Plane className="h-4 w-4" />
@@ -2245,7 +2245,7 @@ export function SearchTabs({
                       {option.airport}
                     </span>
                   </span>
-                  <span className="shrink-0 pl-2 text-right text-sm font-extrabold tracking-[0.12em] text-slate-700">
+                  <span className="shrink-0 ps-2 text-end text-sm font-extrabold tracking-[0.12em] text-slate-700">
                     {option.code}
                   </span>
                 </button>
@@ -2278,7 +2278,7 @@ export function SearchTabs({
   }) => (
     <div
       className={cn(
-        "absolute left-0 top-[calc(100%+10px)] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]",
+        "absolute start-0 top-[calc(100%+10px)] hidden w-[min(92vw,520px)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_42px_rgba(15,23,42,0.12)] ring-1 ring-slate-950/[0.02] sm:block lg:w-[520px]",
         desktopPopoverPanelClassName
       )}
     >
@@ -2300,7 +2300,7 @@ export function SearchTabs({
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => onSelect(option)}
             className={cn(
-              "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-indigo-50/60 focus-visible:bg-indigo-50/60",
+              "focus-ring flex w-full items-center gap-3 border-b border-slate-100 px-4 py-2.5 text-start transition-colors last:border-b-0 hover:bg-indigo-50/60 focus-visible:bg-indigo-50/60",
               highlight === index && "bg-indigo-50 text-indigo-950"
             )}
           >
@@ -2315,7 +2315,7 @@ export function SearchTabs({
                 {option.airport}{option.country ? ` · ${option.country}` : ""}
               </span>
             </span>
-            <span className="shrink-0 pl-3 text-right text-sm font-medium tracking-[0.08em] text-slate-600">
+            <span className="shrink-0 ps-3 text-end text-sm font-medium tracking-[0.08em] text-slate-600">
               {option.code}
             </span>
           </button>
@@ -2824,7 +2824,7 @@ export function SearchTabs({
                   {tripTypeOpen && (
                     <div
                       role="listbox"
-                      className="absolute left-0 top-full z-30 mt-1 min-w-[210px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                      className="absolute start-0 top-full z-30 mt-1 min-w-[210px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
                     >
                       {(
                         [
@@ -2837,7 +2837,7 @@ export function SearchTabs({
                           type="button"
                           onClick={() => onSelectTripType(mode)}
                           className={cn(
-                            "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                            "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium transition-colors",
                             tripType ===
                               mode
                               ? "bg-slate-900 text-white"
@@ -2852,7 +2852,7 @@ export function SearchTabs({
                       <button
                         type="button"
                         disabled
-                        className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium text-slate-500"
+                        className="mt-0.5 flex w-full cursor-not-allowed items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium text-slate-500"
                       >
                         {t.multiCity || "Multi-city"} —
                         {t.useOneWayOrRoundTripSearch || "Use one-way or round-trip search"}
@@ -2888,7 +2888,7 @@ export function SearchTabs({
                       setToOpen(false);
                       setActiveMobileAirportPicker("origin");
                     }}
-                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
+                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-start text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
                   >
                     <span className={cn("truncate", !from.trim() && "text-slate-400")}>
                       {from.trim() || t.fromPlaceholder || "From?"}
@@ -2941,7 +2941,7 @@ export function SearchTabs({
                       onClick={onClearOrigin}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label={t.clearOrigin || "Clear origin"}
-                      className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
+                      className="focus-ring absolute end-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
@@ -2995,7 +2995,7 @@ export function SearchTabs({
                       setToOpen(false);
                       setActiveMobileAirportPicker("destination");
                     }}
-                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 pl-0 pr-11 text-left text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
+                    className="focus-ring flex h-full w-full min-w-0 items-center rounded-md border-0 bg-transparent py-0 ps-0 pe-11 text-start text-[16px] text-slate-900 outline-none transition-colors sm:hidden"
                   >
                     <span className={cn("truncate", !to.trim() && "text-slate-400")}>
                       {to.trim() || t.toPlaceholder || "To?"}
@@ -3042,7 +3042,7 @@ export function SearchTabs({
                       onClick={onClearDestination}
                       onMouseDown={(event) => event.preventDefault()}
                       aria-label={t.clearDestination || "Clear destination"}
-                      className="focus-ring absolute right-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
+                      className="focus-ring absolute end-0 top-1/2 z-30 hidden h-9 w-9 -translate-y-1/2 shrink-0 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900 focus-visible:ring-2 focus-visible:ring-indigo-500/40 active:scale-95 sm:inline-flex sm:h-8 sm:w-8"
                     >
                       <X size={15} />
                     </button>
@@ -3106,7 +3106,7 @@ export function SearchTabs({
                     onClick={onClearTravelDates}
                     onMouseDown={(event) => event.preventDefault()}
                     aria-label={t.clearTravelDates || "Clear travel dates"}
-                    className="focus-ring absolute right-2 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
+                    className="focus-ring absolute end-2 top-6 inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-700 active:scale-95"
                   >
                     <X size={14} />
                   </button>
@@ -3165,7 +3165,7 @@ export function SearchTabs({
                     }
                     openTravelersMenu();
                   }}
-                  className={cn(flightFieldButtonClassName, "justify-between pr-0")}
+                  className={cn(flightFieldButtonClassName, "justify-between pe-0")}
                 >
                   <span className="block min-w-0 truncate">
                       {
@@ -3343,7 +3343,7 @@ export function SearchTabs({
         >
           <div className={fieldCardClassName}>
             <div className={hotelGridClassName}>
-              <div className={cn("relative rounded-xl border border-slate-300 bg-white lg:rounded-l-xl", hotelJoinedFieldClassName)}>
+              <div className={cn("relative rounded-xl border border-slate-300 bg-white lg:rounded-s-xl", hotelJoinedFieldClassName)}>
                 <label className={hotelFieldLabelClassName}>
                   {t.destination || "Destination"}
                 </label>

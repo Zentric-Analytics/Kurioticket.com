@@ -175,7 +175,7 @@ export function CountryCurrencySelector({
   const isGroupedHeaderVariant = isHeaderVariant && grouped;
 
   const triggerClassName = isMobileVariant
-    ? "flex h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-none border border-slate-200 bg-white px-4 text-left text-sm font-semibold text-slate-900 transition-colors hover:border-violet-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+    ? "flex h-12 w-full cursor-pointer items-center justify-between gap-3 rounded-none border border-slate-200 bg-white px-4 text-start text-sm font-semibold text-slate-900 transition-colors hover:border-violet-300 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
     : isGroupedHeaderVariant
       ? "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 px-3 text-xs font-semibold text-indigo-50 shadow-sm backdrop-blur-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-indigo-700"
       : isHeaderVariant
@@ -700,7 +700,7 @@ export function CountryCurrencySelector({
                             },
                           )}
                           onClick={() => handleCountryCurrencySelect(option)}
-                          className={`group flex cursor-pointer items-center justify-between gap-3 rounded-none border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
+                          className={`group flex cursor-pointer items-center justify-between gap-3 rounded-none border px-4 py-3 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 ${
                             isActive
                               ? "border-violet-600 bg-violet-50 ring-1 ring-violet-600"
                               : "border-slate-200 bg-white hover:border-violet-300 hover:bg-slate-50"
@@ -751,7 +751,7 @@ export function CountryCurrencySelector({
                 </div>
 
                 {selectorDebugEnabled ? (
-                  <pre className="pointer-events-none fixed bottom-3 left-3 right-3 z-[1002] max-h-[42vh] overflow-auto rounded-lg bg-slate-950/90 p-3 text-[10px] leading-4 text-white shadow-2xl md:left-auto md:right-4 md:w-[28rem]">
+                  <pre className="pointer-events-none fixed bottom-3 start-3 end-3 z-[1002] max-h-[42vh] overflow-auto rounded-lg bg-slate-950/90 p-3 text-[10px] leading-4 text-white shadow-2xl md:start-auto md:end-4 md:w-[28rem]">
                     {JSON.stringify(
                       {
                         open,

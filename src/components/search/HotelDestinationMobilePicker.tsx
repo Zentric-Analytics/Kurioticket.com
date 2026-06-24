@@ -269,14 +269,14 @@ export function HotelDestinationMobilePicker({
                 }
               }}
               placeholder={t("hotelSearchDestinationPlaceholder")}
-              className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 pl-4 pr-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
+              className="focus-ring h-12 w-full rounded-xl border border-slate-300 bg-white py-3 ps-4 pe-12 text-base font-semibold text-slate-950 outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/15"
             />
             {query ? (
               <button
                 type="button"
                 onClick={clearValue}
                 aria-label={t("clearDestination")}
-                className="focus-ring absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                className="focus-ring absolute end-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-950"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
               </button>
@@ -302,7 +302,7 @@ export function HotelDestinationMobilePicker({
                     type="button"
                     onClick={() => applyValue(suggestion.searchValue)}
                     className={cn(
-                      "focus-ring flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-slate-50 focus-visible:bg-slate-50",
+                      "focus-ring flex w-full items-center justify-between gap-3 px-4 py-3.5 text-start transition-colors hover:bg-slate-50 focus-visible:bg-slate-50",
                       highlight === index && "bg-indigo-50",
                     )}
                   >

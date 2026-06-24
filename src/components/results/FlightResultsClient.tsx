@@ -55,7 +55,7 @@ import type { PublicFlightResult, SortMode } from "@/lib/types";
 import { cn, formatTime } from "@/lib/utils";
 import { translations as enTranslations } from "@/lib/i18n/en";
 
-const resultStackClass = "w-full max-w-[680px] lg:ml-4 xl:ml-6";
+const resultStackClass = "w-full max-w-[680px] lg:ms-4 xl:ms-6";
 const desktopFilterStickyTopClass =
   "lg:sticky lg:top-[7.25rem] lg:max-h-[calc(100vh-8.5rem)] lg:overflow-y-auto lg:overscroll-contain";
 
@@ -454,12 +454,12 @@ function RecentSearchCard({
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/35 via-transparent to-transparent" />
-        <span className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-900 shadow-sm">
+        <span className="absolute bottom-2 start-2 rounded-full bg-white/95 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-slate-900 shadow-sm">
           {entry.type === "flight" ? t("flights") : t("hotels")}
         </span>
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 p-3 pr-11">
+      <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 p-3 pe-11">
         <div className="min-w-0">
           <p className="line-clamp-1 text-[0.95rem] font-bold leading-snug text-slate-950">
             {entry.label}
@@ -497,7 +497,7 @@ function RecentSearchCard({
           event.stopPropagation();
           onRemove(entry.id);
         }}
-        className="focus-ring absolute right-2.5 top-2.5 inline-flex min-h-8 min-w-8 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-500 shadow-sm transition hover:bg-white hover:text-rose-600"
+        className="focus-ring absolute end-2.5 top-2.5 inline-flex min-h-8 min-w-8 items-center justify-center rounded-full border border-slate-200 bg-white/95 text-slate-500 shadow-sm transition hover:bg-white hover:text-rose-600"
       >
         <X className="h-3.5 w-3.5" />
       </button>
@@ -535,13 +535,13 @@ function SavedRouteCard({
             className="object-cover transition duration-500 group-hover:scale-105 group-focus-visible:scale-105"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-slate-950/10 to-transparent" />
-          <span className="absolute bottom-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[0.65rem] font-black tracking-[0.14em] text-slate-950 shadow-sm">
+          <span className="absolute bottom-3 start-3 rounded-full bg-white/95 px-2.5 py-1 text-[0.65rem] font-black tracking-[0.14em] text-slate-950 shadow-sm">
             {item.originCode} → {item.destinationCode}
           </span>
         </div>
 
         <div className="flex flex-1 flex-col p-4">
-          <h3 className="line-clamp-1 pr-8 text-base font-black leading-tight text-slate-950">
+          <h3 className="line-clamp-1 pe-8 text-base font-black leading-tight text-slate-950">
             {copy.title}
           </h3>
           <p className="mt-1 text-sm font-semibold text-slate-500">
@@ -562,7 +562,7 @@ function SavedRouteCard({
         aria-label={`${t("remove")} ${copy.title}`}
         aria-pressed="true"
         onClick={(event) => onHeartToggle(event, item.id)}
-        className="focus-ring absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-950/15 backdrop-blur transition hover:bg-rose-600"
+        className="focus-ring absolute end-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-rose-200/90 bg-rose-500/95 text-white shadow-sm shadow-rose-950/15 backdrop-blur transition hover:bg-rose-600"
       >
         <Heart className="h-4 w-4 fill-current" />
       </button>
@@ -2542,7 +2542,7 @@ export function FlightResultsClient() {
                   <div
                     role="listbox"
                     aria-label={t("tripType")}
-                    className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                    className="absolute start-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
                   >
                     <button
                       type="button"
@@ -2550,7 +2550,7 @@ export function FlightResultsClient() {
                       aria-selected={tripTypeInput === "round-trip"}
                       onClick={() => handleTripTypeChange("round-trip")}
                       className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium transition-colors",
                         tripTypeInput === "round-trip"
                           ? "bg-slate-900 text-white"
                           : "text-slate-700 hover:bg-slate-100",
@@ -2564,7 +2564,7 @@ export function FlightResultsClient() {
                       aria-selected={tripTypeInput === "one-way"}
                       onClick={() => handleTripTypeChange("one-way")}
                       className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium transition-colors",
                         tripTypeInput === "one-way"
                           ? "bg-slate-900 text-white"
                           : "text-slate-700 hover:bg-slate-100",
@@ -2579,9 +2579,9 @@ export function FlightResultsClient() {
 
             <div className="overflow-visible rounded-[1.65rem] border border-white/70 bg-white/90 p-2.5 shadow-[0_18px_44px_rgba(79,70,229,0.16)] ring-1 ring-indigo-100/80 backdrop-blur sm:rounded-2xl sm:border-slate-200 sm:bg-white sm:p-1 sm:shadow-[0_10px_28px_rgba(15,23,42,0.10)] sm:ring-0">
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-2 sm:gap-1.5 lg:grid-cols-[minmax(0,2.5fr)_minmax(0,1.45fr)_minmax(0,1.2fr)_112px] lg:gap-0">
-                <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-stretch rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-indigo-500/40 lg:col-span-1 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+                <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_34px_minmax(0,1fr)] items-stretch rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:px-3 sm:py-1.5 sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-indigo-500/40 lg:col-span-1 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                   <div
-                    className="relative min-h-[48px] px-0 py-0 pr-2 sm:min-h-[54px]"
+                    className="relative min-h-[48px] px-0 py-0 pe-2 sm:min-h-[54px]"
                     ref={originWrapRef}
                   >
                     <label
@@ -2618,7 +2618,7 @@ export function FlightResultsClient() {
                       }}
                       placeholder={t("fromPlaceholder")}
                       autoComplete="off"
-                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-normal md:text-sm"
+                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-normal md:text-sm"
                     />
                     {originInput ? (
                       <button
@@ -2633,7 +2633,7 @@ export function FlightResultsClient() {
                           event.stopPropagation();
                           clearOriginField();
                         }}
-                        className="focus-ring absolute right-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                       >
                         <X size={14} />
                       </button>
@@ -2666,7 +2666,7 @@ export function FlightResultsClient() {
                   </div>
 
                   <div
-                    className="relative min-h-[48px] px-0 py-0 pl-2 sm:min-h-[54px]"
+                    className="relative min-h-[48px] px-0 py-0 ps-2 sm:min-h-[54px]"
                     ref={destinationWrapRef}
                   >
                     <label
@@ -2704,7 +2704,7 @@ export function FlightResultsClient() {
                       }}
                       placeholder={t("toPlaceholder")}
                       autoComplete="off"
-                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pr-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-normal md:text-sm"
+                      className="focus-ring h-7 w-full rounded-md border-0 bg-transparent px-0 pe-8 text-[16px] font-semibold text-slate-950 outline-none transition-colors placeholder:font-medium placeholder:text-slate-400 sm:h-8 sm:font-normal md:text-sm"
                     />
                     {destinationInput ? (
                       <button
@@ -2719,7 +2719,7 @@ export function FlightResultsClient() {
                           event.stopPropagation();
                           clearDestinationField();
                         }}
-                        className="focus-ring absolute right-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                        className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                       >
                         <X size={14} />
                       </button>
@@ -2742,7 +2742,7 @@ export function FlightResultsClient() {
                 </div>
 
                 <div
-                  className="relative min-h-[50px] rounded-[1.25rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                  className="relative min-h-[50px] rounded-[1.25rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                   ref={departureWrapRef}
                 >
                   <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600">
@@ -2752,7 +2752,7 @@ export function FlightResultsClient() {
                     type="button"
                     aria-label={t("travelDates")}
                     onClick={() => setActiveDatePicker("departure")}
-                    className="focus-ring flex h-7 w-full items-center gap-1.5 rounded-md border-0 bg-transparent px-0 pr-7 text-left text-[15px] font-semibold text-slate-950 outline-none transition-colors sm:h-8 sm:gap-2 sm:pr-8 sm:text-[16px] sm:font-normal md:text-sm"
+                    className="focus-ring flex h-7 w-full items-center gap-1.5 rounded-md border-0 bg-transparent px-0 pe-7 text-start text-[15px] font-semibold text-slate-950 outline-none transition-colors sm:h-8 sm:gap-2 sm:pe-8 sm:text-[16px] sm:font-normal md:text-sm"
                   >
                     <Calendar size={16} className="shrink-0 text-slate-500" />
                     <span className="truncate">
@@ -2779,7 +2779,7 @@ export function FlightResultsClient() {
                         setActiveDatePicker(null);
                         setDatePickerPosition(null);
                       }}
-                      className="focus-ring absolute right-3 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      className="focus-ring absolute end-3 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                     >
                       <X size={14} />
                     </button>
@@ -2787,7 +2787,7 @@ export function FlightResultsClient() {
                 </div>
 
                 <div
-                  className="relative min-h-[50px] rounded-[1.25rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
+                  className="relative min-h-[50px] rounded-[1.25rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50/80 px-3 py-1.5 shadow-sm transition-colors hover:border-slate-300 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/30 sm:min-h-[54px] sm:rounded-xl sm:border-slate-300 sm:bg-white sm:shadow-none sm:hover:border-slate-400 sm:focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0"
                   ref={travelerCabinWrapRef}
                 >
                   <label className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.16em] leading-4 text-slate-500 sm:mb-1 sm:text-xs sm:font-semibold sm:tracking-wide sm:text-slate-600">
@@ -2805,7 +2805,7 @@ export function FlightResultsClient() {
                         return next;
                       });
                     }}
-                    className="focus-ring flex h-7 w-full items-center justify-between gap-1.5 rounded-md border-0 bg-transparent px-0 text-left text-[15px] font-semibold text-slate-950 outline-none transition-colors sm:h-8 sm:gap-2 sm:text-[16px] sm:font-normal md:text-sm"
+                    className="focus-ring flex h-7 w-full items-center justify-between gap-1.5 rounded-md border-0 bg-transparent px-0 text-start text-[15px] font-semibold text-slate-950 outline-none transition-colors sm:h-8 sm:gap-2 sm:text-[16px] sm:font-normal md:text-sm"
                   >
                     <span className="block truncate text-[15px] font-semibold text-slate-950 sm:text-sm sm:font-medium sm:text-slate-900">
                       {buildTravelerCabinSummary(
@@ -2828,7 +2828,7 @@ export function FlightResultsClient() {
                 <div className="col-span-2 lg:col-span-1 lg:min-h-[54px] lg:self-stretch">
                   <Button
                     type="submit"
-                    className="h-[50px] w-full rounded-[1.25rem] bg-gradient-to-r from-indigo-700 via-violet-600 to-fuchsia-600 px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(79,70,229,0.28)] transition-transform active:scale-[0.99] sm:h-12 sm:rounded-xl sm:bg-gradient-to-r sm:from-indigo-700 sm:to-violet-600 sm:shadow-md sm:shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-r-xl lg:border lg:border-l-0 lg:border-indigo-600/20"
+                    className="h-[50px] w-full rounded-[1.25rem] bg-gradient-to-r from-indigo-700 via-violet-600 to-fuchsia-600 px-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(79,70,229,0.28)] transition-transform active:scale-[0.99] sm:h-12 sm:rounded-xl sm:bg-gradient-to-r sm:from-indigo-700 sm:to-violet-600 sm:shadow-md sm:shadow-indigo-700/20 lg:h-full lg:min-h-[54px] lg:self-stretch lg:rounded-none lg:rounded-e-xl lg:border lg:border-s-0 lg:border-indigo-600/20"
                   >
                     {t("search")}
                   </Button>
@@ -3253,7 +3253,7 @@ export function FlightResultsClient() {
                   }}
                   className={cn(
                     mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-left",
+                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
                   )}
                 >
                   <span className="min-w-0">
@@ -3278,7 +3278,7 @@ export function FlightResultsClient() {
                   }}
                   className={cn(
                     mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-left",
+                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
                   )}
                 >
                   <span className="min-w-0">
@@ -3305,7 +3305,7 @@ export function FlightResultsClient() {
                   }}
                   className={cn(
                     mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center gap-3 text-left",
+                    "flex min-h-[68px] w-full items-center gap-3 text-start",
                   )}
                 >
                   <Calendar className="h-5 w-5 shrink-0 text-indigo-700" />
@@ -3336,7 +3336,7 @@ export function FlightResultsClient() {
                   }}
                   className={cn(
                     mobileFieldClass,
-                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-left",
+                    "flex min-h-[68px] w-full items-center justify-between gap-3 text-start",
                   )}
                 >
                   <span className="min-w-0">
@@ -3406,7 +3406,7 @@ export function FlightResultsClient() {
               type="button"
               aria-label={t("editFlightSearch")}
               onClick={expandStickySearch}
-              className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-left transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
+              className="group focus-ring flex w-full min-w-0 flex-col gap-2 rounded-[2px] bg-white px-3 py-2.5 text-start transition hover:bg-slate-50 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4"
             >
               <span className="grid min-w-0 flex-1 grid-cols-1 gap-1.5 sm:grid-cols-[minmax(0,1.5fr)_minmax(0,0.8fr)] lg:grid-cols-[minmax(0,1.6fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center lg:gap-3">
                 <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-slate-800">
@@ -3492,7 +3492,7 @@ export function FlightResultsClient() {
                     setTravelerPopoverPosition(null);
                     setTripTypeMenuOpen((open) => !open);
                   }}
-                  className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:rounded-l-xl lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200"
+                  className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:rounded-s-xl lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200"
                 >
                   <span className="min-w-0">
                     <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
@@ -3515,7 +3515,7 @@ export function FlightResultsClient() {
                   <div
                     role="listbox"
                     aria-label={t("tripType")}
-                    className="absolute left-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
+                    className="absolute start-0 top-full z-30 mt-1 min-w-[180px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg shadow-slate-900/10"
                   >
                     <button
                       type="button"
@@ -3523,7 +3523,7 @@ export function FlightResultsClient() {
                       aria-selected={tripTypeInput === "round-trip"}
                       onClick={() => handleTripTypeChange("round-trip")}
                       className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium transition-colors",
                         tripTypeInput === "round-trip"
                           ? "bg-slate-900 text-white"
                           : "text-slate-700 hover:bg-slate-100",
@@ -3538,7 +3538,7 @@ export function FlightResultsClient() {
                       aria-selected={tripTypeInput === "one-way"}
                       onClick={() => handleTripTypeChange("one-way")}
                       className={cn(
-                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-left text-sm font-medium transition-colors",
+                        "focus-ring flex w-full items-center rounded-lg px-2.5 py-1.5 text-start text-sm font-medium transition-colors",
                         tripTypeInput === "one-way"
                           ? "bg-slate-900 text-white"
                           : "text-slate-700 hover:bg-slate-100",
@@ -3550,10 +3550,10 @@ export function FlightResultsClient() {
                 ) : null}
               </div>
 
-              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_36px_minmax(0,1fr)] items-stretch rounded-xl border border-slate-300 bg-white px-3 py-1.5 transition-colors hover:border-slate-400 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200 lg:focus-within:border-slate-200 lg:focus-within:ring-0">
                 <div
                   ref={originWrapRef}
-                  className="relative min-h-[54px] px-0 py-0 pr-3"
+                  className="relative min-h-[54px] px-0 py-0 pe-3"
                 >
                   <label
                     className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
@@ -3600,7 +3600,7 @@ export function FlightResultsClient() {
                     }}
                     placeholder={t("fromPlaceholder")}
                     autoComplete="off"
-                    className="h-8 w-full border-0 bg-transparent p-0 pr-7 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
+                    className="h-8 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
                   />
 
                   {originInput ? (
@@ -3616,7 +3616,7 @@ export function FlightResultsClient() {
                         event.stopPropagation();
                         clearOriginField();
                       }}
-                      className="focus-ring absolute right-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      className="focus-ring absolute end-2 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                     >
                       <X size={14} />
                     </button>
@@ -3651,7 +3651,7 @@ export function FlightResultsClient() {
 
                 <div
                   ref={destinationWrapRef}
-                  className="relative min-h-[54px] px-0 py-0 pl-3"
+                  className="relative min-h-[54px] px-0 py-0 ps-3"
                 >
                   <label
                     className="mb-1 block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600"
@@ -3699,7 +3699,7 @@ export function FlightResultsClient() {
                     }}
                     placeholder={t("toPlaceholder")}
                     autoComplete="off"
-                    className="h-8 w-full border-0 bg-transparent p-0 pr-7 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
+                    className="h-8 w-full border-0 bg-transparent p-0 pe-7 text-[16px] font-semibold text-slate-950 outline-none placeholder:text-slate-400 md:text-sm"
                   />
 
                   {destinationInput ? (
@@ -3715,7 +3715,7 @@ export function FlightResultsClient() {
                         event.stopPropagation();
                         clearDestinationField();
                       }}
-                      className="focus-ring absolute right-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+                      className="focus-ring absolute end-0 top-1/2 inline-flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
                     >
                       <X size={14} />
                     </button>
@@ -3750,7 +3750,7 @@ export function FlightResultsClient() {
                     setActiveDatePicker("departure");
                     setDatePickerPosition(null);
                   }}
-                  className="focus-ring flex h-full min-h-[54px] w-full items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200"
+                  className="focus-ring flex h-full min-h-[54px] w-full items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200"
                 >
                   <Calendar className="h-4 w-4 shrink-0 text-indigo-700" />
                   <span className="min-w-0">
@@ -3813,7 +3813,7 @@ export function FlightResultsClient() {
                     setTravelerPopoverOpen(true);
                     setTravelerPopoverPosition(null);
                   }}
-                  className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-left transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-r lg:border-slate-200 lg:hover:border-slate-200"
+                  className="focus-ring flex h-full min-h-[54px] w-full items-center justify-between gap-2 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-start transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500/40 lg:rounded-none lg:border-0 lg:border-e lg:border-slate-200 lg:hover:border-slate-200"
                 >
                   <span className="min-w-0">
                     <span className="block text-xs font-semibold uppercase leading-4 tracking-wide text-slate-600">
@@ -3886,7 +3886,7 @@ export function FlightResultsClient() {
 
               <Button
                 type="submit"
-                className="h-full min-h-[54px] w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:min-w-[112px] lg:rounded-l-none lg:rounded-r-xl"
+                className="h-full min-h-[54px] w-full rounded-xl bg-gradient-to-r from-indigo-700 to-violet-600 px-5 text-sm font-bold text-white shadow-lg shadow-indigo-700/20 ring-1 ring-indigo-500/20 lg:min-w-[112px] lg:rounded-s-none lg:rounded-e-xl"
               >
                 {t("search")}
               </Button>
@@ -3916,7 +3916,7 @@ export function FlightResultsClient() {
             <span>{t("filters")}</span>
           </span>
           {activeFilterCount > 0 ? (
-            <span className="absolute right-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
+            <span className="absolute end-1.5 top-1.5 inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full bg-indigo-50 px-1.5 text-[11px] font-semibold leading-none text-indigo-700 shadow-sm ring-2 ring-white">
               {activeFilterCount}
             </span>
           ) : null}
@@ -3925,7 +3925,7 @@ export function FlightResultsClient() {
         <button
           type="button"
           onClick={openMobileSearchDrawer}
-          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-left shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+          className="flex h-16 min-w-0 max-w-full flex-1 items-center justify-between gap-3 overflow-hidden rounded-md border border-slate-200/90 bg-white px-4 py-0 text-start shadow-[0_6px_16px_rgba(15,23,42,0.06)] transition hover:border-slate-300 hover:shadow-[0_8px_18px_rgba(15,23,42,0.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/40"
         >
           <span className="flex min-w-0 flex-1 flex-col justify-center overflow-hidden">
             <span className="block truncate text-[16px] font-bold leading-5 text-slate-950">
@@ -4259,7 +4259,7 @@ export function FlightResultsClient() {
 
       <aside
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
+          "fixed bottom-0 start-0 end-0 z-50 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-2xl bg-white shadow-xl transition-transform lg:hidden",
           filtersOpen ? "translate-y-0" : "translate-y-full",
         )}
       >
@@ -5227,7 +5227,7 @@ function SuggestionList({
               event.stopPropagation();
             }}
             onClick={() => onSelect(airportInputValue(item))}
-            className="block w-full px-3 py-1.5 text-left transition-colors hover:bg-slate-50"
+            className="block w-full px-3 py-1.5 text-start transition-colors hover:bg-slate-50"
           >
             <p className="text-[13px] font-medium text-slate-900">
               {item.city} ({item.code})
@@ -5843,7 +5843,7 @@ function SummarySortButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "group relative flex h-full flex-col rounded-2xl border text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
+        "group relative flex h-full flex-col rounded-2xl border text-start transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/30",
         mobile
           ? "min-w-[178px] snap-start px-3 py-2.5"
           : "min-h-[104px] px-3.5 py-3",

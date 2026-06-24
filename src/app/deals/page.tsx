@@ -713,7 +713,7 @@ export default function DealsPage() {
                             value={origin}
                             onChange={(event) => setOrigin(event.target.value)}
                             placeholder={t("deals.originPlaceholder")}
-                            className="h-8 w-full rounded-md border-0 bg-transparent px-0 pr-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
+                            className="h-8 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
                             autoComplete="address-level2"
                             required={includesFlight}
                           />
@@ -727,7 +727,7 @@ export default function DealsPage() {
                                 setError("");
                                 originInputRef.current?.focus();
                               }}
-                              className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                              className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
                             >
                               <X className="h-4 w-4" aria-hidden="true" />
                             </button>
@@ -756,7 +756,7 @@ export default function DealsPage() {
                             setDestination(event.target.value)
                           }
                           placeholder={t("deals.destinationPlaceholder")}
-                          className="h-8 w-full rounded-md border-0 bg-transparent px-0 pr-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
+                          className="h-8 w-full rounded-md border-0 bg-transparent px-0 pe-9 text-[16px] text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 md:text-sm"
                           autoComplete="address-level2"
                           required
                         />
@@ -770,7 +770,7 @@ export default function DealsPage() {
                               setError("");
                               destinationInputRef.current?.focus();
                             }}
-                            className="absolute right-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
+                            className="absolute end-0 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1"
                           >
                             <X className="h-4 w-4" aria-hidden="true" />
                           </button>
