@@ -441,10 +441,8 @@ export const translations: TranslationDictionary = {
     "La cronologia dei tuoi viaggi apparirà qui",
   "accountDashboard.trips.history.empty.past.body":
     "I viaggi completati saranno elencati qui per consentirti di rivedere piani e dettagli passati.",
-  "accountDashboard.trips.history.empty.cancelled.title":
-    "Nessun viaggio cancellato al momento",
-  "accountDashboard.trips.history.empty.cancelled.body":
-    "I viaggi che cancelli appariranno qui per una consultazione semplice.",
+  "accountDashboard.trips.history.empty.cancelled.title": "Programmi cambiati?",
+  "accountDashboard.trips.history.empty.cancelled.body": "Le prenotazioni cancellate appariranno qui come riferimento.",
   "accountDashboard.trips.illustration.currentAriaLabel": "Illustrazione di viaggio",
   "accountDashboard.trips.illustration.historyAriaLabel":
     "Illustrazione della cronologia viaggi",
