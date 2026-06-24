@@ -1203,14 +1203,24 @@ export function SearchTabs({
 
 
   const guests = String(hotelAdultCount + hotelChildCount);
-  const isArabicLocale = (locale ?? activeLocale)
+  const normalizedSummaryLocale = (locale ?? activeLocale)
     ?.trim()
     .replace("_", "-")
-    .toLowerCase()
-    .startsWith("ar");
+    .toLowerCase();
+  const isArabicLocale = normalizedSummaryLocale?.startsWith("ar");
+  const isSimplifiedChineseLocale = normalizedSummaryLocale === "zh-cn";
+  const summarySeparator = isSimplifiedChineseLocale ? "，" : ", ";
   const hotelGuestsRoomsSummary = isArabicLocale
     ? `${Number(guests) === 1 ? `${translate("guestSingular")} واحد` : `${guests} ${translate("guestPlural")}`}، ${Number(rooms) === 1 ? `${translate("roomSingular")} واحدة` : `${rooms} ${translate("roomPlural")}`}`
-    : `${guests} ${Number(guests) === 1 ? translate("guestSingular") || "guest" : translate("guestPlural") || "guests"}, ${rooms} ${Number(rooms) === 1 ? translate("roomSingular") || "room" : translate("roomPlural") || "rooms"}`;
+    : `${guests} ${
+        Number(guests) === 1
+          ? translate("guestSingular") || "guest"
+          : translate("guestPlural") || "guests"
+      }${summarySeparator}${rooms} ${
+        Number(rooms) === 1
+          ? translate("roomSingular") || "room"
+          : translate("roomPlural") || "rooms"
+      }`;
 
   const formatShortDate = useCallback((
     isoDate: string
