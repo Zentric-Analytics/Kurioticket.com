@@ -13,6 +13,14 @@ export const translations: TranslationDictionary = {
   globalLanguage: "全球语言",
   closeLanguageSelector: "关闭语言选择器",
 
+  forgotPasswordTitle: "重置密码",
+  forgotPasswordSubtitle: "输入你的电子邮箱，我们会发送重置密码的说明。",
+  forgotPasswordEmailLabel: "电子邮箱",
+  forgotPasswordEmailPlaceholder: "you@example.com",
+  forgotPasswordSubmit: "发送重置链接",
+  forgotPasswordRemember: "想起密码了？",
+  forgotPasswordLoginLink: "登录",
+
   flights: "航班",
   hotels: "酒店",
   cars: "租车",
