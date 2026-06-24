@@ -287,6 +287,15 @@ export const translations: TranslationDictionary = {
   supportFaqWhyRedirectedQuestion: "为什么我会被跳转到其他供应商？",
   supportFaqWhyRedirectedAnswer:
     "Kurioticket 是一个旅行搜索和比较平台，部分结果会跳转到可信赖的供应商，由你在那里完成预订、付款并获取供应商专属支持。",
+  aboutPageEyebrow: "关于 Kurioticket",
+  aboutPageTitle: "关于我们",
+  aboutPageIntroPrimary:
+    "Kurioticket 是一个旅行搜索和比较平台，帮助旅客搜索、比较并发现航班、酒店、租车和旅行优惠。",
+  aboutPageIntroSecondary:
+    "我们的目标是将可用选项和服务提供商信息集中在一个简单的位置，让旅行规划更清晰，帮助旅客在继续前往适合其行程的服务提供商之前先查看选择。",
+  aboutPagePlanningCardHeading: "实用的旅行规划工具",
+  aboutPagePlanningCardBody:
+    "Kurioticket 专注于通过有用的背景信息帮助旅客评估旅行选项。可订情况、价格、规则和最终预订步骤可能因服务提供商而异，因此旅客在做出决定前应仔细查看服务提供商页面。",
   signupPageTitle: "创建你的账户",
   signupFullNameLabel: "全名",
   signupEmailLabel: "电子邮箱",
