@@ -487,6 +487,7 @@ export const translations: TranslationDictionary = {
   returnDate: "返程日期",
   travelDates: "旅行日期",
   chooseTravelDates: "选择旅行日期",
+  tripType: "行程类型",
   roundTrip: "往返",
   oneWay: "单程",
   travelers: "旅客",

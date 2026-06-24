@@ -2767,7 +2767,7 @@ export function FlightResultsClient() {
                     <span className="truncate">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput, calendarLocale)} — ${formatDateLabel(returnDateInput, calendarLocale)}`
+                          ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} — ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
                           : formatDateLabel(departureDateInput, calendarLocale)
                         : t("travelDates")}
                     </span>
@@ -3323,7 +3323,7 @@ export function FlightResultsClient() {
                     <span className="block truncate text-base font-bold leading-5 text-slate-950">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput, calendarLocale)} – ${formatDateLabel(returnDateInput, calendarLocale)}`
+                          ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
                           : formatDateLabel(departureDateInput, calendarLocale)
                         : t("travelDates")}
                     </span>
@@ -3769,7 +3769,7 @@ export function FlightResultsClient() {
                     <span className="block truncate text-sm font-semibold text-slate-950">
                       {departureDateInput
                         ? tripTypeInput === "round-trip" && returnDateInput
-                          ? `${formatDateLabel(departureDateInput, calendarLocale)} – ${formatDateLabel(returnDateInput, calendarLocale)}`
+                          ? `${formatCompactDateLabel(departureDateInput, calendarLocale)} – ${formatCompactDateLabel(returnDateInput, calendarLocale)}`
                           : formatDateLabel(departureDateInput, calendarLocale)
                         : t("travelDates")}
                     </span>
