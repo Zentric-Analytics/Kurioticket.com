@@ -1797,6 +1797,19 @@ export const translations: TranslationDictionary = {
   homeDestinationNewYorkCountry: "Stati Uniti",
   homeDestinationNewYorkAlt: "New York, Stati Uniti",
 
+  "flightLandingCity.Accra": "Accra",
+  "flightLandingCity.Doha": "Doha",
+  "flightLandingCity.Dubai": "Dubai",
+  "flightLandingCity.Istanbul": "Istanbul",
+  "flightLandingCity.Johannesburg": "Johannesburg",
+  "flightLandingCity.Kigali": "Kigali",
+  "flightLandingCity.Lagos": "Lagos",
+  "flightLandingCity.Nairobi": "Nairobi",
+  "flightLandingCity.Paris": "Parigi",
+  "flightLandingCity.Rome": "Roma",
+  "homePopularDestinationCity.istanbul": "Istanbul",
+  "homePopularDestinationCity.nairobi": "Nairobi",
+  "homePopularDestinationCity.paris": "Parigi",
   flightLandingHeroTitle:
     "Trova il tuo prossimo volo conveniente con facilità.",
   flightLandingHeroSubtitle:
