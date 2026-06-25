@@ -655,16 +655,19 @@ function DetailValue({
   value,
   fallback,
   helper,
+  preserveLines = false,
 }: {
   value: string;
   fallback: string;
   helper?: string;
+  preserveLines?: boolean;
 }) {
   return (
     <div className="min-w-0 space-y-0.5 text-start">
       <p
         className={cn(
           "break-words text-sm font-medium leading-6 text-slate-700",
+          preserveLines && "whitespace-pre-line",
           !value && "text-slate-500",
         )}
       >
@@ -788,6 +791,194 @@ function DateOfBirthInput({
         {dateOfBirthYears.map((year) => (
           <option key={year} value={year}>
             {year}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+
+type StructuredAddressParts = {
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  region: string;
+  postalCode: string;
+  countryCode: string;
+};
+
+const emptyStructuredAddress: StructuredAddressParts = {
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  region: "",
+  postalCode: "",
+  countryCode: "",
+};
+
+const structuredAddressPrefix = "kt-address-v1:";
+
+function parseStructuredAddressDraft(value: string): StructuredAddressParts {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return emptyStructuredAddress;
+
+  if (trimmedValue.startsWith(structuredAddressPrefix)) {
+    try {
+      const parsedValue = JSON.parse(
+        trimmedValue.slice(structuredAddressPrefix.length),
+      ) as Partial<StructuredAddressParts>;
+
+      return {
+        addressLine1: parsedValue.addressLine1 ?? "",
+        addressLine2: parsedValue.addressLine2 ?? "",
+        city: parsedValue.city ?? "",
+        region: parsedValue.region ?? "",
+        postalCode: parsedValue.postalCode ?? "",
+        countryCode: parsedValue.countryCode ?? "",
+      };
+    } catch {
+      return emptyStructuredAddress;
+    }
+  }
+
+  const [addressLine1 = "", addressLine2 = "", cityRegionPostal = "", country = ""] =
+    trimmedValue.split(/\r?\n/).map((line) => line.trim());
+  const countryOption = countryProfileOptions.find(
+    (option) =>
+      option.countryName.toLowerCase() === country.toLowerCase() ||
+      option.isoCode.toLowerCase() === country.toLowerCase(),
+  );
+
+  return {
+    ...emptyStructuredAddress,
+    addressLine1,
+    addressLine2,
+    city: cityRegionPostal,
+    countryCode: countryOption?.isoCode ?? "",
+  };
+}
+
+function serializeStructuredAddressDraft(parts: StructuredAddressParts) {
+  const normalizedParts = {
+    addressLine1: parts.addressLine1.trimStart(),
+    addressLine2: parts.addressLine2.trimStart(),
+    city: parts.city.trimStart(),
+    region: parts.region.trimStart(),
+    postalCode: parts.postalCode.trimStart(),
+    countryCode: parts.countryCode,
+  };
+  const hasAddressValue = Object.values(normalizedParts).some(Boolean);
+
+  return hasAddressValue
+    ? `${structuredAddressPrefix}${JSON.stringify(normalizedParts)}`
+    : "";
+}
+
+function formatStructuredAddressForDisplay(value: string) {
+  if (!value.trim() || !value.trim().startsWith(structuredAddressPrefix)) {
+    return value.trim();
+  }
+
+  const parts = parseStructuredAddressDraft(value);
+  const countryOption = countryProfileOptions.find(
+    (option) => option.isoCode === parts.countryCode,
+  );
+  const localityLine = [parts.city, parts.region, parts.postalCode]
+    .filter(Boolean)
+    .join(", ");
+  const countryLine = countryOption
+    ? `${countryOption.flag} ${countryOption.countryName}`
+    : parts.countryCode;
+
+  return [
+    parts.addressLine1,
+    parts.addressLine2,
+    localityLine,
+    countryLine,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function StructuredAddressInput({
+  value,
+  onChange,
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  className: string;
+}) {
+  const parts = useMemo(() => parseStructuredAddressDraft(value), [value]);
+
+  const updatePart = (part: keyof StructuredAddressParts, nextValue: string) => {
+    onChange(
+      serializeStructuredAddressDraft({
+        ...parts,
+        [part]: nextValue,
+      }),
+    );
+  };
+
+  return (
+    <div className="grid min-w-0 gap-2">
+      <input
+        className={className}
+        value={parts.addressLine1}
+        onChange={(event) => updatePart("addressLine1", event.target.value)}
+        placeholder="Address line 1"
+        aria-label="Address line 1"
+        autoComplete="address-line1"
+      />
+      <input
+        className={className}
+        value={parts.addressLine2}
+        onChange={(event) => updatePart("addressLine2", event.target.value)}
+        placeholder="Address line 2 / apartment / suite / unit (optional)"
+        aria-label="Address line 2, apartment, suite, or unit"
+        autoComplete="address-line2"
+      />
+      <div className="grid min-w-0 gap-2 sm:grid-cols-3">
+        <input
+          className={className}
+          value={parts.city}
+          onChange={(event) => updatePart("city", event.target.value)}
+          placeholder="City or town"
+          aria-label="City or town"
+          autoComplete="address-level2"
+        />
+        <input
+          className={className}
+          value={parts.region}
+          onChange={(event) => updatePart("region", event.target.value)}
+          placeholder="State / province / region"
+          aria-label="State, province, or region"
+          autoComplete="address-level1"
+        />
+        <input
+          className={className}
+          value={parts.postalCode}
+          onChange={(event) => updatePart("postalCode", event.target.value)}
+          placeholder="Postal code"
+          aria-label="Postal code"
+          autoComplete="postal-code"
+        />
+      </div>
+      <select
+        className={className}
+        value={parts.countryCode}
+        onChange={(event) => updatePart("countryCode", event.target.value)}
+        aria-label="Country or region"
+        autoComplete="country"
+      >
+        <option value="" disabled hidden>
+          Country / Region
+        </option>
+        {countryProfileOptions.map((option) => (
+          <option key={option.isoCode} value={option.isoCode}>
+            {option.flag} {option.countryName}
           </option>
         ))}
       </select>
@@ -967,6 +1158,16 @@ function DetailInput({
     );
   }
 
+  if (row.key === "address") {
+    return (
+      <StructuredAddressInput
+        value={value}
+        onChange={(nextValue) => onChange(row.key, nextValue)}
+        className={baseClassName}
+      />
+    );
+  }
+
   if (row.options) {
     return (
       <select
@@ -1067,9 +1268,14 @@ function PersonalDetailsSection(props: DashboardOverviewProps) {
                 </div>
               ) : (
                 <DetailValue
-                  value={readOnlyValue}
+                  value={
+                    row.key === "address"
+                      ? formatStructuredAddressForDisplay(readOnlyValue)
+                      : readOnlyValue
+                  }
                   fallback={row.fallback}
                   helper={row.helper}
+                  preserveLines={row.key === "address"}
                 />
               )}
             </div>
